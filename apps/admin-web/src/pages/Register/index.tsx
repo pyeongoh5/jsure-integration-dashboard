@@ -4,7 +4,7 @@ import axios from "axios";
 import { RegisterRequestSchema } from "@jsure/shared";
 import { register } from "@/lib/auth";
 import { hangulToEn } from "@/lib/hangulToEn";
-import "./Auth.css";
+import "../_shared/Auth.css";
 
 export function Register() {
   const [email, setEmail] = useState("");

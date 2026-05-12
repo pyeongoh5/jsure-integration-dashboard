@@ -1,4 +1,4 @@
-import "./Placeholder.css";
+import "../_shared/Placeholder.css";
 
 export function Brands() {
   return (

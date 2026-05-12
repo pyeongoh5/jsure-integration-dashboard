@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Card } from "../ui/Card";
-import { FilterChips } from "../ui/FilterChips";
-import { CampaignCardTitle } from "../components/campaign/CampaignCardTitle";
-import { CampaignCardBody } from "../components/campaign/CampaignCardBody";
-import { CampaignCardFooter } from "../components/campaign/CampaignCardFooter";
-import type { Campaign, CampaignStatus } from "../components/campaign/types";
-import { useDebouncedValue } from "../lib/useDebouncedValue";
+import { Card } from "../../ui/Card";
+import { FilterChips } from "../../ui/FilterChips";
+import { CampaignCardTitle } from "../../components/Campaign/CampaignCardTitle";
+import { CampaignCardBody } from "../../components/Campaign/CampaignCardBody";
+import { CampaignCardFooter } from "../../components/Campaign/CampaignCardFooter";
+import type { Campaign, CampaignStatus } from "../../components/Campaign/types";
+import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import "./Campaigns.css";
 
 type FilterKey = "all" | CampaignStatus;

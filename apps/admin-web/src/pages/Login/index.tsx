@@ -4,7 +4,7 @@ import axios from "axios";
 import { LoginRequestSchema } from "@jsure/shared";
 import { login } from "@/lib/auth";
 import { hangulToEn } from "@/lib/hangulToEn";
-import "./Auth.css";
+import "../_shared/Auth.css";
 
 type LocationState = { from?: string } | null;
 

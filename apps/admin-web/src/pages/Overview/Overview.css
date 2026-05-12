@@ -117,42 +117,6 @@
   gap: 14px; */
 }
 
-/* Chart */
-.ov-chart {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 10px;
-  height: 240px;
-  align-items: end;
-}
-
-.ov-chart__col {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  height: 100%;
-}
-
-.ov-chart__bar-wrap {
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-}
-
-.ov-chart__bar {
-  width: 100%;
-  background: linear-gradient(180deg, #93c5fd 0%, #2563eb 100%);
-  border-radius: 6px 6px 0 0;
-  transition: height 0.3s;
-  min-height: 2px;
-}
-
-.ov-chart__label {
-  text-align: center;
-  font-size: 11px;
-  color: var(--c-subtle);
-}
-
 /* Activity */
 .ov-activity {
   list-style: none;

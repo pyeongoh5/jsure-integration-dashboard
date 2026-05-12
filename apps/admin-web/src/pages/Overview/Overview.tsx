@@ -1,8 +1,9 @@
 import { getStoredUser } from "@/lib/auth";
 import { Link } from "react-router-dom";
-import { Card } from "../ui/Card";
-import "./Overview.css";
+import { Card } from "../../ui/Card";
 import { ReactNode } from "react";
+import "./Overview.css";
+import { MonthlyCampaignChart } from "./MonthlyCampaignChart";
 
 type Kpi = {
   icon: ReactNode;
@@ -40,21 +41,6 @@ const KPIS: Kpi[] = [
   },
 ];
 
-const MONTHLY = [
-  { m: "5월", v: 38 },
-  { m: "6월", v: 48 },
-  { m: "7월", v: 36 },
-  { m: "8월", v: 56 },
-  { m: "9월", v: 50 },
-  { m: "10월", v: 60 },
-  { m: "11월", v: 70 },
-  { m: "12월", v: 64 },
-  { m: "1월", v: 76 },
-  { m: "2월", v: 82 },
-  { m: "3월", v: 90 },
-  { m: "4월", v: 100 },
-];
-
 // type Activity = {
 //   type: "approve" | "draft" | "campaign" | "alert" | "payout" | "complete";
 //   text: string;
@@ -83,33 +69,32 @@ const MONTHLY = [
 //   complete: { icon: "✓", bg: "#ecfdf5", fg: "#10b981" },
 // };
 
-type UrgentRow = {
-  type: string;
-  tone: "warn" | "info";
-  target: string;
-  receivedAt: string;
-  sla: string;
-  slaTone: "danger" | "warn";
-  assignee: string;
-  action: string;
-};
+// type UrgentRow = {
+//   type: string;
+//   tone: "warn" | "info";
+//   target: string;
+//   receivedAt: string;
+//   sla: string;
+//   slaTone: "danger" | "warn";
+//   assignee: string;
+//   action: string;
+// };
 
-const URGENT: UrgentRow[] = [
-  {
-    type: "응모 검토",
-    tone: "warn",
-    target: "유나 → 라이프스토어 그린 프로젝트",
-    receivedAt: "2시간 전",
-    sla: "D-1",
-    slaTone: "warn",
-    assignee: "HR",
-    action: "검토",
-  },
-];
+// const URGENT: UrgentRow[] = [
+//   {
+//     type: "응모 검토",
+//     tone: "warn",
+//     target: "유나 → 라이프스토어 그린 프로젝트",
+//     receivedAt: "2시간 전",
+//     sla: "D-1",
+//     slaTone: "warn",
+//     assignee: "HR",
+//     action: "검토",
+//   },
+// ];
 
 export function Overview() {
   const user = getStoredUser();
-  const max = Math.max(...MONTHLY.map((m) => m.v));
 
   return (
     <div className="ov">
@@ -151,22 +136,7 @@ export function Overview() {
       </div>
 
       <div className="ov__row">
-        <section className="ov-card ov__chart">
-          <header className="ov-card__head">
-            <h2>월별 캠페인 응모 추이</h2>
-            <span className="ov-card__meta">최근 12개월</span>
-          </header>
-          <div className="ov-chart">
-            {MONTHLY.map((m) => (
-              <div key={m.m} className="ov-chart__col">
-                <div className="ov-chart__bar-wrap">
-                  <div className="ov-chart__bar" style={{ height: `${(m.v / max) * 100}%` }} />
-                </div>
-                <div className="ov-chart__label">{m.m}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <MonthlyCampaignChart />
 
         {/* <section className="ov-card ov__activity">
           <header className="ov-card__head">
@@ -192,7 +162,7 @@ export function Overview() {
         </section> */}
       </div>
 
-      <section className="ov-card ov__urgent">
+      {/* <section className="ov-card ov__urgent">
         <header className="ov-card__head">
           <h2>긴급 처리 항목</h2>
           <span className="ov-card__meta">우선순위 순</span>
@@ -229,7 +199,7 @@ export function Overview() {
             ))}
           </tbody>
         </table>
-      </section>
+      </section> */}
     </div>
   );
 }

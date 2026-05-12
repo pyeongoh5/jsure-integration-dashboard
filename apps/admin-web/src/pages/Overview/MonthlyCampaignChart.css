@@ -1,0 +1,34 @@
+.mc-chart {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 10px;
+  height: 240px;
+  align-items: end;
+}
+
+.mc-chart__col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+}
+
+.mc-chart__bar-wrap {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+
+.mc-chart__bar {
+  width: 100%;
+  background: linear-gradient(180deg, #93c5fd 0%, #2563eb 100%);
+  border-radius: 6px 6px 0 0;
+  transition: height 0.3s;
+  min-height: 2px;
+}
+
+.mc-chart__label {
+  text-align: center;
+  font-size: 11px;
+  color: var(--c-subtle);
+}

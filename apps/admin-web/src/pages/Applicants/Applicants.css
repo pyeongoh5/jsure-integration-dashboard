@@ -1,0 +1,301 @@
+.apl {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1400px;
+  margin: auto;
+}
+
+.apl__header {
+  margin-bottom: 4px;
+}
+
+.apl__title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.apl__subtitle {
+  margin: 0;
+  color: var(--c-muted);
+  font-size: 14px;
+}
+
+/* Tabs */
+.apl__tabs {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.apl-tab {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 12px 0;
+  margin-bottom: -1px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--c-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.15s;
+}
+
+.apl-tab:hover {
+  color: var(--c-text);
+}
+
+.apl-tab--active {
+  color: var(--c-text);
+  font-weight: 600;
+  border-bottom: 2px solid var(--c-text);
+  border-radius: 0;
+}
+
+.apl-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 0 7px;
+  height: 18px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: var(--c-muted);
+}
+
+.apl-tab--active .apl-tab__count {
+  background: var(--c-text);
+  color: #fff;
+}
+
+/* Filter pills (dashed) */
+.apl__filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.apl-filter {
+  border: 1px dashed var(--c-border);
+  background: transparent;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--c-muted);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.apl-filter:hover {
+  border-color: var(--c-brand);
+  color: var(--c-brand);
+}
+
+/* Card / Table */
+.apl__card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.apl__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.apl__table thead th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-muted);
+  background: #f9fafb;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--c-border);
+  white-space: nowrap;
+}
+
+.apl__table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-text);
+  vertical-align: middle;
+}
+
+.apl__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.apl__table tbody tr:hover {
+  background: #fafbfc;
+}
+
+.apl-check {
+  width: 32px;
+}
+
+.apl-check input {
+  cursor: pointer;
+  accent-color: var(--c-brand);
+}
+
+/* Influencer cell */
+.apl-inf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.apl-inf__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #e5e7eb;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.apl-inf__name {
+  font-weight: 600;
+  color: var(--c-text);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.apl-inf__handle {
+  font-size: 12px;
+  color: var(--c-muted);
+  margin-top: 2px;
+}
+
+/* Media icons */
+.apl-media-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.apl-media {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.apl-media--ig {
+  background: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
+}
+
+.apl-media--yt {
+  background: #ff0000;
+}
+
+.apl-media--tt {
+  background: #000;
+}
+
+.apl-media--tt i {
+  text-shadow:
+    -1.2px -1.2px 0 #ff0050,
+    1.2px 1.2px 0 #00f2ea;
+}
+
+.apl-media--x {
+  background: #000;
+}
+
+/* Numeric cells */
+.apl__table td.apl-num {
+  font-weight: 600;
+  color: var(--c-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.apl__table td.apl-rate,
+.apl__table td.apl-time {
+  color: var(--c-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Action buttons */
+.apl-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.apl-action {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.apl-action--approve {
+  background: #10b981;
+  color: #fff;
+}
+
+.apl-action--approve:hover {
+  background: #059669;
+}
+
+.apl-action--reject {
+  background: #fff;
+  border-color: #fecaca;
+  color: var(--c-red);
+}
+
+.apl-action--reject:hover {
+  background: #fef2f2;
+}
+
+.apl-action--undo {
+  background: #fff;
+  border-color: var(--c-border);
+  color: var(--c-muted);
+}
+
+.apl-action--undo:hover {
+  background: #f9fafb;
+  color: var(--c-text);
+}
+
+/* Empty */
+.apl__empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--c-muted);
+  font-size: 14px;
+}

@@ -1,0 +1,27 @@
+type Props = {
+  thumbIcon: string;
+  name: string;
+  description: string;
+  period: string;
+  reward: string;
+};
+
+export function CampaignCardBody({ thumbIcon, name, description, period, reward }: Props) {
+  return (
+    <>
+      <div className="cmp-card__thumb">{thumbIcon}</div>
+      <h3 className="cmp-card__name">{name}</h3>
+      <p className="cmp-card__desc">{description}</p>
+      <div className="cmp-card__meta">
+        <div className="cmp-card__meta-row">
+          <i className="fa-regular fa-calendar" />
+          <span>{period}</span>
+        </div>
+        <div className="cmp-card__meta-row">
+          <i className="fa-solid fa-coins" />
+          <span>{reward}</span>
+        </div>
+      </div>
+    </>
+  );
+}

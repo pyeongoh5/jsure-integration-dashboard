@@ -1,0 +1,15 @@
+# Railway / Nixpacks 설정. 모노레포 루트에서 빌드하기 위한 힌트.
+[phases.setup]
+nixPkgs = ["nodejs_20", "pnpm"]
+
+[phases.install]
+cmds = ["cd ../.. && pnpm install --frozen-lockfile"]
+
+[phases.build]
+cmds = [
+  "cd ../.. && pnpm turbo build --filter=@jsure/api",
+  "cd apps/api && pnpm prisma generate"
+]
+
+[start]
+cmd = "cd apps/api && pnpm prisma migrate deploy && pnpm start:prod"

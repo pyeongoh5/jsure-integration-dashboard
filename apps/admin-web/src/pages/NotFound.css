@@ -1,0 +1,80 @@
+.nf {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.nf-card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 56px 48px;
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+}
+
+.nf__code {
+  font-size: 72px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--c-text);
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.nf__title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+  color: var(--c-text);
+}
+
+.nf__subtitle {
+  margin: 0 0 28px;
+  color: var(--c-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.nf__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.nf__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-card);
+  color: var(--c-text);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.nf__btn:hover {
+  background: var(--c-bg, #f9fafb);
+}
+
+.nf__btn--primary {
+  background: var(--c-text);
+  border-color: var(--c-text);
+  color: #ffffff;
+}
+
+.nf__btn--primary:hover {
+  opacity: 0.9;
+  background: var(--c-text);
+}

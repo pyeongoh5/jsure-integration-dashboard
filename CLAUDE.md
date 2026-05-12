@@ -1,0 +1,1 @@
+코드 작성시에는 `.claude/CODE_RULES.md` 규칙을 따른다.

@@ -10,17 +10,7 @@ export class UsersController {
 
   @Get()
   async list(): Promise<ListUsersResponse> {
-    const rows = await this.users.findAll();
-    return {
-      users: rows.map((u) => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        role: u.role,
-        status: u.status,
-        createdAt: u.createdAt.toISOString(),
-        updatedAt: u.updatedAt.toISOString(),
-      })),
-    };
+    const users = await this.users.findAllPublic();
+    return { users };
   }
 }

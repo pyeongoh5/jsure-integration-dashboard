@@ -6,6 +6,8 @@ import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { LocalStrategy } from "./strategies/local.strategy";
+import { SessionsService } from "./sessions.service";
+import { SessionsCleanupService } from "./sessions-cleanup.service";
 import { UsersModule } from "../users/users.module";
 
 @Module({
@@ -18,12 +20,18 @@ import { UsersModule } from "../users/users.module";
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>("JWT_SECRET"),
         signOptions: {
-          expiresIn: config.get<string>("JWT_EXPIRES_IN") ?? "1h",
+          expiresIn: config.get<string>("JWT_EXPIRES_IN") ?? "15m",
         },
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
+  providers: [
+    AuthService,
+    SessionsService,
+    SessionsCleanupService,
+    JwtStrategy,
+    LocalStrategy,
+  ],
   controllers: [AuthController],
   exports: [AuthService],
 })

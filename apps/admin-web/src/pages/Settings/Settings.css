@@ -1,0 +1,153 @@
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 960px;
+  margin: auto;
+}
+
+.settings__title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.settings__subtitle {
+  margin: 0;
+  color: var(--c-muted);
+  font-size: 14px;
+}
+
+.settings-section {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 20px 22px;
+}
+
+.settings-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.settings-section__title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.settings-section__hint {
+  font-size: 13px;
+  color: var(--c-muted);
+  margin: 0 0 16px;
+}
+
+.sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.session {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: #fff;
+}
+
+.session--current {
+  border-color: var(--c-brand);
+  background: var(--c-brand-soft);
+}
+
+.session__icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: var(--c-muted);
+  flex-shrink: 0;
+}
+
+.session--current .session__icon {
+  background: #fff;
+  color: var(--c-brand);
+}
+
+.session__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.session__device {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.session__current-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-brand);
+  background: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.session__meta {
+  font-size: 12px;
+  color: var(--c-muted);
+  margin-top: 2px;
+}
+
+.session__revoke {
+  background: #fff;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-red);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.session__revoke:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.session__revoke:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings__state {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--c-muted);
+  font-size: 13px;
+  border: 1px dashed var(--c-border);
+  border-radius: var(--r-md);
+}
+
+.settings__state--error {
+  color: var(--c-red);
+  border-color: #fecaca;
+  background: #fef2f2;
+}

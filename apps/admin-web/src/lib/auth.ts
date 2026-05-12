@@ -1,23 +1,32 @@
 import {
   AuthResponseSchema,
+  ListSessionsResponseSchema,
+  RefreshResponseSchema,
   RegisterResponseSchema,
   type AuthResponse,
   type LoginRequest,
   type PublicUser,
+  type RefreshResponse,
   type RegisterRequest,
   type RegisterResponse,
+  type SessionSummary,
 } from "@jsure/shared";
 import { api } from "./api";
 
 const TOKEN_KEY = "accessToken";
+const REFRESH_KEY = "refreshToken";
 const USER_KEY = "currentUser";
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_KEY);
+}
+
 export function isAuthenticated(): boolean {
-  return Boolean(getToken());
+  return Boolean(getToken() || getRefreshToken());
 }
 
 export function getStoredUser(): PublicUser | null {
@@ -32,7 +41,19 @@ export function getStoredUser(): PublicUser | null {
 
 function saveAuth(res: AuthResponse) {
   localStorage.setItem(TOKEN_KEY, res.accessToken);
+  localStorage.setItem(REFRESH_KEY, res.refreshToken);
   localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+}
+
+function saveTokens(res: RefreshResponse) {
+  localStorage.setItem(TOKEN_KEY, res.accessToken);
+  localStorage.setItem(REFRESH_KEY, res.refreshToken);
+}
+
+export function clearAuth() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(REFRESH_KEY);
+  localStorage.removeItem(USER_KEY);
 }
 
 export async function login(input: LoginRequest): Promise<AuthResponse> {
@@ -49,7 +70,40 @@ export async function register(
   return RegisterResponseSchema.parse(res.data);
 }
 
-export function logout() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+export async function refreshAccessToken(): Promise<RefreshResponse | null> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return null;
+  const res = await api.post(
+    "/auth/refresh",
+    { refreshToken },
+    { skipAuthRefresh: true },
+  );
+  const parsed = RefreshResponseSchema.parse(res.data);
+  saveTokens(parsed);
+  return parsed;
+}
+
+export async function logout(): Promise<void> {
+  const refreshToken = getRefreshToken();
+  if (refreshToken) {
+    try {
+      await api.post(
+        "/auth/logout",
+        { refreshToken },
+        { skipAuthRefresh: true },
+      );
+    } catch {
+      // best-effort; clear local state regardless
+    }
+  }
+  clearAuth();
+}
+
+export async function listMySessions(): Promise<SessionSummary[]> {
+  const res = await api.get("/auth/sessions");
+  return ListSessionsResponseSchema.parse(res.data).sessions;
+}
+
+export async function revokeSession(sessionId: string): Promise<void> {
+  await api.delete(`/auth/sessions/${encodeURIComponent(sessionId)}`);
 }

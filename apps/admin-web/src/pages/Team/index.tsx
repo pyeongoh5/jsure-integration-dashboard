@@ -47,7 +47,8 @@ function initialsOf(name: string | null, email: string): string {
   return source.slice(0, 2).toUpperCase();
 }
 
-function formatLastActivity(iso: string, now: Date): string {
+function formatLastActivity(iso: string | null, now: Date): string {
+  if (!iso) return "활동 없음";
   const then = new Date(iso);
   const diffMs = now.getTime() - then.getTime();
   const minutes = Math.floor(diffMs / 60_000);
@@ -66,17 +67,18 @@ export function Team() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    // let cancelled = false;
     listUsers()
       .then((rows) => {
-        if (!cancelled) setUsers(rows);
+        setUsers(rows);
       })
       .catch(() => {
-        if (!cancelled) setError("팀원 목록을 불러오지 못했습니다.");
+        setError("팀원 목록을 불러오지 못했습니다.");
       });
-    return () => {
-      cancelled = true;
-    };
+
+    // return () => {
+    //   cancelled = true;
+    // };
   }, []);
 
   const now = useMemo(() => new Date(), [users]);
@@ -111,6 +113,7 @@ export function Team() {
                 <th>이름</th>
                 <th>이메일</th>
                 <th>역할</th>
+                <th>마지막 활동</th>
                 <th>상태</th>
               </tr>
             </thead>
@@ -136,6 +139,7 @@ export function Team() {
                         {role.label}
                       </span>
                     </td>
+                    <td className="team-activity">{formatLastActivity(u.lastSeenAt, now)}</td>
                     <td>
                       <span className={`team-badge ${status.className}`}>
                         <span className="team-badge__dot" />

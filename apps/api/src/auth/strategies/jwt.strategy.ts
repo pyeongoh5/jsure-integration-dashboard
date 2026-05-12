@@ -2,8 +2,11 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { ConfigService } from "@nestjs/config";
+import type { PublicUser } from "@jsure/shared";
 import type { JwtPayload } from "../auth.service";
 import { UsersService } from "../../users/users.service";
+
+export type AuthenticatedUser = PublicUser & { sid: string };
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -20,10 +23,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload) {
-    const user = await this.users.findById(payload.sub);
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
+    const user = await this.users.findPublicById(payload.sub);
     if (!user) throw new UnauthorizedException();
-    const { passwordHash: _ph, ...safe } = user;
-    return safe;
+    return { ...user, sid: payload.sid };
   }
 }

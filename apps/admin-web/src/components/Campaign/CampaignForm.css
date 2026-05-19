@@ -32,11 +32,16 @@
 .cf__input,
 .cf__textarea {
   width: 100%;
-  padding: 8px 10px;
+  padding: 6px 10px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
-  font: inherit;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+.cf__input {
+  height: 34px;
 }
 .cf__textarea {
   min-height: 96px;
@@ -70,8 +75,12 @@
   font-size: 14px;
   pointer-events: none;
 }
-.cf__currency-prefix { left: 10px; }
-.cf__currency-suffix { right: 10px; }
+.cf__currency-prefix {
+  left: 10px;
+}
+.cf__currency-suffix {
+  right: 10px;
+}
 .cf__chips {
   display: flex;
   gap: 8px;
@@ -91,14 +100,25 @@
   border-color: #2563eb;
   color: #fff;
 }
-.cf__chip:disabled { opacity: 0.5; cursor: not-allowed; }
+.cf__chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .cf__row-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
-.cf__urls { display: flex; flex-direction: column; gap: 8px; }
-.cf__url-row { display: flex; gap: 8px; align-items: center; }
+.cf__urls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cf__url-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 .cf__actions {
   display: flex;
   gap: 8px;
@@ -113,7 +133,10 @@
   font-size: 14px;
   cursor: pointer;
 }
-.cf__btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cf__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .cf__btn--ghost {
   background: #fff;
   color: #2563eb;

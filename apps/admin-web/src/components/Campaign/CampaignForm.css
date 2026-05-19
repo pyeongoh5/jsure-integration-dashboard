@@ -1,0 +1,120 @@
+.cf {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 720px;
+}
+.cf__section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+.cf__section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+.cf__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cf__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+.cf__input,
+.cf__textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font: inherit;
+}
+.cf__textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.cf__error {
+  color: #dc2626;
+  font-size: 12px;
+}
+.cf__banner {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  font-size: 13px;
+}
+.cf__currency {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.cf__currency .cf__input {
+  padding-left: 24px;
+  padding-right: 32px;
+}
+.cf__currency-prefix,
+.cf__currency-suffix {
+  position: absolute;
+  color: #6b7280;
+  font-size: 14px;
+  pointer-events: none;
+}
+.cf__currency-prefix { left: 10px; }
+.cf__currency-suffix { right: 10px; }
+.cf__chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cf__chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  cursor: pointer;
+}
+.cf__chip--on {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+.cf__chip:disabled { opacity: 0.5; cursor: not-allowed; }
+.cf__row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.cf__urls { display: flex; flex-direction: column; gap: 8px; }
+.cf__url-row { display: flex; gap: 8px; align-items: center; }
+.cf__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.cf__btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.cf__btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cf__btn--ghost {
+  background: #fff;
+  color: #2563eb;
+}

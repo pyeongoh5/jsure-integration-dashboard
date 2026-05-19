@@ -51,3 +51,25 @@ enum UserStatus {
   ACTIVE
   SUSPENDED
 }
+
+model Campaign {
+  id                 String   @id @default(cuid())
+  title              String
+  rewardJpy          Int
+  snsTypes           String[]
+  condition          String
+  recruitCount       Int
+  recruitStartAt     DateTime
+  recruitEndAt       DateTime
+  productSummary     String
+  productDetailUrl   String
+  guideline          String
+  referenceMediaUrls String[]
+  ngItems            String
+  cautions           String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([recruitStartAt])
+  @@map("campaigns")
+}

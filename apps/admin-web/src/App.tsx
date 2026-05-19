@@ -3,6 +3,8 @@ import { AdminLayout } from "./layouts/AdminLayout";
 import { RequireAuth } from "./components/RequireAuth";
 import { Overview } from "./pages/Overview";
 import { Campaigns } from "./pages/Campaigns";
+import { CampaignNew } from "./pages/Campaigns/New";
+import { CampaignEdit } from "./pages/Campaigns/Edit";
 import { Applicants } from "./pages/Applicants";
 import { Drafts } from "./pages/Drafts";
 import { Monitoring } from "./pages/Monitoring";
@@ -31,6 +33,8 @@ export function App() {
       >
         <Route path="/overview" element={<Overview />} />
         <Route path="/campaigns" element={<Campaigns />} />
+        <Route path="/campaigns/new" element={<CampaignNew />} />
+        <Route path="/campaigns/:id/edit" element={<CampaignEdit />} />
         <Route path="/applicants" element={<Applicants />} />
         <Route path="/drafts" element={<Drafts />} />
         <Route path="/monitoring" element={<Monitoring />} />

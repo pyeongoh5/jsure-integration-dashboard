@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card } from "../../ui/Card";
 import { FilterChips } from "../../ui/FilterChips";
 import { CampaignCardTitle } from "../../components/Campaign/CampaignCardTitle";
@@ -8,6 +8,7 @@ import { CampaignCardFooter } from "../../components/Campaign/CampaignCardFooter
 import type { Campaign, CampaignStatus } from "../../components/Campaign/types";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import "./Campaigns.css";
+import "../../components/Campaign/CampaignForm.css";
 
 type FilterKey = "all" | CampaignStatus;
 
@@ -113,6 +114,7 @@ const CAMPAIGNS: Campaign[] = [
 ];
 
 export function Campaigns() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const rawStatus = searchParams.get(STATUS_PARAM);
   const filter: FilterKey = isFilterKey(rawStatus) ? rawStatus : "all";
@@ -139,8 +141,17 @@ export function Campaigns() {
   return (
     <div className="cmp">
       <div className="cmp__header">
-        <h1 className="cmp__title">캠페인 관리</h1>
-        <p className="cmp__subtitle">전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요.</p>
+        <div>
+          <h1 className="cmp__title">캠페인 관리</h1>
+          <p className="cmp__subtitle">전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요.</p>
+        </div>
+        <button
+          type="button"
+          className="cf__btn"
+          onClick={() => navigate("/campaigns/new")}
+        >
+          캠페인 만들기
+        </button>
       </div>
 
       <div className="cmp__toolbar">

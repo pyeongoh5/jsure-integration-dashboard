@@ -7,6 +7,10 @@
 }
 
 .cmp__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
   margin-bottom: 4px;
 }
 

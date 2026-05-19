@@ -4,6 +4,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
+import { CampaignsModule } from "./campaigns/campaigns.module";
 import { HealthModule } from "@/health/health.module";
 
 @Module({
@@ -13,6 +14,7 @@ import { HealthModule } from "@/health/health.module";
     PrismaModule,
     AuthModule,
     UsersModule,
+    CampaignsModule,
     HealthModule,
   ],
 })

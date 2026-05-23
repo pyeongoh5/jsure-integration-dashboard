@@ -1,0 +1,75 @@
+.apply {
+  padding-bottom: 90px;
+}
+
+.apply__body {
+  padding: 16px;
+}
+
+.apply__cam {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.apply__cam-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.apply__cam-reward {
+  font-size: 22px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+.apply__sec {
+  margin-top: 20px;
+}
+
+.apply__sec h3 {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.apply__sns {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+}
+
+.apply__sns li {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.apply__chk {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+  color: #111;
+  font-size: 13px;
+}
+
+.apply__chk input {
+  width: 18px;
+  height: 18px;
+}
+
+.apply__cta {
+  position: fixed;
+  bottom: 70px;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid #f3f4f6;
+}

@@ -1,0 +1,97 @@
+.snsc {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+.snsc--on {
+  border-color: #1d6cf3;
+  background: #f5f9ff;
+}
+
+.snsc__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #111;
+}
+
+.snsc__icon {
+  font-size: 18px;
+  color: #4b5563;
+}
+
+.snsc--on .snsc__icon {
+  color: #1d6cf3;
+}
+
+.snsc__name {
+  flex: 1;
+  text-align: left;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.snsc__toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: #d1d5db;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.snsc__toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.15s;
+}
+
+.snsc__toggle--on {
+  background: #1d6cf3;
+}
+
+.snsc__toggle--on::after {
+  left: 18px;
+}
+
+.snsc__body {
+  margin-top: 12px;
+}
+
+.snsc__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.snsc__field > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.snsc__field input {
+  height: 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #fff;
+  color: #111;
+  font-size: 15px;
+}

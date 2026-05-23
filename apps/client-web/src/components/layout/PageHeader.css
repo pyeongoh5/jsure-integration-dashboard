@@ -1,0 +1,35 @@
+.page-header {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  height: 48px;
+  background: #fff;
+  border-bottom: 1px solid #f3f4f6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 0 8px;
+}
+
+.page-header__left,
+.page-header__right {
+  display: flex;
+  align-items: center;
+}
+
+.page-header__title {
+  text-align: center;
+  font-weight: 600;
+  color: #111;
+  font-size: 15px;
+}
+
+.page-header__back {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: #111;
+  font-size: 18px;
+  cursor: pointer;
+}

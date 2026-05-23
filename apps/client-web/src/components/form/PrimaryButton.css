@@ -1,0 +1,24 @@
+.pb {
+  height: 48px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.pb:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pb--primary {
+  background: #1d6cf3;
+  color: #fff;
+}
+
+.pb--ghost {
+  background: #f3f4f6;
+  color: #374151;
+}

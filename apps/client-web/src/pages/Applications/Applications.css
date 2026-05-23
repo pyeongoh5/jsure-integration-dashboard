@@ -1,0 +1,30 @@
+.apps__header {
+  padding: 18px 16px 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.apps__header h1 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.apps__list {
+  padding: 14px 16px 30px;
+}
+
+.apps__empty {
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+  padding: 60px 12px;
+}
+
+.apps__cta {
+  background: #1d6cf3;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}

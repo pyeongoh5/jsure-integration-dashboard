@@ -1,0 +1,42 @@
+.browse {
+  padding-top: 4px;
+}
+
+.browse__brand {
+  text-align: center;
+  padding: 16px 0 18px;
+}
+
+.browse__brand-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1d6cf3;
+  letter-spacing: -0.5px;
+}
+
+.browse__brand-subtitle {
+  font-size: 11px;
+  color: #1d6cf3;
+  margin-top: -2px;
+}
+
+.browse__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 14px 24px;
+}
+
+.browse__skel {
+  aspect-ratio: 3 / 4;
+  background: #f3f4f6;
+  border-radius: 12px;
+}
+
+.browse__empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+  padding: 60px 12px;
+}

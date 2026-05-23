@@ -1,0 +1,27 @@
+.sbl {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.sbl__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  font-size: 11px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.sbl__badge i {
+  color: #1d6cf3;
+}
+
+.sbl__badge--info {
+  background: #dbeafe;
+  color: #1d4ed8;
+}

@@ -1,0 +1,62 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 12px 8px;
+  position: relative;
+}
+
+.stepper__step {
+  flex: 1;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.stepper__dot {
+  width: 22px;
+  height: 22px;
+  background: #e5e7eb;
+  color: transparent;
+  border-radius: 50%;
+  margin: 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepper__step--done .stepper__dot {
+  background: #1d6cf3;
+  color: #fff;
+}
+
+.stepper__step--active .stepper__dot {
+  background: #1d6cf3;
+  color: #fff;
+}
+
+.stepper__label {
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.stepper__step--done .stepper__label,
+.stepper__step--active .stepper__label {
+  color: #1d6cf3;
+  font-weight: 600;
+}
+
+.stepper__terminal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(254, 226, 226, 0.9);
+  color: #991b1b;
+  font-weight: 700;
+  border-radius: 10px;
+}

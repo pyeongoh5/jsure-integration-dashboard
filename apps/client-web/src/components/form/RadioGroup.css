@@ -1,0 +1,38 @@
+.rg {
+  margin-bottom: 14px;
+}
+
+.rg__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 6px;
+}
+
+.rg__row {
+  display: flex;
+  gap: 8px;
+}
+
+.rg__opt {
+  flex: 1;
+  height: 44px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rg__opt--on {
+  background: #1d6cf3;
+  color: #fff;
+  border-color: #1d6cf3;
+}
+
+.rg__error {
+  font-size: 11px;
+  color: #ef4444;
+  margin-top: 4px;
+}

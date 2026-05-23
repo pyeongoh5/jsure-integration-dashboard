@@ -1,6 +1,6 @@
 .signup-shell {
   min-height: 100dvh;
-  padding: 16px 20px env(safe-area-inset-bottom, 20px);
+  padding: 16px 20px calc(env(safe-area-inset-bottom, 0px) + 100px);
   background: #fff;
 }
 

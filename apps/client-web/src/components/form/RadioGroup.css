@@ -10,29 +10,34 @@
 }
 
 .rg__row {
-  display: flex;
-  gap: 8px;
+  display: inline-flex;
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 0;
 }
 
 .rg__opt {
-  flex: 1;
-  height: 44px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #374151;
-  border-radius: 8px;
+  height: 34px;
+  min-width: 80px;
+  padding: 0 16px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  border-radius: 999px;
   font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
 
 .rg__opt--on {
   background: #1d6cf3;
   color: #fff;
-  border-color: #1d6cf3;
 }
 
 .rg__error {
   font-size: 11px;
   color: #ef4444;
-  margin-top: 4px;
+  margin-top: 6px;
 }

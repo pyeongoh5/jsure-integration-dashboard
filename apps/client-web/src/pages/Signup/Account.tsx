@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LabeledInput } from "../../components/form/LabeledInput";
-import { PrimaryButton } from "../../components/form/PrimaryButton";
+import { WizardFooter } from "../../components/Signup/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
 function validate(
@@ -70,12 +70,7 @@ export function SignupAccount() {
         onChange={setConfirm}
         error={touched ? errors.confirm : undefined}
       />
-      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        <PrimaryButton variant="ghost" onClick={() => nav(-1)}>
-          戻る
-        </PrimaryButton>
-        <PrimaryButton onClick={next}>次へ</PrimaryButton>
-      </div>
+      <WizardFooter onBack={() => nav(-1)} onNext={next} />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { INFLUENCER_TERMS, type ConsentItem } from "@jsure/shared";
 import { TermsAccordion } from "../../components/Signup/TermsAccordion";
-import { PrimaryButton } from "../../components/form/PrimaryButton";
+import { WizardFooter } from "../../components/Signup/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
 export function SignupTerms() {
@@ -49,11 +49,7 @@ export function SignupTerms() {
         showKorean={showKorean}
         onToggleKorean={() => setShowKorean((v) => !v)}
       />
-      <div style={{ marginTop: 20 }}>
-        <PrimaryButton onClick={next} disabled={!allChecked}>
-          次へ
-        </PrimaryButton>
-      </div>
+      <WizardFooter onNext={next} disabled={!allChecked} />
     </div>
   );
 }

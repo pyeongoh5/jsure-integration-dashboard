@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SnsTypeSchema, type SnsType } from "@jsure/shared";
 import { SnsAccountCard } from "../../components/Signup/SnsAccountCard";
-import { PrimaryButton } from "../../components/form/PrimaryButton";
+import { WizardFooter } from "../../components/Signup/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
 const SNS_TYPES = SnsTypeSchema.options;
@@ -90,14 +90,7 @@ export function SignupSns() {
           onChange={(field, v) => change(t, field, v)}
         />
       ))}
-      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        <PrimaryButton variant="ghost" onClick={() => nav(-1)}>
-          戻る
-        </PrimaryButton>
-        <PrimaryButton onClick={next} disabled={!isValid}>
-          次へ
-        </PrimaryButton>
-      </div>
+      <WizardFooter onBack={() => nav(-1)} onNext={next} disabled={!isValid} />
     </div>
   );
 }

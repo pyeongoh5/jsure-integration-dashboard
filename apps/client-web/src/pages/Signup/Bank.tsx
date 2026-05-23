@@ -8,9 +8,9 @@ import {
 } from "@jsure/shared";
 import { LabeledInput } from "../../components/form/LabeledInput";
 import { RadioGroup } from "../../components/form/RadioGroup";
-import { PrimaryButton } from "../../components/form/PrimaryButton";
 import { ErrorBanner } from "../../components/form/ErrorBanner";
 import { BankSelect } from "../../components/Bank/BankSelect";
+import { WizardFooter } from "../../components/Signup/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
 import { signup as signupApi } from "../../lib/api/auth";
@@ -181,14 +181,12 @@ export function SignupBank() {
         hint="例: ヤマダ ハナコ"
       />
 
-      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        <PrimaryButton variant="ghost" onClick={() => nav(-1)}>
-          戻る
-        </PrimaryButton>
-        <PrimaryButton onClick={submit} disabled={submitting}>
-          {submitting ? "登録中…" : "登録完了"}
-        </PrimaryButton>
-      </div>
+      <WizardFooter
+        onBack={() => nav(-1)}
+        onNext={submit}
+        nextLabel="登録完了"
+        loading={submitting}
+      />
     </div>
   );
 }

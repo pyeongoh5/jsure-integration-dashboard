@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { ConfirmDialog } from "@/ui/ConfirmDialog";
 import { listCampaigns } from "@/lib/campaigns";
 import "./Applicants.css";
@@ -182,6 +183,15 @@ export function Applicants() {
   const [campaignTitles, setCampaignTitles] = useState<Map<string, string>>(
     () => new Map(),
   );
+  const [mediaFilter, setMediaFilter] = useState<Set<Media>>(() => new Set());
+  const [minFollowers, setMinFollowers] = useState<number | null>(null);
+  const [minFollowersDraft, setMinFollowersDraft] = useState<string>("");
+  const [popover, setPopover] = useState<
+    { kind: "media" | "followers"; rect: DOMRect } | null
+  >(null);
+  const mediaBtnRef = useRef<HTMLButtonElement | null>(null);
+  const followersBtnRef = useRef<HTMLButtonElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!campaignIdFilter) return;
@@ -216,9 +226,70 @@ export function Applicants() {
   );
 
   const visible = useMemo(
-    () => items.filter((a) => a.status === tab),
-    [items, tab],
+    () =>
+      items.filter((a) => {
+        if (a.status !== tab) return false;
+        if (mediaFilter.size > 0 && !a.media.some((m) => mediaFilter.has(m))) {
+          return false;
+        }
+        if (minFollowers !== null && a.followers < minFollowers) return false;
+        return true;
+      }),
+    [items, tab, mediaFilter, minFollowers],
   );
+
+  useEffect(() => {
+    if (!popover) return;
+    const onDocPointer = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (popoverRef.current && popoverRef.current.contains(t)) return;
+      if (mediaBtnRef.current && mediaBtnRef.current.contains(t)) return;
+      if (followersBtnRef.current && followersBtnRef.current.contains(t)) return;
+      setPopover(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPopover(null);
+    };
+    document.addEventListener("pointerdown", onDocPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDocPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [popover]);
+
+  const openPopover = (kind: "media" | "followers") => {
+    const btn = kind === "media" ? mediaBtnRef.current : followersBtnRef.current;
+    if (!btn) return;
+    if (popover?.kind === kind) {
+      setPopover(null);
+      return;
+    }
+    if (kind === "followers") {
+      setMinFollowersDraft(minFollowers !== null ? String(minFollowers) : "");
+    }
+    setPopover({ kind, rect: btn.getBoundingClientRect() });
+  };
+
+  const toggleMedia = (m: Media) => {
+    setMediaFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(m)) next.delete(m);
+      else next.add(m);
+      return next;
+    });
+  };
+
+  const applyFollowers = () => {
+    const raw = minFollowersDraft.trim();
+    if (raw === "") {
+      setMinFollowers(null);
+    } else {
+      const n = Number(raw);
+      if (Number.isInteger(n) && n >= 0) setMinFollowers(n);
+    }
+    setPopover(null);
+  };
 
   function toggleAll(checked: boolean) {
     if (checked) {
@@ -301,13 +372,139 @@ export function Applicants() {
             + 캠페인
           </button>
         )}
-        <button type="button" className="apl-filter">
-          + 팔로워 범위
+        <button
+          ref={followersBtnRef}
+          type="button"
+          className={`apl-filter${minFollowers !== null ? " apl-filter--active" : ""}`}
+          onClick={() => openPopover("followers")}
+        >
+          {minFollowers !== null
+            ? `팔로워 ${minFollowers.toLocaleString()}명 이상`
+            : "+ 팔로워 범위"}
+          {minFollowers !== null && (
+            <span
+              className="apl-popover__btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMinFollowers(null);
+              }}
+            >
+              {" "}✕
+            </span>
+          )}
         </button>
-        <button type="button" className="apl-filter">
-          + 매체
+        <button
+          ref={mediaBtnRef}
+          type="button"
+          className={`apl-filter${mediaFilter.size > 0 ? " apl-filter--active" : ""}`}
+          onClick={() => openPopover("media")}
+        >
+          {mediaFilter.size > 0
+            ? `매체: ${Array.from(mediaFilter).map((m) => MEDIA_META[m].label).join(", ")}`
+            : "+ 매체"}
+          {mediaFilter.size > 0 && (
+            <span
+              className="apl-popover__btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMediaFilter(new Set());
+              }}
+            >
+              {" "}✕
+            </span>
+          )}
         </button>
       </div>
+
+      {popover &&
+        createPortal(
+          <div
+            ref={popoverRef}
+            className="apl-popover"
+            style={{
+              top: popover.rect.bottom + 6,
+              left: popover.rect.left,
+            }}
+          >
+            {popover.kind === "media" ? (
+              <>
+                <div className="apl-popover__title">매체 선택</div>
+                <div className="apl-popover__items">
+                  {(Object.keys(MEDIA_META) as Media[]).map((m) => (
+                    <label key={m} className="apl-popover__check">
+                      <input
+                        type="checkbox"
+                        checked={mediaFilter.has(m)}
+                        onChange={() => toggleMedia(m)}
+                      />
+                      <i className={MEDIA_META[m].icon} />
+                      <span>{MEDIA_META[m].label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="apl-popover__actions">
+                  <button
+                    type="button"
+                    className="apl-popover__btn"
+                    onClick={() => setMediaFilter(new Set())}
+                  >
+                    초기화
+                  </button>
+                  <button
+                    type="button"
+                    className="apl-popover__btn apl-popover__btn--primary"
+                    onClick={() => setPopover(null)}
+                  >
+                    닫기
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="apl-popover__title">팔로워 최소값</div>
+                <div className="apl-popover__input-row">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="apl-popover__input"
+                    placeholder="예: 10000"
+                    autoFocus
+                    value={minFollowersDraft}
+                    onChange={(e) => setMinFollowersDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        applyFollowers();
+                      }
+                    }}
+                  />
+                  <span className="apl-popover__suffix">명 이상</span>
+                </div>
+                <div className="apl-popover__actions">
+                  <button
+                    type="button"
+                    className="apl-popover__btn"
+                    onClick={() => {
+                      setMinFollowers(null);
+                      setMinFollowersDraft("");
+                      setPopover(null);
+                    }}
+                  >
+                    초기화
+                  </button>
+                  <button
+                    type="button"
+                    className="apl-popover__btn apl-popover__btn--primary"
+                    onClick={applyFollowers}
+                  >
+                    적용
+                  </button>
+                </div>
+              </>
+            )}
+          </div>,
+          document.body,
+        )}
 
       <div className="apl__card">
         {visible.length === 0 ? (

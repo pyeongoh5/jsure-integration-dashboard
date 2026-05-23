@@ -4,11 +4,37 @@ const OPTIONS: readonly {
   value: SnsType;
   label: string;
   followerLabel: string;
+  icon: string;
+  iconClass: string;
 }[] = [
-  { value: "INSTAGRAM", label: "인스타그램", followerLabel: "팔로워" },
-  { value: "TIKTOK", label: "틱톡", followerLabel: "팔로워" },
-  { value: "X", label: "X", followerLabel: "팔로워" },
-  { value: "YOUTUBE", label: "유튜브", followerLabel: "구독자" },
+  {
+    value: "INSTAGRAM",
+    label: "인스타그램",
+    followerLabel: "팔로워",
+    icon: "fa-brands fa-instagram",
+    iconClass: "cf__sns-icon--instagram",
+  },
+  {
+    value: "TIKTOK",
+    label: "틱톡",
+    followerLabel: "팔로워",
+    icon: "fa-brands fa-tiktok",
+    iconClass: "cf__sns-icon--tiktok",
+  },
+  {
+    value: "X",
+    label: "X",
+    followerLabel: "팔로워",
+    icon: "fa-brands fa-x-twitter",
+    iconClass: "cf__sns-icon--x",
+  },
+  {
+    value: "YOUTUBE",
+    label: "유튜브",
+    followerLabel: "구독자",
+    icon: "fa-brands fa-youtube",
+    iconClass: "cf__sns-icon--youtube",
+  },
 ];
 
 type ItemError = Partial<Record<"minFollowers" | "recruitCount", string>>;
@@ -64,6 +90,10 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
                 disabled={disabled}
                 onChange={() => toggle(opt.value)}
               />
+              <i
+                className={`${opt.icon} cf__sns-icon ${opt.iconClass}`}
+                aria-hidden="true"
+              />
               <span className="cf__sns-toggle-label">{opt.label}</span>
             </label>
             {selected && row ? (
@@ -98,22 +128,25 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
                 </div>
                 <div className="cf__sns-field cf__sns-field--count">
                   <label className="cf__sub-label">모집 인원</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className="cf__input"
-                    value={
-                      Number.isFinite(row.recruitCount)
-                        ? String(row.recruitCount)
-                        : ""
-                    }
-                    disabled={disabled}
-                    onChange={(e) =>
-                      updateAt(idx, {
-                        recruitCount: parseIntegerInput(e.target.value),
-                      })
-                    }
-                  />
+                  <div className="cf__sns-count-row">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      className="cf__input"
+                      value={
+                        Number.isFinite(row.recruitCount)
+                          ? String(row.recruitCount)
+                          : ""
+                      }
+                      disabled={disabled}
+                      onChange={(e) =>
+                        updateAt(idx, {
+                          recruitCount: parseIntegerInput(e.target.value),
+                        })
+                      }
+                    />
+                    <span className="cf__sns-suffix">명</span>
+                  </div>
                   {err?.recruitCount && (
                     <div className="cf__error">{err.recruitCount}</div>
                   )}

@@ -67,14 +67,15 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
   const capacity = c.snsRecruits.reduce((sum, r) => sum + r.recruitCount, 0);
   return {
     id: c.id,
-    brand: c.brandName ?? "",
+    brand: "",
     name: c.title,
-    description: c.productSummary || c.brandTagline || "",
+    description: c.productSummary,
     status,
     thumbIcon: "📋",
     period: formatDateRange(c.recruitStartDate, c.recruitEndDate),
     reward: formatReward(c.rewardJpy),
-    applied: c.approvedCount,
+    approved: c.approvedCount,
+    applied: c.appliedCount,
     capacity,
     dday: daysUntil(c.recruitEndAt, now),
     snsRecruits: c.snsRecruits.map((r) => ({
@@ -92,9 +93,7 @@ type LoadState =
 export function Campaigns() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [openMenu, setOpenMenu] = useState<
-    { id: string; x: number; y: number } | null
-  >(null);
+  const [openMenu, setOpenMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [closeTargetId, setCloseTargetId] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
   const [closeError, setCloseError] = useState<string | null>(null);
@@ -112,8 +111,7 @@ export function Campaigns() {
         if (cancelled) return;
         setState({
           kind: "error",
-          message:
-            err instanceof Error ? err.message : "캠페인을 불러올 수 없습니다.",
+          message: err instanceof Error ? err.message : "캠페인을 불러올 수 없습니다.",
         });
       });
     return () => {
@@ -198,7 +196,7 @@ export function Campaigns() {
               }}
             >
               <Card
-                title={<CampaignCardTitle brand={c.brand} status={c.status} />}
+                title={<CampaignCardTitle dday={c.dday} status={c.status} />}
                 content={
                   <CampaignCardBody
                     thumbIcon={c.thumbIcon}
@@ -211,10 +209,9 @@ export function Campaigns() {
                 }
                 bottomAffix={
                   <CampaignCardFooter
+                    approved={c.approved}
                     applied={c.applied}
                     capacity={c.capacity}
-                    dday={c.dday}
-                    status={c.status}
                   />
                 }
               />
@@ -245,10 +242,7 @@ export function Campaigns() {
       <ConfirmDialog
         open={closeTargetId !== null}
         title="캠페인 종료"
-        subtitle={
-          closeError ??
-          "이 캠페인을 종료하시겠어요? 종료 후에는 되돌릴 수 없습니다."
-        }
+        subtitle={closeError ?? "이 캠페인을 종료하시겠어요? 종료 후에는 되돌릴 수 없습니다."}
         confirmLabel={closing ? "종료 중…" : "종료"}
         cancelLabel="취소"
         tone="danger"
@@ -262,9 +256,7 @@ export function Campaigns() {
             setCloseTargetId(null);
             setReloadKey((k) => k + 1);
           } catch (err) {
-            setCloseError(
-              err instanceof Error ? err.message : "종료에 실패했습니다.",
-            );
+            setCloseError(err instanceof Error ? err.message : "종료에 실패했습니다.");
           } finally {
             setClosing(false);
           }

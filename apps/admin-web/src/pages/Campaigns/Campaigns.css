@@ -97,6 +97,13 @@
   flex: 1;
 }
 
+.cmp-title-wrapper {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .cmp-card__status {
   font-size: 11px;
   font-weight: 600;
@@ -121,6 +128,11 @@
 }
 
 .cmp-card__status--done {
+  background: #f3f4f6;
+  color: var(--c-muted);
+}
+
+.cmp-card__status--dday {
   background: #f3f4f6;
   color: var(--c-muted);
 }

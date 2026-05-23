@@ -16,6 +16,7 @@ export type Campaign = {
   thumbIcon: string;
   period: string;
   reward: string;
+  approved: number;
   applied: number;
   capacity: number;
   dday: number;

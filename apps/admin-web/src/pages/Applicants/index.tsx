@@ -180,15 +180,13 @@ export function Applicants() {
   const [items, setItems] = useState<Applicant[]>(INITIAL);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<PendingAction | null>(null);
-  const [campaignTitles, setCampaignTitles] = useState<Map<string, string>>(
-    () => new Map(),
-  );
+  const [campaignTitles, setCampaignTitles] = useState<Map<string, string>>(() => new Map());
   const [mediaFilter, setMediaFilter] = useState<Set<Media>>(() => new Set());
   const [minFollowers, setMinFollowers] = useState<number | null>(null);
   const [minFollowersDraft, setMinFollowersDraft] = useState<string>("");
-  const [popover, setPopover] = useState<
-    { kind: "media" | "followers"; rect: DOMRect } | null
-  >(null);
+  const [popover, setPopover] = useState<{ kind: "media" | "followers"; rect: DOMRect } | null>(
+    null,
+  );
   const mediaBtnRef = useRef<HTMLButtonElement | null>(null);
   const followersBtnRef = useRef<HTMLButtonElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
@@ -310,12 +308,9 @@ export function Applicants() {
 
   function confirmAction() {
     if (!pending) return;
-    const nextStatus: ApplicantStatus =
-      pending.type === "approve" ? "approved" : "rejected";
+    const nextStatus: ApplicantStatus = pending.type === "approve" ? "approved" : "rejected";
     setItems((prev) =>
-      prev.map((a) =>
-        a.id === pending.applicant.id ? { ...a, status: nextStatus } : a,
-      ),
+      prev.map((a) => (a.id === pending.applicant.id ? { ...a, status: nextStatus } : a)),
     );
     setSelected((prev) => {
       const next = new Set(prev);
@@ -331,9 +326,7 @@ export function Applicants() {
     <div className="apl">
       <div className="apl__header">
         <h1 className="apl__title">응모자 관리</h1>
-        <p className="apl__subtitle">
-          검토 대기 {counts.pending}건 · 평균 처리 시간 4시간
-        </p>
+        <p className="apl__subtitle">검토 대기 {counts.pending}건 · 평균 처리 시간 4시간</p>
       </div>
 
       <div className="apl__tabs">
@@ -389,7 +382,8 @@ export function Applicants() {
                 setMinFollowers(null);
               }}
             >
-              {" "}✕
+              {" "}
+              ✕
             </span>
           )}
         </button>
@@ -400,7 +394,9 @@ export function Applicants() {
           onClick={() => openPopover("media")}
         >
           {mediaFilter.size > 0
-            ? `매체: ${Array.from(mediaFilter).map((m) => MEDIA_META[m].label).join(", ")}`
+            ? `매체: ${Array.from(mediaFilter)
+                .map((m) => MEDIA_META[m].label)
+                .join(", ")}`
             : "+ 매체"}
           {mediaFilter.size > 0 && (
             <span
@@ -410,7 +406,8 @@ export function Applicants() {
                 setMediaFilter(new Set());
               }}
             >
-              {" "}✕
+              {" "}
+              ✕
             </span>
           )}
         </button>
@@ -445,13 +442,6 @@ export function Applicants() {
                 <div className="apl-popover__actions">
                   <button
                     type="button"
-                    className="apl-popover__btn"
-                    onClick={() => setMediaFilter(new Set())}
-                  >
-                    초기화
-                  </button>
-                  <button
-                    type="button"
                     className="apl-popover__btn apl-popover__btn--primary"
                     onClick={() => setPopover(null)}
                   >
@@ -466,7 +456,7 @@ export function Applicants() {
                   <input
                     type="text"
                     inputMode="numeric"
-                    className="apl-popover__input"
+                    className="apl-popover__input cf__input"
                     placeholder="예: 10000"
                     autoFocus
                     value={minFollowersDraft}
@@ -481,17 +471,6 @@ export function Applicants() {
                   <span className="apl-popover__suffix">명 이상</span>
                 </div>
                 <div className="apl-popover__actions">
-                  <button
-                    type="button"
-                    className="apl-popover__btn"
-                    onClick={() => {
-                      setMinFollowers(null);
-                      setMinFollowersDraft("");
-                      setPopover(null);
-                    }}
-                  >
-                    초기화
-                  </button>
                   <button
                     type="button"
                     className="apl-popover__btn apl-popover__btn--primary"
@@ -599,9 +578,7 @@ export function Applicants() {
                           className="apl-action apl-action--undo"
                           onClick={() =>
                             setItems((prev) =>
-                              prev.map((x) =>
-                                x.id === a.id ? { ...x, status: "pending" } : x,
-                              ),
+                              prev.map((x) => (x.id === a.id ? { ...x, status: "pending" } : x)),
                             )
                           }
                         >
@@ -619,11 +596,7 @@ export function Applicants() {
 
       <ConfirmDialog
         open={pending !== null}
-        title={
-          pending?.type === "approve"
-            ? "응모를 승인할까요?"
-            : "응모를 반려할까요?"
-        }
+        title={pending?.type === "approve" ? "응모를 승인할까요?" : "응모를 반려할까요?"}
         subtitle={
           pending
             ? `${pending.applicant.name}(@${pending.applicant.handle}) — ${pending.applicant.campaign}`

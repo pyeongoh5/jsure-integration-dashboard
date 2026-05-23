@@ -4,7 +4,7 @@ export type CampaignStatus = "recruit" | "review" | "progress" | "done";
 
 export type CampaignCardSnsRecruit = {
   snsType: SnsType;
-  condition: string;
+  minFollowers: number;
 };
 
 export type Campaign = {

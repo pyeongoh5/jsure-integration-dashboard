@@ -6,6 +6,10 @@ import { AuthModule } from "./auth/auth.module";
 import { AdminUsersModule } from "./admin-users/admin-users.module";
 import { CampaignsModule } from "./campaigns/campaigns.module";
 import { HealthModule } from "@/health/health.module";
+import { InfluencersModule } from "./influencers/influencers.module";
+import { InfluencerAuthModule } from "./influencer-auth/influencer-auth.module";
+import { InfluencerCampaignsModule } from "./influencer-campaigns/influencer-campaigns.module";
+import { InfluencerApplicationsModule } from "./influencer-applications/influencer-applications.module";
 
 @Module({
   imports: [
@@ -16,6 +20,10 @@ import { HealthModule } from "@/health/health.module";
     AdminUsersModule,
     CampaignsModule,
     HealthModule,
+    InfluencersModule,
+    InfluencerAuthModule,
+    InfluencerCampaignsModule,
+    InfluencerApplicationsModule,
   ],
 })
 export class AppModule {}

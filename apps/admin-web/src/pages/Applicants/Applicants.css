@@ -183,6 +183,34 @@
   color: var(--c-brand);
   font-weight: 500;
 }
+.apl-popover__items--scroll {
+  max-height: 260px;
+  overflow-y: auto;
+}
+.apl-popover__option {
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 13px;
+  color: #111827;
+  cursor: pointer;
+}
+.apl-popover__option:hover {
+  background: #f3f4f6;
+}
+.apl-popover__option--on {
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--c-brand);
+  font-weight: 500;
+}
+.apl-popover__empty {
+  font-size: 12px;
+  color: #9ca3af;
+  padding: 4px 0;
+}
 
 /* Card / Table */
 .apl__card {

@@ -190,3 +190,57 @@ return HealthResponseSchema.parse(res.data);
 2. 신규 표시 위치: `@{handle}` 한 군데에서만 prefix 붙이는지 확인.
 3. seed/마이그레이션: 이미 `@`가 섞여 들어간 row가 있는지 점검(`SELECT * FROM "InfluencerSnsAccount" WHERE handle LIKE '@%'`).
 
+---
+
+## 7. 컴포넌트 설계 — 단일 책임 + 로직/UI 분리
+
+화면 파일(`pages/*.tsx`)이 fetch + 필터 상태 + 선택 상태 + mutation 상태 + 변환 + 렌더링을 다 떠안으면 다음과 같은 버그가 반복된다.
+- 부모 한 곳에서 들고 있는 모달용 입력 상태가 부모 re-render 때문에 focus가 튄다.
+- 비즈니스 변환(toApplicant, formatRelative…)이 페이지 안에 박혀서 재사용 불가능.
+- 무관한 책임끼리 같은 useEffect 안에 묶여 의존성 배열이 거짓말을 하기 시작한다.
+
+규칙은 단순함: **한 파일 = 한 책임**. 데이터 로드, mutation, URL state, 표시 변환, 렌더링은 서로 다른 파일에 둔다.
+
+### 디렉토리 컨벤션 (admin-web / client-web)
+
+페이지 단위의 도메인(`Applicants`, `Campaigns`, `Influencers` …)은 `src/components/<Domain>/` 아래에 자기 부품을 모은다.
+
+```
+src/components/Applicants/
+  types.ts                       // 도메인 공용 타입/상수
+  applicantTransform.ts          // 순수 변환 함수 (API 모델 -> view 모델)
+  useApplicantsData.ts           // 목록/카운트 fetch + reload
+  useCampaignOptions.ts          // 필터용 부가 데이터 fetch
+  useApplicantMutations.ts       // approve/reject/undo + dialog state
+  ApplicantTabs.tsx              // presentational
+  ApplicantFilters.tsx           // presentational
+  ApplicantTable.tsx             // presentational
+  ApplicantConfirmDialog.tsx     // dialog 자체 + 로컬 입력 상태
+src/pages/Applicants/index.tsx   // 위 부품을 조립만 한다
+```
+
+페이지 파일은 **조립**만 한다. 페이지에 새 `useEffect`/`useState`가 늘어나는 게 보이면 알맞은 hook 파일로 옮길 신호.
+
+### 룰
+
+- **DO** 데이터 fetch는 `use<Domain>Data.ts` / `use<Thing>Options.ts` 같은 커스텀 hook에 격리. 로딩/에러/reload는 hook이 노출하는 상태로만 다룬다.
+- **DO** mutation(승인, 삭제 등)은 `use<Domain>Mutations.ts`로 묶어 pending/mutating/error를 한 곳에서 관리. 성공 시 hook 사용자에게 `onMutated` 콜백으로 알리고, 데이터 hook의 `reload()`를 호출.
+- **DO** API 모델 → view 모델 변환은 `<domain>Transform.ts`의 **순수 함수**로 둔다. React 훅 호출 금지.
+- **DO** Dialog/Modal처럼 자기만의 입력 상태가 있는 컴포넌트는 그 상태를 **자기 안에서** 관리. 부모는 열림/닫힘과 confirm 콜백만 다룬다. (`Applicants` 페이지의 `반려 사유` textarea가 매 키 입력마다 focus가 튄 사고가 이 규칙으로 막힌다.)
+- **DO** Presentational 컴포넌트(`ApplicantTable` 등)는 props로만 동작. 자체적으로 fetch / global state / route 접근 금지.
+- **DO** 페이지 파일은 URL state(`useSearchParams`)와 부품 간 데이터 전달만 한다. 100줄 넘어가면 분리 신호.
+- **DON'T** Modal/Dialog 내부 입력 상태를 부모에 끌어올리지 않는다. 부모 re-render가 입력 컴포넌트의 focus·캐럿·IME 합성을 깬다.
+- **DON'T** `useEffect` 안에서 두 가지 이상의 책임을 동시에 처리하지 않는다 (예: 목록 로드 + 카운트 로드를 한 effect로 묶지 말 것).
+- **DON'T** `useMemo`/`useCallback`을 의미 없는 곳에 흩뿌리지 않는다. 안정적인 참조가 정말 필요한 경계(자식 컴포넌트 props, effect 의존성)에서만 쓴다.
+- **DON'T** Presentational 컴포넌트 안에서 `useNavigate`/`useSearchParams`/`api.*` 호출 금지. 그건 페이지나 hook의 일.
+- **DON'T** 한 파일에서 두 도메인을 섞지 않는다 — `useApplicantsData` 안에서 캠페인 목록을 같이 불러오지 않는다. 별도 hook(`useCampaignOptions`)으로 분리.
+
+### 새 화면 추가 시 체크
+
+1. **변환 함수**: 외부 모델을 view 모델로 바꾸는 코드는 `<domain>Transform.ts`의 순수 함수로 빼라.
+2. **데이터 hook**: fetch + reload + 캐싱은 `use<Domain>Data.ts`.
+3. **mutation hook**: 쓰기 작업은 `use<Domain>Mutations.ts`. 데이터 hook과 `onMutated` 콜백으로만 연결.
+4. **다이얼로그/입력 컴포넌트**: 텍스트 상태는 컴포넌트 내부 `useState`. 부모는 `open` 토글과 `onConfirm(value)`만 알면 된다.
+5. **페이지**: 위 부품들을 import해서 JSX로 엮는 것 이상의 로직을 두지 않는다.
+
+레퍼런스 구현: `apps/admin-web/src/components/Applicants/` + `apps/admin-web/src/pages/Applicants/index.tsx`. 새 도메인 페이지를 만들기 전에 이 구조를 그대로 따라간다.

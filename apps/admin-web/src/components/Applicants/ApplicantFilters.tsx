@@ -6,7 +6,8 @@ type PopoverKind = "campaign" | "media" | "followers";
 
 type Props = {
   campaignId: string | null;
-  campaignLabel: string | null; // resolved title (or fallback to id)
+  campaignLabel: string | null; // resolved title (null while loading or unknown id)
+  campaignsLoaded: boolean;
   campaignOptions: CampaignOption[]; // already filtered to non-closed
   onCampaignChange: (id: string | null) => void;
 
@@ -20,6 +21,7 @@ type Props = {
 export function ApplicantFilters({
   campaignId,
   campaignLabel,
+  campaignsLoaded,
   campaignOptions,
   onCampaignChange,
   mediaFilter,
@@ -107,7 +109,9 @@ export function ApplicantFilters({
           className={`apl-filter ${campaignId ? "apl-filter--active" : ""}`}
           onClick={() => openPopover("campaign")}
         >
-          {campaignId ? `캠페인: ${campaignLabel ?? campaignId}` : "+ 캠페인"}
+          {campaignId
+            ? `캠페인: ${campaignLabel ?? (campaignsLoaded ? campaignId : "불러오는 중…")}`
+            : "+ 캠페인"}
           {campaignId && (
             <span
               className="apl-popover__btn"

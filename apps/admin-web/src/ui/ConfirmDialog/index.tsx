@@ -30,6 +30,10 @@ export function ConfirmDialog({
   useEffect(() => {
     if (!open) return;
     confirmRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape" && !busy) onCancel();
     }

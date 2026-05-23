@@ -19,7 +19,7 @@ export function Browse() {
   return (
     <div className="browse">
       <div className="browse__brand">
-        <div className="browse__brand-title">Reachly</div>
+        <div className="browse__brand-title">J-SURE</div>
         <div className="browse__brand-subtitle">influencer</div>
       </div>
       <SnsTabBar value={sns} onChange={setSns} />
@@ -32,20 +32,14 @@ export function Browse() {
             <div className="browse__skel" />
           </>
         )}
-        {!isLoading && isError && (
-          <div className="browse__empty">読み込みに失敗しました</div>
-        )}
+        {!isLoading && isError && <div className="browse__empty">読み込みに失敗しました</div>}
         {!isLoading && !isError && data && data.length === 0 && (
           <div className="browse__empty">対象のキャンペーンはまだありません</div>
         )}
         {!isLoading &&
           !isError &&
           data?.map((card) => (
-            <CampaignCard
-              key={card.id}
-              card={card}
-              onSelect={() => nav(`/campaigns/${card.id}`)}
-            />
+            <CampaignCard key={card.id} card={card} onSelect={() => nav(`/campaigns/${card.id}`)} />
           ))}
       </div>
     </div>

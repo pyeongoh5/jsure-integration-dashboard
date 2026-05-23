@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  MEDIA_META,
-  type CampaignOption,
-  type Media,
-} from "./types";
+import { MEDIA_META, type CampaignOption, type Media } from "./types";
 
 type PopoverKind = "campaign" | "media" | "followers";
 
@@ -31,9 +27,7 @@ export function ApplicantFilters({
   minFollowers,
   onMinFollowersChange,
 }: Props) {
-  const [popover, setPopover] = useState<
-    { kind: PopoverKind; rect: DOMRect } | null
-  >(null);
+  const [popover, setPopover] = useState<{ kind: PopoverKind; rect: DOMRect } | null>(null);
   const [minFollowersDraft, setMinFollowersDraft] = useState<string>("");
 
   const campaignBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -110,7 +104,7 @@ export function ApplicantFilters({
         <button
           ref={campaignBtnRef}
           type="button"
-          className={`apl-filter${campaignId ? " apl-filter--active" : ""}`}
+          className={`apl-filter ${campaignId ? "apl-filter--active" : ""}`}
           onClick={() => openPopover("campaign")}
         >
           {campaignId ? `캠페인: ${campaignLabel ?? campaignId}` : "+ 캠페인"}
@@ -120,9 +114,11 @@ export function ApplicantFilters({
               onClick={(e) => {
                 e.stopPropagation();
                 clear("campaign");
+                setPopover(null);
               }}
             >
-              {" "}✕
+              {" "}
+              ✕
             </span>
           )}
         </button>
@@ -130,7 +126,7 @@ export function ApplicantFilters({
         <button
           ref={followersBtnRef}
           type="button"
-          className={`apl-filter${minFollowers !== null ? " apl-filter--active" : ""}`}
+          className={`apl-filter ${minFollowers !== null ? "apl-filter--active" : ""}`}
           onClick={() => openPopover("followers")}
         >
           {minFollowers !== null
@@ -142,9 +138,11 @@ export function ApplicantFilters({
               onClick={(e) => {
                 e.stopPropagation();
                 clear("followers");
+                setPopover(null);
               }}
             >
-              {" "}✕
+              {" "}
+              ✕
             </span>
           )}
         </button>
@@ -152,7 +150,7 @@ export function ApplicantFilters({
         <button
           ref={mediaBtnRef}
           type="button"
-          className={`apl-filter${mediaFilter.size > 0 ? " apl-filter--active" : ""}`}
+          className={`apl-filter ${mediaFilter.size > 0 ? "apl-filter--active" : ""}`}
           onClick={() => openPopover("media")}
         >
           {mediaFilter.size > 0
@@ -166,9 +164,11 @@ export function ApplicantFilters({
               onClick={(e) => {
                 e.stopPropagation();
                 clear("media");
+                setPopover(null);
               }}
             >
-              {" "}✕
+              {" "}
+              ✕
             </span>
           )}
         </button>
@@ -188,34 +188,30 @@ export function ApplicantFilters({
                   <div className="apl-popover__empty">진행중인 캠페인이 없습니다.</div>
                 ) : (
                   <div className="apl-popover__items apl-popover__items--scroll">
-                    {campaignOptions.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        className={`apl-popover__option${
-                          c.id === campaignId ? " apl-popover__option--on" : ""
-                        }`}
-                        onClick={() => {
-                          onCampaignChange(c.id);
-                          setPopover(null);
-                        }}
-                      >
-                        {c.title}
-                      </button>
-                    ))}
+                    {campaignOptions.map((c) => {
+                      const selected = c.id === campaignId;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          className={`apl-popover__option${
+                            selected ? " apl-popover__option--on" : ""
+                          }`}
+                          onClick={() => {
+                            onCampaignChange(c.id);
+                            setPopover(null);
+                          }}
+                        >
+                          <span className="apl-popover__option-label">{c.title}</span>
+                          {selected && (
+                            <i className="fa-solid fa-check apl-popover__option-check" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
                 <div className="apl-popover__actions">
-                  <button
-                    type="button"
-                    className="apl-popover__btn"
-                    onClick={() => {
-                      clear("campaign");
-                      setPopover(null);
-                    }}
-                  >
-                    초기화
-                  </button>
                   <button
                     type="button"
                     className="apl-popover__btn apl-popover__btn--primary"
@@ -227,28 +223,31 @@ export function ApplicantFilters({
               </>
             ) : popover.kind === "media" ? (
               <>
-                <div className="apl-popover__title">매체 선택</div>
+                <div className="apl-popover__title">매체 선택 (복수 가능)</div>
                 <div className="apl-popover__items">
-                  {(Object.keys(MEDIA_META) as Media[]).map((m) => (
-                    <label key={m} className="apl-popover__check">
-                      <input
-                        type="checkbox"
-                        checked={mediaFilter.has(m)}
-                        onChange={() => toggleMedia(m)}
-                      />
-                      <i className={MEDIA_META[m].icon} />
-                      <span>{MEDIA_META[m].label}</span>
-                    </label>
-                  ))}
+                  {(Object.keys(MEDIA_META) as Media[]).map((m) => {
+                    const selected = mediaFilter.has(m);
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        className={`apl-popover__option${
+                          selected ? " apl-popover__option--on" : ""
+                        }`}
+                        onClick={() => toggleMedia(m)}
+                      >
+                        <i className={`${MEDIA_META[m].icon} apl-popover__option-icon`} />
+                        <span className="apl-popover__option-label">
+                          {MEDIA_META[m].label}
+                        </span>
+                        {selected && (
+                          <i className="fa-solid fa-check apl-popover__option-check" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
                 <div className="apl-popover__actions">
-                  <button
-                    type="button"
-                    className="apl-popover__btn"
-                    onClick={() => clear("media")}
-                  >
-                    초기화
-                  </button>
                   <button
                     type="button"
                     className="apl-popover__btn apl-popover__btn--primary"
@@ -280,17 +279,6 @@ export function ApplicantFilters({
                   <span className="apl-popover__suffix">명 이상</span>
                 </div>
                 <div className="apl-popover__actions">
-                  <button
-                    type="button"
-                    className="apl-popover__btn"
-                    onClick={() => {
-                      onMinFollowersChange(null);
-                      setMinFollowersDraft("");
-                      setPopover(null);
-                    }}
-                  >
-                    초기화
-                  </button>
                   <button
                     type="button"
                     className="apl-popover__btn apl-popover__btn--primary"

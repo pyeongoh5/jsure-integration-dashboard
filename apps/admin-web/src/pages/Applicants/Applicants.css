@@ -164,7 +164,7 @@
 }
 .apl-popover__actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: end;
   gap: 8px;
   margin-top: 2px;
 }
@@ -188,6 +188,9 @@
   overflow-y: auto;
 }
 .apl-popover__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   text-align: left;
   border: 1px solid transparent;
   background: transparent;
@@ -205,6 +208,25 @@
   background: rgba(37, 99, 235, 0.08);
   color: var(--c-brand);
   font-weight: 500;
+}
+.apl-popover__option-icon {
+  width: 16px;
+  text-align: center;
+  color: #6b7280;
+}
+.apl-popover__option--on .apl-popover__option-icon {
+  color: var(--c-brand);
+}
+.apl-popover__option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.apl-popover__option-check {
+  color: var(--c-brand);
+  font-size: 12px;
 }
 .apl-popover__empty {
   font-size: 12px;

@@ -1,17 +1,29 @@
+import { CampaignCardSnsRecruits } from "./CampaignCardSnsRecruits";
+import type { CampaignCardSnsRecruit } from "./types";
+
 type Props = {
   thumbIcon: string;
   name: string;
   description: string;
   period: string;
   reward: string;
+  snsRecruits: CampaignCardSnsRecruit[];
 };
 
-export function CampaignCardBody({ thumbIcon, name, description, period, reward }: Props) {
+export function CampaignCardBody({
+  thumbIcon,
+  name,
+  description,
+  period,
+  reward,
+  snsRecruits,
+}: Props) {
   return (
     <>
       <div className="cmp-card__thumb">{thumbIcon}</div>
       <h3 className="cmp-card__name">{name}</h3>
       <p className="cmp-card__desc">{description}</p>
+      <CampaignCardSnsRecruits recruits={snsRecruits} />
       <div className="cmp-card__meta">
         <div className="cmp-card__meta-row">
           <i className="fa-regular fa-calendar" />

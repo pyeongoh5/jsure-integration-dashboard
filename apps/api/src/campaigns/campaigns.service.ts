@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type {
+  ApplicationStatus,
   CampaignResponse,
   CreateCampaignRequest,
   SnsRecruit,
@@ -49,7 +50,17 @@ type CampaignRow = {
   createdAt: Date;
   updatedAt: Date;
   snsRecruits: SnsRecruitRow[];
+  _count?: { applications: number };
 };
+
+// "모집된 인원"은 응모 후 승인된 시점부터 카운트. 발송/배송/완료 상태도
+// 이미 승인을 거친 인원이므로 포함. REJECTED/CANCELLED/APPLIED는 제외.
+const APPROVED_LIKE_STATUSES: ApplicationStatus[] = [
+  "APPROVED",
+  "SHIPPED",
+  "DELIVERED",
+  "COMPLETED",
+];
 
 function toResponse(row: CampaignRow): CampaignResponse {
   return {
@@ -75,6 +86,7 @@ function toResponse(row: CampaignRow): CampaignResponse {
     brandName: row.brandName,
     brandTagline: row.brandTagline,
     minFollowers: row.minFollowers,
+    approvedCount: row._count?.applications ?? 0,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -84,6 +96,13 @@ const RECRUITS_INCLUDE = {
   snsRecruits: {
     select: { snsType: true, minFollowers: true, recruitCount: true },
     orderBy: { snsType: "asc" as const },
+  },
+  _count: {
+    select: {
+      applications: {
+        where: { status: { in: APPROVED_LIKE_STATUSES } },
+      },
+    },
   },
 } as const;
 

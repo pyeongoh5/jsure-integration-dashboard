@@ -94,6 +94,7 @@ export const CampaignResponseSchema = z.object({
   brandName: z.string().nullable(),
   brandTagline: z.string().nullable(),
   minFollowers: z.number().int().nullable(),
+  approvedCount: z.number().int().nonnegative(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

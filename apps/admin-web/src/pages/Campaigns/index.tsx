@@ -74,7 +74,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     thumbIcon: "📋",
     period: formatDateRange(c.recruitStartDate, c.recruitEndDate),
     reward: formatReward(c.rewardJpy),
-    applied: 0,
+    applied: c.approvedCount,
     capacity,
     dday: daysUntil(c.recruitEndAt, now),
     snsRecruits: c.snsRecruits.map((r) => ({

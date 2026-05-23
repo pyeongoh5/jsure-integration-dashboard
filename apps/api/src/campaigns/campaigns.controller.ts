@@ -11,6 +11,7 @@ import {
 import {
   CreateCampaignRequestSchema,
   UpdateCampaignRequestSchema,
+  type CampaignListResponse,
   type CampaignResponse,
   type CreateCampaignRequest,
   type UpdateCampaignRequest,
@@ -28,6 +29,12 @@ export class CampaignsController {
   @UsePipes(new ZodValidationPipe(CreateCampaignRequestSchema))
   create(@Body() body: CreateCampaignRequest): Promise<CampaignResponse> {
     return this.campaigns.create(body);
+  }
+
+  @Get()
+  async list(): Promise<CampaignListResponse> {
+    const campaigns = await this.campaigns.findAll();
+    return { campaigns };
   }
 
   @Get(":id")

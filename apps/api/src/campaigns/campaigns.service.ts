@@ -120,6 +120,14 @@ export class CampaignsService {
     return toResponse(row);
   }
 
+  async findAll(): Promise<CampaignResponse[]> {
+    const rows = await this.prisma.campaign.findMany({
+      orderBy: { createdAt: "desc" },
+      include: RECRUITS_INCLUDE,
+    });
+    return rows.map(toResponse);
+  }
+
   async findById(id: string): Promise<CampaignResponse> {
     const row = await this.prisma.campaign.findUnique({
       where: { id },

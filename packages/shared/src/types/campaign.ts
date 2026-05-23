@@ -99,6 +99,11 @@ export const CampaignResponseSchema = z.object({
 });
 export type CampaignResponse = z.infer<typeof CampaignResponseSchema>;
 
+export const CampaignListResponseSchema = z.object({
+  campaigns: z.array(CampaignResponseSchema),
+});
+export type CampaignListResponse = z.infer<typeof CampaignListResponseSchema>;
+
 export const InfluencerCampaignCardSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -125,7 +130,7 @@ export const InfluencerCampaignDetailSchema =
     guideline: z.string(),
     referenceMediaUrls: z.array(z.string().url()),
     cautions: z.string(),
-    condition: z.string(),
+    snsRecruits: z.array(SnsRecruitSchema),
     hasApplied: z.boolean(),
   });
 export type InfluencerCampaignDetail = z.infer<

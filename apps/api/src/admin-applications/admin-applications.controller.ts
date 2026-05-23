@@ -14,6 +14,7 @@ import {
   ApplicationStatusSchema,
   RejectApplicationRequestSchema,
   type AdminApplication,
+  type AdminApplicationCountsResponse,
   type AdminApplicationListResponse,
   type ApplicationStatus,
   type RejectApplicationRequest,
@@ -39,6 +40,14 @@ export class AdminApplicationsController {
       statuses,
     });
     return { applications };
+  }
+
+  @Get("counts")
+  async counts(
+    @Query("campaignId") campaignId?: string,
+  ): Promise<AdminApplicationCountsResponse> {
+    const counts = await this.svc.counts(campaignId || undefined);
+    return { counts };
   }
 
   @Post(":id/approve")

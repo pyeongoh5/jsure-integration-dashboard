@@ -1,4 +1,5 @@
 import {
+  AdminApplicationCountsResponseSchema,
   AdminApplicationListResponseSchema,
   AdminApplicationSchema,
   type AdminApplication,
@@ -22,6 +23,27 @@ export async function listApplications(
   const query = search.toString();
   const res = await api.get(`/campaign-applications${query ? `?${query}` : ""}`);
   return AdminApplicationListResponseSchema.parse(res.data).applications;
+}
+
+export async function getApplicationCounts(
+  campaignId?: string,
+): Promise<Record<ApplicationStatus, number>> {
+  const search = new URLSearchParams();
+  if (campaignId) search.set("campaignId", campaignId);
+  const query = search.toString();
+  const res = await api.get(
+    `/campaign-applications/counts${query ? `?${query}` : ""}`,
+  );
+  const parsed = AdminApplicationCountsResponseSchema.parse(res.data);
+  return {
+    APPLIED: parsed.counts.APPLIED ?? 0,
+    APPROVED: parsed.counts.APPROVED ?? 0,
+    SHIPPED: parsed.counts.SHIPPED ?? 0,
+    DELIVERED: parsed.counts.DELIVERED ?? 0,
+    COMPLETED: parsed.counts.COMPLETED ?? 0,
+    REJECTED: parsed.counts.REJECTED ?? 0,
+    CANCELLED: parsed.counts.CANCELLED ?? 0,
+  };
 }
 
 export async function approveApplication(id: string): Promise<AdminApplication> {

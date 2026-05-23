@@ -64,6 +64,13 @@ export type AdminApplicationListResponse = z.infer<
   typeof AdminApplicationListResponseSchema
 >;
 
+export const AdminApplicationCountsResponseSchema = z.object({
+  counts: z.record(ApplicationStatusSchema, z.number().int().nonnegative()),
+});
+export type AdminApplicationCountsResponse = z.infer<
+  typeof AdminApplicationCountsResponseSchema
+>;
+
 export const RejectApplicationRequestSchema = z.object({
   reason: z.string().min(1, "사유를 입력하세요").max(500),
 });

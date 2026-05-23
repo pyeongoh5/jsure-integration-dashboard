@@ -148,6 +148,29 @@ export class AdminApplicationsService {
     return this.fetch(id);
   }
 
+  async counts(
+    campaignId?: string,
+  ): Promise<Record<ApplicationStatus, number>> {
+    const grouped = await this.prisma.campaignApplication.groupBy({
+      by: ["status"],
+      where: campaignId ? { campaignId } : undefined,
+      _count: { _all: true },
+    });
+    const out: Record<ApplicationStatus, number> = {
+      APPLIED: 0,
+      APPROVED: 0,
+      SHIPPED: 0,
+      DELIVERED: 0,
+      COMPLETED: 0,
+      REJECTED: 0,
+      CANCELLED: 0,
+    };
+    for (const g of grouped) {
+      out[g.status as ApplicationStatus] = g._count._all;
+    }
+    return out;
+  }
+
   async list(filters: {
     campaignId?: string;
     statuses?: ApplicationStatus[];

@@ -12,19 +12,20 @@
 
 ## 인프라 구성
 
-| 컴포넌트 | 서비스 | 결제 주체(예정) | 무료 한도 |
-|---|---|---|---|
-| API (NestJS) | Railway | 회사 명의 | $5 크레딧 1회, 소진 시 정지 |
-| admin-web (Vite/React) | Vercel | 회사 명의 | Hobby 플랜 (상업적 사용은 약관상 Pro 권장) |
-| client-web (Vite/React) | Vercel | 회사 명의 | 동일 |
-| PostgreSQL | Neon | 회사 명의 | 0.5GB, 컴퓨트 191시간/월, ap-southeast-1 |
-| 소스코드 | GitHub | 개인 (`pyeongoh5`) | 무료 무제한 |
+| 컴포넌트                | 서비스  | 결제 주체(예정)    | 무료 한도                                  |
+| ----------------------- | ------- | ------------------ | ------------------------------------------ |
+| API (NestJS)            | Railway | 회사 명의          | $5 크레딧 1회, 소진 시 정지                |
+| admin-web (Vite/React)  | Vercel  | 회사 명의          | Hobby 플랜 (상업적 사용은 약관상 Pro 권장) |
+| client-web (Vite/React) | Vercel  | 회사 명의          | 동일                                       |
+| PostgreSQL              | Neon    | 회사 명의          | 0.5GB, 컴퓨트 191시간/월, ap-southeast-1   |
+| 소스코드                | GitHub  | 개인 (`pyeongoh5`) | 무료 무제한                                |
 
 > **GitHub 계정과 결제는 분리됨.** Railway/Vercel/Neon은 자체 결제 시스템을 가지며, GitHub은 단순 소스 연결용. 추후 회사 GitHub Org를 받으면 repo transfer만 진행하면 됨.
 
 ## 현재 상태 (체크포인트)
 
 ### ✅ 완료
+
 - [x] Neon Postgres 프로비저닝 완료 (`ep-holy-star-ao249jp4`, ap-southeast-1)
 - [x] 로컬 `.env` 설정 (DATABASE_URL, DIRECT_URL pooled/direct 분리)
 - [x] `.env` gitignore 확인됨
@@ -37,6 +38,7 @@
 - [x] Railway 프로젝트 생성 + 첫 배포 시도 (Root Directory 미설정으로 빌더 오인식)
 
 ### ⏳ 진행 필요
+
 - [ ] **`feature/influence-client` 브랜치 push** (인증 이슈로 사용자 직접 실행 필요)
 - [ ] GitHub에서 PR 생성 → main 머지 (사용자 직접)
 - [ ] Railway 서비스 설정: Root Directory = `apps/api`
@@ -86,16 +88,17 @@ GitHub에서 `feature/influence-client` → `main` PR 생성 후 머지.
 **Variables** 탭 → **Raw Editor**:
 
 ```
-DATABASE_URL=postgresql://neondb_owner:npg_uI7jXNcWmU8a@ep-holy-star-ao249jp4-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-DIRECT_URL=postgresql://neondb_owner:npg_uI7jXNcWmU8a@ep-holy-star-ao249jp4.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-JWT_SECRET=<openssl rand -hex 32 결과>
-JWT_EXPIRES_IN=1h
-REFRESH_EXPIRES_DAYS=14
-NODE_ENV=production
-CORS_ORIGIN=http://localhost:5173
+DATABASE_URL=
+DIRECT_URL=
+JWT_SECRET=
+JWT_EXPIRES_IN=
+REFRESH_EXPIRES_DAYS=
+NODE_ENV=
+CORS_ORIGIN=
 ```
 
 **주의**:
+
 - `PORT`는 등록하지 말 것 (Railway가 동적 주입)
 - `JWT_SECRET`은 로컬 `.env`의 placeholder가 아닌 새로 생성한 값 사용
   ```bash
@@ -141,6 +144,7 @@ Step 5와 동일, **Root Directory만 `apps/client-web`**으로 변경. 별도 V
 ### Step 7: CORS 연결 마무리
 
 Railway Variables의 `CORS_ORIGIN` 갱신:
+
 ```
 CORS_ORIGIN=https://admin-xxx.vercel.app,https://client-xxx.vercel.app
 ```
@@ -174,6 +178,7 @@ Railway 자동 재배포 후 admin-web/client-web에서 로그인 시도 → 네
 4. **Neon**: 회사 명의 가입 후 프로젝트 transfer 또는 새 프로젝트로 데이터 마이그레이션
 
 **예상 월 운영비** (사용자 적은 초기 기준):
+
 - Railway Hobby: $5
 - Vercel Pro: $20 (Hobby 유지 가능 시 $0)
 - Neon Launch: $19 (Free 유지 가능 시 $0)

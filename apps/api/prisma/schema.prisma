@@ -52,11 +52,43 @@ enum AdminUserStatus {
   SUSPENDED
 }
 
+enum SnsType {
+  INSTAGRAM
+  TIKTOK
+  X
+  YOUTUBE
+}
+
+enum InfluencerEntityType {
+  INDIVIDUAL
+  CORPORATE
+}
+
+enum InfluencerStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum JpAccountType {
+  FUTSU
+  TOUZA
+}
+
+enum ApplicationStatus {
+  APPLIED
+  REJECTED
+  APPROVED
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
 model Campaign {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   title              String
   rewardJpy          Int
-  snsTypes           String[]
+  snsTypes           SnsType[]
   condition          String
   recruitCount       Int
   recruitStartAt     DateTime
@@ -67,9 +99,151 @@ model Campaign {
   guideline          String
   referenceMediaUrls String[]
   cautions           String
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  thumbnailUrl       String?
+  brandName          String?
+  brandTagline       String?
+  minFollowers       Int?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  applications CampaignApplication[]
 
   @@index([recruitStartAt])
   @@map("campaigns")
+}
+
+model Influencer {
+  id           String               @id @default(cuid())
+  email        String               @unique
+  passwordHash String
+  name         String
+  nameKana     String?
+  phone        String
+  entityType   InfluencerEntityType
+  memo         String?
+  status       InfluencerStatus     @default(ACTIVE)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  snsAccounts  InfluencerSnsAccount[]
+  applications CampaignApplication[]
+  consents     InfluencerConsent[]
+  bankAccount  InfluencerBankAccount?
+  sessions     InfluencerSession[]
+
+  @@map("influencers")
+}
+
+model InfluencerSession {
+  id               String    @id @default(cuid())
+  influencerId     String
+  refreshTokenHash String    @unique
+  userAgent        String?
+  ip               String?
+  createdAt        DateTime  @default(now())
+  lastSeenAt       DateTime  @default(now())
+  expiresAt        DateTime
+  revokedAt        DateTime?
+
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@index([influencerId])
+  @@map("influencer_sessions")
+}
+
+model InfluencerSnsAccount {
+  id            String   @id @default(cuid())
+  influencerId  String
+  snsType       SnsType
+  handle        String
+  followerCount Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@unique([influencerId, snsType])
+  @@map("influencer_sns_accounts")
+}
+
+model InfluencerConsent {
+  id           String   @id @default(cuid())
+  influencerId String
+  termsVersion String
+  agreedItems  String[]
+  agreedAt     DateTime @default(now())
+  ip           String?
+  userAgent    String?
+
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@index([influencerId, termsVersion])
+  @@map("influencer_consents")
+}
+
+model InfluencerBankAccount {
+  id                String               @id @default(cuid())
+  influencerId      String               @unique
+  ownerType         InfluencerEntityType
+  bankCode          String
+  bankName          String
+  branchName        String
+  accountType       JpAccountType
+  accountNumber     String
+  accountHolderKana String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@map("influencer_bank_accounts")
+}
+
+model CampaignApplication {
+  id           String            @id @default(cuid())
+  campaignId   String
+  influencerId String
+  status       ApplicationStatus @default(APPLIED)
+
+  appliedAt    DateTime  @default(now())
+  reviewedAt   DateTime?
+  reviewedById String?
+  rejectReason String?
+
+  trackingNumber String?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  completedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaign   Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencer Influencer      @relation(fields: [influencerId], references: [id], onDelete: Restrict)
+  posts      SubmittedPost[]
+
+  @@unique([campaignId, influencerId])
+  @@index([campaignId, status])
+  @@index([influencerId, status])
+  @@map("campaign_applications")
+}
+
+model SubmittedPost {
+  id                  String    @id @default(cuid())
+  applicationId       String
+  snsType             SnsType
+  url                 String
+  submittedAt         DateTime  @default(now())
+  insightSaves        Int?
+  insightReach        Int?
+  insightProfileViews Int?
+  insightSubmittedAt  DateTime?
+  updatedAt           DateTime  @updatedAt
+
+  application CampaignApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, snsType])
+  @@index([applicationId])
+  @@map("submitted_posts")
 }

@@ -23,17 +23,16 @@ export function WizardFooter({
         {onBack && (
           <button
             type="button"
-            className="wfooter__back"
+            className="wfooter__btn wfooter__btn--back"
             onClick={onBack}
             disabled={loading}
           >
-            <i className="fa-solid fa-chevron-left" />
-            <span>{backLabel}</span>
+            {backLabel}
           </button>
         )}
         <button
           type="button"
-          className="wfooter__next"
+          className="wfooter__btn wfooter__btn--next"
           onClick={onNext}
           disabled={disabled || loading}
         >

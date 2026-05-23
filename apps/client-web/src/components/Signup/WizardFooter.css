@@ -13,49 +13,38 @@
 .wfooter__inner {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   max-width: 480px;
   margin: 0 auto;
 }
 
-.wfooter__back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 48px;
-  padding: 0 14px;
-  border: none;
-  background: transparent;
-  color: #6b7280;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 8px;
-}
-
-.wfooter__back:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.wfooter__back i {
-  font-size: 11px;
-}
-
-.wfooter__next {
+.wfooter__btn {
   flex: 1;
   height: 48px;
   border: none;
   border-radius: 12px;
-  background: #1d6cf3;
-  color: #fff;
   font-weight: 700;
   font-size: 15px;
   cursor: pointer;
+}
+
+.wfooter__btn--back {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.wfooter__btn--back:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wfooter__btn--next {
+  background: #1d6cf3;
+  color: #fff;
   box-shadow: 0 2px 8px rgba(29, 108, 243, 0.25);
 }
 
-.wfooter__next:disabled {
+.wfooter__btn--next:disabled {
   background: #d1d5db;
   color: #fff;
   box-shadow: none;

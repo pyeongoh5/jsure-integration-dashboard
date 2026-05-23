@@ -38,6 +38,10 @@ type CampaignRow = {
   guideline: string;
   referenceMediaUrls: string[];
   cautions: string;
+  thumbnailUrl: string | null;
+  brandName: string | null;
+  brandTagline: string | null;
+  minFollowers: number | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -60,6 +64,10 @@ function toResponse(row: CampaignRow): CampaignResponse {
     guideline: row.guideline,
     referenceMediaUrls: row.referenceMediaUrls,
     cautions: row.cautions,
+    thumbnailUrl: row.thumbnailUrl,
+    brandName: row.brandName,
+    brandTagline: row.brandTagline,
+    minFollowers: row.minFollowers,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

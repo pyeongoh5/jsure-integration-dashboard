@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { SnsTypeSchema, type SnsType } from "./influencer.js";
 
-export const SnsTypeSchema = z.enum(["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"]);
-export type SnsType = z.infer<typeof SnsTypeSchema>;
+export { SnsTypeSchema };
+export type { SnsType };
 
 const DateOnly = z
   .string()
@@ -21,6 +22,10 @@ export const CampaignFormSchema = z
     guideline: z.string().max(2000),
     referenceMediaUrls: z.array(z.string().url()).max(10),
     cautions: z.string().max(2000),
+    thumbnailUrl: z.string().url().nullable().optional(),
+    brandName: z.string().max(50).nullable().optional(),
+    brandTagline: z.string().max(200).nullable().optional(),
+    minFollowers: z.number().int().nonnegative().nullable().optional(),
   })
   .refine((d) => d.recruitStartDate <= d.recruitEndDate, {
     path: ["recruitEndDate"],
@@ -45,6 +50,10 @@ export const UpdateCampaignRequestSchema = z
     guideline: z.string().max(2000).optional(),
     referenceMediaUrls: z.array(z.string().url()).max(10).optional(),
     cautions: z.string().max(2000).optional(),
+    thumbnailUrl: z.string().url().nullable().optional(),
+    brandName: z.string().max(50).nullable().optional(),
+    brandTagline: z.string().max(200).nullable().optional(),
+    minFollowers: z.number().int().nonnegative().nullable().optional(),
   })
   .refine(
     (d) =>
@@ -72,7 +81,51 @@ export const CampaignResponseSchema = z.object({
   guideline: z.string(),
   referenceMediaUrls: z.array(z.string().url()),
   cautions: z.string(),
+  thumbnailUrl: z.string().url().nullable(),
+  brandName: z.string().nullable(),
+  brandTagline: z.string().nullable(),
+  minFollowers: z.number().int().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
 export type CampaignResponse = z.infer<typeof CampaignResponseSchema>;
+
+export const InfluencerCampaignCardSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  brandName: z.string().nullable(),
+  brandTagline: z.string().nullable(),
+  thumbnailUrl: z.string().url().nullable(),
+  rewardJpy: z.number().int().nonnegative(),
+  snsTypes: z.array(SnsTypeSchema),
+  minFollowers: z.number().int().nullable(),
+  recruitCount: z.number().int().nonnegative(),
+  appliedCount: z.number().int().nonnegative(),
+  recruitStartAt: z.string().datetime(),
+  recruitEndAt: z.string().datetime(),
+  isNew: z.boolean(),
+});
+export type InfluencerCampaignCard = z.infer<
+  typeof InfluencerCampaignCardSchema
+>;
+
+export const InfluencerCampaignDetailSchema =
+  InfluencerCampaignCardSchema.extend({
+    productSummary: z.string(),
+    productDetailUrl: z.string().url(),
+    guideline: z.string(),
+    referenceMediaUrls: z.array(z.string().url()),
+    cautions: z.string(),
+    condition: z.string(),
+    hasApplied: z.boolean(),
+  });
+export type InfluencerCampaignDetail = z.infer<
+  typeof InfluencerCampaignDetailSchema
+>;
+
+export const InfluencerCampaignListResponseSchema = z.object({
+  campaigns: z.array(InfluencerCampaignCardSchema),
+});
+export type InfluencerCampaignListResponse = z.infer<
+  typeof InfluencerCampaignListResponseSchema
+>;

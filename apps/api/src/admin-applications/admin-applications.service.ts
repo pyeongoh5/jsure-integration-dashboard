@@ -1,4 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import type { AdminApplication, ApplicationStatus } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -46,9 +50,103 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
   };
 }
 
+const APPLICATION_INCLUDE = {
+  campaign: { select: { id: true, title: true } },
+  influencer: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      snsAccounts: {
+        select: { snsType: true, handle: true, followerCount: true },
+        orderBy: { snsType: "asc" as const },
+      },
+    },
+  },
+} as const;
+
 @Injectable()
 export class AdminApplicationsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private async fetch(id: string): Promise<AdminApplication> {
+    const row = await this.prisma.campaignApplication.findUnique({
+      where: { id },
+      include: APPLICATION_INCLUDE,
+    });
+    if (!row) throw new NotFoundException("Application not found");
+    return toResponse(row);
+  }
+
+  async approve(id: string, reviewerId: string): Promise<AdminApplication> {
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: { id },
+    });
+    if (!existing) throw new NotFoundException("Application not found");
+    if (existing.status !== "APPLIED") {
+      throw new BadRequestException(
+        `Cannot approve from status ${existing.status}`,
+      );
+    }
+    await this.prisma.campaignApplication.update({
+      where: { id },
+      data: {
+        status: "APPROVED",
+        reviewedAt: new Date(),
+        reviewedById: reviewerId,
+        rejectReason: null,
+      },
+    });
+    return this.fetch(id);
+  }
+
+  async reject(
+    id: string,
+    reviewerId: string,
+    reason: string,
+  ): Promise<AdminApplication> {
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: { id },
+    });
+    if (!existing) throw new NotFoundException("Application not found");
+    if (existing.status !== "APPLIED") {
+      throw new BadRequestException(
+        `Cannot reject from status ${existing.status}`,
+      );
+    }
+    await this.prisma.campaignApplication.update({
+      where: { id },
+      data: {
+        status: "REJECTED",
+        reviewedAt: new Date(),
+        reviewedById: reviewerId,
+        rejectReason: reason,
+      },
+    });
+    return this.fetch(id);
+  }
+
+  async undo(id: string): Promise<AdminApplication> {
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: { id },
+    });
+    if (!existing) throw new NotFoundException("Application not found");
+    if (existing.status !== "APPROVED" && existing.status !== "REJECTED") {
+      throw new BadRequestException(
+        `Cannot undo from status ${existing.status}`,
+      );
+    }
+    await this.prisma.campaignApplication.update({
+      where: { id },
+      data: {
+        status: "APPLIED",
+        reviewedAt: null,
+        reviewedById: null,
+        rejectReason: null,
+      },
+    });
+    return this.fetch(id);
+  }
 
   async list(filters: {
     campaignId?: string;
@@ -62,20 +160,7 @@ export class AdminApplicationsService {
           : {}),
       },
       orderBy: { appliedAt: "desc" },
-      include: {
-        campaign: { select: { id: true, title: true } },
-        influencer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            snsAccounts: {
-              select: { snsType: true, handle: true, followerCount: true },
-              orderBy: { snsType: "asc" },
-            },
-          },
-        },
-      },
+      include: APPLICATION_INCLUDE,
     });
     return rows.map(toResponse);
   }

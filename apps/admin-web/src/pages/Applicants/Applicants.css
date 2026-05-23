@@ -234,6 +234,25 @@
   padding: 4px 0;
 }
 
+.apl-reject-reason {
+  width: 100%;
+  min-height: 80px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.apl-mutation-error {
+  margin-top: 8px;
+  color: #dc2626;
+  font-size: 12px;
+}
+
 /* Card / Table */
 .apl__card {
   background: var(--c-card);

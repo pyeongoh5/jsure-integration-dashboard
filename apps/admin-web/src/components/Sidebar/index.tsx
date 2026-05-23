@@ -4,7 +4,7 @@ import { Logo } from "@/components/Sidebar/Logo";
 import { SidebarSearch } from "@/components/Sidebar/SidebarSearch";
 import { FooterUser } from "@/components/Sidebar/FooterUser";
 
-type NavItem = { to: string; label: string; icon: ReactNode; badge?: number | string };
+type NavItem = { to: string; label: string; icon: ReactNode; badge?: ReactNode };
 type NavGroup = { title: string; items: NavItem[] };
 
 const NAV: NavGroup[] = [
@@ -16,15 +16,13 @@ const NAV: NavGroup[] = [
         to: "/campaigns",
         label: "캠페인 관리",
         icon: <i className="fa-solid fa-bullhorn" />,
-        badge: 14,
       },
       {
         to: "/applicants",
         label: "응모자 관리",
         icon: <i className="fa-solid fa-user-check" />,
-        badge: 23,
       },
-      { to: "/drafts", label: "초안 검토", icon: <i className="fa-solid fa-file-pen" />, badge: 8 },
+      { to: "/drafts", label: "초안 검토", icon: <i className="fa-solid fa-file-pen" /> },
       {
         to: "/monitoring",
         label: "게시 모니터링",
@@ -39,14 +37,12 @@ const NAV: NavGroup[] = [
         to: "/influencers",
         label: "인플루언서",
         icon: <i className="fa-solid fa-user-group" />,
-        badge: "3,248",
       },
-      {
-        to: "/brands",
-        label: "광고주(브랜드)",
-        icon: <i className="fa-solid fa-building" />,
-        badge: 42,
-      },
+      // {
+      //   to: "/brands",
+      //   label: "광고주(브랜드)",
+      //   icon: <i className="fa-solid fa-building" />,
+      // },
     ],
   },
   {
@@ -56,7 +52,6 @@ const NAV: NavGroup[] = [
         to: "/payouts",
         label: "정산 관리",
         icon: <i className="fa-solid fa-money-check-dollar" />,
-        badge: 12,
       },
       { to: "/reports", label: "리포트", icon: <i className="fa-solid fa-chart-line" /> },
     ],

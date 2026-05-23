@@ -63,3 +63,10 @@ export const AdminApplicationListResponseSchema = z.object({
 export type AdminApplicationListResponse = z.infer<
   typeof AdminApplicationListResponseSchema
 >;
+
+export const RejectApplicationRequestSchema = z.object({
+  reason: z.string().min(1, "사유를 입력하세요").max(500),
+});
+export type RejectApplicationRequest = z.infer<
+  typeof RejectApplicationRequestSchema
+>;

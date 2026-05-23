@@ -1,10 +1,26 @@
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+  UsePipes,
+} from "@nestjs/common";
 import {
   ApplicationStatusSchema,
+  RejectApplicationRequestSchema,
+  type AdminApplication,
   type AdminApplicationListResponse,
   type ApplicationStatus,
+  type RejectApplicationRequest,
 } from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { ZodValidationPipe } from "../common/zod-validation.pipe";
+import type { AuthenticatedUser } from "../auth/strategies/jwt.strategy";
 import { AdminApplicationsService } from "./admin-applications.service";
 
 @UseGuards(JwtAuthGuard)
@@ -23,6 +39,32 @@ export class AdminApplicationsController {
       statuses,
     });
     return { applications };
+  }
+
+  @Post(":id/approve")
+  @HttpCode(200)
+  approve(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<AdminApplication> {
+    return this.svc.approve(id, req.user.id);
+  }
+
+  @Post(":id/reject")
+  @HttpCode(200)
+  @UsePipes(new ZodValidationPipe(RejectApplicationRequestSchema))
+  reject(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+    @Body() body: RejectApplicationRequest,
+  ): Promise<AdminApplication> {
+    return this.svc.reject(id, req.user.id, body.reason);
+  }
+
+  @Post(":id/undo")
+  @HttpCode(200)
+  undo(@Param("id") id: string): Promise<AdminApplication> {
+    return this.svc.undo(id);
   }
 }
 

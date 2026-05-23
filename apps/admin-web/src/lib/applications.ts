@@ -1,5 +1,6 @@
 import {
   AdminApplicationListResponseSchema,
+  AdminApplicationSchema,
   type AdminApplication,
   type ApplicationStatus,
 } from "@jsure/shared";
@@ -21,4 +22,25 @@ export async function listApplications(
   const query = search.toString();
   const res = await api.get(`/campaign-applications${query ? `?${query}` : ""}`);
   return AdminApplicationListResponseSchema.parse(res.data).applications;
+}
+
+export async function approveApplication(id: string): Promise<AdminApplication> {
+  const res = await api.post(`/campaign-applications/${encodeURIComponent(id)}/approve`);
+  return AdminApplicationSchema.parse(res.data);
+}
+
+export async function rejectApplication(
+  id: string,
+  reason: string,
+): Promise<AdminApplication> {
+  const res = await api.post(
+    `/campaign-applications/${encodeURIComponent(id)}/reject`,
+    { reason },
+  );
+  return AdminApplicationSchema.parse(res.data);
+}
+
+export async function undoApplication(id: string): Promise<AdminApplication> {
+  const res = await api.post(`/campaign-applications/${encodeURIComponent(id)}/undo`);
+  return AdminApplicationSchema.parse(res.data);
 }

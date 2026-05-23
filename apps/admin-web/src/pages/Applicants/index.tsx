@@ -8,7 +8,12 @@ import type {
 } from "@jsure/shared";
 import { ConfirmDialog } from "@/ui/ConfirmDialog";
 import { listCampaigns } from "@/lib/campaigns";
-import { listApplications } from "@/lib/applications";
+import {
+  approveApplication,
+  listApplications,
+  rejectApplication,
+  undoApplication,
+} from "@/lib/applications";
 import { ApplicantTabs } from "@/components/Applicants/ApplicantTabs";
 import { ApplicantFilters } from "@/components/Applicants/ApplicantFilters";
 import { ApplicantTable } from "@/components/Applicants/ApplicantTable";
@@ -103,6 +108,10 @@ export function Applicants() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<PendingAction | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [mutating, setMutating] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [mediaFilter, setMediaFilter] = useState<Set<Media>>(() => new Set());
   const [minFollowers, setMinFollowers] = useState<number | null>(null);
 
@@ -154,7 +163,7 @@ export function Applicants() {
     return () => {
       cancelled = true;
     };
-  }, [campaignId, tab]);
+  }, [campaignId, tab, reloadKey]);
 
   const setCampaignId = (id: string | null) => {
     const next = new URLSearchParams(searchParams);
@@ -206,10 +215,51 @@ export function Applicants() {
     });
   }
 
-  function confirmAction() {
-    // TODO: wire to approve/reject API once admin mutation endpoints exist.
-    // For now this is a no-op; the dialog just closes.
+  function closeDialog() {
     setPending(null);
+    setRejectReason("");
+    setMutationError(null);
+  }
+
+  async function confirmAction() {
+    if (!pending || mutating) return;
+    setMutating(true);
+    setMutationError(null);
+    try {
+      if (pending.type === "approve") {
+        await approveApplication(pending.applicant.id);
+      } else {
+        const reason = rejectReason.trim();
+        if (reason === "") {
+          setMutationError("반려 사유를 입력하세요.");
+          setMutating(false);
+          return;
+        }
+        await rejectApplication(pending.applicant.id, reason);
+      }
+      closeDialog();
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(pending.applicant.id);
+        return next;
+      });
+      setReloadKey((k) => k + 1);
+    } catch (err) {
+      setMutationError(
+        err instanceof Error ? err.message : "처리에 실패했습니다.",
+      );
+    } finally {
+      setMutating(false);
+    }
+  }
+
+  async function undoApplicant(a: Applicant) {
+    try {
+      await undoApplication(a.id);
+      setReloadKey((k) => k + 1);
+    } catch {
+      // Best-effort; UI stays as-is.
+    }
   }
 
   return (
@@ -259,11 +309,17 @@ export function Applicants() {
           selected={selected}
           onToggleAll={toggleAll}
           onToggleOne={toggleOne}
-          onApprove={(a) => setPending({ type: "approve", applicant: a })}
-          onReject={(a) => setPending({ type: "reject", applicant: a })}
-          onUndo={() => {
-            // No-op until admin mutation API exists.
+          onApprove={(a) => {
+            setMutationError(null);
+            setRejectReason("");
+            setPending({ type: "approve", applicant: a });
           }}
+          onReject={(a) => {
+            setMutationError(null);
+            setRejectReason("");
+            setPending({ type: "reject", applicant: a });
+          }}
+          onUndo={undoApplicant}
         />
       )}
 
@@ -275,15 +331,41 @@ export function Applicants() {
             : "응모를 반려할까요?"
         }
         subtitle={
-          pending
-            ? `${pending.applicant.name}${pending.applicant.handle ? `(@${pending.applicant.handle})` : ""} — ${pending.applicant.campaign}`
-            : undefined
+          pending ? (
+            <>
+              <div>
+                {pending.applicant.name}
+                {pending.applicant.handle ? `(@${pending.applicant.handle})` : ""}{" "}
+                — {pending.applicant.campaign}
+              </div>
+              {pending.type === "reject" && (
+                <textarea
+                  className="apl-reject-reason"
+                  placeholder="반려 사유를 입력하세요"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  disabled={mutating}
+                  autoFocus
+                />
+              )}
+              {mutationError && (
+                <div className="apl-mutation-error">{mutationError}</div>
+              )}
+            </>
+          ) : undefined
         }
-        confirmLabel={pending?.type === "approve" ? "승인" : "반려"}
+        confirmLabel={
+          mutating
+            ? "처리 중…"
+            : pending?.type === "approve"
+              ? "승인"
+              : "반려"
+        }
         cancelLabel="취소"
         tone={pending?.type === "approve" ? "primary" : "danger"}
+        busy={mutating}
         onConfirm={confirmAction}
-        onCancel={() => setPending(null)}
+        onCancel={closeDialog}
       />
     </div>
   );

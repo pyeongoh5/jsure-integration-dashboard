@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeSnsHandle } from "../utils/snsHandle.js";
 
 export const SnsTypeSchema = z.enum(["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"]);
 export type SnsType = z.infer<typeof SnsTypeSchema>;
@@ -34,7 +35,10 @@ export type InfluencerBankAccount = z.infer<typeof InfluencerBankAccountSchema>;
 
 export const InfluencerSnsAccountInputSchema = z.object({
   snsType: SnsTypeSchema,
-  handle: z.string().min(1).max(64),
+  handle: z
+    .string()
+    .transform(normalizeSnsHandle)
+    .pipe(z.string().min(1, "ハンドルを入力してください").max(64)),
   followerCount: z.number().int().nonnegative(),
 });
 export type InfluencerSnsAccountInput = z.infer<

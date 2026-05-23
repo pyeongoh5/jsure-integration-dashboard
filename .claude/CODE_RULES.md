@@ -167,3 +167,26 @@ return HealthResponseSchema.parse(res.data);
 ### CORS
 
 - 허용 도메인은 `apps/api`의 `CORS_ORIGIN` env로만 관리. 코드에 도메인 하드코딩 금지.
+
+---
+
+## 6. SNS 핸들 (`@username`) 정책
+
+`@@username`처럼 prefix가 두 번 붙는 버그가 반복돼서 규칙을 박아둠. SNS 핸들(`SnsAccount.handle`)을 **저장·전송·내부 로직**에서 다룰 때는 **bare**(앞에 `@` 없음)로 통일한다. `@`는 **표시(render)** 시점에만 붙인다.
+
+### 룰
+
+- **DO** 저장/전송/내부 비교는 항상 bare 문자열(`yamada_hanako`).
+- **DO** 입력 폼은 사용자가 `@`를 붙여 넣어도 받아준다 — 정규화는 `@jsure/shared`의 `normalizeSnsHandle()` 또는 `InfluencerSnsAccountInputSchema`(이미 `.transform(normalizeSnsHandle)` 적용)에 맡긴다.
+- **DO** 표시 측은 `@{handle}` 형태로 직접 prefix 하거나, 헬퍼가 필요하면 `displaySnsHandle(handle)`을 쓴다.
+- **DON'T** 입력 placeholder에 `@your_handle`처럼 `@`를 박지 않는다 (사용자가 prefix까지 그대로 입력해서 저장 데이터 오염을 유발한다).
+- **DON'T** 컴포넌트/서비스 안에서 임시로 `handle.replace(/^@/, "")` 같은 정규화를 흩뿌리지 않는다. 한 곳(schema 또는 `normalizeSnsHandle`)에 집중.
+- **DON'T** API 응답을 만들 때 `@`를 붙여서 내려주지 않는다. 응답은 bare, 표시 책임은 클라이언트.
+- **DON'T** DB 시드/픽스처에 `@`-prefixed 값을 넣지 않는다.
+
+### 새 필드/화면 추가 시 체크
+
+1. 신규 입력 폼: zod 스키마에서 `InfluencerSnsAccountInputSchema`처럼 `.transform(normalizeSnsHandle)`를 거치는지 확인.
+2. 신규 표시 위치: `@{handle}` 한 군데에서만 prefix 붙이는지 확인.
+3. seed/마이그레이션: 이미 `@`가 섞여 들어간 row가 있는지 점검(`SELECT * FROM "InfluencerSnsAccount" WHERE handle LIKE '@%'`).
+

@@ -47,7 +47,7 @@ export function SnsAccountCard({
               type="text"
               value={handle}
               onChange={(e) => onChange("handle", e.target.value)}
-              placeholder="@your_handle"
+              placeholder="your_handle"
             />
           </label>
           <label className="snsc__field">

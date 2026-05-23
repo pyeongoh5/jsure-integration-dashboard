@@ -8,3 +8,4 @@ export * from "./types/adminInfluencer.js";
 export * from "./types/jpBank.js";
 export * from "./data/influencerTerms.js";
 export { JP_BANKS } from "./data/jpBanks.js";
+export * from "./utils/snsHandle.js";

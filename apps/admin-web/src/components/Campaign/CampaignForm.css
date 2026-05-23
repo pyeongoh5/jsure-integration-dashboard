@@ -119,6 +119,55 @@
   gap: 8px;
   align-items: center;
 }
+.cf__sub-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+.cf__sns-recruits {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cf__sns-row {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cf__sns-row--on {
+  border-color: #2563eb;
+  background: #f8faff;
+}
+.cf__sns-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+.cf__sns-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.cf__sns-toggle-label {
+  font-weight: 500;
+}
+.cf__sns-fields {
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 10px;
+}
+.cf__sns-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .cf__actions {
   display: flex;
   gap: 8px;

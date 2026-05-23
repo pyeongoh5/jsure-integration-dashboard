@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { CampaignFormSchema, type CampaignForm as Values, type SnsType } from "@jsure/shared";
-import { SnsTypeChips } from "./SnsTypeChips";
+import {
+  CampaignFormSchema,
+  type CampaignForm as Values,
+  type SnsRecruit,
+} from "@jsure/shared";
+import { SnsRecruitList } from "./SnsRecruitList";
 import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
 import "./CampaignForm.css";
 
 export const EMPTY_CAMPAIGN_FORM: Values = {
   title: "",
   rewardJpy: 0,
-  snsTypes: [],
-  condition: "",
-  recruitCount: 1,
   recruitStartDate: "",
   recruitEndDate: "",
+  snsRecruits: [],
   productSummary: "",
   productDetailUrl: "",
   guideline: "",
@@ -19,8 +21,11 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   cautions: "",
 };
 
+type SnsRecruitItemError = Partial<Record<"condition" | "recruitCount", string>>;
+
 type FieldErrors = Partial<Record<keyof Values, string>> & {
   referenceMediaUrls_items?: Record<number, string>;
+  snsRecruits_items?: Record<number, SnsRecruitItemError>;
 };
 
 type Props = {
@@ -53,15 +58,24 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
     if (!result.success) {
       const next: FieldErrors = {};
       const urlItems: Record<number, string> = {};
+      const recruitItems: Record<number, SnsRecruitItemError> = {};
       for (const issue of result.error.issues) {
-        const [first, second] = issue.path;
+        const [first, second, third] = issue.path;
         if (first === "referenceMediaUrls" && typeof second === "number") {
           urlItems[second] = issue.message;
+        } else if (
+          first === "snsRecruits" &&
+          typeof second === "number" &&
+          (third === "condition" || third === "recruitCount")
+        ) {
+          const prev = recruitItems[second] ?? {};
+          recruitItems[second] = { ...prev, [third]: issue.message };
         } else if (typeof first === "string") {
           next[first as keyof Values] = issue.message;
         }
       }
       if (Object.keys(urlItems).length > 0) next.referenceMediaUrls_items = urlItems;
+      if (Object.keys(recruitItems).length > 0) next.snsRecruits_items = recruitItems;
       setErrors(next);
       return;
     }
@@ -78,7 +92,7 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
     }
   };
 
-  const setSns = (next: SnsType[]) => update("snsTypes", next);
+  const setSnsRecruits = (next: SnsRecruit[]) => update("snsRecruits", next);
 
   return (
     <form className="cf" onSubmit={handleSubmit} noValidate>
@@ -116,42 +130,6 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
           {errors.rewardJpy && <div className="cf__error">{errors.rewardJpy}</div>}
         </div>
 
-        <div className="cf__field">
-          <label className="cf__label">SNS 종류</label>
-          <SnsTypeChips value={values.snsTypes} onChange={setSns} disabled={submitting} />
-          {errors.snsTypes && <div className="cf__error">{errors.snsTypes}</div>}
-        </div>
-
-        <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-condition">조건</label>
-          <input
-            id="cf-condition"
-            className="cf__input"
-            placeholder="예: 팔로워수 1,000명 이상"
-            value={values.condition}
-            onChange={(e) => update("condition", e.target.value)}
-            disabled={submitting}
-          />
-          {errors.condition && <div className="cf__error">{errors.condition}</div>}
-        </div>
-      </section>
-
-      <section className="cf__section">
-        <h2 className="cf__section-title">모집</h2>
-
-        <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-count">모집 인원</label>
-          <input
-            id="cf-count"
-            className="cf__input"
-            inputMode="numeric"
-            value={Number.isFinite(values.recruitCount) ? String(values.recruitCount) : ""}
-            onChange={(e) => update("recruitCount", parseIntegerInput(e.target.value))}
-            disabled={submitting}
-          />
-          {errors.recruitCount && <div className="cf__error">{errors.recruitCount}</div>}
-        </div>
-
         <div className="cf__row-2">
           <div className="cf__field">
             <label className="cf__label" htmlFor="cf-start">모집 시작일</label>
@@ -182,6 +160,22 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
             )}
           </div>
         </div>
+      </section>
+
+      <section className="cf__section">
+        <h2 className="cf__section-title">SNS별 모집</h2>
+        <p className="cf__sub-label">
+          사용할 SNS를 선택하고, 각 SNS에 적용할 조건과 모집 인원을 입력하세요.
+        </p>
+        <SnsRecruitList
+          value={values.snsRecruits}
+          onChange={setSnsRecruits}
+          disabled={submitting}
+          errorByIndex={errors.snsRecruits_items}
+        />
+        {errors.snsRecruits && (
+          <div className="cf__error">{errors.snsRecruits}</div>
+        )}
       </section>
 
       <section className="cf__section">

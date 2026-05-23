@@ -28,16 +28,18 @@ export function CampaignEdit() {
         const initial: Values = {
           title: res.title,
           rewardJpy: res.rewardJpy,
-          snsTypes: res.snsTypes,
-          condition: res.condition,
-          recruitCount: res.recruitCount,
           recruitStartDate: res.recruitStartDate,
           recruitEndDate: res.recruitEndDate,
+          snsRecruits: res.snsRecruits,
           productSummary: res.productSummary,
           productDetailUrl: res.productDetailUrl,
           guideline: res.guideline,
           referenceMediaUrls: res.referenceMediaUrls,
           cautions: res.cautions,
+          thumbnailUrl: res.thumbnailUrl,
+          brandName: res.brandName,
+          brandTagline: res.brandTagline,
+          minFollowers: res.minFollowers,
         };
         setState({ kind: "ready", initial });
       })

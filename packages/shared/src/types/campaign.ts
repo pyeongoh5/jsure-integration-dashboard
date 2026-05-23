@@ -8,15 +8,28 @@ const DateOnly = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "YYYY-MM-DD 형식이어야 합니다");
 
+export const SnsRecruitSchema = z.object({
+  snsType: SnsTypeSchema,
+  condition: z.string().max(500),
+  recruitCount: z.number().int().positive("1 이상"),
+});
+export type SnsRecruit = z.infer<typeof SnsRecruitSchema>;
+
+const SnsRecruitArray = z
+  .array(SnsRecruitSchema)
+  .min(1, "1개 이상의 SNS를 모집해야 합니다")
+  .refine(
+    (arr) => new Set(arr.map((r) => r.snsType)).size === arr.length,
+    "SNS가 중복되었습니다",
+  );
+
 export const CampaignFormSchema = z
   .object({
     title: z.string().min(1, "필수 입력").max(100),
     rewardJpy: z.number().int("정수만 입력").nonnegative(),
-    snsTypes: z.array(SnsTypeSchema).min(1, "1개 이상 선택"),
-    condition: z.string().max(500),
-    recruitCount: z.number().int().positive("1 이상"),
     recruitStartDate: DateOnly,
     recruitEndDate: DateOnly,
+    snsRecruits: SnsRecruitArray,
     productSummary: z.string().max(1000),
     productDetailUrl: z.string().url("URL 형식이어야 합니다"),
     guideline: z.string().max(2000),
@@ -40,11 +53,9 @@ export const UpdateCampaignRequestSchema = z
   .object({
     title: z.string().min(1).max(100).optional(),
     rewardJpy: z.number().int().nonnegative().optional(),
-    snsTypes: z.array(SnsTypeSchema).min(1).optional(),
-    condition: z.string().max(500).optional(),
-    recruitCount: z.number().int().positive().optional(),
     recruitStartDate: DateOnly.optional(),
     recruitEndDate: DateOnly.optional(),
+    snsRecruits: SnsRecruitArray.optional(),
     productSummary: z.string().max(1000).optional(),
     productDetailUrl: z.string().url().optional(),
     guideline: z.string().max(2000).optional(),
@@ -68,9 +79,7 @@ export const CampaignResponseSchema = z.object({
   id: z.string(),
   title: z.string(),
   rewardJpy: z.number().int().nonnegative(),
-  snsTypes: z.array(SnsTypeSchema),
-  condition: z.string(),
-  recruitCount: z.number().int().positive(),
+  snsRecruits: z.array(SnsRecruitSchema),
   recruitStartDate: DateOnly,
   recruitEndDate: DateOnly,
   recruitStartAt: z.string().datetime(),

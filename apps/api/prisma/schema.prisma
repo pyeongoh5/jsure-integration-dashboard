@@ -88,9 +88,6 @@ model Campaign {
   id                 String    @id @default(cuid())
   title              String
   rewardJpy          Int
-  snsTypes           SnsType[]
-  condition          String
-  recruitCount       Int
   recruitStartAt     DateTime
   recruitEndAt       DateTime
   closedAt           DateTime?
@@ -106,10 +103,27 @@ model Campaign {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
+  snsRecruits  CampaignSnsRecruit[]
   applications CampaignApplication[]
 
   @@index([recruitStartAt])
   @@map("campaigns")
+}
+
+model CampaignSnsRecruit {
+  id           String   @id @default(cuid())
+  campaignId   String
+  snsType      SnsType
+  condition    String   @default("")
+  recruitCount Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, snsType])
+  @@index([campaignId])
+  @@map("campaign_sns_recruits")
 }
 
 model Influencer {

@@ -1,10 +1,16 @@
 import {
+  CampaignListResponseSchema,
   CampaignResponseSchema,
   type CampaignResponse,
   type CreateCampaignRequest,
   type UpdateCampaignRequest,
 } from "@jsure/shared";
 import { api } from "./api";
+
+export async function listCampaigns(): Promise<CampaignResponse[]> {
+  const res = await api.get("/campaigns");
+  return CampaignListResponseSchema.parse(res.data).campaigns;
+}
 
 export async function getCampaign(id: string): Promise<CampaignResponse> {
   const res = await api.get(`/campaigns/${encodeURIComponent(id)}`);

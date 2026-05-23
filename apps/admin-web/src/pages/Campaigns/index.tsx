@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import type { CampaignResponse } from "@jsure/shared";
 import { Card } from "../../ui/Card";
 import { ConfirmDialog } from "../../ui/ConfirmDialog";
 import { FilterChips } from "../../ui/FilterChips";
@@ -9,7 +10,7 @@ import { CampaignCardFooter } from "../../components/Campaign/CampaignCardFooter
 import { CampaignActionsMenu } from "../../components/Campaign/CampaignActionsMenu";
 import type { Campaign, CampaignStatus } from "../../components/Campaign/types";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
-import { closeCampaign } from "../../lib/campaigns";
+import { closeCampaign, listCampaigns } from "../../lib/campaigns";
 import "./Campaigns.css";
 import "../../components/Campaign/CampaignActionsMenu.css";
 
@@ -35,86 +36,54 @@ function isFilterKey(value: string | null): value is FilterKey {
   );
 }
 
-const CAMPAIGNS: Campaign[] = [
-  {
-    id: "cmp_001",
-    brand: "스타벅스",
-    name: "프라푸치노 서머 캠페인",
-    description: "여름 한정 신메뉴 프라푸치노를 즐기는 일상을 인스타그램 릴스로 공유해 주세요.",
-    status: "recruit",
-    thumbIcon: "☕",
-    period: "5/1 — 6/15",
-    reward: "₩300,000 + 제품 제공",
-    applied: 27,
-    capacity: 30,
-    dday: 7,
-  },
-  {
-    id: "cmp_002",
-    brand: "비오데르마",
-    name: "센시비오 H2O 200ml 리뷰",
-    description: "민감성 피부를 위한 클렌징 워터 사용 후기를 블로그 포스팅으로 작성.",
-    status: "review",
-    thumbIcon: "💧",
-    period: "4/20 — 5/20",
-    reward: "₩150,000 + 제품 제공",
-    applied: 42,
-    capacity: 40,
-    dday: 3,
-  },
-  {
-    id: "cmp_003",
-    brand: "라이프스토어",
-    name: "그린 프로젝트 — 친환경 라이프",
-    description: "지속 가능한 일상 아이템을 소개하고 친환경 챌린지에 동참합니다.",
-    status: "progress",
-    thumbIcon: "🌿",
-    period: "4/1 — 5/31",
-    reward: "₩500,000",
-    applied: 12,
-    capacity: 12,
-    dday: 18,
-  },
-  {
-    id: "cmp_004",
-    brand: "대한항공",
-    name: "호놀룰루 여행 캠페인",
-    description: "하와이 호놀룰루 여행 콘텐츠를 유튜브 영상으로 제작.",
-    status: "done",
-    thumbIcon: "✈",
-    period: "2/1 — 4/30",
-    reward: "왕복 항공권 + ₩1,000,000",
-    applied: 8,
-    capacity: 8,
-    dday: 0,
-  },
-  {
-    id: "cmp_005",
-    brand: "올리브영",
-    name: "5월 어워즈 베스트 픽",
-    description: "월간 베스트 아이템을 골라 30초 숏폼으로 제작.",
-    status: "recruit",
-    thumbIcon: "🛍",
-    period: "5/5 — 5/30",
-    reward: "₩200,000 + 베스트 키트",
-    applied: 18,
-    capacity: 50,
-    dday: 21,
-  },
-  {
-    id: "cmp_006",
-    brand: "무신사",
-    name: "썸머 룩북 캠페인",
-    description: "여름 신상 컬렉션을 활용한 데일리 룩북을 인스타그램 피드로 게시.",
-    status: "recruit",
-    thumbIcon: "👕",
-    period: "5/10 — 6/10",
-    reward: "₩400,000 + 의류 제공",
-    applied: 9,
-    capacity: 25,
-    dday: 5,
-  },
-];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function deriveStatus(c: CampaignResponse, now: Date): CampaignStatus {
+  if (c.closedAt) return "done";
+  const end = new Date(c.recruitEndAt);
+  if (now > end) return "done";
+  return "recruit";
+}
+
+function daysUntil(endIso: string, now: Date): number {
+  const end = new Date(endIso);
+  return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / DAY_MS));
+}
+
+function formatDateRange(startYmd: string, endYmd: string): string {
+  const fmt = (s: string) => {
+    const [, m, d] = s.split("-");
+    return `${Number(m)}/${Number(d)}`;
+  };
+  return `${fmt(startYmd)} — ${fmt(endYmd)}`;
+}
+
+function formatReward(jpy: number): string {
+  return `¥${jpy.toLocaleString()}円`;
+}
+
+function toCard(c: CampaignResponse, now: Date): Campaign {
+  const status = deriveStatus(c, now);
+  const capacity = c.snsRecruits.reduce((sum, r) => sum + r.recruitCount, 0);
+  return {
+    id: c.id,
+    brand: c.brandName ?? "",
+    name: c.title,
+    description: c.productSummary || c.brandTagline || "",
+    status,
+    thumbIcon: "📋",
+    period: formatDateRange(c.recruitStartDate, c.recruitEndDate),
+    reward: formatReward(c.rewardJpy),
+    applied: 0,
+    capacity,
+    dday: daysUntil(c.recruitEndAt, now),
+  };
+}
+
+type LoadState =
+  | { kind: "loading" }
+  | { kind: "ready"; campaigns: CampaignResponse[] }
+  | { kind: "error"; message: string };
 
 export function Campaigns() {
   const navigate = useNavigate();
@@ -125,6 +94,29 @@ export function Campaigns() {
   const [closeTargetId, setCloseTargetId] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
   const [closeError, setCloseError] = useState<string | null>(null);
+  const [state, setState] = useState<LoadState>({ kind: "loading" });
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setState({ kind: "loading" });
+    listCampaigns()
+      .then((campaigns) => {
+        if (!cancelled) setState({ kind: "ready", campaigns });
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setState({
+          kind: "error",
+          message:
+            err instanceof Error ? err.message : "캠페인을 불러올 수 없습니다.",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
+
   const rawStatus = searchParams.get(STATUS_PARAM);
   const filter: FilterKey = isFilterKey(rawStatus) ? rawStatus : "all";
 
@@ -138,14 +130,20 @@ export function Campaigns() {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 300);
 
+  const cards = useMemo(() => {
+    if (state.kind !== "ready") return [];
+    const now = new Date();
+    return state.campaigns.map((c) => toCard(c, now));
+  }, [state]);
+
   const filtered = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
-    return CAMPAIGNS.filter((c) => {
+    return cards.filter((c) => {
       if (filter !== "all" && c.status !== filter) return false;
       if (q && !`${c.brand} ${c.name}`.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [filter, debouncedQuery]);
+  }, [cards, filter, debouncedQuery]);
 
   return (
     <div className="cmp">
@@ -166,7 +164,20 @@ export function Campaigns() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {state.kind === "loading" ? (
+        <div className="cmp__empty">불러오는 중…</div>
+      ) : state.kind === "error" ? (
+        <div className="cmp__empty">
+          {state.message}{" "}
+          <button
+            type="button"
+            className="cf__btn cf__btn--ghost"
+            onClick={() => setReloadKey((k) => k + 1)}
+          >
+            다시 시도
+          </button>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="cmp__empty">조건에 맞는 캠페인이 없습니다.</div>
       ) : (
         <div className="cmp__list">
@@ -244,6 +255,7 @@ export function Campaigns() {
           try {
             await closeCampaign(closeTargetId);
             setCloseTargetId(null);
+            setReloadKey((k) => k + 1);
           } catch (err) {
             setCloseError(
               err instanceof Error ? err.message : "종료에 실패했습니다.",

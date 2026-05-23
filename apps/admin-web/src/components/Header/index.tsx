@@ -7,10 +7,10 @@ export const Header = () => {
     <header className="admin__topbar">
       <Breadcrumb />
       <div className="admin__topbar-actions">
-        <button className="admin__icon-btn" aria-label="알림">
+        {/* <button className="admin__icon-btn" aria-label="알림">
           🔔
         </button>
-        <button className="admin__btn admin__btn--ghost">✓ 내보내기</button>
+        <button className="admin__btn admin__btn--ghost">✓ 내보내기</button> */}
         <button
           type="button"
           className="admin__btn admin__btn--primary"

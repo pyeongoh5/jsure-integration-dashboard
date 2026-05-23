@@ -7,10 +7,6 @@
 }
 
 .cmp__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
   margin-bottom: 4px;
 }
 
@@ -61,10 +57,21 @@
 }
 
 /* Grid */
+/* Pinterest-style masonry via CSS columns. Cards flow top→bottom within
+   each column instead of being row-aligned, so a shorter card never leaves
+   trailing whitespace under it. */
 .cmp__list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  column-width: 280px;
+  column-gap: 14px;
+}
+
+.cmp__list > .cam-card-wrap {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  display: block;
+  width: 100%;
+  margin-bottom: 14px;
 }
 
 /* Card hover (applies to ui-card inside the list) */

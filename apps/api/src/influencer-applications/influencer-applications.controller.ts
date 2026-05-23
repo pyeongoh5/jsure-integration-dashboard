@@ -71,24 +71,23 @@ export class InfluencerApplicationsController {
   }
 
   @Put(":id/posts/:snsType")
-  @UsePipes(new ZodValidationPipe(SubmitPostRequestSchema))
   upsertPost(
     @Request() req: { user: AuthenticatedInfluencer },
     @Param("id") id: string,
     @Param("snsType") snsTypeRaw: string,
-    @Body() dto: SubmitPostRequest,
+    @Body(new ZodValidationPipe(SubmitPostRequestSchema)) dto: SubmitPostRequest,
   ) {
     const snsType = SnsTypeSchema.parse(snsTypeRaw);
     return this.svc.upsertPost(req.user.id, id, snsType, dto.url);
   }
 
   @Put(":id/posts/:snsType/insight")
-  @UsePipes(new ZodValidationPipe(SubmitInsightRequestSchema))
   upsertInsight(
     @Request() req: { user: AuthenticatedInfluencer },
     @Param("id") id: string,
     @Param("snsType") snsTypeRaw: string,
-    @Body() dto: SubmitInsightRequest,
+    @Body(new ZodValidationPipe(SubmitInsightRequestSchema))
+    dto: SubmitInsightRequest,
   ) {
     const snsType = SnsTypeSchema.parse(snsTypeRaw);
     return this.svc.upsertInsight(req.user.id, id, snsType, dto);

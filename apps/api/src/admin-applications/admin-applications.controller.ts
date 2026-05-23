@@ -8,7 +8,6 @@ import {
   Query,
   Req,
   UseGuards,
-  UsePipes,
 } from "@nestjs/common";
 import {
   ApplicationStatusSchema,
@@ -61,11 +60,11 @@ export class AdminApplicationsController {
 
   @Post(":id/reject")
   @HttpCode(200)
-  @UsePipes(new ZodValidationPipe(RejectApplicationRequestSchema))
   reject(
     @Req() req: { user: AuthenticatedUser },
     @Param("id") id: string,
-    @Body() body: RejectApplicationRequest,
+    @Body(new ZodValidationPipe(RejectApplicationRequestSchema))
+    body: RejectApplicationRequest,
   ): Promise<AdminApplication> {
     return this.svc.reject(id, req.user.id, body.reason);
   }

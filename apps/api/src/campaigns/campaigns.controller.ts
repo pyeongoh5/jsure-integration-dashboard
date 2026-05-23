@@ -6,7 +6,6 @@ import {
   Patch,
   Post,
   UseGuards,
-  UsePipes,
 } from "@nestjs/common";
 import {
   CreateCampaignRequestSchema,
@@ -26,8 +25,10 @@ export class CampaignsController {
   constructor(private readonly campaigns: CampaignsService) {}
 
   @Post()
-  @UsePipes(new ZodValidationPipe(CreateCampaignRequestSchema))
-  create(@Body() body: CreateCampaignRequest): Promise<CampaignResponse> {
+  create(
+    @Body(new ZodValidationPipe(CreateCampaignRequestSchema))
+    body: CreateCampaignRequest,
+  ): Promise<CampaignResponse> {
     return this.campaigns.create(body);
   }
 
@@ -43,10 +44,10 @@ export class CampaignsController {
   }
 
   @Patch(":id")
-  @UsePipes(new ZodValidationPipe(UpdateCampaignRequestSchema))
   update(
     @Param("id") id: string,
-    @Body() body: UpdateCampaignRequest,
+    @Body(new ZodValidationPipe(UpdateCampaignRequestSchema))
+    body: UpdateCampaignRequest,
   ): Promise<CampaignResponse> {
     return this.campaigns.update(id, body);
   }

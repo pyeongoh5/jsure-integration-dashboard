@@ -73,14 +73,26 @@ export type PublicUser = z.infer<typeof PublicUserSchema>;
 - **DO** 프론트의 응답 핸들링은 `Schema.parse()` 또는 `Schema.safeParse()` 경유.
 - **DON'T** 컨트롤러나 프론트 코드 안에서 응답/요청 타입을 손으로 다시 정의 금지.
 - **DON'T** `ZodValidationPipe` 없이 `@Body()`만으로 받은 입력을 신뢰 금지.
+- **DON'T** `@UsePipes(new ZodValidationPipe(...))`를 **메서드 레벨**에 붙이지 않는다. NestJS는 그 파이프를 메서드의 **모든 파라미터**에 적용하므로, 같이 선언된 `@Param("id")` 문자열이 zod 스키마로 검증되며 `"expected object, received string"`으로 실패한다(`@Req()`는 예외적으로 파이프를 거치지 않음). 항상 `@Body(new ZodValidationPipe(Schema))` 형태로 파라미터에 직접 부착.
 - **DON'T** Prisma 모델을 그대로 응답으로 반환 금지 — shared 스키마 모양으로 매핑 후 반환.
 
 ### 예시 — 컨트롤러
 
 ```ts
-@Post("login")
-@UsePipes(new ZodValidationPipe(LoginRequestSchema))
-login(@Body() dto: LoginRequest): Promise<LoginResponse> { ... }
+// OK — 파이프를 @Body 파라미터에 직접 부착
+@Patch(":id")
+update(
+  @Param("id") id: string,
+  @Body(new ZodValidationPipe(UpdateCampaignRequestSchema))
+  body: UpdateCampaignRequest,
+): Promise<CampaignResponse> {
+  return this.campaigns.update(id, body);
+}
+
+// BAD — @Param("id") 문자열이 zod로 들어가서 검증 실패
+@Patch(":id")
+@UsePipes(new ZodValidationPipe(UpdateCampaignRequestSchema))
+update(@Param("id") id: string, @Body() body: UpdateCampaignRequest) { ... }
 ```
 
 ### 예시 — 프론트

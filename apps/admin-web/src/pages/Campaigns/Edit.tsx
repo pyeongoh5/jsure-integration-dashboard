@@ -37,7 +37,6 @@ export function CampaignEdit() {
           productDetailUrl: res.productDetailUrl,
           guideline: res.guideline,
           referenceMediaUrls: res.referenceMediaUrls,
-          ngItems: res.ngItems,
           cautions: res.cautions,
         };
         setState({ kind: "ready", initial });

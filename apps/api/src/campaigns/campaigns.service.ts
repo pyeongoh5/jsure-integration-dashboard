@@ -32,7 +32,6 @@ type CampaignRow = {
   productDetailUrl: string;
   guideline: string;
   referenceMediaUrls: string[];
-  ngItems: string;
   cautions: string;
   createdAt: Date;
   updatedAt: Date;
@@ -54,7 +53,6 @@ function toResponse(row: CampaignRow): CampaignResponse {
     productDetailUrl: row.productDetailUrl,
     guideline: row.guideline,
     referenceMediaUrls: row.referenceMediaUrls,
-    ngItems: row.ngItems,
     cautions: row.cautions,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -79,7 +77,6 @@ export class CampaignsService {
         productDetailUrl: input.productDetailUrl,
         guideline: input.guideline,
         referenceMediaUrls: input.referenceMediaUrls,
-        ngItems: input.ngItems,
         cautions: input.cautions,
       },
     });
@@ -115,7 +112,6 @@ export class CampaignsService {
     if (input.productDetailUrl !== undefined) data.productDetailUrl = input.productDetailUrl;
     if (input.guideline !== undefined) data.guideline = input.guideline;
     if (input.referenceMediaUrls !== undefined) data.referenceMediaUrls = input.referenceMediaUrls;
-    if (input.ngItems !== undefined) data.ngItems = input.ngItems;
     if (input.cautions !== undefined) data.cautions = input.cautions;
 
     const row = await this.prisma.campaign.update({ where: { id }, data });

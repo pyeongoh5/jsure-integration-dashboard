@@ -20,7 +20,6 @@ export const CampaignFormSchema = z
     productDetailUrl: z.string().url("URL 형식이어야 합니다"),
     guideline: z.string().max(2000),
     referenceMediaUrls: z.array(z.string().url()).max(10),
-    ngItems: z.string().max(2000),
     cautions: z.string().max(2000),
   })
   .refine((d) => d.recruitStartDate <= d.recruitEndDate, {
@@ -45,7 +44,6 @@ export const UpdateCampaignRequestSchema = z
     productDetailUrl: z.string().url().optional(),
     guideline: z.string().max(2000).optional(),
     referenceMediaUrls: z.array(z.string().url()).max(10).optional(),
-    ngItems: z.string().max(2000).optional(),
     cautions: z.string().max(2000).optional(),
   })
   .refine(
@@ -72,7 +70,6 @@ export const CampaignResponseSchema = z.object({
   productDetailUrl: z.string().url(),
   guideline: z.string(),
   referenceMediaUrls: z.array(z.string().url()),
-  ngItems: z.string(),
   cautions: z.string(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

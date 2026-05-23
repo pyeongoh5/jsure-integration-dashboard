@@ -16,7 +16,6 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   productDetailUrl: "",
   guideline: "",
   referenceMediaUrls: [],
-  ngItems: "",
   cautions: "",
 };
 
@@ -248,19 +247,7 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
         </div>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-ng">NG 사항</label>
-          <textarea
-            id="cf-ng"
-            className="cf__textarea"
-            value={values.ngItems}
-            onChange={(e) => update("ngItems", e.target.value)}
-            disabled={submitting}
-          />
-          {errors.ngItems && <div className="cf__error">{errors.ngItems}</div>}
-        </div>
-
-        <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-cautions">주의 사항</label>
+          <label className="cf__label" htmlFor="cf-cautions">NG 및 주의 사항</label>
           <textarea
             id="cf-cautions"
             className="cf__textarea"

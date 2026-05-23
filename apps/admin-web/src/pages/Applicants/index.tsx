@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ConfirmDialog } from "@/ui/ConfirmDialog";
+import { listCampaigns } from "@/lib/campaigns";
 import "./Applicants.css";
 
 type ApplicantStatus = "pending" | "approved" | "rejected";
@@ -178,6 +179,29 @@ export function Applicants() {
   const [items, setItems] = useState<Applicant[]>(INITIAL);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<PendingAction | null>(null);
+  const [campaignTitles, setCampaignTitles] = useState<Map<string, string>>(
+    () => new Map(),
+  );
+
+  useEffect(() => {
+    if (!campaignIdFilter) return;
+    let cancelled = false;
+    listCampaigns()
+      .then((rows) => {
+        if (cancelled) return;
+        setCampaignTitles(new Map(rows.map((c) => [c.id, c.title])));
+      })
+      .catch(() => {
+        // Fallback to raw ID display on failure.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [campaignIdFilter]);
+
+  const campaignFilterLabel = campaignIdFilter
+    ? (campaignTitles.get(campaignIdFilter) ?? campaignIdFilter)
+    : null;
 
   const counts = useMemo(
     () =>
@@ -270,7 +294,7 @@ export function Applicants() {
             }}
             title="필터 해제"
           >
-            캠페인: {campaignIdFilter} ✕
+            캠페인: {campaignFilterLabel} ✕
           </button>
         ) : (
           <button type="button" className="apl-filter">

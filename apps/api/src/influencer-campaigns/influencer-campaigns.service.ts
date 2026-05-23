@@ -21,7 +21,7 @@ type CampaignRow = {
   createdAt: Date;
   snsRecruits: {
     snsType: SnsType;
-    condition: string;
+    minFollowers: number;
     recruitCount: number;
   }[];
 };
@@ -76,7 +76,7 @@ export class InfluencerCampaignsService {
       orderBy: [{ recruitEndAt: "asc" }],
       include: {
         snsRecruits: {
-          select: { snsType: true, condition: true, recruitCount: true },
+          select: { snsType: true, minFollowers: true, recruitCount: true },
           orderBy: { snsType: "asc" },
         },
       },
@@ -105,7 +105,7 @@ export class InfluencerCampaignsService {
       where: { id: args.campaignId },
       include: {
         snsRecruits: {
-          select: { snsType: true, condition: true, recruitCount: true },
+          select: { snsType: true, minFollowers: true, recruitCount: true },
           orderBy: { snsType: "asc" },
         },
       },

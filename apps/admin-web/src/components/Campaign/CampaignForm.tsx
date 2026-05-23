@@ -25,7 +25,7 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   minFollowers: null,
 };
 
-type SnsRecruitItemError = Partial<Record<"condition" | "recruitCount", string>>;
+type SnsRecruitItemError = Partial<Record<"minFollowers" | "recruitCount", string>>;
 
 type FieldErrors = Partial<Record<keyof Values, string>> & {
   referenceMediaUrls_items?: Record<number, string>;
@@ -70,7 +70,7 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
         } else if (
           first === "snsRecruits" &&
           typeof second === "number" &&
-          (third === "condition" || third === "recruitCount")
+          (third === "minFollowers" || third === "recruitCount")
         ) {
           const prev = recruitItems[second] ?? {};
           recruitItems[second] = { ...prev, [third]: issue.message };

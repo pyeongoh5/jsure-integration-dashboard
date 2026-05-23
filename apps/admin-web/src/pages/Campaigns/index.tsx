@@ -79,7 +79,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     dday: daysUntil(c.recruitEndAt, now),
     snsRecruits: c.snsRecruits.map((r) => ({
       snsType: r.snsType,
-      condition: r.condition,
+      minFollowers: r.minFollowers,
     })),
   };
 }

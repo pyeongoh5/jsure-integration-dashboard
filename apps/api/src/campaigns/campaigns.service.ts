@@ -26,7 +26,7 @@ export function utcToJstDateStr(d: Date): string {
 
 type SnsRecruitRow = {
   snsType: string;
-  condition: string;
+  minFollowers: number;
   recruitCount: number;
 };
 
@@ -58,7 +58,7 @@ function toResponse(row: CampaignRow): CampaignResponse {
     rewardJpy: row.rewardJpy,
     snsRecruits: row.snsRecruits.map((r) => ({
       snsType: r.snsType as SnsRecruit["snsType"],
-      condition: r.condition,
+      minFollowers: r.minFollowers,
       recruitCount: r.recruitCount,
     })),
     recruitStartDate: utcToJstDateStr(row.recruitStartAt),
@@ -82,7 +82,7 @@ function toResponse(row: CampaignRow): CampaignResponse {
 
 const RECRUITS_INCLUDE = {
   snsRecruits: {
-    select: { snsType: true, condition: true, recruitCount: true },
+    select: { snsType: true, minFollowers: true, recruitCount: true },
     orderBy: { snsType: "asc" as const },
   },
 } as const;
@@ -110,7 +110,7 @@ export class CampaignsService {
         snsRecruits: {
           create: input.snsRecruits.map((r) => ({
             snsType: r.snsType,
-            condition: r.condition,
+            minFollowers: r.minFollowers,
             recruitCount: r.recruitCount,
           })),
         },
@@ -171,7 +171,7 @@ export class CampaignsService {
           data: input.snsRecruits.map((r) => ({
             campaignId: id,
             snsType: r.snsType,
-            condition: r.condition,
+            minFollowers: r.minFollowers,
             recruitCount: r.recruitCount,
           })),
         });

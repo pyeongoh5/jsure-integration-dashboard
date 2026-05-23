@@ -92,7 +92,12 @@ export function CampaignDetail() {
               <li key={r.snsType}>
                 <b>{r.snsType}</b>
                 <span>{r.recruitCount}名</span>
-                {r.condition && <p>{r.condition}</p>}
+                {r.minFollowers > 0 && (
+                  <p>
+                    {r.snsType === "YOUTUBE" ? "登録者" : "フォロワー"}{" "}
+                    {r.minFollowers.toLocaleString()}人以上
+                  </p>
+                )}
               </li>
             ))}
           </ul>

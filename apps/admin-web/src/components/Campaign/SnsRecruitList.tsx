@@ -1,13 +1,17 @@
 import type { SnsRecruit, SnsType } from "@jsure/shared";
 
-const OPTIONS: readonly { value: SnsType; label: string }[] = [
-  { value: "INSTAGRAM", label: "인스타그램" },
-  { value: "TIKTOK", label: "틱톡" },
-  { value: "X", label: "X" },
-  { value: "YOUTUBE", label: "유튜브" },
+const OPTIONS: readonly {
+  value: SnsType;
+  label: string;
+  followerLabel: string;
+}[] = [
+  { value: "INSTAGRAM", label: "인스타그램", followerLabel: "팔로워" },
+  { value: "TIKTOK", label: "틱톡", followerLabel: "팔로워" },
+  { value: "X", label: "X", followerLabel: "팔로워" },
+  { value: "YOUTUBE", label: "유튜브", followerLabel: "구독자" },
 ];
 
-type ItemError = Partial<Record<"condition" | "recruitCount", string>>;
+type ItemError = Partial<Record<"minFollowers" | "recruitCount", string>>;
 
 type Props = {
   value: SnsRecruit[];
@@ -31,7 +35,7 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
     if (idx >= 0) {
       onChange(value.filter((_, i) => i !== idx));
     } else {
-      onChange([...value, { snsType: sns, condition: "", recruitCount: 1 }]);
+      onChange([...value, { snsType: sns, minFollowers: 0, recruitCount: 1 }]);
     }
   };
 
@@ -65,17 +69,31 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
             {selected && row ? (
               <div className="cf__sns-fields">
                 <div className="cf__sns-field">
-                  <label className="cf__sub-label">조건</label>
-                  <input
-                    type="text"
-                    className="cf__input"
-                    placeholder="예: 팔로워 1,000명 이상"
-                    value={row.condition}
-                    disabled={disabled}
-                    onChange={(e) => updateAt(idx, { condition: e.target.value })}
-                  />
-                  {err?.condition && (
-                    <div className="cf__error">{err.condition}</div>
+                  <label className="cf__sub-label">
+                    최소 {opt.followerLabel}
+                  </label>
+                  <div className="cf__sns-count-row">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      className="cf__input"
+                      placeholder="0"
+                      value={
+                        Number.isFinite(row.minFollowers)
+                          ? String(row.minFollowers)
+                          : ""
+                      }
+                      disabled={disabled}
+                      onChange={(e) =>
+                        updateAt(idx, {
+                          minFollowers: parseIntegerInput(e.target.value),
+                        })
+                      }
+                    />
+                    <span className="cf__sns-suffix">명 이상</span>
+                  </div>
+                  {err?.minFollowers && (
+                    <div className="cf__error">{err.minFollowers}</div>
                   )}
                 </div>
                 <div className="cf__sns-field cf__sns-field--count">

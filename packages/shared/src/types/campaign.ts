@@ -10,7 +10,7 @@ const DateOnly = z
 
 export const SnsRecruitSchema = z.object({
   snsType: SnsTypeSchema,
-  condition: z.string().max(500),
+  minFollowers: z.number().int().nonnegative("0 이상의 정수"),
   recruitCount: z.number().int().positive("1 이상"),
 });
 export type SnsRecruit = z.infer<typeof SnsRecruitSchema>;

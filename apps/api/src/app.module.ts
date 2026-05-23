@@ -11,6 +11,7 @@ import { InfluencerAuthModule } from "./influencer-auth/influencer-auth.module";
 import { InfluencerCampaignsModule } from "./influencer-campaigns/influencer-campaigns.module";
 import { InfluencerApplicationsModule } from "./influencer-applications/influencer-applications.module";
 import { InfluencerMeModule } from "./influencer-me/influencer-me.module";
+import { AdminApplicationsModule } from "./admin-applications/admin-applications.module";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { InfluencerMeModule } from "./influencer-me/influencer-me.module";
     InfluencerCampaignsModule,
     InfluencerApplicationsModule,
     InfluencerMeModule,
+    AdminApplicationsModule,
   ],
 })
 export class AppModule {}

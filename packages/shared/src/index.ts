@@ -4,6 +4,7 @@ export * from "./types/campaign.js";
 export * from "./types/influencer.js";
 export * from "./types/influencerAuth.js";
 export * from "./types/application.js";
+export * from "./types/adminInfluencer.js";
 export * from "./types/jpBank.js";
 export * from "./data/influencerTerms.js";
 export { JP_BANKS } from "./data/jpBanks.js";

@@ -1,9 +1,6 @@
 .cam-menu {
-  position: absolute;
-  top: 100%;
-  right: 12px;
-  margin-top: 6px;
-  z-index: 20;
+  position: fixed;
+  z-index: 1000;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -33,9 +30,6 @@
   background: #fef2f2;
 }
 
-.cam-card-wrap {
-  position: relative;
-}
 .cam-card-wrap > .ui-card {
   cursor: pointer;
 }

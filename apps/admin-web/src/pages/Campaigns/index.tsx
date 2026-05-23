@@ -119,7 +119,9 @@ const CAMPAIGNS: Campaign[] = [
 export function Campaigns() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<
+    { id: string; x: number; y: number } | null
+  >(null);
   const [closeTargetId, setCloseTargetId] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
   const [closeError, setCloseError] = useState<string | null>(null);
@@ -172,7 +174,13 @@ export function Campaigns() {
             <div
               key={c.id}
               className="cam-card-wrap"
-              onClick={() => setOpenMenuId((cur) => (cur === c.id ? null : c.id))}
+              onClick={(e) => {
+                if (openMenu?.id === c.id) {
+                  setOpenMenu(null);
+                } else {
+                  setOpenMenu({ id: c.id, x: e.clientX, y: e.clientY });
+                }
+              }}
             >
               <Card
                 title={<CampaignCardTitle brand={c.brand} status={c.status} />}
@@ -194,22 +202,23 @@ export function Campaigns() {
                   />
                 }
               />
-              {openMenuId === c.id && (
+              {openMenu?.id === c.id && (
                 <CampaignActionsMenu
+                  anchor={{ x: openMenu.x, y: openMenu.y }}
                   onApplicants={() => {
-                    setOpenMenuId(null);
+                    setOpenMenu(null);
                     navigate(`/applicants?campaignId=${encodeURIComponent(c.id)}`);
                   }}
                   onEdit={() => {
-                    setOpenMenuId(null);
+                    setOpenMenu(null);
                     navigate(`/campaigns/${encodeURIComponent(c.id)}/edit`);
                   }}
                   onClose={() => {
-                    setOpenMenuId(null);
+                    setOpenMenu(null);
                     setCloseError(null);
                     setCloseTargetId(c.id);
                   }}
-                  onDismiss={() => setOpenMenuId(null)}
+                  onDismiss={() => setOpenMenu(null)}
                 />
               )}
             </div>

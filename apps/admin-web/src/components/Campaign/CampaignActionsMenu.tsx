@@ -1,15 +1,47 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "./CampaignActionsMenu.css";
 
+const MENU_GAP = 4;
+const VIEWPORT_PADDING = 8;
+
 type Props = {
+  anchor: { x: number; y: number };
   onApplicants: () => void;
   onEdit: () => void;
   onClose: () => void;
   onDismiss: () => void;
 };
 
-export function CampaignActionsMenu({ onApplicants, onEdit, onClose, onDismiss }: Props) {
+export function CampaignActionsMenu({
+  anchor,
+  onApplicants,
+  onEdit,
+  onClose,
+  onDismiss,
+}: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number }>({
+    left: anchor.x,
+    top: anchor.y + MENU_GAP,
+  });
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let left = anchor.x;
+    let top = anchor.y + MENU_GAP;
+    if (left + rect.width > vw - VIEWPORT_PADDING) {
+      left = Math.max(VIEWPORT_PADDING, vw - rect.width - VIEWPORT_PADDING);
+    }
+    if (top + rect.height > vh - VIEWPORT_PADDING) {
+      top = Math.max(VIEWPORT_PADDING, anchor.y - rect.height - MENU_GAP);
+    }
+    setPos({ left, top });
+  }, [anchor.x, anchor.y]);
 
   useEffect(() => {
     const onDocPointer = (e: PointerEvent) => {
@@ -28,8 +60,14 @@ export function CampaignActionsMenu({ onApplicants, onEdit, onClose, onDismiss }
     };
   }, [onDismiss]);
 
-  return (
-    <div ref={ref} className="cam-menu" role="menu" onClick={(e) => e.stopPropagation()}>
+  return createPortal(
+    <div
+      ref={ref}
+      className="cam-menu"
+      role="menu"
+      style={{ left: pos.left, top: pos.top }}
+      onClick={(e) => e.stopPropagation()}
+    >
       <button
         type="button"
         role="menuitem"
@@ -54,6 +92,7 @@ export function CampaignActionsMenu({ onApplicants, onEdit, onClose, onDismiss }
       >
         캠페인 종료
       </button>
-    </div>
+    </div>,
+    document.body,
   );
 }

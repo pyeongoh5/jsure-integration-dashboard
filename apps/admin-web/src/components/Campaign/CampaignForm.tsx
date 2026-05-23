@@ -164,45 +164,11 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
             )}
           </div>
         </div>
-      </section>
-
-      <section className="cf__section">
-        <h2 className="cf__section-title">브랜드 / 썸네일 (인플루언서 앱 표시용)</h2>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-brand-name">브랜드명</label>
-          <input
-            id="cf-brand-name"
-            className="cf__input"
-            placeholder="GREEN PROJECT"
-            value={values.brandName ?? ""}
-            onChange={(e) =>
-              update("brandName", e.target.value === "" ? null : e.target.value)
-            }
-            disabled={submitting}
-          />
-          {errors.brandName && <div className="cf__error">{errors.brandName}</div>}
-        </div>
-
-        <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-brand-tagline">슬로건 / 카피</label>
-          <input
-            id="cf-brand-tagline"
-            className="cf__input"
-            placeholder="잡화의 힘으로, 일상과 지구를 행복하게."
-            value={values.brandTagline ?? ""}
-            onChange={(e) =>
-              update("brandTagline", e.target.value === "" ? null : e.target.value)
-            }
-            disabled={submitting}
-          />
-          {errors.brandTagline && (
-            <div className="cf__error">{errors.brandTagline}</div>
-          )}
-        </div>
-
-        <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-thumbnail">썸네일 이미지 URL</label>
+          <label className="cf__label" htmlFor="cf-thumbnail">
+            썸네일 이미지 URL (인플루언서 앱 표시용)
+          </label>
           <input
             id="cf-thumbnail"
             type="url"
@@ -219,32 +185,6 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
           />
           {errors.thumbnailUrl && (
             <div className="cf__error">{errors.thumbnailUrl}</div>
-          )}
-        </div>
-
-        <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-min-followers">
-            최소 팔로워 수 (신청 자격, 공란이면 무제한)
-          </label>
-          <input
-            id="cf-min-followers"
-            className="cf__input"
-            inputMode="numeric"
-            placeholder="10000"
-            value={values.minFollowers != null ? String(values.minFollowers) : ""}
-            onChange={(e) => {
-              const raw = e.target.value;
-              if (raw === "") {
-                update("minFollowers", null);
-                return;
-              }
-              const n = Number(raw);
-              update("minFollowers", Number.isInteger(n) && n >= 0 ? n : Number.NaN);
-            }}
-            disabled={submitting}
-          />
-          {errors.minFollowers && (
-            <div className="cf__error">{errors.minFollowers}</div>
           )}
         </div>
       </section>

@@ -154,6 +154,43 @@
   line-height: 1.5;
 }
 
+.cmp-card__sns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.cmp-card__sns-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+.cmp-card__sns-chip i {
+  font-size: 12px;
+  color: #6b7280;
+}
+.cmp-card__sns-chip--instagram i {
+  color: #e1306c;
+}
+.cmp-card__sns-chip--tiktok i {
+  color: #111827;
+}
+.cmp-card__sns-chip--x i {
+  color: #111827;
+}
+.cmp-card__sns-chip--youtube i {
+  color: #ff0000;
+}
+.cmp-card__sns-cond {
+  white-space: nowrap;
+}
+
 .cmp-card__meta {
   display: flex;
   flex-direction: column;

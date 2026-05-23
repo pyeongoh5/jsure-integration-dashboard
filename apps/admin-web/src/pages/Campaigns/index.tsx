@@ -77,6 +77,10 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     applied: 0,
     capacity,
     dday: daysUntil(c.recruitEndAt, now),
+    snsRecruits: c.snsRecruits.map((r) => ({
+      snsType: r.snsType,
+      condition: r.condition,
+    })),
   };
 }
 
@@ -202,6 +206,7 @@ export function Campaigns() {
                     description={c.description}
                     period={c.period}
                     reward={c.reward}
+                    snsRecruits={c.snsRecruits}
                   />
                 }
                 bottomAffix={

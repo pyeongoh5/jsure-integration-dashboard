@@ -66,6 +66,7 @@ export const CampaignResponseSchema = z.object({
   recruitEndDate: DateOnly,
   recruitStartAt: z.string().datetime(),
   recruitEndAt: z.string().datetime(),
+  closedAt: z.string().datetime().nullable(),
   productSummary: z.string(),
   productDetailUrl: z.string().url(),
   guideline: z.string(),

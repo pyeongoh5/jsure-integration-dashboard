@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ConfirmDialog } from "@/ui/ConfirmDialog";
 import "./Applicants.css";
 
@@ -171,6 +172,8 @@ function formatFollowers(n: number): string {
 type PendingAction = { type: "approve" | "reject"; applicant: Applicant };
 
 export function Applicants() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const campaignIdFilter = searchParams.get("campaignId");
   const [tab, setTab] = useState<ApplicantStatus>("pending");
   const [items, setItems] = useState<Applicant[]>(INITIAL);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -256,9 +259,24 @@ export function Applicants() {
       </div>
 
       <div className="apl__filters">
-        <button type="button" className="apl-filter">
-          + 캠페인
-        </button>
+        {campaignIdFilter ? (
+          <button
+            type="button"
+            className="apl-filter apl-filter--active"
+            onClick={() => {
+              const next = new URLSearchParams(searchParams);
+              next.delete("campaignId");
+              setSearchParams(next);
+            }}
+            title="필터 해제"
+          >
+            캠페인: {campaignIdFilter} ✕
+          </button>
+        ) : (
+          <button type="button" className="apl-filter">
+            + 캠페인
+          </button>
+        )}
         <button type="button" className="apl-filter">
           + 팔로워 범위
         </button>

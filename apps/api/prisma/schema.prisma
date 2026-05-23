@@ -61,6 +61,7 @@ model Campaign {
   recruitCount       Int
   recruitStartAt     DateTime
   recruitEndAt       DateTime
+  closedAt           DateTime?
   productSummary     String
   productDetailUrl   String
   guideline          String

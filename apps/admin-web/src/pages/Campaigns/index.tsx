@@ -1,13 +1,17 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "../../ui/Card";
+import { ConfirmDialog } from "../../ui/ConfirmDialog";
 import { FilterChips } from "../../ui/FilterChips";
 import { CampaignCardTitle } from "../../components/Campaign/CampaignCardTitle";
 import { CampaignCardBody } from "../../components/Campaign/CampaignCardBody";
 import { CampaignCardFooter } from "../../components/Campaign/CampaignCardFooter";
+import { CampaignActionsMenu } from "../../components/Campaign/CampaignActionsMenu";
 import type { Campaign, CampaignStatus } from "../../components/Campaign/types";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
+import { closeCampaign } from "../../lib/campaigns";
 import "./Campaigns.css";
+import "../../components/Campaign/CampaignActionsMenu.css";
 
 type FilterKey = "all" | CampaignStatus;
 
@@ -113,7 +117,12 @@ const CAMPAIGNS: Campaign[] = [
 ];
 
 export function Campaigns() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [closeTargetId, setCloseTargetId] = useState<string | null>(null);
+  const [closing, setClosing] = useState(false);
+  const [closeError, setCloseError] = useState<string | null>(null);
   const rawStatus = searchParams.get(STATUS_PARAM);
   const filter: FilterKey = isFilterKey(rawStatus) ? rawStatus : "all";
 
@@ -160,30 +169,86 @@ export function Campaigns() {
       ) : (
         <div className="cmp__list">
           {filtered.map((c) => (
-            <Card
+            <div
               key={c.id}
-              title={<CampaignCardTitle brand={c.brand} status={c.status} />}
-              content={
-                <CampaignCardBody
-                  thumbIcon={c.thumbIcon}
-                  name={c.name}
-                  description={c.description}
-                  period={c.period}
-                  reward={c.reward}
+              className="cam-card-wrap"
+              onClick={() => setOpenMenuId((cur) => (cur === c.id ? null : c.id))}
+            >
+              <Card
+                title={<CampaignCardTitle brand={c.brand} status={c.status} />}
+                content={
+                  <CampaignCardBody
+                    thumbIcon={c.thumbIcon}
+                    name={c.name}
+                    description={c.description}
+                    period={c.period}
+                    reward={c.reward}
+                  />
+                }
+                bottomAffix={
+                  <CampaignCardFooter
+                    applied={c.applied}
+                    capacity={c.capacity}
+                    dday={c.dday}
+                    status={c.status}
+                  />
+                }
+              />
+              {openMenuId === c.id && (
+                <CampaignActionsMenu
+                  onApplicants={() => {
+                    setOpenMenuId(null);
+                    navigate(`/applicants?campaignId=${encodeURIComponent(c.id)}`);
+                  }}
+                  onEdit={() => {
+                    setOpenMenuId(null);
+                    navigate(`/campaigns/${encodeURIComponent(c.id)}/edit`);
+                  }}
+                  onClose={() => {
+                    setOpenMenuId(null);
+                    setCloseError(null);
+                    setCloseTargetId(c.id);
+                  }}
+                  onDismiss={() => setOpenMenuId(null)}
                 />
-              }
-              bottomAffix={
-                <CampaignCardFooter
-                  applied={c.applied}
-                  capacity={c.capacity}
-                  dday={c.dday}
-                  status={c.status}
-                />
-              }
-            />
+              )}
+            </div>
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={closeTargetId !== null}
+        title="캠페인 종료"
+        subtitle={
+          closeError ??
+          "이 캠페인을 종료하시겠어요? 종료 후에는 되돌릴 수 없습니다."
+        }
+        confirmLabel={closing ? "종료 중…" : "종료"}
+        cancelLabel="취소"
+        tone="danger"
+        busy={closing}
+        onConfirm={async () => {
+          if (!closeTargetId || closing) return;
+          setClosing(true);
+          setCloseError(null);
+          try {
+            await closeCampaign(closeTargetId);
+            setCloseTargetId(null);
+          } catch (err) {
+            setCloseError(
+              err instanceof Error ? err.message : "종료에 실패했습니다.",
+            );
+          } finally {
+            setClosing(false);
+          }
+        }}
+        onCancel={() => {
+          if (closing) return;
+          setCloseTargetId(null);
+          setCloseError(null);
+        }}
+      />
     </div>
   );
 }

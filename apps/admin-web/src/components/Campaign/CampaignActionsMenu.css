@@ -1,0 +1,41 @@
+.cam-menu {
+  position: absolute;
+  top: 100%;
+  right: 12px;
+  margin-top: 6px;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+.cam-menu__item {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #111827;
+  text-align: left;
+  cursor: pointer;
+}
+.cam-menu__item:hover {
+  background: #f3f4f6;
+}
+.cam-menu__item--danger {
+  color: #dc2626;
+}
+.cam-menu__item--danger:hover {
+  background: #fef2f2;
+}
+
+.cam-card-wrap {
+  position: relative;
+}
+.cam-card-wrap > .ui-card {
+  cursor: pointer;
+}

@@ -28,3 +28,8 @@ export async function updateCampaign(
   );
   return CampaignResponseSchema.parse(res.data);
 }
+
+export async function closeCampaign(id: string): Promise<CampaignResponse> {
+  const res = await api.post(`/campaigns/${encodeURIComponent(id)}/close`);
+  return CampaignResponseSchema.parse(res.data);
+}

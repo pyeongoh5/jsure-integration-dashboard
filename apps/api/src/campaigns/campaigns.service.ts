@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import type {
   CampaignResponse,
   CreateCampaignRequest,
@@ -28,6 +32,7 @@ type CampaignRow = {
   recruitCount: number;
   recruitStartAt: Date;
   recruitEndAt: Date;
+  closedAt: Date | null;
   productSummary: string;
   productDetailUrl: string;
   guideline: string;
@@ -49,6 +54,7 @@ function toResponse(row: CampaignRow): CampaignResponse {
     recruitEndDate: utcToJstDateStr(row.recruitEndAt),
     recruitStartAt: row.recruitStartAt.toISOString(),
     recruitEndAt: row.recruitEndAt.toISOString(),
+    closedAt: row.closedAt ? row.closedAt.toISOString() : null,
     productSummary: row.productSummary,
     productDetailUrl: row.productDetailUrl,
     guideline: row.guideline,
@@ -115,6 +121,19 @@ export class CampaignsService {
     if (input.cautions !== undefined) data.cautions = input.cautions;
 
     const row = await this.prisma.campaign.update({ where: { id }, data });
+    return toResponse(row);
+  }
+
+  async close(id: string): Promise<CampaignResponse> {
+    const existing = await this.prisma.campaign.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException("Campaign not found");
+    if (existing.closedAt) {
+      throw new ConflictException("Campaign already closed");
+    }
+    const row = await this.prisma.campaign.update({
+      where: { id },
+      data: { closedAt: new Date() },
+    });
     return toResponse(row);
   }
 }

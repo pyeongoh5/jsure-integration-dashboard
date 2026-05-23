@@ -43,4 +43,9 @@ export class CampaignsController {
   ): Promise<CampaignResponse> {
     return this.campaigns.update(id, body);
   }
+
+  @Post(":id/close")
+  close(@Param("id") id: string): Promise<CampaignResponse> {
+    return this.campaigns.close(id);
+  }
 }

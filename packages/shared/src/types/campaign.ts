@@ -36,9 +36,6 @@ export const CampaignFormSchema = z
     referenceMediaUrls: z.array(z.string().url()).max(10),
     cautions: z.string().max(2000),
     thumbnailUrl: z.string().url().nullable().optional(),
-    brandName: z.string().max(50).nullable().optional(),
-    brandTagline: z.string().max(200).nullable().optional(),
-    minFollowers: z.number().int().nonnegative().nullable().optional(),
   })
   .refine((d) => d.recruitStartDate <= d.recruitEndDate, {
     path: ["recruitEndDate"],
@@ -62,9 +59,6 @@ export const UpdateCampaignRequestSchema = z
     referenceMediaUrls: z.array(z.string().url()).max(10).optional(),
     cautions: z.string().max(2000).optional(),
     thumbnailUrl: z.string().url().nullable().optional(),
-    brandName: z.string().max(50).nullable().optional(),
-    brandTagline: z.string().max(200).nullable().optional(),
-    minFollowers: z.number().int().nonnegative().nullable().optional(),
   })
   .refine(
     (d) =>
@@ -91,10 +85,8 @@ export const CampaignResponseSchema = z.object({
   referenceMediaUrls: z.array(z.string().url()),
   cautions: z.string(),
   thumbnailUrl: z.string().url().nullable(),
-  brandName: z.string().nullable(),
-  brandTagline: z.string().nullable(),
-  minFollowers: z.number().int().nullable(),
   approvedCount: z.number().int().nonnegative(),
+  appliedCount: z.number().int().nonnegative(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -108,12 +100,10 @@ export type CampaignListResponse = z.infer<typeof CampaignListResponseSchema>;
 export const InfluencerCampaignCardSchema = z.object({
   id: z.string(),
   title: z.string(),
-  brandName: z.string().nullable(),
-  brandTagline: z.string().nullable(),
+  productSummary: z.string(),
   thumbnailUrl: z.string().url().nullable(),
   rewardJpy: z.number().int().nonnegative(),
-  snsTypes: z.array(SnsTypeSchema),
-  minFollowers: z.number().int().nullable(),
+  snsRecruits: z.array(SnsRecruitSchema),
   recruitCount: z.number().int().nonnegative(),
   appliedCount: z.number().int().nonnegative(),
   recruitStartAt: z.string().datetime(),
@@ -126,12 +116,10 @@ export type InfluencerCampaignCard = z.infer<
 
 export const InfluencerCampaignDetailSchema =
   InfluencerCampaignCardSchema.extend({
-    productSummary: z.string(),
     productDetailUrl: z.string().url(),
     guideline: z.string(),
     referenceMediaUrls: z.array(z.string().url()),
     cautions: z.string(),
-    snsRecruits: z.array(SnsRecruitSchema),
     hasApplied: z.boolean(),
   });
 export type InfluencerCampaignDetail = z.infer<

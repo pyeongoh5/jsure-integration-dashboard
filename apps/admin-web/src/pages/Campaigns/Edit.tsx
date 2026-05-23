@@ -37,9 +37,6 @@ export function CampaignEdit() {
           referenceMediaUrls: res.referenceMediaUrls,
           cautions: res.cautions,
           thumbnailUrl: res.thumbnailUrl,
-          brandName: res.brandName,
-          brandTagline: res.brandTagline,
-          minFollowers: res.minFollowers,
         };
         setState({ kind: "ready", initial });
       })

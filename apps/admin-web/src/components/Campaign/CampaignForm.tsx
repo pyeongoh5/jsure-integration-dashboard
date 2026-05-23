@@ -20,9 +20,6 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   referenceMediaUrls: [],
   cautions: "",
   thumbnailUrl: null,
-  brandName: null,
-  brandTagline: null,
-  minFollowers: null,
 };
 
 type SnsRecruitItemError = Partial<Record<"minFollowers" | "recruitCount", string>>;

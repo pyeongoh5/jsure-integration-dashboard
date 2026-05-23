@@ -46,7 +46,7 @@ export function CampaignDetail() {
 
   return (
     <div className="cdetail">
-      <PageHeader showBack title={data.brandName ?? data.title} />
+      <PageHeader showBack title={data.title} />
       <div
         className="cdetail__hero"
         style={
@@ -54,14 +54,7 @@ export function CampaignDetail() {
             ? { backgroundImage: `url(${data.thumbnailUrl})` }
             : undefined
         }
-      >
-        {data.brandTagline && (
-          <div className="cdetail__hero-tagline">{data.brandTagline}</div>
-        )}
-        {data.brandName && (
-          <div className="cdetail__hero-brand">{data.brandName}</div>
-        )}
-      </div>
+      />
 
       <div className="cdetail__body">
         <h1 className="cdetail__title">{data.title}</h1>
@@ -70,7 +63,7 @@ export function CampaignDetail() {
           募集 {formatDate(data.recruitStartAt)} 〜 {formatDate(data.recruitEndAt)}
         </div>
 
-        <SnsBadgeList snsTypes={data.snsTypes} minFollowers={data.minFollowers} />
+        <SnsBadgeList recruits={data.snsRecruits} />
 
         <section className="cdetail__section">
           <h3>商品</h3>

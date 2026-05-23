@@ -73,7 +73,9 @@ export function Apply() {
   }
 
   const mySnsTypes = new Set(me.data?.snsAccounts.map((s) => s.snsType) ?? []);
-  const matched = campaign.data.snsTypes.filter((t) => mySnsTypes.has(t));
+  const matched = campaign.data.snsRecruits
+    .map((r) => r.snsType)
+    .filter((t) => mySnsTypes.has(t));
 
   return (
     <div className="apply">

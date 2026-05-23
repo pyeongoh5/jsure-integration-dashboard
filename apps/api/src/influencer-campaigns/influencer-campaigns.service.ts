@@ -11,11 +11,9 @@ const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 type CampaignRow = {
   id: string;
   title: string;
+  productSummary: string;
   rewardJpy: number;
-  brandName: string | null;
-  brandTagline: string | null;
   thumbnailUrl: string | null;
-  minFollowers: number | null;
   recruitStartAt: Date;
   recruitEndAt: Date;
   createdAt: Date;
@@ -42,12 +40,10 @@ function toCard(
   return {
     id: row.id,
     title: row.title,
-    brandName: row.brandName,
-    brandTagline: row.brandTagline,
+    productSummary: row.productSummary,
     thumbnailUrl: row.thumbnailUrl,
     rewardJpy: row.rewardJpy,
-    snsTypes: row.snsRecruits.map((r) => r.snsType),
-    minFollowers: row.minFollowers,
+    snsRecruits: row.snsRecruits,
     recruitCount: totalRecruitCount(row.snsRecruits),
     appliedCount,
     recruitStartAt: row.recruitStartAt.toISOString(),
@@ -131,12 +127,10 @@ export class InfluencerCampaignsService {
 
     return {
       ...toCard(row, appliedCount, now),
-      productSummary: row.productSummary,
       productDetailUrl: row.productDetailUrl,
       guideline: row.guideline,
       referenceMediaUrls: row.referenceMediaUrls,
       cautions: row.cautions,
-      snsRecruits: row.snsRecruits,
       hasApplied: existing !== null,
     };
   }

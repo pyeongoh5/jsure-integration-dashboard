@@ -131,7 +131,9 @@ export class InfluencerApplicationsService {
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
       include: {
-        snsRecruits: { select: { snsType: true, recruitCount: true } },
+        snsRecruits: {
+          select: { snsType: true, minFollowers: true, recruitCount: true },
+        },
       },
     });
     if (!campaign) {
@@ -156,11 +158,11 @@ export class InfluencerApplicationsService {
     const influencerSns = await this.prisma.influencerSnsAccount.findMany({
       where: { influencerId },
     });
-    const campaignSnsTypes = new Set(
-      campaign.snsRecruits.map((r) => r.snsType),
+    const minFollowersBySns = new Map(
+      campaign.snsRecruits.map((r) => [r.snsType, r.minFollowers]),
     );
     const matchingSns = influencerSns.filter((s) =>
-      campaignSnsTypes.has(s.snsType),
+      minFollowersBySns.has(s.snsType),
     );
     if (matchingSns.length === 0) {
       throw new BadRequestException({
@@ -169,16 +171,14 @@ export class InfluencerApplicationsService {
       });
     }
 
-    if (campaign.minFollowers != null) {
-      const hasEnough = matchingSns.some(
-        (s) => s.followerCount >= (campaign.minFollowers ?? 0),
-      );
-      if (!hasEnough) {
-        throw new BadRequestException({
-          code: "INSUFFICIENT_FOLLOWERS",
-          message: `フォロワー数が ${campaign.minFollowers} 以上必要です`,
-        });
-      }
+    const qualifies = matchingSns.some(
+      (s) => s.followerCount >= (minFollowersBySns.get(s.snsType) ?? 0),
+    );
+    if (!qualifies) {
+      throw new BadRequestException({
+        code: "INSUFFICIENT_FOLLOWERS",
+        message: "対象SNSの最低フォロワー条件を満たしていません",
+      });
     }
 
     try {

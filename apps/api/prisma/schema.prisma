@@ -97,9 +97,6 @@ model Campaign {
   referenceMediaUrls String[]
   cautions           String
   thumbnailUrl       String?
-  brandName          String?
-  brandTagline       String?
-  minFollowers       Int?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 

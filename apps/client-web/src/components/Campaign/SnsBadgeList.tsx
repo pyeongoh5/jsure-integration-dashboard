@@ -1,4 +1,4 @@
-import type { SnsType } from "@jsure/shared";
+import type { SnsRecruit, SnsType } from "@jsure/shared";
 import "./SnsBadgeList.css";
 
 const ICON: Record<SnsType, string> = {
@@ -16,24 +16,24 @@ const LABEL: Record<SnsType, string> = {
 };
 
 interface Props {
-  snsTypes: SnsType[];
-  minFollowers: number | null;
+  recruits: SnsRecruit[];
 }
 
-export function SnsBadgeList({ snsTypes, minFollowers }: Props) {
+export function SnsBadgeList({ recruits }: Props) {
   return (
     <div className="sbl">
-      {snsTypes.map((t) => (
-        <div key={t} className="sbl__badge">
-          <i className={ICON[t]} />
-          <span>{LABEL[t]}</span>
+      {recruits.map((r) => (
+        <div key={r.snsType} className="sbl__badge">
+          <i className={ICON[r.snsType]} />
+          <span>{LABEL[r.snsType]}</span>
+          {r.minFollowers > 0 && (
+            <span className="sbl__badge-cond">
+              {r.snsType === "YOUTUBE" ? "登録者" : "フォロワー"}{" "}
+              {r.minFollowers.toLocaleString("ja-JP")}+
+            </span>
+          )}
         </div>
       ))}
-      {minFollowers != null && (
-        <div className="sbl__badge sbl__badge--info">
-          フォロワー {minFollowers.toLocaleString("ja-JP")}+
-        </div>
-      )}
     </div>
   );
 }

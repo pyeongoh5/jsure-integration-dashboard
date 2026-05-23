@@ -2,17 +2,17 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { ConfigService } from "@nestjs/config";
-import type { PublicUser } from "@jsure/shared";
+import type { PublicAdminUser } from "@jsure/shared";
 import type { JwtPayload } from "../auth.service";
-import { UsersService } from "../../users/users.service";
+import { AdminUsersService } from "../../admin-users/admin-users.service";
 
-export type AuthenticatedUser = PublicUser & { sid: string };
+export type AuthenticatedUser = PublicAdminUser & { sid: string };
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     config: ConfigService,
-    private readonly users: UsersService,
+    private readonly users: AdminUsersService,
   ) {
     const secret = config.get<string>("JWT_SECRET");
     if (!secret) throw new Error("JWT_SECRET is not configured");

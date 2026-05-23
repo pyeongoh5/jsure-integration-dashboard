@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import type { PublicUser, UserRole, UserStatus } from "@jsure/shared";
-import { listUsers } from "@/lib/users";
+import type { PublicAdminUser, AdminUserRole, AdminUserStatus } from "@jsure/shared";
+import { listAdminUsers } from "@/lib/adminUsers";
 import "./Team.css";
 
-const ROLE_META: Record<UserRole, { label: string; className: string }> = {
+const ROLE_META: Record<AdminUserRole, { label: string; className: string }> = {
   OWNER: { label: "소유자(Owner)", className: "team-role--owner" },
   ADMIN: { label: "관리자(Admin)", className: "team-role--admin" },
   GUEST: { label: "게스트(Guest)", className: "team-role--guest" },
 };
 
-const STATUS_META: Record<UserStatus, { label: string; className: string }> = {
+const STATUS_META: Record<AdminUserStatus, { label: string; className: string }> = {
   ACTIVE: { label: "활성", className: "team-status--active" },
   PENDING: { label: "초대 대기", className: "team-status--pending" },
   SUSPENDED: { label: "정지", className: "team-status--suspended" },
@@ -63,12 +63,12 @@ function formatLastActivity(iso: string | null, now: Date): string {
 }
 
 export function Team() {
-  const [users, setUsers] = useState<PublicUser[] | null>(null);
+  const [users, setUsers] = useState<PublicAdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // let cancelled = false;
-    listUsers()
+    listAdminUsers()
       .then((rows) => {
         setUsers(rows);
       })

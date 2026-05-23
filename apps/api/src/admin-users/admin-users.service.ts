@@ -1,9 +1,9 @@
 import { Injectable, ConflictException } from "@nestjs/common";
 import * as bcrypt from "bcrypt";
-import type { PublicUser } from "@jsure/shared";
+import type { PublicAdminUser } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 
-const PUBLIC_USER_SELECT = {
+const PUBLIC_ADMIN_USER_SELECT = {
   id: true,
   email: true,
   name: true,
@@ -19,18 +19,18 @@ const PUBLIC_USER_SELECT = {
   },
 } as const;
 
-type PublicUserRow = {
+type PublicAdminUserRow = {
   id: string;
   email: string;
   name: string | null;
-  role: PublicUser["role"];
-  status: PublicUser["status"];
+  role: PublicAdminUser["role"];
+  status: PublicAdminUser["status"];
   createdAt: Date;
   updatedAt: Date;
   sessions: { lastSeenAt: Date }[];
 };
 
-function toPublic(row: PublicUserRow): PublicUser {
+function toPublic(row: PublicAdminUserRow): PublicAdminUser {
   return {
     id: row.id,
     email: row.email,
@@ -44,31 +44,31 @@ function toPublic(row: PublicUserRow): PublicUser {
 }
 
 @Injectable()
-export class UsersService {
+export class AdminUsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   findByEmail(email: string) {
-    return this.prisma.user.findUnique({ where: { email } });
+    return this.prisma.adminUser.findUnique({ where: { email } });
   }
 
-  async findAllPublic(): Promise<PublicUser[]> {
-    const rows = await this.prisma.user.findMany({
+  async findAllPublic(): Promise<PublicAdminUser[]> {
+    const rows = await this.prisma.adminUser.findMany({
       orderBy: { createdAt: "desc" },
-      select: PUBLIC_USER_SELECT,
+      select: PUBLIC_ADMIN_USER_SELECT,
     });
     return rows.map(toPublic);
   }
 
-  async findPublicById(id: string): Promise<PublicUser | null> {
-    const row = await this.prisma.user.findUnique({
+  async findPublicById(id: string): Promise<PublicAdminUser | null> {
+    const row = await this.prisma.adminUser.findUnique({
       where: { id },
-      select: PUBLIC_USER_SELECT,
+      select: PUBLIC_ADMIN_USER_SELECT,
     });
     return row ? toPublic(row) : null;
   }
 
   findById(id: string) {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prisma.adminUser.findUnique({ where: { id } });
   }
 
   async create(input: { email: string; password: string; name?: string }) {
@@ -77,7 +77,7 @@ export class UsersService {
       throw new ConflictException("Email already in use");
     }
     const passwordHash = await bcrypt.hash(input.password, 10);
-    return this.prisma.user.create({
+    return this.prisma.adminUser.create({
       data: {
         email: input.email,
         passwordHash,

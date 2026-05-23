@@ -44,13 +44,13 @@ export class SessionsService {
   }
 
   async create(
-    userId: string,
+    adminUserId: string,
     ctx: SessionContext,
   ): Promise<{ refreshToken: string; sessionId: string }> {
     const refreshToken = this.generateToken();
-    const session = await this.prisma.userSession.create({
+    const session = await this.prisma.adminUserSession.create({
       data: {
-        userId,
+        adminUserId,
         refreshTokenHash: this.hash(refreshToken),
         userAgent: ctx.userAgent ?? null,
         ip: ctx.ip ?? null,
@@ -68,9 +68,9 @@ export class SessionsService {
   async rotate(
     presented: string,
     ctx: SessionContext,
-  ): Promise<{ refreshToken: string; userId: string; sessionId: string }> {
+  ): Promise<{ refreshToken: string; adminUserId: string; sessionId: string }> {
     const presentedHash = this.hash(presented);
-    const session = await this.prisma.userSession.findUnique({
+    const session = await this.prisma.adminUserSession.findUnique({
       where: { refreshTokenHash: presentedHash },
     });
     if (!session) {
@@ -78,10 +78,10 @@ export class SessionsService {
     }
     if (session.revokedAt) {
       this.log.warn(
-        `Refresh reuse detected for user=${session.userId} session=${session.id} — revoking all sessions`,
+        `Refresh reuse detected for adminUser=${session.adminUserId} session=${session.id} — revoking all sessions`,
       );
-      await this.prisma.userSession.updateMany({
-        where: { userId: session.userId, revokedAt: null },
+      await this.prisma.adminUserSession.updateMany({
+        where: { adminUserId: session.adminUserId, revokedAt: null },
         data: { revokedAt: new Date() },
       });
       throw new UnauthorizedException("Refresh token reuse detected");
@@ -92,13 +92,13 @@ export class SessionsService {
 
     const next = this.generateToken();
     const created = await this.prisma.$transaction(async (tx) => {
-      await tx.userSession.update({
+      await tx.adminUserSession.update({
         where: { id: session.id },
         data: { revokedAt: new Date() },
       });
-      return tx.userSession.create({
+      return tx.adminUserSession.create({
         data: {
-          userId: session.userId,
+          adminUserId: session.adminUserId,
           refreshTokenHash: this.hash(next),
           userAgent: ctx.userAgent ?? session.userAgent,
           ip: ctx.ip ?? session.ip,
@@ -106,28 +106,28 @@ export class SessionsService {
         },
       });
     });
-    return { refreshToken: next, userId: session.userId, sessionId: created.id };
+    return { refreshToken: next, adminUserId: session.adminUserId, sessionId: created.id };
   }
 
   async revokeByToken(presented: string): Promise<void> {
     const presentedHash = this.hash(presented);
-    await this.prisma.userSession.updateMany({
+    await this.prisma.adminUserSession.updateMany({
       where: { refreshTokenHash: presentedHash, revokedAt: null },
       data: { revokedAt: new Date() },
     });
   }
 
-  async revokeOwnedById(userId: string, sessionId: string): Promise<boolean> {
-    const result = await this.prisma.userSession.updateMany({
-      where: { id: sessionId, userId, revokedAt: null },
+  async revokeOwnedById(adminUserId: string, sessionId: string): Promise<boolean> {
+    const result = await this.prisma.adminUserSession.updateMany({
+      where: { id: sessionId, adminUserId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
     return result.count > 0;
   }
 
-  async listForUser(userId: string): Promise<SessionSummary[]> {
-    const rows = await this.prisma.userSession.findMany({
-      where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
+  async listForUser(adminUserId: string): Promise<SessionSummary[]> {
+    const rows = await this.prisma.adminUserSession.findMany({
+      where: { adminUserId, revokedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { lastSeenAt: "desc" },
       select: {
         id: true,
@@ -142,7 +142,7 @@ export class SessionsService {
   }
 
   async touch(sessionId: string): Promise<void> {
-    await this.prisma.userSession.updateMany({
+    await this.prisma.adminUserSession.updateMany({
       where: { id: sessionId, revokedAt: null },
       data: { lastSeenAt: new Date() },
     });
@@ -150,10 +150,10 @@ export class SessionsService {
 
   async cleanupExpired(): Promise<{ expired: number; revoked: number }> {
     const now = new Date();
-    const expired = await this.prisma.userSession.deleteMany({
+    const expired = await this.prisma.adminUserSession.deleteMany({
       where: { expiresAt: { lt: now } },
     });
-    const revoked = await this.prisma.userSession.deleteMany({
+    const revoked = await this.prisma.adminUserSession.deleteMany({
       where: { revokedAt: { lt: new Date(now.getTime() - this.revokedRetentionMs) } },
     });
     return { expired: expired.count, revoked: revoked.count };

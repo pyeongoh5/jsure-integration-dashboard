@@ -8,24 +8,24 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
+model AdminUser {
+  id           String          @id @default(cuid())
+  email        String          @unique
   passwordHash String
   name         String?
-  role         Role       @default(GUEST)
-  status       UserStatus @default(PENDING)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  role         AdminUserRole   @default(GUEST)
+  status       AdminUserStatus @default(PENDING)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
-  sessions UserSession[]
+  sessions AdminUserSession[]
 
-  @@map("users")
+  @@map("admin_users")
 }
 
-model UserSession {
+model AdminUserSession {
   id               String    @id @default(cuid())
-  userId           String
+  adminUserId      String
   refreshTokenHash String    @unique
   userAgent        String?
   ip               String?
@@ -34,19 +34,19 @@ model UserSession {
   expiresAt        DateTime
   revokedAt        DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@map("user_sessions")
+  @@index([adminUserId])
+  @@map("admin_user_sessions")
 }
 
-enum Role {
+enum AdminUserRole {
   GUEST
   ADMIN
   OWNER
 }
 
-enum UserStatus {
+enum AdminUserStatus {
   PENDING
   ACTIVE
   SUSPENDED

@@ -5,7 +5,7 @@ import {
   RegisterResponseSchema,
   type AuthResponse,
   type LoginRequest,
-  type PublicUser,
+  type PublicAdminUser,
   type RefreshResponse,
   type RegisterRequest,
   type RegisterResponse,
@@ -29,11 +29,11 @@ export function isAuthenticated(): boolean {
   return Boolean(getToken() || getRefreshToken());
 }
 
-export function getStoredUser(): PublicUser | null {
+export function getStoredUser(): PublicAdminUser | null {
   const raw = localStorage.getItem(USER_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as PublicUser;
+    return JSON.parse(raw) as PublicAdminUser;
   } catch {
     return null;
   }

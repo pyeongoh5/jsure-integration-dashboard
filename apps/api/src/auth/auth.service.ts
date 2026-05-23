@@ -10,7 +10,7 @@ import type {
   RefreshResponse,
   SessionSummary,
 } from "@jsure/shared";
-import { UsersService } from "../users/users.service";
+import { AdminUsersService } from "../admin-users/admin-users.service";
 import {
   SessionsService,
   type SessionContext,
@@ -39,7 +39,7 @@ function toPublicSession(row: SessionRow, currentSid: string | null): SessionSum
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly users: UsersService,
+    private readonly users: AdminUsersService,
     private readonly sessions: SessionsService,
     private readonly jwt: JwtService,
   ) {}
@@ -97,11 +97,11 @@ export class AuthService {
     presented: string,
     ctx: SessionContext,
   ): Promise<RefreshResponse> {
-    const { refreshToken, userId, sessionId } = await this.sessions.rotate(
+    const { refreshToken, adminUserId, sessionId } = await this.sessions.rotate(
       presented,
       ctx,
     );
-    const user = await this.users.findById(userId);
+    const user = await this.users.findById(adminUserId);
     if (!user) throw new UnauthorizedException();
     if (user.status !== "ACTIVE") {
       throw new ForbiddenException("Account is not active");

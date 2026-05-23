@@ -8,11 +8,11 @@ import { JwtStrategy } from "./strategies/jwt.strategy";
 import { LocalStrategy } from "./strategies/local.strategy";
 import { SessionsService } from "./sessions.service";
 import { SessionsCleanupService } from "./sessions-cleanup.service";
-import { UsersModule } from "../users/users.module";
+import { AdminUsersModule } from "../admin-users/admin-users.module";
 
 @Module({
   imports: [
-    UsersModule,
+    AdminUsersModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

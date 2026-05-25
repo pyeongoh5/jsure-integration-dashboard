@@ -10,6 +10,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 COPY packages ./packages
 COPY apps/api ./apps/api
 RUN pnpm install --frozen-lockfile
+RUN find . -name "*.tsbuildinfo" -delete && find packages -type d -name "dist" -exec rm -rf {} +
 RUN pnpm turbo build --filter=@jsure/api
 RUN pnpm --filter @jsure/api exec prisma generate
 

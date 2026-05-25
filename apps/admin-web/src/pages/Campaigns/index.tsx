@@ -215,7 +215,7 @@ export function Campaigns() {
                   />
                 }
               />
-              {openMenu?.id === c.id && (
+              {openMenu && openMenu.id === c.id && (
                 <CampaignActionsMenu
                   anchor={{ x: openMenu.x, y: openMenu.y }}
                   onApplicants={() => {

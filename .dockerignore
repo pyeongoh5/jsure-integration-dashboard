@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/.turbo
+**/.env
+**/.env.local
+.git
+.github
+.vscode
+.claude
+docs
+apps/admin-web
+apps/client-web

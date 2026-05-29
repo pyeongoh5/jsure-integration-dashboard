@@ -92,6 +92,8 @@
   background: #f3f4f6;
   color: #374151;
   border: 1px solid #e5e7eb;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .ccard__sns-chip i {
@@ -116,7 +118,16 @@
 }
 
 .ccard__sns-cond {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
   white-space: nowrap;
+}
+
+.ccard__sns-cond-track {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
 }
 
 .ccard__meta {

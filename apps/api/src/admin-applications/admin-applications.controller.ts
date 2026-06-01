@@ -12,11 +12,17 @@ import {
 import {
   ApplicationStatusSchema,
   RejectApplicationRequestSchema,
+  RejectSubmittedPostRequestSchema,
+  ShipApplicationRequestSchema,
   type AdminApplication,
   type AdminApplicationCountsResponse,
   type AdminApplicationListResponse,
+  type AdminSubmittedPost,
+  type AdminSubmittedPostListResponse,
   type ApplicationStatus,
   type RejectApplicationRequest,
+  type RejectSubmittedPostRequest,
+  type ShipApplicationRequest,
 } from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
@@ -49,6 +55,53 @@ export class AdminApplicationsController {
     return { counts };
   }
 
+  @Get("submitted-posts")
+  async submittedPosts(): Promise<AdminSubmittedPostListResponse> {
+    const posts = await this.svc.listSubmittedPosts();
+    return { posts };
+  }
+
+  @Post("submitted-posts/:postId/approve")
+  @HttpCode(200)
+  approveSubmittedPost(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("postId") postId: string,
+  ): Promise<AdminSubmittedPost> {
+    return this.svc.approveSubmittedPost(postId, req.user.id);
+  }
+
+  @Post("submitted-posts/:postId/reject")
+  @HttpCode(200)
+  rejectSubmittedPost(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("postId") postId: string,
+    @Body(new ZodValidationPipe(RejectSubmittedPostRequestSchema))
+    body: RejectSubmittedPostRequest,
+  ): Promise<AdminSubmittedPost> {
+    return this.svc.rejectSubmittedPost(
+      postId,
+      req.user.id,
+      body.comment.trim(),
+    );
+  }
+
+  @Post("submitted-posts/:postId/undo")
+  @HttpCode(200)
+  undoSubmittedPostReview(
+    @Param("postId") postId: string,
+  ): Promise<AdminSubmittedPost> {
+    return this.svc.undoSubmittedPostReview(postId);
+  }
+
+  @Post("submitted-posts/:postId/settle")
+  @HttpCode(200)
+  settleSubmittedPost(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("postId") postId: string,
+  ): Promise<AdminSubmittedPost> {
+    return this.svc.settleSubmittedPost(postId, req.user.id);
+  }
+
   @Post(":id/approve")
   @HttpCode(200)
   approve(
@@ -73,6 +126,26 @@ export class AdminApplicationsController {
   @HttpCode(200)
   undo(@Param("id") id: string): Promise<AdminApplication> {
     return this.svc.undo(id);
+  }
+
+  @Post(":id/ship")
+  @HttpCode(200)
+  ship(
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(ShipApplicationRequestSchema))
+    body: ShipApplicationRequest,
+  ): Promise<AdminApplication> {
+    return this.svc.ship(
+      id,
+      body.trackingCarrier.trim(),
+      body.trackingNumber.trim(),
+    );
+  }
+
+  @Post(":id/deliver")
+  @HttpCode(200)
+  deliver(@Param("id") id: string): Promise<AdminApplication> {
+    return this.svc.deliver(id);
   }
 }
 

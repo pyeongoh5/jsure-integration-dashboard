@@ -133,7 +133,9 @@ export class InfluencerAuthService {
     ctx: SessionContext,
   ): Promise<InfluencerAuthResponse> {
     const inf = await this.prisma.influencer.findUnique({ where: { email } });
-    if (!inf) throw new UnauthorizedException("Invalid credentials");
+    if (!inf || !inf.passwordHash) {
+      throw new UnauthorizedException("Invalid credentials");
+    }
     const ok = await bcrypt.compare(password, inf.passwordHash);
     if (!ok) throw new UnauthorizedException("Invalid credentials");
     if (inf.status !== "ACTIVE") {

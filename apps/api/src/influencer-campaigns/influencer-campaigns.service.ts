@@ -5,6 +5,7 @@ import type {
   SnsType,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { UploadsService } from "../uploads/uploads.service";
 
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -16,6 +17,7 @@ type CampaignRow = {
   thumbnailUrl: string | null;
   recruitStartAt: Date;
   recruitEndAt: Date;
+  postingPeriodDays: number;
   createdAt: Date;
   snsRecruits: {
     snsType: SnsType;
@@ -48,13 +50,22 @@ function toCard(
     appliedCount,
     recruitStartAt: row.recruitStartAt.toISOString(),
     recruitEndAt: row.recruitEndAt.toISOString(),
+    postingPeriodDays: row.postingPeriodDays,
     isNew: isNew(row.createdAt, now),
   };
 }
 
 @Injectable()
 export class InfluencerCampaignsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly uploads: UploadsService,
+  ) {}
+
+  private async resolveCard(card: InfluencerCampaignCard): Promise<InfluencerCampaignCard> {
+    card.thumbnailUrl = await this.uploads.resolveCampaignThumbnailUrl(card.thumbnailUrl);
+    return card;
+  }
 
   async list(args: {
     influencerId: string;
@@ -89,7 +100,9 @@ export class InfluencerCampaignsService {
       ),
     );
 
-    return rows.map((r, i) => toCard(r, counts[i] ?? 0, now));
+    return Promise.all(
+      rows.map((r, i) => this.resolveCard(toCard(r, counts[i] ?? 0, now))),
+    );
   }
 
   async detail(args: {
@@ -122,16 +135,17 @@ export class InfluencerCampaignsService {
           influencerId: args.influencerId,
         },
       },
-      select: { id: true },
+      select: { status: true },
     });
 
+    const card = await this.resolveCard(toCard(row, appliedCount, now));
     return {
-      ...toCard(row, appliedCount, now),
+      ...card,
       productDetailUrl: row.productDetailUrl,
       guideline: row.guideline,
       referenceMediaUrls: row.referenceMediaUrls,
       cautions: row.cautions,
-      hasApplied: existing !== null,
+      hasApplied: existing !== null && existing.status !== "CANCELLED",
     };
   }
 }

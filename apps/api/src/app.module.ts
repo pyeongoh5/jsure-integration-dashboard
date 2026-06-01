@@ -12,6 +12,8 @@ import { InfluencerCampaignsModule } from "./influencer-campaigns/influencer-cam
 import { InfluencerApplicationsModule } from "./influencer-applications/influencer-applications.module";
 import { InfluencerMeModule } from "./influencer-me/influencer-me.module";
 import { AdminApplicationsModule } from "./admin-applications/admin-applications.module";
+import { R2Module } from "./r2/r2.module";
+import { UploadsModule } from "./uploads/uploads.module";
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { AdminApplicationsModule } from "./admin-applications/admin-applications
     InfluencerApplicationsModule,
     InfluencerMeModule,
     AdminApplicationsModule,
+    R2Module,
+    UploadsModule,
   ],
 })
 export class AppModule {}

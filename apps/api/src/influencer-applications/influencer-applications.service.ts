@@ -11,6 +11,7 @@ import type {
   ApplicationStatus,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { UploadsService } from "../uploads/uploads.service";
 import {
   deriveDisplayStage,
   postingDeadline,
@@ -21,10 +22,17 @@ type PostRow = {
   snsType: SnsType;
   url: string;
   submittedAt: Date;
+  insightLikes: number | null;
+  insightComments: number | null;
+  insightShares: number | null;
+  insightReposts: number | null;
   insightSaves: number | null;
+  insightViews: number | null;
   insightReach: number | null;
-  insightProfileViews: number | null;
   insightSubmittedAt: Date | null;
+  reviewStatus: "PENDING" | "APPROVED" | "REJECTED";
+  reviewedAt: Date | null;
+  rejections: { comment: string; rejectedAt: Date }[];
 };
 
 type ApplicationRow = {
@@ -32,37 +40,53 @@ type ApplicationRow = {
   campaignId: string;
   status: ApplicationStatus;
   appliedAt: Date;
+  trackingCarrier: string | null;
   trackingNumber: string | null;
   shippedAt: Date | null;
   deliveredAt: Date | null;
+  receivedAt: Date | null;
   completedAt: Date | null;
   rejectReason: string | null;
+  selectedSnsTypes: SnsType[];
   posts: PostRow[];
   campaign: {
     id: string;
     title: string;
     thumbnailUrl: string | null;
     rewardJpy: number;
+    postingPeriodDays: number;
   };
 };
 
 function toPost(row: PostRow): SubmittedPost {
+  const latestRejection =
+    row.reviewStatus === "REJECTED" ? row.rejections[0] ?? null : null;
   return {
     id: row.id,
     snsType: row.snsType,
     url: row.url,
     submittedAt: row.submittedAt.toISOString(),
+    insightLikes: row.insightLikes,
+    insightComments: row.insightComments,
+    insightShares: row.insightShares,
+    insightReposts: row.insightReposts,
     insightSaves: row.insightSaves,
+    insightViews: row.insightViews,
     insightReach: row.insightReach,
-    insightProfileViews: row.insightProfileViews,
     insightSubmittedAt: row.insightSubmittedAt
       ? row.insightSubmittedAt.toISOString()
       : null,
+    reviewStatus: row.reviewStatus,
+    reviewedAt: row.reviewedAt ? row.reviewedAt.toISOString() : null,
+    lastRejectionComment: latestRejection ? latestRejection.comment : null,
   };
 }
 
 function toResponse(row: ApplicationRow): InfluencerApplication {
-  const deadline = postingDeadline(row.deliveredAt);
+  const deadline = postingDeadline(
+    row.receivedAt,
+    row.campaign.postingPeriodDays,
+  );
   return {
     id: row.id,
     campaignId: row.campaignId,
@@ -72,32 +96,55 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     status: row.status,
     displayStage: deriveDisplayStage({
       status: row.status,
+      receivedAt: row.receivedAt,
       posts: row.posts.map((p) => ({
         submittedAt: p.submittedAt,
         insightSubmittedAt: p.insightSubmittedAt,
+        reviewStatus: p.reviewStatus,
       })),
     }),
     appliedAt: row.appliedAt.toISOString(),
+    trackingCarrier: row.trackingCarrier,
     trackingNumber: row.trackingNumber,
     shippedAt: row.shippedAt ? row.shippedAt.toISOString() : null,
     deliveredAt: row.deliveredAt ? row.deliveredAt.toISOString() : null,
+    receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     rejectReason: row.rejectReason,
+    selectedSnsTypes: row.selectedSnsTypes,
     posts: row.posts.map(toPost),
+    postingPeriodDays: row.campaign.postingPeriodDays,
     postingDeadlineAt: deadline ? deadline.toISOString() : null,
   };
 }
 
 const INCLUDE = {
-  posts: true,
+  posts: {
+    include: {
+      rejections: {
+        orderBy: { rejectedAt: "desc" as const },
+        take: 1,
+        select: { comment: true, rejectedAt: true },
+      },
+    },
+  },
   campaign: {
-    select: { id: true, title: true, thumbnailUrl: true, rewardJpy: true },
+    select: {
+      id: true,
+      title: true,
+      thumbnailUrl: true,
+      rewardJpy: true,
+      postingPeriodDays: true,
+    },
   },
 } as const;
 
 @Injectable()
 export class InfluencerApplicationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly uploads: UploadsService,
+  ) {}
 
   async listForInfluencer(
     influencerId: string,
@@ -126,6 +173,7 @@ export class InfluencerApplicationsService {
   async create(
     influencerId: string,
     campaignId: string,
+    snsTypes: SnsType[],
   ): Promise<InfluencerApplication> {
     const now = new Date();
     const campaign = await this.prisma.campaign.findUnique({
@@ -161,50 +209,77 @@ export class InfluencerApplicationsService {
     const minFollowersBySns = new Map(
       campaign.snsRecruits.map((r) => [r.snsType, r.minFollowers]),
     );
-    const matchingSns = influencerSns.filter((s) =>
-      minFollowersBySns.has(s.snsType),
+    const followerByMySns = new Map(
+      influencerSns.map((s) => [s.snsType, s.followerCount]),
     );
-    if (matchingSns.length === 0) {
+
+    const qualifyingSns = Array.from(minFollowersBySns.entries())
+      .filter(([sns, min]) => {
+        const f = followerByMySns.get(sns);
+        return f !== undefined && f >= min;
+      })
+      .map(([sns]) => sns);
+
+    if (qualifyingSns.length === 0) {
       throw new BadRequestException({
         code: "SNS_MISMATCH",
-        message: "対象SNSのアカウントが登録されていません",
+        message: "対象SNSの応募条件を満たすアカウントがありません",
       });
     }
 
-    const qualifies = matchingSns.some(
-      (s) => s.followerCount >= (minFollowersBySns.get(s.snsType) ?? 0),
-    );
-    if (!qualifies) {
+    const qualifyingSet = new Set(qualifyingSns);
+    const invalid = snsTypes.filter((s) => !qualifyingSet.has(s));
+    if (invalid.length > 0) {
       throw new BadRequestException({
-        code: "INSUFFICIENT_FOLLOWERS",
-        message: "対象SNSの最低フォロワー条件を満たしていません",
+        code: "SNS_NOT_QUALIFIED",
+        message: "応募条件を満たさないSNSが含まれています",
       });
     }
 
-    try {
-      const created = await this.prisma.campaignApplication.create({
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: {
+        campaignId_influencerId: { campaignId, influencerId },
+      },
+    });
+
+    if (existing && existing.status !== "CANCELLED") {
+      throw new BadRequestException({
+        code: "ALREADY_APPLIED",
+        message: "すでに応募済みです",
+      });
+    }
+
+    if (existing) {
+      const reopened = await this.prisma.campaignApplication.update({
+        where: { id: existing.id },
         data: {
-          campaignId,
-          influencerId,
           status: "APPLIED",
+          appliedAt: new Date(),
+          selectedSnsTypes: snsTypes,
+          reviewedAt: null,
+          reviewedById: null,
+          rejectReason: null,
+          trackingNumber: null,
+          shippedAt: null,
+          deliveredAt: null,
+          receivedAt: null,
+          completedAt: null,
         },
         include: INCLUDE,
       });
-      return toResponse(created);
-    } catch (err: unknown) {
-      if (
-        err &&
-        typeof err === "object" &&
-        "code" in err &&
-        (err as { code: string }).code === "P2002"
-      ) {
-        throw new BadRequestException({
-          code: "ALREADY_APPLIED",
-          message: "すでに応募済みです",
-        });
-      }
-      throw err;
+      return toResponse(reopened);
     }
+
+    const created = await this.prisma.campaignApplication.create({
+      data: {
+        campaignId,
+        influencerId,
+        status: "APPLIED",
+        selectedSnsTypes: snsTypes,
+      },
+      include: INCLUDE,
+    });
+    return toResponse(created);
   }
 
   async cancel(
@@ -212,14 +287,10 @@ export class InfluencerApplicationsService {
     applicationId: string,
   ): Promise<InfluencerApplication> {
     const app = await this.assertOwned(influencerId, applicationId);
-    if (
-      app.status !== "APPLIED" &&
-      app.status !== "APPROVED" &&
-      app.status !== "SHIPPED"
-    ) {
+    if (app.status !== "APPLIED") {
       throw new BadRequestException({
         code: "CANCEL_NOT_ALLOWED",
-        message: "現在のステータスではキャンセルできません",
+        message: "承認後はキャンセルできません",
       });
     }
     const updated = await this.prisma.campaignApplication.update({
@@ -230,20 +301,26 @@ export class InfluencerApplicationsService {
     return toResponse(updated);
   }
 
-  async confirmDelivery(
+  async confirmReceipt(
     influencerId: string,
     applicationId: string,
   ): Promise<InfluencerApplication> {
     const app = await this.assertOwned(influencerId, applicationId);
-    if (app.status !== "SHIPPED") {
+    if (app.status !== "SHIPPED" && app.status !== "DELIVERED") {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
-        message: "発送中の応募のみ受取完了にできます",
+        message: "発送中または配送完了の応募のみ受領確認できます",
+      });
+    }
+    if (app.receivedAt) {
+      throw new BadRequestException({
+        code: "ALREADY_RECEIVED",
+        message: "すでに受領確認済みです",
       });
     }
     const updated = await this.prisma.campaignApplication.update({
       where: { id: applicationId },
-      data: { status: "DELIVERED", deliveredAt: new Date() },
+      data: { receivedAt: new Date() },
       include: INCLUDE,
     });
     return toResponse(updated);
@@ -256,22 +333,44 @@ export class InfluencerApplicationsService {
     url: string,
   ): Promise<InfluencerApplication> {
     const app = await this.assertOwned(influencerId, applicationId);
-    if (app.status !== "DELIVERED") {
+    if (!app.receivedAt) {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
-        message: "受取完了後のみ投稿URLを提出できます",
+        message: "受領確認後のみ投稿URLを提出できます",
       });
     }
-    const campaign = await this.prisma.campaign.findUnique({
-      where: { id: app.campaignId },
-      include: { snsRecruits: { select: { snsType: true } } },
+    if (app.selectedSnsTypes.length > 0) {
+      if (!app.selectedSnsTypes.includes(snsType)) {
+        throw new BadRequestException({
+          code: "SNS_NOT_SELECTED",
+          message: "応募時に選択したSNSではありません",
+        });
+      }
+    } else {
+      // Legacy applications created before selectedSnsTypes existed: fall back
+      // to the campaign's SNS recruit list.
+      const campaign = await this.prisma.campaign.findUnique({
+        where: { id: app.campaignId },
+        include: { snsRecruits: { select: { snsType: true } } },
+      });
+      if (!campaign) throw new NotFoundException();
+      const allowed = new Set(campaign.snsRecruits.map((r) => r.snsType));
+      if (!allowed.has(snsType)) {
+        throw new BadRequestException({
+          code: "SNS_NOT_IN_CAMPAIGN",
+          message: "このキャンペーンの対象SNSではありません",
+        });
+      }
+    }
+
+    const existing = await this.prisma.submittedPost.findUnique({
+      where: { applicationId_snsType: { applicationId, snsType } },
+      select: { reviewStatus: true },
     });
-    if (!campaign) throw new NotFoundException();
-    const allowed = new Set(campaign.snsRecruits.map((r) => r.snsType));
-    if (!allowed.has(snsType)) {
+    if (existing?.reviewStatus === "APPROVED") {
       throw new BadRequestException({
-        code: "SNS_NOT_IN_CAMPAIGN",
-        message: "このキャンペーンの対象SNSではありません",
+        code: "POST_ALREADY_APPROVED",
+        message: "承認済みの投稿は変更できません",
       });
     }
 
@@ -280,7 +379,13 @@ export class InfluencerApplicationsService {
         applicationId_snsType: { applicationId, snsType },
       },
       create: { applicationId, snsType, url },
-      update: { url, submittedAt: new Date() },
+      update: {
+        url,
+        submittedAt: new Date(),
+        reviewStatus: "PENDING",
+        reviewedAt: null,
+        reviewedById: null,
+      },
     });
 
     return this.getForInfluencer(influencerId, applicationId);
@@ -290,7 +395,20 @@ export class InfluencerApplicationsService {
     influencerId: string,
     applicationId: string,
     snsType: SnsType,
-    input: { saves: number; reach: number; profileViews: number },
+    input: {
+      likes: number;
+      comments: number;
+      shares: number;
+      reposts: number;
+      saves: number;
+      views: number;
+      reach: number;
+      attachments?: {
+        objectKey: string;
+        contentType: "image/png" | "image/jpeg" | "image/webp";
+        sizeBytes: number;
+      }[];
+    },
   ): Promise<InfluencerApplication> {
     await this.assertOwned(influencerId, applicationId);
     const post = await this.prisma.submittedPost.findUnique({
@@ -305,12 +423,19 @@ export class InfluencerApplicationsService {
     await this.prisma.submittedPost.update({
       where: { id: post.id },
       data: {
+        insightLikes: input.likes,
+        insightComments: input.comments,
+        insightShares: input.shares,
+        insightReposts: input.reposts,
         insightSaves: input.saves,
+        insightViews: input.views,
         insightReach: input.reach,
-        insightProfileViews: input.profileViews,
         insightSubmittedAt: new Date(),
       },
     });
+    if (input.attachments && input.attachments.length > 0) {
+      await this.uploads.attachInsightUploads(post.id, input.attachments);
+    }
     return this.getForInfluencer(influencerId, applicationId);
   }
 

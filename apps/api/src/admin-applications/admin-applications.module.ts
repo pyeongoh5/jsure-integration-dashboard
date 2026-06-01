@@ -1,8 +1,10 @@
 import { Module } from "@nestjs/common";
 import { AdminApplicationsController } from "./admin-applications.controller";
 import { AdminApplicationsService } from "./admin-applications.service";
+import { InfluencerAuthModule } from "../influencer-auth/influencer-auth.module";
 
 @Module({
+  imports: [InfluencerAuthModule],
   controllers: [AdminApplicationsController],
   providers: [AdminApplicationsService],
 })

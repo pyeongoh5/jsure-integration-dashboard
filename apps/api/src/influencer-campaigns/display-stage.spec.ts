@@ -4,25 +4,69 @@ const NOW = new Date("2026-06-01T00:00:00Z");
 
 describe("deriveDisplayStage", () => {
   it("APPLIED → APPLIED", () => {
-    expect(deriveDisplayStage({ status: "APPLIED", posts: [], now: NOW })).toBe(
-      "APPLIED",
-    );
-  });
-
-  it("DELIVERED no posts → POSTING", () => {
     expect(
-      deriveDisplayStage({ status: "DELIVERED", posts: [], now: NOW }),
-    ).toBe("POSTING");
+      deriveDisplayStage({
+        status: "APPLIED",
+        receivedAt: null,
+        posts: [],
+        now: NOW,
+      }),
+    ).toBe("APPLIED");
   });
 
-  it("DELIVERED post submitted <7d → POSTED", () => {
+  it("SHIPPED, receivedAt null → AWAITING_RECEIPT", () => {
+    expect(
+      deriveDisplayStage({
+        status: "SHIPPED",
+        receivedAt: null,
+        posts: [],
+        now: NOW,
+      }),
+    ).toBe("AWAITING_RECEIPT");
+  });
+
+  it("DELIVERED, receivedAt null → AWAITING_RECEIPT", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        receivedAt: null,
+        posts: [],
+        now: NOW,
+      }),
+    ).toBe("AWAITING_RECEIPT");
+  });
+
+  it("SHIPPED, receivedAt set, no posts → POSTING", () => {
+    expect(
+      deriveDisplayStage({
+        status: "SHIPPED",
+        receivedAt: new Date(NOW.getTime() - 86400000),
+        posts: [],
+        now: NOW,
+      }),
+    ).toBe("POSTING");
+  });
+
+  it("DELIVERED, receivedAt set, no posts → POSTING", () => {
+    expect(
+      deriveDisplayStage({
+        status: "DELIVERED",
+        receivedAt: new Date(NOW.getTime() - 86400000),
+        posts: [],
+        now: NOW,
+      }),
+    ).toBe("POSTING");
+  });
+
+  it("DELIVERED, post submitted <7d → POSTED", () => {
+    expect(
+      deriveDisplayStage({
+        status: "DELIVERED",
+        receivedAt: new Date(NOW.getTime() - 3 * 86400000),
         posts: [
           {
             submittedAt: new Date(NOW.getTime() - 2 * 86400000),
-            insightSubmittedAt: null,
+            insightSubmittedAt: null, reviewStatus: "PENDING",
           },
         ],
         now: NOW,
@@ -30,14 +74,15 @@ describe("deriveDisplayStage", () => {
     ).toBe("POSTED");
   });
 
-  it("DELIVERED post submitted ≥7d, no insight → INSIGHT_DUE", () => {
+  it("DELIVERED, post submitted ≥7d, no insight → INSIGHT_DUE", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
             submittedAt: new Date(NOW.getTime() - 8 * 86400000),
-            insightSubmittedAt: null,
+            insightSubmittedAt: null, reviewStatus: "PENDING",
           },
         ],
         now: NOW,
@@ -45,14 +90,15 @@ describe("deriveDisplayStage", () => {
     ).toBe("INSIGHT_DUE");
   });
 
-  it("DELIVERED all insights submitted → REVIEWING", () => {
+  it("DELIVERED, all insights submitted → REVIEWING", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
             submittedAt: new Date(NOW.getTime() - 9 * 86400000),
-            insightSubmittedAt: new Date(NOW.getTime() - 1 * 86400000),
+            insightSubmittedAt: new Date(NOW.getTime() - 1 * 86400000), reviewStatus: "PENDING",
           },
         ],
         now: NOW,
@@ -60,25 +106,62 @@ describe("deriveDisplayStage", () => {
     ).toBe("REVIEWING");
   });
 
+  it("DELIVERED, any post REJECTED → POST_REJECTED", () => {
+    expect(
+      deriveDisplayStage({
+        status: "DELIVERED",
+        receivedAt: new Date(NOW.getTime() - 3 * 86400000),
+        posts: [
+          {
+            submittedAt: new Date(NOW.getTime() - 2 * 86400000),
+            insightSubmittedAt: null,
+            reviewStatus: "REJECTED",
+          },
+        ],
+        now: NOW,
+      }),
+    ).toBe("POST_REJECTED");
+  });
+
   it("REJECTED, CANCELLED, COMPLETED pass through", () => {
     expect(
-      deriveDisplayStage({ status: "REJECTED", posts: [], now: NOW }),
+      deriveDisplayStage({
+        status: "REJECTED",
+        receivedAt: null,
+        posts: [],
+        now: NOW,
+      }),
     ).toBe("REJECTED");
     expect(
-      deriveDisplayStage({ status: "CANCELLED", posts: [], now: NOW }),
+      deriveDisplayStage({
+        status: "CANCELLED",
+        receivedAt: null,
+        posts: [],
+        now: NOW,
+      }),
     ).toBe("CANCELLED");
     expect(
-      deriveDisplayStage({ status: "COMPLETED", posts: [], now: NOW }),
+      deriveDisplayStage({
+        status: "COMPLETED",
+        receivedAt: null,
+        posts: [],
+        now: NOW,
+      }),
     ).toBe("COMPLETED");
   });
 });
 
 describe("postingDeadline", () => {
-  it("null deliveredAt → null", () => {
-    expect(postingDeadline(null)).toBeNull();
+  it("null receivedAt → null", () => {
+    expect(postingDeadline(null, 14)).toBeNull();
   });
-  it("adds 14 days", () => {
+  it("adds N days based on postingPeriodDays", () => {
     const d = new Date("2026-06-01T00:00:00Z");
-    expect(postingDeadline(d)?.toISOString()).toBe("2026-06-15T00:00:00.000Z");
+    expect(postingDeadline(d, 14)?.toISOString()).toBe(
+      "2026-06-15T00:00:00.000Z",
+    );
+    expect(postingDeadline(d, 7)?.toISOString()).toBe(
+      "2026-06-08T00:00:00.000Z",
+    );
   });
 });

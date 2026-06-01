@@ -49,7 +49,7 @@ export class InfluencerApplicationsController {
     @Request() req: { user: AuthenticatedInfluencer },
     @Body() dto: CreateApplicationRequest,
   ) {
-    return this.svc.create(req.user.id, dto.campaignId);
+    return this.svc.create(req.user.id, dto.campaignId, dto.snsTypes);
   }
 
   @Post(":id/cancel")
@@ -61,13 +61,13 @@ export class InfluencerApplicationsController {
     return this.svc.cancel(req.user.id, id);
   }
 
-  @Post(":id/confirm-delivery")
+  @Post(":id/confirm-receipt")
   @HttpCode(200)
-  confirmDelivery(
+  confirmReceipt(
     @Request() req: { user: AuthenticatedInfluencer },
     @Param("id") id: string,
   ) {
-    return this.svc.confirmDelivery(req.user.id, id);
+    return this.svc.confirmReceipt(req.user.id, id);
   }
 
   @Put(":id/posts/:snsType")

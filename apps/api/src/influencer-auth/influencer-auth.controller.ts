@@ -1,10 +1,13 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   HttpCode,
   NotFoundException,
   Post,
+  Query,
+  Redirect,
   Request,
   UseGuards,
   UsePipes,
@@ -13,12 +16,15 @@ import type { Request as ExpressRequest } from "express";
 import {
   InfluencerLoginRequestSchema,
   InfluencerSignupRequestSchema,
+  LineCompleteSignupRequestSchema,
   type InfluencerLoginRequest,
   type InfluencerMeResponse,
   type InfluencerSignupRequest,
+  type LineCompleteSignupRequest,
 } from "@jsure/shared";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { InfluencerAuthService } from "./influencer-auth.service";
+import { InfluencerLineAuthService } from "./influencer-line-auth.service";
 import { InfluencerJwtAuthGuard } from "./guards/influencer-jwt-auth.guard";
 import { InfluencersService } from "../influencers/influencers.service";
 import type { AuthenticatedInfluencer } from "./strategies/influencer-jwt.strategy";
@@ -40,8 +46,58 @@ function maskAccountNumber(value: string): string {
 export class InfluencerAuthController {
   constructor(
     private readonly auth: InfluencerAuthService,
+    private readonly line: InfluencerLineAuthService,
     private readonly influencers: InfluencersService,
   ) {}
+
+  @Get("line/authorize")
+  @Redirect()
+  async lineAuthorize() {
+    const { url } = await this.line.buildAuthorizeUrl();
+    return { url, statusCode: 302 };
+  }
+
+  @Get("line/callback")
+  @Redirect()
+  async lineCallback(
+    @Query("code") code: string | undefined,
+    @Query("state") state: string | undefined,
+    @Query("error") error: string | undefined,
+    @Request() req: ExpressRequest,
+  ) {
+    if (error) {
+      throw new BadRequestException(`LINE auth error: ${error}`);
+    }
+    if (!code || !state) {
+      throw new BadRequestException("Missing code or state");
+    }
+    const result = await this.line.handleCallback({
+      code,
+      state,
+      ctx: ctxFrom(req),
+    });
+    if (result.kind === "login") {
+      const url = new URL(result.redirectTo);
+      url.searchParams.set("line_access_token", result.auth.accessToken);
+      return { url: url.toString(), statusCode: 302 };
+    }
+    const url = new URL(result.redirectTo);
+    url.searchParams.set("signup_token", result.signupToken);
+    if (result.displayName) {
+      url.searchParams.set("display_name", result.displayName);
+    }
+    return { url: url.toString(), statusCode: 302 };
+  }
+
+  @HttpCode(201)
+  @Post("line/complete-signup")
+  @UsePipes(new ZodValidationPipe(LineCompleteSignupRequestSchema))
+  lineCompleteSignup(
+    @Body() dto: LineCompleteSignupRequest,
+    @Request() req: ExpressRequest,
+  ) {
+    return this.line.completeSignup(dto, ctxFrom(req));
+  }
 
   @HttpCode(201)
   @Post("signup")

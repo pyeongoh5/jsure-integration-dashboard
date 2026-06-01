@@ -11,6 +11,7 @@ import type {
   UpdateCampaignRequest,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { UploadsService } from "../uploads/uploads.service";
 
 export function jstDayStartUtc(dateStr: string): Date {
   return new Date(`${dateStr}T00:00:00+09:00`);
@@ -38,6 +39,7 @@ type CampaignRow = {
   recruitStartAt: Date;
   recruitEndAt: Date;
   closedAt: Date | null;
+  postingPeriodDays: number;
   productSummary: string;
   productDetailUrl: string;
   guideline: string;
@@ -78,6 +80,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     recruitStartAt: row.recruitStartAt.toISOString(),
     recruitEndAt: row.recruitEndAt.toISOString(),
     closedAt: row.closedAt ? row.closedAt.toISOString() : null,
+    postingPeriodDays: row.postingPeriodDays,
     productSummary: row.productSummary,
     productDetailUrl: row.productDetailUrl,
     guideline: row.guideline,
@@ -100,7 +103,19 @@ const RECRUITS_INCLUDE = {
 
 @Injectable()
 export class CampaignsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly uploads: UploadsService,
+  ) {}
+
+  private async withResolvedThumbnail(
+    response: CampaignResponse,
+  ): Promise<CampaignResponse> {
+    response.thumbnailUrl = await this.uploads.resolveCampaignThumbnailUrl(
+      response.thumbnailUrl,
+    );
+    return response;
+  }
 
   private async loadCounts(
     campaignIds: string[],
@@ -140,6 +155,7 @@ export class CampaignsService {
         rewardJpy: input.rewardJpy,
         recruitStartAt: jstDayStartUtc(input.recruitStartDate),
         recruitEndAt: jstDayEndUtc(input.recruitEndDate),
+        postingPeriodDays: input.postingPeriodDays,
         productSummary: input.productSummary,
         productDetailUrl: input.productDetailUrl,
         guideline: input.guideline,
@@ -156,7 +172,7 @@ export class CampaignsService {
       },
       include: RECRUITS_INCLUDE,
     });
-    return toResponse(row, EMPTY_COUNTS);
+    return this.withResolvedThumbnail(toResponse(row, EMPTY_COUNTS));
   }
 
   async findAll(): Promise<CampaignResponse[]> {
@@ -165,7 +181,13 @@ export class CampaignsService {
       include: RECRUITS_INCLUDE,
     });
     const counts = await this.loadCounts(rows.map((r) => r.id));
-    return rows.map((r) => toResponse(r, counts.get(r.id) ?? EMPTY_COUNTS));
+    return Promise.all(
+      rows.map((row) =>
+        this.withResolvedThumbnail(
+          toResponse(row, counts.get(row.id) ?? EMPTY_COUNTS),
+        ),
+      ),
+    );
   }
 
   async findById(id: string): Promise<CampaignResponse> {
@@ -174,7 +196,9 @@ export class CampaignsService {
       include: RECRUITS_INCLUDE,
     });
     if (!row) throw new NotFoundException("Campaign not found");
-    return toResponse(row, await this.countsFor(id));
+    return this.withResolvedThumbnail(
+      toResponse(row, await this.countsFor(id)),
+    );
   }
 
   async update(
@@ -192,6 +216,9 @@ export class CampaignsService {
     }
     if (input.recruitEndDate !== undefined) {
       data.recruitEndAt = jstDayEndUtc(input.recruitEndDate);
+    }
+    if (input.postingPeriodDays !== undefined) {
+      data.postingPeriodDays = input.postingPeriodDays;
     }
     if (input.productSummary !== undefined) data.productSummary = input.productSummary;
     if (input.productDetailUrl !== undefined) data.productDetailUrl = input.productDetailUrl;
@@ -219,7 +246,9 @@ export class CampaignsService {
         include: RECRUITS_INCLUDE,
       });
     });
-    return toResponse(row, await this.countsFor(id));
+    return this.withResolvedThumbnail(
+      toResponse(row, await this.countsFor(id)),
+    );
   }
 
   async close(id: string): Promise<CampaignResponse> {
@@ -233,6 +262,8 @@ export class CampaignsService {
       data: { closedAt: new Date() },
       include: RECRUITS_INCLUDE,
     });
-    return toResponse(row, await this.countsFor(id));
+    return this.withResolvedThumbnail(
+      toResponse(row, await this.countsFor(id)),
+    );
   }
 }

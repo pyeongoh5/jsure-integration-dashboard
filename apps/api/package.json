@@ -19,6 +19,8 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1057.0",
+    "@aws-sdk/s3-request-presigner": "^3.1057.0",
     "@jsure/shared": "workspace:*",
     "@nestjs/common": "^10.4.6",
     "@nestjs/config": "^3.3.0",

@@ -146,6 +146,17 @@ export class InfluencerApplicationsService {
     private readonly uploads: UploadsService,
   ) {}
 
+  private async resolveResponse(
+    row: ApplicationRow,
+  ): Promise<InfluencerApplication> {
+    const response = toResponse(row);
+    response.campaignThumbnailUrl =
+      await this.uploads.resolveCampaignThumbnailUrl(
+        response.campaignThumbnailUrl,
+      );
+    return response;
+  }
+
   async listForInfluencer(
     influencerId: string,
   ): Promise<InfluencerApplication[]> {
@@ -154,7 +165,7 @@ export class InfluencerApplicationsService {
       orderBy: { appliedAt: "desc" },
       include: INCLUDE,
     });
-    return rows.map(toResponse);
+    return Promise.all(rows.map((row) => this.resolveResponse(row)));
   }
 
   async getForInfluencer(
@@ -167,7 +178,7 @@ export class InfluencerApplicationsService {
     });
     if (!row) throw new NotFoundException("Application not found");
     if (row.influencerId !== influencerId) throw new ForbiddenException();
-    return toResponse(row);
+    return this.resolveResponse(row);
   }
 
   async create(
@@ -267,7 +278,7 @@ export class InfluencerApplicationsService {
         },
         include: INCLUDE,
       });
-      return toResponse(reopened);
+      return this.resolveResponse(reopened);
     }
 
     const created = await this.prisma.campaignApplication.create({
@@ -279,7 +290,7 @@ export class InfluencerApplicationsService {
       },
       include: INCLUDE,
     });
-    return toResponse(created);
+    return this.resolveResponse(created);
   }
 
   async cancel(
@@ -298,7 +309,7 @@ export class InfluencerApplicationsService {
       data: { status: "CANCELLED" },
       include: INCLUDE,
     });
-    return toResponse(updated);
+    return this.resolveResponse(updated);
   }
 
   async confirmReceipt(
@@ -323,7 +334,7 @@ export class InfluencerApplicationsService {
       data: { receivedAt: new Date() },
       include: INCLUDE,
     });
-    return toResponse(updated);
+    return this.resolveResponse(updated);
   }
 
   async upsertPost(

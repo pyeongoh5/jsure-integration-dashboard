@@ -58,15 +58,17 @@ describe("deriveDisplayStage", () => {
     ).toBe("POSTING");
   });
 
-  it("DELIVERED, post submitted <7d → POSTED", () => {
+  it("DELIVERED, post submitted same JST day → POSTED", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
         receivedAt: new Date(NOW.getTime() - 3 * 86400000),
         posts: [
           {
-            submittedAt: new Date(NOW.getTime() - 2 * 86400000),
-            insightSubmittedAt: null, reviewStatus: "PENDING",
+            // 같은 JST 일자 안에서 제출된 경우 daysPassed=0 → POSTED
+            submittedAt: new Date(NOW.getTime() - 60 * 60 * 1000),
+            insightSubmittedAt: null,
+            reviewStatus: "PENDING",
           },
         ],
         now: NOW,

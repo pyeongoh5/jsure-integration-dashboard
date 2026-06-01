@@ -1,11 +1,16 @@
-import type {
-  ApplicationDisplayStage,
-  ApplicationStatus,
-} from "@jsure/shared";
+import type { ApplicationDisplayStage, ApplicationStatus } from "@jsure/shared";
 
-// TEMP: 전체 흐름 테스트용으로 0초로 단축 (운영 시 7일로 복귀 필요)
-const SEVEN_DAYS_MS = 0;
 const DAY_MS = 24 * 60 * 60 * 1000;
+// TEMP: 전체 흐름 테스트용으로 1일로 단축 (운영 시 7로 복귀 필요)
+const INSIGHT_DUE_DAYS = 1;
+
+/** JST 기준 그 날 00:00 UTC 타임스탬프 (ms). */
+function startOfJstDay(d: Date): number {
+  const jstOffsetMs = 9 * 60 * 60 * 1000;
+  const shifted = d.getTime() + jstOffsetMs;
+  const dayStartUtcShifted = shifted - (shifted % DAY_MS);
+  return dayStartUtcShifted - jstOffsetMs;
+}
 
 interface DisplayStageInput {
   status: ApplicationStatus;
@@ -18,9 +23,7 @@ interface DisplayStageInput {
   now?: Date;
 }
 
-export function deriveDisplayStage(
-  input: DisplayStageInput,
-): ApplicationDisplayStage {
+export function deriveDisplayStage(input: DisplayStageInput): ApplicationDisplayStage {
   const { status, receivedAt, posts } = input;
   const now = input.now ?? new Date();
 
@@ -38,27 +41,22 @@ export function deriveDisplayStage(
       return "POST_REJECTED";
     }
 
-    const allInsightsSubmitted = posts.every(
-      (p) => p.insightSubmittedAt !== null,
-    );
+    const allInsightsSubmitted = posts.every((p) => p.insightSubmittedAt !== null);
     if (allInsightsSubmitted) return "REVIEWING";
 
     const first = posts[0]!.submittedAt;
-    const earliest = posts.reduce(
-      (acc, p) => (p.submittedAt < acc ? p.submittedAt : acc),
-      first,
+    const earliest = posts.reduce((acc, p) => (p.submittedAt < acc ? p.submittedAt : acc), first);
+    // JST 일자 기준으로 N일째 되는 날(자정 이후)에 INSIGHT_DUE 로 전환.
+    const daysPassed = Math.round(
+      (startOfJstDay(now) - startOfJstDay(earliest)) / DAY_MS,
     );
-    const sevenDaysPassed = now.getTime() - earliest.getTime() >= SEVEN_DAYS_MS;
-    return sevenDaysPassed ? "INSIGHT_DUE" : "POSTED";
+    return daysPassed >= INSIGHT_DUE_DAYS ? "INSIGHT_DUE" : "POSTED";
   }
 
   return "APPLIED";
 }
 
-export function postingDeadline(
-  receivedAt: Date | null,
-  postingPeriodDays: number,
-): Date | null {
+export function postingDeadline(receivedAt: Date | null, postingPeriodDays: number): Date | null {
   if (!receivedAt) return null;
   return new Date(receivedAt.getTime() + postingPeriodDays * DAY_MS);
 }

@@ -44,7 +44,12 @@ export function ApplicationDetail() {
 
   const cancel = useMutation({
     mutationFn: () => cancelApplication(id),
-    onSuccess: () => invalidate(),
+    onSuccess: () => {
+      invalidate();
+      // 취소된 응모는 인플루언서에게 보이지 않도록 처리되므로
+      // 상세 페이지에서 즉시 캠페인 목록으로 이동.
+      nav("/", { replace: true });
+    },
   });
   const receive = useMutation({
     mutationFn: () => confirmReceipt(id),

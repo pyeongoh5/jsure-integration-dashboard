@@ -161,7 +161,7 @@ export class InfluencerApplicationsService {
     influencerId: string,
   ): Promise<InfluencerApplication[]> {
     const rows = await this.prisma.campaignApplication.findMany({
-      where: { influencerId },
+      where: { influencerId, status: { not: "CANCELLED" } },
       orderBy: { appliedAt: "desc" },
       include: INCLUDE,
     });
@@ -178,6 +178,10 @@ export class InfluencerApplicationsService {
     });
     if (!row) throw new NotFoundException("Application not found");
     if (row.influencerId !== influencerId) throw new ForbiddenException();
+    // 취소된 응모는 인플루언서에게 "응모하지 않은 상태"로 보이도록 숨김
+    if (row.status === "CANCELLED") {
+      throw new NotFoundException("Application not found");
+    }
     return this.resolveResponse(row);
   }
 

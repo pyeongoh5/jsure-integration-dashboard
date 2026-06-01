@@ -75,3 +75,33 @@ export const UpdateInfluencerProfileRequestSchema = z.object({
 export type UpdateInfluencerProfileRequest = z.infer<
   typeof UpdateInfluencerProfileRequestSchema
 >;
+
+export const LineCompleteSignupRequestSchema = z.object({
+  signupToken: z.string().min(1),
+  email: z.string().email(),
+  password: z.string().min(8).max(72).optional(),
+  name: z.string().min(1).max(50),
+  nameKana: z.string().min(1).regex(KANA_RE, "カナで入力してください"),
+  phone: z.string().min(10).max(20),
+  entityType: InfluencerEntityTypeSchema,
+  snsAccounts: z
+    .array(InfluencerSnsAccountInputSchema)
+    .min(1, "1つ以上のSNSアカウントを追加してください"),
+  bankAccount: InfluencerBankAccountSchema,
+  termsVersion: z.string(),
+  agreedItems: z
+    .array(ConsentItemSchema)
+    .length(6)
+    .refine((items) => new Set(items).size === 6, "重複した同意項目"),
+});
+export type LineCompleteSignupRequest = z.infer<
+  typeof LineCompleteSignupRequestSchema
+>;
+
+export const LineSignupTokenPayloadSchema = z.object({
+  lineUserId: z.string(),
+  displayName: z.string().nullable(),
+});
+export type LineSignupTokenPayload = z.infer<
+  typeof LineSignupTokenPayloadSchema
+>;

@@ -84,6 +84,12 @@ enum ApplicationStatus {
   CANCELLED
 }
 
+enum PostReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Campaign {
   id                 String    @id @default(cuid())
   title              String
@@ -91,6 +97,7 @@ model Campaign {
   recruitStartAt     DateTime
   recruitEndAt       DateTime
   closedAt           DateTime?
+  postingPeriodDays  Int       @default(14)
   productSummary     String
   productDetailUrl   String
   guideline          String
@@ -126,7 +133,9 @@ model CampaignSnsRecruit {
 model Influencer {
   id           String               @id @default(cuid())
   email        String               @unique
-  passwordHash String
+  passwordHash String?
+  lineUserId   String?              @unique
+  lineLinkedAt DateTime?
   name         String
   nameKana     String?
   phone        String
@@ -222,10 +231,14 @@ model CampaignApplication {
   reviewedById String?
   rejectReason String?
 
-  trackingNumber String?
-  shippedAt      DateTime?
+  trackingCarrier String?
+  trackingNumber  String?
+  shippedAt       DateTime?
   deliveredAt    DateTime?
+  receivedAt     DateTime?
   completedAt    DateTime?
+
+  selectedSnsTypes SnsType[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -246,15 +259,58 @@ model SubmittedPost {
   snsType             SnsType
   url                 String
   submittedAt         DateTime  @default(now())
+  insightLikes        Int?
+  insightComments     Int?
+  insightShares       Int?
+  insightReposts      Int?
   insightSaves        Int?
+  insightViews        Int?
   insightReach        Int?
   insightProfileViews Int?
   insightSubmittedAt  DateTime?
   updatedAt           DateTime  @updatedAt
 
-  application CampaignApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewStatus PostReviewStatus @default(PENDING)
+  reviewedAt   DateTime?
+  reviewedById String?
+
+  settledAt        DateTime?
+  settledAmountJpy Int?
+  settledById      String?
+
+  application CampaignApplication      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  rejections  SubmittedPostRejection[]
+  attachments SubmittedPostAttachment[]
 
   @@unique([applicationId, snsType])
   @@index([applicationId])
+  @@index([reviewStatus])
   @@map("submitted_posts")
+}
+
+model SubmittedPostAttachment {
+  id          String   @id @default(cuid())
+  postId      String
+  objectKey   String   @unique
+  contentType String
+  sizeBytes   Int
+  uploadedAt  DateTime @default(now())
+
+  post SubmittedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("submitted_post_attachments")
+}
+
+model SubmittedPostRejection {
+  id           String   @id @default(cuid())
+  postId       String
+  comment      String
+  rejectedAt   DateTime @default(now())
+  rejectedById String?
+
+  post SubmittedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("submitted_post_rejections")
 }

@@ -16,8 +16,10 @@ export const ApplicationDisplayStageSchema = z.enum([
   "APPLIED",
   "APPROVED",
   "SHIPPED",
+  "AWAITING_RECEIPT",
   "POSTING",
   "POSTED",
+  "POST_REJECTED",
   "INSIGHT_DUE",
   "REVIEWING",
   "COMPLETED",
@@ -28,15 +30,29 @@ export type ApplicationDisplayStage = z.infer<
   typeof ApplicationDisplayStageSchema
 >;
 
+export const PostReviewStatusSchema = z.enum([
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+]);
+export type PostReviewStatus = z.infer<typeof PostReviewStatusSchema>;
+
 export const SubmittedPostSchema = z.object({
   id: z.string(),
   snsType: SnsTypeSchema,
   url: z.string().url(),
   submittedAt: z.string().datetime(),
+  insightLikes: z.number().int().nullable(),
+  insightComments: z.number().int().nullable(),
+  insightShares: z.number().int().nullable(),
+  insightReposts: z.number().int().nullable(),
   insightSaves: z.number().int().nullable(),
+  insightViews: z.number().int().nullable(),
   insightReach: z.number().int().nullable(),
-  insightProfileViews: z.number().int().nullable(),
   insightSubmittedAt: z.string().datetime().nullable(),
+  reviewStatus: PostReviewStatusSchema,
+  reviewedAt: z.string().datetime().nullable(),
+  lastRejectionComment: z.string().nullable(),
 });
 export type SubmittedPost = z.infer<typeof SubmittedPostSchema>;
 
@@ -46,14 +62,35 @@ export const SubmitPostRequestSchema = z.object({
 export type SubmitPostRequest = z.infer<typeof SubmitPostRequestSchema>;
 
 export const SubmitInsightRequestSchema = z.object({
+  likes: z.number().int().nonnegative(),
+  comments: z.number().int().nonnegative(),
+  shares: z.number().int().nonnegative(),
+  reposts: z.number().int().nonnegative(),
   saves: z.number().int().nonnegative(),
+  views: z.number().int().nonnegative(),
   reach: z.number().int().nonnegative(),
-  profileViews: z.number().int().nonnegative(),
+  attachments: z
+    .array(
+      z.object({
+        objectKey: z.string().min(1),
+        contentType: z.enum(["image/png", "image/jpeg", "image/webp"]),
+        sizeBytes: z.number().int().positive(),
+      }),
+    )
+    .max(10)
+    .optional(),
 });
 export type SubmitInsightRequest = z.infer<typeof SubmitInsightRequestSchema>;
 
 export const CreateApplicationRequestSchema = z.object({
   campaignId: z.string().min(1),
+  snsTypes: z
+    .array(SnsTypeSchema)
+    .min(1, "1つ以上のSNSを選択してください")
+    .refine(
+      (arr) => new Set(arr).size === arr.length,
+      "SNSが重複しています",
+    ),
 });
 export type CreateApplicationRequest = z.infer<
   typeof CreateApplicationRequestSchema
@@ -68,12 +105,16 @@ export const InfluencerApplicationSchema = z.object({
   status: ApplicationStatusSchema,
   displayStage: ApplicationDisplayStageSchema,
   appliedAt: z.string().datetime(),
+  trackingCarrier: z.string().nullable(),
   trackingNumber: z.string().nullable(),
   shippedAt: z.string().datetime().nullable(),
   deliveredAt: z.string().datetime().nullable(),
+  receivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   rejectReason: z.string().nullable(),
+  selectedSnsTypes: z.array(SnsTypeSchema),
   posts: z.array(SubmittedPostSchema),
+  postingPeriodDays: z.number().int().min(1),
   postingDeadlineAt: z.string().datetime().nullable(),
 });
 export type InfluencerApplication = z.infer<typeof InfluencerApplicationSchema>;

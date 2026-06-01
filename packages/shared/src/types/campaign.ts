@@ -29,13 +29,18 @@ export const CampaignFormSchema = z
     rewardJpy: z.number().int("정수만 입력").nonnegative(),
     recruitStartDate: DateOnly,
     recruitEndDate: DateOnly,
+    postingPeriodDays: z
+      .number()
+      .int("정수만 입력")
+      .min(1, "1 이상의 일수여야 합니다")
+      .max(365),
     snsRecruits: SnsRecruitArray,
     productSummary: z.string().max(1000),
     productDetailUrl: z.string().url("URL 형식이어야 합니다"),
     guideline: z.string().max(2000),
     referenceMediaUrls: z.array(z.string().url()).max(10),
     cautions: z.string().max(2000),
-    thumbnailUrl: z.string().url().nullable().optional(),
+    thumbnailUrl: z.string().min(1).nullable().optional(),
   })
   .refine((d) => d.recruitStartDate <= d.recruitEndDate, {
     path: ["recruitEndDate"],
@@ -52,13 +57,14 @@ export const UpdateCampaignRequestSchema = z
     rewardJpy: z.number().int().nonnegative().optional(),
     recruitStartDate: DateOnly.optional(),
     recruitEndDate: DateOnly.optional(),
+    postingPeriodDays: z.number().int().min(1).max(365).optional(),
     snsRecruits: SnsRecruitArray.optional(),
     productSummary: z.string().max(1000).optional(),
     productDetailUrl: z.string().url().optional(),
     guideline: z.string().max(2000).optional(),
     referenceMediaUrls: z.array(z.string().url()).max(10).optional(),
     cautions: z.string().max(2000).optional(),
-    thumbnailUrl: z.string().url().nullable().optional(),
+    thumbnailUrl: z.string().min(1).nullable().optional(),
   })
   .refine(
     (d) =>
@@ -79,6 +85,7 @@ export const CampaignResponseSchema = z.object({
   recruitStartAt: z.string().datetime(),
   recruitEndAt: z.string().datetime(),
   closedAt: z.string().datetime().nullable(),
+  postingPeriodDays: z.number().int().min(1),
   productSummary: z.string(),
   productDetailUrl: z.string().url(),
   guideline: z.string(),
@@ -108,6 +115,7 @@ export const InfluencerCampaignCardSchema = z.object({
   appliedCount: z.number().int().nonnegative(),
   recruitStartAt: z.string().datetime(),
   recruitEndAt: z.string().datetime(),
+  postingPeriodDays: z.number().int().min(1),
   isNew: z.boolean(),
 });
 export type InfluencerCampaignCard = z.infer<

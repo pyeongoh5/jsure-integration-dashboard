@@ -1,0 +1,77 @@
+import type { AdminSubmittedPost } from "@jsure/shared";
+import {
+  REVIEW_STATUS_TO_TAB,
+  SNS_TO_MEDIA,
+  type DraftReview,
+  type DraftReviewCounts,
+} from "./types";
+
+const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
+
+function formatRelative(iso: string, now: Date): string {
+  const then = new Date(iso);
+  const diffMs = now.getTime() - then.getTime();
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 1) return "방금";
+  if (minutes < 60) return RELATIVE_TIME.format(-minutes, "minute");
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return RELATIVE_TIME.format(-hours, "hour");
+  const days = Math.floor(hours / 24);
+  if (days < 7) return RELATIVE_TIME.format(-days, "day");
+  return then.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+export function toDraftReview(
+  post: AdminSubmittedPost,
+  now: Date,
+): DraftReview {
+  const matchingAccount = post.influencer.snsAccounts.find(
+    (account) => account.snsType === post.snsType,
+  );
+  return {
+    id: post.id,
+    influencerName: post.influencer.name,
+    influencerHandle: matchingAccount?.handle ?? "",
+    campaignTitle: post.campaign.title,
+    campaignThumbnailUrl: post.campaign.thumbnailUrl,
+    snsType: post.snsType,
+    media: SNS_TO_MEDIA[post.snsType],
+    url: post.url,
+    submittedAt: formatRelative(post.submittedAt, now),
+    insightSubmitted: post.insightSubmittedAt !== null,
+    insight: {
+      likes: post.insightLikes,
+      comments: post.insightComments,
+      shares: post.insightShares,
+      reposts: post.insightReposts,
+      saves: post.insightSaves,
+      views: post.insightViews,
+      reach: post.insightReach,
+      submittedAt: post.insightSubmittedAt,
+    },
+    attachments: post.attachments,
+    reviewStatus: post.reviewStatus,
+    applicationStatus: post.application.status,
+    rejectionHistory: post.rejectionHistory.map((rejection) => ({
+      id: rejection.id,
+      comment: rejection.comment,
+      rejectedAt: formatRelative(rejection.rejectedAt, now),
+    })),
+    settledAt: post.settledAt
+      ? formatRelative(post.settledAt, now)
+      : null,
+    settledAmountJpy: post.settledAmountJpy,
+  };
+}
+
+export function countByTab(drafts: DraftReview[]): DraftReviewCounts {
+  const counts: DraftReviewCounts = { pending: 0, approved: 0, rejected: 0 };
+  for (const draft of drafts) {
+    counts[REVIEW_STATUS_TO_TAB[draft.reviewStatus]] += 1;
+  }
+  return counts;
+}

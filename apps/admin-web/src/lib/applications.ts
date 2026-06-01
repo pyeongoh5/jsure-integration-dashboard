@@ -66,3 +66,24 @@ export async function undoApplication(id: string): Promise<AdminApplication> {
   const res = await api.post(`/campaign-applications/${encodeURIComponent(id)}/undo`);
   return AdminApplicationSchema.parse(res.data);
 }
+
+export async function shipApplication(
+  id: string,
+  trackingCarrier: string,
+  trackingNumber: string,
+): Promise<AdminApplication> {
+  const res = await api.post(
+    `/campaign-applications/${encodeURIComponent(id)}/ship`,
+    { trackingCarrier, trackingNumber },
+  );
+  return AdminApplicationSchema.parse(res.data);
+}
+
+export async function deliverApplication(
+  id: string,
+): Promise<AdminApplication> {
+  const res = await api.post(
+    `/campaign-applications/${encodeURIComponent(id)}/deliver`,
+  );
+  return AdminApplicationSchema.parse(res.data);
+}

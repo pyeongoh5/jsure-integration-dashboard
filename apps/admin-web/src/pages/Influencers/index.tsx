@@ -19,7 +19,7 @@ const SNS_CLASS: Record<SnsType, string> = {
 
 function formatFollowers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+  if (n >= 1_000) return `${parseFloat((n / 1_000).toFixed(1))}K`;
   return String(n);
 }
 
@@ -63,10 +63,7 @@ export function Influencers() {
         if (cancelled) return;
         setState({
           kind: "error",
-          message:
-            err instanceof Error
-              ? err.message
-              : "인플루언서 목록을 불러올 수 없습니다.",
+          message: err instanceof Error ? err.message : "인플루언서 목록을 불러올 수 없습니다.",
         });
       });
     return () => {
@@ -91,9 +88,7 @@ export function Influencers() {
         <div>
           <h1 className="inf__title">인플루언서</h1>
           <p className="inf__subtitle">
-            {state.kind === "ready"
-              ? `총 ${state.rows.length}명`
-              : "목록을 불러오는 중..."}
+            {state.kind === "ready" ? `총 ${state.rows.length}명` : "목록을 불러오는 중..."}
           </p>
         </div>
         <div className="inf__search">
@@ -111,11 +106,7 @@ export function Influencers() {
       ) : state.kind === "error" ? (
         <div className="inf__empty">
           {state.message}{" "}
-          <button
-            type="button"
-            className="inf__retry"
-            onClick={() => setReloadKey((k) => k + 1)}
-          >
+          <button type="button" className="inf__retry" onClick={() => setReloadKey((k) => k + 1)}>
             다시 시도
           </button>
         </div>
@@ -138,17 +129,12 @@ export function Influencers() {
                 <tr key={r.id}>
                   <td>
                     <div className="inf-name">
-                      <span
-                        className="inf-avatar"
-                        style={{ background: pickAvatarColor(r.id) }}
-                      >
+                      <span className="inf-avatar" style={{ background: pickAvatarColor(r.id) }}>
                         {r.name[0]}
                       </span>
                       <div>
                         <div className="inf-name__text">{r.name}</div>
-                        {r.nameKana && (
-                          <div className="inf-name__sub">{r.nameKana}</div>
-                        )}
+                        {r.nameKana && <div className="inf-name__sub">{r.nameKana}</div>}
                       </div>
                     </div>
                   </td>
@@ -178,9 +164,7 @@ export function Influencers() {
                     )}
                   </td>
                   <td>
-                    <span
-                      className={`inf-status inf-status--${r.status.toLowerCase()}`}
-                    >
+                    <span className={`inf-status inf-status--${r.status.toLowerCase()}`}>
                       {r.status === "ACTIVE" ? "활성" : "정지"}
                     </span>
                   </td>

@@ -9,15 +9,15 @@ type Props = {
 export function ApplicantTabs({ value, counts, onChange }: Props) {
   return (
     <div className="apl__tabs">
-      {STATUS_TABS.map((t) => (
+      {STATUS_TABS.map((tab) => (
         <button
-          key={t.key}
+          key={tab.key}
           type="button"
-          className={`apl-tab ${value === t.key ? "apl-tab--active" : ""}`}
-          onClick={() => onChange(t.key)}
+          className={`apl-tab ${value === tab.key ? "apl-tab--active" : ""}`}
+          onClick={() => onChange(tab.key)}
         >
-          {t.label}
-          <span className="apl-tab__count">{counts[t.key]}</span>
+          {tab.label}
+          <span className="apl-tab__count">{counts[tab.key]}</span>
         </button>
       ))}
     </div>

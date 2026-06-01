@@ -14,6 +14,24 @@ import type {
 } from "@jsure/shared";
 
 const STORAGE_KEY = "signupDraft";
+const LINE_TOKEN_KEY = "lineSignupToken";
+
+export function getLineSignupToken(): string | null {
+  try {
+    return sessionStorage.getItem(LINE_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setLineSignupTokenStorage(token: string | null): void {
+  try {
+    if (token) sessionStorage.setItem(LINE_TOKEN_KEY, token);
+    else sessionStorage.removeItem(LINE_TOKEN_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 interface ProfileDraft {
   name: string;
@@ -43,6 +61,7 @@ interface SignupDraft {
   profile: ProfileDraft;
   snsAccounts: InfluencerSnsAccountInput[];
   bank: BankDraft;
+  lineSignupToken: string | null;
 }
 
 const DEFAULT: SignupDraft = {
@@ -59,6 +78,7 @@ const DEFAULT: SignupDraft = {
     accountNumber: "",
     accountHolderKana: "",
   },
+  lineSignupToken: null,
 };
 
 interface Ctx {
@@ -68,6 +88,7 @@ interface Ctx {
   setProfile: (p: ProfileDraft) => void;
   setSnsAccounts: (s: InfluencerSnsAccountInput[]) => void;
   setBank: (b: BankDraft) => void;
+  setLineSignupToken: (token: string | null) => void;
   reset: () => void;
 }
 
@@ -85,11 +106,7 @@ function readStored(): SignupDraft {
 }
 
 export function SignupProvider({ children }: { children: ReactNode }) {
-  const [draft, setDraft] = useState<SignupDraft>(DEFAULT);
-
-  useEffect(() => {
-    setDraft(readStored());
-  }, []);
+  const [draft, setDraft] = useState<SignupDraft>(() => readStored());
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
@@ -116,6 +133,11 @@ export function SignupProvider({ children }: { children: ReactNode }) {
     (b: BankDraft) => setDraft((d) => ({ ...d, bank: b })),
     [],
   );
+  const setLineSignupToken = useCallback(
+    (token: string | null) =>
+      setDraft((d) => ({ ...d, lineSignupToken: token })),
+    [],
+  );
   const reset = useCallback(() => {
     sessionStorage.removeItem(STORAGE_KEY);
     setDraft(DEFAULT);
@@ -129,9 +151,19 @@ export function SignupProvider({ children }: { children: ReactNode }) {
       setProfile,
       setSnsAccounts,
       setBank,
+      setLineSignupToken,
       reset,
     }),
-    [draft, setAgreedItems, setAccount, setProfile, setSnsAccounts, setBank, reset],
+    [
+      draft,
+      setAgreedItems,
+      setAccount,
+      setProfile,
+      setSnsAccounts,
+      setBank,
+      setLineSignupToken,
+      reset,
+    ],
   );
 
   return <SignupCtx.Provider value={value}>{children}</SignupCtx.Provider>;

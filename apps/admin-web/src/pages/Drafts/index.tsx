@@ -1,10 +1,77 @@
-import "../_shared/Placeholder.css";
+import { useMemo, useState } from "react";
+import { DraftDialogs } from "@/components/Drafts/DraftDialogs";
+import { DraftTable } from "@/components/Drafts/DraftTable";
+import { DraftTabs } from "@/components/Drafts/DraftTabs";
+import { InsightDetailDialog } from "@/components/Drafts/InsightDetailDialog";
+import { useDraftMutations } from "@/components/Drafts/useDraftMutations";
+import { useDraftReviewsData } from "@/components/Drafts/useDraftReviewsData";
+import {
+  REVIEW_STATUS_TO_TAB,
+  type DraftReview,
+  type DraftReviewTab,
+} from "@/components/Drafts/types";
+import "./Drafts.css";
 
 export function Drafts() {
+  const [tab, setTab] = useState<DraftReviewTab>("pending");
+  const [insightView, setInsightView] = useState<DraftReview | null>(null);
+  const { state, drafts, counts, reload } = useDraftReviewsData();
+  const mutations = useDraftMutations(reload);
+
+  const visible = useMemo(
+    () => drafts.filter((draft) => REVIEW_STATUS_TO_TAB[draft.reviewStatus] === tab),
+    [drafts, tab],
+  );
+
   return (
-    <div className="ph">
-      <h1 className="ph__title">초안 검토</h1>
-      <p className="ph__subtitle">준비 중인 페이지입니다.</p>
+    <div className="dr">
+      <div className="dr__header">
+        <h1 className="dr__title">초안 검토</h1>
+        <p className="dr__subtitle">
+          {state.kind === "ready"
+            ? `현재 탭 ${visible.length}건`
+            : state.kind === "loading"
+              ? "불러오는 중..."
+              : ""}
+        </p>
+      </div>
+
+      <DraftTabs value={tab} counts={counts} onChange={setTab} />
+
+      {state.kind === "loading" ? (
+        <div className="dr__card">
+          <div className="dr__empty">불러오는 중…</div>
+        </div>
+      ) : state.kind === "error" ? (
+        <div className="dr__card">
+          <div className="dr__empty">{state.message}</div>
+        </div>
+      ) : (
+        <DraftTable
+          items={visible}
+          showHistory={tab === "pending"}
+          onApprove={mutations.openApprove}
+          onReject={mutations.openReject}
+          onUndo={mutations.openUndo}
+          onSettle={mutations.openSettle}
+          onViewInsight={setInsightView}
+        />
+      )}
+
+      <DraftDialogs
+        pending={mutations.pending}
+        mutating={mutations.mutating}
+        error={mutations.error}
+        onConfirm={mutations.confirm}
+        onCancel={mutations.cancel}
+      />
+
+      {insightView && (
+        <InsightDetailDialog
+          draft={insightView}
+          onClose={() => setInsightView(null)}
+        />
+      )}
     </div>
   );
 }

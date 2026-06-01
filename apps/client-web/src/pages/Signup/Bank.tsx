@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   INFLUENCER_TERMS_VERSION,
   InfluencerSignupRequestSchema,
+  LineCompleteSignupRequestSchema,
   type InfluencerEntityType,
   type JpAccountType,
 } from "@jsure/shared";
@@ -11,9 +12,16 @@ import { RadioGroup } from "../../components/form/RadioGroup";
 import { ErrorBanner } from "../../components/form/ErrorBanner";
 import { BankSelect } from "../../components/Bank/BankSelect";
 import { WizardFooter } from "../../components/Signup/WizardFooter";
-import { useSignup } from "../../context/SignupContext";
+import {
+  getLineSignupToken,
+  setLineSignupTokenStorage,
+  useSignup,
+} from "../../context/SignupContext";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
-import { signup as signupApi } from "../../lib/api/auth";
+import {
+  lineCompleteSignup,
+  signup as signupApi,
+} from "../../lib/api/auth";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
 
@@ -82,7 +90,15 @@ export function SignupBank() {
       agreedItems: draft.agreedItems,
     };
 
-    const parsed = InfluencerSignupRequestSchema.safeParse(payload);
+    const lineToken = getLineSignupToken();
+    const isLineFlow = !!lineToken;
+    const parsed = isLineFlow
+      ? LineCompleteSignupRequestSchema.safeParse({
+          ...payload,
+          signupToken: lineToken,
+          password: payload.password || undefined,
+        })
+      : InfluencerSignupRequestSchema.safeParse(payload);
     if (!parsed.success) {
       setServerError(
         parsed.error.issues[0]?.message ?? "入力内容を再度ご確認ください",
@@ -101,8 +117,15 @@ export function SignupBank() {
     });
     setSubmitting(true);
     try {
-      const res = await signupApi(parsed.data);
+      const res = isLineFlow
+        ? await lineCompleteSignup(
+            parsed.data as Parameters<typeof lineCompleteSignup>[0],
+          )
+        : await signupApi(
+            parsed.data as Parameters<typeof signupApi>[0],
+          );
       auth.setSession(res.accessToken, res.influencer);
+      setLineSignupTokenStorage(null);
       reset();
       nav("/", { replace: true });
     } catch (err: unknown) {

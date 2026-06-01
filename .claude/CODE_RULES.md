@@ -133,6 +133,19 @@ return HealthResponseSchema.parse(res.data);
 - **DO** 기존 디렉토리 컨벤션을 먼저 확인하고 따라간다. 새 폴더를 만들기 전에 사용자에게 확인.
 - **DO** 한 파일 = 한 주된 책임. 파일이 커지면 분할 신호.
 
+### 변수 / 파라미터 네이밍
+
+- **DO** 변수/파라미터는 의미가 그대로 드러나는 단어로 적는다. `applicant`, `campaign`, `media`, `event`, `handlers`.
+- **DO** 콜백/콜렉션 메서드의 파라미터도 도메인 이름으로 적는다. `items.map((applicant) => ...)`, `accounts.find((account) => ...)`.
+- **DON'T** 약어 금지. 다음은 모두 금지:
+  - 도메인 타입의 첫 글자만 따서 변수명으로 쓰지 않는다 (`Applicant a`, `Campaign c`, `Media m`).
+  - 일반 약어 (`val`, `tmp`, `obj`, `req`, `res`, `cb`, `fn`, `mut`, `data1`).
+  - 의미가 죽은 한 글자 파라미터 (`e` for event, `s` for seed, `n` for count, `v` for value 등).
+- **DO** 예외로만 한 글자 이름을 허용:
+  - 표준 관용 루프 인덱서: `for (let i = 0; ...)` / `arr.forEach((_, index) => ...)`.
+  - 수학·좌표 변수 (`x`, `y`, `dx`, `dy`).
+  - 그 외에는 단어로 풀어 쓴다.
+
 ### `apps/api` (NestJS)
 
 - 도메인별 디렉토리: `src/<domain>/` (예: `auth/`, `users/`).

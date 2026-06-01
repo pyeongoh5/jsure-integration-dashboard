@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { SnsType } from "@jsure/shared";
 import { getCampaign } from "../../lib/api/campaigns";
 import { createApplication } from "../../lib/api/applications";
 import { fetchMe } from "../../lib/api/auth";
@@ -9,7 +10,13 @@ import { PrimaryButton } from "../../components/form/PrimaryButton";
 import { ErrorBanner } from "../../components/form/ErrorBanner";
 import "./Apply.css";
 
-const CONFIRM_KEYS = ["PR_LABEL", "DEADLINE", "INSIGHTS", "YAKKIHO", "GUIDELINE"] as const;
+const CONFIRM_KEYS = [
+  "PR_LABEL",
+  "DEADLINE",
+  "INSIGHTS",
+  "YAKKIHO",
+  "GUIDELINE",
+] as const;
 const CONFIRM_LABELS: Record<(typeof CONFIRM_KEYS)[number], string> = {
   PR_LABEL: "投稿冒頭に「#PR」または「ブランドから提供」表記",
   DEADLINE: "受取後2週間以内に投稿",
@@ -18,10 +25,25 @@ const CONFIRM_LABELS: Record<(typeof CONFIRM_KEYS)[number], string> = {
   GUIDELINE: "ガイドラインの確認・遵守",
 };
 
+const SNS_LABEL: Record<SnsType, string> = {
+  INSTAGRAM: "Instagram",
+  TIKTOK: "TikTok",
+  X: "X",
+  YOUTUBE: "YouTube",
+};
+
+const SNS_FOLLOWER_LABEL: Record<SnsType, string> = {
+  INSTAGRAM: "フォロワー",
+  TIKTOK: "フォロワー",
+  X: "フォロワー",
+  YOUTUBE: "登録者",
+};
+
 export function Apply() {
   const { id = "" } = useParams();
   const nav = useNavigate();
   const [agreed, setAgreed] = useState<Set<string>>(new Set());
+  const [selectedSns, setSelectedSns] = useState<Set<SnsType>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
   const campaign = useQuery({
@@ -31,10 +53,24 @@ export function Apply() {
   });
   const me = useQuery({ queryKey: ["me"], queryFn: fetchMe });
 
+  const qualifying = useMemo(() => {
+    if (!campaign.data || !me.data) return [];
+    const followerByMySns = new Map(
+      me.data.snsAccounts.map((a) => [a.snsType, a.followerCount]),
+    );
+    return campaign.data.snsRecruits
+      .filter((r) => {
+        const f = followerByMySns.get(r.snsType);
+        return f !== undefined && f >= r.minFollowers;
+      })
+      .map((r) => r.snsType);
+  }, [campaign.data, me.data]);
+
   const allAgreed = CONFIRM_KEYS.every((k) => agreed.has(k));
+  const hasSelection = selectedSns.size > 0;
 
   const apply = useMutation({
-    mutationFn: () => createApplication(id),
+    mutationFn: () => createApplication(id, Array.from(selectedSns)),
     onSuccess: (app) => nav(`/applications/${app.id}`, { replace: true }),
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { message?: string } } };
@@ -42,11 +78,20 @@ export function Apply() {
     },
   });
 
-  function toggle(k: string) {
+  function toggleAgree(k: string) {
     setAgreed((prev) => {
       const next = new Set(prev);
       if (next.has(k)) next.delete(k);
       else next.add(k);
+      return next;
+    });
+  }
+
+  function toggleSns(s: SnsType) {
+    setSelectedSns((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
       return next;
     });
   }
@@ -72,10 +117,9 @@ export function Apply() {
     );
   }
 
-  const mySnsTypes = new Set(me.data?.snsAccounts.map((s) => s.snsType) ?? []);
-  const matched = campaign.data.snsRecruits
-    .map((r) => r.snsType)
-    .filter((t) => mySnsTypes.has(t));
+  const followerByMySns = new Map(
+    me.data?.snsAccounts.map((a) => [a.snsType, a.followerCount]) ?? [],
+  );
 
   return (
     <div className="apply">
@@ -89,16 +133,54 @@ export function Apply() {
         </div>
 
         <section className="apply__sec">
-          <h3>応募に使用されるSNS</h3>
-          {matched.length === 0 ? (
+          <h3>応募に使用するSNSを選択</h3>
+          {qualifying.length === 0 ? (
             <p style={{ color: "#ef4444", fontSize: 13 }}>
-              対象SNSのアカウントが未登録です
+              応募条件を満たすSNSアカウントがありません
             </p>
           ) : (
-            <ul className="apply__sns">
-              {matched.map((t) => (
-                <li key={t}>{t}</li>
-              ))}
+            <ul className="apply__sns-pick">
+              {campaign.data.snsRecruits.map((r) => {
+                const isQualifying = qualifying.includes(r.snsType);
+                const myFollowers = followerByMySns.get(r.snsType);
+                const isSelected = selectedSns.has(r.snsType);
+                return (
+                  <li key={r.snsType}>
+                    <label
+                      className={`apply__sns-item ${
+                        isQualifying ? "" : "apply__sns-item--disabled"
+                      } ${isSelected ? "apply__sns-item--selected" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        disabled={!isQualifying}
+                        onChange={() => toggleSns(r.snsType)}
+                      />
+                      <div className="apply__sns-info">
+                        <div className="apply__sns-name">
+                          {SNS_LABEL[r.snsType]}
+                        </div>
+                        <div className="apply__sns-cond">
+                          応募条件: {SNS_FOLLOWER_LABEL[r.snsType]}{" "}
+                          {r.minFollowers > 0
+                            ? `${r.minFollowers.toLocaleString("ja-JP")}人以上`
+                            : "制限なし"}
+                          {myFollowers !== undefined && (
+                            <>
+                              {" "}
+                              （現在: {myFollowers.toLocaleString("ja-JP")}人）
+                            </>
+                          )}
+                          {myFollowers === undefined && (
+                            <>（アカウント未登録）</>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
@@ -110,7 +192,7 @@ export function Apply() {
               <input
                 type="checkbox"
                 checked={agreed.has(k)}
-                onChange={() => toggle(k)}
+                onChange={() => toggleAgree(k)}
               />
               <span>{CONFIRM_LABELS[k]}</span>
             </label>
@@ -122,7 +204,12 @@ export function Apply() {
 
       <div className="apply__cta">
         <PrimaryButton
-          disabled={!allAgreed || matched.length === 0 || apply.isPending}
+          disabled={
+            !allAgreed ||
+            !hasSelection ||
+            qualifying.length === 0 ||
+            apply.isPending
+          }
           onClick={() => apply.mutate()}
         >
           {apply.isPending ? "送信中…" : "応募を送信"}

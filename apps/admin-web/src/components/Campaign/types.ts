@@ -1,6 +1,6 @@
 import type { SnsType } from "@jsure/shared";
 
-export type CampaignStatus = "recruit" | "review" | "progress" | "done";
+export type CampaignStatus = "recruit" | "done";
 
 export type CampaignCardSnsRecruit = {
   snsType: SnsType;
@@ -14,6 +14,7 @@ export type Campaign = {
   description: string;
   status: CampaignStatus;
   thumbIcon: string;
+  thumbnailUrl: string | null;
   period: string;
   reward: string;
   approved: number;
@@ -39,7 +40,5 @@ export const SNS_FOLLOWER_LABEL: Record<SnsType, string> = {
 
 export const STATUS_LABEL: Record<CampaignStatus, string> = {
   recruit: "모집중",
-  review: "검토중",
-  progress: "진행중",
   done: "완료",
 };

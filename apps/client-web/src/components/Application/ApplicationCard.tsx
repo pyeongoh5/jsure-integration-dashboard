@@ -10,8 +10,8 @@ interface Props {
 
 function nextAction(app: InfluencerApplication): string | null {
   switch (app.displayStage) {
-    case "SHIPPED":
-      return "受取完了を報告";
+    case "AWAITING_RECEIPT":
+      return "受領を確認";
     case "POSTING":
       return "投稿URLを提出";
     case "INSIGHT_DUE":

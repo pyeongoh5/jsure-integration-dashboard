@@ -1,0 +1,143 @@
+.isf-section {
+  margin: 16px 0 12px;
+}
+
+.isf-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 6px;
+}
+
+.isf-section-hint {
+  font-size: 11px;
+  color: #6b7280;
+  margin: 0 0 10px;
+}
+
+.isf-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 16px;
+  border: 1.5px dashed #d1d5db;
+  border-radius: 10px;
+  background: #f9fafb;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.isf-dropzone:hover,
+.isf-dropzone--drag {
+  border-color: #1d6cf3;
+  background: #eff6ff;
+}
+
+.isf-dropzone--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.isf-dropzone__icon {
+  font-size: 24px;
+  color: #9ca3af;
+}
+
+.isf-dropzone--drag .isf-dropzone__icon,
+.isf-dropzone:hover .isf-dropzone__icon {
+  color: #1d6cf3;
+}
+
+.isf-dropzone__main {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.isf-dropzone__sub {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.isf-dropzone__hidden-input {
+  display: none;
+}
+
+.isf-error {
+  color: #ef4444;
+  font-size: 11px;
+  margin-top: 8px;
+}
+
+.isf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.isf-tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.isf-tile__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.isf-tile__remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(17, 24, 39, 0.7);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.isf-tile__remove:hover {
+  background: #ef4444;
+}
+
+.isf-tile__remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.isf-tile__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.isf-counter {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 8px;
+  text-align: right;
+}

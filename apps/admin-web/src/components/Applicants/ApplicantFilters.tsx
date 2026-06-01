@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MEDIA_META, type CampaignOption, type Media } from "./types";
+import {
+  MEDIA_META,
+  STAGE_OPTIONS,
+  type ApplicantStage,
+  type CampaignOption,
+  type Media,
+} from "./types";
 
-type PopoverKind = "campaign" | "media" | "followers";
+type PopoverKind = "campaign" | "media" | "followers" | "stage";
 
 type Props = {
   campaignId: string | null;
@@ -15,7 +21,11 @@ type Props = {
   onMediaChange: (next: Set<Media>) => void;
 
   minFollowers: number | null;
-  onMinFollowersChange: (n: number | null) => void;
+  onMinFollowersChange: (followers: number | null) => void;
+
+  showStageFilter: boolean;
+  stageFilter: Set<ApplicantStage>;
+  onStageChange: (next: Set<ApplicantStage>) => void;
 };
 
 export function ApplicantFilters({
@@ -28,6 +38,9 @@ export function ApplicantFilters({
   onMediaChange,
   minFollowers,
   onMinFollowersChange,
+  showStageFilter,
+  stageFilter,
+  onStageChange,
 }: Props) {
   const [popover, setPopover] = useState<{ kind: PopoverKind; rect: DOMRect } | null>(null);
   const [minFollowersDraft, setMinFollowersDraft] = useState<string>("");
@@ -35,20 +48,24 @@ export function ApplicantFilters({
   const campaignBtnRef = useRef<HTMLButtonElement | null>(null);
   const mediaBtnRef = useRef<HTMLButtonElement | null>(null);
   const followersBtnRef = useRef<HTMLButtonElement | null>(null);
+  const stageBtnRef = useRef<HTMLButtonElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!popover) return;
-    const onDocPointer = (e: PointerEvent) => {
-      const t = e.target as Node;
-      if (popoverRef.current && popoverRef.current.contains(t)) return;
-      if (campaignBtnRef.current && campaignBtnRef.current.contains(t)) return;
-      if (mediaBtnRef.current && mediaBtnRef.current.contains(t)) return;
-      if (followersBtnRef.current && followersBtnRef.current.contains(t)) return;
+    const onDocPointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (popoverRef.current && popoverRef.current.contains(target)) return;
+      if (campaignBtnRef.current && campaignBtnRef.current.contains(target))
+        return;
+      if (mediaBtnRef.current && mediaBtnRef.current.contains(target)) return;
+      if (followersBtnRef.current && followersBtnRef.current.contains(target))
+        return;
+      if (stageBtnRef.current && stageBtnRef.current.contains(target)) return;
       setPopover(null);
     };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPopover(null);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPopover(null);
     };
     document.addEventListener("pointerdown", onDocPointer);
     document.addEventListener("keydown", onKey);
@@ -59,13 +76,15 @@ export function ApplicantFilters({
   }, [popover]);
 
   const openPopover = (kind: PopoverKind) => {
-    const btn =
+    const anchorButton =
       kind === "campaign"
         ? campaignBtnRef.current
         : kind === "media"
           ? mediaBtnRef.current
-          : followersBtnRef.current;
-    if (!btn) return;
+          : kind === "followers"
+            ? followersBtnRef.current
+            : stageBtnRef.current;
+    if (!anchorButton) return;
     if (popover?.kind === kind) {
       setPopover(null);
       return;
@@ -73,14 +92,21 @@ export function ApplicantFilters({
     if (kind === "followers") {
       setMinFollowersDraft(minFollowers !== null ? String(minFollowers) : "");
     }
-    setPopover({ kind, rect: btn.getBoundingClientRect() });
+    setPopover({ kind, rect: anchorButton.getBoundingClientRect() });
   };
 
-  const toggleMedia = (m: Media) => {
+  const toggleMedia = (media: Media) => {
     const next = new Set(mediaFilter);
-    if (next.has(m)) next.delete(m);
-    else next.add(m);
+    if (next.has(media)) next.delete(media);
+    else next.add(media);
     onMediaChange(next);
+  };
+
+  const toggleStage = (stage: ApplicantStage) => {
+    const next = new Set(stageFilter);
+    if (next.has(stage)) next.delete(stage);
+    else next.add(stage);
+    onStageChange(next);
   };
 
   const applyFollowers = () => {
@@ -88,8 +114,8 @@ export function ApplicantFilters({
     if (raw === "") {
       onMinFollowersChange(null);
     } else {
-      const n = Number(raw);
-      if (Number.isInteger(n) && n >= 0) onMinFollowersChange(n);
+      const parsed = Number(raw);
+      if (Number.isInteger(parsed) && parsed >= 0) onMinFollowersChange(parsed);
     }
     setPopover(null);
   };
@@ -97,7 +123,8 @@ export function ApplicantFilters({
   const clear = (kind: PopoverKind) => {
     if (kind === "campaign") onCampaignChange(null);
     else if (kind === "media") onMediaChange(new Set());
-    else onMinFollowersChange(null);
+    else if (kind === "followers") onMinFollowersChange(null);
+    else onStageChange(new Set());
   };
 
   return (
@@ -115,8 +142,8 @@ export function ApplicantFilters({
           {campaignId && (
             <span
               className="apl-popover__btn"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
                 clear("campaign");
                 setPopover(null);
               }}
@@ -139,8 +166,8 @@ export function ApplicantFilters({
           {minFollowers !== null && (
             <span
               className="apl-popover__btn"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
                 clear("followers");
                 setPopover(null);
               }}
@@ -159,14 +186,14 @@ export function ApplicantFilters({
         >
           {mediaFilter.size > 0
             ? `매체: ${Array.from(mediaFilter)
-                .map((m) => MEDIA_META[m].label)
+                .map((media) => MEDIA_META[media].label)
                 .join(", ")}`
             : "+ 매체"}
           {mediaFilter.size > 0 && (
             <span
               className="apl-popover__btn"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
                 clear("media");
                 setPopover(null);
               }}
@@ -176,6 +203,36 @@ export function ApplicantFilters({
             </span>
           )}
         </button>
+
+        {showStageFilter && (
+          <button
+            ref={stageBtnRef}
+            type="button"
+            className={`apl-filter ${stageFilter.size > 0 ? "apl-filter--active" : ""}`}
+            onClick={() => openPopover("stage")}
+          >
+            {stageFilter.size > 0
+              ? `상태: ${STAGE_OPTIONS.filter((option) =>
+                  stageFilter.has(option.key),
+                )
+                  .map((option) => option.label)
+                  .join(", ")}`
+              : "+ 상태"}
+            {stageFilter.size > 0 && (
+              <span
+                className="apl-popover__btn"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  clear("stage");
+                  setPopover(null);
+                }}
+              >
+                {" "}
+                ✕
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {popover &&
@@ -192,21 +249,23 @@ export function ApplicantFilters({
                   <div className="apl-popover__empty">진행중인 캠페인이 없습니다.</div>
                 ) : (
                   <div className="apl-popover__items apl-popover__items--scroll">
-                    {campaignOptions.map((c) => {
-                      const selected = c.id === campaignId;
+                    {campaignOptions.map((campaign) => {
+                      const selected = campaign.id === campaignId;
                       return (
                         <button
-                          key={c.id}
+                          key={campaign.id}
                           type="button"
                           className={`apl-popover__option${
                             selected ? " apl-popover__option--on" : ""
                           }`}
                           onClick={() => {
-                            onCampaignChange(c.id);
+                            onCampaignChange(campaign.id);
                             setPopover(null);
                           }}
                         >
-                          <span className="apl-popover__option-label">{c.title}</span>
+                          <span className="apl-popover__option-label">
+                            {campaign.title}
+                          </span>
                           {selected && (
                             <i className="fa-solid fa-check apl-popover__option-check" />
                           )}
@@ -225,24 +284,61 @@ export function ApplicantFilters({
                   </button>
                 </div>
               </>
-            ) : popover.kind === "media" ? (
+            ) : popover.kind === "stage" ? (
               <>
-                <div className="apl-popover__title">매체 선택 (복수 가능)</div>
+                <div className="apl-popover__title">상태 선택 (복수 가능)</div>
                 <div className="apl-popover__items">
-                  {(Object.keys(MEDIA_META) as Media[]).map((m) => {
-                    const selected = mediaFilter.has(m);
+                  {STAGE_OPTIONS.map((option) => {
+                    const selected = stageFilter.has(option.key);
                     return (
                       <button
-                        key={m}
+                        key={option.key}
                         type="button"
                         className={`apl-popover__option${
                           selected ? " apl-popover__option--on" : ""
                         }`}
-                        onClick={() => toggleMedia(m)}
+                        onClick={() => toggleStage(option.key)}
                       >
-                        <i className={`${MEDIA_META[m].icon} apl-popover__option-icon`} />
                         <span className="apl-popover__option-label">
-                          {MEDIA_META[m].label}
+                          {option.label}
+                        </span>
+                        {selected && (
+                          <i className="fa-solid fa-check apl-popover__option-check" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="apl-popover__actions">
+                  <button
+                    type="button"
+                    className="apl-popover__btn apl-popover__btn--primary"
+                    onClick={() => setPopover(null)}
+                  >
+                    닫기
+                  </button>
+                </div>
+              </>
+            ) : popover.kind === "media" ? (
+              <>
+                <div className="apl-popover__title">매체 선택 (복수 가능)</div>
+                <div className="apl-popover__items">
+                  {(Object.keys(MEDIA_META) as Media[]).map((media) => {
+                    const selected = mediaFilter.has(media);
+                    return (
+                      <button
+                        key={media}
+                        type="button"
+                        className={`apl-popover__option${
+                          selected ? " apl-popover__option--on" : ""
+                        }`}
+                        onClick={() => toggleMedia(media)}
+                      >
+                        <i
+                          className={`${MEDIA_META[media].icon} apl-popover__option-icon`}
+                        />
+                        <span className="apl-popover__option-label">
+                          {MEDIA_META[media].label}
                         </span>
                         {selected && (
                           <i className="fa-solid fa-check apl-popover__option-check" />
@@ -272,10 +368,10 @@ export function ApplicantFilters({
                     placeholder="예: 10000"
                     autoFocus
                     value={minFollowersDraft}
-                    onChange={(e) => setMinFollowersDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
+                    onChange={(event) => setMinFollowersDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
                         applyFollowers();
                       }
                     }}

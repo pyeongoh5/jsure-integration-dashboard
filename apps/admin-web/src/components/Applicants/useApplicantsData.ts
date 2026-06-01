@@ -40,8 +40,8 @@ export function useApplicantsData(
   useEffect(() => {
     let cancelled = false;
     getApplicationCounts(campaignId ?? undefined)
-      .then((c) => {
-        if (!cancelled) setStatusCounts(c);
+      .then((counts) => {
+        if (!cancelled) setStatusCounts(counts);
       })
       .catch(() => {
         if (!cancelled) setStatusCounts(null);
@@ -61,13 +61,13 @@ export function useApplicantsData(
       .then((rows) => {
         if (!cancelled) setState({ kind: "ready", rows });
       })
-      .catch((err: unknown) => {
+      .catch((error: unknown) => {
         if (cancelled) return;
         setState({
           kind: "error",
           message:
-            err instanceof Error
-              ? err.message
+            error instanceof Error
+              ? error.message
               : "응모자 목록을 불러올 수 없습니다.",
         });
       });
@@ -80,7 +80,9 @@ export function useApplicantsData(
 
   const applicants = useMemo<Applicant[]>(() => {
     if (state.kind !== "ready") return [];
-    return state.rows.map((a) => toApplicant(a, now));
+    return state.rows
+      .map((application) => toApplicant(application, now))
+      .filter((a): a is Applicant => a !== null);
   }, [state, now]);
 
   const counts = useMemo(() => aggregateTabCounts(statusCounts), [statusCounts]);
@@ -89,6 +91,6 @@ export function useApplicantsData(
     state,
     applicants,
     counts,
-    reload: () => setReloadKey((k) => k + 1),
+    reload: () => setReloadKey((current) => current + 1),
   };
 }

@@ -1,5 +1,8 @@
-import { Outlet, useLocation } from "react-router-dom";
-import { SignupProvider } from "../context/SignupContext";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import {
+  SignupProvider,
+  getLineSignupToken,
+} from "../context/SignupContext";
 import "./SignupShell.css";
 
 const SIGNUP_STEPS = [
@@ -14,6 +17,15 @@ function progressPercent(pathname: string): number {
   const i = SIGNUP_STEPS.indexOf(pathname);
   if (i < 0) return 0;
   return ((i + 1) / SIGNUP_STEPS.length) * 100;
+}
+
+function LineGate({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  if (pathname === "/signup/line") return <>{children}</>;
+  if (!getLineSignupToken()) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
 }
 
 export function SignupShell() {
@@ -33,7 +45,9 @@ export function SignupShell() {
           </div>
         </div>
         <main className="signup-shell__main">
-          <Outlet />
+          <LineGate>
+            <Outlet />
+          </LineGate>
         </main>
       </div>
     </SignupProvider>

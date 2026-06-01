@@ -3,11 +3,12 @@ import { useSearchParams } from "react-router-dom";
 import { ApplicantTabs } from "@/components/Applicants/ApplicantTabs";
 import { ApplicantFilters } from "@/components/Applicants/ApplicantFilters";
 import { ApplicantTable } from "@/components/Applicants/ApplicantTable";
-import { ApplicantConfirmDialog } from "@/components/Applicants/ApplicantConfirmDialog";
+import { ApplicantDialogs } from "@/components/Applicants/ApplicantDialogs";
 import { useApplicantsData } from "@/components/Applicants/useApplicantsData";
 import { useCampaignOptions } from "@/components/Applicants/useCampaignOptions";
 import { useApplicantMutations } from "@/components/Applicants/useApplicantMutations";
 import type {
+  ApplicantStage,
   ApplicantStatus,
   Media,
 } from "@/components/Applicants/types";
@@ -20,6 +21,9 @@ export function Applicants() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mediaFilter, setMediaFilter] = useState<Set<Media>>(() => new Set());
   const [minFollowers, setMinFollowers] = useState<number | null>(null);
+  const [stageFilter, setStageFilter] = useState<Set<ApplicantStage>>(
+    () => new Set(),
+  );
 
   const { state, applicants, counts, reload } = useApplicantsData(
     campaignId,
@@ -41,15 +45,26 @@ export function Applicants() {
 
   const visible = useMemo(
     () =>
-      applicants.filter((a) => {
-        if (a.status !== tab) return false;
-        if (mediaFilter.size > 0 && !a.media.some((m) => mediaFilter.has(m))) {
+      applicants.filter((applicant) => {
+        if (applicant.status !== tab) return false;
+        if (
+          mediaFilter.size > 0 &&
+          !applicant.media.some((media) => mediaFilter.has(media))
+        ) {
           return false;
         }
-        if (minFollowers !== null && a.followers < minFollowers) return false;
+        if (minFollowers !== null && applicant.followers < minFollowers)
+          return false;
+        if (
+          tab === "approved" &&
+          stageFilter.size > 0 &&
+          (applicant.stage === null || !stageFilter.has(applicant.stage))
+        ) {
+          return false;
+        }
         return true;
       }),
-    [applicants, tab, mediaFilter, minFollowers],
+    [applicants, tab, mediaFilter, minFollowers, stageFilter],
   );
 
   return (
@@ -84,6 +99,9 @@ export function Applicants() {
         onMediaChange={setMediaFilter}
         minFollowers={minFollowers}
         onMinFollowersChange={setMinFollowers}
+        showStageFilter={tab === "approved"}
+        stageFilter={stageFilter}
+        onStageChange={setStageFilter}
       />
 
       {state.kind === "loading" ? (
@@ -98,8 +116,13 @@ export function Applicants() {
         <ApplicantTable
           items={visible}
           selected={selected}
+          showStage={tab === "approved"}
           onToggleAll={(checked) =>
-            setSelected(checked ? new Set(visible.map((v) => v.id)) : new Set())
+            setSelected(
+              checked
+                ? new Set(visible.map((applicant) => applicant.id))
+                : new Set(),
+            )
           }
           onToggleOne={(id) =>
             setSelected((prev) => {
@@ -111,11 +134,13 @@ export function Applicants() {
           }
           onApprove={mutations.openApprove}
           onReject={mutations.openReject}
-          onUndo={mutations.undo}
+          onUndo={mutations.openUndo}
+          onShip={mutations.openShip}
+          onDeliver={mutations.openDeliver}
         />
       )}
 
-      <ApplicantConfirmDialog
+      <ApplicantDialogs
         pending={mutations.pending}
         mutating={mutations.mutating}
         error={mutations.error}

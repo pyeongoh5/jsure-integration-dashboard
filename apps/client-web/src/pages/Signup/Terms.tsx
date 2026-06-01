@@ -39,9 +39,7 @@ export function SignupTerms() {
 
   return (
     <div>
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>
-        利用規約への同意
-      </h2>
+      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>利用規約への同意</h2>
       <TermsAccordion
         agreed={agreed}
         onToggle={toggle}
@@ -49,7 +47,7 @@ export function SignupTerms() {
         showKorean={showKorean}
         onToggleKorean={() => setShowKorean((v) => !v)}
       />
-      <WizardFooter onNext={next} disabled={!allChecked} />
+      <WizardFooter onBack={() => nav("/")} onNext={next} disabled={!allChecked} />
     </div>
   );
 }

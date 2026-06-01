@@ -3,6 +3,8 @@ import { AppShell } from "./layouts/AppShell";
 import { AuthShell } from "./layouts/AuthShell";
 import { SignupShell } from "./layouts/SignupShell";
 import { Login } from "./pages/Auth/Login";
+import { LineReturn } from "./pages/Auth/LineReturn";
+import { LineSignup } from "./pages/Signup/LineSignup";
 import { SignupTerms } from "./pages/Signup/Terms";
 import { SignupAccount } from "./pages/Signup/Account";
 import { SignupProfile } from "./pages/Signup/Profile";
@@ -25,6 +27,7 @@ export function App() {
       <Route element={<AuthShell />}>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Navigate to="/signup/terms" replace />} />
+        <Route path="/auth/line-return" element={<LineReturn />} />
       </Route>
 
       <Route element={<SignupShell />}>
@@ -33,6 +36,7 @@ export function App() {
         <Route path="/signup/profile" element={<SignupProfile />} />
         <Route path="/signup/sns" element={<SignupSns />} />
         <Route path="/signup/bank" element={<SignupBank />} />
+        <Route path="/signup/line" element={<LineSignup />} />
       </Route>
 
       <Route element={<AppShell />}>

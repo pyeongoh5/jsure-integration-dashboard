@@ -20,8 +20,12 @@ export async function getApplication(
 
 export async function createApplication(
   campaignId: string,
+  snsTypes: SnsType[],
 ): Promise<InfluencerApplication> {
-  const res = await api.post("/influencer/applications", { campaignId });
+  const res = await api.post("/influencer/applications", {
+    campaignId,
+    snsTypes,
+  });
   return InfluencerApplicationSchema.parse(res.data);
 }
 
@@ -32,11 +36,11 @@ export async function cancelApplication(
   return InfluencerApplicationSchema.parse(res.data);
 }
 
-export async function confirmDelivery(
+export async function confirmReceipt(
   id: string,
 ): Promise<InfluencerApplication> {
   const res = await api.post(
-    `/influencer/applications/${id}/confirm-delivery`,
+    `/influencer/applications/${id}/confirm-receipt`,
   );
   return InfluencerApplicationSchema.parse(res.data);
 }
@@ -56,11 +60,34 @@ export async function submitPost(
 export async function submitInsight(
   id: string,
   snsType: SnsType,
-  input: { saves: number; reach: number; profileViews: number },
+  input: {
+    likes: number;
+    comments: number;
+    shares: number;
+    reposts: number;
+    saves: number;
+    views: number;
+    reach: number;
+    attachments?: {
+      objectKey: string;
+      contentType: "image/png" | "image/jpeg" | "image/webp";
+      sizeBytes: number;
+    }[];
+  },
 ): Promise<InfluencerApplication> {
   const res = await api.put(
     `/influencer/applications/${id}/posts/${snsType}/insight`,
     input,
   );
   return InfluencerApplicationSchema.parse(res.data);
+}
+
+export async function presignInsightUpload(input: {
+  applicationId: string;
+  snsType: SnsType;
+  contentType: "image/png" | "image/jpeg" | "image/webp";
+  sizeBytes: number;
+}): Promise<{ objectKey: string; uploadUrl: string; expiresInSec: number }> {
+  const res = await api.post("/uploads/insight/presign", input);
+  return res.data;
 }

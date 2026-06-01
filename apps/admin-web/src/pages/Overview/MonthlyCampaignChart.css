@@ -4,6 +4,7 @@
   gap: 10px;
   height: 240px;
   align-items: end;
+  padding-top: 22px;
 }
 
 .mc-chart__col {
@@ -20,6 +21,7 @@
 }
 
 .mc-chart__bar {
+  position: relative;
   width: 100%;
   background: linear-gradient(180deg, #93c5fd 0%, #2563eb 100%);
   border-radius: 6px 6px 0 0;
@@ -27,8 +29,39 @@
   min-height: 2px;
 }
 
+.mc-chart__value {
+  position: absolute;
+  left: 50%;
+  top: -22px;
+  transform: translateX(-50%);
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .mc-chart__label {
   text-align: center;
   font-size: 11px;
   color: var(--c-subtle);
+}
+
+.mc-chart__empty {
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-muted);
+  font-size: 13px;
+}
+.mc-chart__empty--error {
+  color: #dc2626;
 }

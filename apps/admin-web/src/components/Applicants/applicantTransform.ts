@@ -4,7 +4,12 @@ import type {
   ApplicationStatus,
   SnsType,
 } from "@jsure/shared";
-import type { Applicant, ApplicantStatus, Media } from "./types";
+import type {
+  Applicant,
+  ApplicantStage,
+  ApplicantStatus,
+  Media,
+} from "./types";
 
 export const SNS_TO_MEDIA: Record<SnsType, Media> = {
   INSTAGRAM: "ig",
@@ -13,20 +18,20 @@ export const SNS_TO_MEDIA: Record<SnsType, Media> = {
   X: "x",
 };
 
-export const STATUS_TO_TAB: Record<ApplicationStatus, ApplicantStatus> = {
+export const STATUS_TO_TAB: Record<ApplicationStatus, ApplicantStatus | null> = {
   APPLIED: "pending",
   APPROVED: "approved",
   SHIPPED: "approved",
   DELIVERED: "approved",
   COMPLETED: "approved",
   REJECTED: "rejected",
-  CANCELLED: "rejected",
+  CANCELLED: null,
 };
 
 export const TAB_TO_STATUSES: Record<ApplicantStatus, ApplicationStatus[]> = {
   pending: ["APPLIED"],
   approved: ["APPROVED", "SHIPPED", "DELIVERED", "COMPLETED"],
-  rejected: ["REJECTED", "CANCELLED"],
+  rejected: ["REJECTED"],
 };
 
 const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
@@ -36,11 +41,14 @@ function pickHandle(accounts: AdminInfluencerSnsAccount[]): string {
 }
 
 function pickFollowers(accounts: AdminInfluencerSnsAccount[]): number {
-  return accounts.reduce((max, s) => Math.max(max, s.followerCount), 0);
+  return accounts.reduce(
+    (max, account) => Math.max(max, account.followerCount),
+    0,
+  );
 }
 
-function pickMedia(accounts: AdminInfluencerSnsAccount[]): Media[] {
-  return accounts.map((s) => SNS_TO_MEDIA[s.snsType]);
+function pickMedia(selectedSnsTypes: SnsType[]): Media[] {
+  return selectedSnsTypes.map((s) => SNS_TO_MEDIA[s]);
 }
 
 export function formatRelative(iso: string, now: Date): string {
@@ -60,17 +68,36 @@ export function formatRelative(iso: string, now: Date): string {
   });
 }
 
-export function toApplicant(a: AdminApplication, now: Date): Applicant {
+function deriveStage(application: AdminApplication): ApplicantStage | null {
+  if (application.status === "COMPLETED") return "COMPLETED";
+  if (application.hasSubmittedPost) return "REVIEW_DUE";
+  if (application.receivedAt) return "POST_DUE";
+  if (application.status === "DELIVERED") return "DELIVERED";
+  if (application.status === "SHIPPED") return "SHIPPING";
+  if (application.status === "APPROVED") return "PRE_SHIP";
+  return null;
+}
+
+export function toApplicant(
+  application: AdminApplication,
+  now: Date,
+): Applicant | null {
+  const tab = STATUS_TO_TAB[application.status];
+  if (!tab) return null;
   return {
-    id: a.id,
-    name: a.influencer.name,
-    handle: pickHandle(a.influencer.snsAccounts),
-    campaign: a.campaign.title,
-    media: pickMedia(a.influencer.snsAccounts),
-    followers: pickFollowers(a.influencer.snsAccounts),
+    id: application.id,
+    name: application.influencer.name,
+    handle: pickHandle(application.influencer.snsAccounts),
+    campaign: application.campaign.title,
+    media: pickMedia(application.selectedSnsTypes),
+    followers: pickFollowers(application.influencer.snsAccounts),
     engagementRate: 0,
-    appliedAt: formatRelative(a.appliedAt, now),
-    status: STATUS_TO_TAB[a.status],
+    appliedAt: formatRelative(application.appliedAt, now),
+    status: tab,
+    rawStatus: application.status,
+    trackingCarrier: application.trackingCarrier,
+    trackingNumber: application.trackingNumber,
+    stage: deriveStage(application),
   };
 }
 

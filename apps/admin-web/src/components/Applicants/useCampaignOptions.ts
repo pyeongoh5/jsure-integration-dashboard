@@ -20,11 +20,13 @@ export function useCampaignOptions(): UseCampaignOptionsResult {
     listCampaigns()
       .then((rows) => {
         if (cancelled) return;
-        setCampaignTitleById(new Map(rows.map((c) => [c.id, c.title])));
+        setCampaignTitleById(
+          new Map(rows.map((campaign) => [campaign.id, campaign.title])),
+        );
         setCampaignOptions(
           rows
-            .filter((c) => c.closedAt === null)
-            .map((c) => ({ id: c.id, title: c.title })),
+            .filter((campaign) => campaign.closedAt === null)
+            .map((campaign) => ({ id: campaign.id, title: campaign.title })),
         );
       })
       .catch(() => {

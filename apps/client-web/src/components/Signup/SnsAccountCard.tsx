@@ -42,12 +42,12 @@ export function SnsAccountCard({
       {enabled && (
         <div className="snsc__body">
           <label className="snsc__field">
-            <span>ハンドル名</span>
+            <span>ID</span>
             <input
               type="text"
               value={handle}
               onChange={(e) => onChange("handle", e.target.value)}
-              placeholder="your_handle"
+              placeholder="ID"
             />
           </label>
           <label className="snsc__field">
@@ -56,9 +56,7 @@ export function SnsAccountCard({
               type="text"
               inputMode="numeric"
               value={followerCount}
-              onChange={(e) =>
-                onChange("followerCount", e.target.value.replace(/[^\d]/g, ""))
-              }
+              onChange={(e) => onChange("followerCount", e.target.value.replace(/[^\d]/g, ""))}
               placeholder="12500"
             />
           </label>

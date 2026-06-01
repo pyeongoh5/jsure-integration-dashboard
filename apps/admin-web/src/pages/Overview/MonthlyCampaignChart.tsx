@@ -1,24 +1,8 @@
 import "./MonthlyCampaignChart.css";
-
-type DataPoint = { m: string; v: number };
-
-const MONTHLY: DataPoint[] = [
-  { m: "5월", v: 38 },
-  { m: "6월", v: 48 },
-  { m: "7월", v: 36 },
-  { m: "8월", v: 56 },
-  { m: "9월", v: 50 },
-  { m: "10월", v: 60 },
-  { m: "11월", v: 70 },
-  { m: "12월", v: 64 },
-  { m: "1월", v: 76 },
-  { m: "2월", v: 82 },
-  { m: "3월", v: 90 },
-  { m: "4월", v: 100 },
-];
+import { useMonthlyApplicationCounts } from "./useMonthlyApplicationCounts";
 
 export function MonthlyCampaignChart() {
-  const max = Math.max(...MONTHLY.map((d) => d.v));
+  const state = useMonthlyApplicationCounts();
 
   return (
     <section className="ov-card">
@@ -26,16 +10,42 @@ export function MonthlyCampaignChart() {
         <h2>월별 캠페인 응모 추이</h2>
         <span className="ov-card__meta">최근 12개월</span>
       </header>
-      <div className="mc-chart">
-        {MONTHLY.map((d) => (
-          <div key={d.m} className="mc-chart__col">
-            <div className="mc-chart__bar-wrap">
-              <div className="mc-chart__bar" style={{ height: `${(d.v / max) * 100}%` }} />
-            </div>
-            <div className="mc-chart__label">{d.m}</div>
-          </div>
-        ))}
-      </div>
+      {state.kind === "loading" && (
+        <div className="mc-chart__empty">불러오는 중…</div>
+      )}
+      {state.kind === "error" && (
+        <div className="mc-chart__empty mc-chart__empty--error">
+          {state.message}
+        </div>
+      )}
+      {state.kind === "ready" && <Chart points={state.points} />}
     </section>
+  );
+}
+
+type ChartProps = {
+  points: { label: string; count: number }[];
+};
+
+function Chart({ points }: ChartProps) {
+  const max = Math.max(1, ...points.map((point) => point.count));
+
+  return (
+    <div className="mc-chart">
+      {points.map((point, index) => (
+        <div key={`${point.label}-${index}`} className="mc-chart__col">
+          <div className="mc-chart__bar-wrap">
+            <div
+              className="mc-chart__bar"
+              style={{ height: `${(point.count / max) * 100}%` }}
+              title={`${point.label}: ${point.count}건`}
+            >
+              <span className="mc-chart__value">{point.count}</span>
+            </div>
+          </div>
+          <div className="mc-chart__label">{point.label}</div>
+        </div>
+      ))}
+    </div>
   );
 }

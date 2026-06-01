@@ -19,8 +19,6 @@ type FilterKey = "all" | CampaignStatus;
 const FILTERS: readonly { key: FilterKey; label: string }[] = [
   { key: "all", label: "전체" },
   { key: "recruit", label: "모집중" },
-  { key: "review", label: "검토중" },
-  { key: "progress", label: "진행중" },
   { key: "done", label: "완료" },
 ];
 
@@ -72,6 +70,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     description: c.productSummary,
     status,
     thumbIcon: "📋",
+    thumbnailUrl: c.thumbnailUrl,
     period: formatDateRange(c.recruitStartDate, c.recruitEndDate),
     reward: formatReward(c.rewardJpy),
     approved: c.approvedCount,
@@ -200,6 +199,7 @@ export function Campaigns() {
                 content={
                   <CampaignCardBody
                     thumbIcon={c.thumbIcon}
+                    thumbnailUrl={c.thumbnailUrl}
                     name={c.name}
                     description={c.description}
                     period={c.period}

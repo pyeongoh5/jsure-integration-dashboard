@@ -1,11 +1,8 @@
 import { useState } from "react";
-import {
-  CampaignFormSchema,
-  type CampaignForm as Values,
-  type SnsRecruit,
-} from "@jsure/shared";
+import { CampaignFormSchema, type CampaignForm as Values, type SnsRecruit } from "@jsure/shared";
 import { SnsRecruitList } from "./SnsRecruitList";
 import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
+import { uploadCampaignThumbnail, UploadError } from "../../lib/uploads";
 import "./CampaignForm.css";
 
 export const EMPTY_CAMPAIGN_FORM: Values = {
@@ -13,6 +10,7 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   rewardJpy: 0,
   recruitStartDate: "",
   recruitEndDate: "",
+  postingPeriodDays: Number.NaN,
   snsRecruits: [],
   productSummary: "",
   productDetailUrl: "",
@@ -47,6 +45,45 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
+  type ThumbnailDraft =
+    | { kind: "unchanged" }
+    | { kind: "new"; objectKey: string; viewUrl: string }
+    | { kind: "removed" };
+  const [thumbnailDraft, setThumbnailDraft] = useState<ThumbnailDraft>({
+    kind: "unchanged",
+  });
+
+  const thumbnailPreviewSrc: string | null =
+    thumbnailDraft.kind === "new"
+      ? thumbnailDraft.viewUrl
+      : thumbnailDraft.kind === "removed"
+        ? null
+        : (initialValue.thumbnailUrl ?? null);
+
+  const handleThumbnailFile = async (file: File | null) => {
+    if (!file) return;
+    setThumbnailError(null);
+    setUploadingThumbnail(true);
+    try {
+      const { objectKey, viewUrl } = await uploadCampaignThumbnail(file);
+      setThumbnailDraft({ kind: "new", objectKey, viewUrl });
+    } catch (uploadError) {
+      setThumbnailError(
+        uploadError instanceof UploadError
+          ? uploadError.message
+          : "업로드에 실패했습니다",
+      );
+    } finally {
+      setUploadingThumbnail(false);
+    }
+  };
+
+  const removeThumbnail = () => {
+    setThumbnailError(null);
+    setThumbnailDraft({ kind: "removed" });
+  };
 
   const update = <K extends keyof Values>(key: K, v: Values[K]) => {
     setValues((prev) => ({ ...prev, [key]: v }));
@@ -83,11 +120,17 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
     setErrors({});
     setSubmitting(true);
     try {
-      await onSubmit(result.data);
+      const finalValues: Values = { ...result.data };
+      if (thumbnailDraft.kind === "new") {
+        finalValues.thumbnailUrl = thumbnailDraft.objectKey;
+      } else if (thumbnailDraft.kind === "removed") {
+        finalValues.thumbnailUrl = null;
+      } else {
+        delete finalValues.thumbnailUrl;
+      }
+      await onSubmit(finalValues);
     } catch (err) {
-      setBanner(
-        err instanceof Error ? err.message : "저장 중 오류가 발생했습니다.",
-      );
+      setBanner(err instanceof Error ? err.message : "저장 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -103,7 +146,9 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
         <h2 className="cf__section-title">기본 정보</h2>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-title">캠페인 제목</label>
+          <label className="cf__label" htmlFor="cf-title">
+            캠페인 제목
+          </label>
           <input
             id="cf-title"
             className="cf__input"
@@ -115,7 +160,9 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
         </div>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-reward">보수 금액</label>
+          <label className="cf__label" htmlFor="cf-reward">
+            보수 금액
+          </label>
           <div className="cf__currency">
             <span className="cf__currency-prefix">¥</span>
             <input
@@ -133,7 +180,9 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
 
         <div className="cf__row-2">
           <div className="cf__field">
-            <label className="cf__label" htmlFor="cf-start">모집 시작일</label>
+            <label className="cf__label" htmlFor="cf-start">
+              모집 시작일
+            </label>
             <input
               id="cf-start"
               type="date"
@@ -142,12 +191,12 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
               onChange={(e) => update("recruitStartDate", e.target.value)}
               disabled={submitting}
             />
-            {errors.recruitStartDate && (
-              <div className="cf__error">{errors.recruitStartDate}</div>
-            )}
+            {errors.recruitStartDate && <div className="cf__error">{errors.recruitStartDate}</div>}
           </div>
           <div className="cf__field">
-            <label className="cf__label" htmlFor="cf-end">모집 종료일</label>
+            <label className="cf__label" htmlFor="cf-end">
+              모집 종료일
+            </label>
             <input
               id="cf-end"
               type="date"
@@ -156,33 +205,65 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
               onChange={(e) => update("recruitEndDate", e.target.value)}
               disabled={submitting}
             />
-            {errors.recruitEndDate && (
-              <div className="cf__error">{errors.recruitEndDate}</div>
-            )}
+            {errors.recruitEndDate && <div className="cf__error">{errors.recruitEndDate}</div>}
           </div>
         </div>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-thumbnail">
-            썸네일 이미지 URL (인플루언서 앱 표시용)
+          <label className="cf__label" htmlFor="cf-posting-period">
+            게시 기간 (수령 후 N일)
           </label>
           <input
-            id="cf-thumbnail"
-            type="url"
+            id="cf-posting-period"
             className="cf__input"
-            placeholder="https://..."
-            value={values.thumbnailUrl ?? ""}
-            onChange={(e) =>
-              update(
-                "thumbnailUrl",
-                e.target.value === "" ? null : e.target.value,
-              )
+            inputMode="numeric"
+            placeholder="예시: 14"
+            value={
+              Number.isFinite(values.postingPeriodDays) ? String(values.postingPeriodDays) : ""
             }
+            onChange={(e) => update("postingPeriodDays", parseIntegerInput(e.target.value))}
             disabled={submitting}
           />
-          {errors.thumbnailUrl && (
-            <div className="cf__error">{errors.thumbnailUrl}</div>
-          )}
+          {errors.postingPeriodDays && <div className="cf__error">{errors.postingPeriodDays}</div>}
+        </div>
+
+        <div className="cf__field">
+          <label className="cf__label" htmlFor="cf-thumbnail">
+            썸네일 이미지 (인플루언서 앱 표시용)
+          </label>
+          <div className="cf__thumbnail">
+            {thumbnailPreviewSrc && (
+              <div className="cf__thumbnail-preview">
+                <img src={thumbnailPreviewSrc} alt="썸네일" />
+                <button
+                  type="button"
+                  className="cf__thumbnail-remove"
+                  onClick={removeThumbnail}
+                  disabled={submitting || uploadingThumbnail}
+                >
+                  제거
+                </button>
+              </div>
+            )}
+            <input
+              id="cf-thumbnail"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="cf__file"
+              disabled={submitting || uploadingThumbnail}
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null;
+                event.target.value = "";
+                void handleThumbnailFile(file);
+              }}
+            />
+            <p className="cf__hint">PNG · JPEG · WebP, 5MB 이하</p>
+            {uploadingThumbnail && (
+              <div className="cf__hint">업로드 중...</div>
+            )}
+            {thumbnailError && <div className="cf__error">{thumbnailError}</div>}
+          </div>
+          {errors.thumbnailUrl && <div className="cf__error">{errors.thumbnailUrl}</div>}
         </div>
       </section>
 
@@ -197,16 +278,16 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
           disabled={submitting}
           errorByIndex={errors.snsRecruits_items}
         />
-        {errors.snsRecruits && (
-          <div className="cf__error">{errors.snsRecruits}</div>
-        )}
+        {errors.snsRecruits && <div className="cf__error">{errors.snsRecruits}</div>}
       </section>
 
       <section className="cf__section">
         <h2 className="cf__section-title">상품</h2>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-product-summary">상품 개요</label>
+          <label className="cf__label" htmlFor="cf-product-summary">
+            상품 개요
+          </label>
           <textarea
             id="cf-product-summary"
             className="cf__textarea"
@@ -214,13 +295,13 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
             onChange={(e) => update("productSummary", e.target.value)}
             disabled={submitting}
           />
-          {errors.productSummary && (
-            <div className="cf__error">{errors.productSummary}</div>
-          )}
+          {errors.productSummary && <div className="cf__error">{errors.productSummary}</div>}
         </div>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-product-url">상품 상세 URL (qoo10)</label>
+          <label className="cf__label" htmlFor="cf-product-url">
+            상품 상세 URL (qoo10)
+          </label>
           <input
             id="cf-product-url"
             type="url"
@@ -230,9 +311,7 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
             onChange={(e) => update("productDetailUrl", e.target.value)}
             disabled={submitting}
           />
-          {errors.productDetailUrl && (
-            <div className="cf__error">{errors.productDetailUrl}</div>
-          )}
+          {errors.productDetailUrl && <div className="cf__error">{errors.productDetailUrl}</div>}
         </div>
       </section>
 
@@ -240,7 +319,9 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
         <h2 className="cf__section-title">가이드라인</h2>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-guideline">안건 개요 (투고 가이드라인)</label>
+          <label className="cf__label" htmlFor="cf-guideline">
+            안건 개요 (투고 가이드라인)
+          </label>
           <textarea
             id="cf-guideline"
             className="cf__textarea"
@@ -265,7 +346,9 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
         </div>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-cautions">NG 및 주의 사항</label>
+          <label className="cf__label" htmlFor="cf-cautions">
+            NG 및 주의 사항
+          </label>
           <textarea
             id="cf-cautions"
             className="cf__textarea"

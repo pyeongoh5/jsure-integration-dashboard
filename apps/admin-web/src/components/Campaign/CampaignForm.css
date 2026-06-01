@@ -51,6 +51,48 @@
   color: #dc2626;
   font-size: 12px;
 }
+.cf__hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+.cf__thumbnail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cf__thumbnail-preview {
+  position: relative;
+  width: 180px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f9fafb;
+}
+.cf__thumbnail-preview img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+.cf__thumbnail-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.cf__thumbnail-remove:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+.cf__file {
+  font-size: 13px;
+}
 .cf__banner {
   padding: 10px 12px;
   border-radius: 8px;

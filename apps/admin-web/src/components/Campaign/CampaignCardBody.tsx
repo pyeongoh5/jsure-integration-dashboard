@@ -3,6 +3,7 @@ import type { CampaignCardSnsRecruit } from "./types";
 
 type Props = {
   thumbIcon: string;
+  thumbnailUrl?: string | null;
   name: string;
   description: string;
   period: string;
@@ -12,6 +13,7 @@ type Props = {
 
 export function CampaignCardBody({
   thumbIcon,
+  thumbnailUrl,
   name,
   description,
   period,
@@ -20,7 +22,20 @@ export function CampaignCardBody({
 }: Props) {
   return (
     <>
-      <div className="cmp-card__thumb">{thumbIcon}</div>
+      <div
+        className="cmp-card__thumb"
+        style={
+          thumbnailUrl
+            ? {
+                backgroundImage: `url(${thumbnailUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {!thumbnailUrl && thumbIcon}
+      </div>
       <h3 className="cmp-card__name">{name}</h3>
       <p className="cmp-card__desc">{description}</p>
       <CampaignCardSnsRecruits recruits={snsRecruits} />

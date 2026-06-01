@@ -4,47 +4,45 @@ import { LabeledInput } from "../../components/form/LabeledInput";
 import { WizardFooter } from "../../components/Signup/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
-function validate(
-  email: string,
-  password: string,
-  confirm: string,
-): { email?: string; password?: string; confirm?: string } {
-  const errors: { email?: string; password?: string; confirm?: string } = {};
+function validate(email: string): { email?: string } {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    errors.email = "正しいメールアドレスを入力してください";
+    return { email: "正しいメールアドレスを入力してください" };
   }
-  if (password.length < 8) {
-    errors.password = "パスワードは8文字以上";
-  }
-  if (password !== confirm) {
-    errors.confirm = "パスワードが一致しません";
-  }
-  return errors;
+  return {};
 }
 
 export function SignupAccount() {
   const nav = useNavigate();
   const { draft, setAccount } = useSignup();
   const [email, setEmail] = useState(draft.account.email);
-  const [password, setPassword] = useState(draft.account.password);
-  const [confirm, setConfirm] = useState(draft.account.password);
   const [touched, setTouched] = useState(false);
 
-  const errors = validate(email, password, confirm);
+  const errors = validate(email);
   const valid = Object.keys(errors).length === 0;
 
   function next() {
     setTouched(true);
     if (!valid) return;
-    setAccount({ email, password });
+    setAccount({ email, password: "" });
     nav("/signup/profile");
   }
 
   return (
     <div>
       <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>
-        ログイン情報
+        メールアドレス
       </h2>
+      <p
+        style={{
+          fontSize: 12,
+          color: "#6b7280",
+          marginTop: 0,
+          marginBottom: 16,
+          lineHeight: 1.6,
+        }}
+      >
+        LINEでのご連絡が届かない場合に備えて、メールアドレスをご登録ください。
+      </p>
       <LabeledInput
         label="メールアドレス"
         type="email"
@@ -53,22 +51,6 @@ export function SignupAccount() {
         onChange={setEmail}
         error={touched ? errors.email : undefined}
         placeholder="your@example.com"
-      />
-      <LabeledInput
-        label="パスワード (8文字以上)"
-        type="password"
-        autoComplete="new-password"
-        value={password}
-        onChange={setPassword}
-        error={touched ? errors.password : undefined}
-      />
-      <LabeledInput
-        label="パスワード確認"
-        type="password"
-        autoComplete="new-password"
-        value={confirm}
-        onChange={setConfirm}
-        error={touched ? errors.confirm : undefined}
       />
       <WizardFooter onBack={() => nav(-1)} onNext={next} />
     </div>

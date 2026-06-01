@@ -30,6 +30,7 @@ export function CampaignEdit() {
           rewardJpy: res.rewardJpy,
           recruitStartDate: res.recruitStartDate,
           recruitEndDate: res.recruitEndDate,
+          postingPeriodDays: res.postingPeriodDays,
           snsRecruits: res.snsRecruits,
           productSummary: res.productSummary,
           productDetailUrl: res.productDetailUrl,

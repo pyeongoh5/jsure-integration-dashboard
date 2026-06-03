@@ -348,3 +348,10 @@
 .dr-insight--btn:hover {
   filter: brightness(0.95);
 }
+
+.dr-locked {
+  display: inline-block;
+  font-size: 11px;
+  color: #6b7280;
+  font-style: italic;
+}

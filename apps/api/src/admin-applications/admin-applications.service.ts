@@ -350,6 +350,11 @@ export class AdminApplicationsService {
     if (existing.reviewStatus === "PENDING") {
       throw new BadRequestException("Already pending");
     }
+    if (existing.insightSubmittedAt) {
+      throw new BadRequestException(
+        "인사이트가 제출된 검토는 되돌릴 수 없습니다",
+      );
+    }
     await this.prisma.submittedPost.update({
       where: { id: postId },
       data: {
@@ -497,20 +502,32 @@ type SubmittedPostRow = {
   };
 };
 
+async function resolveThumbnail(
+  raw: string | null,
+  r2: R2Service,
+): Promise<string | null> {
+  if (!raw) return null;
+  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+  return r2.presignGet(raw, 300);
+}
+
 async function toSubmittedPostResponse(
   row: SubmittedPostRow,
   r2: R2Service,
 ): Promise<AdminSubmittedPost> {
-  const attachments = await Promise.all(
-    row.attachments.map(async (attachment) => ({
-      id: attachment.id,
-      objectKey: attachment.objectKey,
-      contentType: attachment.contentType,
-      sizeBytes: attachment.sizeBytes,
-      uploadedAt: attachment.uploadedAt.toISOString(),
-      viewUrl: await r2.presignGet(attachment.objectKey, 300),
-    })),
-  );
+  const [attachments, campaignThumbnailUrl] = await Promise.all([
+    Promise.all(
+      row.attachments.map(async (attachment) => ({
+        id: attachment.id,
+        objectKey: attachment.objectKey,
+        contentType: attachment.contentType,
+        sizeBytes: attachment.sizeBytes,
+        uploadedAt: attachment.uploadedAt.toISOString(),
+        viewUrl: await r2.presignGet(attachment.objectKey, 300),
+      })),
+    ),
+    resolveThumbnail(row.application.campaign.thumbnailUrl, r2),
+  ]);
   return {
     id: row.id,
     snsType: row.snsType,
@@ -543,7 +560,7 @@ async function toSubmittedPostResponse(
     campaign: {
       id: row.application.campaign.id,
       title: row.application.campaign.title,
-      thumbnailUrl: row.application.campaign.thumbnailUrl,
+      thumbnailUrl: campaignThumbnailUrl,
     },
     influencer: {
       id: row.application.influencer.id,

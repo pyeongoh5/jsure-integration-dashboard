@@ -76,15 +76,21 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
         >
           정산하기
         </button>
-        <button
-          type="button"
-          className="dr-action dr-action--undo"
-          onClick={() => handlers.onUndo(draft)}
-        >
-          되돌리기
-        </button>
+        {!draft.insightSubmitted && (
+          <button
+            type="button"
+            className="dr-action dr-action--undo"
+            onClick={() => handlers.onUndo(draft)}
+          >
+            되돌리기
+          </button>
+        )}
       </div>
     );
+  }
+
+  if (draft.insightSubmitted) {
+    return <span className="dr-locked">인사이트 제출 완료 · 되돌리기 불가</span>;
   }
 
   return (

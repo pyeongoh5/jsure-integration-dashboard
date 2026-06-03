@@ -1,8 +1,7 @@
 import type { ApplicationDisplayStage, ApplicationStatus } from "@jsure/shared";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-// TEMP: 전체 흐름 테스트용으로 1일로 단축 (운영 시 7로 복귀 필요)
-const INSIGHT_DUE_DAYS = 1;
+const INSIGHT_DUE_DAYS = 7;
 
 /** JST 기준 그 날 00:00 UTC 타임스탬프 (ms). */
 function startOfJstDay(d: Date): number {

@@ -5,8 +5,7 @@ import { LineMessagingService } from "./line-messaging.service";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const POSTING_REMINDER_DAYS = [3, 1];
-// TEMP: 테스트용으로 1일. 운영 시 7로 복원 필요.
-const INSIGHT_REMINDER_DAY_AFTER_POST = 1;
+const INSIGHT_REMINDER_DAY_AFTER_POST = 7;
 const JST_TZ = "Asia/Tokyo";
 
 /** JST 기준 그 날의 00:00 UTC 타임스탬프 (밀리초). */

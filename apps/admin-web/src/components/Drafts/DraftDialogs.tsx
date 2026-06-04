@@ -1,6 +1,5 @@
 import { DraftApproveDialog } from "./DraftApproveDialog";
 import { DraftRejectDialog } from "./DraftRejectDialog";
-import { DraftSettleDialog } from "./DraftSettleDialog";
 import { DraftUndoDialog } from "./DraftUndoDialog";
 import type { PendingDraftAction } from "./useDraftMutations";
 
@@ -34,7 +33,5 @@ export function DraftDialogs({
       );
     case "undo":
       return <DraftUndoDialog {...common} onConfirm={() => onConfirm()} />;
-    case "settle":
-      return <DraftSettleDialog {...common} onConfirm={() => onConfirm()} />;
   }
 }

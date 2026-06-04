@@ -14,10 +14,23 @@ import type {
 } from "@/components/Applicants/types";
 import "./Applicants.css";
 
+const VALID_APPLICANT_TABS: ApplicantStatus[] = ["pending", "approved", "rejected"];
+
+function isApplicantTab(value: string | null): value is ApplicantStatus {
+  return value !== null && (VALID_APPLICANT_TABS as string[]).includes(value);
+}
+
 export function Applicants() {
   const [searchParams, setSearchParams] = useSearchParams();
   const campaignId = searchParams.get("campaignId");
-  const [tab, setTab] = useState<ApplicantStatus>("pending");
+  const tab: ApplicantStatus = isApplicantTab(searchParams.get("tab"))
+    ? (searchParams.get("tab") as ApplicantStatus)
+    : "pending";
+  const setTab = (next: ApplicantStatus) => {
+    const np = new URLSearchParams(searchParams);
+    np.set("tab", next);
+    setSearchParams(np);
+  };
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mediaFilter, setMediaFilter] = useState<Set<Media>>(() => new Set());
   const [minFollowers, setMinFollowers] = useState<number | null>(null);

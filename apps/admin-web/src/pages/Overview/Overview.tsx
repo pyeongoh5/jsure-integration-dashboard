@@ -29,7 +29,7 @@ const KPIS: Kpi[] = [
   },
   {
     icon: <i className="fa-solid fa-file-pen" />,
-    label: "초안 검토 대기",
+    label: "검토 대기",
     value: "8",
     delta: { text: "↓ 2 (어제 대비)", tone: "down" },
   },

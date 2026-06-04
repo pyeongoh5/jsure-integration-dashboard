@@ -61,10 +61,13 @@ export function toDraftReview(
       comment: rejection.comment,
       rejectedAt: formatRelative(rejection.rejectedAt, now),
     })),
-    settledAt: post.settledAt
-      ? formatRelative(post.settledAt, now)
+    settlement: post.settlement
+      ? {
+          status: post.settlement.status,
+          amountJpy: post.settlement.amountJpy,
+          completedAt: post.settlement.completedAt,
+        }
       : null,
-    settledAmountJpy: post.settledAmountJpy,
   };
 }
 

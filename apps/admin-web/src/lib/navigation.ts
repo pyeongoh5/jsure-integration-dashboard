@@ -17,8 +17,7 @@ export const NAV: NavGroup[] = [
       { to: "/overview", label: "대시보드", icon: "▦" },
       { to: "/campaigns", label: "캠페인 관리", icon: "◁", badge: 14 },
       { to: "/applicants", label: "응모자 관리", icon: "◎", badge: 23 },
-      { to: "/drafts", label: "초안 검토", icon: "✎", badge: 8 },
-      { to: "/monitoring", label: "게시 모니터링", icon: "✓" },
+      { to: "/drafts", label: "검토", icon: "✎", badge: 8 },
     ],
   },
   {

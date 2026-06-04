@@ -55,15 +55,23 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
   }
 
   if (draft.reviewStatus === "APPROVED") {
-    if (draft.settledAt) {
+    if (draft.settlement?.status === "COMPLETED") {
       return (
-        <span className="dr-settled" title={`정산일: ${draft.settledAt}`}>
+        <span className="dr-settled">
           정산 완료
-          {draft.settledAmountJpy !== null && (
-            <span className="dr-settled__amount">
-              {formatJpy(draft.settledAmountJpy)}
-            </span>
-          )}
+          <span className="dr-settled__amount">
+            {formatJpy(draft.settlement.amountJpy)}
+          </span>
+        </span>
+      );
+    }
+    if (draft.settlement?.status === "PENDING") {
+      return (
+        <span className="dr-settled" title="정산 페이지에서 처리 대기 중">
+          정산 대기
+          <span className="dr-settled__amount">
+            {formatJpy(draft.settlement.amountJpy)}
+          </span>
         </span>
       );
     }

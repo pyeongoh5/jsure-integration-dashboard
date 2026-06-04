@@ -47,8 +47,8 @@ function pickFollowers(accounts: AdminInfluencerSnsAccount[]): number {
   );
 }
 
-function pickMedia(selectedSnsTypes: SnsType[]): Media[] {
-  return selectedSnsTypes.map((s) => SNS_TO_MEDIA[s]);
+function pickMedia(snsType: SnsType): Media[] {
+  return [SNS_TO_MEDIA[snsType]];
 }
 
 export function formatRelative(iso: string, now: Date): string {
@@ -89,7 +89,7 @@ export function toApplicant(
     name: application.influencer.name,
     handle: pickHandle(application.influencer.snsAccounts),
     campaign: application.campaign.title,
-    media: pickMedia(application.selectedSnsTypes),
+    media: pickMedia(application.snsType),
     followers: pickFollowers(application.influencer.snsAccounts),
     engagementRate: 0,
     appliedAt: formatRelative(application.appliedAt, now),

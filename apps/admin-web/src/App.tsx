@@ -7,7 +7,6 @@ import { CampaignNew } from "./pages/Campaigns/New";
 import { CampaignEdit } from "./pages/Campaigns/Edit";
 import { Applicants } from "./pages/Applicants";
 import { Drafts } from "./pages/Drafts";
-import { Monitoring } from "./pages/Monitoring";
 import { Influencers } from "./pages/Influencers";
 import { Brands } from "./pages/Brands";
 import { Payouts } from "./pages/Payouts";
@@ -37,7 +36,6 @@ export function App() {
         <Route path="/campaigns/:id/edit" element={<CampaignEdit />} />
         <Route path="/applicants" element={<Applicants />} />
         <Route path="/drafts" element={<Drafts />} />
-        <Route path="/monitoring" element={<Monitoring />} />
         <Route path="/influencers" element={<Influencers />} />
         <Route path="/brands" element={<Brands />} />
         <Route path="/payouts" element={<Payouts />} />

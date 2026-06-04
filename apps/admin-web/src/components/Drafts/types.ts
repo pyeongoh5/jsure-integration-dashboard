@@ -42,8 +42,11 @@ export type DraftReview = {
   reviewStatus: PostReviewStatus;
   applicationStatus: ApplicationStatus;
   rejectionHistory: RejectionEntry[];
-  settledAt: string | null;
-  settledAmountJpy: number | null;
+  settlement: {
+    status: "PENDING" | "COMPLETED";
+    amountJpy: number;
+    completedAt: string | null;
+  } | null;
 };
 
 export type DraftReviewCounts = Record<DraftReviewTab, number>;

@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { DraftDialogs } from "@/components/Drafts/DraftDialogs";
 import { DraftTable } from "@/components/Drafts/DraftTable";
 import { DraftTabs } from "@/components/Drafts/DraftTabs";
@@ -12,8 +14,25 @@ import {
 } from "@/components/Drafts/types";
 import "./Drafts.css";
 
+const VALID_TABS: DraftReviewTab[] = ["pending", "approved", "rejected"];
+
+function isDraftTab(value: string | null): value is DraftReviewTab {
+  return value !== null && (VALID_TABS as string[]).includes(value);
+}
+
 export function Drafts() {
-  const [tab, setTab] = useState<DraftReviewTab>("pending");
+  const qc = useQueryClient();
+  const [params, setParams] = useSearchParams();
+  const tab: DraftReviewTab = isDraftTab(params.get("tab"))
+    ? (params.get("tab") as DraftReviewTab)
+    : "pending";
+  const setTab = (next: DraftReviewTab) => {
+    setParams((prev) => {
+      const np = new URLSearchParams(prev);
+      np.set("tab", next);
+      return np;
+    });
+  };
   const [insightView, setInsightView] = useState<DraftReview | null>(null);
   const { state, drafts, counts, reload } = useDraftReviewsData();
   const mutations = useDraftMutations(reload);
@@ -26,7 +45,7 @@ export function Drafts() {
   return (
     <div className="dr">
       <div className="dr__header">
-        <h1 className="dr__title">초안 검토</h1>
+        <h1 className="dr__title">검토</h1>
         <p className="dr__subtitle">
           {state.kind === "ready"
             ? `현재 탭 ${visible.length}건`
@@ -53,7 +72,12 @@ export function Drafts() {
           onApprove={mutations.openApprove}
           onReject={mutations.openReject}
           onUndo={mutations.openUndo}
-          onSettle={mutations.openSettle}
+          onSettle={async (draft) => {
+            const ok = await mutations.settle(draft);
+            if (ok) {
+              qc.invalidateQueries({ queryKey: ["settlements-pending-count"] });
+            }
+          }}
           onViewInsight={setInsightView}
         />
       )}

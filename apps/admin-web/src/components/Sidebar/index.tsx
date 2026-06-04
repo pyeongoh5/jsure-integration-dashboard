@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Logo } from "@/components/Sidebar/Logo";
 import { SidebarSearch } from "@/components/Sidebar/SidebarSearch";
 import { FooterUser } from "@/components/Sidebar/FooterUser";
+import { fetchPendingSettlementCount } from "@/lib/draftReviews";
 
 type NavItem = { to: string; label: string; icon: ReactNode; badge?: ReactNode };
 type NavGroup = { title: string; items: NavItem[] };
@@ -22,12 +24,7 @@ const NAV: NavGroup[] = [
         label: "응모자 관리",
         icon: <i className="fa-solid fa-user-check" />,
       },
-      { to: "/drafts", label: "초안 검토", icon: <i className="fa-solid fa-file-pen" /> },
-      {
-        to: "/monitoring",
-        label: "게시 모니터링",
-        icon: <i className="fa-regular fa-circle-check" />,
-      },
+      { to: "/drafts", label: "검토", icon: <i className="fa-solid fa-file-pen" /> },
     ],
   },
   {
@@ -66,6 +63,20 @@ const NAV: NavGroup[] = [
 ];
 
 export const Sidebar = () => {
+  const { data: pendingPayouts } = useQuery({
+    queryKey: ["settlements-pending-count"],
+    queryFn: fetchPendingSettlementCount,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
+  const dynamicBadge = (to: string): ReactNode => {
+    if (to === "/payouts" && pendingPayouts && pendingPayouts > 0) {
+      return pendingPayouts;
+    }
+    return undefined;
+  };
+
   return (
     <aside className="admin__sidebar">
       <Logo />
@@ -76,18 +87,25 @@ export const Sidebar = () => {
         {NAV.map((group) => (
           <div key={group.title} className="admin__nav-group">
             <div className="admin__nav-title">{group.title}</div>
-            {group.items.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === "/"}
-                className={({ isActive }) => "admin__nav-item" + (isActive ? " is-active" : "")}
-              >
-                <span className="admin__nav-icon">{item.icon}</span>
-                <span className="admin__nav-label">{item.label}</span>
-                {item.badge !== undefined && <span className="admin__nav-badge">{item.badge}</span>}
-              </NavLink>
-            ))}
+            {group.items.map((item) => {
+              const badge = item.badge ?? dynamicBadge(item.to);
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/"}
+                  className={({ isActive }) =>
+                    "admin__nav-item" + (isActive ? " is-active" : "")
+                  }
+                >
+                  <span className="admin__nav-icon">{item.icon}</span>
+                  <span className="admin__nav-label">{item.label}</span>
+                  {badge !== undefined && (
+                    <span className="admin__nav-badge">{badge}</span>
+                  )}
+                </NavLink>
+              );
+            })}
           </div>
         ))}
       </nav>

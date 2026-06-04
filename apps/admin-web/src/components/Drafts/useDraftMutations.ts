@@ -7,11 +7,7 @@ import {
 } from "@/lib/draftReviews";
 import type { DraftReview } from "./types";
 
-export type PendingDraftActionType =
-  | "approve"
-  | "reject"
-  | "undo"
-  | "settle";
+export type PendingDraftActionType = "approve" | "reject" | "undo";
 
 export type PendingDraftAction = {
   type: PendingDraftActionType;
@@ -25,7 +21,7 @@ export type UseDraftMutationsResult = {
   openApprove: (draft: DraftReview) => void;
   openReject: (draft: DraftReview) => void;
   openUndo: (draft: DraftReview) => void;
-  openSettle: (draft: DraftReview) => void;
+  settle: (draft: DraftReview) => Promise<boolean>;
   cancel: () => void;
   confirm: (input?: string) => Promise<boolean>;
 };
@@ -69,9 +65,6 @@ export function useDraftMutations(
         case "undo":
           await undoSubmittedPostReview(postId);
           break;
-        case "settle":
-          await settleSubmittedPost(postId);
-          break;
       }
       setPending(null);
       onMutated();
@@ -95,7 +88,16 @@ export function useDraftMutations(
     openApprove: open("approve"),
     openReject: open("reject"),
     openUndo: open("undo"),
-    openSettle: open("settle"),
+    settle: async (draft: DraftReview) => {
+      try {
+        await settleSubmittedPost(draft.id);
+        onMutated();
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "처리에 실패했습니다.");
+        return false;
+      }
+    },
     cancel,
     confirm,
   };

@@ -51,7 +51,7 @@ export const AdminApplicationSchema = z.object({
   deliveredAt: z.string().datetime().nullable(),
   receivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
-  selectedSnsTypes: z.array(SnsTypeSchema),
+  snsType: SnsTypeSchema,
   hasSubmittedPost: z.boolean(),
 
   campaign: z.object({
@@ -127,6 +127,16 @@ export const AdminSubmittedPostSchema = z.object({
 
   settledAt: z.string().datetime().nullable(),
   settledAmountJpy: z.number().int().nonnegative().nullable(),
+  settlementCompletedAt: z.string().datetime().nullable(),
+  settlement: z
+    .object({
+      id: z.string(),
+      status: z.enum(["PENDING", "COMPLETED"]),
+      amountJpy: z.number().int().nonnegative(),
+      createdAt: z.string().datetime(),
+      completedAt: z.string().datetime().nullable(),
+    })
+    .nullable(),
 
   application: z.object({
     id: z.string(),
@@ -137,6 +147,7 @@ export const AdminSubmittedPostSchema = z.object({
     id: z.string(),
     title: z.string(),
     thumbnailUrl: z.string().url().nullable(),
+    rewardJpy: z.number().int().nonnegative(),
   }),
 
   influencer: z.object({
@@ -159,4 +170,39 @@ export const RejectSubmittedPostRequestSchema = z.object({
 });
 export type RejectSubmittedPostRequest = z.infer<
   typeof RejectSubmittedPostRequestSchema
+>;
+
+export const SettlementStatusSchema = z.enum(["PENDING", "COMPLETED"]);
+export type SettlementStatus = z.infer<typeof SettlementStatusSchema>;
+
+export const AdminSettlementSchema = z.object({
+  id: z.string(),
+  postId: z.string(),
+  amountJpy: z.number().int().nonnegative(),
+  status: SettlementStatusSchema,
+  createdAt: z.string().datetime(),
+  completedAt: z.string().datetime().nullable(),
+
+  influencer: z.object({
+    id: z.string(),
+    name: z.string(),
+    handle: z.string(),
+  }),
+  campaign: z.object({
+    id: z.string(),
+    title: z.string(),
+  }),
+  post: z.object({
+    id: z.string(),
+    url: z.string().url(),
+    snsType: SnsTypeSchema,
+  }),
+});
+export type AdminSettlement = z.infer<typeof AdminSettlementSchema>;
+
+export const AdminSettlementListResponseSchema = z.object({
+  settlements: z.array(AdminSettlementSchema),
+});
+export type AdminSettlementListResponse = z.infer<
+  typeof AdminSettlementListResponseSchema
 >;

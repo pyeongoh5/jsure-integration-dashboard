@@ -224,6 +224,7 @@ model CampaignApplication {
   id           String            @id @default(cuid())
   campaignId   String
   influencerId String
+  snsType      SnsType
   status       ApplicationStatus @default(APPLIED)
 
   appliedAt    DateTime  @default(now())
@@ -238,8 +239,6 @@ model CampaignApplication {
   receivedAt     DateTime?
   completedAt    DateTime?
 
-  selectedSnsTypes SnsType[] @default([])
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -247,7 +246,7 @@ model CampaignApplication {
   influencer Influencer      @relation(fields: [influencerId], references: [id], onDelete: Restrict)
   posts      SubmittedPost[]
 
-  @@unique([campaignId, influencerId])
+  @@unique([campaignId, influencerId, snsType])
   @@index([campaignId, status])
   @@index([influencerId, status])
   @@map("campaign_applications")
@@ -278,14 +277,38 @@ model SubmittedPost {
   settledAmountJpy Int?
   settledById      String?
 
+  settlementCompletedAt   DateTime?
+  settlementCompletedById String?
+
   application CampaignApplication      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   rejections  SubmittedPostRejection[]
   attachments SubmittedPostAttachment[]
+  settlement  Settlement?
 
   @@unique([applicationId, snsType])
   @@index([applicationId])
   @@index([reviewStatus])
   @@map("submitted_posts")
+}
+
+enum SettlementStatus {
+  PENDING
+  COMPLETED
+}
+
+model Settlement {
+  id            String           @id @default(cuid())
+  postId        String           @unique
+  amountJpy     Int
+  status        SettlementStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+  completedAt   DateTime?
+  completedById String?
+
+  post SubmittedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("settlements")
 }
 
 model SubmittedPostAttachment {

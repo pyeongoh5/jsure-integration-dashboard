@@ -112,7 +112,7 @@ export const InfluencerApplicationSchema = z.object({
   receivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   rejectReason: z.string().nullable(),
-  selectedSnsTypes: z.array(SnsTypeSchema),
+  snsType: SnsTypeSchema,
   posts: z.array(SubmittedPostSchema),
   postingPeriodDays: z.number().int().min(1),
   postingDeadlineAt: z.string().datetime().nullable(),

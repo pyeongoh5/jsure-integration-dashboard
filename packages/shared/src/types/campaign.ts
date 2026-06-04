@@ -128,7 +128,8 @@ export const InfluencerCampaignDetailSchema =
     guideline: z.string(),
     referenceMediaUrls: z.array(z.string().url()),
     cautions: z.string(),
-    hasApplied: z.boolean(),
+    /** 인플루언서가 이 캠페인에 이미 신청한(취소 제외) SNS 목록 */
+    appliedSnsTypes: z.array(SnsTypeSchema),
   });
 export type InfluencerCampaignDetail = z.infer<
   typeof InfluencerCampaignDetailSchema

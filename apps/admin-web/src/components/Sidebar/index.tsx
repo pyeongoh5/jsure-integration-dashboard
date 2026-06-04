@@ -56,6 +56,7 @@ const NAV: NavGroup[] = [
   {
     title: "시스템",
     items: [
+      { to: "/notices", label: "공지사항", icon: <i className="fa-solid fa-bullhorn" /> },
       { to: "/team", label: "팀원/권한", icon: <i className="fa-solid fa-user-plus" /> },
       { to: "/settings", label: "설정", icon: <i className="fa-solid fa-gear" /> },
     ],

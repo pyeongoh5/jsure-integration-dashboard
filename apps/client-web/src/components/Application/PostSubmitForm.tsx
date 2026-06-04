@@ -12,6 +12,13 @@ interface Props {
 
 const URL_RE = /^https?:\/\/.+/i;
 
+const PLACEHOLDER_BY_SNS: Record<SnsType, string> = {
+  INSTAGRAM: "https://www.instagram.com/p/...",
+  TIKTOK: "https://www.tiktok.com/@user/video/...",
+  X: "https://x.com/user/status/...",
+  YOUTUBE: "https://www.youtube.com/watch?v=...",
+};
+
 export function PostSubmitForm({
   snsType,
   initial,
@@ -36,7 +43,7 @@ export function PostSubmitForm({
         value={url}
         onChange={setUrl}
         error={touched ? error : undefined}
-        placeholder="https://instagram.com/p/..."
+        placeholder={PLACEHOLDER_BY_SNS[snsType]}
       />
       <PrimaryButton onClick={handle} disabled={submitting}>
         {submitting ? "送信中…" : initial ? "投稿URLを更新" : "投稿URLを提出"}

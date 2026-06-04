@@ -119,16 +119,21 @@ export function CampaignDetail() {
       </div>
 
       <div className="cdetail__cta">
-        {data.hasApplied ? (
+        {data.appliedSnsTypes.length > 0 && (
           <PrimaryButton onClick={() => nav("/applications")}>
             応募内訳を見る
           </PrimaryButton>
-        ) : (
+        )}
+        {data.appliedSnsTypes.length < data.snsRecruits.length && (
           <PrimaryButton
             disabled={closed}
             onClick={() => nav(`/campaigns/${data.id}/apply`)}
           >
-            {closed ? "募集終了" : "応募する"}
+            {closed
+              ? "募集終了"
+              : data.appliedSnsTypes.length > 0
+                ? "別のSNSで応募する"
+                : "応募する"}
           </PrimaryButton>
         )}
       </div>

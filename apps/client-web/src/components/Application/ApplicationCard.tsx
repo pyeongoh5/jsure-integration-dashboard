@@ -27,7 +27,10 @@ export function ApplicationCard({ app, onSelect }: Props) {
   return (
     <button type="button" className="acard" onClick={onSelect}>
       <div className="acard__head">
-        <div className="acard__title">{app.campaignTitle}</div>
+        <div className="acard__title">
+          {app.campaignTitle}
+          <span className="acard__sns">{app.snsType}</span>
+        </div>
         <StageBadge stage={app.displayStage} />
       </div>
       <div className="acard__meta">

@@ -142,24 +142,33 @@ export function Apply() {
             <ul className="apply__sns-pick">
               {campaign.data.snsRecruits.map((r) => {
                 const isQualifying = qualifying.includes(r.snsType);
+                const alreadyApplied = campaign.data.appliedSnsTypes.includes(
+                  r.snsType,
+                );
                 const myFollowers = followerByMySns.get(r.snsType);
                 const isSelected = selectedSns.has(r.snsType);
+                const disabled = !isQualifying || alreadyApplied;
                 return (
                   <li key={r.snsType}>
                     <label
                       className={`apply__sns-item ${
-                        isQualifying ? "" : "apply__sns-item--disabled"
+                        disabled ? "apply__sns-item--disabled" : ""
                       } ${isSelected ? "apply__sns-item--selected" : ""}`}
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        disabled={!isQualifying}
+                        disabled={disabled}
                         onChange={() => toggleSns(r.snsType)}
                       />
                       <div className="apply__sns-info">
                         <div className="apply__sns-name">
                           {SNS_LABEL[r.snsType]}
+                          {alreadyApplied && (
+                            <span style={{ marginLeft: 8, color: "#10b981", fontSize: 11 }}>
+                              応募済み
+                            </span>
+                          )}
                         </div>
                         <div className="apply__sns-cond">
                           応募条件: {SNS_FOLLOWER_LABEL[r.snsType]}{" "}

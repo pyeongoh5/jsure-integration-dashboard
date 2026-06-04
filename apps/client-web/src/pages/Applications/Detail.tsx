@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InfluencerApplication, SnsType } from "@jsure/shared";
+import type { SnsType } from "@jsure/shared";
 import { useState } from "react";
 import {
   cancelApplication,
@@ -17,10 +17,6 @@ import { ApplicationStepper } from "../../components/Application/ApplicationStep
 import { PostSubmitForm } from "../../components/Application/PostSubmitForm";
 import { InsightSubmitForm } from "../../components/Application/InsightSubmitForm";
 import "./ApplicationDetail.css";
-
-function findPost(app: InfluencerApplication, snsType: SnsType) {
-  return app.posts.find((p) => p.snsType === snsType) ?? null;
-}
 
 export function ApplicationDetail() {
   const { id = "" } = useParams();
@@ -107,11 +103,6 @@ export function ApplicationDetail() {
   const stage = data.displayStage;
   const canCancel = data.status === "APPLIED";
 
-  // Determine SNS types this application can post to (intersection — use
-  // app.posts existing or campaign snsTypes via separate fetch). MVP: derive
-  // from existing posts + add option for SNS not yet posted later.
-  const sns = new Set<SnsType>(data.posts.map((p) => p.snsType));
-
   return (
     <div className="adetail">
       <PageHeader showBack title={data.campaignTitle} />
@@ -169,11 +160,10 @@ export function ApplicationDetail() {
 
         {stage === "POSTING" && (
           <PostSubmitForm
-            snsType={(Array.from(sns)[0] ?? "INSTAGRAM") as SnsType}
+            snsType={data.snsType}
             initial=""
             onSubmit={async (url) => {
-              const snsType: SnsType = "INSTAGRAM"; // MVP: default; refine later
-              await post.mutateAsync({ snsType, url });
+              await post.mutateAsync({ snsType: data.snsType, url });
             }}
             submitting={post.isPending}
           />

@@ -50,3 +50,15 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+.acard__sns {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 2px 6px;
+  border-radius: 999px;
+  vertical-align: middle;
+}

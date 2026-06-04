@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import type {
   AdminApplication,
+  AdminSettlement,
   AdminSubmittedPost,
   ApplicationStatus,
   SnsType,
@@ -25,7 +26,7 @@ type AdminApplicationRow = {
   deliveredAt: Date | null;
   receivedAt: Date | null;
   completedAt: Date | null;
-  selectedSnsTypes: AdminApplication["selectedSnsTypes"];
+  snsType: SnsType;
   campaign: { id: string; title: string };
   influencer: {
     id: string;
@@ -49,7 +50,7 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
     deliveredAt: row.deliveredAt ? row.deliveredAt.toISOString() : null,
     receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
-    selectedSnsTypes: row.selectedSnsTypes,
+    snsType: row.snsType,
     hasSubmittedPost: row._count.posts > 0,
     campaign: row.campaign,
     influencer: {
@@ -389,22 +390,15 @@ export class AdminApplicationsService {
     if (existing.reviewStatus !== "APPROVED") {
       throw new BadRequestException("승인된 초안만 정산할 수 있습니다");
     }
-    if (existing.settledAt) {
-      throw new BadRequestException("이미 정산 완료된 초안입니다");
-    }
-    await this.prisma.submittedPost.update({
-      where: { id: postId },
-      data: {
-        settledAt: new Date(),
-        settledAmountJpy: existing.application.campaign.rewardJpy,
-        settledById: settlerId,
+    // Settlement row 생성 (idempotent: 이미 있으면 그대로 유지)
+    await this.prisma.settlement.upsert({
+      where: { postId },
+      create: {
+        postId,
+        amountJpy: existing.application.campaign.rewardJpy,
+        status: "PENDING",
       },
-    });
-    void this.line.notifySettlementComplete({
-      influencerId: existing.application.influencerId,
-      applicationId: existing.application.id,
-      campaignTitle: existing.application.campaign.title,
-      rewardJpy: existing.application.campaign.rewardJpy,
+      update: {},
     });
     return this.fetchSubmittedPost(postId);
   }
@@ -419,9 +413,108 @@ export class AdminApplicationsService {
     if (!row) throw new NotFoundException("Post not found");
     return toSubmittedPostResponse(row, this.r2);
   }
+
+  /**
+   * Settlement 테이블 기반 정산 목록.
+   * month 가 주어지면 해당 월(JST) 안에 insightSubmittedAt 이 찍힌 건만 반환.
+   */
+  async listSettlements(month?: string): Promise<AdminSettlement[]> {
+    const where = month ? buildMonthWhere(month) : {};
+    const rows = await this.prisma.settlement.findMany({
+      where,
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      include: {
+        post: {
+          select: {
+            id: true,
+            url: true,
+            snsType: true,
+            application: {
+              select: {
+                influencerId: true,
+                campaign: { select: { id: true, title: true } },
+                influencer: {
+                  select: {
+                    id: true,
+                    name: true,
+                    snsAccounts: {
+                      select: { snsType: true, handle: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    return rows.map((row) => toSettlementResponse(row));
+  }
+
+  /** PENDING Settlement 건수. 사이드바 뱃지용. */
+  async pendingSettlementCount(): Promise<{ count: number }> {
+    const count = await this.prisma.settlement.count({
+      where: { status: "PENDING" },
+    });
+    return { count };
+  }
+
+  /** PENDING Settlement 들을 COMPLETED 로. ids 가 비어있으면 모든 PENDING 대상. */
+  async completeSettlements(
+    completerId: string,
+    ids?: string[],
+  ): Promise<{ completedCount: number }> {
+    const where = {
+      status: "PENDING" as const,
+      ...(ids && ids.length > 0 ? { id: { in: ids } } : {}),
+    };
+    const targets = await this.prisma.settlement.findMany({
+      where,
+      include: {
+        post: {
+          select: {
+            application: {
+              select: {
+                id: true,
+                influencerId: true,
+                campaign: { select: { title: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    const now = new Date();
+    await this.prisma.settlement.updateMany({
+      where,
+      data: {
+        status: "COMPLETED",
+        completedAt: now,
+        completedById: completerId,
+      },
+    });
+    for (const target of targets) {
+      void this.line.notifySettlementComplete({
+        influencerId: target.post.application.influencerId,
+        applicationId: target.post.application.id,
+        campaignTitle: target.post.application.campaign.title,
+        rewardJpy: target.amountJpy,
+      });
+    }
+    return { completedCount: targets.length };
+  }
 }
 
 const SUBMITTED_POST_INCLUDE = {
+  settlement: {
+    select: {
+      id: true,
+      status: true,
+      amountJpy: true,
+      createdAt: true,
+      completedAt: true,
+    },
+  },
   rejections: {
     orderBy: { rejectedAt: "desc" as const },
     select: { id: true, comment: true, rejectedAt: true },
@@ -441,7 +534,7 @@ const SUBMITTED_POST_INCLUDE = {
       id: true,
       status: true,
       campaign: {
-        select: { id: true, title: true, thumbnailUrl: true },
+        select: { id: true, title: true, thumbnailUrl: true, rewardJpy: true },
       },
       influencer: {
         select: {
@@ -478,6 +571,14 @@ type SubmittedPostRow = {
   reviewedAt: Date | null;
   settledAt: Date | null;
   settledAmountJpy: number | null;
+  settlementCompletedAt: Date | null;
+  settlement: {
+    id: string;
+    status: "PENDING" | "COMPLETED";
+    amountJpy: number;
+    createdAt: Date;
+    completedAt: Date | null;
+  } | null;
   rejections: { id: string; comment: string; rejectedAt: Date }[];
   attachments: {
     id: string;
@@ -489,7 +590,7 @@ type SubmittedPostRow = {
   application: {
     id: string;
     status: ApplicationStatus;
-    campaign: { id: string; title: string; thumbnailUrl: string | null };
+    campaign: { id: string; title: string; thumbnailUrl: string | null; rewardJpy: number };
     influencer: {
       id: string;
       name: string;
@@ -547,6 +648,20 @@ async function toSubmittedPostResponse(
     reviewedAt: row.reviewedAt ? row.reviewedAt.toISOString() : null,
     settledAt: row.settledAt ? row.settledAt.toISOString() : null,
     settledAmountJpy: row.settledAmountJpy,
+    settlementCompletedAt: row.settlementCompletedAt
+      ? row.settlementCompletedAt.toISOString()
+      : null,
+    settlement: row.settlement
+      ? {
+          id: row.settlement.id,
+          status: row.settlement.status,
+          amountJpy: row.settlement.amountJpy,
+          createdAt: row.settlement.createdAt.toISOString(),
+          completedAt: row.settlement.completedAt
+            ? row.settlement.completedAt.toISOString()
+            : null,
+        }
+      : null,
     rejectionHistory: row.rejections.map((rejection) => ({
       id: rejection.id,
       comment: rejection.comment,
@@ -561,6 +676,7 @@ async function toSubmittedPostResponse(
       id: row.application.campaign.id,
       title: row.application.campaign.title,
       thumbnailUrl: campaignThumbnailUrl,
+      rewardJpy: row.application.campaign.rewardJpy,
     },
     influencer: {
       id: row.application.influencer.id,
@@ -570,6 +686,79 @@ async function toSubmittedPostResponse(
         handle: account.handle,
         followerCount: account.followerCount,
       })),
+    },
+  };
+}
+
+
+type SettlementRow = {
+  id: string;
+  postId: string;
+  amountJpy: number;
+  status: "PENDING" | "COMPLETED";
+  createdAt: Date;
+  completedAt: Date | null;
+  post: {
+    id: string;
+    url: string;
+    snsType: SnsType;
+    application: {
+      campaign: { id: string; title: string };
+      influencer: {
+        id: string;
+        name: string;
+        snsAccounts: { snsType: SnsType; handle: string }[];
+      };
+    };
+  };
+};
+
+function toSettlementResponse(row: SettlementRow): AdminSettlement {
+  const matchingAccount = row.post.application.influencer.snsAccounts.find(
+    (a) => a.snsType === row.post.snsType,
+  );
+  return {
+    id: row.id,
+    postId: row.postId,
+    amountJpy: row.amountJpy,
+    status: row.status,
+    createdAt: row.createdAt.toISOString(),
+    completedAt: row.completedAt ? row.completedAt.toISOString() : null,
+    influencer: {
+      id: row.post.application.influencer.id,
+      name: row.post.application.influencer.name,
+      handle: matchingAccount?.handle ?? "",
+    },
+    campaign: {
+      id: row.post.application.campaign.id,
+      title: row.post.application.campaign.title,
+    },
+    post: {
+      id: row.post.id,
+      url: row.post.url,
+      snsType: row.post.snsType,
+    },
+  };
+}
+
+/** "YYYY-MM" (JST) → Settlement where 절: post.insightSubmittedAt 가 해당 월 범위. */
+function buildMonthWhere(monthStr: string): {
+  post: { insightSubmittedAt: { gte: Date; lt: Date } };
+} | Record<string, never> {
+  const m = monthStr.match(/^(\d{4})-(\d{2})$/);
+  if (!m) return {};
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  if (month < 1 || month > 12) return {};
+  const start = new Date(`${monthStr}-01T00:00:00+09:00`);
+  const nextYear = month === 12 ? year + 1 : year;
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const end = new Date(
+    `${nextYear}-${String(nextMonth).padStart(2, "0")}-01T00:00:00+09:00`,
+  );
+  return {
+    post: {
+      insightSubmittedAt: { gte: start, lt: end },
     },
   };
 }

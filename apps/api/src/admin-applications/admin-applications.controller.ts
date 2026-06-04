@@ -18,6 +18,7 @@ import {
   type AdminApplicationCountsResponse,
   type AdminApplicationListResponse,
   type AdminSubmittedPost,
+  type AdminSettlementListResponse,
   type AdminSubmittedPostListResponse,
   type ApplicationStatus,
   type RejectApplicationRequest,
@@ -100,6 +101,28 @@ export class AdminApplicationsController {
     @Param("postId") postId: string,
   ): Promise<AdminSubmittedPost> {
     return this.svc.settleSubmittedPost(postId, req.user.id);
+  }
+
+  @Get("settlements")
+  async listSettlements(
+    @Query("month") month?: string,
+  ): Promise<AdminSettlementListResponse> {
+    const settlements = await this.svc.listSettlements(month);
+    return { settlements };
+  }
+
+  @Get("settlements/pending-count")
+  pendingSettlementCount(): Promise<{ count: number }> {
+    return this.svc.pendingSettlementCount();
+  }
+
+  @Post("settlements/complete")
+  @HttpCode(200)
+  completeSettlements(
+    @Req() req: { user: AuthenticatedUser },
+    @Body() body: { ids?: string[] },
+  ): Promise<{ completedCount: number }> {
+    return this.svc.completeSettlements(req.user.id, body.ids);
   }
 
   @Post(":id/approve")

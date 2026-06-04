@@ -47,7 +47,7 @@ type ApplicationRow = {
   receivedAt: Date | null;
   completedAt: Date | null;
   rejectReason: string | null;
-  selectedSnsTypes: SnsType[];
+  snsType: SnsType;
   posts: PostRow[];
   campaign: {
     id: string;
@@ -111,7 +111,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     rejectReason: row.rejectReason,
-    selectedSnsTypes: row.selectedSnsTypes,
+    snsType: row.snsType,
     posts: row.posts.map(toPost),
     postingPeriodDays: row.campaign.postingPeriodDays,
     postingDeadlineAt: deadline ? deadline.toISOString() : null,
@@ -251,50 +251,64 @@ export class InfluencerApplicationsService {
       });
     }
 
-    const existing = await this.prisma.campaignApplication.findUnique({
-      where: {
-        campaignId_influencerId: { campaignId, influencerId },
-      },
-    });
+    // 각 snsType 별로 application row를 생성하거나 (CANCELLED 면) reopen.
+    const results: InfluencerApplication[] = [];
+    for (const snsType of snsTypes) {
+      const existing = await this.prisma.campaignApplication.findUnique({
+        where: {
+          campaignId_influencerId_snsType: {
+            campaignId,
+            influencerId,
+            snsType,
+          },
+        },
+      });
 
-    if (existing && existing.status !== "CANCELLED") {
+      if (existing && existing.status !== "CANCELLED") {
+        // 이미 활성 응모가 있는 SNS는 스킵 (이미 신청된 항목 중복 방지)
+        continue;
+      }
+
+      let row;
+      if (existing) {
+        row = await this.prisma.campaignApplication.update({
+          where: { id: existing.id },
+          data: {
+            status: "APPLIED",
+            appliedAt: new Date(),
+            reviewedAt: null,
+            reviewedById: null,
+            rejectReason: null,
+            trackingCarrier: null,
+            trackingNumber: null,
+            shippedAt: null,
+            deliveredAt: null,
+            receivedAt: null,
+            completedAt: null,
+          },
+          include: INCLUDE,
+        });
+      } else {
+        row = await this.prisma.campaignApplication.create({
+          data: {
+            campaignId,
+            influencerId,
+            snsType,
+            status: "APPLIED",
+          },
+          include: INCLUDE,
+        });
+      }
+      results.push(await this.resolveResponse(row));
+    }
+
+    if (results.length === 0) {
       throw new BadRequestException({
         code: "ALREADY_APPLIED",
-        message: "すでに応募済みです",
+        message: "選択したSNSはすでに応募済みです",
       });
     }
-
-    if (existing) {
-      const reopened = await this.prisma.campaignApplication.update({
-        where: { id: existing.id },
-        data: {
-          status: "APPLIED",
-          appliedAt: new Date(),
-          selectedSnsTypes: snsTypes,
-          reviewedAt: null,
-          reviewedById: null,
-          rejectReason: null,
-          trackingNumber: null,
-          shippedAt: null,
-          deliveredAt: null,
-          receivedAt: null,
-          completedAt: null,
-        },
-        include: INCLUDE,
-      });
-      return this.resolveResponse(reopened);
-    }
-
-    const created = await this.prisma.campaignApplication.create({
-      data: {
-        campaignId,
-        influencerId,
-        status: "APPLIED",
-        selectedSnsTypes: snsTypes,
-      },
-      include: INCLUDE,
-    });
-    return this.resolveResponse(created);
+    return results[0]!;
   }
 
   async cancel(
@@ -354,28 +368,12 @@ export class InfluencerApplicationsService {
         message: "受領確認後のみ投稿URLを提出できます",
       });
     }
-    if (app.selectedSnsTypes.length > 0) {
-      if (!app.selectedSnsTypes.includes(snsType)) {
-        throw new BadRequestException({
-          code: "SNS_NOT_SELECTED",
-          message: "応募時に選択したSNSではありません",
-        });
-      }
-    } else {
-      // Legacy applications created before selectedSnsTypes existed: fall back
-      // to the campaign's SNS recruit list.
-      const campaign = await this.prisma.campaign.findUnique({
-        where: { id: app.campaignId },
-        include: { snsRecruits: { select: { snsType: true } } },
+    // 이제 application 자체가 단일 snsType 을 가지므로 단순 비교.
+    if (app.snsType !== snsType) {
+      throw new BadRequestException({
+        code: "SNS_NOT_SELECTED",
+        message: "応募のSNSと一致しません",
       });
-      if (!campaign) throw new NotFoundException();
-      const allowed = new Set(campaign.snsRecruits.map((r) => r.snsType));
-      if (!allowed.has(snsType)) {
-        throw new BadRequestException({
-          code: "SNS_NOT_IN_CAMPAIGN",
-          message: "このキャンペーンの対象SNSではありません",
-        });
-      }
     }
 
     const existing = await this.prisma.submittedPost.findUnique({

@@ -128,14 +128,13 @@ export class InfluencerCampaignsService {
       },
     });
 
-    const existing = await this.prisma.campaignApplication.findUnique({
+    const existing = await this.prisma.campaignApplication.findMany({
       where: {
-        campaignId_influencerId: {
-          campaignId: row.id,
-          influencerId: args.influencerId,
-        },
+        campaignId: row.id,
+        influencerId: args.influencerId,
+        status: { not: "CANCELLED" },
       },
-      select: { status: true },
+      select: { snsType: true },
     });
 
     const card = await this.resolveCard(toCard(row, appliedCount, now));
@@ -145,7 +144,7 @@ export class InfluencerCampaignsService {
       guideline: row.guideline,
       referenceMediaUrls: row.referenceMediaUrls,
       cautions: row.cautions,
-      hasApplied: existing !== null && existing.status !== "CANCELLED",
+      appliedSnsTypes: existing.map((r) => r.snsType),
     };
   }
 }

@@ -12,7 +12,6 @@ import { Brands } from "./pages/Brands";
 import { Payouts } from "./pages/Payouts";
 import { Reports } from "./pages/Reports";
 import { Team } from "./pages/Team";
-import { Settings } from "./pages/Settings";
 import { Notices } from "./pages/Notices";
 import { NoticeEdit } from "./pages/Notices/Edit";
 import { Login } from "./pages/Login";
@@ -43,7 +42,6 @@ export function App() {
         <Route path="/payouts" element={<Payouts />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/team" element={<Team />} />
-        <Route path="/settings" element={<Settings />} />
         <Route path="/notices" element={<Notices />} />
         <Route path="/notices/new" element={<NoticeEdit mode="create" />} />
         <Route path="/notices/:id/edit" element={<NoticeEdit mode="edit" />} />

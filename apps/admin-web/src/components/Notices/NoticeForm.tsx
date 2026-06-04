@@ -9,7 +9,8 @@ import "./NoticeForm.css";
 export type NoticeFormValue = {
   title: string;
   contentHtml: string;
-  publishedAt: string;
+  startAt: string;
+  endAt: string;
 };
 
 type Props = {
@@ -21,8 +22,33 @@ type Props = {
   onCancel: () => void;
 };
 
-function defaultPublishedAt(): string {
+function defaultStartAt(): string {
   return new Date().toISOString();
+}
+
+function defaultEndAt(): string {
+  // 시작일 + 30일
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  return d.toISOString();
+}
+
+/**
+ * 에디터의 img src 는 미리보기용 presigned URL 이지만 저장 시에는
+ * `r2:<objectKey>` 형태로 되돌려야 서버측 영구 저장과 호환된다.
+ * data-r2-key 속성을 보고 src 를 치환하고 속성은 제거.
+ */
+function serializeContentHtml(html: string): string {
+  return html.replace(
+    /<img\b([^>]*)\bdata-r2-key="([^"]+)"([^>]*)>/g,
+    (_match, before: string, key: string, after: string) => {
+      const restored = `${before}${after}`.replace(
+        /\bsrc="[^"]*"/,
+        `src="r2:${key}"`,
+      );
+      return `<img${restored}>`;
+    },
+  );
 }
 
 export function NoticeForm({
@@ -35,9 +61,8 @@ export function NoticeForm({
 }: Props) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [contentHtml, setContentHtml] = useState(initial?.contentHtml ?? "");
-  const [publishedAt, setPublishedAt] = useState(
-    initial?.publishedAt ?? defaultPublishedAt(),
-  );
+  const [startAt, setStartAt] = useState(initial?.startAt ?? defaultStartAt());
+  const [endAt, setEndAt] = useState(initial?.endAt ?? defaultEndAt());
 
   function handleSubmit() {
     if (!title.trim()) {
@@ -48,10 +73,20 @@ export function NoticeForm({
       window.alert("내용을 입력해 주세요");
       return;
     }
+    if (new Date(startAt) >= new Date(endAt)) {
+      window.alert("종료일은 시작일 이후여야 합니다");
+      return;
+    }
+    // 업로드가 끝나지 않은 이미지 (data-r2-key 없음) 가 있으면 차단
+    if (/<img\b(?![^>]*\bdata-r2-key=)[^>]*>/.test(contentHtml)) {
+      window.alert("이미지 업로드가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요");
+      return;
+    }
     onSubmit({
       title: title.trim(),
-      contentHtml,
-      publishedAt,
+      contentHtml: serializeContentHtml(contentHtml),
+      startAt,
+      endAt,
     });
   }
 
@@ -72,20 +107,37 @@ export function NoticeForm({
         />
       </div>
 
-      <div className="notice-form__row">
-        <label className="notice-form__label" htmlFor="notice-published-at">
-          게시일
-        </label>
-        <input
-          id="notice-published-at"
-          type="datetime-local"
-          className="notice-form__input"
-          value={toDateTimeLocalInputValue(publishedAt)}
-          onChange={(event) =>
-            setPublishedAt(fromDateTimeLocalInputValue(event.target.value))
-          }
-          disabled={busy}
-        />
+      <div className="notice-form__row notice-form__row--inline">
+        <div className="notice-form__field">
+          <label className="notice-form__label" htmlFor="notice-start-at">
+            게시 시작일
+          </label>
+          <input
+            id="notice-start-at"
+            type="datetime-local"
+            className="notice-form__input"
+            value={toDateTimeLocalInputValue(startAt)}
+            onChange={(event) =>
+              setStartAt(fromDateTimeLocalInputValue(event.target.value))
+            }
+            disabled={busy}
+          />
+        </div>
+        <div className="notice-form__field">
+          <label className="notice-form__label" htmlFor="notice-end-at">
+            게시 종료일
+          </label>
+          <input
+            id="notice-end-at"
+            type="datetime-local"
+            className="notice-form__input"
+            value={toDateTimeLocalInputValue(endAt)}
+            onChange={(event) =>
+              setEndAt(fromDateTimeLocalInputValue(event.target.value))
+            }
+            disabled={busy}
+          />
+        </div>
       </div>
 
       <div className="notice-form__row">

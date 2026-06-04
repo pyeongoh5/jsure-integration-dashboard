@@ -1,7 +1,9 @@
 import { getStoredUser } from "@/lib/auth";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "../../ui/Card";
 import { MonthlyCampaignChart } from "./MonthlyCampaignChart";
+import { getOverviewStats } from "../../lib/overview";
 import "./Overview.css";
 import { ReactNode } from "react";
 
@@ -13,33 +15,52 @@ type Kpi = {
   to?: string;
 };
 
-const KPIS: Kpi[] = [
-  {
-    icon: <i className="fa-solid fa-bullhorn" />,
-    label: "모집 중 캠페인",
-    value: "14",
-    delta: { text: "↑ 3 신규 시작 (이번 주)", tone: "up" },
-    to: "/campaigns?status=recruit",
-  },
-  {
-    icon: "✓",
-    label: "검토 대기 응모",
-    value: "23",
-    delta: { text: "평균 처리 시간 4시간", tone: "neutral" },
-  },
-  {
-    icon: <i className="fa-solid fa-file-pen" />,
-    label: "검토 대기",
-    value: "8",
-    delta: { text: "↓ 2 (어제 대비)", tone: "down" },
-  },
-  {
-    icon: <i className="fa-solid fa-money-check-dollar" />,
-    label: "지급 대기 금액",
-    value: "₩48.2M",
-    delta: { text: "12건 정산 대기", tone: "neutral" },
-  },
-];
+function formatJpy(value: number): string {
+  if (value >= 1_000_000) return `¥${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `¥${(value / 1_000).toFixed(0)}K`;
+  return `¥${value.toLocaleString()}`;
+}
+
+function buildKpis(stats: {
+  recruitingCampaignCount: number;
+  pendingApplicationCount: number;
+  pendingPostReviewCount: number;
+  pendingSettlementAmountJpy: number;
+  pendingSettlementCount: number;
+}): Kpi[] {
+  return [
+    {
+      icon: <i className="fa-solid fa-bullhorn" />,
+      label: "모집 중 캠페인",
+      value: String(stats.recruitingCampaignCount),
+      to: "/campaigns?status=recruit",
+    },
+    {
+      icon: "✓",
+      label: "응모자 검토",
+      value: String(stats.pendingApplicationCount),
+      delta: { text: "검토 대기 응모", tone: "neutral" },
+      to: "/applicants",
+    },
+    {
+      icon: <i className="fa-solid fa-file-pen" />,
+      label: "게시물 검토",
+      value: String(stats.pendingPostReviewCount),
+      delta: { text: "검토 대기 게시물", tone: "neutral" },
+      to: "/drafts",
+    },
+    {
+      icon: <i className="fa-solid fa-money-check-dollar" />,
+      label: "지급 대기 금액",
+      value: formatJpy(stats.pendingSettlementAmountJpy),
+      delta: {
+        text: `${stats.pendingSettlementCount}건 정산 대기`,
+        tone: "neutral",
+      },
+      to: "/payouts",
+    },
+  ];
+}
 
 // type Activity = {
 //   type: "approve" | "draft" | "campaign" | "alert" | "payout" | "complete";
@@ -95,6 +116,20 @@ const URGENT: UrgentRow[] = [
 
 export function Overview() {
   const user = getStoredUser();
+  const { data: stats } = useQuery({
+    queryKey: ["admin", "overview"],
+    queryFn: getOverviewStats,
+    staleTime: 30_000,
+  });
+  const kpis = buildKpis(
+    stats ?? {
+      recruitingCampaignCount: 0,
+      pendingApplicationCount: 0,
+      pendingPostReviewCount: 0,
+      pendingSettlementAmountJpy: 0,
+      pendingSettlementCount: 0,
+    },
+  );
 
   return (
     <div className="ov">
@@ -106,7 +141,7 @@ export function Overview() {
       </div>
 
       <div className="ov__kpis">
-        {KPIS.map((k) => {
+        {kpis.map((k) => {
           const card = (
             <Card
               title={

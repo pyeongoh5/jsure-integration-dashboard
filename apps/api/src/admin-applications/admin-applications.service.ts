@@ -429,6 +429,8 @@ export class AdminApplicationsService {
             id: true,
             url: true,
             snsType: true,
+            submittedAt: true,
+            insightSubmittedAt: true,
             application: {
               select: {
                 influencerId: true,
@@ -702,6 +704,8 @@ type SettlementRow = {
     id: string;
     url: string;
     snsType: SnsType;
+    submittedAt: Date;
+    insightSubmittedAt: Date | null;
     application: {
       campaign: { id: string; title: string };
       influencer: {
@@ -737,6 +741,10 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
       id: row.post.id,
       url: row.post.url,
       snsType: row.post.snsType,
+      submittedAt: row.post.submittedAt.toISOString(),
+      insightSubmittedAt: row.post.insightSubmittedAt
+        ? row.post.insightSubmittedAt.toISOString()
+        : null,
     },
   };
 }

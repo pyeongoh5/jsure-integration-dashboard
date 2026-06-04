@@ -48,17 +48,27 @@
   color: #92400e;
 }
 
+.notice-table__status--expired {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
 .notice-table__btn {
-  padding: 6px 12px;
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
   background: #fff;
+  color: #111827;
   font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
+  font-family: inherit;
 }
 
 .notice-table__btn:hover {
-  background: var(--color-surface-hover, #f3f4f6);
+  background: #f9fafb;
 }
 
 .notice-table__btn--danger {
@@ -71,7 +81,7 @@
 }
 
 .notice-table__btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 

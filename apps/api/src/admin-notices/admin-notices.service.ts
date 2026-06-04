@@ -13,7 +13,7 @@ type NoticeRow = {
   id: string;
   title: string;
   contentHtml: string;
-  publishedAt: Date;
+  startAt: Date; endAt: Date;
   createdAt: Date;
   updatedAt: Date;
   author: { name: string | null } | null;
@@ -31,7 +31,7 @@ export class AdminNoticesService {
       id: row.id,
       title: row.title,
       contentHtml: await this.uploads.resolveNoticeImageUrls(row.contentHtml),
-      publishedAt: row.publishedAt.toISOString(),
+      startAt: row.startAt.toISOString(), endAt: row.endAt.toISOString(),
       authorName: row.author?.name ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
@@ -41,7 +41,7 @@ export class AdminNoticesService {
   async list(): Promise<AdminNoticeListResponse> {
     const [rows, total] = await Promise.all([
       this.prisma.notice.findMany({
-        orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+        orderBy: [{ startAt: "desc" }, { createdAt: "desc" }],
         include: { author: { select: { name: true } } },
       }),
       this.prisma.notice.count(),
@@ -67,7 +67,7 @@ export class AdminNoticesService {
       data: {
         title: input.title,
         contentHtml: sanitizeNoticeHtml(input.contentHtml),
-        publishedAt: new Date(input.publishedAt),
+        startAt: new Date(input.startAt), endAt: new Date(input.endAt),
         authorId,
       },
       include: { author: { select: { name: true } } },
@@ -85,7 +85,7 @@ export class AdminNoticesService {
       data: {
         title: input.title,
         contentHtml: sanitizeNoticeHtml(input.contentHtml),
-        publishedAt: new Date(input.publishedAt),
+        startAt: new Date(input.startAt), endAt: new Date(input.endAt),
       },
       include: { author: { select: { name: true } } },
     });

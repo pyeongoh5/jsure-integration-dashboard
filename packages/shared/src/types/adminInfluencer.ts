@@ -196,6 +196,8 @@ export const AdminSettlementSchema = z.object({
     id: z.string(),
     url: z.string().url(),
     snsType: SnsTypeSchema,
+    submittedAt: z.string().datetime(),
+    insightSubmittedAt: z.string().datetime().nullable(),
   }),
 });
 export type AdminSettlement = z.infer<typeof AdminSettlementSchema>;

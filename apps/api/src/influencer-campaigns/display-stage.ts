@@ -46,9 +46,7 @@ export function deriveDisplayStage(input: DisplayStageInput): ApplicationDisplay
     const first = posts[0]!.submittedAt;
     const earliest = posts.reduce((acc, p) => (p.submittedAt < acc ? p.submittedAt : acc), first);
     // JST 일자 기준으로 N일째 되는 날(자정 이후)에 INSIGHT_DUE 로 전환.
-    const daysPassed = Math.round(
-      (startOfJstDay(now) - startOfJstDay(earliest)) / DAY_MS,
-    );
+    const daysPassed = Math.round((startOfJstDay(now) - startOfJstDay(earliest)) / DAY_MS);
     return daysPassed >= INSIGHT_DUE_DAYS ? "INSIGHT_DUE" : "POSTED";
   }
 

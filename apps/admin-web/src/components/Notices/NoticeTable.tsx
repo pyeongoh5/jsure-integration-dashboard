@@ -18,7 +18,8 @@ export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
         <tr>
           <th>제목</th>
           <th style={{ width: 120 }}>상태</th>
-          <th style={{ width: 180 }}>게시일</th>
+          <th style={{ width: 170 }}>게시 시작일</th>
+          <th style={{ width: 170 }}>게시 종료일</th>
           <th style={{ width: 120 }}>작성자</th>
           <th style={{ width: 160 }} aria-label="작업" />
         </tr>
@@ -31,10 +32,15 @@ export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
               <span
                 className={`notice-table__status notice-table__status--${notice.status}`}
               >
-                {notice.status === "scheduled" ? "예약" : "게시됨"}
+                {notice.status === "scheduled"
+                  ? "예약"
+                  : notice.status === "expired"
+                    ? "종료"
+                    : "게시 중"}
               </span>
             </td>
-            <td>{notice.publishedAtLabel}</td>
+            <td>{notice.startAtLabel}</td>
+            <td>{notice.endAtLabel}</td>
             <td>{notice.authorName}</td>
             <td>
               <div

@@ -35,7 +35,7 @@ export function Notices() {
           >
             <div className="notice-list-item__title">{notice.title}</div>
             <div className="notice-list-item__date">
-              {formatDate(notice.publishedAt)}
+              {formatDate(notice.startAt)}
             </div>
             {!readSet.has(notice.id) ? (
               <span className="notice-list-item__dot" aria-label="신규" />

@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
-import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import {
+  EditorContent,
+  ReactNodeViewRenderer,
+  useEditor,
+  type Editor,
+} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
@@ -7,8 +12,36 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import FontFamily from "@tiptap/extension-font-family";
 import TextAlign from "@tiptap/extension-text-align";
-import { uploadNoticeImage, NoticeImageUploadError } from "../../lib/notices";
+import { startNoticeImageUpload, NoticeImageUploadError } from "../../lib/notices";
+import { ResizableImageView } from "./ResizableImageView";
 import "./NoticeEditor.css";
+
+const ImageWithR2Key = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      dataR2Key: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("data-r2-key"),
+        renderHTML: (attributes) => {
+          if (!attributes.dataR2Key) return {};
+          return { "data-r2-key": attributes.dataR2Key as string };
+        },
+      },
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("width"),
+        renderHTML: (attributes) => {
+          if (!attributes.width) return {};
+          return { width: attributes.width as string };
+        },
+      },
+    };
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(ResizableImageView);
+  },
+});
 
 type Props = {
   value: string;
@@ -26,7 +59,7 @@ export function NoticeEditor({ value, onChange }: Props) {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image.configure({ inline: false }),
+      ImageWithR2Key.configure({ inline: false }),
       Link.configure({ openOnClick: false, autolink: true }),
       TextStyle,
       Color,
@@ -34,6 +67,8 @@ export function NoticeEditor({ value, onChange }: Props) {
       TextAlign.configure({ types: ["heading", "paragraph"] }),
     ],
     content: value || "<p></p>",
+    // 셀렉션만 바뀌어도 toolbar (editor.isActive) 가 갱신되도록 강제 리렌더
+    shouldRerenderOnTransaction: true,
     onUpdate: ({ editor: nextEditor }) => {
       onChange(nextEditor.getHTML());
     },
@@ -63,17 +98,84 @@ function Toolbar({ editor }: { editor: Editor }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImage = useCallback(
-    async (file: File) => {
+    (file: File) => {
+      let handle;
       try {
-        const result = await uploadNoticeImage(file);
-        editor.chain().focus().setImage({ src: `r2:${result.objectKey}` }).run();
+        handle = startNoticeImageUpload(file);
       } catch (caught) {
         const message =
           caught instanceof NoticeImageUploadError
             ? caught.message
             : "이미지 업로드에 실패했습니다";
         window.alert(message);
+        return;
       }
+
+      // 1) 즉시 로컬 objectURL 로 에디터 삽입 (R2 왕복 대기 없음)
+      const { previewUrl, done } = handle;
+      editor
+        .chain()
+        .focus()
+        .setImage({
+          src: previewUrl,
+          dataR2Key: null,
+        } as { src: string; dataR2Key: string | null })
+        .run();
+
+      // 2) 업로드 완료되면 같은 src 를 가진 이미지 노드에 dataR2Key 채워줌
+      done
+        .then((result) => {
+          let foundPos: number | null = null;
+          editor.state.doc.descendants((node, pos) => {
+            if (
+              foundPos === null &&
+              node.type.name === "image" &&
+              node.attrs.src === previewUrl
+            ) {
+              foundPos = pos;
+              return false;
+            }
+            return true;
+          });
+          if (foundPos !== null) {
+            editor.commands.command(({ tr, dispatch }) => {
+              const node = tr.doc.nodeAt(foundPos!);
+              if (!node) return false;
+              if (dispatch) {
+                tr.setNodeMarkup(foundPos!, undefined, {
+                  ...node.attrs,
+                  dataR2Key: result.objectKey,
+                });
+                dispatch(tr);
+              }
+              return true;
+            });
+          }
+        })
+        .catch((caught: unknown) => {
+          const message =
+            caught instanceof NoticeImageUploadError
+              ? caught.message
+              : "이미지 업로드에 실패했습니다";
+          window.alert(message);
+          // 실패한 이미지 노드는 제거
+          const tr = editor.state.tr;
+          let removed = false;
+          editor.state.doc.descendants((node, pos) => {
+            if (
+              !removed &&
+              node.type.name === "image" &&
+              node.attrs.src === previewUrl
+            ) {
+              tr.delete(pos, pos + node.nodeSize);
+              removed = true;
+              return false;
+            }
+            return true;
+          });
+          if (removed) editor.view.dispatch(tr);
+          URL.revokeObjectURL(previewUrl);
+        });
     },
     [editor],
   );
@@ -81,7 +183,7 @@ function Toolbar({ editor }: { editor: Editor }) {
   const onPickFile = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
-      if (file) void handleImage(file);
+      if (file) handleImage(file);
       event.target.value = "";
     },
     [handleImage],
@@ -218,7 +320,72 @@ function Toolbar({ editor }: { editor: Editor }) {
         style={{ display: "none" }}
         onChange={onPickFile}
       />
+
+      {editor.isActive("image") && (
+        <ImageSizeControls editor={editor} />
+      )}
     </div>
+  );
+}
+
+function ImageSizeControls({ editor }: { editor: Editor }) {
+  const currentWidth = editor.getAttributes("image").width as string | null;
+
+  // 프리셋/원본 버튼: 처리 후 에디터에 포커스 복귀
+  const setWidthWithFocus = (width: string | null) => {
+    editor.chain().focus().updateAttributes("image", { width }).run();
+  };
+
+  // px 입력: 매 키 입력마다 editor.focus() 가 따라가면 input 포커스가 빠지므로
+  // focus 없이 attribute 만 업데이트.
+  const updateWidthOnly = (width: string | null) => {
+    editor.commands.updateAttributes("image", { width });
+  };
+
+  const pxValue =
+    currentWidth && !currentWidth.endsWith("%")
+      ? currentWidth.replace(/px$/, "")
+      : "";
+
+  return (
+    <>
+      <span className="notice-editor__divider" />
+      <span style={{ fontSize: 11, color: "#6b7280", alignSelf: "center" }}>
+        이미지
+      </span>
+      {["25%", "50%", "75%", "100%"].map((preset) => (
+        <button
+          key={preset}
+          type="button"
+          className={`notice-editor__button ${currentWidth === preset ? "is-active" : ""}`}
+          onClick={() => setWidthWithFocus(preset)}
+        >
+          {preset}
+        </button>
+      ))}
+      <input
+        type="text"
+        className="notice-editor__size-input"
+        placeholder="예: 300"
+        value={pxValue}
+        onChange={(event) => {
+          const raw = event.target.value.replace(/[^\d]/g, "");
+          updateWidthOnly(raw ? `${raw}px` : null);
+        }}
+        title="픽셀(px) 단위 너비"
+      />
+      <span style={{ fontSize: 11, color: "#6b7280", alignSelf: "center" }}>
+        px
+      </span>
+      <button
+        type="button"
+        className="notice-editor__button"
+        onClick={() => setWidthWithFocus(null)}
+        title="원본 크기"
+      >
+        원본
+      </button>
+    </>
   );
 }
 

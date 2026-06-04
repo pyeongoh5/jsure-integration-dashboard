@@ -13,29 +13,34 @@ export class InfluencerNoticesService {
     private readonly uploads: UploadsService,
   ) {}
 
+  /** 현재 게시 기간(startAt ≤ now < endAt) 안에 있는 공지만 반환. */
   async list(): Promise<InfluencerNoticeListResponse> {
+    const now = new Date();
     const rows = await this.prisma.notice.findMany({
-      where: { publishedAt: { lte: new Date() } },
-      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
-      select: { id: true, title: true, publishedAt: true },
+      where: { startAt: { lte: now }, endAt: { gt: now } },
+      orderBy: [{ startAt: "desc" }, { createdAt: "desc" }],
+      select: { id: true, title: true, startAt: true, endAt: true },
     });
     return {
       items: rows.map((notice) => ({
         id: notice.id,
         title: notice.title,
-        publishedAt: notice.publishedAt.toISOString(),
+        startAt: notice.startAt.toISOString(),
+        endAt: notice.endAt.toISOString(),
       })),
     };
   }
 
   async get(id: string): Promise<InfluencerNoticeDetail> {
+    const now = new Date();
     const notice = await this.prisma.notice.findFirst({
-      where: { id, publishedAt: { lte: new Date() } },
+      where: { id, startAt: { lte: now }, endAt: { gt: now } },
       select: {
         id: true,
         title: true,
         contentHtml: true,
-        publishedAt: true,
+        startAt: true,
+        endAt: true,
       },
     });
     if (!notice) throw new NotFoundException("공지사항을 찾을 수 없습니다");
@@ -43,7 +48,8 @@ export class InfluencerNoticesService {
       id: notice.id,
       title: notice.title,
       contentHtml: await this.uploads.resolveNoticeImageUrls(notice.contentHtml),
-      publishedAt: notice.publishedAt.toISOString(),
+      startAt: notice.startAt.toISOString(),
+      endAt: notice.endAt.toISOString(),
     };
   }
 }

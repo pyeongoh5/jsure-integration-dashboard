@@ -41,6 +41,7 @@
   border-radius: var(--r-md);
   padding: 6px 12px;
   min-width: 240px;
+  height: 34px;
 }
 
 .cmp__search input {
@@ -54,6 +55,10 @@
 
 .cmp__search i {
   color: var(--c-subtle);
+}
+
+.cmp__new-btn {
+  margin-left: auto;
 }
 
 /* Grid */

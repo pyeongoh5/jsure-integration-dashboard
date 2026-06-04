@@ -17,7 +17,18 @@ export function NoticeEdit({ mode }: Props) {
   const noticeId = params.id;
 
   const [initial, setInitial] = useState<NoticeFormValue | null>(
-    mode === "create" ? { title: "", contentHtml: "", publishedAt: new Date().toISOString() } : null,
+    mode === "create"
+      ? {
+          title: "",
+          contentHtml: "",
+          startAt: new Date().toISOString(),
+          endAt: (() => {
+            const d = new Date();
+            d.setDate(d.getDate() + 30);
+            return d.toISOString();
+          })(),
+        }
+      : null,
   );
   const [loadError, setLoadError] = useState<string | null>(null);
   const { create, update, pendingId, error } = useNoticeMutations();
@@ -32,7 +43,8 @@ export function NoticeEdit({ mode }: Props) {
         setInitial({
           title: notice.title,
           contentHtml: notice.contentHtml,
-          publishedAt: notice.publishedAt,
+          startAt: notice.startAt,
+          endAt: notice.endAt,
         });
       } catch (caught) {
         if (cancelled) return;

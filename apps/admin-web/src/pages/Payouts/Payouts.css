@@ -25,18 +25,21 @@
 
 .po__actions {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
 .po__btn {
+  height: 36px;
   border: 1px solid #d1d5db;
   background: #fff;
   color: #111827;
   border-radius: 8px;
-  padding: 8px 14px;
+  padding: 0 14px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  line-height: 1;
 }
 
 .po__btn:hover {
@@ -158,6 +161,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  height: 36px;
 }
 
 .po__month-label {
@@ -167,9 +171,13 @@
 }
 
 .po__month-input {
+  height: 36px;
+  box-sizing: border-box;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  padding: 7px 10px;
+  padding: 0 10px;
   font-size: 13px;
   font-family: inherit;
+  line-height: 1;
+  margin-block-start: 0;
 }

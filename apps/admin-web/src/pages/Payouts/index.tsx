@@ -39,6 +39,8 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
     "캠페인",
     "SNS",
     "투고 URL",
+    "투고 게시일",
+    "인사이트 제출일",
     "정산 금액(JPY)",
     "정산 등록일",
     "정산 완료일",
@@ -53,6 +55,8 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
         row.campaign.title,
         row.post.snsType,
         row.post.url,
+        formatDateTime(row.post.submittedAt),
+        formatDateTime(row.post.insightSubmittedAt),
         row.amountJpy,
         formatDateTime(row.createdAt),
         formatDateTime(row.completedAt),
@@ -101,10 +105,7 @@ export function Payouts() {
         if (cancelled) return;
         setState({
           kind: "error",
-          message:
-            err instanceof Error
-              ? err.message
-              : "정산 목록을 불러올 수 없습니다.",
+          message: err instanceof Error ? err.message : "정산 목록을 불러올 수 없습니다.",
         });
       });
     return () => {
@@ -135,10 +136,8 @@ export function Payouts() {
     [pendingRows, selected],
   );
 
-  const allPendingSelected =
-    pendingRows.length > 0 && selectedPendingCount === pendingRows.length;
-  const somePendingSelected =
-    selectedPendingCount > 0 && !allPendingSelected;
+  const allPendingSelected = pendingRows.length > 0 && selectedPendingCount === pendingRows.length;
+  const somePendingSelected = selectedPendingCount > 0 && !allPendingSelected;
 
   function toggleOne(id: string) {
     setSelected((prev) => {
@@ -159,16 +158,12 @@ export function Payouts() {
 
   async function handleComplete() {
     if (selectedPendingCount === 0) return;
-    const targetIds = pendingRows
-      .filter((r) => selected.has(r.id))
-      .map((r) => r.id);
+    const targetIds = pendingRows.filter((r) => selected.has(r.id)).map((r) => r.id);
     const targetAmount = pendingRows
       .filter((r) => selected.has(r.id))
       .reduce((sum, r) => sum + r.amountJpy, 0);
     const isAll = allPendingSelected;
-    const label = isAll
-      ? `전체 ${targetIds.length}건`
-      : `선택한 ${targetIds.length}건`;
+    const label = isAll ? `전체 ${targetIds.length}건` : `선택한 ${targetIds.length}건`;
     if (
       !window.confirm(
         `${label} (¥${targetAmount.toLocaleString("ja-JP")})을 정산 완료 처리하시겠습니까?`,
@@ -183,9 +178,7 @@ export function Payouts() {
       setReloadKey((n) => n + 1);
       qc.invalidateQueries({ queryKey: ["settlements-pending-count"] });
     } catch (err) {
-      window.alert(
-        err instanceof Error ? err.message : "완료 처리에 실패했습니다.",
-      );
+      window.alert(err instanceof Error ? err.message : "완료 처리에 실패했습니다.");
     } finally {
       setCompleting(false);
     }
@@ -203,13 +196,10 @@ export function Payouts() {
       <div className="po__header">
         <div>
           <h1 className="po__title">정산 관리</h1>
-          <p className="po__subtitle">
-            선택한 월 안에 인사이트가 제출된 건이 표시됩니다.
-          </p>
+          <p className="po__subtitle">선택한 월 안에 인사이트가 제출된 건이 표시됩니다.</p>
         </div>
         <div className="po__actions">
           <label className="po__month">
-            <span className="po__month-label">대상 월</span>
             <input
               type="month"
               className="po__month-input"
@@ -244,9 +234,7 @@ export function Payouts() {
           </div>
           <div className="po__summary-item">
             <span className="po__summary-label">미완료</span>
-            <span className="po__summary-value">
-              {summary.pendingCount}건
-            </span>
+            <span className="po__summary-value">{summary.pendingCount}건</span>
           </div>
           <div className="po__summary-item">
             <span className="po__summary-label">미완료 금액</span>
@@ -256,12 +244,8 @@ export function Payouts() {
           </div>
         </div>
 
-        {state.kind === "loading" && (
-          <div className="po__empty">불러오는 중…</div>
-        )}
-        {state.kind === "error" && (
-          <div className="po__empty">{state.message}</div>
-        )}
+        {state.kind === "loading" && <div className="po__empty">불러오는 중…</div>}
+        {state.kind === "error" && <div className="po__empty">{state.message}</div>}
         {state.kind === "ready" && state.rows.length === 0 && (
           <div className="po__empty">정산 대상이 없습니다.</div>
         )}
@@ -284,6 +268,8 @@ export function Payouts() {
                 <th>인플루언서</th>
                 <th>캠페인</th>
                 <th>매체</th>
+                <th>투고 게시일</th>
+                <th>인사이트 제출일</th>
                 <th>금액</th>
                 <th>정산 등록일</th>
                 <th>정산 완료일</th>
@@ -308,6 +294,8 @@ export function Payouts() {
                     <td>{row.influencer.name}</td>
                     <td>{row.campaign.title}</td>
                     <td>{row.post.snsType}</td>
+                    <td>{formatDateTime(row.post.submittedAt)}</td>
+                    <td>{formatDateTime(row.post.insightSubmittedAt)}</td>
                     <td className="po__amount">{formatJpy(row.amountJpy)}</td>
                     <td>{formatDateTime(row.createdAt)}</td>
                     <td>{formatDateTime(row.completedAt)}</td>

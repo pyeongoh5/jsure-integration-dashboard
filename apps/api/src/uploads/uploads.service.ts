@@ -121,7 +121,8 @@ export class UploadsService {
   }
 
   /**
-   * 공지 본문 HTML에 박힌 `r2:<objectKey>` 형태의 img src를 presigned GET URL로 치환.
+   * 공지 본문 HTML 의 `<img src="r2:<objectKey>">` 를 presigned GET URL 로 치환.
+   * 재편집/재저장 라운드트립을 위해 `data-r2-key` 속성으로 원본 key 를 보존한다.
    */
   async resolveNoticeImageUrls(html: string): Promise<string> {
     const matches = Array.from(html.matchAll(/r2:([A-Za-z0-9/_.\-]+)/g));
@@ -133,9 +134,21 @@ export class UploadsService {
       keys.map(async (key) => [key, await this.r2.presignGet(key, 300)] as const),
     );
     const map = new Map(entries);
-    return html.replace(/r2:([A-Za-z0-9/_.\-]+)/g, (full, key: string) =>
+
+    // 1) <img src="r2:KEY" ...> → <img src="<presigned>" data-r2-key="KEY" ...>
+    let out = html.replace(
+      /<img\b([^>]*)\bsrc="r2:([A-Za-z0-9/_.\-]+)"([^>]*)>/g,
+      (_full, before: string, key: string, after: string) => {
+        const url = map.get(key);
+        if (!url) return _full;
+        return `<img${before} src="${url}" data-r2-key="${key}"${after}>`;
+      },
+    );
+    // 2) <img> 밖에 있는 그대로의 r2:KEY 토큰 (anchor href 등) 도 치환
+    out = out.replace(/r2:([A-Za-z0-9/_.\-]+)/g, (full, key: string) =>
       map.get(key) ?? full,
     );
+    return out;
   }
 
   /**

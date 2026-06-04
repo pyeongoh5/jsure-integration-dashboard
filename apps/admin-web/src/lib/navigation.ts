@@ -39,7 +39,6 @@ export const NAV: NavGroup[] = [
     items: [
       { to: "/notices", label: "공지사항", icon: "✉" },
       { to: "/team", label: "팀원/권한", icon: "♕" },
-      { to: "/settings", label: "설정", icon: "⚙" },
     ],
   },
 ];

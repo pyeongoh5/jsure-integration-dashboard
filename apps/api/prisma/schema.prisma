@@ -343,13 +343,15 @@ model Notice {
   id          String   @id @default(cuid())
   title       String
   contentHtml String
-  publishedAt DateTime
+  startAt     DateTime
+  endAt       DateTime
   authorId    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   author AdminUser @relation(fields: [authorId], references: [id])
 
-  @@index([publishedAt])
+  @@index([startAt])
+  @@index([endAt])
   @@map("notices")
 }

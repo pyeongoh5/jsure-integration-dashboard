@@ -30,12 +30,16 @@ export function NoticeDetail() {
 
   return (
     <div className="notice-detail">
-      <div className="notice-detail__title">{notice.title}</div>
-      <div className="notice-detail__date">{formatDate(notice.publishedAt)}</div>
-      <div
-        className="notice-detail__body"
-        dangerouslySetInnerHTML={{ __html: notice.contentHtml }}
-      />
+      <div className="notice-detail__card">
+        <div className="notice-detail__header">
+          <h1 className="notice-detail__title">{notice.title}</h1>
+          <div className="notice-detail__date">{formatDate(notice.startAt)}</div>
+        </div>
+        <div
+          className="notice-detail__body"
+          dangerouslySetInnerHTML={{ __html: notice.contentHtml }}
+        />
+      </div>
     </div>
   );
 }

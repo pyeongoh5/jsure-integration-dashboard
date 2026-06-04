@@ -3,9 +3,11 @@ import type { NoticeResponse } from "@jsure/shared";
 export type NoticeRow = {
   id: string;
   title: string;
-  publishedAt: string;
-  publishedAtLabel: string;
-  status: "scheduled" | "published";
+  startAt: string;
+  endAt: string;
+  startAtLabel: string;
+  endAtLabel: string;
+  status: "scheduled" | "active" | "expired";
   authorName: string;
 };
 
@@ -20,13 +22,20 @@ function formatDateTime(iso: string): string {
 }
 
 export function toNoticeRow(notice: NoticeResponse, now: Date = new Date()): NoticeRow {
-  const publishedAt = new Date(notice.publishedAt);
+  const start = new Date(notice.startAt);
+  const end = new Date(notice.endAt);
+  let status: NoticeRow["status"];
+  if (start > now) status = "scheduled";
+  else if (end <= now) status = "expired";
+  else status = "active";
   return {
     id: notice.id,
     title: notice.title,
-    publishedAt: notice.publishedAt,
-    publishedAtLabel: formatDateTime(notice.publishedAt),
-    status: publishedAt > now ? "scheduled" : "published",
+    startAt: notice.startAt,
+    endAt: notice.endAt,
+    startAtLabel: formatDateTime(notice.startAt),
+    endAtLabel: formatDateTime(notice.endAt),
+    status,
     authorName: notice.authorName ?? "—",
   };
 }

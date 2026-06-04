@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Logo } from "@/components/Sidebar/Logo";
-import { SidebarSearch } from "@/components/Sidebar/SidebarSearch";
 import { FooterUser } from "@/components/Sidebar/FooterUser";
 import { fetchPendingSettlementCount } from "@/lib/draftReviews";
 
@@ -58,7 +57,6 @@ const NAV: NavGroup[] = [
     items: [
       { to: "/notices", label: "공지사항", icon: <i className="fa-solid fa-bullhorn" /> },
       { to: "/team", label: "팀원/권한", icon: <i className="fa-solid fa-user-plus" /> },
-      { to: "/settings", label: "설정", icon: <i className="fa-solid fa-gear" /> },
     ],
   },
 ];
@@ -82,8 +80,6 @@ export const Sidebar = () => {
     <aside className="admin__sidebar">
       <Logo />
 
-      <SidebarSearch />
-
       <nav className="admin__nav">
         {NAV.map((group) => (
           <div key={group.title} className="admin__nav-group">
@@ -95,15 +91,11 @@ export const Sidebar = () => {
                   key={item.to}
                   to={item.to}
                   end={item.to === "/"}
-                  className={({ isActive }) =>
-                    "admin__nav-item" + (isActive ? " is-active" : "")
-                  }
+                  className={({ isActive }) => "admin__nav-item" + (isActive ? " is-active" : "")}
                 >
                   <span className="admin__nav-icon">{item.icon}</span>
                   <span className="admin__nav-label">{item.label}</span>
-                  {badge !== undefined && (
-                    <span className="admin__nav-badge">{badge}</span>
-                  )}
+                  {badge !== undefined && <span className="admin__nav-badge">{badge}</span>}
                 </NavLink>
               );
             })}

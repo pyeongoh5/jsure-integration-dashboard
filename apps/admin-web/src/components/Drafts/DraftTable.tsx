@@ -59,9 +59,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
       return (
         <span className="dr-settled">
           정산 완료
-          <span className="dr-settled__amount">
-            {formatJpy(draft.settlement.amountJpy)}
-          </span>
+          <span className="dr-settled__amount">{formatJpy(draft.settlement.amountJpy)}</span>
         </span>
       );
     }
@@ -69,9 +67,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
       return (
         <span className="dr-settled" title="정산 페이지에서 처리 대기 중">
           정산 대기
-          <span className="dr-settled__amount">
-            {formatJpy(draft.settlement.amountJpy)}
-          </span>
+          <span className="dr-settled__amount">{formatJpy(draft.settlement.amountJpy)}</span>
         </span>
       );
     }
@@ -134,7 +130,7 @@ export function DraftTable({
   if (items.length === 0) {
     return (
       <div className="dr__card">
-        <div className="dr__empty">해당 상태의 초안이 없습니다.</div>
+        <div className="dr__empty">검토할 내용이 없습니다.</div>
       </div>
     );
   }
@@ -207,9 +203,7 @@ export function DraftTable({
                         제출됨 · 보기
                       </button>
                     ) : (
-                      <span className="dr-insight dr-insight--pending">
-                        대기
-                      </span>
+                      <span className="dr-insight dr-insight--pending">대기</span>
                     )}
                   </td>
                   <td>

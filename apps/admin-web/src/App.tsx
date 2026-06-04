@@ -14,6 +14,8 @@ import { Payouts } from "./pages/Payouts";
 import { Reports } from "./pages/Reports";
 import { Team } from "./pages/Team";
 import { Settings } from "./pages/Settings";
+import { Notices } from "./pages/Notices";
+import { NoticeEdit } from "./pages/Notices/Edit";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { NotFound } from "./pages/NotFound";
@@ -44,6 +46,9 @@ export function App() {
         <Route path="/reports" element={<Reports />} />
         <Route path="/team" element={<Team />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/notices" element={<Notices />} />
+        <Route path="/notices/new" element={<NoticeEdit mode="create" />} />
+        <Route path="/notices/:id/edit" element={<NoticeEdit mode="edit" />} />
       </Route>
       <Route path="/*" element={<NotFound />} />
     </Routes>

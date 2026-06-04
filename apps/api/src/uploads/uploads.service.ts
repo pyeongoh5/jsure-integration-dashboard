@@ -12,6 +12,8 @@ import {
   type InsightAttachmentInput,
   type InsightUploadPresignRequest,
   type InsightUploadPresignResponse,
+  type NoticeImageUploadPresignRequest,
+  type NoticeImageUploadPresignResponse,
   type SubmittedPostAttachment as SharedAttachment,
   type SnsType,
 } from "@jsure/shared";
@@ -95,6 +97,45 @@ export class UploadsService {
       this.r2.presignGet(objectKey, VIEW_EXPIRES_SEC),
     ]);
     return { objectKey, uploadUrl, viewUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
+  }
+
+  async presignNoticeImageUpload(
+    body: NoticeImageUploadPresignRequest,
+  ): Promise<NoticeImageUploadPresignResponse> {
+    if (body.sizeBytes > UPLOAD_MAX_BYTES) {
+      throw new BadRequestException("파일 크기 한도를 초과했습니다");
+    }
+    const objectKey = `notices/${randomUUID()}.${extOf(body.contentType)}`;
+    const [uploadUrl, viewUrl] = await Promise.all([
+      this.r2.presignPut(
+        {
+          objectKey,
+          contentType: body.contentType,
+          contentLength: body.sizeBytes,
+        },
+        PRESIGN_EXPIRES_SEC,
+      ),
+      this.r2.presignGet(objectKey, VIEW_EXPIRES_SEC),
+    ]);
+    return { objectKey, uploadUrl, viewUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
+  }
+
+  /**
+   * 공지 본문 HTML에 박힌 `r2:<objectKey>` 형태의 img src를 presigned GET URL로 치환.
+   */
+  async resolveNoticeImageUrls(html: string): Promise<string> {
+    const matches = Array.from(html.matchAll(/r2:([A-Za-z0-9/_.\-]+)/g));
+    if (matches.length === 0) return html;
+    const keys = Array.from(
+      new Set(matches.map((match) => match[1]).filter((key): key is string => Boolean(key))),
+    );
+    const entries = await Promise.all(
+      keys.map(async (key) => [key, await this.r2.presignGet(key, 300)] as const),
+    );
+    const map = new Map(entries);
+    return html.replace(/r2:([A-Za-z0-9/_.\-]+)/g, (full, key: string) =>
+      map.get(key) ?? full,
+    );
   }
 
   /**

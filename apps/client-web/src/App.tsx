@@ -16,6 +16,8 @@ import { Apply } from "./pages/Apply";
 import { Applications } from "./pages/Applications";
 import { ApplicationDetail } from "./pages/Applications/Detail";
 import { Me } from "./pages/Me";
+import { Notices } from "./pages/Notices";
+import { NoticeDetail } from "./pages/Notices/Detail";
 import { MeProfile } from "./pages/Me/Profile";
 import { MeSns } from "./pages/Me/Sns";
 import { MeBank } from "./pages/Me/Bank";
@@ -49,6 +51,8 @@ export function App() {
         <Route path="/me/profile" element={<MeProfile />} />
         <Route path="/me/sns" element={<MeSns />} />
         <Route path="/me/bank" element={<MeBank />} />
+        <Route path="/notices" element={<Notices />} />
+        <Route path="/notices/:id" element={<NoticeDetail />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

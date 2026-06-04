@@ -19,6 +19,7 @@ model AdminUser {
   updatedAt    DateTime        @updatedAt
 
   sessions AdminUserSession[]
+  notices  Notice[]
 
   @@map("admin_users")
 }
@@ -313,4 +314,19 @@ model SubmittedPostRejection {
 
   @@index([postId])
   @@map("submitted_post_rejections")
+}
+
+model Notice {
+  id          String   @id @default(cuid())
+  title       String
+  contentHtml String
+  publishedAt DateTime
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author AdminUser @relation(fields: [authorId], references: [id])
+
+  @@index([publishedAt])
+  @@map("notices")
 }

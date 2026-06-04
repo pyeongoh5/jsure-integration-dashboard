@@ -68,6 +68,27 @@ export type CampaignThumbnailUploadPresignResponse = z.infer<
 >;
 
 /**
+ * admin이 공지사항 본문 이미지 업로드 전에 호출.
+ */
+export const NoticeImageUploadPresignRequestSchema = z.object({
+  contentType: UploadContentTypeSchema,
+  sizeBytes: z.number().int().positive().max(UPLOAD_MAX_BYTES),
+});
+export type NoticeImageUploadPresignRequest = z.infer<
+  typeof NoticeImageUploadPresignRequestSchema
+>;
+
+export const NoticeImageUploadPresignResponseSchema = z.object({
+  objectKey: z.string(),
+  uploadUrl: z.string().url(),
+  viewUrl: z.string().url(),
+  expiresInSec: z.number().int().positive(),
+});
+export type NoticeImageUploadPresignResponse = z.infer<
+  typeof NoticeImageUploadPresignResponseSchema
+>;
+
+/**
  * admin 조회용 — viewUrl은 presigned GET URL (단기 만료)
  */
 export const SubmittedPostAttachmentSchema = z.object({

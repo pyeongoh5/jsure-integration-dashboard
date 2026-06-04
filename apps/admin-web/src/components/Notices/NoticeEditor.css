@@ -1,0 +1,72 @@
+.notice-editor {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.notice-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-surface-muted, #f9fafb);
+}
+
+.notice-editor__button {
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text, #111827);
+}
+
+.notice-editor__button:hover {
+  background: #e5e7eb;
+}
+
+.notice-editor__button.is-active {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.notice-editor__divider {
+  width: 1px;
+  background: var(--color-border, #e5e7eb);
+  margin: 4px 4px;
+}
+
+.notice-editor__body {
+  min-height: 400px;
+  padding: 16px;
+}
+
+.notice-editor__body .ProseMirror {
+  outline: none;
+  min-height: 360px;
+}
+
+.notice-editor__body .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+}
+
+.notice-editor__body .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+.notice-editor__color {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+}

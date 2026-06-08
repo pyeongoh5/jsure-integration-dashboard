@@ -31,6 +31,7 @@ export async function lookupPostalCode(
     return null;
   }
   const first = json.results[0];
+  if (!first) return null;
   return {
     prefecture: first.address1,
     city: first.address2,

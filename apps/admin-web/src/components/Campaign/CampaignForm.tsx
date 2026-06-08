@@ -3,6 +3,10 @@ import { CampaignFormSchema, type CampaignForm as Values, type SnsRecruit } from
 import { SnsRecruitList } from "./SnsRecruitList";
 import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
 import { uploadCampaignThumbnail, UploadError } from "../../lib/uploads";
+import { RichTextEditor } from "../common/RichTextEditor";
+import { serializeRichTextHtml } from "../../lib/richTextImages";
+
+const CAMPAIGN_IMAGE_ENDPOINT = "/uploads/admin/campaign-image/presign";
 import "./CampaignForm.css";
 
 export const EMPTY_CAMPAIGN_FORM: Values = {
@@ -117,10 +121,22 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
       setErrors(next);
       return;
     }
+    // 업로드가 끝나지 않은 이미지 (data-r2-key 없는 img) 차단
+    const pending = [values.productSummary, values.guideline, values.cautions];
+    if (pending.some((html) => /<img\b(?![^>]*\bdata-r2-key=)[^>]*>/.test(html))) {
+      setBanner("이미지 업로드가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
     setErrors({});
     setSubmitting(true);
     try {
-      const finalValues: Values = { ...result.data };
+      const finalValues: Values = {
+        ...result.data,
+        // 본문 이미지는 r2:KEY 로 직렬화해서 저장
+        productSummary: serializeRichTextHtml(result.data.productSummary),
+        guideline: serializeRichTextHtml(result.data.guideline),
+        cautions: serializeRichTextHtml(result.data.cautions),
+      };
       if (thumbnailDraft.kind === "new") {
         finalValues.thumbnailUrl = thumbnailDraft.objectKey;
       } else if (thumbnailDraft.kind === "removed") {
@@ -285,15 +301,13 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
         <h2 className="cf__section-title">상품</h2>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-product-summary">
-            상품 개요
-          </label>
-          <textarea
-            id="cf-product-summary"
-            className="cf__textarea"
+          <label className="cf__label">상품 개요</label>
+          <RichTextEditor
             value={values.productSummary}
-            onChange={(e) => update("productSummary", e.target.value)}
+            onChange={(html) => update("productSummary", html)}
             disabled={submitting}
+            minHeight={160}
+            imageUploadEndpoint={CAMPAIGN_IMAGE_ENDPOINT}
           />
           {errors.productSummary && <div className="cf__error">{errors.productSummary}</div>}
         </div>
@@ -319,15 +333,13 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
         <h2 className="cf__section-title">가이드라인</h2>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-guideline">
-            안건 개요 (투고 가이드라인)
-          </label>
-          <textarea
-            id="cf-guideline"
-            className="cf__textarea"
+          <label className="cf__label">안건 개요 (투고 가이드라인)</label>
+          <RichTextEditor
             value={values.guideline}
-            onChange={(e) => update("guideline", e.target.value)}
+            onChange={(html) => update("guideline", html)}
             disabled={submitting}
+            minHeight={220}
+            imageUploadEndpoint={CAMPAIGN_IMAGE_ENDPOINT}
           />
           {errors.guideline && <div className="cf__error">{errors.guideline}</div>}
         </div>
@@ -346,15 +358,13 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
         </div>
 
         <div className="cf__field">
-          <label className="cf__label" htmlFor="cf-cautions">
-            NG 및 주의 사항
-          </label>
-          <textarea
-            id="cf-cautions"
-            className="cf__textarea"
+          <label className="cf__label">NG 및 주의 사항</label>
+          <RichTextEditor
             value={values.cautions}
-            onChange={(e) => update("cautions", e.target.value)}
+            onChange={(html) => update("cautions", html)}
             disabled={submitting}
+            minHeight={200}
+            imageUploadEndpoint={CAMPAIGN_IMAGE_ENDPOINT}
           />
           {errors.cautions && <div className="cf__error">{errors.cautions}</div>}
         </div>

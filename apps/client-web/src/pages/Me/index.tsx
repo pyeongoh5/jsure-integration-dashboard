@@ -23,9 +23,7 @@ export function Me() {
       <Link to="/me/profile" className="me__row">
         <div className="me__row-main">
           <div className="me__row-label">プロフィール</div>
-          <div className="me__row-sub">
-            {data ? `${data.name} (${data.entityType === "INDIVIDUAL" ? "個人" : "法人"})` : "—"}
-          </div>
+          <div className="me__row-sub">{data ? data.name : "—"}</div>
         </div>
         <i className="fa-solid fa-chevron-right me__chev" />
       </Link>

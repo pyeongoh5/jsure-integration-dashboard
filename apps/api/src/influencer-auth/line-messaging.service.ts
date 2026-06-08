@@ -3,12 +3,17 @@ import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
 
 const LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push";
+const LINE_MULTICAST_URL = "https://api.line.me/v2/bot/message/multicast";
 const LINE_TOKEN_URL = "https://api.line.me/v2/oauth/accessToken";
+const MULTICAST_CHUNK = 500;
 
-interface LineMessage {
-  type: "text";
-  text: string;
-}
+type LineMessage =
+  | { type: "text"; text: string }
+  | {
+      type: "flex";
+      altText: string;
+      contents: unknown;
+    };
 
 interface CachedToken {
   token: string;
@@ -130,6 +135,59 @@ export class LineMessagingService {
 
   pushText(influencerId: string, text: string): Promise<void> {
     return this.pushToInfluencer(influencerId, [{ type: "text", text }]);
+  }
+
+  /**
+   * 여러 lineUserId 에게 동일한 메시지 전송. 500명씩 chunk 하고
+   * 결과(성공/실패 카운트) 반환. 실패한 ID 는 errors 에 기록.
+   */
+  async multicast(
+    lineUserIds: string[],
+    messages: LineMessage[],
+  ): Promise<{ sent: number; failed: number; errors: { ids: string[]; reason: string }[] }> {
+    const token = await this.resolveToken();
+    if (!token) {
+      this.logger.warn("LINE messaging token not configured; skipping multicast");
+      return {
+        sent: 0,
+        failed: lineUserIds.length,
+        errors: [{ ids: lineUserIds, reason: "messaging token not configured" }],
+      };
+    }
+    let sent = 0;
+    let failed = 0;
+    const errors: { ids: string[]; reason: string }[] = [];
+    for (let i = 0; i < lineUserIds.length; i += MULTICAST_CHUNK) {
+      const chunk = lineUserIds.slice(i, i + MULTICAST_CHUNK);
+      try {
+        const res = await fetch(LINE_MULTICAST_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ to: chunk, messages }),
+        });
+        if (res.ok) {
+          sent += chunk.length;
+        } else {
+          const body = await res.text();
+          failed += chunk.length;
+          errors.push({ ids: chunk, reason: `HTTP ${res.status}: ${body}` });
+          this.logger.warn(
+            `LINE multicast failed (${res.status}) for ${chunk.length} ids: ${body}`,
+          );
+        }
+      } catch (err) {
+        failed += chunk.length;
+        errors.push({
+          ids: chunk,
+          reason: err instanceof Error ? err.message : String(err),
+        });
+        this.logger.error("LINE multicast error", err as Error);
+      }
+    }
+    return { sent, failed, errors };
   }
 
   applicationUrl(applicationId: string): string {

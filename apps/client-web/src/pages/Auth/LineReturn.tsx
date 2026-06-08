@@ -37,7 +37,6 @@ export function LineReturn() {
           id: me.id,
           email: me.email,
           name: me.name,
-          entityType: me.entityType,
         });
         nav("/", { replace: true });
       })

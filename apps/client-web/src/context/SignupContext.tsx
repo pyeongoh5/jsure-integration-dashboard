@@ -9,7 +9,6 @@ import {
 } from "react";
 import type {
   ConsentItem,
-  InfluencerEntityType,
   InfluencerSnsAccountInput,
 } from "@jsure/shared";
 
@@ -37,7 +36,11 @@ interface ProfileDraft {
   name: string;
   nameKana: string;
   phone: string;
-  entityType: InfluencerEntityType | null;
+  postalCode: string;
+  prefecture: string;
+  city: string;
+  addressLine1: string;
+  addressLine2: string;
 }
 
 interface AccountDraft {
@@ -46,10 +49,10 @@ interface AccountDraft {
 }
 
 interface BankDraft {
-  ownerType: InfluencerEntityType | null;
   bankCode: string;
   bankName: string;
   branchName: string;
+  branchCode: string;
   accountType: "FUTSU" | "TOUZA" | null;
   accountNumber: string;
   accountHolderKana: string;
@@ -67,13 +70,22 @@ interface SignupDraft {
 const DEFAULT: SignupDraft = {
   agreedItems: [],
   account: { email: "", password: "" },
-  profile: { name: "", nameKana: "", phone: "", entityType: null },
+  profile: {
+    name: "",
+    nameKana: "",
+    phone: "",
+    postalCode: "",
+    prefecture: "",
+    city: "",
+    addressLine1: "",
+    addressLine2: "",
+  },
   snsAccounts: [],
   bank: {
-    ownerType: null,
     bankCode: "",
     bankName: "",
     branchName: "",
+    branchCode: "",
     accountType: null,
     accountNumber: "",
     accountHolderKana: "",

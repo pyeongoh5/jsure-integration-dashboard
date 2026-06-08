@@ -36,6 +36,7 @@
   border-radius: var(--r-md);
   padding: 6px 12px;
   min-width: 280px;
+  height: 34px;
 }
 
 .inf__search input {
@@ -49,6 +50,39 @@
 
 .inf__search i {
   color: var(--c-subtle);
+}
+
+.inf__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inf__broadcast-btn {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid #1d4ed8;
+  border-radius: var(--r-md);
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.inf__broadcast-btn:hover {
+  background: #1e40af;
+}
+
+.inf__broadcast-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .inf__empty {
@@ -76,13 +110,23 @@
   background: var(--c-card);
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
-  overflow: hidden;
+  /* 좁은 화면에서 가로 스크롤 — overflow hidden 으로 두면 컬럼이 잘림 */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .inf__table {
   width: 100%;
+  /* 너무 좁아지지 않게 최소폭 보장 (이 폭 이하에서는 카드가 스크롤됨) */
+  min-width: 960px;
   border-collapse: collapse;
   font-size: 13px;
+}
+
+.inf__table td,
+.inf__table th {
+  white-space: nowrap;
 }
 
 .inf__table thead th {
@@ -175,10 +219,18 @@
   font-size: 12px;
 }
 
-.inf-sns--ig i { color: #e1306c; }
-.inf-sns--tt i { color: #111827; }
-.inf-sns--x  i { color: #111827; }
-.inf-sns--yt i { color: #ff0000; }
+.inf-sns--ig i {
+  color: #e1306c;
+}
+.inf-sns--tt i {
+  color: #111827;
+}
+.inf-sns--x i {
+  color: #111827;
+}
+.inf-sns--yt i {
+  color: #ff0000;
+}
 
 .inf-sns__handle {
   color: #111827;

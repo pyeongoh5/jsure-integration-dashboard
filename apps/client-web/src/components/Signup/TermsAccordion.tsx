@@ -7,17 +7,9 @@ interface Props {
   agreed: Set<ConsentItem>;
   onToggle: (k: ConsentItem) => void;
   onToggleAll: () => void;
-  showKorean: boolean;
-  onToggleKorean: () => void;
 }
 
-export function TermsAccordion({
-  agreed,
-  onToggle,
-  onToggleAll,
-  showKorean,
-  onToggleKorean,
-}: Props) {
+export function TermsAccordion({ agreed, onToggle, onToggleAll }: Props) {
   const [expanded, setExpanded] = useState<Set<ConsentItem>>(new Set());
   const allChecked = INFLUENCER_TERMS.every((t) => agreed.has(t.key));
 
@@ -42,15 +34,6 @@ export function TermsAccordion({
         </span>
         <span>すべての項目に同意します</span>
       </button>
-
-      <label className="terms__kr-toggle">
-        <input
-          type="checkbox"
-          checked={showKorean}
-          onChange={onToggleKorean}
-        />
-        <span>한국어 설명 보기</span>
-      </label>
 
       {INFLUENCER_TERMS.map((term) => {
         const on = agreed.has(term.key);
@@ -83,9 +66,6 @@ export function TermsAccordion({
             {open && (
               <div className="terms__body">
                 <div>{term.bodyJa}</div>
-                {showKorean && (
-                  <div className="terms__body-ko">{term.bodyKo}</div>
-                )}
               </div>
             )}
           </div>

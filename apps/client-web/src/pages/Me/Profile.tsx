@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InfluencerEntityType } from "@jsure/shared";
 import { fetchMe } from "../../lib/api/auth";
 import { updateProfile } from "../../lib/api/me";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { LabeledInput } from "../../components/form/LabeledInput";
-import { RadioGroup } from "../../components/form/RadioGroup";
 import { PrimaryButton } from "../../components/form/PrimaryButton";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
@@ -19,7 +17,6 @@ export function MeProfile() {
   const [name, setName] = useState("");
   const [nameKana, setNameKana] = useState("");
   const [phone, setPhone] = useState("");
-  const [entityType, setEntityType] = useState<InfluencerEntityType | null>(null);
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
@@ -27,7 +24,6 @@ export function MeProfile() {
       setName(data.name);
       setNameKana(data.nameKana ?? "");
       setPhone(data.phone);
-      setEntityType(data.entityType);
     }
   }, [data]);
 
@@ -44,7 +40,6 @@ export function MeProfile() {
         name,
         nameKana,
         phone: phone.replace(/[^\d]/g, ""),
-        entityType: entityType!,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["me"] });
@@ -54,7 +49,7 @@ export function MeProfile() {
 
   function save() {
     setTouched(true);
-    if (!valid || !entityType) return;
+    if (!valid) return;
     m.mutate();
   }
 
@@ -81,15 +76,6 @@ export function MeProfile() {
           value={phone}
           onChange={setPhone}
           error={touched ? errors.phone : undefined}
-        />
-        <RadioGroup<InfluencerEntityType>
-          label="種別"
-          value={entityType}
-          options={[
-            { value: "INDIVIDUAL", label: "個人" },
-            { value: "CORPORATE", label: "法人" },
-          ]}
-          onChange={setEntityType}
         />
         <PrimaryButton onClick={save} disabled={m.isPending}>
           {m.isPending ? "保存中…" : "保存"}

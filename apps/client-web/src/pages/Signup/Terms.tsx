@@ -10,7 +10,6 @@ export function SignupTerms() {
   const { draft, setAgreedItems } = useSignup();
   const initial = new Set<ConsentItem>(draft.agreedItems);
   const [agreed, setAgreed] = useState<Set<ConsentItem>>(initial);
-  const [showKorean, setShowKorean] = useState(false);
 
   const allChecked = INFLUENCER_TERMS.every((t) => agreed.has(t.key));
 
@@ -44,8 +43,6 @@ export function SignupTerms() {
         agreed={agreed}
         onToggle={toggle}
         onToggleAll={toggleAll}
-        showKorean={showKorean}
-        onToggleKorean={() => setShowKorean((v) => !v)}
       />
       <WizardFooter onBack={() => nav("/")} onNext={next} disabled={!allChecked} />
     </div>

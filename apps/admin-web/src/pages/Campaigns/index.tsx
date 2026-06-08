@@ -60,6 +60,14 @@ function formatReward(jpy: number): string {
   return `¥${jpy.toLocaleString()}円`;
 }
 
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function toCard(c: CampaignResponse, now: Date): Campaign {
   const status = deriveStatus(c, now);
   const capacity = c.snsRecruits.reduce((sum, r) => sum + r.recruitCount, 0);
@@ -67,7 +75,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     id: c.id,
     brand: "",
     name: c.title,
-    description: c.productSummary,
+    description: stripHtml(c.productSummary),
     status,
     thumbIcon: "📋",
     thumbnailUrl: c.thumbnailUrl,

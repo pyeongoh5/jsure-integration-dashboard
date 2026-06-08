@@ -30,7 +30,7 @@ export class AdminNoticesService {
     return {
       id: row.id,
       title: row.title,
-      contentHtml: await this.uploads.resolveNoticeImageUrls(row.contentHtml),
+      contentHtml: await this.uploads.resolveR2ImagesInHtml(row.contentHtml),
       startAt: row.startAt.toISOString(), endAt: row.endAt.toISOString(),
       authorName: row.author?.name ?? null,
       createdAt: row.createdAt.toISOString(),

@@ -67,7 +67,10 @@ export function CampaignDetail() {
 
         <section className="cdetail__section">
           <h3>商品</h3>
-          <p>{data.productSummary}</p>
+          <div
+            className="cdetail__rich"
+            dangerouslySetInnerHTML={{ __html: data.productSummary }}
+          />
           <a
             href={data.productDetailUrl}
             target="_blank"
@@ -98,7 +101,10 @@ export function CampaignDetail() {
 
         <section className="cdetail__section">
           <h3>ガイドライン</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{data.guideline}</p>
+          <div
+            className="cdetail__rich"
+            dangerouslySetInnerHTML={{ __html: data.guideline }}
+          />
           {data.referenceMediaUrls.length > 0 && (
             <ul className="cdetail__refs">
               {data.referenceMediaUrls.map((u) => (
@@ -114,7 +120,10 @@ export function CampaignDetail() {
 
         <section className="cdetail__section">
           <h3>注意事項</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{data.cautions}</p>
+          <div
+            className="cdetail__rich"
+            dangerouslySetInnerHTML={{ __html: data.cautions }}
+          />
         </section>
       </div>
 

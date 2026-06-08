@@ -15,7 +15,6 @@ type AdminInfluencerRow = {
   name: string;
   nameKana: string | null;
   phone: string;
-  entityType: "INDIVIDUAL" | "CORPORATE";
   status: "ACTIVE" | "SUSPENDED";
   memo: string | null;
   createdAt: Date;
@@ -33,7 +32,6 @@ function toAdminResponse(row: AdminInfluencerRow): AdminInfluencer {
     name: row.name,
     nameKana: row.nameKana,
     phone: row.phone,
-    entityType: row.entityType,
     status: row.status,
     memo: row.memo,
     snsAccounts: row.snsAccounts.map((s) => ({

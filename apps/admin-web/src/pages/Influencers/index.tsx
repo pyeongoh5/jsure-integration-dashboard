@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AdminInfluencer, SnsType } from "@jsure/shared";
 import { listInfluencers } from "@/lib/influencers";
+import { BroadcastDialog } from "@/components/Influencers/BroadcastDialog";
 import "./Influencers.css";
 
 const SNS_ICON: Record<SnsType, string> = {
@@ -51,6 +52,7 @@ export function Influencers() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
   const [query, setQuery] = useState("");
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,13 +93,23 @@ export function Influencers() {
             {state.kind === "ready" ? `총 ${state.rows.length}명` : "목록을 불러오는 중..."}
           </p>
         </div>
-        <div className="inf__search">
-          <i className="fa-solid fa-magnifying-glass" />
-          <input
-            placeholder="이름, 이메일, 핸들 검색"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+        <div className="inf__header-actions">
+          <div className="inf__search">
+            <i className="fa-solid fa-magnifying-glass" />
+            <input
+              placeholder="이름, 이메일, 핸들 검색"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            className="inf__broadcast-btn"
+            onClick={() => setBroadcastOpen(true)}
+            disabled={state.kind !== "ready"}
+          >
+            <i className="fa-regular fa-paper-plane" /> 메시지 발송
+          </button>
         </div>
       </div>
 
@@ -181,6 +193,12 @@ export function Influencers() {
           </table>
         </div>
       )}
+
+      <BroadcastDialog
+        open={broadcastOpen}
+        candidates={filtered}
+        onClose={() => setBroadcastOpen(false)}
+      />
     </div>
   );
 }

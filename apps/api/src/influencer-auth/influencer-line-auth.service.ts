@@ -55,13 +55,11 @@ function toPublic(i: {
   id: string;
   email: string | null;
   name: string;
-  entityType: "INDIVIDUAL" | "CORPORATE";
 }): PublicInfluencer {
   return {
     id: i.id,
     email: i.email ?? "",
     name: i.name,
-    entityType: i.entityType,
   };
 }
 
@@ -221,7 +219,11 @@ export class InfluencerLineAuthService {
             name: input.name,
             nameKana: input.nameKana,
             phone: input.phone,
-            entityType: input.entityType,
+            postalCode: input.address.postalCode,
+            prefecture: input.address.prefecture,
+            city: input.address.city,
+            addressLine1: input.address.addressLine1,
+            addressLine2: input.address.addressLine2 ?? "",
           },
         });
         for (const sns of input.snsAccounts) {
@@ -237,10 +239,10 @@ export class InfluencerLineAuthService {
         await tx.influencerBankAccount.create({
           data: {
             influencerId: created.id,
-            ownerType: input.bankAccount.ownerType,
             bankCode: input.bankAccount.bankCode,
             bankName: input.bankAccount.bankName,
             branchName: input.bankAccount.branchName,
+            branchCode: input.bankAccount.branchCode,
             accountType: input.bankAccount.accountType,
             accountNumber: input.bankAccount.accountNumber,
             accountHolderKana: input.bankAccount.accountHolderKana,

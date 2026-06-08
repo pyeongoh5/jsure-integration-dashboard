@@ -47,7 +47,7 @@ export class InfluencerNoticesService {
     return {
       id: notice.id,
       title: notice.title,
-      contentHtml: await this.uploads.resolveNoticeImageUrls(notice.contentHtml),
+      contentHtml: await this.uploads.resolveR2ImagesInHtml(notice.contentHtml),
       startAt: notice.startAt.toISOString(),
       endAt: notice.endAt.toISOString(),
     };

@@ -19,6 +19,7 @@ type CampaignRow = {
   recruitEndAt: Date;
   postingPeriodDays: number;
   createdAt: Date;
+  closedAt: Date | null;
   snsRecruits: {
     snsType: SnsType;
     minFollowers: number;
@@ -37,8 +38,10 @@ function isNew(createdAt: Date, now: Date): boolean {
 function toCard(
   row: CampaignRow,
   appliedCount: number,
+  closedAt: Date | null,
   now: Date,
 ): InfluencerCampaignCard {
+  const isEnded = closedAt !== null || row.recruitEndAt.getTime() < now.getTime();
   return {
     id: row.id,
     title: row.title,
@@ -51,7 +54,8 @@ function toCard(
     recruitStartAt: row.recruitStartAt.toISOString(),
     recruitEndAt: row.recruitEndAt.toISOString(),
     postingPeriodDays: row.postingPeriodDays,
-    isNew: isNew(row.createdAt, now),
+    isNew: !isEnded && isNew(row.createdAt, now),
+    isEnded,
   };
 }
 
@@ -63,7 +67,12 @@ export class InfluencerCampaignsService {
   ) {}
 
   private async resolveCard(card: InfluencerCampaignCard): Promise<InfluencerCampaignCard> {
-    card.thumbnailUrl = await this.uploads.resolveCampaignThumbnailUrl(card.thumbnailUrl);
+    const [thumbnailUrl, productSummary] = await Promise.all([
+      this.uploads.resolveCampaignThumbnailUrl(card.thumbnailUrl),
+      this.uploads.resolveR2ImagesInHtml(card.productSummary),
+    ]);
+    card.thumbnailUrl = thumbnailUrl;
+    card.productSummary = productSummary;
     return card;
   }
 
@@ -73,13 +82,9 @@ export class InfluencerCampaignsService {
   }): Promise<InfluencerCampaignCard[]> {
     const now = new Date();
     const rows = await this.prisma.campaign.findMany({
-      where: {
-        closedAt: null,
-        recruitEndAt: { gte: now },
-        ...(args.sns
-          ? { snsRecruits: { some: { snsType: args.sns } } }
-          : {}),
-      },
+      where: args.sns
+        ? { snsRecruits: { some: { snsType: args.sns } } }
+        : {},
       orderBy: [{ recruitEndAt: "asc" }],
       include: {
         snsRecruits: {
@@ -100,9 +105,15 @@ export class InfluencerCampaignsService {
       ),
     );
 
-    return Promise.all(
-      rows.map((r, i) => this.resolveCard(toCard(r, counts[i] ?? 0, now))),
+    const cards = await Promise.all(
+      rows.map((r, i) => this.resolveCard(toCard(r, counts[i] ?? 0, r.closedAt, now))),
     );
+    return cards.sort((a, b) => {
+      if (a.isEnded !== b.isEnded) return a.isEnded ? 1 : -1;
+      const aTime = new Date(a.recruitEndAt).getTime();
+      const bTime = new Date(b.recruitEndAt).getTime();
+      return a.isEnded ? bTime - aTime : aTime - bTime;
+    });
   }
 
   async detail(args: {
@@ -137,13 +148,17 @@ export class InfluencerCampaignsService {
       select: { snsType: true },
     });
 
-    const card = await this.resolveCard(toCard(row, appliedCount, now));
+    const card = await this.resolveCard(toCard(row, appliedCount, row.closedAt, now));
+    const [guideline, cautions] = await Promise.all([
+      this.uploads.resolveR2ImagesInHtml(row.guideline),
+      this.uploads.resolveR2ImagesInHtml(row.cautions),
+    ]);
     return {
       ...card,
       productDetailUrl: row.productDetailUrl,
-      guideline: row.guideline,
+      guideline,
       referenceMediaUrls: row.referenceMediaUrls,
-      cautions: row.cautions,
+      cautions,
       appliedSnsTypes: existing.map((r) => r.snsType),
     };
   }

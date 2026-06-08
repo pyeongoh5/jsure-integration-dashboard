@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PublicAdminUser, AdminUserRole, AdminUserStatus } from "@jsure/shared";
-import { listAdminUsers } from "@/lib/adminUsers";
+import {
+  approveAdminUser,
+  listAdminUsers,
+  rejectAdminUser,
+  updateAdminUserRole,
+} from "@/lib/adminUsers";
+import { getStoredUser } from "@/lib/auth";
 import "./Team.css";
 
 const ROLE_META: Record<AdminUserRole, { label: string; className: string }> = {
@@ -11,7 +17,7 @@ const ROLE_META: Record<AdminUserRole, { label: string; className: string }> = {
 
 const STATUS_META: Record<AdminUserStatus, { label: string; className: string }> = {
   ACTIVE: { label: "활성", className: "team-status--active" },
-  PENDING: { label: "초대 대기", className: "team-status--pending" },
+  PENDING: { label: "승인 대기", className: "team-status--pending" },
   SUSPENDED: { label: "정지", className: "team-status--suspended" },
 };
 
@@ -65,21 +71,71 @@ function formatLastActivity(iso: string | null, now: Date): string {
 export function Team() {
   const [users, setUsers] = useState<PublicAdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  const currentUser = getStoredUser();
+  const canManage =
+    currentUser?.role === "OWNER" || currentUser?.role === "ADMIN";
+  // 승인/반려 버튼이 필요한 PENDING 행이 하나라도 있을 때만 액션 컬럼 노출
+  const hasPending =
+    (users ?? []).some((u) => u.status === "PENDING") && canManage;
 
   useEffect(() => {
-    // let cancelled = false;
     listAdminUsers()
-      .then((rows) => {
-        setUsers(rows);
-      })
-      .catch(() => {
-        setError("팀원 목록을 불러오지 못했습니다.");
-      });
-
-    // return () => {
-    //   cancelled = true;
-    // };
+      .then((rows) => setUsers(rows))
+      .catch(() => setError("팀원 목록을 불러오지 못했습니다."));
   }, []);
+
+  const handleApprove = async (id: string) => {
+    if (pendingId) return;
+    setPendingId(id);
+    try {
+      const updated = await approveAdminUser(id);
+      setUsers((prev) =>
+        prev ? prev.map((u) => (u.id === id ? updated : u)) : prev,
+      );
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "승인에 실패했습니다");
+    } finally {
+      setPendingId(null);
+    }
+  };
+
+  const handleRoleChange = async (id: string, role: AdminUserRole) => {
+    if (pendingId) return;
+    if (!window.confirm(`이 팀원의 권한을 "${ROLE_META[role].label}" 로 변경할까요?`)) {
+      return;
+    }
+    setPendingId(id);
+    try {
+      const updated = await updateAdminUserRole(id, role);
+      setUsers((prev) =>
+        prev ? prev.map((u) => (u.id === id ? updated : u)) : prev,
+      );
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "권한 변경에 실패했습니다");
+    } finally {
+      setPendingId(null);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    if (pendingId) return;
+    if (!window.confirm("이 요청을 반려할까요? 반려된 계정은 정지 상태가 됩니다.")) {
+      return;
+    }
+    setPendingId(id);
+    try {
+      const updated = await rejectAdminUser(id);
+      setUsers((prev) =>
+        prev ? prev.map((u) => (u.id === id ? updated : u)) : prev,
+      );
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "반려에 실패했습니다");
+    } finally {
+      setPendingId(null);
+    }
+  };
 
   const now = useMemo(() => new Date(), [users]);
   const activeCount = users?.filter((u) => u.status === "ACTIVE").length ?? 0;
@@ -115,6 +171,7 @@ export function Team() {
                 <th>역할</th>
                 <th>마지막 활동</th>
                 <th>상태</th>
+                {hasPending && <th aria-label="작업" />}
               </tr>
             </thead>
             <tbody>
@@ -134,10 +191,30 @@ export function Team() {
                     </td>
                     <td className="team-email">{u.email}</td>
                     <td>
-                      <span className={`team-badge ${role.className}`}>
-                        <span className="team-badge__dot" />
-                        {role.label}
-                      </span>
+                      {canManage && currentUser?.id !== u.id ? (
+                        <select
+                          className={`team-role-select ${role.className}`}
+                          value={u.role}
+                          disabled={pendingId === u.id}
+                          onChange={(event) =>
+                            handleRoleChange(
+                              u.id,
+                              event.target.value as AdminUserRole,
+                            )
+                          }
+                        >
+                          {currentUser?.role === "OWNER" && (
+                            <option value="OWNER">{ROLE_META.OWNER.label}</option>
+                          )}
+                          <option value="ADMIN">{ROLE_META.ADMIN.label}</option>
+                          <option value="GUEST">{ROLE_META.GUEST.label}</option>
+                        </select>
+                      ) : (
+                        <span className={`team-badge ${role.className}`}>
+                          <span className="team-badge__dot" />
+                          {role.label}
+                        </span>
+                      )}
                     </td>
                     <td className="team-activity">{formatLastActivity(u.lastSeenAt, now)}</td>
                     <td>
@@ -146,6 +223,30 @@ export function Team() {
                         {status.label}
                       </span>
                     </td>
+                    {hasPending && (
+                      <td className="team-actions">
+                        {u.status === "PENDING" ? (
+                          <>
+                            <button
+                              type="button"
+                              className="team-btn team-btn--primary"
+                              onClick={() => handleApprove(u.id)}
+                              disabled={pendingId === u.id}
+                            >
+                              승인
+                            </button>
+                            <button
+                              type="button"
+                              className="team-btn team-btn--danger"
+                              onClick={() => handleReject(u.id)}
+                              disabled={pendingId === u.id}
+                            >
+                              반려
+                            </button>
+                          </>
+                        ) : null}
+                      </td>
+                    )}
                   </tr>
                 );
               })}

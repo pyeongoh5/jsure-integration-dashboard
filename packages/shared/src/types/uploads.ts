@@ -89,6 +89,27 @@ export type NoticeImageUploadPresignResponse = z.infer<
 >;
 
 /**
+ * admin이 캠페인 본문 (상품/가이드라인/주의사항) 이미지 업로드 전에 호출.
+ */
+export const CampaignImageUploadPresignRequestSchema = z.object({
+  contentType: UploadContentTypeSchema,
+  sizeBytes: z.number().int().positive().max(UPLOAD_MAX_BYTES),
+});
+export type CampaignImageUploadPresignRequest = z.infer<
+  typeof CampaignImageUploadPresignRequestSchema
+>;
+
+export const CampaignImageUploadPresignResponseSchema = z.object({
+  objectKey: z.string(),
+  uploadUrl: z.string().url(),
+  viewUrl: z.string().url(),
+  expiresInSec: z.number().int().positive(),
+});
+export type CampaignImageUploadPresignResponse = z.infer<
+  typeof CampaignImageUploadPresignResponseSchema
+>;
+
+/**
  * admin 조회용 — viewUrl은 presigned GET URL (단기 만료)
  */
 export const SubmittedPostAttachmentSchema = z.object({

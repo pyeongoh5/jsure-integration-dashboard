@@ -71,6 +71,39 @@ export class AdminUsersService {
     return this.prisma.adminUser.findUnique({ where: { id } });
   }
 
+  /** 역할 변경. */
+  async updateRole(
+    id: string,
+    role: "OWNER" | "ADMIN" | "GUEST",
+  ): Promise<PublicAdminUser> {
+    const row = await this.prisma.adminUser.update({
+      where: { id },
+      data: { role },
+      select: PUBLIC_ADMIN_USER_SELECT,
+    });
+    return toPublic(row);
+  }
+
+  /** PENDING → ACTIVE 승인. */
+  async approve(id: string): Promise<PublicAdminUser> {
+    const row = await this.prisma.adminUser.update({
+      where: { id },
+      data: { status: "ACTIVE" },
+      select: PUBLIC_ADMIN_USER_SELECT,
+    });
+    return toPublic(row);
+  }
+
+  /** PENDING/ACTIVE → SUSPENDED 반려/정지. */
+  async reject(id: string): Promise<PublicAdminUser> {
+    const row = await this.prisma.adminUser.update({
+      where: { id },
+      data: { status: "SUSPENDED" },
+      select: PUBLIC_ADMIN_USER_SELECT,
+    });
+    return toPublic(row);
+  }
+
   async create(input: { email: string; password: string; name?: string }) {
     const existing = await this.findByEmail(input.email);
     if (existing) {

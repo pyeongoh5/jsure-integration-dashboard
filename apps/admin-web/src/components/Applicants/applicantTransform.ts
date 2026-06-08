@@ -36,15 +36,11 @@ export const TAB_TO_STATUSES: Record<ApplicantStatus, ApplicationStatus[]> = {
 
 const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
 
-function pickHandle(accounts: AdminInfluencerSnsAccount[]): string {
-  return accounts[0]?.handle ?? "";
-}
-
-function pickFollowers(accounts: AdminInfluencerSnsAccount[]): number {
-  return accounts.reduce(
-    (max, account) => Math.max(max, account.followerCount),
-    0,
-  );
+function pickAccount(
+  accounts: AdminInfluencerSnsAccount[],
+  snsType: SnsType,
+): AdminInfluencerSnsAccount | undefined {
+  return accounts.find((account) => account.snsType === snsType);
 }
 
 function pickMedia(snsType: SnsType): Media[] {
@@ -84,13 +80,17 @@ export function toApplicant(
 ): Applicant | null {
   const tab = STATUS_TO_TAB[application.status];
   if (!tab) return null;
+  const appliedAccount = pickAccount(
+    application.influencer.snsAccounts,
+    application.snsType,
+  );
   return {
     id: application.id,
     name: application.influencer.name,
-    handle: pickHandle(application.influencer.snsAccounts),
+    handle: appliedAccount?.handle ?? "",
     campaign: application.campaign.title,
     media: pickMedia(application.snsType),
-    followers: pickFollowers(application.influencer.snsAccounts),
+    followers: appliedAccount?.followerCount ?? 0,
     engagementRate: 0,
     appliedAt: formatRelative(application.appliedAt, now),
     status: tab,

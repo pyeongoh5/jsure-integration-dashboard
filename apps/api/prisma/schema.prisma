@@ -60,11 +60,6 @@ enum SnsType {
   YOUTUBE
 }
 
-enum InfluencerEntityType {
-  INDIVIDUAL
-  CORPORATE
-}
-
 enum InfluencerStatus {
   ACTIVE
   SUSPENDED
@@ -132,19 +127,23 @@ model CampaignSnsRecruit {
 }
 
 model Influencer {
-  id           String               @id @default(cuid())
-  email        String               @unique
-  passwordHash String?
-  lineUserId   String?              @unique
-  lineLinkedAt DateTime?
-  name         String
-  nameKana     String?
-  phone        String
-  entityType   InfluencerEntityType
-  memo         String?
-  status       InfluencerStatus     @default(ACTIVE)
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
+  id            String               @id @default(cuid())
+  email         String               @unique
+  passwordHash  String?
+  lineUserId    String?              @unique
+  lineLinkedAt  DateTime?
+  name          String
+  nameKana      String?
+  phone         String
+  postalCode    String               @default("")
+  prefecture    String               @default("")
+  city          String               @default("")
+  addressLine1  String               @default("")
+  addressLine2  String               @default("")
+  memo          String?
+  status        InfluencerStatus     @default(ACTIVE)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
 
   snsAccounts  InfluencerSnsAccount[]
   applications CampaignApplication[]
@@ -205,10 +204,10 @@ model InfluencerConsent {
 model InfluencerBankAccount {
   id                String               @id @default(cuid())
   influencerId      String               @unique
-  ownerType         InfluencerEntityType
   bankCode          String
   bankName          String
   branchName        String
+  branchCode        String               @default("")
   accountType       JpAccountType
   accountNumber     String
   accountHolderKana String
@@ -354,4 +353,32 @@ model Notice {
   @@index([startAt])
   @@index([endAt])
   @@map("notices")
+}
+
+enum BroadcastJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model BroadcastJob {
+  id              String             @id @default(cuid())
+  status          BroadcastJobStatus @default(QUEUED)
+  total           Int                @default(0)
+  sent            Int                @default(0)
+  failed          Int                @default(0)
+  skipped         Int                @default(0)
+  contentHtml     String
+  heroImageR2Key  String?
+  altText         String?
+  errorMessage    String?
+  createdById     String
+  influencerIds   String[]
+  createdAt       DateTime           @default(now())
+  startedAt       DateTime?
+  finishedAt      DateTime?
+
+  @@index([status, createdAt])
+  @@map("broadcast_jobs")
 }

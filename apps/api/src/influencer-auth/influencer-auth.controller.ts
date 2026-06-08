@@ -133,7 +133,6 @@ export class InfluencerAuthController {
       name: inf.name,
       nameKana: inf.nameKana,
       phone: inf.phone,
-      entityType: inf.entityType,
       snsAccounts: inf.snsAccounts.map((s) => ({
         snsType: s.snsType,
         handle: s.handle,
@@ -141,10 +140,10 @@ export class InfluencerAuthController {
       })),
       bankAccount: inf.bankAccount
         ? {
-            ownerType: inf.bankAccount.ownerType,
             bankCode: inf.bankAccount.bankCode,
             bankName: inf.bankAccount.bankName,
             branchName: inf.bankAccount.branchName,
+            branchCode: inf.bankAccount.branchCode,
             accountType: inf.bankAccount.accountType,
             accountHolderKana: inf.bankAccount.accountHolderKana,
             accountNumberMasked: maskAccountNumber(

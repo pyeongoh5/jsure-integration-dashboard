@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   InfluencerBankAccountSchema,
-  type InfluencerEntityType,
   type JpAccountType,
 } from "@jsure/shared";
 import { fetchMe } from "../../lib/api/auth";
@@ -22,9 +21,9 @@ export function MeBank() {
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["me"], queryFn: fetchMe });
 
-  const [ownerType, setOwnerType] = useState<InfluencerEntityType | null>(null);
   const [bank, setBank] = useState<{ code: string; name: string } | null>(null);
   const [branchName, setBranchName] = useState("");
+  const [branchCode, setBranchCode] = useState("");
   const [accountType, setAccountType] = useState<JpAccountType | null>(null);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolderKana, setAccountHolderKana] = useState("");
@@ -33,24 +32,22 @@ export function MeBank() {
 
   useEffect(() => {
     if (data?.bankAccount) {
-      setOwnerType(data.bankAccount.ownerType);
       setBank({
         code: data.bankAccount.bankCode,
         name: data.bankAccount.bankName,
       });
       setBranchName(data.bankAccount.branchName);
+      setBranchCode(data.bankAccount.branchCode);
       setAccountType(data.bankAccount.accountType);
       setAccountHolderKana(data.bankAccount.accountHolderKana);
       // existing accountNumber not exposed; user must re-enter
-    } else if (data?.entityType) {
-      setOwnerType(data.entityType);
     }
   }, [data]);
 
   const errs = {
-    ownerType: ownerType ? undefined : "種別を選択",
     bank: bank ? undefined : "銀行を選択",
     branchName: branchName.trim() ? undefined : "必須",
+    branchCode: /^\d{3}$/.test(branchCode) ? undefined : "3桁",
     accountType: accountType ? undefined : "口座種類を選択",
     accountNumber: /^\d{6,8}$/.test(accountNumber) ? undefined : "6~8桁",
     accountHolderKana: KANA_RE.test(accountHolderKana)
@@ -62,10 +59,10 @@ export function MeBank() {
   const m = useMutation({
     mutationFn: () => {
       const payload = InfluencerBankAccountSchema.parse({
-        ownerType: ownerType!,
         bankCode: bank!.code,
         bankName: bank!.name,
         branchName: branchName.trim(),
+        branchCode,
         accountType: accountType!,
         accountNumber,
         accountHolderKana,
@@ -108,26 +105,34 @@ export function MeBank() {
             セキュリティのため口座番号は再入力してください
           </div>
         )}
-        <RadioGroup<InfluencerEntityType>
-          label="種別"
-          value={ownerType}
-          options={[
-            { value: "INDIVIDUAL", label: "個人" },
-            { value: "CORPORATE", label: "法人" },
-          ]}
-          onChange={setOwnerType}
-          error={touched ? errs.ownerType : undefined}
-        />
         <div style={{ fontSize: 13, fontWeight: 600, color: "#111", marginBottom: 6 }}>
           銀行
         </div>
         <BankSelect value={bank} onChange={setBank} />
-        <LabeledInput
-          label="支店名"
-          value={branchName}
-          onChange={setBranchName}
-          error={touched ? errs.branchName : undefined}
-        />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            columnGap: 12,
+          }}
+        >
+          <LabeledInput
+            label="支店名"
+            value={branchName}
+            onChange={setBranchName}
+            error={touched ? errs.branchName : undefined}
+          />
+          <LabeledInput
+            label="支店コード (3桁)"
+            value={branchCode}
+            onChange={(v) =>
+              setBranchCode(v.replace(/[^\d]/g, "").slice(0, 3))
+            }
+            error={touched ? errs.branchCode : undefined}
+            inputMode="numeric"
+            maxLength={3}
+          />
+        </div>
         <RadioGroup<JpAccountType>
           label="口座種類"
           value={accountType}

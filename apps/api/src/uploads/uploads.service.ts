@@ -12,6 +12,8 @@ import {
   type InsightAttachmentInput,
   type InsightUploadPresignRequest,
   type InsightUploadPresignResponse,
+  type CampaignImageUploadPresignRequest,
+  type CampaignImageUploadPresignResponse,
   type NoticeImageUploadPresignRequest,
   type NoticeImageUploadPresignResponse,
   type SubmittedPostAttachment as SharedAttachment,
@@ -120,11 +122,34 @@ export class UploadsService {
     return { objectKey, uploadUrl, viewUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
   }
 
+  async presignCampaignImageUpload(
+    body: CampaignImageUploadPresignRequest,
+  ): Promise<CampaignImageUploadPresignResponse> {
+    if (body.sizeBytes > UPLOAD_MAX_BYTES) {
+      throw new BadRequestException("파일 크기 한도를 초과했습니다");
+    }
+    const objectKey =
+      `campaigns/rich/${randomUUID()}.${extOf(body.contentType)}`;
+    const [uploadUrl, viewUrl] = await Promise.all([
+      this.r2.presignPut(
+        {
+          objectKey,
+          contentType: body.contentType,
+          contentLength: body.sizeBytes,
+        },
+        PRESIGN_EXPIRES_SEC,
+      ),
+      this.r2.presignGet(objectKey, VIEW_EXPIRES_SEC),
+    ]);
+    return { objectKey, uploadUrl, viewUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
+  }
+
   /**
-   * 공지 본문 HTML 의 `<img src="r2:<objectKey>">` 를 presigned GET URL 로 치환.
+   * 본문 HTML 의 `<img src="r2:<objectKey>">` 를 presigned GET URL 로 치환.
    * 재편집/재저장 라운드트립을 위해 `data-r2-key` 속성으로 원본 key 를 보존한다.
+   * 공지/캠페인 등 r2 객체 키를 임베드한 HTML 전반에 사용 가능.
    */
-  async resolveNoticeImageUrls(html: string): Promise<string> {
+  async resolveR2ImagesInHtml(html: string): Promise<string> {
     const matches = Array.from(html.matchAll(/r2:([A-Za-z0-9/_.\-]+)/g));
     if (matches.length === 0) return html;
     const keys = Array.from(

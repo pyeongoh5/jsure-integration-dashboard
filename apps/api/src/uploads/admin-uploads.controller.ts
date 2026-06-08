@@ -1,7 +1,10 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import {
+  CampaignImageUploadPresignRequestSchema,
   CampaignThumbnailUploadPresignRequestSchema,
   NoticeImageUploadPresignRequestSchema,
+  type CampaignImageUploadPresignRequest,
+  type CampaignImageUploadPresignResponse,
   type CampaignThumbnailUploadPresignRequest,
   type CampaignThumbnailUploadPresignResponse,
   type NoticeImageUploadPresignRequest,
@@ -30,5 +33,13 @@ export class AdminUploadsController {
     body: NoticeImageUploadPresignRequest,
   ): Promise<NoticeImageUploadPresignResponse> {
     return this.svc.presignNoticeImageUpload(body);
+  }
+
+  @Post("campaign-image/presign")
+  presignCampaignImage(
+    @Body(new ZodValidationPipe(CampaignImageUploadPresignRequestSchema))
+    body: CampaignImageUploadPresignRequest,
+  ): Promise<CampaignImageUploadPresignResponse> {
+    return this.svc.presignCampaignImageUpload(body);
   }
 }

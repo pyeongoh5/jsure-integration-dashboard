@@ -73,6 +73,50 @@
   line-height: 1.6;
 }
 
+.cdetail__rich {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.7;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.cdetail__rich img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 8px auto;
+  border-radius: 8px;
+}
+.cdetail__rich p {
+  margin: 6px 0;
+}
+.cdetail__rich h2,
+.cdetail__rich h3,
+.cdetail__rich h4 {
+  font-weight: 700;
+  margin: 12px 0 6px;
+  color: #111827;
+}
+.cdetail__rich h2 { font-size: 16px; }
+.cdetail__rich h3 { font-size: 14px; }
+.cdetail__rich ul,
+.cdetail__rich ol {
+  padding-left: 20px;
+  margin: 6px 0;
+}
+.cdetail__rich a {
+  color: #1d6cf3;
+  text-decoration: underline;
+}
+.cdetail__rich blockquote {
+  border-left: 3px solid #d1d5db;
+  padding: 4px 12px;
+  margin: 8px 0;
+  background: #f9fafb;
+  color: #374151;
+}
+
 .cdetail__link {
   display: inline-block;
   margin-top: 8px;

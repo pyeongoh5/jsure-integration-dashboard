@@ -4,7 +4,6 @@ import {
   INFLUENCER_TERMS_VERSION,
   InfluencerSignupRequestSchema,
   LineCompleteSignupRequestSchema,
-  type InfluencerEntityType,
   type JpAccountType,
 } from "@jsure/shared";
 import { LabeledInput } from "../../components/form/LabeledInput";
@@ -30,15 +29,13 @@ export function SignupBank() {
   const { draft, setBank, reset } = useSignup();
   const auth = useInfluencerAuth();
 
-  const [ownerType, setOwnerType] = useState<InfluencerEntityType | null>(
-    draft.bank.ownerType ?? draft.profile.entityType,
-  );
   const [bank, setBankField] = useState<{ code: string; name: string } | null>(
     draft.bank.bankCode
       ? { code: draft.bank.bankCode, name: draft.bank.bankName }
       : null,
   );
   const [branchName, setBranchName] = useState(draft.bank.branchName);
+  const [branchCode, setBranchCode] = useState(draft.bank.branchCode);
   const [accountType, setAccountType] = useState<JpAccountType | null>(
     draft.bank.accountType,
   );
@@ -51,9 +48,9 @@ export function SignupBank() {
   const [serverError, setServerError] = useState<string | null>(null);
 
   const errors = {
-    ownerType: ownerType ? undefined : "種別を選択してください",
     bank: bank ? undefined : "銀行を選択してください",
     branchName: branchName.trim() ? undefined : "支店名は必須",
+    branchCode: /^\d{3}$/.test(branchCode) ? undefined : "支店コードは3桁",
     accountType: accountType ? undefined : "口座種類を選択してください",
     accountNumber: /^\d{6,8}$/.test(accountNumber)
       ? undefined
@@ -67,7 +64,7 @@ export function SignupBank() {
   async function submit() {
     setTouched(true);
     setServerError(null);
-    if (!valid || !ownerType || !bank || !accountType) return;
+    if (!valid || !bank || !accountType) return;
 
     const payload = {
       email: draft.account.email,
@@ -75,13 +72,19 @@ export function SignupBank() {
       name: draft.profile.name,
       nameKana: draft.profile.nameKana,
       phone: draft.profile.phone.replace(/[^\d]/g, ""),
-      entityType: draft.profile.entityType!,
+      address: {
+        postalCode: draft.profile.postalCode,
+        prefecture: draft.profile.prefecture,
+        city: draft.profile.city,
+        addressLine1: draft.profile.addressLine1,
+        addressLine2: draft.profile.addressLine2,
+      },
       snsAccounts: draft.snsAccounts,
       bankAccount: {
-        ownerType,
         bankCode: bank.code,
         bankName: bank.name,
         branchName: branchName.trim(),
+        branchCode,
         accountType,
         accountNumber,
         accountHolderKana,
@@ -107,10 +110,10 @@ export function SignupBank() {
     }
 
     setBank({
-      ownerType,
       bankCode: bank.code,
       bankName: bank.name,
       branchName: branchName.trim(),
+      branchCode,
       accountType,
       accountNumber,
       accountHolderKana,
@@ -146,17 +149,6 @@ export function SignupBank() {
       </h2>
       {serverError && <ErrorBanner message={serverError} />}
 
-      <RadioGroup<InfluencerEntityType>
-        label="種別"
-        value={ownerType}
-        options={[
-          { value: "INDIVIDUAL", label: "個人" },
-          { value: "CORPORATE", label: "法人" },
-        ]}
-        onChange={setOwnerType}
-        error={touched ? errors.ownerType : undefined}
-      />
-
       <div style={{ fontSize: 13, fontWeight: 600, color: "#111", marginBottom: 6 }}>
         銀行
       </div>
@@ -167,13 +159,30 @@ export function SignupBank() {
         </div>
       )}
 
-      <LabeledInput
-        label="支店名"
-        value={branchName}
-        onChange={setBranchName}
-        error={touched ? errors.branchName : undefined}
-        placeholder="渋谷支店"
-      />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          columnGap: 12,
+        }}
+      >
+        <LabeledInput
+          label="支店名"
+          value={branchName}
+          onChange={setBranchName}
+          error={touched ? errors.branchName : undefined}
+          placeholder="渋谷支店"
+        />
+        <LabeledInput
+          label="支店コード (3桁)"
+          value={branchCode}
+          onChange={(v) => setBranchCode(v.replace(/[^\d]/g, "").slice(0, 3))}
+          error={touched ? errors.branchCode : undefined}
+          inputMode="numeric"
+          maxLength={3}
+          placeholder="123"
+        />
+      </div>
 
       <RadioGroup<JpAccountType>
         label="口座種類"

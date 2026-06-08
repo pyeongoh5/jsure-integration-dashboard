@@ -25,7 +25,6 @@ export class InfluencerMeService {
         name: input.name,
         nameKana: input.nameKana,
         phone: input.phone,
-        entityType: input.entityType,
       },
     });
   }
@@ -86,19 +85,19 @@ export class InfluencerMeService {
       where: { influencerId },
       create: {
         influencerId,
-        ownerType: input.ownerType,
         bankCode: input.bankCode,
         bankName: input.bankName,
         branchName: input.branchName,
+        branchCode: input.branchCode,
         accountType: input.accountType,
         accountNumber: input.accountNumber,
         accountHolderKana: input.accountHolderKana,
       },
       update: {
-        ownerType: input.ownerType,
         bankCode: input.bankCode,
         bankName: input.bankName,
         branchName: input.branchName,
+        branchCode: input.branchCode,
         accountType: input.accountType,
         accountNumber: input.accountNumber,
         accountHolderKana: input.accountHolderKana,

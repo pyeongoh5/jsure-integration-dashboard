@@ -1,10 +1,10 @@
 import { z } from "zod";
 import {
-  InfluencerEntityTypeSchema,
   InfluencerBankAccountSchema,
   InfluencerSnsAccountInputSchema,
   ConsentItemSchema,
   InfluencerBankAccountPublicSchema,
+  InfluencerAddressSchema,
 } from "./influencer.js";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
@@ -15,7 +15,7 @@ export const InfluencerSignupRequestSchema = z.object({
   name: z.string().min(1).max(50),
   nameKana: z.string().min(1).regex(KANA_RE, "カナで入力してください"),
   phone: z.string().min(10).max(20),
-  entityType: InfluencerEntityTypeSchema,
+  address: InfluencerAddressSchema,
   snsAccounts: z
     .array(InfluencerSnsAccountInputSchema)
     .min(1, "1つ以上のSNSアカウントを追加してください"),
@@ -42,7 +42,6 @@ export const PublicInfluencerSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   name: z.string(),
-  entityType: InfluencerEntityTypeSchema,
 });
 export type PublicInfluencer = z.infer<typeof PublicInfluencerSchema>;
 
@@ -60,7 +59,6 @@ export const InfluencerMeResponseSchema = z.object({
   name: z.string(),
   nameKana: z.string().nullable(),
   phone: z.string(),
-  entityType: InfluencerEntityTypeSchema,
   snsAccounts: z.array(InfluencerSnsAccountInputSchema),
   bankAccount: InfluencerBankAccountPublicSchema.nullable(),
 });
@@ -70,7 +68,6 @@ export const UpdateInfluencerProfileRequestSchema = z.object({
   name: z.string().min(1).max(50),
   nameKana: z.string().min(1).regex(KANA_RE),
   phone: z.string().min(10).max(20),
-  entityType: InfluencerEntityTypeSchema,
 });
 export type UpdateInfluencerProfileRequest = z.infer<
   typeof UpdateInfluencerProfileRequestSchema
@@ -83,7 +80,7 @@ export const LineCompleteSignupRequestSchema = z.object({
   name: z.string().min(1).max(50),
   nameKana: z.string().min(1).regex(KANA_RE, "カナで入力してください"),
   phone: z.string().min(10).max(20),
-  entityType: InfluencerEntityTypeSchema,
+  address: InfluencerAddressSchema,
   snsAccounts: z
     .array(InfluencerSnsAccountInputSchema)
     .min(1, "1つ以上のSNSアカウントを追加してください"),

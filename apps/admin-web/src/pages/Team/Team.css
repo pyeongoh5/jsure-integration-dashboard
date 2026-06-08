@@ -122,6 +122,8 @@
   font-weight: 500;
   padding: 4px 10px;
   border-radius: 999px;
+  min-width: 110px;
+  box-sizing: border-box;
 }
 
 .team-badge__dot {
@@ -180,4 +182,91 @@
   color: var(--c-red);
   border-color: #fecaca;
   background: #fef2f2;
+}
+
+.team-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.team-btn {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.team-btn:hover {
+  background: #f9fafb;
+}
+
+.team-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.team-btn--primary {
+  background: #1d4ed8;
+  color: #fff;
+  border-color: #1d4ed8;
+}
+
+.team-btn--primary:hover {
+  background: #1e40af;
+}
+
+.team-btn--danger {
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.team-btn--danger:hover {
+  background: #fee2e2;
+}
+
+.team-role-select {
+  /* badge 와 동일 톤 — pill 모양, role 별 배경/문자색은 class 가 결정 */
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  border-radius: 999px;
+  padding: 4px 22px 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  width: auto;
+  box-sizing: border-box;
+  /* 우측 아래 방향 삼각형 — select 임을 명시 */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'><path d='M0 2 L4 6 L8 2 Z' fill='currentColor'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 8px 8px;
+}
+
+.team-role-select:focus {
+  outline: 2px solid rgba(29, 78, 216, 0.2);
+  outline-offset: 1px;
+}
+
+.team-role-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.team-role-select option {
+  /* 드롭다운 옵션은 OS 기본 색으로 — pill 색이 옵션 리스트에 적용되면 가독성 떨어짐 */
+  background: #fff;
+  color: #111827;
 }

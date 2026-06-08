@@ -24,7 +24,6 @@ export const AdminInfluencerSchema = z.object({
   name: z.string(),
   nameKana: z.string().nullable(),
   phone: z.string(),
-  entityType: z.enum(["INDIVIDUAL", "CORPORATE"]),
   status: z.enum(["ACTIVE", "SUSPENDED"]),
   memo: z.string().nullable(),
   snsAccounts: z.array(AdminInfluencerSnsAccountSchema),

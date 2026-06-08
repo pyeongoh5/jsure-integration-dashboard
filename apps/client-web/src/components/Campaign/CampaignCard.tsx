@@ -27,6 +27,15 @@ function formatYen(v: number): string {
   return `¥${v.toLocaleString("ja-JP")}円`;
 }
 
+function stripHtml(html: string): string {
+  // 카드 미리보기용 — 태그 제거 + 연속 공백 정리
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function formatDateRange(startIso: string, endIso: string): string {
   const fmt = (iso: string) => {
     const d = new Date(iso);
@@ -139,17 +148,22 @@ export function CampaignCard({ card, onSelect }: Props) {
     : 0;
   const dday = daysUntil(card.recruitEndAt, new Date());
   return (
-    <button type="button" className="ccard" onClick={onSelect}>
+    <button
+      type="button"
+      className={`ccard${card.isEnded ? " ccard--ended" : ""}`}
+      onClick={onSelect}
+    >
       <div
         className="ccard__thumb"
         style={card.thumbnailUrl ? { backgroundImage: `url(${card.thumbnailUrl})` } : undefined}
       >
         {card.isNew && <div className="ccard__new">NEW</div>}
+        {card.isEnded && <div className="ccard__ended-badge">終了</div>}
       </div>
 
       <div className="ccard__body">
         <h3 className="ccard__title">{card.title}</h3>
-        <p className="ccard__desc">{card.productSummary}</p>
+        <p className="ccard__desc">{stripHtml(card.productSummary)}</p>
 
         {card.snsRecruits.length > 0 && <SnsChipList recruits={card.snsRecruits} />}
 
@@ -173,7 +187,13 @@ export function CampaignCard({ card, onSelect }: Props) {
               <div className="ccard__progress-fill" style={{ width: `${ratio}%` }} />
             </div>
           </div>
-          <span className={`ccard__dday ${dday <= 7 ? "ccard__dday--urgent" : ""}`}>D-{dday}</span>
+          {card.isEnded ? (
+            <span className="ccard__dday ccard__dday--ended">終了</span>
+          ) : (
+            <span className={`ccard__dday ${dday <= 7 ? "ccard__dday--urgent" : ""}`}>
+              D-{dday}
+            </span>
+          )}
         </div>
       </div>
     </button>

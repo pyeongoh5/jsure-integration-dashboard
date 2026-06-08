@@ -13,20 +13,6 @@
   cursor: pointer;
 }
 
-.terms__kr-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0 4px;
-  color: #4b5563;
-  font-size: 12px;
-}
-
-.terms__kr-toggle input {
-  width: 16px;
-  height: 16px;
-}
-
 .terms__chk {
   width: 20px;
   height: 20px;
@@ -108,9 +94,3 @@
   line-height: 1.6;
 }
 
-.terms__body-ko {
-  margin-top: 6px;
-  color: #6b7280;
-  font-size: 12px;
-  font-style: italic;
-}

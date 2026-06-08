@@ -117,6 +117,33 @@ export class CampaignsService {
     return response;
   }
 
+  /**
+   * 본문 (productSummary/guideline/cautions) 안의 r2: 이미지 키를
+   * presigned URL 로 치환하고 data-r2-key 속성으로 보존.
+   * 어드민 폼 재편집 시 round-trip 가능.
+   */
+  private async withResolved(
+    response: CampaignResponse,
+  ): Promise<CampaignResponse> {
+    await this.withResolvedThumbnail(response);
+    await this.withResolvedRich(response);
+    return response;
+  }
+
+  private async withResolvedRich(
+    response: CampaignResponse,
+  ): Promise<CampaignResponse> {
+    const [productSummary, guideline, cautions] = await Promise.all([
+      this.uploads.resolveR2ImagesInHtml(response.productSummary),
+      this.uploads.resolveR2ImagesInHtml(response.guideline),
+      this.uploads.resolveR2ImagesInHtml(response.cautions),
+    ]);
+    response.productSummary = productSummary;
+    response.guideline = guideline;
+    response.cautions = cautions;
+    return response;
+  }
+
   private async loadCounts(
     campaignIds: string[],
   ): Promise<Map<string, CampaignCounts>> {
@@ -172,7 +199,7 @@ export class CampaignsService {
       },
       include: RECRUITS_INCLUDE,
     });
-    return this.withResolvedThumbnail(toResponse(row, EMPTY_COUNTS));
+    return this.withResolved(toResponse(row, EMPTY_COUNTS));
   }
 
   async findAll(): Promise<CampaignResponse[]> {
@@ -183,7 +210,7 @@ export class CampaignsService {
     const counts = await this.loadCounts(rows.map((r) => r.id));
     return Promise.all(
       rows.map((row) =>
-        this.withResolvedThumbnail(
+        this.withResolved(
           toResponse(row, counts.get(row.id) ?? EMPTY_COUNTS),
         ),
       ),
@@ -196,7 +223,7 @@ export class CampaignsService {
       include: RECRUITS_INCLUDE,
     });
     if (!row) throw new NotFoundException("Campaign not found");
-    return this.withResolvedThumbnail(
+    return this.withResolved(
       toResponse(row, await this.countsFor(id)),
     );
   }
@@ -246,7 +273,7 @@ export class CampaignsService {
         include: RECRUITS_INCLUDE,
       });
     });
-    return this.withResolvedThumbnail(
+    return this.withResolved(
       toResponse(row, await this.countsFor(id)),
     );
   }
@@ -262,7 +289,7 @@ export class CampaignsService {
       data: { closedAt: new Date() },
       include: RECRUITS_INCLUDE,
     });
-    return this.withResolvedThumbnail(
+    return this.withResolved(
       toResponse(row, await this.countsFor(id)),
     );
   }

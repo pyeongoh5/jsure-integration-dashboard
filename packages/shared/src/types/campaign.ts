@@ -35,11 +35,12 @@ export const CampaignFormSchema = z
       .min(1, "1 이상의 일수여야 합니다")
       .max(365),
     snsRecruits: SnsRecruitArray,
-    productSummary: z.string().max(1000),
+    // HTML 본문 (tiptap) 을 저장하므로 길이 제한을 크게 둠.
+    productSummary: z.string().max(50000),
     productDetailUrl: z.string().url("URL 형식이어야 합니다"),
-    guideline: z.string().max(2000),
+    guideline: z.string().max(50000),
     referenceMediaUrls: z.array(z.string().url()).max(10),
-    cautions: z.string().max(2000),
+    cautions: z.string().max(50000),
     thumbnailUrl: z.string().min(1).nullable().optional(),
   })
   .refine((d) => d.recruitStartDate <= d.recruitEndDate, {
@@ -59,11 +60,11 @@ export const UpdateCampaignRequestSchema = z
     recruitEndDate: DateOnly.optional(),
     postingPeriodDays: z.number().int().min(1).max(365).optional(),
     snsRecruits: SnsRecruitArray.optional(),
-    productSummary: z.string().max(1000).optional(),
+    productSummary: z.string().max(50000).optional(),
     productDetailUrl: z.string().url().optional(),
-    guideline: z.string().max(2000).optional(),
+    guideline: z.string().max(50000).optional(),
     referenceMediaUrls: z.array(z.string().url()).max(10).optional(),
-    cautions: z.string().max(2000).optional(),
+    cautions: z.string().max(50000).optional(),
     thumbnailUrl: z.string().min(1).nullable().optional(),
   })
   .refine(
@@ -117,6 +118,7 @@ export const InfluencerCampaignCardSchema = z.object({
   recruitEndAt: z.string().datetime(),
   postingPeriodDays: z.number().int().min(1),
   isNew: z.boolean(),
+  isEnded: z.boolean(),
 });
 export type InfluencerCampaignCard = z.infer<
   typeof InfluencerCampaignCardSchema

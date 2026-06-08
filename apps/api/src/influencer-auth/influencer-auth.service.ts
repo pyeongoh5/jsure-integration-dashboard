@@ -21,7 +21,6 @@ interface SignableInfluencer {
   id: string;
   email: string;
   name: string;
-  entityType: "INDIVIDUAL" | "CORPORATE";
 }
 
 function toPublic(i: SignableInfluencer): PublicInfluencer {
@@ -29,7 +28,6 @@ function toPublic(i: SignableInfluencer): PublicInfluencer {
     id: i.id,
     email: i.email,
     name: i.name,
-    entityType: i.entityType,
   };
 }
 
@@ -69,7 +67,11 @@ export class InfluencerAuthService {
             name: input.name,
             nameKana: input.nameKana,
             phone: input.phone,
-            entityType: input.entityType,
+            postalCode: input.address.postalCode,
+            prefecture: input.address.prefecture,
+            city: input.address.city,
+            addressLine1: input.address.addressLine1,
+            addressLine2: input.address.addressLine2 ?? "",
           },
         });
 
@@ -87,10 +89,10 @@ export class InfluencerAuthService {
         await tx.influencerBankAccount.create({
           data: {
             influencerId: created.id,
-            ownerType: input.bankAccount.ownerType,
             bankCode: input.bankAccount.bankCode,
             bankName: input.bankAccount.bankName,
             branchName: input.bankAccount.branchName,
+            branchCode: input.bankAccount.branchCode,
             accountType: input.bankAccount.accountType,
             accountNumber: input.bankAccount.accountNumber,
             accountHolderKana: input.bankAccount.accountHolderKana,

@@ -13,6 +13,7 @@ import { InfluencerApplicationsModule } from "./influencer-applications/influenc
 import { InfluencerMeModule } from "./influencer-me/influencer-me.module";
 import { AdminApplicationsModule } from "./admin-applications/admin-applications.module";
 import { AdminOverviewModule } from "./admin-overview/admin-overview.module";
+import { AdminBroadcastsModule } from "./admin-broadcasts/admin-broadcasts.module";
 import { AdminNoticesModule } from "./admin-notices/admin-notices.module";
 import { InfluencerNoticesModule } from "./influencer-notices/influencer-notices.module";
 import { R2Module } from "./r2/r2.module";
@@ -34,6 +35,7 @@ import { UploadsModule } from "./uploads/uploads.module";
     InfluencerMeModule,
     AdminApplicationsModule,
     AdminOverviewModule,
+    AdminBroadcastsModule,
     AdminNoticesModule,
     InfluencerNoticesModule,
     R2Module,

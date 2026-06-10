@@ -243,7 +243,6 @@ export class InfluencerLineAuthService {
             bankName: input.bankAccount.bankName,
             branchName: input.bankAccount.branchName,
             branchCode: input.bankAccount.branchCode,
-            accountType: input.bankAccount.accountType,
             accountNumber: input.bankAccount.accountNumber,
             accountHolderKana: input.bankAccount.accountHolderKana,
           },

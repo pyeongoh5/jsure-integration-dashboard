@@ -416,10 +416,16 @@ export class AdminApplicationsService {
 
   /**
    * Settlement 테이블 기반 정산 목록.
-   * month 가 주어지면 해당 월(JST) 안에 insightSubmittedAt 이 찍힌 건만 반환.
+   * PENDING 은 월과 무관하게 항상 포함하고, COMPLETED 만 month(JST) 필터를 적용.
    */
   async listSettlements(month?: string): Promise<AdminSettlement[]> {
-    const where = month ? buildMonthWhere(month) : {};
+    const monthWhere = month ? buildMonthWhere(month) : {};
+    const where = {
+      OR: [
+        { status: "PENDING" as const },
+        { status: "COMPLETED" as const, ...monthWhere },
+      ],
+    };
     const rows = await this.prisma.settlement.findMany({
       where,
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],

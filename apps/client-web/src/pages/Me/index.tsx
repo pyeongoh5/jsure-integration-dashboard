@@ -50,6 +50,18 @@ export function Me() {
         <i className="fa-solid fa-chevron-right me__chev" />
       </Link>
 
+      <Link to="/me/address" className="me__row">
+        <div className="me__row-main">
+          <div className="me__row-label">配送先住所</div>
+          <div className="me__row-sub">
+            {data?.address
+              ? `〒${data.address.postalCode} ${data.address.prefecture}${data.address.city}`
+              : "未登録"}
+          </div>
+        </div>
+        <i className="fa-solid fa-chevron-right me__chev" />
+      </Link>
+
       <div className="me__email">
         <div style={{ fontSize: 11, color: "#6b7280" }}>ログイン</div>
         <div style={{ fontSize: 13, color: "#111" }}>{data?.email ?? "—"}</div>

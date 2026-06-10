@@ -14,9 +14,11 @@ import {
   InfluencerBankAccountSchema,
   InfluencerSnsAccountInputSchema,
   SnsTypeSchema,
+  UpdateInfluencerAddressRequestSchema,
   UpdateInfluencerProfileRequestSchema,
   type InfluencerBankAccount,
   type InfluencerSnsAccountInput,
+  type UpdateInfluencerAddressRequest,
   type UpdateInfluencerProfileRequest,
 } from "@jsure/shared";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
@@ -37,6 +39,16 @@ export class InfluencerMeController {
     @Body() dto: UpdateInfluencerProfileRequest,
   ) {
     await this.svc.updateProfile(req.user.id, dto);
+  }
+
+  @Patch("address")
+  @HttpCode(204)
+  @UsePipes(new ZodValidationPipe(UpdateInfluencerAddressRequestSchema))
+  async updateAddress(
+    @Request() req: { user: AuthenticatedInfluencer },
+    @Body() dto: UpdateInfluencerAddressRequest,
+  ) {
+    await this.svc.updateAddress(req.user.id, dto);
   }
 
   @Put("sns")

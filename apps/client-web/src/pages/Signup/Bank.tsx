@@ -4,10 +4,8 @@ import {
   INFLUENCER_TERMS_VERSION,
   InfluencerSignupRequestSchema,
   LineCompleteSignupRequestSchema,
-  type JpAccountType,
 } from "@jsure/shared";
 import { LabeledInput } from "../../components/form/LabeledInput";
-import { RadioGroup } from "../../components/form/RadioGroup";
 import { ErrorBanner } from "../../components/form/ErrorBanner";
 import { BankSelect } from "../../components/Bank/BankSelect";
 import { WizardFooter } from "../../components/Signup/WizardFooter";
@@ -36,9 +34,6 @@ export function SignupBank() {
   );
   const [branchName, setBranchName] = useState(draft.bank.branchName);
   const [branchCode, setBranchCode] = useState(draft.bank.branchCode);
-  const [accountType, setAccountType] = useState<JpAccountType | null>(
-    draft.bank.accountType,
-  );
   const [accountNumber, setAccountNumber] = useState(draft.bank.accountNumber);
   const [accountHolderKana, setAccountHolderKana] = useState(
     draft.bank.accountHolderKana,
@@ -51,7 +46,6 @@ export function SignupBank() {
     bank: bank ? undefined : "銀行を選択してください",
     branchName: branchName.trim() ? undefined : "支店名は必須",
     branchCode: /^\d{3}$/.test(branchCode) ? undefined : "支店コードは3桁",
-    accountType: accountType ? undefined : "口座種類を選択してください",
     accountNumber: /^\d{6,8}$/.test(accountNumber)
       ? undefined
       : "口座番号は6~8桁",
@@ -64,7 +58,7 @@ export function SignupBank() {
   async function submit() {
     setTouched(true);
     setServerError(null);
-    if (!valid || !bank || !accountType) return;
+    if (!valid || !bank) return;
 
     const payload = {
       email: draft.account.email,
@@ -85,7 +79,6 @@ export function SignupBank() {
         bankName: bank.name,
         branchName: branchName.trim(),
         branchCode,
-        accountType,
         accountNumber,
         accountHolderKana,
       },
@@ -114,7 +107,6 @@ export function SignupBank() {
       bankName: bank.name,
       branchName: branchName.trim(),
       branchCode,
-      accountType,
       accountNumber,
       accountHolderKana,
     });
@@ -183,17 +175,6 @@ export function SignupBank() {
           placeholder="123"
         />
       </div>
-
-      <RadioGroup<JpAccountType>
-        label="口座種類"
-        value={accountType}
-        options={[
-          { value: "FUTSU", label: "普通" },
-          { value: "TOUZA", label: "当座" },
-        ]}
-        onChange={setAccountType}
-        error={touched ? errors.accountType : undefined}
-      />
 
       <LabeledInput
         label="口座番号 (6~8桁)"

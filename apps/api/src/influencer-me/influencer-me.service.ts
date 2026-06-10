@@ -7,6 +7,7 @@ import type {
   InfluencerBankAccount,
   InfluencerSnsAccountInput,
   SnsType,
+  UpdateInfluencerAddressRequest,
   UpdateInfluencerProfileRequest,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
@@ -25,6 +26,22 @@ export class InfluencerMeService {
         name: input.name,
         nameKana: input.nameKana,
         phone: input.phone,
+      },
+    });
+  }
+
+  async updateAddress(
+    influencerId: string,
+    input: UpdateInfluencerAddressRequest,
+  ): Promise<void> {
+    await this.prisma.influencer.update({
+      where: { id: influencerId },
+      data: {
+        postalCode: input.postalCode,
+        prefecture: input.prefecture,
+        city: input.city,
+        addressLine1: input.addressLine1,
+        addressLine2: input.addressLine2 ?? "",
       },
     });
   }
@@ -89,7 +106,6 @@ export class InfluencerMeService {
         bankName: input.bankName,
         branchName: input.branchName,
         branchCode: input.branchCode,
-        accountType: input.accountType,
         accountNumber: input.accountNumber,
         accountHolderKana: input.accountHolderKana,
       },
@@ -98,7 +114,6 @@ export class InfluencerMeService {
         bankName: input.bankName,
         branchName: input.branchName,
         branchCode: input.branchCode,
-        accountType: input.accountType,
         accountNumber: input.accountNumber,
         accountHolderKana: input.accountHolderKana,
       },

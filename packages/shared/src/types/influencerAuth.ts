@@ -59,6 +59,7 @@ export const InfluencerMeResponseSchema = z.object({
   name: z.string(),
   nameKana: z.string().nullable(),
   phone: z.string(),
+  address: InfluencerAddressSchema.nullable(),
   snsAccounts: z.array(InfluencerSnsAccountInputSchema),
   bankAccount: InfluencerBankAccountPublicSchema.nullable(),
 });
@@ -71,6 +72,11 @@ export const UpdateInfluencerProfileRequestSchema = z.object({
 });
 export type UpdateInfluencerProfileRequest = z.infer<
   typeof UpdateInfluencerProfileRequestSchema
+>;
+
+export const UpdateInfluencerAddressRequestSchema = InfluencerAddressSchema;
+export type UpdateInfluencerAddressRequest = z.infer<
+  typeof UpdateInfluencerAddressRequestSchema
 >;
 
 export const LineCompleteSignupRequestSchema = z.object({

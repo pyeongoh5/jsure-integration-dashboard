@@ -242,6 +242,13 @@ export function ApplicationDetail() {
           <p className="adetail__msg">完了しました。振込予定をお待ちください。</p>
         )}
 
+        {stage === "SETTLED" && data.settlement?.completedAt && (
+          <p className="adetail__msg">
+            ¥{data.settlement.amountJpy.toLocaleString("ja-JP")} の振込が完了しました
+            ({new Date(data.settlement.completedAt).toLocaleDateString("ja-JP")})
+          </p>
+        )}
+
         {stage === "REJECTED" && (
           <p className="adetail__msg adetail__msg--err">
             却下されました: {data.rejectReason ?? "—"}

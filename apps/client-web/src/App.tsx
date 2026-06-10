@@ -21,6 +21,7 @@ import { NoticeDetail } from "./pages/Notices/Detail";
 import { MeProfile } from "./pages/Me/Profile";
 import { MeSns } from "./pages/Me/Sns";
 import { MeBank } from "./pages/Me/Bank";
+import { MeAddress } from "./pages/Me/Address";
 import { NotFound } from "./pages/NotFound";
 
 export function App() {
@@ -51,6 +52,7 @@ export function App() {
         <Route path="/me/profile" element={<MeProfile />} />
         <Route path="/me/sns" element={<MeSns />} />
         <Route path="/me/bank" element={<MeBank />} />
+        <Route path="/me/address" element={<MeAddress />} />
         <Route path="/notices" element={<Notices />} />
         <Route path="/notices/:id" element={<NoticeDetail />} />
       </Route>

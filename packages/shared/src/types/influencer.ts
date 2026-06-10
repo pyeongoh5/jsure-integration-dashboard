@@ -4,9 +4,6 @@ import { normalizeSnsHandle } from "../utils/snsHandle.js";
 export const SnsTypeSchema = z.enum(["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"]);
 export type SnsType = z.infer<typeof SnsTypeSchema>;
 
-export const JpAccountTypeSchema = z.enum(["FUTSU", "TOUZA"]);
-export type JpAccountType = z.infer<typeof JpAccountTypeSchema>;
-
 export const ConsentItemSchema = z.enum([
   "PR_LABEL",
   "DEADLINE",
@@ -24,7 +21,6 @@ export const InfluencerBankAccountSchema = z.object({
   bankName: z.string().min(1).max(40),
   branchName: z.string().min(1).max(50),
   branchCode: z.string().max(10),
-  accountType: JpAccountTypeSchema,
   accountNumber: z.string().regex(/^\d{6,8}$/, "口座番号は6~8桁の数字"),
   accountHolderKana: z.string().regex(KANA_RE, "カナで入力してください"),
 });

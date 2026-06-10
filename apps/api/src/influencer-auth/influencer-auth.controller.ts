@@ -20,6 +20,7 @@ import {
   type InfluencerLoginRequest,
   type InfluencerMeResponse,
   type InfluencerSignupRequest,
+  type JpPrefecture,
   type LineCompleteSignupRequest,
 } from "@jsure/shared";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
@@ -127,12 +128,25 @@ export class InfluencerAuthController {
   ): Promise<InfluencerMeResponse> {
     const inf = await this.influencers.findFull(req.user.id);
     if (!inf) throw new NotFoundException("Influencer not found");
+    const hasAddress =
+      Boolean(inf.postalCode) || Boolean(inf.prefecture) || Boolean(inf.city) ||
+      Boolean(inf.addressLine1);
     return {
       id: inf.id,
       email: inf.email,
       name: inf.name,
       nameKana: inf.nameKana,
       phone: inf.phone,
+      address: hasAddress
+        ? {
+            postalCode: inf.postalCode,
+            // DB 는 string 으로 저장, 회원가입에서 enum 검증을 거치므로 안전
+            prefecture: inf.prefecture as JpPrefecture,
+            city: inf.city,
+            addressLine1: inf.addressLine1,
+            addressLine2: inf.addressLine2 ?? "",
+          }
+        : null,
       snsAccounts: inf.snsAccounts.map((s) => ({
         snsType: s.snsType,
         handle: s.handle,
@@ -144,7 +158,6 @@ export class InfluencerAuthController {
             bankName: inf.bankAccount.bankName,
             branchName: inf.bankAccount.branchName,
             branchCode: inf.bankAccount.branchCode,
-            accountType: inf.bankAccount.accountType,
             accountHolderKana: inf.bankAccount.accountHolderKana,
             accountNumberMasked: maskAccountNumber(
               inf.bankAccount.accountNumber,

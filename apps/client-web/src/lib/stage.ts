@@ -11,6 +11,7 @@ export const STAGE_LABEL: Record<ApplicationDisplayStage, string> = {
   INSIGHT_DUE: "インサイト提出",
   REVIEWING: "検査中",
   COMPLETED: "完了",
+  SETTLED: "支払完了",
   REJECTED: "却下",
   CANCELLED: "キャンセル",
 };
@@ -26,6 +27,7 @@ export const STAGE_VARIANT: Record<ApplicationDisplayStage, string> = {
   INSIGHT_DUE: "warn",
   REVIEWING: "neutral",
   COMPLETED: "ok",
+  SETTLED: "ok",
   REJECTED: "danger",
   CANCELLED: "danger",
 };
@@ -41,8 +43,9 @@ export const STAGE_PROGRESS: Record<ApplicationDisplayStage, number> = {
   INSIGHT_DUE: 6,
   REVIEWING: 7,
   COMPLETED: 8,
+  SETTLED: 9,
   REJECTED: 0,
   CANCELLED: 0,
 };
 
-export const STAGE_TOTAL = 8;
+export const STAGE_TOTAL = 9;

@@ -53,7 +53,6 @@ interface BankDraft {
   bankName: string;
   branchName: string;
   branchCode: string;
-  accountType: "FUTSU" | "TOUZA" | null;
   accountNumber: string;
   accountHolderKana: string;
 }
@@ -86,7 +85,6 @@ const DEFAULT: SignupDraft = {
     bankName: "",
     branchName: "",
     branchCode: "",
-    accountType: null,
     accountNumber: "",
     accountHolderKana: "",
   },

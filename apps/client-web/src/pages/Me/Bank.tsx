@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  InfluencerBankAccountSchema,
-  type JpAccountType,
-} from "@jsure/shared";
+import { InfluencerBankAccountSchema } from "@jsure/shared";
 import { fetchMe } from "../../lib/api/auth";
 import { upsertBankAccount } from "../../lib/api/me";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { LabeledInput } from "../../components/form/LabeledInput";
-import { RadioGroup } from "../../components/form/RadioGroup";
 import { PrimaryButton } from "../../components/form/PrimaryButton";
 import { BankSelect } from "../../components/Bank/BankSelect";
 import { ErrorBanner } from "../../components/form/ErrorBanner";
@@ -24,7 +20,6 @@ export function MeBank() {
   const [bank, setBank] = useState<{ code: string; name: string } | null>(null);
   const [branchName, setBranchName] = useState("");
   const [branchCode, setBranchCode] = useState("");
-  const [accountType, setAccountType] = useState<JpAccountType | null>(null);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolderKana, setAccountHolderKana] = useState("");
   const [touched, setTouched] = useState(false);
@@ -38,7 +33,6 @@ export function MeBank() {
       });
       setBranchName(data.bankAccount.branchName);
       setBranchCode(data.bankAccount.branchCode);
-      setAccountType(data.bankAccount.accountType);
       setAccountHolderKana(data.bankAccount.accountHolderKana);
       // existing accountNumber not exposed; user must re-enter
     }
@@ -48,7 +42,6 @@ export function MeBank() {
     bank: bank ? undefined : "銀行を選択",
     branchName: branchName.trim() ? undefined : "必須",
     branchCode: /^\d{3}$/.test(branchCode) ? undefined : "3桁",
-    accountType: accountType ? undefined : "口座種類を選択",
     accountNumber: /^\d{6,8}$/.test(accountNumber) ? undefined : "6~8桁",
     accountHolderKana: KANA_RE.test(accountHolderKana)
       ? undefined
@@ -63,7 +56,6 @@ export function MeBank() {
         bankName: bank!.name,
         branchName: branchName.trim(),
         branchCode,
-        accountType: accountType!,
         accountNumber,
         accountHolderKana,
       });
@@ -133,16 +125,6 @@ export function MeBank() {
             maxLength={3}
           />
         </div>
-        <RadioGroup<JpAccountType>
-          label="口座種類"
-          value={accountType}
-          options={[
-            { value: "FUTSU", label: "普通" },
-            { value: "TOUZA", label: "当座" },
-          ]}
-          onChange={setAccountType}
-          error={touched ? errs.accountType : undefined}
-        />
         <LabeledInput
           label="口座番号"
           type="text"

@@ -2,6 +2,7 @@ import type {
   InfluencerBankAccount,
   InfluencerSnsAccountInput,
   SnsType,
+  UpdateInfluencerAddressRequest,
   UpdateInfluencerProfileRequest,
 } from "@jsure/shared";
 import { api } from "../api";
@@ -10,6 +11,12 @@ export async function updateProfile(
   input: UpdateInfluencerProfileRequest,
 ): Promise<void> {
   await api.patch("/influencer-me/profile", input);
+}
+
+export async function updateAddress(
+  input: UpdateInfluencerAddressRequest,
+): Promise<void> {
+  await api.patch("/influencer-me/address", input);
 }
 
 export async function upsertSnsAccount(

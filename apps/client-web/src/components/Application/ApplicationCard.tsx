@@ -21,9 +21,18 @@ function nextAction(app: InfluencerApplication): string | null {
   }
 }
 
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function ApplicationCard({ app, onSelect }: Props) {
   const ratio = (STAGE_PROGRESS[app.displayStage] / STAGE_TOTAL) * 100;
   const action = nextAction(app);
+  const settled =
+    app.displayStage === "SETTLED" && app.settlement?.completedAt
+      ? `¥${app.settlement.amountJpy.toLocaleString("ja-JP")} (${formatDate(app.settlement.completedAt)} 振込)`
+      : null;
   return (
     <button type="button" className="acard" onClick={onSelect}>
       <div className="acard__head">
@@ -39,6 +48,7 @@ export function ApplicationCard({ app, onSelect }: Props) {
       <div className="acard__bar">
         <div className="acard__bar-fill" style={{ width: `${ratio}%` }} />
       </div>
+      {settled && <div className="acard__settled">支払完了 — {settled}</div>}
       {action && <div className="acard__cta">{action}</div>}
     </button>
   );

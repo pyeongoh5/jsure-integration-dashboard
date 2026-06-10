@@ -23,6 +23,7 @@ export const ApplicationDisplayStageSchema = z.enum([
   "INSIGHT_DUE",
   "REVIEWING",
   "COMPLETED",
+  "SETTLED",
   "REJECTED",
   "CANCELLED",
 ]);
@@ -96,6 +97,15 @@ export type CreateApplicationRequest = z.infer<
   typeof CreateApplicationRequestSchema
 >;
 
+export const InfluencerApplicationSettlementSchema = z.object({
+  status: z.enum(["PENDING", "COMPLETED"]),
+  amountJpy: z.number().int().nonnegative(),
+  completedAt: z.string().datetime().nullable(),
+});
+export type InfluencerApplicationSettlement = z.infer<
+  typeof InfluencerApplicationSettlementSchema
+>;
+
 export const InfluencerApplicationSchema = z.object({
   id: z.string(),
   campaignId: z.string(),
@@ -116,6 +126,7 @@ export const InfluencerApplicationSchema = z.object({
   posts: z.array(SubmittedPostSchema),
   postingPeriodDays: z.number().int().min(1),
   postingDeadlineAt: z.string().datetime().nullable(),
+  settlement: InfluencerApplicationSettlementSchema.nullable(),
 });
 export type InfluencerApplication = z.infer<typeof InfluencerApplicationSchema>;
 

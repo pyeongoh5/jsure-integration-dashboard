@@ -18,6 +18,7 @@ interface DisplayStageInput {
     submittedAt: Date;
     insightSubmittedAt: Date | null;
     reviewStatus: "PENDING" | "APPROVED" | "REJECTED";
+    settlementStatus?: "PENDING" | "COMPLETED" | null;
   }[];
   now?: Date;
 }
@@ -30,7 +31,13 @@ export function deriveDisplayStage(input: DisplayStageInput): ApplicationDisplay
   if (status === "APPROVED") return "APPROVED";
   if (status === "REJECTED") return "REJECTED";
   if (status === "CANCELLED") return "CANCELLED";
-  if (status === "COMPLETED") return "COMPLETED";
+  if (status === "COMPLETED") {
+    // 검토 완료된 게시물의 정산이 COMPLETED 면 "支払完了" 단계로 진입
+    const anySettled = posts.some(
+      (p) => p.settlementStatus === "COMPLETED",
+    );
+    return anySettled ? "SETTLED" : "COMPLETED";
+  }
 
   if (status === "SHIPPED" || status === "DELIVERED") {
     if (!receivedAt) return "AWAITING_RECEIPT";

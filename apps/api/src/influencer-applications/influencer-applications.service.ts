@@ -33,6 +33,11 @@ type PostRow = {
   reviewStatus: "PENDING" | "APPROVED" | "REJECTED";
   reviewedAt: Date | null;
   rejections: { comment: string; rejectedAt: Date }[];
+  settlement: {
+    status: "PENDING" | "COMPLETED";
+    amountJpy: number;
+    completedAt: Date | null;
+  } | null;
 };
 
 type ApplicationRow = {
@@ -87,6 +92,19 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     row.receivedAt,
     row.campaign.postingPeriodDays,
   );
+  // 가장 최근에 완료된 정산을 대표로 사용 (1 application = 1 SNS = 1 post 흐름)
+  const settledPost =
+    row.posts.find((p) => p.settlement?.status === "COMPLETED") ??
+    row.posts.find((p) => p.settlement != null);
+  const settlement = settledPost?.settlement
+    ? {
+        status: settledPost.settlement.status,
+        amountJpy: settledPost.settlement.amountJpy,
+        completedAt: settledPost.settlement.completedAt
+          ? settledPost.settlement.completedAt.toISOString()
+          : null,
+      }
+    : null;
   return {
     id: row.id,
     campaignId: row.campaignId,
@@ -101,6 +119,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
         submittedAt: p.submittedAt,
         insightSubmittedAt: p.insightSubmittedAt,
         reviewStatus: p.reviewStatus,
+        settlementStatus: p.settlement?.status ?? null,
       })),
     }),
     appliedAt: row.appliedAt.toISOString(),
@@ -115,6 +134,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     posts: row.posts.map(toPost),
     postingPeriodDays: row.campaign.postingPeriodDays,
     postingDeadlineAt: deadline ? deadline.toISOString() : null,
+    settlement,
   };
 }
 
@@ -125,6 +145,9 @@ const INCLUDE = {
         orderBy: { rejectedAt: "desc" as const },
         take: 1,
         select: { comment: true, rejectedAt: true },
+      },
+      settlement: {
+        select: { status: true, amountJpy: true, completedAt: true },
       },
     },
   },

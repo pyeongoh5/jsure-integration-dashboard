@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { UpdateInfluencerAddressRequest } from "@jsure/shared";
 import { fetchMe } from "../../lib/api/auth";
 import { updateAddress } from "../../lib/api/me";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -45,7 +46,9 @@ export function MeAddress() {
   const valid = !Object.values(errors).some((e) => e);
 
   const m = useMutation({
-    mutationFn: () => updateAddress(address),
+    mutationFn: () =>
+      // prefecture 는 validateAddress 로 enum 값 보장됨 — TS 캐스트만 필요
+      updateAddress(address as UpdateInfluencerAddressRequest),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["me"] });
       nav("/me");

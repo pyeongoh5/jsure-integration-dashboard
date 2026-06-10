@@ -416,16 +416,10 @@ export class AdminApplicationsService {
 
   /**
    * Settlement 테이블 기반 정산 목록.
-   * PENDING 은 월과 무관하게 항상 포함하고, COMPLETED 만 month(JST) 필터를 적용.
+   * month(JST) 필터는 Settlement.createdAt(정산 등록일) 기준으로 PENDING/COMPLETED 모두에 적용.
    */
   async listSettlements(month?: string): Promise<AdminSettlement[]> {
-    const monthWhere = month ? buildMonthWhere(month) : {};
-    const where = {
-      OR: [
-        { status: "PENDING" as const },
-        { status: "COMPLETED" as const, ...monthWhere },
-      ],
-    };
+    const where = month ? buildMonthWhere(month) : {};
     const rows = await this.prisma.settlement.findMany({
       where,
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
@@ -755,9 +749,9 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
   };
 }
 
-/** "YYYY-MM" (JST) → Settlement where 절: post.insightSubmittedAt 가 해당 월 범위. */
+/** "YYYY-MM" (JST) → Settlement where 절: Settlement.createdAt(정산 등록일)이 해당 월 범위. */
 function buildMonthWhere(monthStr: string): {
-  post: { insightSubmittedAt: { gte: Date; lt: Date } };
+  createdAt: { gte: Date; lt: Date };
 } | Record<string, never> {
   const m = monthStr.match(/^(\d{4})-(\d{2})$/);
   if (!m) return {};
@@ -771,8 +765,6 @@ function buildMonthWhere(monthStr: string): {
     `${nextYear}-${String(nextMonth).padStart(2, "0")}-01T00:00:00+09:00`,
   );
   return {
-    post: {
-      insightSubmittedAt: { gte: start, lt: end },
-    },
+    createdAt: { gte: start, lt: end },
   };
 }

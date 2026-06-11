@@ -9,12 +9,25 @@ import {
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
 
+/** YYYY-MM-DD (DateOnly) — 1900-01-01 이후, 미래 X. */
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const BirthDateSchema = z
+  .string()
+  .regex(DATE_ONLY_RE, "YYYY-MM-DD 形式で入力してください")
+  .refine((v) => {
+    const d = new Date(`${v}T00:00:00Z`);
+    if (Number.isNaN(d.getTime())) return false;
+    const year = d.getUTCFullYear();
+    return year >= 1900 && d.getTime() <= Date.now();
+  }, "正しい生年月日を入力してください");
+
 export const InfluencerSignupRequestSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(72),
   name: z.string().min(1).max(50),
   nameKana: z.string().min(1).regex(KANA_RE, "カナで入力してください"),
   phone: z.string().min(10).max(20),
+  birthDate: BirthDateSchema,
   address: InfluencerAddressSchema,
   snsAccounts: z
     .array(InfluencerSnsAccountInputSchema)
@@ -59,6 +72,7 @@ export const InfluencerMeResponseSchema = z.object({
   name: z.string(),
   nameKana: z.string().nullable(),
   phone: z.string(),
+  birthDate: z.string().regex(DATE_ONLY_RE).nullable(),
   address: InfluencerAddressSchema.nullable(),
   snsAccounts: z.array(InfluencerSnsAccountInputSchema),
   bankAccount: InfluencerBankAccountPublicSchema.nullable(),
@@ -86,6 +100,7 @@ export const LineCompleteSignupRequestSchema = z.object({
   name: z.string().min(1).max(50),
   nameKana: z.string().min(1).regex(KANA_RE, "カナで入力してください"),
   phone: z.string().min(10).max(20),
+  birthDate: BirthDateSchema,
   address: InfluencerAddressSchema,
   snsAccounts: z
     .array(InfluencerSnsAccountInputSchema)

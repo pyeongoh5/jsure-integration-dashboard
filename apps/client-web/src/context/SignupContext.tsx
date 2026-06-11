@@ -36,6 +36,7 @@ interface ProfileDraft {
   name: string;
   nameKana: string;
   phone: string;
+  birthDate: string;
   postalCode: string;
   prefecture: string;
   city: string;
@@ -73,6 +74,7 @@ const DEFAULT: SignupDraft = {
     name: "",
     nameKana: "",
     phone: "",
+    birthDate: "",
     postalCode: "",
     prefecture: "",
     city: "",

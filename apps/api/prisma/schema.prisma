@@ -130,6 +130,7 @@ model Influencer {
   name          String
   nameKana      String?
   phone         String
+  birthDate     DateTime?
   postalCode    String               @default("")
   prefecture    String               @default("")
   city          String               @default("")

@@ -67,6 +67,7 @@ export class InfluencerAuthService {
             name: input.name,
             nameKana: input.nameKana,
             phone: input.phone,
+            birthDate: new Date(`${input.birthDate}T00:00:00Z`),
             postalCode: input.address.postalCode,
             prefecture: input.address.prefecture,
             city: input.address.city,

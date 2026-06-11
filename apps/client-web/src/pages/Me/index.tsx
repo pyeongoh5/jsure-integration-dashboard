@@ -23,7 +23,11 @@ export function Me() {
       <Link to="/me/profile" className="me__row">
         <div className="me__row-main">
           <div className="me__row-label">プロフィール</div>
-          <div className="me__row-sub">{data ? data.name : "—"}</div>
+          <div className="me__row-sub">
+            {data
+              ? `${data.name}${data.birthDate ? ` ・ ${data.birthDate}` : ""}`
+              : "—"}
+          </div>
         </div>
         <i className="fa-solid fa-chevron-right me__chev" />
       </Link>

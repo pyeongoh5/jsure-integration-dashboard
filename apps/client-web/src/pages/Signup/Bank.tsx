@@ -66,6 +66,7 @@ export function SignupBank() {
       name: draft.profile.name,
       nameKana: draft.profile.nameKana,
       phone: draft.profile.phone.replace(/[^\d]/g, ""),
+      birthDate: draft.profile.birthDate,
       address: {
         postalCode: draft.profile.postalCode,
         prefecture: draft.profile.prefecture,

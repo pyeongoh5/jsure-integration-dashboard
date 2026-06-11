@@ -77,6 +77,27 @@ export function MeProfile() {
           onChange={setPhone}
           error={touched ? errors.phone : undefined}
         />
+
+        {/* 변경 불가 정보 — 표시 전용 */}
+        <div className="li">
+          <span className="li__label">メールアドレス</span>
+          <div
+            className="li__input"
+            style={{ background: "#f3f4f6", color: "#6b7280" }}
+          >
+            {data?.email ?? "—"}
+          </div>
+        </div>
+        <div className="li">
+          <span className="li__label">生年月日</span>
+          <div
+            className="li__input"
+            style={{ background: "#f3f4f6", color: "#6b7280" }}
+          >
+            {data?.birthDate ?? "—"}
+          </div>
+        </div>
+
         <PrimaryButton onClick={save} disabled={m.isPending}>
           {m.isPending ? "保存中…" : "保存"}
         </PrimaryButton>

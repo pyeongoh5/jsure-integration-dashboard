@@ -10,6 +10,8 @@ import {
 } from "../../components/Address/AddressFormFields";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
+const BIRTH_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TODAY_YMD = new Date().toISOString().slice(0, 10);
 
 export function SignupProfile() {
   const nav = useNavigate();
@@ -17,6 +19,7 @@ export function SignupProfile() {
   const [name, setName] = useState(draft.profile.name);
   const [nameKana, setNameKana] = useState(draft.profile.nameKana);
   const [phone, setPhone] = useState(draft.profile.phone);
+  const [birthDate, setBirthDate] = useState(draft.profile.birthDate);
   const [address, setAddress] = useState<AddressValues>({
     postalCode: draft.profile.postalCode,
     prefecture: draft.profile.prefecture,
@@ -33,6 +36,10 @@ export function SignupProfile() {
     phone: /^\d{10,15}$|^[\d-]{10,20}$/.test(phone)
       ? undefined
       : "電話番号は10~15桁",
+    birthDate:
+      BIRTH_RE.test(birthDate) && birthDate <= TODAY_YMD
+        ? undefined
+        : "生年月日を入力してください",
     ...addressErrors,
   };
   const valid = !Object.values(errors).some((e) => e);
@@ -44,6 +51,7 @@ export function SignupProfile() {
       name,
       nameKana,
       phone,
+      birthDate,
       ...address,
     });
     nav("/signup/sns");
@@ -76,6 +84,19 @@ export function SignupProfile() {
         error={touched ? errors.phone : undefined}
         placeholder="09012345678"
       />
+      <label className="li">
+        <span className="li__label">生年月日</span>
+        <input
+          type="date"
+          className={`li__input ${touched && errors.birthDate ? "li__input--error" : ""}`}
+          value={birthDate}
+          max={TODAY_YMD}
+          onChange={(e) => setBirthDate(e.target.value)}
+        />
+        {touched && errors.birthDate && (
+          <span className="li__error">{errors.birthDate}</span>
+        )}
+      </label>
 
       <AddressFormFields
         values={address}

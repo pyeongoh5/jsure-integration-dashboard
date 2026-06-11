@@ -137,6 +137,9 @@ export class InfluencerAuthController {
       name: inf.name,
       nameKana: inf.nameKana,
       phone: inf.phone,
+      birthDate: inf.birthDate
+        ? inf.birthDate.toISOString().slice(0, 10)
+        : null,
       address: hasAddress
         ? {
             postalCode: inf.postalCode,

@@ -1,8 +1,15 @@
-import { useState } from "react";
-import { CampaignFormSchema, type CampaignForm as Values, type SnsRecruit } from "@jsure/shared";
+import { useEffect, useState } from "react";
+import {
+  CampaignFormSchema,
+  type CampaignForm as Values,
+  type CampaignResponse,
+  type SnsRecruit,
+} from "@jsure/shared";
 import { SnsRecruitList } from "./SnsRecruitList";
 import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
+import { ExcludedCampaignsPicker } from "./ExcludedCampaignsPicker";
 import { uploadCampaignThumbnail, UploadError } from "../../lib/uploads";
+import { listCampaigns } from "../../lib/campaigns";
 import { RichTextEditor } from "../common/RichTextEditor";
 import { serializeRichTextHtml } from "../../lib/richTextImages";
 
@@ -22,6 +29,7 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   referenceMediaUrls: [],
   cautions: "",
   thumbnailUrl: null,
+  excludedCampaignIds: [],
 };
 
 type SnsRecruitItemError = Partial<Record<"minFollowers" | "recruitCount", string>>;
@@ -36,6 +44,8 @@ type Props = {
   submitLabel: string;
   onSubmit: (values: Values) => Promise<void>;
   onCancel: () => void;
+  /** 편집 모드일 때 자기 자신 캠페인 id (제외 목록에서 자신 제거) */
+  selfCampaignId?: string;
 };
 
 function parseIntegerInput(raw: string): number {
@@ -44,8 +54,31 @@ function parseIntegerInput(raw: string): number {
   return Number.isInteger(n) ? n : Number.NaN;
 }
 
-export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: Props) {
+export function CampaignForm({
+  initialValue,
+  submitLabel,
+  onSubmit,
+  onCancel,
+  selfCampaignId,
+}: Props) {
   const [values, setValues] = useState<Values>(initialValue);
+  const [allCampaigns, setAllCampaigns] = useState<CampaignResponse[] | null>(
+    null,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    listCampaigns()
+      .then((rows) => {
+        if (!cancelled) setAllCampaigns(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setAllCampaigns([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
@@ -368,6 +401,21 @@ export function CampaignForm({ initialValue, submitLabel, onSubmit, onCancel }: 
           />
           {errors.cautions && <div className="cf__error">{errors.cautions}</div>}
         </div>
+      </section>
+
+      <section className="cf__section">
+        <h2 className="cf__section-title">참여 제외 캠페인</h2>
+        <p className="cf__sub-label">
+          여기서 선택한 캠페인에 이미 응모한 인플루언서는 이 캠페인에 응모할 수
+          없습니다. (CANCELLED 상태인 응모는 제외)
+        </p>
+        <ExcludedCampaignsPicker
+          allCampaigns={allCampaigns}
+          selfId={selfCampaignId}
+          value={values.excludedCampaignIds ?? []}
+          onChange={(next) => update("excludedCampaignIds", next)}
+          disabled={submitting}
+        />
       </section>
 
       <div className="cf__actions">

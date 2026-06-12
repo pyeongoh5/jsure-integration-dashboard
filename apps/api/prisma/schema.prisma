@@ -101,8 +101,30 @@ model Campaign {
   snsRecruits  CampaignSnsRecruit[]
   applications CampaignApplication[]
 
+  // 이 캠페인이 "제외 대상" 으로 지정한 다른 캠페인들 (E → A,B)
+  exclusionsAsExcluding CampaignExclusion[] @relation("excludingCampaign")
+  // 이 캠페인이 다른 캠페인에 의해 "제외 대상" 으로 지정된 관계 (역방향)
+  exclusionsAsExcluded  CampaignExclusion[] @relation("excludedCampaign")
+
   @@index([recruitStartAt])
   @@map("campaigns")
+}
+
+// 캠페인 응모 시 제외(exclusion) 관계.
+// campaignId 가 신규/현재 캠페인 (E), excludedCampaignId 가 응모 이력이 있으면
+// 이 캠페인 응모를 막을 기준 캠페인 (A,B).
+model CampaignExclusion {
+  id                 String   @id @default(cuid())
+  campaignId         String
+  excludedCampaignId String
+  createdAt          DateTime @default(now())
+
+  campaign         Campaign @relation("excludingCampaign", fields: [campaignId], references: [id], onDelete: Cascade)
+  excludedCampaign Campaign @relation("excludedCampaign", fields: [excludedCampaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, excludedCampaignId])
+  @@index([excludedCampaignId])
+  @@map("campaign_exclusions")
 }
 
 model CampaignSnsRecruit {

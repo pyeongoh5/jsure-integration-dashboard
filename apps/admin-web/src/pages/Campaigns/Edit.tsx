@@ -38,6 +38,7 @@ export function CampaignEdit() {
           referenceMediaUrls: res.referenceMediaUrls,
           cautions: res.cautions,
           thumbnailUrl: res.thumbnailUrl,
+          excludedCampaignIds: res.excludedCampaignIds,
         };
         setState({ kind: "ready", initial });
       })
@@ -91,6 +92,7 @@ export function CampaignEdit() {
         submitLabel="수정 저장"
         onSubmit={handleSubmit}
         onCancel={() => navigate("/campaigns")}
+        selfCampaignId={id}
       />
     </div>
   );

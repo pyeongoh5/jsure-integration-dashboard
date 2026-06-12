@@ -49,6 +49,7 @@ type CampaignRow = {
   createdAt: Date;
   updatedAt: Date;
   snsRecruits: SnsRecruitRow[];
+  exclusionsAsExcluding: { excludedCampaignId: string }[];
 };
 
 type CampaignCounts = { approvedCount: number; appliedCount: number };
@@ -89,6 +90,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     thumbnailUrl: row.thumbnailUrl,
     approvedCount: counts.approvedCount,
     appliedCount: counts.appliedCount,
+    excludedCampaignIds: row.exclusionsAsExcluding.map((e) => e.excludedCampaignId),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -98,6 +100,9 @@ const RECRUITS_INCLUDE = {
   snsRecruits: {
     select: { snsType: true, minFollowers: true, recruitCount: true },
     orderBy: { snsType: "asc" as const },
+  },
+  exclusionsAsExcluding: {
+    select: { excludedCampaignId: true },
   },
 } as const;
 
@@ -176,6 +181,9 @@ export class CampaignsService {
   }
 
   async create(input: CreateCampaignRequest): Promise<CampaignResponse> {
+    const excludedCampaignIds = await this.validateExcludedCampaignIds(
+      input.excludedCampaignIds,
+    );
     const row = await this.prisma.campaign.create({
       data: {
         title: input.title,
@@ -196,10 +204,41 @@ export class CampaignsService {
             recruitCount: r.recruitCount,
           })),
         },
+        exclusionsAsExcluding: {
+          create: excludedCampaignIds.map((excludedCampaignId) => ({
+            excludedCampaignId,
+          })),
+        },
       },
       include: RECRUITS_INCLUDE,
     });
     return this.withResolved(toResponse(row, EMPTY_COUNTS));
+  }
+
+  /**
+   * 입력된 제외 캠페인 id 의 중복 제거 + 실제 존재 여부 검증.
+   * 빈 배열이면 그대로 빈 배열 반환.
+   */
+  private async validateExcludedCampaignIds(
+    ids: string[] | undefined,
+    selfId?: string,
+  ): Promise<string[]> {
+    const unique = Array.from(new Set(ids ?? [])).filter(
+      (id) => id !== selfId,
+    );
+    if (unique.length === 0) return [];
+    const found = await this.prisma.campaign.findMany({
+      where: { id: { in: unique } },
+      select: { id: true },
+    });
+    const foundIds = new Set(found.map((c) => c.id));
+    const invalid = unique.filter((id) => !foundIds.has(id));
+    if (invalid.length > 0) {
+      throw new NotFoundException(
+        `제외 대상 캠페인을 찾을 수 없습니다: ${invalid.join(", ")}`,
+      );
+    }
+    return unique;
   }
 
   async findAll(): Promise<CampaignResponse[]> {
@@ -254,7 +293,12 @@ export class CampaignsService {
     if (input.cautions !== undefined) data.cautions = input.cautions;
     if (input.thumbnailUrl !== undefined) data.thumbnailUrl = input.thumbnailUrl;
 
-    // snsRecruits is a full-replace operation when provided.
+    const validatedExcluded =
+      input.excludedCampaignIds !== undefined
+        ? await this.validateExcludedCampaignIds(input.excludedCampaignIds, id)
+        : null;
+
+    // snsRecruits / exclusions 는 전체 교체.
     const row = await this.prisma.$transaction(async (tx) => {
       if (input.snsRecruits !== undefined) {
         await tx.campaignSnsRecruit.deleteMany({ where: { campaignId: id } });
@@ -266,6 +310,17 @@ export class CampaignsService {
             recruitCount: r.recruitCount,
           })),
         });
+      }
+      if (validatedExcluded !== null) {
+        await tx.campaignExclusion.deleteMany({ where: { campaignId: id } });
+        if (validatedExcluded.length > 0) {
+          await tx.campaignExclusion.createMany({
+            data: validatedExcluded.map((excludedCampaignId) => ({
+              campaignId: id,
+              excludedCampaignId,
+            })),
+          });
+        }
       }
       return tx.campaign.update({
         where: { id },

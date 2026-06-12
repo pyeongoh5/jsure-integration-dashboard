@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { BroadcastJob } from "@jsure/shared";
-import { listBroadcastJobs } from "../../lib/broadcasts";
+import { listBroadcastJobs } from "../api";
 import "./BroadcastProgressDock.css";
 
 /**

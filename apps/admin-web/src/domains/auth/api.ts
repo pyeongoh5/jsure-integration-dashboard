@@ -11,7 +11,7 @@ import {
   type RegisterResponse,
   type SessionSummary,
 } from "@jsure/shared";
-import { api } from "./api";
+import { api } from "@/lib/api";
 
 const TOKEN_KEY = "accessToken";
 const REFRESH_KEY = "refreshToken";

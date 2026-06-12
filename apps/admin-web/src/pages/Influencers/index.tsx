@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AdminInfluencer, SnsType } from "@jsure/shared";
-import { listInfluencers } from "@/lib/influencers";
-import { BroadcastDialog } from "@/components/Influencers/BroadcastDialog";
+import { listInfluencers } from "@/domains/influencer";
+import { BroadcastDialog } from "@/domains/broadcast";
 import "./Influencers.css";
 
 const SNS_ICON: Record<SnsType, string> = {

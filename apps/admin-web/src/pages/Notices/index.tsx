@@ -1,10 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { NoticeTable } from "@/components/Notices/NoticeTable";
-import { NoticeDeleteDialog } from "@/components/Notices/NoticeDeleteDialog";
-import { useNoticesData } from "@/components/Notices/useNoticesData";
-import { useNoticeMutations } from "@/components/Notices/useNoticeMutations";
-import { toNoticeRow } from "@/components/Notices/noticeTransform";
+import { NoticeTable, NoticeDeleteDialog, useNoticesData, useNoticeMutations, toNoticeRow } from "@/domains/notice";
 import "./Notices.css";
 
 export function Notices() {

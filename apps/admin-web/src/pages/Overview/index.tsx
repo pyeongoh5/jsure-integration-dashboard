@@ -1,9 +1,9 @@
-import { getStoredUser } from "@/lib/auth";
+import { getStoredUser } from "@/domains/auth";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "../../ui/Card";
 import { MonthlyCampaignChart } from "./MonthlyCampaignChart";
-import { getOverviewStats } from "../../lib/overview";
+import { getOverviewStats } from "@/domains/overview";
 import "./Overview.css";
 import { ReactNode } from "react";
 

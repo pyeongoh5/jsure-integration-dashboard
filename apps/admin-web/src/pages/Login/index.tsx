@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { LoginRequestSchema } from "@jsure/shared";
-import { login } from "@/lib/auth";
+import { login } from "@/domains/auth";
 import { hangulToEn } from "@/lib/hangulToEn";
 import "../_shared/Auth.css";
 

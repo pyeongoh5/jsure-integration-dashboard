@@ -15,8 +15,8 @@ import {
   RichTextImageUploadError,
   startRichTextImageUpload,
 } from "../../lib/richTextImages";
-import { ResizableImageView } from "../Notices/ResizableImageView";
-import "../Notices/NoticeEditor.css";
+import { ResizableImageView } from "./ResizableImageView";
+import "./NoticeEditor.css";
 
 type Props = {
   value: string;

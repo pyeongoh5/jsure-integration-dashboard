@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { NoticeForm, type NoticeFormValue } from "@/components/Notices/NoticeForm";
-import { useNoticeMutations } from "@/components/Notices/useNoticeMutations";
-import { getNotice } from "@/lib/notices";
+import { NoticeForm, type NoticeFormValue, useNoticeMutations, getNotice } from "@/domains/notice";
 import "./Notices.css";
 
 type Mode = "create" | "edit";

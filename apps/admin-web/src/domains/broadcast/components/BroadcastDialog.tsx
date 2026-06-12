@@ -1,15 +1,15 @@
 import { useMemo, useRef, useState } from "react";
 import type { AdminInfluencer, SnsType } from "@jsure/shared";
-import { RichTextEditor } from "../common/RichTextEditor";
+import { RichTextEditor } from "@/components/common/RichTextEditor";
 import {
   RichTextImageUploadError,
   serializeRichTextHtml,
   startRichTextImageUpload,
-} from "../../lib/richTextImages";
-import { sendBroadcastMessage } from "../../lib/broadcasts";
+} from "@/lib/richTextImages";
+import { sendBroadcastMessage } from "../api";
 import "./BroadcastDialog.css";
 // SNS 칩 스타일은 인플루언서 페이지의 것을 그대로 재사용
-import "../../pages/Influencers/Influencers.css";
+import "@/pages/Influencers/Influencers.css";
 
 const SNS_ICON: Record<SnsType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",

@@ -11,7 +11,7 @@ import {
   type UpdateNoticeRequest,
   type UploadContentType,
 } from "@jsure/shared";
-import { api } from "./api";
+import { api } from "@/lib/api";
 
 export async function listNotices(): Promise<AdminNoticeListResponse> {
   const res = await api.get("/admin/notices");

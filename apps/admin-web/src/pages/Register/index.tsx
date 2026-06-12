@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { RegisterRequestSchema } from "@jsure/shared";
-import { register } from "@/lib/auth";
+import { register } from "@/domains/auth";
 import { hangulToEn } from "@/lib/hangulToEn";
 import "../_shared/Auth.css";
 

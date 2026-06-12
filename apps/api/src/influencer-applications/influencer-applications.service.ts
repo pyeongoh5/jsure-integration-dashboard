@@ -16,6 +16,7 @@ import {
   deriveDisplayStage,
   postingDeadline,
 } from "../influencer-campaigns/display-stage";
+import { ensureSettlementForPost } from "../settlements/ensure-settlement";
 
 type PostRow = {
   id: string;
@@ -504,6 +505,8 @@ export class InfluencerApplicationsService {
     if (input.attachments && input.attachments.length > 0) {
       await this.uploads.attachInsightUploads(post.id, input.attachments);
     }
+    // 투고가 이미 승인된 상태라면 인사이트 제출 시점에 자동 정산.
+    await ensureSettlementForPost(this.prisma, post.id);
     return this.getForInfluencer(influencerId, applicationId);
   }
 

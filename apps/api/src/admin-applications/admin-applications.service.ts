@@ -13,6 +13,7 @@ import type {
 import { PrismaService } from "../prisma/prisma.service";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 import { R2Service } from "../r2/r2.service";
+import { ensureSettlementForPost } from "../settlements/ensure-settlement";
 
 type AdminApplicationRow = {
   id: string;
@@ -349,6 +350,8 @@ export class AdminApplicationsService {
         reviewedById: reviewerId,
       },
     });
+    // 인사이트가 이미 제출돼 있던 경우, 승인 시점에 자동 정산.
+    await ensureSettlementForPost(this.prisma, postId);
     return this.fetchSubmittedPost(postId);
   }
 

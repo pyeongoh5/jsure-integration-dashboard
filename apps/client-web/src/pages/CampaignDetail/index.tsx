@@ -2,8 +2,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { SnsType } from "@jsure/shared";
 import { getCampaign } from "../../lib/api/campaigns";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { PrimaryButton } from "../../components/form/PrimaryButton";
+import { PageHeader } from "../../components/composites/PageHeader";
+import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import "./CampaignDetail.css";
 
 const SNS_ICON: Record<SnsType, string> = {

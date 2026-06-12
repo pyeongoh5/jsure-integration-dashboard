@@ -5,9 +5,9 @@ import type { SnsType } from "@jsure/shared";
 import { getCampaign } from "../../lib/api/campaigns";
 import { createApplication } from "../../lib/api/applications";
 import { fetchMe } from "../../lib/api/auth";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { PrimaryButton } from "../../components/form/PrimaryButton";
-import { ErrorBanner } from "../../components/form/ErrorBanner";
+import { PageHeader } from "../../components/composites/PageHeader";
+import { PrimaryButton } from "../../components/composites/PrimaryButton";
+import { ErrorBanner } from "../../components/composites/ErrorBanner";
 import "./Apply.css";
 
 const CONFIRM_KEYS = [

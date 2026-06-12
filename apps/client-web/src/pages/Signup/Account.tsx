@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LabeledInput } from "../../components/form/LabeledInput";
+import { LabeledInput } from "../../components/composites/LabeledInput";
 import { WizardFooter } from "../../components/Signup/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 

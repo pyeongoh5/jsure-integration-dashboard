@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { SnsType } from "@jsure/shared";
-import { LabeledInput } from "../form/LabeledInput";
-import { PrimaryButton } from "../form/PrimaryButton";
+import { LabeledInput } from "../composites/LabeledInput";
+import { PrimaryButton } from "../composites/PrimaryButton";
 
 interface Props {
   snsType: SnsType;

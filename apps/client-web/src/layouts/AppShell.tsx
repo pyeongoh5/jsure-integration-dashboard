@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { BottomTabBar } from "../components/layout/BottomTabBar";
+import { BottomTabBar } from "../components/composites/BottomTabBar";
 import { RequireAuth } from "../components/layout/RequireAuth";
 import "./AppShell.css";
 

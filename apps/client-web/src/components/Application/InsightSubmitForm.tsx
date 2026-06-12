@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { SnsType } from "@jsure/shared";
-import { LabeledInput } from "../form/LabeledInput";
-import { PrimaryButton } from "../form/PrimaryButton";
+import { LabeledInput } from "../composites/LabeledInput";
+import { PrimaryButton } from "../composites/PrimaryButton";
 import { presignInsightUpload } from "../../lib/api/applications";
 import "./InsightSubmitForm.css";
 

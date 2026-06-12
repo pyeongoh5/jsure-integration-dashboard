@@ -1,4 +1,4 @@
-import { Breadcrumb } from "@/components/Breadcrumb";
+import { Breadcrumb } from "@/components/composites/Breadcrumb";
 
 export const Header = () => {
   return (

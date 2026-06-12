@@ -39,32 +39,107 @@
   padding: 16px;
 }
 
+.cdetail__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .cdetail__title {
   font-size: 17px;
   font-weight: 700;
   line-height: 1.4;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .cdetail__reward {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 800;
-  margin-top: 8px;
+  white-space: nowrap;
+  color: #111827;
 }
 
 .cdetail__period {
   font-size: 12px;
   color: #6b7280;
-  margin-top: 4px;
+  margin-top: 6px;
+}
+
+.cdetail__sns {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cdetail__sns-row {
+  display: grid;
+  grid-template-columns: 18px auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  color: #374151;
+}
+
+.cdetail__sns-row i {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.cdetail__sns-row--instagram i { color: #e1306c; }
+.cdetail__sns-row--tiktok i { color: #111827; }
+.cdetail__sns-row--x i { color: #111827; }
+.cdetail__sns-row--youtube i { color: #ff0000; }
+
+.cdetail__sns-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.cdetail__sns-count {
+  justify-self: end;
+  color: #1d6cf3;
+  font-weight: 700;
+}
+
+.cdetail__sns-cond {
+  grid-column: 2 / -1;
+  color: #6b7280;
+  font-size: 11px;
 }
 
 .cdetail__section {
-  margin-top: 22px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
 }
 
 .cdetail__section h3 {
   font-size: 14px;
   font-weight: 700;
-  margin-bottom: 8px;
+  color: #111827;
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cdetail__section h3::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 13px;
+  background: #1d6cf3;
+  border-radius: 2px;
 }
 
 .cdetail__section p {

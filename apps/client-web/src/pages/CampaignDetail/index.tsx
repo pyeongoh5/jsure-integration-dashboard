@@ -1,10 +1,24 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import type { SnsType } from "@jsure/shared";
 import { getCampaign } from "../../lib/api/campaigns";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { PrimaryButton } from "../../components/form/PrimaryButton";
-import { SnsBadgeList } from "../../components/Campaign/SnsBadgeList";
 import "./CampaignDetail.css";
+
+const SNS_ICON: Record<SnsType, string> = {
+  INSTAGRAM: "fa-brands fa-instagram",
+  TIKTOK: "fa-brands fa-tiktok",
+  YOUTUBE: "fa-brands fa-youtube",
+  X: "fa-brands fa-x-twitter",
+};
+
+const SNS_LABEL: Record<SnsType, string> = {
+  INSTAGRAM: "Instagram",
+  TIKTOK: "TikTok",
+  YOUTUBE: "YouTube",
+  X: "X",
+};
 
 function formatYen(v: number) {
   return `¥${v.toLocaleString("ja-JP")}`;
@@ -58,13 +72,29 @@ export function CampaignDetail() {
       />
 
       <div className="cdetail__body">
-        <h1 className="cdetail__title">{data.title}</h1>
-        <div className="cdetail__reward">{formatYen(data.rewardJpy)}</div>
+        <div className="cdetail__head">
+          <h1 className="cdetail__title">{data.title}</h1>
+          <div className="cdetail__reward">{formatYen(data.rewardJpy)}</div>
+        </div>
         <div className="cdetail__period">
           募集 {formatDate(data.recruitStartAt)} 〜 {formatDate(data.recruitEndAt)}
         </div>
 
-        <SnsBadgeList recruits={data.snsRecruits} />
+        <ul className="cdetail__sns">
+          {data.snsRecruits.map((r) => (
+            <li key={r.snsType} className={`cdetail__sns-row cdetail__sns-row--${r.snsType.toLowerCase()}`}>
+              <i className={SNS_ICON[r.snsType]} aria-hidden="true" />
+              <span className="cdetail__sns-name">{SNS_LABEL[r.snsType]}</span>
+              <span className="cdetail__sns-count">募集 {r.recruitCount}名</span>
+              <span className="cdetail__sns-cond">
+                条件:{" "}
+                {r.minFollowers > 0
+                  ? `${r.snsType === "YOUTUBE" ? "登録者" : "フォロワー"}数 ${r.minFollowers.toLocaleString("ja-JP")}+`
+                  : "制限なし"}
+              </span>
+            </li>
+          ))}
+        </ul>
 
         <section className="cdetail__section">
           <h3>商品</h3>
@@ -80,24 +110,6 @@ export function CampaignDetail() {
           >
             商品ページを見る →
           </a>
-        </section>
-
-        <section className="cdetail__section">
-          <h3>SNS別募集</h3>
-          <ul className="cdetail__rlist">
-            {data.snsRecruits.map((r) => (
-              <li key={r.snsType}>
-                <b>{r.snsType}</b>
-                <span>{r.recruitCount}名</span>
-                {r.minFollowers > 0 && (
-                  <p>
-                    {r.snsType === "YOUTUBE" ? "登録者" : "フォロワー"}{" "}
-                    {r.minFollowers.toLocaleString()}人以上
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
         </section>
 
         <section className="cdetail__section">

@@ -1,7 +1,7 @@
 import { getStoredUser } from "@/domains/auth";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Card } from "../../ui/Card";
+import { Card } from "@/components/composites/Card";
 import { MonthlyCampaignChart } from "./MonthlyCampaignChart";
 import { getOverviewStats } from "@/domains/overview";
 import "./Overview.css";

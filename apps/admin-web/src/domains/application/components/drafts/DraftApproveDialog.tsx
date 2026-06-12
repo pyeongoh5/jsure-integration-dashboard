@@ -1,4 +1,4 @@
-import { ConfirmDialog } from "@/ui/ConfirmDialog";
+import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
 import type { DraftReview } from "./types";
 
 type Props = {

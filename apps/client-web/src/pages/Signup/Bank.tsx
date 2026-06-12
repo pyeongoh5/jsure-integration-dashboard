@@ -8,7 +8,7 @@ import {
 import { LabeledInput } from "../../components/composites/LabeledInput";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 import { BankSelect } from "@/domains/me";
-import { WizardFooter } from "../../components/Signup/WizardFooter";
+import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import {
   getLineSignupToken,
   setLineSignupTokenStorage,

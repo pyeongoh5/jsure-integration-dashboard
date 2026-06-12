@@ -14,7 +14,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import {
   RichTextImageUploadError,
   startRichTextImageUpload,
-} from "../../lib/richTextImages";
+} from "@/lib/richTextImages";
 import { ResizableImageView } from "./ResizableImageView";
 import "./NoticeEditor.css";
 

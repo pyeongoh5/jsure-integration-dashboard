@@ -13,8 +13,8 @@ import Color from "@tiptap/extension-color";
 import FontFamily from "@tiptap/extension-font-family";
 import TextAlign from "@tiptap/extension-text-align";
 import { startNoticeImageUpload, NoticeImageUploadError } from "../api";
-import { ResizableImageView } from "@/components/common/ResizableImageView";
-import "@/components/common/NoticeEditor.css";
+import { ResizableImageView } from "@/components/composites/RichTextEditor/ResizableImageView";
+import "@/components/composites/RichTextEditor/NoticeEditor.css";
 
 const ImageWithR2Key = Image.extend({
   addAttributes() {

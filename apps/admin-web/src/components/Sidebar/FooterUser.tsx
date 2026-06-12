@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStoredUser, logout } from "@/domains/auth";
-import { ConfirmDialog } from "@/ui/ConfirmDialog";
+import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
 
 function initials(name: string | null, email: string): string {
   if (name && name.trim()) {

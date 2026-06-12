@@ -1,0 +1,40 @@
+import type {
+  ApplicationStatus,
+  InfluencerApplication,
+  SnsType,
+} from "@jsure/shared";
+
+export type StatusFilter =
+  | "all"
+  | "applied"
+  | "rejected"
+  | "in_progress"
+  | "ended";
+
+/** 상태 필터 → 실제 status 집합. null 이면 전체. CANCELLED 는 서버에서 이미 제외됨. */
+export const STATUS_FILTER_GROUPS: Record<
+  StatusFilter,
+  ApplicationStatus[] | null
+> = {
+  all: null,
+  applied: ["APPLIED"],
+  rejected: ["REJECTED"],
+  in_progress: ["APPROVED", "SHIPPED", "DELIVERED"],
+  ended: ["COMPLETED"],
+};
+
+export function filterApplications(
+  applications: InfluencerApplication[],
+  statusFilter: StatusFilter,
+  selectedSnsTypes: Set<SnsType>,
+): InfluencerApplication[] {
+  const statuses = STATUS_FILTER_GROUPS[statusFilter];
+  return applications.filter((application) => {
+    const statusMatch =
+      statuses === null || statuses.includes(application.status);
+    const snsMatch =
+      selectedSnsTypes.size === 0 ||
+      selectedSnsTypes.has(application.snsType);
+    return statusMatch && snsMatch;
+  });
+}

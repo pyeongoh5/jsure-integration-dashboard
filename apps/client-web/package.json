@@ -13,11 +13,13 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
+    "@hookform/resolvers": "^5.4.0",
     "@jsure/shared": "workspace:*",
     "@tanstack/react-query": "^5.59.16",
     "axios": "^1.7.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-hook-form": "^7.78.0",
     "react-router-dom": "^6.27.0"
   },
   "devDependencies": {

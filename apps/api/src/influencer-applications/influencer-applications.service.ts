@@ -220,6 +220,7 @@ export class InfluencerApplicationsService {
         snsRecruits: {
           select: { snsType: true, minFollowers: true, recruitCount: true },
         },
+        exclusionsAsExcluding: { select: { excludedCampaignId: true } },
       },
     });
     if (!campaign) {
@@ -239,6 +240,26 @@ export class InfluencerApplicationsService {
         code: "OUT_OF_RECRUIT_PERIOD",
         message: "募集はまだ開始していません",
       });
+    }
+
+    // 제외 캠페인에 "같은 SNS"로 응모한 이력이 있으면 그 SNS 응모만 차단 (CANCELLED 제외)
+    const excludedCampaignIds = campaign.exclusionsAsExcluding.map(
+      (exclusion) => exclusion.excludedCampaignId,
+    );
+    const excludedSnsTypes = new Set<SnsType>();
+    if (excludedCampaignIds.length > 0) {
+      const priorOnExcluded = await this.prisma.campaignApplication.findMany({
+        where: {
+          influencerId,
+          campaignId: { in: excludedCampaignIds },
+          status: { not: "CANCELLED" },
+        },
+        select: { snsType: true },
+        distinct: ["snsType"],
+      });
+      for (const application of priorOnExcluded) {
+        excludedSnsTypes.add(application.snsType);
+      }
     }
 
     const influencerSns = await this.prisma.influencerSnsAccount.findMany({
@@ -266,11 +287,22 @@ export class InfluencerApplicationsService {
     }
 
     const qualifyingSet = new Set(qualifyingSns);
-    const invalid = snsTypes.filter((s) => !qualifyingSet.has(s));
+    const invalid = snsTypes.filter((snsType) => !qualifyingSet.has(snsType));
     if (invalid.length > 0) {
       throw new BadRequestException({
         code: "SNS_NOT_QUALIFIED",
         message: "応募条件を満たさないSNSが含まれています",
+      });
+    }
+
+    const blockedByExclusion = snsTypes.filter((snsType) =>
+      excludedSnsTypes.has(snsType),
+    );
+    if (blockedByExclusion.length > 0) {
+      throw new BadRequestException({
+        code: "EXCLUDED_BY_PREVIOUS_APPLICATION",
+        message:
+          "同種のキャンペーンに既に応募済みのため、このSNSでは応募できません",
       });
     }
 

@@ -122,6 +122,33 @@
   height: 18px;
 }
 
+.apply__address {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #111827;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.apply__address--missing {
+  color: #ef4444;
+}
+
+.apply__address-edit {
+  display: block;
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
 .apply__cta {
   position: fixed;
   bottom: 70px;

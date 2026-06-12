@@ -45,6 +45,7 @@ export function Apply() {
   const [agreed, setAgreed] = useState<Set<string>>(new Set());
   const [selectedSns, setSelectedSns] = useState<Set<SnsType>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
 
   const campaign = useQuery({
     queryKey: ["influencer-campaign", id],
@@ -209,6 +210,50 @@ export function Apply() {
         </section>
 
         <section className="apply__sec">
+          <h3>お届け先住所</h3>
+          {me.data?.address ? (
+            <>
+              <div className="apply__address">
+                〒{me.data.address.postalCode}
+                <br />
+                {me.data.address.prefecture}
+                {me.data.address.city}
+                {me.data.address.addressLine1}
+                {me.data.address.addressLine2
+                  ? ` ${me.data.address.addressLine2}`
+                  : ""}
+              </div>
+              <label className="apply__chk">
+                <input
+                  type="checkbox"
+                  checked={addressConfirmed}
+                  onChange={() => setAddressConfirmed((prev) => !prev)}
+                />
+                <span>この住所で受け取ります</span>
+              </label>
+              <button
+                type="button"
+                className="apply__address-edit"
+                onClick={() => nav("/me/address")}
+              >
+                住所を修正する
+              </button>
+            </>
+          ) : (
+            <div className="apply__address apply__address--missing">
+              お届け先住所が未登録です。
+              <button
+                type="button"
+                className="apply__address-edit"
+                onClick={() => nav("/me/address")}
+              >
+                住所を登録する
+              </button>
+            </div>
+          )}
+        </section>
+
+        <section className="apply__sec">
           <h3>応募にあたっての再確認</h3>
           {CONFIRM_KEYS.map((k) => (
             <label key={k} className="apply__chk">
@@ -232,6 +277,8 @@ export function Apply() {
             !allAgreed ||
             !hasSelection ||
             qualifying.length === 0 ||
+            !me.data?.address ||
+            !addressConfirmed ||
             apply.isPending
           }
           onClick={() => apply.mutate()}

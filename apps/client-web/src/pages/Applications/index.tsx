@@ -51,6 +51,7 @@ export function Applications() {
           onStatusChange={setStatusFilter}
           selectedSnsTypes={selectedSnsTypes}
           onToggleSns={toggleSns}
+          onClearSns={() => setSelectedSnsTypes(new Set())}
         />
       )}
 

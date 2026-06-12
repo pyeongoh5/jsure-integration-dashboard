@@ -5,7 +5,7 @@ import {
   type InfluencerCampaignDetail,
   type SnsType,
 } from "@jsure/shared";
-import { api } from "../api";
+import { api } from "@/lib/api";
 
 export async function listCampaigns(sns?: SnsType): Promise<InfluencerCampaignCard[]> {
   const res = await api.get("/influencer/campaigns", {

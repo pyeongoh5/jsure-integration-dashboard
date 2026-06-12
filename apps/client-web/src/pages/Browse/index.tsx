@@ -1,20 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { SnsTypeSchema, type SnsType } from "@jsure/shared";
-import { CampaignCard } from "../../components/Campaign/CampaignCard";
-import { SnsTabBar } from "../../components/Campaign/SnsTabBar";
-import { listCampaigns } from "../../lib/api/campaigns";
+import { CampaignCard, SnsTabBar, useCampaignList } from "@/domains/campaign";
 import "./Browse.css";
 
 export function Browse() {
   const nav = useNavigate();
   const [sns, setSns] = useState<SnsType>(SnsTypeSchema.options[0]);
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["influencer-campaigns", sns],
-    queryFn: () => listCampaigns(sns),
-  });
+  const { data, isLoading, isError } = useCampaignList(sns);
 
   return (
     <div className="browse">

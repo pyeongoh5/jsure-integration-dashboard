@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AdminSubmittedPost } from "@jsure/shared";
-import { listSubmittedPosts } from "@/lib/draftReviews";
+import { listSubmittedPosts } from "../draftsApi";
 import { countByTab, toDraftReview } from "./draftTransform";
 import type { DraftReview, DraftReviewCounts } from "./types";
 

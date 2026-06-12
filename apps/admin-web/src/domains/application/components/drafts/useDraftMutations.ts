@@ -4,7 +4,7 @@ import {
   rejectSubmittedPost,
   settleSubmittedPost,
   undoSubmittedPostReview,
-} from "@/lib/draftReviews";
+} from "../draftsApi";
 import type { DraftReview } from "./types";
 
 export type PendingDraftActionType = "approve" | "reject" | "undo";

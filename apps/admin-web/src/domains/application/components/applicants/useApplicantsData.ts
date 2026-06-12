@@ -6,7 +6,7 @@ import type {
 import {
   getApplicationCounts,
   listApplications,
-} from "@/lib/applications";
+} from "../api";
 import type { Applicant, ApplicantStatus, StatusCounts } from "./types";
 import {
   TAB_TO_STATUSES,

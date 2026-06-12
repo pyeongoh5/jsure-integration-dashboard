@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AdminSettlement } from "@jsure/shared";
-import { completeSettlements, listSettlements } from "@/lib/draftReviews";
+import { completeSettlements, listSettlements } from "@/domains/application";
 import "./Payouts.css";
 
 type LoadState =

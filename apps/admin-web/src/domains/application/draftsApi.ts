@@ -5,7 +5,7 @@ import {
   type AdminSettlement,
   type AdminSubmittedPost,
 } from "@jsure/shared";
-import { api } from "./api";
+import { api } from "@/lib/api";
 
 export async function listSubmittedPosts(): Promise<AdminSubmittedPost[]> {
   const res = await api.get("/campaign-applications/submitted-posts");

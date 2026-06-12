@@ -250,4 +250,11 @@
   padding: 12px 16px;
   background: #fff;
   border-top: 1px solid #f3f4f6;
+  display: flex;
+  gap: 8px;
+}
+
+.cdetail__cta > * {
+  flex: 1;
+  min-width: 0;
 }

@@ -1,22 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import type { SnsType } from "@jsure/shared";
-import { listApplications } from "../../lib/api/applications";
-import { ApplicationCard } from "../../components/Application/ApplicationCard";
-import { ApplicationFilters } from "../../components/Application/ApplicationFilters";
 import {
+  ApplicationCard,
+  ApplicationFilters,
   filterApplications,
+  useApplications,
   type StatusFilter,
-} from "../../components/Application/applicationFilter";
+} from "@/domains/application";
 import "./Applications.css";
 
 export function Applications() {
   const nav = useNavigate();
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["applications"],
-    queryFn: listApplications,
-  });
+  const { data, isLoading, isError } = useApplications();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selectedSnsTypes, setSelectedSnsTypes] = useState<Set<SnsType>>(

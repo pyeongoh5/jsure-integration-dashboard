@@ -1,5 +1,5 @@
 import type { ApplicationDisplayStage } from "@jsure/shared";
-import { STAGE_LABEL, STAGE_VARIANT } from "../../lib/stage";
+import { STAGE_LABEL, STAGE_VARIANT } from "../utils";
 import "./StageBadge.css";
 
 export function StageBadge({ stage }: { stage: ApplicationDisplayStage }) {

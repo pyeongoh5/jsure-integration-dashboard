@@ -4,7 +4,7 @@ import {
   type InfluencerApplication,
   type SnsType,
 } from "@jsure/shared";
-import { api } from "../api";
+import { api } from "@/lib/api";
 
 export async function listApplications(): Promise<InfluencerApplication[]> {
   const res = await api.get("/influencer/applications");

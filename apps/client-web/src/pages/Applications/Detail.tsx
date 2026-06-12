@@ -1,21 +1,21 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { SnsType } from "@jsure/shared";
 import { useState } from "react";
 import {
+  ApplicationStepper,
+  InsightSubmitForm,
+  PostSubmitForm,
+  ReceiptConfirmDialog,
+  StageBadge,
   cancelApplication,
   confirmReceipt,
-  getApplication,
   submitInsight,
   submitPost,
-} from "../../lib/api/applications";
-import { ReceiptConfirmDialog } from "../../components/Application/ReceiptConfirmDialog";
-import { PageHeader } from "../../components/composites/PageHeader";
-import { PrimaryButton } from "../../components/composites/PrimaryButton";
-import { StageBadge } from "../../components/Application/StageBadge";
-import { ApplicationStepper } from "../../components/Application/ApplicationStepper";
-import { PostSubmitForm } from "../../components/Application/PostSubmitForm";
-import { InsightSubmitForm } from "../../components/Application/InsightSubmitForm";
+  useApplication,
+} from "@/domains/application";
+import { PageHeader } from "@/components/composites/PageHeader";
+import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import "./ApplicationDetail.css";
 
 export function ApplicationDetail() {
@@ -23,11 +23,7 @@ export function ApplicationDetail() {
   const nav = useNavigate();
   const qc = useQueryClient();
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["application", id],
-    queryFn: () => getApplication(id),
-    enabled: !!id,
-  });
+  const { data, isLoading, isError } = useApplication(id);
 
   function invalidate() {
     qc.invalidateQueries({ queryKey: ["application", id] });

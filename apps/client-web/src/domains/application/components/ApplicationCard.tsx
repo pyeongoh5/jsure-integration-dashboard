@@ -1,5 +1,5 @@
 import type { InfluencerApplication } from "@jsure/shared";
-import { STAGE_PROGRESS, STAGE_TOTAL } from "../../lib/stage";
+import { STAGE_PROGRESS, STAGE_TOTAL } from "../utils";
 import { StageBadge } from "./StageBadge";
 import "./ApplicationCard.css";
 

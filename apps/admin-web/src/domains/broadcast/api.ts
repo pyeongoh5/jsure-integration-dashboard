@@ -6,7 +6,7 @@ import {
   type BroadcastMessageRequest,
   type BroadcastMessageResponse,
 } from "@jsure/shared";
-import { api } from "./api";
+import { api } from "@/lib/api";
 
 export async function sendBroadcastMessage(
   input: BroadcastMessageRequest,

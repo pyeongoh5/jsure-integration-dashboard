@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import "./AdminLayout.css";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
-import { BroadcastProgressDock } from "@/components/Influencers/BroadcastProgressDock";
+import { BroadcastProgressDock } from "@/domains/broadcast";
 
 export function AdminLayout() {
   return (

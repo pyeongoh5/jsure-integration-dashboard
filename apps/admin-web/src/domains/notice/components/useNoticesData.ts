@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { NoticeResponse } from "@jsure/shared";
-import { listNotices } from "../../lib/notices";
+import { listNotices } from "../api";
 
 type State = {
   notices: NoticeResponse[];

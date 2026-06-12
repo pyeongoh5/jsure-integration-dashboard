@@ -12,9 +12,9 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import FontFamily from "@tiptap/extension-font-family";
 import TextAlign from "@tiptap/extension-text-align";
-import { startNoticeImageUpload, NoticeImageUploadError } from "../../lib/notices";
-import { ResizableImageView } from "./ResizableImageView";
-import "./NoticeEditor.css";
+import { startNoticeImageUpload, NoticeImageUploadError } from "../api";
+import { ResizableImageView } from "@/components/common/ResizableImageView";
+import "@/components/common/NoticeEditor.css";
 
 const ImageWithR2Key = Image.extend({
   addAttributes() {

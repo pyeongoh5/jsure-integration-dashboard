@@ -5,8 +5,8 @@ import {
   listAdminUsers,
   rejectAdminUser,
   updateAdminUserRole,
-} from "@/lib/adminUsers";
-import { getStoredUser } from "@/lib/auth";
+} from "@/domains/team";
+import { getStoredUser } from "@/domains/auth";
 import "./Team.css";
 
 const ROLE_META: Record<AdminUserRole, { label: string; className: string }> = {

@@ -4,7 +4,7 @@ import type {
   NoticeResponse,
   UpdateNoticeRequest,
 } from "@jsure/shared";
-import { createNotice, deleteNotice, updateNotice } from "../../lib/notices";
+import { createNotice, deleteNotice, updateNotice } from "../api";
 
 type Options = {
   onMutated?: () => void | Promise<void>;

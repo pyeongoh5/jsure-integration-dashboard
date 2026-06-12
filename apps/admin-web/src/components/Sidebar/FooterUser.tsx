@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getStoredUser, logout } from "@/lib/auth";
+import { getStoredUser, logout } from "@/domains/auth";
 import { ConfirmDialog } from "@/ui/ConfirmDialog";
 
 function initials(name: string | null, email: string): string {

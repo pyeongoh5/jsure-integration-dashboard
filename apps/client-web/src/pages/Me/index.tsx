@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchMe } from "../../lib/api/auth";
+import { fetchMe } from "@/domains/auth";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
 import "./Me.css";
 

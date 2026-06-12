@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { InfluencerBankAccountSchema } from "@jsure/shared";
-import { fetchMe } from "../../lib/api/auth";
-import { upsertBankAccount } from "../../lib/api/me";
+import { fetchMe } from "@/domains/auth";
+import { upsertBankAccount } from "@/domains/me";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { LabeledInput } from "../../components/composites/LabeledInput";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
-import { BankSelect } from "../../components/Bank/BankSelect";
+import { BankSelect } from "@/domains/me";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { InfluencerNoticeDetail } from "@jsure/shared";
-import { getNotice } from "../../lib/api/notices";
+import { getNotice } from "../api";
 
 type State = {
   notice: InfluencerNoticeDetail | null;

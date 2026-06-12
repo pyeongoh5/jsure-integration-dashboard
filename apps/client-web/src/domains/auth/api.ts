@@ -7,7 +7,7 @@ import {
   type InfluencerSignupRequest,
   type LineCompleteSignupRequest,
 } from "@jsure/shared";
-import { api } from "../api";
+import { api } from "@/lib/api";
 
 export async function signup(
   input: InfluencerSignupRequest,

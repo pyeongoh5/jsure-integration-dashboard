@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { fetchMe } from "../../lib/api/auth";
+import { fetchMe } from "@/domains/auth";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
 import { TOKEN_STORAGE_KEY } from "../../lib/api";
 

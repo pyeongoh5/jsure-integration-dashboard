@@ -7,7 +7,7 @@ import {
 } from "@jsure/shared";
 import { LabeledInput } from "../../components/composites/LabeledInput";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
-import { BankSelect } from "../../components/Bank/BankSelect";
+import { BankSelect } from "@/domains/me";
 import { WizardFooter } from "../../components/Signup/WizardFooter";
 import {
   getLineSignupToken,
@@ -18,7 +18,7 @@ import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
 import {
   lineCompleteSignup,
   signup as signupApi,
-} from "../../lib/api/auth";
+} from "@/domains/auth";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
 

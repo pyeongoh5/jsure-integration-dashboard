@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { SnsType } from "@jsure/shared";
 import { useCampaign } from "@/domains/campaign";
 import { createApplication } from "@/domains/application";
-import { fetchMe } from "../../lib/api/auth";
+import { fetchMe } from "@/domains/auth";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";

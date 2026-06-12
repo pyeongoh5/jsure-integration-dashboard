@@ -2,15 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UpdateInfluencerAddressRequest } from "@jsure/shared";
-import { fetchMe } from "../../lib/api/auth";
-import { updateAddress } from "../../lib/api/me";
+import { fetchMe } from "@/domains/auth";
+import { updateAddress } from "@/domains/me";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import {
   AddressFormFields,
   validateAddress,
   type AddressValues,
-} from "../../components/Address/AddressFormFields";
+} from "@/domains/me";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 
 const EMPTY: AddressValues = {

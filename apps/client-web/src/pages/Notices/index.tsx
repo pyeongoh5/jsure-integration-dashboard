@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { useNoticesData } from "../../components/Notices/useNoticesData";
-import { useReadNoticeIds } from "../../components/Notices/useReadNotices";
+import { useNoticesData } from "@/domains/notice";
+import { useReadNoticeIds } from "@/domains/notice";
 import "./Notices.css";
 
 function formatDate(iso: string): string {

@@ -5,7 +5,7 @@ import type {
   UpdateInfluencerAddressRequest,
   UpdateInfluencerProfileRequest,
 } from "@jsure/shared";
-import { api } from "../api";
+import { api } from "@/lib/api";
 
 export async function updateProfile(
   input: UpdateInfluencerProfileRequest,

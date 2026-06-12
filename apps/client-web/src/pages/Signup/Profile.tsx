@@ -7,7 +7,7 @@ import {
   AddressFormFields,
   validateAddress,
   type AddressValues,
-} from "../../components/Address/AddressFormFields";
+} from "@/domains/me";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
 const BIRTH_RE = /^\d{4}-\d{2}-\d{2}$/;

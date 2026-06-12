@@ -1,50 +1,76 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { INFLUENCER_TERMS, type ConsentItem } from "@jsure/shared";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { INFLUENCER_TERMS, ConsentItemSchema, type ConsentItem } from "@jsure/shared";
 import { TermsAccordion } from "@/domains/auth";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
+const ALL_KEYS = INFLUENCER_TERMS.map((term) => term.key);
+
+const schema = z.object({
+  agreedItems: z
+    .array(ConsentItemSchema)
+    .refine((items) => ALL_KEYS.every((key) => items.includes(key)), {
+      message: "全ての利用規約に同意してください",
+    }),
+});
+type Values = z.infer<typeof schema>;
+
 export function SignupTerms() {
   const nav = useNavigate();
   const { draft, setAgreedItems } = useSignup();
-  const initial = new Set<ConsentItem>(draft.agreedItems);
-  const [agreed, setAgreed] = useState<Set<ConsentItem>>(initial);
+  const methods = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: { agreedItems: draft.agreedItems },
+  });
+  const agreedItems = useWatch({
+    control: methods.control,
+    name: "agreedItems",
+  });
+  const agreedSet = new Set<ConsentItem>(agreedItems ?? []);
+  const allChecked = ALL_KEYS.every((key) => agreedSet.has(key));
 
-  const allChecked = INFLUENCER_TERMS.every((t) => agreed.has(t.key));
-
-  function toggle(k: ConsentItem) {
-    setAgreed((prev) => {
-      const next = new Set(prev);
-      if (next.has(k)) next.delete(k);
-      else next.add(k);
-      return next;
+  function toggle(key: ConsentItem) {
+    const next = new Set(agreedSet);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    methods.setValue("agreedItems", Array.from(next), {
+      shouldDirty: true,
+      shouldValidate: methods.formState.isSubmitted,
     });
   }
 
   function toggleAll() {
-    if (allChecked) {
-      setAgreed(new Set());
-    } else {
-      setAgreed(new Set(INFLUENCER_TERMS.map((t) => t.key)));
-    }
+    methods.setValue("agreedItems", allChecked ? [] : [...ALL_KEYS], {
+      shouldDirty: true,
+      shouldValidate: methods.formState.isSubmitted,
+    });
   }
 
-  function next() {
-    if (!allChecked) return;
-    setAgreedItems(Array.from(agreed));
+  function next(values: Values) {
+    setAgreedItems(values.agreedItems);
     nav("/signup/account");
   }
 
   return (
-    <div>
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>利用規約への同意</h2>
-      <TermsAccordion
-        agreed={agreed}
-        onToggle={toggle}
-        onToggleAll={toggleAll}
-      />
-      <WizardFooter onBack={() => nav("/")} onNext={next} disabled={!allChecked} />
-    </div>
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(next)}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>
+          利用規約への同意
+        </h2>
+        <TermsAccordion
+          agreed={agreedSet}
+          onToggle={toggle}
+          onToggleAll={toggleAll}
+        />
+        <WizardFooter
+          onBack={() => nav("/")}
+          onNext={methods.handleSubmit(next)}
+          disabled={!allChecked}
+        />
+      </form>
+    </FormProvider>
   );
 }

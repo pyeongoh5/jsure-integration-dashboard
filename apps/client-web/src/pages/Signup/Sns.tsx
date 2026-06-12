@@ -1,5 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { SnsTypeSchema, type SnsType } from "@jsure/shared";
 import { SnsAccountCard } from "@/domains/auth";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
@@ -7,90 +10,184 @@ import { useSignup } from "../../context/SignupContext";
 
 const SNS_TYPES = SnsTypeSchema.options;
 
-interface FieldsByType {
-  enabled: boolean;
-  handle: string;
-  followerCount: string;
-}
+const fieldsSchema = z.object({
+  enabled: z.boolean(),
+  handle: z.string(),
+  followerCount: z.string(),
+});
 
-function buildInitial(
+const schema = z
+  .object({
+    instagram: fieldsSchema,
+    tiktok: fieldsSchema,
+    x: fieldsSchema,
+    youtube: fieldsSchema,
+  })
+  .superRefine((values, ctx) => {
+    const enabled = (Object.keys(values) as Array<keyof typeof values>).filter(
+      (key) => values[key].enabled,
+    );
+    if (enabled.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "1つ以上のSNSアカウントを追加してください",
+        path: ["instagram"],
+      });
+      return;
+    }
+    for (const key of enabled) {
+      const fields = values[key];
+      if (fields.handle.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "ハンドルを入力してください",
+          path: [key, "handle"],
+        });
+      }
+      if (!/^\d+$/.test(fields.followerCount)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "フォロワー数は数字のみ",
+          path: [key, "followerCount"],
+        });
+      }
+    }
+  });
+
+type Values = z.infer<typeof schema>;
+type ValuesKey = keyof Values;
+
+const TYPE_TO_KEY: Record<SnsType, ValuesKey> = {
+  INSTAGRAM: "instagram",
+  TIKTOK: "tiktok",
+  X: "x",
+  YOUTUBE: "youtube",
+};
+
+function buildDefaults(
   existing: { snsType: SnsType; handle: string; followerCount: number }[],
-): Record<SnsType, FieldsByType> {
-  const map = Object.fromEntries(
-    SNS_TYPES.map((t) => [
-      t,
-      { enabled: false, handle: "", followerCount: "" } as FieldsByType,
-    ]),
-  ) as Record<SnsType, FieldsByType>;
-  for (const e of existing) {
-    map[e.snsType] = {
+): Values {
+  const base: Values = {
+    instagram: { enabled: false, handle: "", followerCount: "" },
+    tiktok: { enabled: false, handle: "", followerCount: "" },
+    x: { enabled: false, handle: "", followerCount: "" },
+    youtube: { enabled: false, handle: "", followerCount: "" },
+  };
+  for (const entry of existing) {
+    base[TYPE_TO_KEY[entry.snsType]] = {
       enabled: true,
-      handle: e.handle,
-      followerCount: String(e.followerCount),
+      handle: entry.handle,
+      followerCount: String(entry.followerCount),
     };
   }
-  return map;
+  return base;
 }
 
 export function SignupSns() {
   const nav = useNavigate();
   const { draft, setSnsAccounts } = useSignup();
-  const [state, setState] = useState(() => buildInitial(draft.snsAccounts));
+  const methods = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: buildDefaults(draft.snsAccounts),
+  });
+  const values = useWatch({ control: methods.control });
 
   const enabledTypes = useMemo(
-    () => SNS_TYPES.filter((t) => state[t].enabled),
-    [state],
+    () =>
+      SNS_TYPES.filter((type) => values?.[TYPE_TO_KEY[type]]?.enabled === true),
+    [values],
   );
 
   const isValid =
     enabledTypes.length > 0 &&
-    enabledTypes.every((t) => {
-      const f = state[t];
-      return f.handle.trim().length > 0 && /^\d+$/.test(f.followerCount);
+    enabledTypes.every((type) => {
+      const fields = values?.[TYPE_TO_KEY[type]];
+      return (
+        !!fields &&
+        typeof fields.handle === "string" &&
+        fields.handle.trim().length > 0 &&
+        typeof fields.followerCount === "string" &&
+        /^\d+$/.test(fields.followerCount)
+      );
     });
 
-  function toggle(t: SnsType) {
-    setState((prev) => ({
-      ...prev,
-      [t]: { ...prev[t], enabled: !prev[t].enabled },
-    }));
-  }
-  function change(t: SnsType, field: "handle" | "followerCount", v: string) {
-    setState((prev) => ({ ...prev, [t]: { ...prev[t], [field]: v } }));
+  function toggle(type: SnsType) {
+    const key = TYPE_TO_KEY[type];
+    const current = methods.getValues(key);
+    methods.setValue(
+      key,
+      { ...current, enabled: !current.enabled },
+      { shouldDirty: true },
+    );
   }
 
-  function next() {
-    if (!isValid) return;
-    setSnsAccounts(
-      enabledTypes.map((t) => ({
-        snsType: t,
-        handle: state[t].handle.trim(),
-        followerCount: Number(state[t].followerCount),
-      })),
+  function changeField(
+    type: SnsType,
+    field: "handle" | "followerCount",
+    value: string,
+  ) {
+    const key = TYPE_TO_KEY[type];
+    const current = methods.getValues(key);
+    methods.setValue(
+      key,
+      { ...current, [field]: value },
+      {
+        shouldDirty: true,
+        shouldValidate: methods.formState.isSubmitted,
+      },
     );
+  }
+
+  function next(formValues: Values) {
+    const accounts = SNS_TYPES.filter(
+      (type) => formValues[TYPE_TO_KEY[type]].enabled,
+    ).map((type) => {
+      const fields = formValues[TYPE_TO_KEY[type]];
+      return {
+        snsType: type,
+        handle: fields.handle.trim(),
+        followerCount: Number(fields.followerCount),
+      };
+    });
+    setSnsAccounts(accounts);
     nav("/signup/bank");
   }
 
   return (
-    <div>
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
-        SNSアカウント
-      </h2>
-      <p style={{ color: "#4b5563", fontSize: 12, marginBottom: 12 }}>
-        登録するSNSを選択して情報を入力 (1つ以上必須)
-      </p>
-      {SNS_TYPES.map((t) => (
-        <SnsAccountCard
-          key={t}
-          snsType={t}
-          enabled={state[t].enabled}
-          handle={state[t].handle}
-          followerCount={state[t].followerCount}
-          onToggle={() => toggle(t)}
-          onChange={(field, v) => change(t, field, v)}
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(next)}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
+          SNSアカウント
+        </h2>
+        <p style={{ color: "#4b5563", fontSize: 12, marginBottom: 12 }}>
+          登録するSNSを選択して情報を入力 (1つ以上必須)
+        </p>
+        {SNS_TYPES.map((type) => {
+          const fields = values?.[TYPE_TO_KEY[type]];
+          return (
+            <SnsAccountCard
+              key={type}
+              snsType={type}
+              enabled={fields?.enabled === true}
+              handle={
+                typeof fields?.handle === "string" ? fields.handle : ""
+              }
+              followerCount={
+                typeof fields?.followerCount === "string"
+                  ? fields.followerCount
+                  : ""
+              }
+              onToggle={() => toggle(type)}
+              onChange={(field, value) => changeField(type, field, value)}
+            />
+          );
+        })}
+        <WizardFooter
+          onBack={() => nav(-1)}
+          onNext={methods.handleSubmit(next)}
+          disabled={!isValid}
         />
-      ))}
-      <WizardFooter onBack={() => nav(-1)} onNext={next} disabled={!isValid} />
-    </div>
+      </form>
+    </FormProvider>
   );
 }

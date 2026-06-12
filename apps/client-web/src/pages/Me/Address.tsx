@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import type { UpdateInfluencerAddressRequest } from "@jsure/shared";
 import { fetchMe } from "@/domains/auth";
 import { updateAddress } from "@/domains/me";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
-import {
-  AddressFormFields,
-  validateAddress,
-  type AddressValues,
-} from "@/domains/me";
+import { AddressFormFields, AddressZodSchema } from "@/domains/me";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 
-const EMPTY: AddressValues = {
+const schema = AddressZodSchema;
+type Values = z.infer<typeof schema>;
+
+const EMPTY: Values = {
   postalCode: "",
-  prefecture: "",
+  prefecture: "" as Values["prefecture"],
   city: "",
   addressLine1: "",
   addressLine2: "",
@@ -25,63 +27,58 @@ export function MeAddress() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["me"], queryFn: fetchMe });
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const [address, setAddress] = useState<AddressValues>(EMPTY);
-  const [touched, setTouched] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const methods = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: EMPTY,
+  });
 
   useEffect(() => {
     if (data?.address) {
-      setAddress({
+      methods.reset({
         postalCode: data.address.postalCode,
-        prefecture: data.address.prefecture,
+        prefecture: data.address.prefecture as Values["prefecture"],
         city: data.address.city,
         addressLine1: data.address.addressLine1,
         addressLine2: data.address.addressLine2 ?? "",
       });
     }
-  }, [data]);
+  }, [data, methods]);
 
-  const errors = validateAddress(address);
-  const valid = !Object.values(errors).some((e) => e);
-
-  const m = useMutation({
-    mutationFn: () =>
-      // prefecture 는 validateAddress 로 enum 값 보장됨 — TS 캐스트만 필요
-      updateAddress(address as UpdateInfluencerAddressRequest),
+  const mutation = useMutation({
+    mutationFn: (values: Values) =>
+      updateAddress(values as UpdateInfluencerAddressRequest),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["me"] });
       nav("/me");
     },
     onError: (err: unknown) => {
-      const e = err as { response?: { data?: { message?: string } } };
-      setError(e?.response?.data?.message ?? "保存に失敗しました");
+      const error = err as { response?: { data?: { message?: string } } };
+      setServerError(error?.response?.data?.message ?? "保存に失敗しました");
     },
   });
 
-  function save() {
-    setTouched(true);
-    setError(null);
-    if (!valid) return;
-    m.mutate();
+  function save(values: Values) {
+    setServerError(null);
+    mutation.mutate(values);
   }
 
   return (
-    <div>
-      <PageHeader showBack title="配送先住所" />
-      <div style={{ padding: 16 }}>
-        {error && <ErrorBanner message={error} />}
-        <AddressFormFields
-          values={address}
-          onChange={setAddress}
-          touched={touched}
-          errors={errors}
-          showHeading={false}
-        />
-        <PrimaryButton onClick={save} disabled={m.isPending}>
-          {m.isPending ? "保存中…" : "保存"}
-        </PrimaryButton>
-      </div>
-    </div>
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(save)}>
+        <PageHeader showBack title="配送先住所" />
+        <div style={{ padding: 16 }}>
+          {serverError && <ErrorBanner message={serverError} />}
+          <AddressFormFields showHeading={false} />
+          <PrimaryButton
+            onClick={() => methods.handleSubmit(save)()}
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? "保存中…" : "保存"}
+          </PrimaryButton>
+        </div>
+      </form>
+    </FormProvider>
   );
 }

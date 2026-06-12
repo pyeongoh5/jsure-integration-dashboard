@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { useFormContext, useController } from "react-hook-form";
 import { JP_PREFECTURES } from "@jsure/shared";
+import { z } from "zod";
 import { LabeledInput } from "@/components/composites/LabeledInput";
+import { FormField } from "@/components/composites";
 import { lookupPostalCode } from "@/lib/zipcloud";
 
 const POSTAL_RE = /^\d{3}-?\d{4}$/;
@@ -23,11 +26,36 @@ export type AddressErrors = Partial<
   Record<keyof AddressValues, string | undefined>
 >;
 
+export function validateAddress(values: AddressValues): AddressErrors {
+  return {
+    postalCode: POSTAL_RE.test(values.postalCode) ? undefined : "郵便番号は7桁",
+    prefecture: (JP_PREFECTURES as readonly string[]).includes(values.prefecture)
+      ? undefined
+      : "都道府県を選択してください",
+    city: values.city.trim() ? undefined : "市区町村は必須",
+    addressLine1: values.addressLine1.trim() ? undefined : "番地は必須",
+  };
+}
+
+export const AddressZodSchema = z.object({
+  postalCode: z.string().regex(POSTAL_RE, "郵便番号は7桁"),
+  prefecture: z.enum(JP_PREFECTURES, {
+    errorMap: () => ({ message: "都道府県を選択してください" }),
+  }),
+  city: z
+    .string()
+    .refine((value) => value.trim().length > 0, "市区町村は必須"),
+  addressLine1: z
+    .string()
+    .refine((value) => value.trim().length > 0, "番地は必須"),
+  addressLine2: z.string(),
+});
+
+type AddressFieldValues = Record<string, unknown>;
+
 type Props = {
-  values: AddressValues;
-  onChange: (next: AddressValues) => void;
-  touched: boolean;
-  errors: AddressErrors;
+  /** 폼 값 안에서 address 객체가 들어있는 경로. 빈 문자열이면 루트 자체가 address. */
+  prefix?: string;
   /** "住所" 헤더를 컴포넌트 안에 넣을지 (default true) */
   showHeading?: boolean;
 };
@@ -35,24 +63,32 @@ type Props = {
 /**
  * 회원가입 / 마이페이지 양쪽에서 공유되는 주소 입력 필드.
  * - 郵便番号 입력 시 zipcloud 로 都道府県/市区町村 자동 보완
+ * - 부모 폼이 react-hook-form FormProvider 안에 있어야 한다
  */
-export function AddressFormFields({
-  values,
-  onChange,
-  touched,
-  errors,
-  showHeading = true,
-}: Props) {
+export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
   const [lookupState, setLookupState] = useState<
     "idle" | "loading" | "notFound" | "error"
   >("idle");
+  const methods = useFormContext<AddressFieldValues>();
+  const fieldName = (key: keyof AddressValues): string =>
+    prefix ? `${prefix}.${key}` : key;
 
-  const patch = (next: Partial<AddressValues>) =>
-    onChange({ ...values, ...next });
+  const postal = useController({
+    name: fieldName("postalCode"),
+    control: methods.control,
+  });
+  const prefecture = useController({
+    name: fieldName("prefecture"),
+    control: methods.control,
+  });
+
+  const showPrefectureError =
+    (methods.formState.isSubmitted || prefecture.fieldState.isTouched) &&
+    !!prefecture.fieldState.error;
 
   async function handlePostalChange(raw: string) {
     const formatted = formatPostalCode(raw);
-    patch({ postalCode: formatted });
+    postal.field.onChange(formatted);
     if (!POSTAL_RE.test(formatted)) {
       setLookupState("idle");
       return;
@@ -64,16 +100,25 @@ export function AddressFormFields({
         setLookupState("notFound");
         return;
       }
-      patch({
-        postalCode: formatted,
-        prefecture: result.prefecture,
-        city: `${result.city}${result.town}`,
+      methods.setValue(fieldName("prefecture"), result.prefecture, {
+        shouldValidate: true,
+        shouldTouch: true,
       });
+      methods.setValue(
+        fieldName("city"),
+        `${result.city}${result.town}`,
+        { shouldValidate: true, shouldTouch: true },
+      );
       setLookupState("idle");
     } catch {
       setLookupState("error");
     }
   }
+
+  const postalShowError =
+    (methods.formState.isSubmitted || postal.fieldState.isTouched) &&
+    !!postal.fieldState.error;
+  const postalErrorMessage = postal.fieldState.error?.message;
 
   return (
     <div>
@@ -93,9 +138,13 @@ export function AddressFormFields({
 
       <LabeledInput
         label="郵便番号"
-        value={values.postalCode}
+        value={typeof postal.field.value === "string" ? postal.field.value : ""}
         onChange={handlePostalChange}
-        error={touched ? errors.postalCode : undefined}
+        error={
+          postalShowError && typeof postalErrorMessage === "string"
+            ? postalErrorMessage
+            : undefined
+        }
         hint={
           lookupState === "loading"
             ? "住所を検索中…"
@@ -113,53 +162,72 @@ export function AddressFormFields({
       <label className="li">
         <span className="li__label">都道府県</span>
         <select
-          className={`li__input ${touched && errors.prefecture ? "li__input--error" : ""}`}
-          value={values.prefecture}
-          onChange={(e) => patch({ prefecture: e.target.value })}
+          className={`li__input ${showPrefectureError ? "li__input--error" : ""}`}
+          value={
+            typeof prefecture.field.value === "string"
+              ? prefecture.field.value
+              : ""
+          }
+          onChange={(event) => prefecture.field.onChange(event.target.value)}
+          onBlur={prefecture.field.onBlur}
         >
           <option value="">選択してください</option>
-          {JP_PREFECTURES.map((p) => (
-            <option key={p} value={p}>
-              {p}
+          {JP_PREFECTURES.map((name) => (
+            <option key={name} value={name}>
+              {name}
             </option>
           ))}
         </select>
-        {touched && errors.prefecture && (
-          <span className="li__error">{errors.prefecture}</span>
+        {showPrefectureError && (
+          <span className="li__error">
+            {typeof prefecture.fieldState.error?.message === "string"
+              ? prefecture.fieldState.error.message
+              : "都道府県を選択してください"}
+          </span>
         )}
       </label>
 
-      <LabeledInput
-        label="市区町村"
-        value={values.city}
-        onChange={(v) => patch({ city: v })}
-        error={touched ? errors.city : undefined}
-        placeholder="渋谷区神宮前"
-      />
-      <LabeledInput
-        label="番地"
-        value={values.addressLine1}
-        onChange={(v) => patch({ addressLine1: v })}
-        error={touched ? errors.addressLine1 : undefined}
-        placeholder="1-2-3"
-      />
-      <LabeledInput
-        label="建物名・部屋番号 (任意)"
-        value={values.addressLine2}
-        onChange={(v) => patch({ addressLine2: v })}
-        placeholder="ABCビル 502号室"
-      />
+      <FormField name={fieldName("city")} label="市区町村">
+        {(field) => (
+          <input
+            id={field.id}
+            className={`li__input ${field.error ? "li__input--error" : ""}`}
+            type="text"
+            value={typeof field.value === "string" ? field.value : ""}
+            onChange={(event) => field.onChange(event.target.value)}
+            onBlur={field.onBlur}
+            placeholder="渋谷区神宮前"
+            aria-invalid={field["aria-invalid"]}
+          />
+        )}
+      </FormField>
+      <FormField name={fieldName("addressLine1")} label="番地">
+        {(field) => (
+          <input
+            id={field.id}
+            className={`li__input ${field.error ? "li__input--error" : ""}`}
+            type="text"
+            value={typeof field.value === "string" ? field.value : ""}
+            onChange={(event) => field.onChange(event.target.value)}
+            onBlur={field.onBlur}
+            placeholder="1-2-3"
+            aria-invalid={field["aria-invalid"]}
+          />
+        )}
+      </FormField>
+      <FormField name={fieldName("addressLine2")} label="建物名・部屋番号 (任意)">
+        {(field) => (
+          <input
+            id={field.id}
+            className="li__input"
+            type="text"
+            value={typeof field.value === "string" ? field.value : ""}
+            onChange={(event) => field.onChange(event.target.value)}
+            onBlur={field.onBlur}
+            placeholder="ABCビル 502号室"
+          />
+        )}
+      </FormField>
     </div>
   );
-}
-
-export function validateAddress(values: AddressValues): AddressErrors {
-  return {
-    postalCode: POSTAL_RE.test(values.postalCode) ? undefined : "郵便番号は7桁",
-    prefecture: (JP_PREFECTURES as readonly string[]).includes(values.prefecture)
-      ? undefined
-      : "都道府県を選択してください",
-    city: values.city.trim() ? undefined : "市区町村は必須",
-    addressLine1: values.addressLine1.trim() ? undefined : "番地は必須",
-  };
 }

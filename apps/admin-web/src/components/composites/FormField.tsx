@@ -1,41 +1,34 @@
 import type { ReactNode } from "react";
-import {
-  useFormContext,
-  useController,
-  type FieldValues,
-  type FieldPath,
-  type FieldPathValue,
-} from "react-hook-form";
+import { useFormContext, useController } from "react-hook-form";
 import styles from "./FormField.module.css";
 
-interface FieldRenderProps<TValue> {
+interface FieldRenderProps {
   id: string;
   name: string;
-  value: TValue;
-  onChange: (value: TValue) => void;
+  value: string;
+  onChange: (value: string) => void;
   onBlur: () => void;
   error: boolean;
   "aria-invalid": boolean;
   ref: (instance: unknown) => void;
 }
 
-interface Props<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> {
-  name: TName;
+interface Props {
+  name: string;
   label?: ReactNode;
   hint?: ReactNode;
   required?: boolean;
-  children: (field: FieldRenderProps<FieldPathValue<TFieldValues, TName>>) => ReactNode;
+  children: (field: FieldRenderProps) => ReactNode;
 }
 
-export function FormField<
-  TFieldValues extends FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
->({ name, label, hint, required, children }: Props<TFieldValues, TName>) {
-  const { control } = useFormContext<TFieldValues>();
-  const { field, fieldState, formState } = useController<TFieldValues, TName>({ name, control });
-  const showError = (formState.isSubmitted || fieldState.isTouched) && !!fieldState.error;
-  const id = `ff-${String(name).replace(/\./g, "-")}`;
+export function FormField({ name, label, hint, required, children }: Props) {
+  const { control } = useFormContext();
+  const { field, fieldState, formState } = useController({ name, control });
+  const showError =
+    (formState.isSubmitted || fieldState.isTouched) && !!fieldState.error;
+  const id = `ff-${name.replace(/\./g, "-")}`;
   const errorMessage = fieldState.error?.message;
+  const value = typeof field.value === "string" ? field.value : "";
 
   return (
     <label htmlFor={id} className={styles.field}>
@@ -48,7 +41,7 @@ export function FormField<
       {children({
         id,
         name: field.name,
-        value: field.value as FieldPathValue<TFieldValues, TName>,
+        value,
         onChange: field.onChange,
         onBlur: field.onBlur,
         error: showError,

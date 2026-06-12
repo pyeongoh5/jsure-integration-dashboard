@@ -151,9 +151,12 @@ export function Apply() {
                 const alreadyApplied = campaign.data.appliedSnsTypes.includes(
                   r.snsType,
                 );
+                const isExcluded = campaign.data.excludedSnsTypes.includes(
+                  r.snsType,
+                );
                 const myFollowers = followerByMySns.get(r.snsType);
                 const isSelected = selectedSns.has(r.snsType);
-                const disabled = !isQualifying || alreadyApplied;
+                const disabled = !isQualifying || alreadyApplied || isExcluded;
                 return (
                   <li key={r.snsType}>
                     <label
@@ -173,6 +176,11 @@ export function Apply() {
                           {alreadyApplied && (
                             <span style={{ marginLeft: 8, color: "#10b981", fontSize: 11 }}>
                               応募済み
+                            </span>
+                          )}
+                          {!alreadyApplied && isExcluded && (
+                            <span style={{ marginLeft: 8, color: "#ef4444", fontSize: 11 }}>
+                              参加不可（類似キャンペーンに応募済み）
                             </span>
                           )}
                         </div>

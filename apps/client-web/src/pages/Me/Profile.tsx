@@ -1,45 +1,58 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { fetchMe } from "@/domains/auth";
 import { updateProfile } from "@/domains/me";
+import { Input } from "@/components/ui";
+import { FormField } from "@/components/composites";
 import { PageHeader } from "../../components/composites/PageHeader";
-import { LabeledInput } from "../../components/composites/LabeledInput";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
+
+const schema = z.object({
+  name: z.string().refine((value) => value.trim().length > 0, "必須"),
+  nameKana: z.string().regex(KANA_RE, "カナで入力"),
+  phone: z
+    .string()
+    .refine(
+      (value) => /^\d{10,15}$|^[\d-]{10,20}$/.test(value),
+      "10~15桁",
+    ),
+});
+type Values = z.infer<typeof schema>;
+
+const DEFAULTS: Values = { name: "", nameKana: "", phone: "" };
 
 export function MeProfile() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["me"], queryFn: fetchMe });
 
-  const [name, setName] = useState("");
-  const [nameKana, setNameKana] = useState("");
-  const [phone, setPhone] = useState("");
-  const [touched, setTouched] = useState(false);
+  const methods = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: DEFAULTS,
+  });
 
   useEffect(() => {
     if (data) {
-      setName(data.name);
-      setNameKana(data.nameKana ?? "");
-      setPhone(data.phone);
+      methods.reset({
+        name: data.name,
+        nameKana: data.nameKana ?? "",
+        phone: data.phone,
+      });
     }
-  }, [data]);
+  }, [data, methods]);
 
-  const errors = {
-    name: name.trim() ? undefined : "必須",
-    nameKana: KANA_RE.test(nameKana) ? undefined : "カナで入力",
-    phone: /^\d{10,15}$|^[\d-]{10,20}$/.test(phone) ? undefined : "10~15桁",
-  };
-  const valid = !Object.values(errors).some((e) => e);
-
-  const m = useMutation({
-    mutationFn: () =>
+  const mutation = useMutation({
+    mutationFn: (values: Values) =>
       updateProfile({
-        name,
-        nameKana,
-        phone: phone.replace(/[^\d]/g, ""),
+        name: values.name,
+        nameKana: values.nameKana,
+        phone: values.phone.replace(/[^\d]/g, ""),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["me"] });
@@ -47,71 +60,88 @@ export function MeProfile() {
     },
   });
 
-  function save() {
-    setTouched(true);
-    if (!valid) return;
-    m.mutate();
+  function save(values: Values) {
+    mutation.mutate(values);
   }
 
   return (
-    <div>
-      <PageHeader showBack title="プロフィール" />
-      <div style={{ padding: 16 }}>
-        <LabeledInput
-          label="お名前"
-          value={name}
-          onChange={setName}
-          error={touched ? errors.name : undefined}
-        />
-        <LabeledInput
-          label="お名前 (カナ)"
-          value={nameKana}
-          onChange={setNameKana}
-          error={touched ? errors.nameKana : undefined}
-        />
-        <LabeledInput
-          label="電話番号"
-          type="tel"
-          inputMode="tel"
-          value={phone}
-          onChange={setPhone}
-          error={touched ? errors.phone : undefined}
-        />
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(save)}>
+        <PageHeader showBack title="プロフィール" />
+        <div style={{ padding: 16 }}>
+          <FormField name="name" label="お名前">
+            {(field) => (
+              <Input
+                id={field.id}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={field.error}
+                aria-invalid={field["aria-invalid"]}
+              />
+            )}
+          </FormField>
+          <FormField name="nameKana" label="お名前 (カナ)">
+            {(field) => (
+              <Input
+                id={field.id}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={field.error}
+                aria-invalid={field["aria-invalid"]}
+              />
+            )}
+          </FormField>
+          <FormField name="phone" label="電話番号">
+            {(field) => (
+              <Input
+                id={field.id}
+                type="tel"
+                inputMode="tel"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={field.error}
+                aria-invalid={field["aria-invalid"]}
+              />
+            )}
+          </FormField>
 
-        {/* 변경 불가 정보 — 표시 전용 */}
-        <div className="li">
-          <span className="li__label">メールアドレス</span>
-          <div
-            className="li__input"
-            style={{
-              background: "#f3f4f6",
-              color: "#6b7280",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            {data?.email ?? "—"}
+          <div className="li">
+            <span className="li__label">メールアドレス</span>
+            <div
+              className="li__input"
+              style={{
+                background: "#f3f4f6",
+                color: "#6b7280",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {data?.email ?? "—"}
+            </div>
           </div>
-        </div>
-        <div className="li">
-          <span className="li__label">生年月日</span>
-          <div
-            className="li__input"
-            style={{
-              background: "#f3f4f6",
-              color: "#6b7280",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            {data?.birthDate ?? "—"}
+          <div className="li">
+            <span className="li__label">生年月日</span>
+            <div
+              className="li__input"
+              style={{
+                background: "#f3f4f6",
+                color: "#6b7280",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {data?.birthDate ?? "—"}
+            </div>
           </div>
-        </div>
 
-        <PrimaryButton onClick={save} disabled={m.isPending}>
-          {m.isPending ? "保存中…" : "保存"}
-        </PrimaryButton>
-      </div>
-    </div>
+          <PrimaryButton type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? "保存中…" : "保存"}
+          </PrimaryButton>
+        </div>
+      </form>
+    </FormProvider>
   );
 }

@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { SnsTypeSchema, type SnsType } from "@jsure/shared";
 import { fetchMe } from "@/domains/auth";
 import { deleteSnsAccount, upsertSnsAccount } from "@/domains/me";
@@ -9,104 +12,204 @@ import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 
 const SNS_TYPES = SnsTypeSchema.options;
-type Fields = { enabled: boolean; handle: string; followerCount: string };
+
+const fieldsSchema = z.object({
+  enabled: z.boolean(),
+  handle: z.string(),
+  followerCount: z.string(),
+});
+
+const schema = z
+  .object({
+    instagram: fieldsSchema,
+    tiktok: fieldsSchema,
+    x: fieldsSchema,
+    youtube: fieldsSchema,
+  })
+  .superRefine((values, ctx) => {
+    const keys = Object.keys(values) as Array<keyof typeof values>;
+    const enabled = keys.filter((key) => values[key].enabled);
+    if (enabled.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "1つ以上のSNSアカウントを追加してください",
+        path: ["instagram"],
+      });
+      return;
+    }
+    for (const key of enabled) {
+      const fields = values[key];
+      if (fields.handle.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "ハンドルを入力してください",
+          path: [key, "handle"],
+        });
+      }
+      if (!/^\d+$/.test(fields.followerCount)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "フォロワー数は数字のみ",
+          path: [key, "followerCount"],
+        });
+      }
+    }
+  });
+
+type Values = z.infer<typeof schema>;
+type ValuesKey = keyof Values;
+
+const TYPE_TO_KEY: Record<SnsType, ValuesKey> = {
+  INSTAGRAM: "instagram",
+  TIKTOK: "tiktok",
+  X: "x",
+  YOUTUBE: "youtube",
+};
+
+const EMPTY: Values = {
+  instagram: { enabled: false, handle: "", followerCount: "" },
+  tiktok: { enabled: false, handle: "", followerCount: "" },
+  x: { enabled: false, handle: "", followerCount: "" },
+  youtube: { enabled: false, handle: "", followerCount: "" },
+};
 
 export function MeSns() {
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["me"], queryFn: fetchMe });
-  const [state, setState] = useState<Record<SnsType, Fields>>(() =>
-    Object.fromEntries(
-      SNS_TYPES.map((t) => [t, { enabled: false, handle: "", followerCount: "" }]),
-    ) as Record<SnsType, Fields>,
-  );
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const methods = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: EMPTY,
+  });
+  const values = useWatch({ control: methods.control });
 
   useEffect(() => {
     if (!data) return;
-    const next: Record<SnsType, Fields> = Object.fromEntries(
-      SNS_TYPES.map((t) => [t, { enabled: false, handle: "", followerCount: "" }]),
-    ) as Record<SnsType, Fields>;
+    const next: Values = { ...EMPTY };
     for (const sns of data.snsAccounts) {
-      next[sns.snsType] = {
+      next[TYPE_TO_KEY[sns.snsType]] = {
         enabled: true,
         handle: sns.handle,
         followerCount: String(sns.followerCount),
       };
     }
-    setState(next);
-  }, [data]);
+    methods.reset(next);
+  }, [data, methods]);
 
-  const enabledTypes = SNS_TYPES.filter((t) => state[t].enabled);
-  const existing = new Set(data?.snsAccounts.map((s) => s.snsType) ?? []);
+  const enabledTypes = useMemo(
+    () =>
+      SNS_TYPES.filter((type) => values?.[TYPE_TO_KEY[type]]?.enabled === true),
+    [values],
+  );
+  const existing = new Set(data?.snsAccounts.map((sns) => sns.snsType) ?? []);
 
   const upsert = useMutation({
-    mutationFn: (snsType: SnsType) =>
-      upsertSnsAccount({
+    mutationFn: (snsType: SnsType) => {
+      const fields = methods.getValues(TYPE_TO_KEY[snsType]);
+      return upsertSnsAccount({
         snsType,
-        handle: state[snsType].handle.trim(),
-        followerCount: Number(state[snsType].followerCount),
-      }),
+        handle: fields.handle.trim(),
+        followerCount: Number(fields.followerCount),
+      });
+    },
   });
   const remove = useMutation({
     mutationFn: (snsType: SnsType) => deleteSnsAccount(snsType),
   });
 
-  const valid =
+  const isValid =
     enabledTypes.length > 0 &&
-    enabledTypes.every(
-      (t) =>
-        state[t].handle.trim().length > 0 &&
-        /^\d+$/.test(state[t].followerCount),
-    );
+    enabledTypes.every((type) => {
+      const fields = values?.[TYPE_TO_KEY[type]];
+      return (
+        !!fields &&
+        typeof fields.handle === "string" &&
+        fields.handle.trim().length > 0 &&
+        typeof fields.followerCount === "string" &&
+        /^\d+$/.test(fields.followerCount)
+      );
+    });
 
   async function save() {
-    setError(null);
+    setServerError(null);
+    const ok = await methods.trigger();
+    if (!ok) return;
     try {
-      for (const t of enabledTypes) {
-        await upsert.mutateAsync(t);
+      for (const type of enabledTypes) {
+        await upsert.mutateAsync(type);
       }
-      for (const t of SNS_TYPES) {
-        if (!state[t].enabled && existing.has(t)) {
-          await remove.mutateAsync(t);
+      for (const type of SNS_TYPES) {
+        const fields = methods.getValues(TYPE_TO_KEY[type]);
+        if (!fields.enabled && existing.has(type)) {
+          await remove.mutateAsync(type);
         }
       }
       qc.invalidateQueries({ queryKey: ["me"] });
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      setError(e?.response?.data?.message ?? "保存に失敗しました");
+      const error = err as { response?: { data?: { message?: string } } };
+      setServerError(error?.response?.data?.message ?? "保存に失敗しました");
     }
   }
 
-  function toggle(t: SnsType) {
-    setState((p) => ({ ...p, [t]: { ...p[t], enabled: !p[t].enabled } }));
+  function toggle(type: SnsType) {
+    const key = TYPE_TO_KEY[type];
+    const current = methods.getValues(key);
+    methods.setValue(
+      key,
+      { ...current, enabled: !current.enabled },
+      { shouldDirty: true },
+    );
   }
-  function change(t: SnsType, f: "handle" | "followerCount", v: string) {
-    setState((p) => ({ ...p, [t]: { ...p[t], [f]: v } }));
+  function changeField(
+    type: SnsType,
+    field: "handle" | "followerCount",
+    value: string,
+  ) {
+    const key = TYPE_TO_KEY[type];
+    const current = methods.getValues(key);
+    methods.setValue(
+      key,
+      { ...current, [field]: value },
+      {
+        shouldDirty: true,
+        shouldValidate: methods.formState.isSubmitted,
+      },
+    );
   }
 
   return (
-    <div>
+    <FormProvider {...methods}>
       <PageHeader showBack title="SNSアカウント" />
       <div style={{ padding: 16 }}>
-        {error && <ErrorBanner message={error} />}
-        {SNS_TYPES.map((t) => (
-          <SnsAccountCard
-            key={t}
-            snsType={t}
-            enabled={state[t].enabled}
-            handle={state[t].handle}
-            followerCount={state[t].followerCount}
-            onToggle={() => toggle(t)}
-            onChange={(f, v) => change(t, f, v)}
-          />
-        ))}
+        {serverError && <ErrorBanner message={serverError} />}
+        {SNS_TYPES.map((type) => {
+          const fields = values?.[TYPE_TO_KEY[type]];
+          return (
+            <SnsAccountCard
+              key={type}
+              snsType={type}
+              enabled={fields?.enabled === true}
+              handle={
+                typeof fields?.handle === "string" ? fields.handle : ""
+              }
+              followerCount={
+                typeof fields?.followerCount === "string"
+                  ? fields.followerCount
+                  : ""
+              }
+              onToggle={() => toggle(type)}
+              onChange={(field, value) => changeField(type, field, value)}
+            />
+          );
+        })}
         <PrimaryButton
           onClick={save}
-          disabled={!valid || upsert.isPending || remove.isPending}
+          disabled={!isValid || upsert.isPending || remove.isPending}
         >
           {upsert.isPending || remove.isPending ? "保存中…" : "保存"}
         </PrimaryButton>
       </div>
-    </div>
+    </FormProvider>
   );
 }

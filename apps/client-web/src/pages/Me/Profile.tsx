@@ -8,6 +8,7 @@ import { fetchMe } from "@/domains/auth";
 import { updateProfile } from "@/domains/me";
 import { Input } from "@/components/ui";
 import { FormField } from "@/components/composites";
+import labeledInputStyles from "@/components/composites/LabeledInput.module.css";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 
@@ -108,10 +109,10 @@ export function MeProfile() {
             )}
           </FormField>
 
-          <div className="li">
-            <span className="li__label">メールアドレス</span>
+          <div className={labeledInputStyles.field}>
+            <span className={labeledInputStyles.label}>メールアドレス</span>
             <div
-              className="li__input"
+              className={labeledInputStyles.input}
               style={{
                 background: "#f3f4f6",
                 color: "#6b7280",
@@ -122,10 +123,10 @@ export function MeProfile() {
               {data?.email ?? "—"}
             </div>
           </div>
-          <div className="li">
-            <span className="li__label">生年月日</span>
+          <div className={labeledInputStyles.field}>
+            <span className={labeledInputStyles.label}>生年月日</span>
             <div
-              className="li__input"
+              className={labeledInputStyles.input}
               style={{
                 background: "#f3f4f6",
                 color: "#6b7280",

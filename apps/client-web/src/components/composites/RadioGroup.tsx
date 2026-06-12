@@ -1,4 +1,4 @@
-import "./RadioGroup.css";
+import styles from "./RadioGroup.module.css";
 
 interface Option<T extends string> {
   value: T;
@@ -21,21 +21,21 @@ export function RadioGroup<T extends string>({
   error,
 }: Props<T>) {
   return (
-    <div className="rg">
-      {label && <div className="rg__label">{label}</div>}
-      <div className="rg__row">
+    <div className={styles.root}>
+      {label && <div className={styles.label}>{label}</div>}
+      <div className={styles.row}>
         {options.map((opt) => (
           <button
             key={opt.value}
             type="button"
-            className={`rg__opt ${value === opt.value ? "rg__opt--on" : ""}`}
+            className={`${styles.opt} ${value === opt.value ? styles.optOn : ""}`}
             onClick={() => onChange(opt.value)}
           >
             {opt.label}
           </button>
         ))}
       </div>
-      {error && <div className="rg__error">{error}</div>}
+      {error && <div className={styles.error}>{error}</div>}
     </div>
   );
 }

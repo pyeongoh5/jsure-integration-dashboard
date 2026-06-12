@@ -1,4 +1,4 @@
-import "./LabeledInput.css";
+import styles from "./LabeledInput.module.css";
 
 interface Props {
   label: string;
@@ -26,20 +26,22 @@ export function LabeledInput({
   maxLength,
 }: Props) {
   return (
-    <label className="li">
-      <span className="li__label">{label}</span>
+    <label className={styles.field}>
+      <span className={styles.label}>{label}</span>
       <input
-        className={`li__input ${error ? "li__input--error" : ""}`}
+        className={[styles.input, error && styles.error]
+          .filter(Boolean)
+          .join(" ")}
         type={type}
         value={value}
         placeholder={placeholder}
         inputMode={inputMode}
         autoComplete={autoComplete}
         maxLength={maxLength}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
       />
-      {hint && !error && <span className="li__hint">{hint}</span>}
-      {error && <span className="li__error">{error}</span>}
+      {hint && !error && <span className={styles.hint}>{hint}</span>}
+      {error && <span className={styles.errorText}>{error}</span>}
     </label>
   );
 }

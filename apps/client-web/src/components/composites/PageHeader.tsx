@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import "./PageHeader.css";
+import styles from "./PageHeader.module.css";
 
 interface Props {
   title?: string;
@@ -8,23 +8,23 @@ interface Props {
 }
 
 export function PageHeader({ title, showBack, right }: Props) {
-  const nav = useNavigate();
+  const navigate = useNavigate();
   return (
-    <header className="page-header">
-      <div className="page-header__left">
+    <header className={styles.header}>
+      <div className={styles.left}>
         {showBack && (
           <button
             type="button"
-            className="page-header__back"
-            onClick={() => nav(-1)}
+            className={styles.back}
+            onClick={() => navigate(-1)}
             aria-label="戻る"
           >
             <i className="fa-solid fa-chevron-left" />
           </button>
         )}
       </div>
-      <div className="page-header__title">{title}</div>
-      <div className="page-header__right">{right}</div>
+      <div className={styles.title}>{title}</div>
+      <div className={styles.right}>{right}</div>
     </header>
   );
 }

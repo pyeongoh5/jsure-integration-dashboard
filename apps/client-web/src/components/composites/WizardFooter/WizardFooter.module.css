@@ -1,16 +1,16 @@
-.wfooter {
+.root {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   background: #fff;
-  border-top: 1px solid #e5e7eb;
-  padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 12px);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-4) calc(env(safe-area-inset-bottom, 0px) + var(--space-3));
   z-index: 30;
   box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
 }
 
-.wfooter__inner {
+.inner {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -18,34 +18,34 @@
   margin: 0 auto;
 }
 
-.wfooter__btn {
+.btn {
   flex: 1;
   height: 48px;
   border: none;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 15px;
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
   cursor: pointer;
 }
 
-.wfooter__btn--back {
-  background: #f3f4f6;
+.btnBack {
+  background: var(--color-bg-muted);
   color: #374151;
 }
 
-.wfooter__btn--back:disabled {
+.btnBack:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.wfooter__btn--next {
-  background: #1d6cf3;
+.btnNext {
+  background: var(--color-primary);
   color: #fff;
   box-shadow: 0 2px 8px rgba(29, 108, 243, 0.25);
 }
 
-.wfooter__btn--next:disabled {
-  background: #d1d5db;
+.btnNext:disabled {
+  background: var(--color-border-strong);
   color: #fff;
   box-shadow: none;
   cursor: not-allowed;

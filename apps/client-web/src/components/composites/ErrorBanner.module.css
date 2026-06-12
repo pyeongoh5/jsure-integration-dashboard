@@ -1,0 +1,8 @@
+.root {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  margin-bottom: var(--space-3);
+}

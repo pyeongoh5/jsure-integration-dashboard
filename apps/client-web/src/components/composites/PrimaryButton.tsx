@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import "./PrimaryButton.css";
+import styles from "./PrimaryButton.module.css";
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "ghost";
@@ -14,7 +14,7 @@ export function PrimaryButton({
 }: Props) {
   return (
     <button
-      className={`pb pb--${variant} ${className}`}
+      className={[styles.button, styles[variant], className].filter(Boolean).join(" ")}
       {...rest}
     >
       {children}

@@ -1,0 +1,24 @@
+.button {
+  height: 48px;
+  border: none;
+  border-radius: 10px;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  width: 100%;
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.ghost {
+  background: var(--color-bg-muted);
+  color: #374151;
+}

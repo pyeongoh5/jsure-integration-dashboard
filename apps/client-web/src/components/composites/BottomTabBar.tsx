@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useUnreadNoticeCount } from "@/domains/notice";
-import "./BottomTabBar.css";
+import styles from "./BottomTabBar.module.css";
 
 type Tab = {
   to: string;
@@ -20,20 +20,20 @@ export function BottomTabBar() {
   const unreadNoticeCount = useUnreadNoticeCount();
 
   return (
-    <nav className="bottom-tab">
+    <nav className={styles.bar}>
       {TABS.map((tab) => (
         <NavLink
           key={tab.to}
           to={tab.to}
           end={tab.end}
           className={({ isActive }) =>
-            `bottom-tab__item ${isActive ? "bottom-tab__item--active" : ""}`
+            [styles.item, isActive ? styles.itemActive : ""].filter(Boolean).join(" ")
           }
         >
-          <span className="bottom-tab__icon-wrap">
+          <span className={styles.iconWrap}>
             <i className={`fa-solid ${tab.icon}`} aria-hidden />
             {tab.to === "/notices" && unreadNoticeCount > 0 ? (
-              <span className="bottom-tab__badge">
+              <span className={styles.badge}>
                 {unreadNoticeCount > 99 ? "99+" : unreadNoticeCount}
               </span>
             ) : null}

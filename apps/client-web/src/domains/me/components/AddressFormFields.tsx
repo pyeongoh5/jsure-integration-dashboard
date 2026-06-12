@@ -3,6 +3,7 @@ import { useFormContext, useController } from "react-hook-form";
 import { JP_PREFECTURES } from "@jsure/shared";
 import { z } from "zod";
 import { LabeledInput } from "@/components/composites/LabeledInput";
+import labeledInputStyles from "@/components/composites/LabeledInput.module.css";
 import { FormField } from "@/components/composites";
 import { lookupPostalCode } from "@/lib/zipcloud";
 
@@ -159,10 +160,15 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
         maxLength={8}
       />
 
-      <label className="li">
-        <span className="li__label">都道府県</span>
+      <label className={labeledInputStyles.field}>
+        <span className={labeledInputStyles.label}>都道府県</span>
         <select
-          className={`li__input ${showPrefectureError ? "li__input--error" : ""}`}
+          className={[
+            labeledInputStyles.input,
+            showPrefectureError && labeledInputStyles.error,
+          ]
+            .filter(Boolean)
+            .join(" ")}
           value={
             typeof prefecture.field.value === "string"
               ? prefecture.field.value
@@ -179,7 +185,7 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
           ))}
         </select>
         {showPrefectureError && (
-          <span className="li__error">
+          <span className={labeledInputStyles.errorText}>
             {typeof prefecture.fieldState.error?.message === "string"
               ? prefecture.fieldState.error.message
               : "都道府県を選択してください"}
@@ -191,7 +197,12 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
         {(field) => (
           <input
             id={field.id}
-            className={`li__input ${field.error ? "li__input--error" : ""}`}
+            className={[
+              labeledInputStyles.input,
+              field.error && labeledInputStyles.error,
+            ]
+              .filter(Boolean)
+              .join(" ")}
             type="text"
             value={typeof field.value === "string" ? field.value : ""}
             onChange={(event) => field.onChange(event.target.value)}
@@ -205,7 +216,12 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
         {(field) => (
           <input
             id={field.id}
-            className={`li__input ${field.error ? "li__input--error" : ""}`}
+            className={[
+              labeledInputStyles.input,
+              field.error && labeledInputStyles.error,
+            ]
+              .filter(Boolean)
+              .join(" ")}
             type="text"
             value={typeof field.value === "string" ? field.value : ""}
             onChange={(event) => field.onChange(event.target.value)}
@@ -219,7 +235,7 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
         {(field) => (
           <input
             id={field.id}
-            className="li__input"
+            className={labeledInputStyles.input}
             type="text"
             value={typeof field.value === "string" ? field.value : ""}
             onChange={(event) => field.onChange(event.target.value)}

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui";
 import { FormField } from "@/components/composites";
+import labeledInputStyles from "@/components/composites/LabeledInput.module.css";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 import { AddressFormFields, AddressZodSchema } from "@/domains/me";
@@ -122,7 +123,12 @@ export function SignupProfile() {
             <input
               id={field.id}
               type="date"
-              className={`li__input ${field.error ? "li__input--error" : ""}`}
+              className={[
+                labeledInputStyles.input,
+                field.error && labeledInputStyles.error,
+              ]
+                .filter(Boolean)
+                .join(" ")}
               value={field.value}
               max={TODAY_YMD}
               onChange={(event) => field.onChange(event.target.value)}

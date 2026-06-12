@@ -1,4 +1,4 @@
-import "./WizardFooter.css";
+import styles from "./WizardFooter.module.css";
 
 interface Props {
   onBack?: () => void;
@@ -18,12 +18,12 @@ export function WizardFooter({
   loading,
 }: Props) {
   return (
-    <div className="wfooter">
-      <div className="wfooter__inner">
+    <div className={styles.root}>
+      <div className={styles.inner}>
         {onBack && (
           <button
             type="button"
-            className="wfooter__btn wfooter__btn--back"
+            className={`${styles.btn} ${styles.btnBack}`}
             onClick={onBack}
             disabled={loading}
           >
@@ -32,7 +32,7 @@ export function WizardFooter({
         )}
         <button
           type="button"
-          className="wfooter__btn wfooter__btn--next"
+          className={`${styles.btn} ${styles.btnNext}`}
           onClick={onNext}
           disabled={disabled || loading}
         >

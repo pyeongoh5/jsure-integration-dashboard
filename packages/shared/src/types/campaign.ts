@@ -42,6 +42,8 @@ export const CampaignFormSchema = z
     referenceMediaUrls: z.array(z.string().url()).max(10),
     cautions: z.string().max(50000),
     thumbnailUrl: z.string().min(1).nullable().optional(),
+    /** 이 캠페인 응모를 막을 기존 캠페인 id 목록. */
+    excludedCampaignIds: z.array(z.string()).max(50).optional().default([]),
   })
   .refine((d) => d.recruitStartDate <= d.recruitEndDate, {
     path: ["recruitEndDate"],
@@ -66,6 +68,7 @@ export const UpdateCampaignRequestSchema = z
     referenceMediaUrls: z.array(z.string().url()).max(10).optional(),
     cautions: z.string().max(50000).optional(),
     thumbnailUrl: z.string().min(1).nullable().optional(),
+    excludedCampaignIds: z.array(z.string()).max(50).optional(),
   })
   .refine(
     (d) =>
@@ -95,6 +98,7 @@ export const CampaignResponseSchema = z.object({
   thumbnailUrl: z.string().url().nullable(),
   approvedCount: z.number().int().nonnegative(),
   appliedCount: z.number().int().nonnegative(),
+  excludedCampaignIds: z.array(z.string()),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -132,6 +136,8 @@ export const InfluencerCampaignDetailSchema =
     cautions: z.string(),
     /** 인플루언서가 이 캠페인에 이미 신청한(취소 제외) SNS 목록 */
     appliedSnsTypes: z.array(SnsTypeSchema),
+    /** 과거 응모 이력(제외 캠페인) 때문에 이 캠페인에서 응모할 수 없는 SNS 목록 */
+    excludedSnsTypes: z.array(SnsTypeSchema),
   });
 export type InfluencerCampaignDetail = z.infer<
   typeof InfluencerCampaignDetailSchema

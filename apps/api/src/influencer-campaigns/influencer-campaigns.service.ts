@@ -128,6 +128,7 @@ export class InfluencerCampaignsService {
           select: { snsType: true, minFollowers: true, recruitCount: true },
           orderBy: { snsType: "asc" },
         },
+        exclusionsAsExcluding: { select: { excludedCampaignId: true } },
       },
     });
     if (!row) throw new NotFoundException("Campaign not found");
@@ -139,14 +140,36 @@ export class InfluencerCampaignsService {
       },
     });
 
-    const existing = await this.prisma.campaignApplication.findMany({
-      where: {
-        campaignId: row.id,
-        influencerId: args.influencerId,
-        status: { not: "CANCELLED" },
-      },
-      select: { snsType: true },
-    });
+    const excludedCampaignIds = row.exclusionsAsExcluding.map(
+      (exclusion) => exclusion.excludedCampaignId,
+    );
+    const [existing, applicationsOnExcludedCampaigns] = await Promise.all([
+      this.prisma.campaignApplication.findMany({
+        where: {
+          campaignId: row.id,
+          influencerId: args.influencerId,
+          status: { not: "CANCELLED" },
+        },
+        select: { snsType: true },
+      }),
+      excludedCampaignIds.length > 0
+        ? this.prisma.campaignApplication.findMany({
+            where: {
+              influencerId: args.influencerId,
+              campaignId: { in: excludedCampaignIds },
+              status: { not: "CANCELLED" },
+            },
+            select: { snsType: true },
+            distinct: ["snsType"],
+          })
+        : Promise.resolve([] as { snsType: SnsType }[]),
+    ]);
+    const recruitedSnsTypes = new Set(
+      row.snsRecruits.map((recruit) => recruit.snsType),
+    );
+    const excludedSnsTypes = applicationsOnExcludedCampaigns
+      .map((application) => application.snsType)
+      .filter((snsType) => recruitedSnsTypes.has(snsType));
 
     const card = await this.resolveCard(toCard(row, appliedCount, row.closedAt, now));
     const [guideline, cautions] = await Promise.all([
@@ -160,6 +183,7 @@ export class InfluencerCampaignsService {
       referenceMediaUrls: row.referenceMediaUrls,
       cautions,
       appliedSnsTypes: existing.map((r) => r.snsType),
+      excludedSnsTypes,
     };
   }
 }

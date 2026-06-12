@@ -83,7 +83,12 @@ export function MeProfile() {
           <span className="li__label">メールアドレス</span>
           <div
             className="li__input"
-            style={{ background: "#f3f4f6", color: "#6b7280" }}
+            style={{
+              background: "#f3f4f6",
+              color: "#6b7280",
+              display: "flex",
+              alignItems: "center",
+            }}
           >
             {data?.email ?? "—"}
           </div>
@@ -92,7 +97,12 @@ export function MeProfile() {
           <span className="li__label">生年月日</span>
           <div
             className="li__input"
-            style={{ background: "#f3f4f6", color: "#6b7280" }}
+            style={{
+              background: "#f3f4f6",
+              color: "#6b7280",
+              display: "flex",
+              alignItems: "center",
+            }}
           >
             {data?.birthDate ?? "—"}
           </div>

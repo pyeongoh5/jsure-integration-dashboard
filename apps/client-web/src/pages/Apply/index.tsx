@@ -68,6 +68,12 @@ export function Apply() {
 
   const allAgreed = CONFIRM_KEYS.every((k) => agreed.has(k));
   const hasSelection = selectedSns.size > 0;
+  const isClosed = Boolean(
+    campaign.data &&
+      (campaign.data.isEnded ||
+        new Date(campaign.data.recruitEndAt) < new Date() ||
+        campaign.data.appliedCount >= campaign.data.recruitCount),
+  );
 
   const apply = useMutation({
     mutationFn: () => createApplication(id, Array.from(selectedSns)),
@@ -214,6 +220,7 @@ export function Apply() {
       <div className="apply__cta">
         <PrimaryButton
           disabled={
+            isClosed ||
             !allAgreed ||
             !hasSelection ||
             qualifying.length === 0 ||
@@ -221,7 +228,11 @@ export function Apply() {
           }
           onClick={() => apply.mutate()}
         >
-          {apply.isPending ? "送信中…" : "応募を送信"}
+          {isClosed
+            ? "募集終了"
+            : apply.isPending
+              ? "送信中…"
+              : "応募を送信"}
         </PrimaryButton>
       </div>
     </div>

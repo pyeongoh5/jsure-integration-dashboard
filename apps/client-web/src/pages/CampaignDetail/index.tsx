@@ -41,6 +41,7 @@ export function CampaignDetail() {
   }
 
   const closed =
+    data.isEnded ||
     new Date(data.recruitEndAt) < new Date() ||
     data.appliedCount >= data.recruitCount;
 

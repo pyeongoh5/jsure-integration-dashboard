@@ -1,16 +1,17 @@
-import { useState } from "react";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import type { SnsType } from "@jsure/shared";
-import { LabeledInput } from "@/components/composites/LabeledInput";
+import { Input } from "@/components/ui";
+import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 
-interface Props {
-  snsType: SnsType;
-  initial: string;
-  onSubmit: (url: string) => Promise<void>;
-  submitting: boolean;
-}
-
-const URL_RE = /^https?:\/\/.+/i;
+const schema = z.object({
+  url: z
+    .string()
+    .regex(/^https?:\/\/.+/i, "正しいURLを入力してください"),
+});
+type Values = z.infer<typeof schema>;
 
 const PLACEHOLDER_BY_SNS: Record<SnsType, string> = {
   INSTAGRAM: "https://www.instagram.com/p/...",
@@ -19,38 +20,59 @@ const PLACEHOLDER_BY_SNS: Record<SnsType, string> = {
   YOUTUBE: "https://www.youtube.com/watch?v=...",
 };
 
+interface Props {
+  snsType: SnsType;
+  initial: string;
+  onSubmit: (url: string) => Promise<void>;
+  submitting: boolean;
+}
+
 export function PostSubmitForm({
   snsType,
   initial,
   onSubmit,
   submitting,
 }: Props) {
-  const [url, setUrl] = useState(initial);
-  const [touched, setTouched] = useState(false);
-  const error = URL_RE.test(url) ? undefined : "正しいURLを入力してください";
+  const methods = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: { url: initial },
+  });
 
-  async function handle() {
-    setTouched(true);
-    if (error) return;
-    await onSubmit(url);
+  async function handle(values: Values) {
+    await onSubmit(values.url);
   }
 
   return (
-    <div>
-      <LabeledInput
-        label={`${snsType} 投稿URL`}
-        type="text"
-        value={url}
-        onChange={setUrl}
-        error={touched ? error : undefined}
-        placeholder={PLACEHOLDER_BY_SNS[snsType]}
-      />
-      <PrimaryButton onClick={handle} disabled={submitting}>
-        {submitting ? "送信中…" : initial ? "投稿URLを更新" : "投稿URLを提出"}
-      </PrimaryButton>
-      <p style={{ fontSize: 11, color: "#6b7280", marginTop: 10, textAlign: "center" }}>
-        ⚠ 投稿冒頭に #PR を必ず記載
-      </p>
-    </div>
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(handle)}>
+        <FormField name="url" label={`${snsType} 投稿URL`}>
+          {(field) => (
+            <Input
+              id={field.id}
+              type="text"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={field.error}
+              placeholder={PLACEHOLDER_BY_SNS[snsType]}
+              aria-invalid={field["aria-invalid"]}
+            />
+          )}
+        </FormField>
+        <PrimaryButton type="submit" disabled={submitting}>
+          {submitting ? "送信中…" : initial ? "投稿URLを更新" : "投稿URLを提出"}
+        </PrimaryButton>
+        <p
+          style={{
+            fontSize: 11,
+            color: "#6b7280",
+            marginTop: 10,
+            textAlign: "center",
+          }}
+        >
+          ⚠ 投稿冒頭に #PR を必ず記載
+        </p>
+      </form>
+    </FormProvider>
   );
 }

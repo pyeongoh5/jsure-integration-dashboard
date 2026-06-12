@@ -1,6 +1,10 @@
 import { useRef, useState } from "react";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import type { SnsType } from "@jsure/shared";
-import { LabeledInput } from "@/components/composites/LabeledInput";
+import { Input } from "@/components/ui";
+import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import { presignInsightUpload } from "../api";
 import "./InsightSubmitForm.css";
@@ -24,6 +28,29 @@ const METRIC_FIELDS = [
 type MetricKey = (typeof METRIC_FIELDS)[number]["key"];
 type Metrics = Record<MetricKey, number>;
 
+const metricSchema = z.string().regex(/^\d+$/, "数字を入力");
+
+const schema = z.object({
+  likes: metricSchema,
+  comments: metricSchema,
+  shares: metricSchema,
+  reposts: metricSchema,
+  saves: metricSchema,
+  views: metricSchema,
+  reach: metricSchema,
+});
+type Values = z.infer<typeof schema>;
+
+const EMPTY_VALUES: Values = {
+  likes: "",
+  comments: "",
+  shares: "",
+  reposts: "",
+  saves: "",
+  views: "",
+  reach: "",
+};
+
 interface Attachment {
   objectKey: string;
   contentType: ImgContentType;
@@ -44,21 +71,12 @@ interface Props {
   applicationId: string;
   snsType: SnsType;
   initial: Metrics | null;
-  onSubmit: (v: InsightInput) => Promise<void>;
+  onSubmit: (value: InsightInput) => Promise<void>;
   submitting: boolean;
 }
 
-function fromInitial(initial: Metrics | null): Record<MetricKey, string> {
-  const base: Record<MetricKey, string> = {
-    likes: "",
-    comments: "",
-    shares: "",
-    reposts: "",
-    saves: "",
-    views: "",
-    reach: "",
-  };
-  if (!initial) return base;
+function fromInitial(initial: Metrics | null): Values {
+  if (!initial) return EMPTY_VALUES;
   return {
     likes: String(initial.likes),
     comments: String(initial.comments),
@@ -77,23 +95,16 @@ export function InsightSubmitForm({
   onSubmit,
   submitting,
 }: Props) {
-  const [values, setValues] = useState(() => fromInitial(initial));
-  const [touched, setTouched] = useState(false);
+  const methods = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: fromInitial(initial),
+  });
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function setField(key: MetricKey, raw: string) {
-    setValues((prev) => ({ ...prev, [key]: raw.replace(/[^\d]/g, "") }));
-  }
-
-  const errors: Partial<Record<MetricKey, string>> = {};
-  for (const f of METRIC_FIELDS) {
-    if (!/^\d+$/.test(values[f.key])) errors[f.key] = "数字を入力";
-  }
-  const valid = Object.keys(errors).length === 0;
   const uploading = pendingCount > 0;
   const busy = submitting || uploading;
   const remaining = MAX_FILES - attachments.length;
@@ -140,14 +151,16 @@ export function InsightSubmitForm({
       return;
     }
     const list = Array.from(files).slice(0, remaining);
-    setPendingCount((c) => c + list.length);
+    setPendingCount((count) => count + list.length);
     try {
-      for (const f of list) {
+      for (const file of list) {
         try {
-          const att = await uploadOne(f);
-          if (att) setAttachments((prev) => [...prev, att]);
+          const attachment = await uploadOne(file);
+          if (attachment) {
+            setAttachments((prev) => [...prev, attachment]);
+          }
         } finally {
-          setPendingCount((c) => c - 1);
+          setPendingCount((count) => count - 1);
         }
       }
     } catch (err) {
@@ -159,11 +172,11 @@ export function InsightSubmitForm({
     }
   }
 
-  function removeAttachment(idx: number) {
+  function removeAttachment(index: number) {
     setAttachments((prev) => {
-      const target = prev[idx];
+      const target = prev[index];
       if (target) URL.revokeObjectURL(target.previewUrl);
-      return prev.filter((_, i) => i !== idx);
+      return prev.filter((_, i) => i !== index);
     });
   }
 
@@ -172,9 +185,7 @@ export function InsightSubmitForm({
     fileInputRef.current?.click();
   }
 
-  async function handle() {
-    setTouched(true);
-    if (!valid) return;
+  async function handle(values: Values) {
     await onSubmit({
       likes: Number(values.likes),
       comments: Number(values.comments),
@@ -183,130 +194,143 @@ export function InsightSubmitForm({
       saves: Number(values.saves),
       views: Number(values.views),
       reach: Number(values.reach),
-      attachments: attachments.map((a) => ({
-        objectKey: a.objectKey,
-        contentType: a.contentType,
-        sizeBytes: a.sizeBytes,
+      attachments: attachments.map((attachment) => ({
+        objectKey: attachment.objectKey,
+        contentType: attachment.contentType,
+        sizeBytes: attachment.sizeBytes,
       })),
     });
   }
 
   return (
-    <div>
-      <div
-        style={{
-          background: "#fef3c7",
-          padding: 10,
-          borderRadius: 8,
-          fontSize: 12,
-          color: "#92400e",
-          marginBottom: 14,
-        }}
-      >
-        投稿のインサイトをご提出ください。
-      </div>
-
-      {METRIC_FIELDS.map((f) => (
-        <LabeledInput
-          key={f.key}
-          label={f.label}
-          type="text"
-          inputMode="numeric"
-          value={values[f.key]}
-          onChange={(v) => setField(f.key, v)}
-          error={touched ? errors[f.key] : undefined}
-        />
-      ))}
-
-      <div className="isf-section">
-        <div className="isf-section-title">インサイトのスクリーンショット</div>
-        <div className="isf-section-hint">
-          PNG / JPEG / WebP · 最大{MAX_FILES}枚 · 5MB以下
-        </div>
-
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(handle)}>
         <div
-          className={`isf-dropzone ${dragOver ? "isf-dropzone--drag" : ""} ${
-            busy || remaining <= 0 ? "isf-dropzone--disabled" : ""
-          }`}
-          onClick={openPicker}
-          onDragOver={(e) => {
-            e.preventDefault();
-            if (!busy && remaining > 0) setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            if (!busy && remaining > 0) handleFiles(e.dataTransfer.files);
-          }}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              openPicker();
-            }
+          style={{
+            background: "#fef3c7",
+            padding: 10,
+            borderRadius: 8,
+            fontSize: 12,
+            color: "#92400e",
+            marginBottom: 14,
           }}
         >
-          <i className="isf-dropzone__icon fa-regular fa-image" />
-          <div className="isf-dropzone__main">
-            {uploading
-              ? "アップロード中…"
-              : remaining <= 0
-                ? "添付枚数が上限に達しました"
-                : "クリックまたはドラッグして画像を追加"}
-          </div>
-          <div className="isf-dropzone__sub">
-            {attachments.length}/{MAX_FILES} 枚
-          </div>
-          <input
-            ref={fileInputRef}
-            className="isf-dropzone__hidden-input"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            multiple
-            disabled={busy || remaining <= 0}
-            onChange={(e) => {
-              handleFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
+          投稿のインサイトをご提出ください。
         </div>
 
-        {uploadError && <div className="isf-error">{uploadError}</div>}
+        {METRIC_FIELDS.map((metric) => (
+          <FormField key={metric.key} name={metric.key} label={metric.label}>
+            {(field) => (
+              <Input
+                id={field.id}
+                type="text"
+                inputMode="numeric"
+                value={field.value}
+                onChange={(value) =>
+                  field.onChange(value.replace(/[^\d]/g, ""))
+                }
+                onBlur={field.onBlur}
+                error={field.error}
+                aria-invalid={field["aria-invalid"]}
+              />
+            )}
+          </FormField>
+        ))}
 
-        {(attachments.length > 0 || pendingCount > 0) && (
-          <div className="isf-grid">
-            {attachments.map((a, i) => (
-              <div key={a.objectKey} className="isf-tile">
-                <img src={a.previewUrl} alt={a.name} className="isf-tile__img" />
-                <button
-                  type="button"
-                  className="isf-tile__remove"
-                  onClick={() => removeAttachment(i)}
-                  disabled={busy}
-                  aria-label="削除"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-            {Array.from({ length: pendingCount }).map((_, i) => (
-              <div key={`pending-${i}`} className="isf-tile">
-                <div className="isf-tile__loading">アップロード中…</div>
-              </div>
-            ))}
+        <div className="isf-section">
+          <div className="isf-section-title">インサイトのスクリーンショット</div>
+          <div className="isf-section-hint">
+            PNG / JPEG / WebP · 最大{MAX_FILES}枚 · 5MB以下
           </div>
-        )}
-      </div>
 
-      <PrimaryButton onClick={handle} disabled={busy}>
-        {submitting
-          ? "送信中…"
-          : uploading
-            ? "アップロード中…"
-            : "インサイトを提出"}
-      </PrimaryButton>
-    </div>
+          <div
+            className={`isf-dropzone ${dragOver ? "isf-dropzone--drag" : ""} ${
+              busy || remaining <= 0 ? "isf-dropzone--disabled" : ""
+            }`}
+            onClick={openPicker}
+            onDragOver={(event) => {
+              event.preventDefault();
+              if (!busy && remaining > 0) setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragOver(false);
+              if (!busy && remaining > 0) handleFiles(event.dataTransfer.files);
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openPicker();
+              }
+            }}
+          >
+            <i className="isf-dropzone__icon fa-regular fa-image" />
+            <div className="isf-dropzone__main">
+              {uploading
+                ? "アップロード中…"
+                : remaining <= 0
+                  ? "添付枚数が上限に達しました"
+                  : "クリックまたはドラッグして画像を追加"}
+            </div>
+            <div className="isf-dropzone__sub">
+              {attachments.length}/{MAX_FILES} 枚
+            </div>
+            <input
+              ref={fileInputRef}
+              className="isf-dropzone__hidden-input"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              disabled={busy || remaining <= 0}
+              onChange={(event) => {
+                handleFiles(event.target.files);
+                event.target.value = "";
+              }}
+            />
+          </div>
+
+          {uploadError && <div className="isf-error">{uploadError}</div>}
+
+          {(attachments.length > 0 || pendingCount > 0) && (
+            <div className="isf-grid">
+              {attachments.map((attachment, index) => (
+                <div key={attachment.objectKey} className="isf-tile">
+                  <img
+                    src={attachment.previewUrl}
+                    alt={attachment.name}
+                    className="isf-tile__img"
+                  />
+                  <button
+                    type="button"
+                    className="isf-tile__remove"
+                    onClick={() => removeAttachment(index)}
+                    disabled={busy}
+                    aria-label="削除"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {Array.from({ length: pendingCount }).map((_, index) => (
+                <div key={`pending-${index}`} className="isf-tile">
+                  <div className="isf-tile__loading">アップロード中…</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <PrimaryButton type="submit" disabled={busy}>
+          {submitting
+            ? "送信中…"
+            : uploading
+              ? "アップロード中…"
+              : "インサイトを提出"}
+        </PrimaryButton>
+      </form>
+    </FormProvider>
   );
 }

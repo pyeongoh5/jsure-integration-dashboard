@@ -63,7 +63,9 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
           </button>
         </>
       )}
-      {applicant.rawStatus === "SHIPPED" && (
+      {/* 수령 확인(receivedAt) 전, 즉 stage가 SHIPPING일 때만 노출.
+          인플루언서가 먼저 수령 확인하면 stage가 POST_DUE(게시 대기)가 되어 숨겨진다. */}
+      {applicant.stage === "SHIPPING" && (
         <button
           type="button"
           className="apl-action apl-action--approve"

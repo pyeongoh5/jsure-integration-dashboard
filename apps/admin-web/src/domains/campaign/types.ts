@@ -1,5 +1,13 @@
 import type { SnsType } from "@jsure/shared";
 
+export type {
+  CampaignResponse,
+  CreateCampaignRequest,
+  UpdateCampaignRequest,
+  SnsRecruit,
+  SnsType,
+} from "@jsure/shared";
+
 export type CampaignStatus = "recruit" | "done";
 
 export type CampaignCardSnsRecruit = {

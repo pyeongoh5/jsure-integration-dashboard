@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import type { CampaignForm as Values } from "@jsure/shared";
-import { CampaignForm, EMPTY_CAMPAIGN_FORM } from "../../components/Campaign/CampaignForm";
-import { createCampaign } from "../../lib/campaigns";
+import { CampaignForm, EMPTY_CAMPAIGN_FORM, createCampaign } from "@/domains/campaign";
 
 export function CampaignNew() {
   const navigate = useNavigate();

@@ -1,4 +1,4 @@
-import { STATUS_LABEL, type CampaignStatus } from "./types";
+import { STATUS_LABEL, type CampaignStatus } from "../types";
 
 type Props = {
   status: CampaignStatus;

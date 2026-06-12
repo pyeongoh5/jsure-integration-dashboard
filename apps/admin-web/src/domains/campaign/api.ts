@@ -5,7 +5,7 @@ import {
   type CreateCampaignRequest,
   type UpdateCampaignRequest,
 } from "@jsure/shared";
-import { api } from "./api";
+import { api } from "@/lib/api";
 
 export async function listCampaigns(): Promise<CampaignResponse[]> {
   const res = await api.get("/campaigns");

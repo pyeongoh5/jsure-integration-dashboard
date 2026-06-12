@@ -2,7 +2,7 @@ import {
   SNS_FOLLOWER_LABEL,
   SNS_ICON_CLASS,
   type CampaignCardSnsRecruit,
-} from "./types";
+} from "../types";
 
 type Props = {
   recruits: CampaignCardSnsRecruit[];

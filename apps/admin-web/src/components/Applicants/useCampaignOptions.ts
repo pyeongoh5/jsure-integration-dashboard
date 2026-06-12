@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listCampaigns } from "@/lib/campaigns";
+import { listCampaigns } from "@/domains/campaign";
 import type { CampaignOption } from "./types";
 
 export type UseCampaignOptionsResult = {

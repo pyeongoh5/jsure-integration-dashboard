@@ -49,7 +49,12 @@ export function deriveDisplayStage(input: DisplayStageInput): ApplicationDisplay
     }
 
     const allInsightsSubmitted = posts.every((p) => p.insightSubmittedAt !== null);
-    if (allInsightsSubmitted) return "REVIEWING";
+    if (allInsightsSubmitted) {
+      const anySettled = posts.some(
+        (p) => p.settlementStatus === "COMPLETED",
+      );
+      return anySettled ? "SETTLED" : "REVIEWING";
+    }
 
     const first = posts[0]!.submittedAt;
     const earliest = posts.reduce((acc, p) => (p.submittedAt < acc ? p.submittedAt : acc), first);

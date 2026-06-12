@@ -242,11 +242,22 @@ export function ApplicationDetail() {
           <p className="adetail__msg">完了しました。振込予定をお待ちください。</p>
         )}
 
-        {stage === "SETTLED" && data.settlement?.completedAt && (
-          <p className="adetail__msg">
-            ¥{data.settlement.amountJpy.toLocaleString("ja-JP")} の振込が完了しました
-            ({new Date(data.settlement.completedAt).toLocaleDateString("ja-JP")})
-          </p>
+        {stage === "SETTLED" && data.settlement && (
+          <div className="adetail__thanks">
+            <p className="adetail__thanks-title">
+              キャンペーンにご参加いただきありがとうございます。
+            </p>
+            <dl className="adetail__thanks-meta">
+              <div>
+                <dt>報酬</dt>
+                <dd>¥{data.settlement.amountJpy.toLocaleString("ja-JP")}円</dd>
+              </div>
+              <div>
+                <dt>振込人</dt>
+                <dd>株式会社J-SURE</dd>
+              </div>
+            </dl>
+          </div>
         )}
 
         {stage === "REJECTED" && (

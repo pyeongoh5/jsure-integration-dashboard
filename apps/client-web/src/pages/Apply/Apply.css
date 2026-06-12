@@ -149,6 +149,17 @@
   padding: 0;
 }
 
+.apply__address-notice {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6b7280;
+}
+
+.apply__address-notice--caution {
+  color: #b45309;
+}
+
 .apply__cta {
   position: fixed;
   bottom: 70px;

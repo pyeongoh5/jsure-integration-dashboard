@@ -238,6 +238,12 @@ export function Apply() {
               >
                 住所を修正する
               </button>
+              <p className="apply__address-notice">
+                上記の内容に変更がある場合は、マイページで更新のうえ、再度ご応募ください。
+              </p>
+              <p className="apply__address-notice apply__address-notice--caution">
+                ※住所の転送手続きを行う場合、転送費用をご負担いただくことがございますので、あらかじめご了承ください。
+              </p>
             </>
           ) : (
             <div className="apply__address apply__address--missing">

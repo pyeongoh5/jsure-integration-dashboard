@@ -66,6 +66,21 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
   };
 }
 
+// 모집 인원(슬롯)을 소비하는 상태. APPLIED/REJECTED/CANCELLED 는 인원에 포함하지 않는다.
+const SLOT_CONSUMING_STATUSES: ApplicationStatus[] = [
+  "APPROVED",
+  "SHIPPED",
+  "DELIVERED",
+  "COMPLETED",
+];
+
+const SNS_LABEL: Record<SnsType, string> = {
+  INSTAGRAM: "Instagram",
+  TIKTOK: "TikTok",
+  X: "X",
+  YOUTUBE: "YouTube",
+};
+
 const APPLICATION_INCLUDE = {
   campaign: { select: { id: true, title: true } },
   influencer: {
@@ -110,6 +125,31 @@ export class AdminApplicationsService {
         `Cannot approve from status ${existing.status}`,
       );
     }
+
+    // 해당 캠페인 + SNS 의 모집 인원을 넘겨 승인할 수 없도록 막는다.
+    const recruit = await this.prisma.campaignSnsRecruit.findUnique({
+      where: {
+        campaignId_snsType: {
+          campaignId: existing.campaignId,
+          snsType: existing.snsType,
+        },
+      },
+      select: { recruitCount: true },
+    });
+    const recruitCount = recruit?.recruitCount ?? 0;
+    const approvedCount = await this.prisma.campaignApplication.count({
+      where: {
+        campaignId: existing.campaignId,
+        snsType: existing.snsType,
+        status: { in: SLOT_CONSUMING_STATUSES },
+      },
+    });
+    if (approvedCount >= recruitCount) {
+      throw new BadRequestException(
+        `${SNS_LABEL[existing.snsType]} 모집 인원(${recruitCount}명)이 모두 충족되어 더 이상 승인할 수 없습니다`,
+      );
+    }
+
     await this.prisma.campaignApplication.update({
       where: { id },
       data: {

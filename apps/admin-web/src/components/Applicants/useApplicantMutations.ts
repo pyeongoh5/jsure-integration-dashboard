@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import {
   approveApplication,
   deliverApplication,
@@ -36,6 +37,19 @@ export type UseApplicantMutationsResult = {
 export type ConfirmInput =
   | string
   | { trackingCarrier: string; trackingNumber: string };
+
+/** API 에러 응답에서 사용자에게 보여줄 메시지를 뽑아낸다. NestJS 는 message 를 문자열 또는 배열로 내려준다. */
+function extractErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const message = (err.response?.data as { message?: unknown } | undefined)
+      ?.message;
+    if (typeof message === "string" && message.trim() !== "") return message;
+    if (Array.isArray(message) && typeof message[0] === "string") {
+      return message[0];
+    }
+  }
+  return err instanceof Error ? err.message : "처리에 실패했습니다.";
+}
 
 export function useApplicantMutations(
   onMutated: () => void,
@@ -101,7 +115,7 @@ export function useApplicantMutations(
       onMutated();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "처리에 실패했습니다.");
+      setError(extractErrorMessage(err));
       return false;
     } finally {
       setMutating(false);

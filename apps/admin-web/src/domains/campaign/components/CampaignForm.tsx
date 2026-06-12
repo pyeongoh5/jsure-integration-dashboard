@@ -10,7 +10,7 @@ import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
 import { ExcludedCampaignsPicker } from "./ExcludedCampaignsPicker";
 import { uploadCampaignThumbnail, UploadError } from "@/lib/uploads";
 import { listCampaigns } from "../api";
-import { RichTextEditor } from "@/components/common/RichTextEditor";
+import { RichTextEditor } from "@/components/composites/RichTextEditor/RichTextEditor";
 import { serializeRichTextHtml } from "@/lib/richTextImages";
 
 const CAMPAIGN_IMAGE_ENDPOINT = "/uploads/admin/campaign-image/presign";

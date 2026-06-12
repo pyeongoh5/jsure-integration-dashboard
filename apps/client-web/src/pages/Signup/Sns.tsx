@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SnsTypeSchema, type SnsType } from "@jsure/shared";
-import { SnsAccountCard } from "../../components/Signup/SnsAccountCard";
-import { WizardFooter } from "../../components/Signup/WizardFooter";
+import { SnsAccountCard } from "@/domains/auth";
+import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
 const SNS_TYPES = SnsTypeSchema.options;

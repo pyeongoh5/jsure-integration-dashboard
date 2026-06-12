@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { CampaignResponse } from "@jsure/shared";
-import { Card } from "../../ui/Card";
-import { ConfirmDialog } from "../../ui/ConfirmDialog";
-import { FilterChips } from "../../ui/FilterChips";
+import { Card } from "@/components/composites/Card";
+import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import { FilterChips } from "@/components/composites/FilterChips";
 import {
   CampaignCardTitle,
   CampaignCardBody,

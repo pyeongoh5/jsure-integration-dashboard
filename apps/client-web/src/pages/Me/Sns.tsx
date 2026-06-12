@@ -4,7 +4,7 @@ import { SnsTypeSchema, type SnsType } from "@jsure/shared";
 import { fetchMe } from "@/domains/auth";
 import { deleteSnsAccount, upsertSnsAccount } from "@/domains/me";
 import { PageHeader } from "../../components/composites/PageHeader";
-import { SnsAccountCard } from "../../components/Signup/SnsAccountCard";
+import { SnsAccountCard } from "@/domains/auth";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 

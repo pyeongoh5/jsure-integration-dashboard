@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { INFLUENCER_TERMS, type ConsentItem } from "@jsure/shared";
-import { TermsAccordion } from "../../components/Signup/TermsAccordion";
-import { WizardFooter } from "../../components/Signup/WizardFooter";
+import { TermsAccordion } from "@/domains/auth";
+import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
 export function SignupTerms() {

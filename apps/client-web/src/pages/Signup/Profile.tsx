@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LabeledInput } from "../../components/composites/LabeledInput";
-import { WizardFooter } from "../../components/Signup/WizardFooter";
+import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 import {
   AddressFormFields,

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import type { AdminInfluencer, SnsType } from "@jsure/shared";
-import { RichTextEditor } from "@/components/common/RichTextEditor";
+import { RichTextEditor } from "@/components/composites/RichTextEditor/RichTextEditor";
 import {
   RichTextImageUploadError,
   serializeRichTextHtml,

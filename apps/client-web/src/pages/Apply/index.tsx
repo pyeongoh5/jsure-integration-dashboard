@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { SnsType } from "@jsure/shared";
 import { useCampaign } from "@/domains/campaign";
-import { createApplication } from "../../lib/api/applications";
+import { createApplication } from "@/domains/application";
 import { fetchMe } from "../../lib/api/auth";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";

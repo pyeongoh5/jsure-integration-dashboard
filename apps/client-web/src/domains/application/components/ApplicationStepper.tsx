@@ -1,5 +1,5 @@
 import type { ApplicationDisplayStage } from "@jsure/shared";
-import { STAGE_PROGRESS, STAGE_TOTAL } from "../../lib/stage";
+import { STAGE_PROGRESS, STAGE_TOTAL } from "../utils";
 import "./ApplicationStepper.css";
 
 const STEPS = ["申請", "承認", "発送", "受取", "投稿", "検査", "完了"];

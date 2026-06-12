@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import type { SnsType } from "@jsure/shared";
-import { LabeledInput } from "../composites/LabeledInput";
-import { PrimaryButton } from "../composites/PrimaryButton";
-import { presignInsightUpload } from "../../lib/api/applications";
+import { LabeledInput } from "@/components/composites/LabeledInput";
+import { PrimaryButton } from "@/components/composites/PrimaryButton";
+import { presignInsightUpload } from "../api";
 import "./InsightSubmitForm.css";
 
 type ImgContentType = "image/png" | "image/jpeg" | "image/webp";

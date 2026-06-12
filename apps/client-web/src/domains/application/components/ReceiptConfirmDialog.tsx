@@ -1,4 +1,4 @@
-import { PrimaryButton } from "../composites/PrimaryButton";
+import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import "./ReceiptConfirmDialog.css";
 
 interface Props {

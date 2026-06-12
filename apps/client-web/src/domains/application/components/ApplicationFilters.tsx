@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { SnsType } from "@jsure/shared";
-import type { StatusFilter } from "./applicationFilter";
+import type { StatusFilter } from "../filter";
 import "./ApplicationFilters.css";
 
 const STATUS_OPTIONS: { value: Exclude<StatusFilter, "all">; label: string }[] =

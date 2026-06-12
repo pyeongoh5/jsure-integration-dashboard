@@ -8,10 +8,10 @@ import {
 import { SnsRecruitList } from "./SnsRecruitList";
 import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
 import { ExcludedCampaignsPicker } from "./ExcludedCampaignsPicker";
-import { uploadCampaignThumbnail, UploadError } from "../../lib/uploads";
-import { listCampaigns } from "../../lib/campaigns";
-import { RichTextEditor } from "../common/RichTextEditor";
-import { serializeRichTextHtml } from "../../lib/richTextImages";
+import { uploadCampaignThumbnail, UploadError } from "@/lib/uploads";
+import { listCampaigns } from "../api";
+import { RichTextEditor } from "@/components/common/RichTextEditor";
+import { serializeRichTextHtml } from "@/lib/richTextImages";
 
 const CAMPAIGN_IMAGE_ENDPOINT = "/uploads/admin/campaign-image/presign";
 import "./CampaignForm.css";

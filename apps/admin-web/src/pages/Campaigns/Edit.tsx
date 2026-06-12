@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { CampaignForm as Values } from "@jsure/shared";
-import { CampaignForm } from "../../components/Campaign/CampaignForm";
-import { getCampaign, updateCampaign } from "../../lib/campaigns";
+import { CampaignForm, getCampaign, updateCampaign } from "@/domains/campaign";
 
 type LoadState =
   | { kind: "loading" }

@@ -4,15 +4,17 @@ import type { CampaignResponse } from "@jsure/shared";
 import { Card } from "../../ui/Card";
 import { ConfirmDialog } from "../../ui/ConfirmDialog";
 import { FilterChips } from "../../ui/FilterChips";
-import { CampaignCardTitle } from "../../components/Campaign/CampaignCardTitle";
-import { CampaignCardBody } from "../../components/Campaign/CampaignCardBody";
-import { CampaignCardFooter } from "../../components/Campaign/CampaignCardFooter";
-import { CampaignActionsMenu } from "../../components/Campaign/CampaignActionsMenu";
-import type { Campaign, CampaignStatus } from "../../components/Campaign/types";
+import {
+  CampaignCardTitle,
+  CampaignCardBody,
+  CampaignCardFooter,
+  CampaignActionsMenu,
+  closeCampaign,
+  listCampaigns,
+} from "@/domains/campaign";
+import type { Campaign, CampaignStatus } from "@/domains/campaign";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
-import { closeCampaign, listCampaigns } from "../../lib/campaigns";
 import "./Campaigns.css";
-import "../../components/Campaign/CampaignActionsMenu.css";
 
 type FilterKey = "all" | CampaignStatus;
 

@@ -1,5 +1,5 @@
 import { CampaignCardSnsRecruits } from "./CampaignCardSnsRecruits";
-import type { CampaignCardSnsRecruit } from "./types";
+import type { CampaignCardSnsRecruit } from "../types";
 
 type Props = {
   thumbIcon: string;

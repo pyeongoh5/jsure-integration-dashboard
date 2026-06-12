@@ -10,6 +10,8 @@ type ConfirmDialogProps = {
   cancelLabel?: string;
   tone?: "primary" | "danger";
   busy?: boolean;
+  /** 입력 미충족 등으로 확인 버튼만 비활성화. 취소 버튼/Escape/배경 클릭에는 영향 없음. */
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -22,6 +24,7 @@ export function ConfirmDialog({
   cancelLabel = "취소",
   tone = "primary",
   busy = false,
+  confirmDisabled = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -79,7 +82,7 @@ export function ConfirmDialog({
               tone === "danger" ? "ui-confirm__btn--danger" : ""
             }`}
             onClick={onConfirm}
-            disabled={busy}
+            disabled={busy || confirmDisabled}
           >
             {busy ? "처리 중..." : confirmLabel}
           </button>

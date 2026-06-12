@@ -104,10 +104,11 @@ export function ApplicantShipDialog({
           {error && <div className="apl-mutation-error">{error}</div>}
         </div>
       }
-      confirmLabel={mutating ? "처리 중…" : "배송 시작"}
+      confirmLabel="배송 시작"
       cancelLabel="취소"
       tone="primary"
-      busy={mutating || !canSubmit}
+      busy={mutating}
+      confirmDisabled={!canSubmit}
       onConfirm={() => onConfirm(resolvedCarrier, trimmedNumber)}
       onCancel={onCancel}
     />

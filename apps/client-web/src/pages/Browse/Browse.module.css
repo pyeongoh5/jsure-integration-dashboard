@@ -1,0 +1,42 @@
+.browse {
+  padding-top: var(--space-1);
+}
+
+.brand {
+  text-align: center;
+  padding: var(--space-4) 0 18px;
+}
+
+.brandTitle {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-primary);
+  letter-spacing: -0.5px;
+}
+
+.brandSubtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  margin-top: -2px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 14px var(--space-6);
+}
+
+.skel {
+  aspect-ratio: 3 / 4;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-lg);
+}
+
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+  padding: 60px var(--space-3);
+}

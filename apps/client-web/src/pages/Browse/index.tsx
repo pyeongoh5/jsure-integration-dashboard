@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SnsTypeSchema, type SnsType } from "@jsure/shared";
 import { CampaignCard, SnsTabBar, useCampaignList } from "@/domains/campaign";
-import "./Browse.css";
+import styles from "./Browse.module.css";
 
 export function Browse() {
   const nav = useNavigate();
@@ -11,24 +11,24 @@ export function Browse() {
   const { data, isLoading, isError } = useCampaignList(sns);
 
   return (
-    <div className="browse">
-      <div className="browse__brand">
-        <div className="browse__brand-title">J-SURE</div>
-        <div className="browse__brand-subtitle">influencer</div>
+    <div className={styles.browse}>
+      <div className={styles.brand}>
+        <div className={styles.brandTitle}>J-SURE</div>
+        <div className={styles.brandSubtitle}>influencer</div>
       </div>
       <SnsTabBar value={sns} onChange={setSns} />
-      <div className="browse__grid">
+      <div className={styles.grid}>
         {isLoading && (
           <>
-            <div className="browse__skel" />
-            <div className="browse__skel" />
-            <div className="browse__skel" />
-            <div className="browse__skel" />
+            <div className={styles.skel} />
+            <div className={styles.skel} />
+            <div className={styles.skel} />
+            <div className={styles.skel} />
           </>
         )}
-        {!isLoading && isError && <div className="browse__empty">読み込みに失敗しました</div>}
+        {!isLoading && isError && <div className={styles.empty}>読み込みに失敗しました</div>}
         {!isLoading && !isError && data && data.length === 0 && (
-          <div className="browse__empty">対象のキャンペーンはまだありません</div>
+          <div className={styles.empty}>対象のキャンペーンはまだありません</div>
         )}
         {!isLoading &&
           !isError &&

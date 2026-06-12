@@ -7,7 +7,7 @@ import { Input } from "@/components/ui";
 import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import { presignInsightUpload } from "../api";
-import "./InsightSubmitForm.css";
+import styles from "./InsightSubmitForm.module.css";
 
 type ImgContentType = "image/png" | "image/jpeg" | "image/webp";
 
@@ -237,15 +237,15 @@ export function InsightSubmitForm({
           </FormField>
         ))}
 
-        <div className="isf-section">
-          <div className="isf-section-title">インサイトのスクリーンショット</div>
-          <div className="isf-section-hint">
+        <div className={styles.section}>
+          <div className={styles.sectionTitle}>インサイトのスクリーンショット</div>
+          <div className={styles.sectionHint}>
             PNG / JPEG / WebP · 最大{MAX_FILES}枚 · 5MB以下
           </div>
 
           <div
-            className={`isf-dropzone ${dragOver ? "isf-dropzone--drag" : ""} ${
-              busy || remaining <= 0 ? "isf-dropzone--disabled" : ""
+            className={`${styles.dropzone} ${dragOver ? styles.dropzoneDrag : ""} ${
+              busy || remaining <= 0 ? styles.dropzoneDisabled : ""
             }`}
             onClick={openPicker}
             onDragOver={(event) => {
@@ -267,20 +267,20 @@ export function InsightSubmitForm({
               }
             }}
           >
-            <i className="isf-dropzone__icon fa-regular fa-image" />
-            <div className="isf-dropzone__main">
+            <i className={`${styles.dropzoneIcon} fa-regular fa-image`} />
+            <div className={styles.dropzoneMain}>
               {uploading
                 ? "アップロード中…"
                 : remaining <= 0
                   ? "添付枚数が上限に達しました"
                   : "クリックまたはドラッグして画像を追加"}
             </div>
-            <div className="isf-dropzone__sub">
+            <div className={styles.dropzoneSub}>
               {attachments.length}/{MAX_FILES} 枚
             </div>
             <input
               ref={fileInputRef}
-              className="isf-dropzone__hidden-input"
+              className={styles.dropzoneHiddenInput}
               type="file"
               accept="image/png,image/jpeg,image/webp"
               multiple
@@ -292,20 +292,20 @@ export function InsightSubmitForm({
             />
           </div>
 
-          {uploadError && <div className="isf-error">{uploadError}</div>}
+          {uploadError && <div className={styles.error}>{uploadError}</div>}
 
           {(attachments.length > 0 || pendingCount > 0) && (
-            <div className="isf-grid">
+            <div className={styles.grid}>
               {attachments.map((attachment, index) => (
-                <div key={attachment.objectKey} className="isf-tile">
+                <div key={attachment.objectKey} className={styles.tile}>
                   <img
                     src={attachment.previewUrl}
                     alt={attachment.name}
-                    className="isf-tile__img"
+                    className={styles.tileImg}
                   />
                   <button
                     type="button"
-                    className="isf-tile__remove"
+                    className={styles.tileRemove}
                     onClick={() => removeAttachment(index)}
                     disabled={busy}
                     aria-label="削除"
@@ -315,8 +315,8 @@ export function InsightSubmitForm({
                 </div>
               ))}
               {Array.from({ length: pendingCount }).map((_, index) => (
-                <div key={`pending-${index}`} className="isf-tile">
-                  <div className="isf-tile__loading">アップロード中…</div>
+                <div key={`pending-${index}`} className={styles.tile}>
+                  <div className={styles.tileLoading}>アップロード中…</div>
                 </div>
               ))}
             </div>

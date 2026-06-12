@@ -8,7 +8,7 @@ import {
   useApplications,
   type StatusFilter,
 } from "@/domains/application";
-import "./Applications.css";
+import styles from "./Applications.module.css";
 
 export function Applications() {
   const nav = useNavigate();
@@ -36,8 +36,8 @@ export function Applications() {
   );
 
   return (
-    <div className="apps">
-      <header className="apps__header">
+    <div>
+      <header className={styles.header}>
         <h1>応募内訳</h1>
       </header>
 
@@ -51,18 +51,18 @@ export function Applications() {
         />
       )}
 
-      <div className="apps__list">
-        {isLoading && <div className="apps__empty">読み込み中…</div>}
+      <div className={styles.list}>
+        {isLoading && <div className={styles.empty}>読み込み中…</div>}
         {isError && (
-          <div className="apps__empty">読み込みに失敗しました</div>
+          <div className={styles.empty}>読み込みに失敗しました</div>
         )}
         {!isLoading && !isError && applications.length === 0 && (
-          <div className="apps__empty">
+          <div className={styles.empty}>
             まだ応募していません
             <div style={{ marginTop: 12 }}>
               <button
                 type="button"
-                className="apps__cta"
+                className={styles.cta}
                 onClick={() => nav("/")}
               >
                 キャンペーンを探す
@@ -74,7 +74,7 @@ export function Applications() {
           !isError &&
           applications.length > 0 &&
           filtered.length === 0 && (
-            <div className="apps__empty">該当する応募がありません</div>
+            <div className={styles.empty}>該当する応募がありません</div>
           )}
         {filtered.map((app) => (
           <ApplicationCard

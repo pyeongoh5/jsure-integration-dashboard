@@ -1,0 +1,61 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 100;
+}
+
+.panel {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  max-width: 360px;
+  width: 100%;
+  padding: var(--space-5);
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.2);
+}
+
+.title {
+  margin: 0 0 var(--space-3);
+  font-size: 16px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.body {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md);
+  color: #374151;
+  line-height: 1.55;
+}
+
+.warn {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  font-weight: var(--font-weight-semibold);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cancel {
+  background: var(--color-bg-muted);
+  color: #374151;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: var(--font-size-base);
+  cursor: pointer;
+}
+
+.cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,0 +1,62 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--color-bg-subtle);
+  border-radius: 10px;
+  padding: var(--space-3) var(--space-2);
+  position: relative;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  color: var(--color-text-subtle);
+}
+
+.dot {
+  width: 22px;
+  height: 22px;
+  background: var(--color-border);
+  color: transparent;
+  border-radius: 50%;
+  margin: 0 auto;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepDone .dot {
+  background: var(--color-primary);
+  color: var(--color-bg);
+}
+
+.stepActive .dot {
+  background: var(--color-primary);
+  color: var(--color-bg);
+}
+
+.label {
+  font-size: 10px;
+  margin-top: var(--space-1);
+}
+
+.stepDone .label,
+.stepActive .label {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.terminal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(254, 226, 226, 0.9);
+  color: var(--color-danger-text);
+  font-weight: var(--font-weight-bold);
+  border-radius: 10px;
+}

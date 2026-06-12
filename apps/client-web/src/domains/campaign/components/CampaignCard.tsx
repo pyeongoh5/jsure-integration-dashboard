@@ -1,6 +1,19 @@
 import { useLayoutEffect, useRef } from "react";
 import type { InfluencerCampaignCard, SnsType, SnsRecruit } from "@jsure/shared";
-import "./CampaignCard.css";
+import styles from "./CampaignCard.module.css";
+
+function snsChipClass(snsType: SnsType) {
+  switch (snsType) {
+    case "INSTAGRAM":
+      return styles.snsChipInstagram;
+    case "TIKTOK":
+      return styles.snsChipTiktok;
+    case "X":
+      return styles.snsChipX;
+    case "YOUTUBE":
+      return styles.snsChipYoutube;
+  }
+}
 
 const SNS_ICON: Record<SnsType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",
@@ -114,24 +127,24 @@ function SnsChipList({ recruits }: { recruits: SnsRecruit[] }) {
   trackRefs.current.length = recruits.length;
 
   return (
-    <div className="ccard__sns">
+    <div className={styles.sns}>
       {recruits.map((r, i) => (
         <span
           key={r.snsType}
-          className={`ccard__sns-chip ccard__sns-chip--${r.snsType.toLowerCase()}`}
+          className={`${styles.snsChip} ${snsChipClass(r.snsType)}`}
         >
           <i className={SNS_ICON[r.snsType]} aria-hidden="true" />
           <span
             ref={(el) => {
               wrapRefs.current[i] = el;
             }}
-            className="ccard__sns-cond"
+            className={styles.snsCond}
           >
             <span
               ref={(el) => {
                 trackRefs.current[i] = el;
               }}
-              className="ccard__sns-cond-track"
+              className={styles.snsCondTrack}
             >
               {condText(r)}
             </span>
@@ -150,47 +163,47 @@ export function CampaignCard({ card, onSelect }: Props) {
   return (
     <button
       type="button"
-      className={`ccard${card.isEnded ? " ccard--ended" : ""}`}
+      className={`${styles.card}${card.isEnded ? ` ${styles.ended}` : ""}`}
       onClick={onSelect}
     >
       <div
-        className="ccard__thumb"
+        className={styles.thumb}
         style={card.thumbnailUrl ? { backgroundImage: `url(${card.thumbnailUrl})` } : undefined}
       >
-        {card.isNew && <div className="ccard__new">NEW</div>}
-        {card.isEnded && <div className="ccard__ended-badge">終了</div>}
+        {card.isNew && <div className={styles.new}>NEW</div>}
+        {card.isEnded && <div className={styles.endedBadge}>終了</div>}
       </div>
 
-      <div className="ccard__body">
-        <h3 className="ccard__title">{card.title}</h3>
-        <p className="ccard__desc">{stripHtml(card.productSummary)}</p>
+      <div className={styles.body}>
+        <h3 className={styles.title}>{card.title}</h3>
+        <p className={styles.desc}>{stripHtml(card.productSummary)}</p>
 
         {card.snsRecruits.length > 0 && <SnsChipList recruits={card.snsRecruits} />}
 
-        <div className="ccard__meta">
-          <div className="ccard__meta-row">
+        <div className={styles.meta}>
+          <div className={styles.metaRow}>
             <i className="fa-regular fa-calendar" />
             <span>{formatDateRange(card.recruitStartAt, card.recruitEndAt)}</span>
           </div>
-          <div className="ccard__meta-row">
+          <div className={styles.metaRow}>
             <i className="fa-solid fa-coins" />
             <span>{formatYen(card.rewardJpy)}</span>
           </div>
         </div>
 
-        <div className="ccard__affix">
-          <div className="ccard__progress">
-            <div className="ccard__progress-text">
+        <div className={styles.affix}>
+          <div className={styles.progress}>
+            <div className={styles.progressText}>
               募集 {card.appliedCount}/{card.recruitCount}名 ({ratio}%)
             </div>
-            <div className="ccard__progress-bar">
-              <div className="ccard__progress-fill" style={{ width: `${ratio}%` }} />
+            <div className={styles.progressBar}>
+              <div className={styles.progressFill} style={{ width: `${ratio}%` }} />
             </div>
           </div>
           {card.isEnded ? (
-            <span className="ccard__dday ccard__dday--ended">終了</span>
+            <span className={`${styles.dday} ${styles.ddayEnded}`}>終了</span>
           ) : (
-            <span className={`ccard__dday ${dday <= 7 ? "ccard__dday--urgent" : ""}`}>
+            <span className={`${styles.dday} ${dday <= 7 ? styles.ddayUrgent : ""}`}>
               D-{dday}
             </span>
           )}

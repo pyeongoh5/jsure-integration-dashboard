@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useNoticeDetail } from "@/domains/notice";
 import { useMarkNoticeRead } from "@/domains/notice";
-import "./Notices.css";
+import styles from "./Notices.module.css";
 
 function formatDate(iso: string): string {
   const date = new Date(iso);
@@ -22,21 +22,21 @@ export function NoticeDetail() {
   }, [notice, markRead]);
 
   if (loading) {
-    return <div className="notices-page__state">불러오는 중…</div>;
+    return <div className={styles.pageState}>불러오는 중…</div>;
   }
   if (error || !notice) {
-    return <div className="notices-page__state">{error ?? "공지를 찾을 수 없습니다"}</div>;
+    return <div className={styles.pageState}>{error ?? "공지를 찾을 수 없습니다"}</div>;
   }
 
   return (
-    <div className="notice-detail">
-      <div className="notice-detail__card">
-        <div className="notice-detail__header">
-          <h1 className="notice-detail__title">{notice.title}</h1>
-          <div className="notice-detail__date">{formatDate(notice.startAt)}</div>
+    <div className={styles.detail}>
+      <div className={styles.detailCard}>
+        <div className={styles.detailHeader}>
+          <h1 className={styles.detailTitle}>{notice.title}</h1>
+          <div className={styles.detailDate}>{formatDate(notice.startAt)}</div>
         </div>
         <div
-          className="notice-detail__body"
+          className={styles.detailBody}
           dangerouslySetInnerHTML={{ __html: notice.contentHtml }}
         />
       </div>

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useNoticesData } from "@/domains/notice";
 import { useReadNoticeIds } from "@/domains/notice";
-import "./Notices.css";
+import styles from "./Notices.module.css";
 
 function formatDate(iso: string): string {
   const date = new Date(iso);
@@ -17,28 +17,28 @@ export function Notices() {
   const readSet = new Set(readIds);
 
   return (
-    <div className="notices-page">
-      <div className="notices-page__title">お知らせ</div>
+    <div className={styles.page}>
+      <div className={styles.pageTitle}>お知らせ</div>
 
       {loading ? (
-        <div className="notices-page__state">불러오는 중…</div>
+        <div className={styles.pageState}>불러오는 중…</div>
       ) : error ? (
-        <div className="notices-page__state">{error}</div>
+        <div className={styles.pageState}>{error}</div>
       ) : notices.length === 0 ? (
-        <div className="notices-page__state">공지사항이 없습니다</div>
+        <div className={styles.pageState}>공지사항이 없습니다</div>
       ) : (
         notices.map((notice) => (
           <Link
             key={notice.id}
             to={`/notices/${encodeURIComponent(notice.id)}`}
-            className="notice-list-item"
+            className={styles.listItem}
           >
-            <div className="notice-list-item__title">{notice.title}</div>
-            <div className="notice-list-item__date">
+            <div className={styles.listItemTitle}>{notice.title}</div>
+            <div className={styles.listItemDate}>
               {formatDate(notice.startAt)}
             </div>
             {!readSet.has(notice.id) ? (
-              <span className="notice-list-item__dot" aria-label="신규" />
+              <span className={styles.listItemDot} aria-label="신규" />
             ) : null}
           </Link>
         ))

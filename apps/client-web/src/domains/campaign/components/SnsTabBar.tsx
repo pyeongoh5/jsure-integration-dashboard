@@ -1,5 +1,5 @@
 import { SnsTypeSchema, type SnsType } from "@jsure/shared";
-import "./SnsTabBar.css";
+import styles from "./SnsTabBar.module.css";
 
 const SNS_TYPES = SnsTypeSchema.options;
 const LABEL: Record<SnsType, string> = {
@@ -16,12 +16,12 @@ interface Props {
 
 export function SnsTabBar({ value, onChange }: Props) {
   return (
-    <div className="stb">
+    <div className={styles.bar}>
       {SNS_TYPES.map((t) => (
         <button
           key={t}
           type="button"
-          className={`stb__pill ${value === t ? "stb__pill--on" : ""}`}
+          className={`${styles.pill} ${value === t ? styles.pillOn : ""}`}
           onClick={() => onChange(t)}
         >
           {LABEL[t]}

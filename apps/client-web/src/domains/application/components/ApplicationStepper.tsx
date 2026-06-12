@@ -1,6 +1,6 @@
 import type { ApplicationDisplayStage } from "@jsure/shared";
 import { STAGE_PROGRESS, STAGE_TOTAL } from "../utils";
-import "./ApplicationStepper.css";
+import styles from "./ApplicationStepper.module.css";
 
 const STEPS = ["申請", "承認", "発送", "受取", "投稿", "検査", "完了"];
 
@@ -13,7 +13,7 @@ export function ApplicationStepper({
   const terminal = stage === "REJECTED" || stage === "CANCELLED";
 
   return (
-    <div className="stepper">
+    <div className={styles.stepper}>
       {STEPS.map((label, idx) => {
         const step = idx + 1;
         const done = !terminal && step < current;
@@ -21,15 +21,15 @@ export function ApplicationStepper({
         return (
           <div
             key={label}
-            className={`stepper__step ${done ? "stepper__step--done" : ""} ${active ? "stepper__step--active" : ""}`}
+            className={`${styles.step} ${done ? styles.stepDone : ""} ${active ? styles.stepActive : ""}`}
           >
-            <div className="stepper__dot">{done ? "✓" : step === current ? "●" : ""}</div>
-            <div className="stepper__label">{label}</div>
+            <div className={styles.dot}>{done ? "✓" : step === current ? "●" : ""}</div>
+            <div className={styles.label}>{label}</div>
           </div>
         );
       })}
       {terminal && (
-        <div className="stepper__terminal">
+        <div className={styles.terminal}>
           {stage === "REJECTED" ? "却下" : "キャンセル"}
         </div>
       )}

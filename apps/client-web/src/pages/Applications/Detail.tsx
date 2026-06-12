@@ -16,7 +16,7 @@ import {
 } from "@/domains/application";
 import { PageHeader } from "@/components/composites/PageHeader";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
-import "./ApplicationDetail.css";
+import styles from "./ApplicationDetail.module.css";
 
 export function ApplicationDetail() {
   const { id = "" } = useParams();
@@ -83,7 +83,7 @@ export function ApplicationDetail() {
     return (
       <div>
         <PageHeader showBack />
-        <div className="adetail__center">読み込み中…</div>
+        <div className={styles.center}>読み込み中…</div>
       </div>
     );
   }
@@ -91,7 +91,7 @@ export function ApplicationDetail() {
     return (
       <div>
         <PageHeader showBack />
-        <div className="adetail__center">読み込みに失敗しました</div>
+        <div className={styles.center}>読み込みに失敗しました</div>
       </div>
     );
   }
@@ -100,51 +100,51 @@ export function ApplicationDetail() {
   const canCancel = data.status === "APPLIED";
 
   return (
-    <div className="adetail">
+    <div>
       <PageHeader showBack title={data.campaignTitle} />
-      <div className="adetail__top">
-        <div className="adetail__head-row">
-          <div className="adetail__title">{data.campaignTitle}</div>
+      <div className={styles.top}>
+        <div className={styles.headRow}>
+          <div className={styles.title}>{data.campaignTitle}</div>
           <StageBadge stage={stage} />
         </div>
-        <div className="adetail__reward">¥{data.rewardJpy.toLocaleString("ja-JP")}</div>
-        <div className="adetail__stepper">
+        <div className={styles.reward}>¥{data.rewardJpy.toLocaleString("ja-JP")}</div>
+        <div className={styles.stepper}>
           <ApplicationStepper stage={stage} />
         </div>
       </div>
 
-      <div className="adetail__sections">
-        {stage === "APPLIED" && <p className="adetail__msg">承認をお待ちください。</p>}
-        {stage === "APPROVED" && <p className="adetail__msg">JSUREで発送準備中です。</p>}
+      <div className={styles.sections}>
+        {stage === "APPLIED" && <p className={styles.msg}>承認をお待ちください。</p>}
+        {stage === "APPROVED" && <p className={styles.msg}>JSUREで発送準備中です。</p>}
         {stage === "SHIPPED" && (
           <div>
-            <div className="adetail__tracking">
-              <div className="adetail__tracking-label">配送業者</div>
-              <div className="adetail__tracking-value">
+            <div className={styles.tracking}>
+              <div className={styles.trackingLabel}>配送業者</div>
+              <div className={styles.trackingValue}>
                 {data.trackingCarrier ?? "—"}
               </div>
-              <div className="adetail__tracking-label">運送番号</div>
-              <div className="adetail__tracking-value">
+              <div className={styles.trackingLabel}>運送番号</div>
+              <div className={styles.trackingValue}>
                 {data.trackingNumber ?? "—"}
               </div>
             </div>
-            <p className="adetail__msg">配送状況を確認しています。</p>
+            <p className={styles.msg}>配送状況を確認しています。</p>
           </div>
         )}
 
         {stage === "AWAITING_RECEIPT" && (
           <div>
-            <div className="adetail__tracking">
-              <div className="adetail__tracking-label">配送業者</div>
-              <div className="adetail__tracking-value">
+            <div className={styles.tracking}>
+              <div className={styles.trackingLabel}>配送業者</div>
+              <div className={styles.trackingValue}>
                 {data.trackingCarrier ?? "—"}
               </div>
-              <div className="adetail__tracking-label">運送番号</div>
-              <div className="adetail__tracking-value">
+              <div className={styles.trackingLabel}>運送番号</div>
+              <div className={styles.trackingValue}>
                 {data.trackingNumber ?? "—"}
               </div>
             </div>
-            <p className="adetail__msg">
+            <p className={styles.msg}>
               商品が届きましたか？受領を確認すると投稿期間（{data.postingPeriodDays}
               日）が始まります。
             </p>
@@ -169,20 +169,20 @@ export function ApplicationDetail() {
           data.posts
             .filter((p) => p.reviewStatus === "REJECTED")
             .map((p) => (
-              <div key={p.id} className="adetail__reject">
-                <div className="adetail__reject-head">
-                  <span className="adetail__reject-badge">差し戻し</span>
-                  <span className="adetail__reject-sns">{p.snsType}</span>
+              <div key={p.id} className={styles.reject}>
+                <div className={styles.rejectHead}>
+                  <span className={styles.rejectBadge}>差し戻し</span>
+                  <span className={styles.rejectSns}>{p.snsType}</span>
                 </div>
-                <div className="adetail__reject-url">
+                <div className={styles.rejectUrl}>
                   提出URL:{" "}
                   <a href={p.url} target="_blank" rel="noreferrer">
                     {p.url}
                   </a>
                 </div>
                 {p.lastRejectionComment && (
-                  <div className="adetail__reject-comment">
-                    <div className="adetail__reject-comment-label">
+                  <div className={styles.rejectComment}>
+                    <div className={styles.rejectCommentLabel}>
                       管理者コメント
                     </div>
                     <p>{p.lastRejectionComment}</p>
@@ -200,7 +200,7 @@ export function ApplicationDetail() {
             ))}
 
         {stage === "POSTED" && (
-          <p className="adetail__msg">
+          <p className={styles.msg}>
             投稿を確認しました。投稿から7日後にインサイトを提出してください。
           </p>
         )}
@@ -232,18 +232,18 @@ export function ApplicationDetail() {
           />
         )}
 
-        {stage === "REVIEWING" && <p className="adetail__msg">ブランドが検査中です。</p>}
+        {stage === "REVIEWING" && <p className={styles.msg}>ブランドが検査中です。</p>}
 
         {stage === "COMPLETED" && (
-          <p className="adetail__msg">完了しました。振込予定をお待ちください。</p>
+          <p className={styles.msg}>完了しました。振込予定をお待ちください。</p>
         )}
 
         {stage === "SETTLED" && data.settlement && (
-          <div className="adetail__thanks">
-            <p className="adetail__thanks-title">
+          <div className={styles.thanks}>
+            <p className={styles.thanksTitle}>
               キャンペーンにご参加いただきありがとうございます。
             </p>
-            <dl className="adetail__thanks-meta">
+            <dl className={styles.thanksMeta}>
               <div>
                 <dt>報酬</dt>
                 <dd>¥{data.settlement.amountJpy.toLocaleString("ja-JP")}円</dd>
@@ -257,16 +257,16 @@ export function ApplicationDetail() {
         )}
 
         {stage === "REJECTED" && (
-          <p className="adetail__msg adetail__msg--err">
+          <p className={`${styles.msg} ${styles.msgErr}`}>
             却下されました: {data.rejectReason ?? "—"}
           </p>
         )}
-        {stage === "CANCELLED" && <p className="adetail__msg adetail__msg--err">キャンセル済</p>}
+        {stage === "CANCELLED" && <p className={`${styles.msg} ${styles.msgErr}`}>キャンセル済</p>}
 
         {canCancel && (
           <button
             type="button"
-            className="adetail__cancel"
+            className={styles.cancel}
             disabled={cancel.isPending}
             onClick={() => {
               if (window.confirm("本当にキャンセルしますか？")) cancel.mutate();

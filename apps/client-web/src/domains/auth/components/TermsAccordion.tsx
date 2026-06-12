@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ConsentItem } from "@jsure/shared";
 import { INFLUENCER_TERMS } from "@jsure/shared";
-import "./TermsAccordion.css";
+import styles from "./TermsAccordion.module.css";
 
 interface Props {
   agreed: Set<ConsentItem>;
@@ -23,13 +23,13 @@ export function TermsAccordion({ agreed, onToggle, onToggleAll }: Props) {
   }
 
   return (
-    <div className="terms">
+    <div>
       <button
         type="button"
-        className={`terms__all ${allChecked ? "terms__all--on" : ""}`}
+        className={styles.all}
         onClick={onToggleAll}
       >
-        <span className={`terms__chk ${allChecked ? "terms__chk--on" : ""}`}>
+        <span className={[styles.chk, allChecked ? styles.chkOn : ""].filter(Boolean).join(" ")}>
           {allChecked ? "✓" : ""}
         </span>
         <span>すべての項目に同意します</span>
@@ -39,32 +39,32 @@ export function TermsAccordion({ agreed, onToggle, onToggleAll }: Props) {
         const on = agreed.has(term.key);
         const open = expanded.has(term.key);
         return (
-          <div key={term.key} className="terms__item">
-            <div className="terms__head">
+          <div key={term.key} className={styles.item}>
+            <div className={styles.head}>
               <button
                 type="button"
-                className="terms__chk-btn"
+                className={styles.chkBtn}
                 aria-label={on ? "解除" : "同意"}
                 onClick={() => onToggle(term.key)}
               >
-                <span className={`terms__chk ${on ? "terms__chk--on" : ""}`}>
+                <span className={[styles.chk, on ? styles.chkOn : ""].filter(Boolean).join(" ")}>
                   {on ? "✓" : ""}
                 </span>
               </button>
               <button
                 type="button"
-                className="terms__label-btn"
+                className={styles.labelBtn}
                 onClick={() => toggleExpand(term.key)}
               >
-                <span className="terms__req">[必須]</span>
-                <span className="terms__title">{term.title}</span>
+                <span className={styles.req}>[必須]</span>
+                <span className={styles.title}>{term.title}</span>
                 <i
-                  className={`fa-solid fa-chevron-down terms__caret ${open ? "terms__caret--open" : ""}`}
+                  className={`fa-solid fa-chevron-down ${styles.caret} ${open ? styles.caretOpen : ""}`}
                 />
               </button>
             </div>
             {open && (
-              <div className="terms__body">
+              <div className={styles.body}>
                 <div>{term.bodyJa}</div>
               </div>
             )}

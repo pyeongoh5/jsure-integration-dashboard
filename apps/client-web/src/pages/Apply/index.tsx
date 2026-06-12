@@ -8,7 +8,7 @@ import { fetchMe } from "@/domains/auth";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
-import "./Apply.css";
+import styles from "./Apply.module.css";
 
 const CONFIRM_KEYS = [
   "PR_LABEL",
@@ -125,24 +125,24 @@ export function Apply() {
   );
 
   return (
-    <div className="apply">
+    <div className={styles.apply}>
       <PageHeader showBack title="応募確認" />
-      <div className="apply__body">
-        <div className="apply__cam">
-          <div className="apply__cam-title">{campaign.data.title}</div>
-          <div className="apply__cam-reward">
+      <div className={styles.body}>
+        <div className={styles.cam}>
+          <div className={styles.camTitle}>{campaign.data.title}</div>
+          <div className={styles.camReward}>
             ¥{campaign.data.rewardJpy.toLocaleString("ja-JP")}
           </div>
         </div>
 
-        <section className="apply__sec">
+        <section className={styles.sec}>
           <h3>応募に使用するSNSを選択</h3>
           {qualifying.length === 0 ? (
             <p style={{ color: "#ef4444", fontSize: 13 }}>
               応募条件を満たすSNSアカウントがありません
             </p>
           ) : (
-            <ul className="apply__sns-pick">
+            <ul className={styles.snsPick}>
               {campaign.data.snsRecruits.map((r) => {
                 const isQualifying = qualifying.includes(r.snsType);
                 const alreadyApplied = campaign.data.appliedSnsTypes.includes(
@@ -157,9 +157,9 @@ export function Apply() {
                 return (
                   <li key={r.snsType}>
                     <label
-                      className={`apply__sns-item ${
-                        disabled ? "apply__sns-item--disabled" : ""
-                      } ${isSelected ? "apply__sns-item--selected" : ""}`}
+                      className={`${styles.snsItem} ${
+                        disabled ? styles.snsItemDisabled : ""
+                      } ${isSelected ? styles.snsItemSelected : ""}`}
                     >
                       <input
                         type="checkbox"
@@ -167,8 +167,8 @@ export function Apply() {
                         disabled={disabled}
                         onChange={() => toggleSns(r.snsType)}
                       />
-                      <div className="apply__sns-info">
-                        <div className="apply__sns-name">
+                      <div className={styles.snsInfo}>
+                        <div className={styles.snsName}>
                           {SNS_LABEL[r.snsType]}
                           {alreadyApplied && (
                             <span style={{ marginLeft: 8, color: "#10b981", fontSize: 11 }}>
@@ -181,7 +181,7 @@ export function Apply() {
                             </span>
                           )}
                         </div>
-                        <div className="apply__sns-cond">
+                        <div className={styles.snsCond}>
                           応募条件: {SNS_FOLLOWER_LABEL[r.snsType]}{" "}
                           {r.minFollowers > 0
                             ? `${r.minFollowers.toLocaleString("ja-JP")}人以上`
@@ -205,11 +205,11 @@ export function Apply() {
           )}
         </section>
 
-        <section className="apply__sec">
+        <section className={styles.sec}>
           <h3>お届け先住所</h3>
           {me.data?.address ? (
             <>
-              <div className="apply__address">
+              <div className={styles.address}>
                 〒{me.data.address.postalCode}
                 <br />
                 {me.data.address.prefecture}
@@ -219,7 +219,7 @@ export function Apply() {
                   ? ` ${me.data.address.addressLine2}`
                   : ""}
               </div>
-              <label className="apply__chk">
+              <label className={styles.chk}>
                 <input
                   type="checkbox"
                   checked={addressConfirmed}
@@ -229,24 +229,24 @@ export function Apply() {
               </label>
               <button
                 type="button"
-                className="apply__address-edit"
+                className={styles.addressEdit}
                 onClick={() => nav("/me/address")}
               >
                 住所を修正する
               </button>
-              <p className="apply__address-notice">
+              <p className={styles.addressNotice}>
                 上記の内容に変更がある場合は、マイページで更新のうえ、再度ご応募ください。
               </p>
-              <p className="apply__address-notice apply__address-notice--caution">
+              <p className={`${styles.addressNotice} ${styles.addressNoticeCaution}`}>
                 ※住所の転送手続きを行う場合、転送費用をご負担いただくことがございますので、あらかじめご了承ください。
               </p>
             </>
           ) : (
-            <div className="apply__address apply__address--missing">
+            <div className={`${styles.address} ${styles.addressMissing}`}>
               お届け先住所が未登録です。
               <button
                 type="button"
-                className="apply__address-edit"
+                className={styles.addressEdit}
                 onClick={() => nav("/me/address")}
               >
                 住所を登録する
@@ -255,10 +255,10 @@ export function Apply() {
           )}
         </section>
 
-        <section className="apply__sec">
+        <section className={styles.sec}>
           <h3>応募にあたっての再確認</h3>
           {CONFIRM_KEYS.map((k) => (
-            <label key={k} className="apply__chk">
+            <label key={k} className={styles.chk}>
               <input
                 type="checkbox"
                 checked={agreed.has(k)}
@@ -272,7 +272,7 @@ export function Apply() {
         {error && <ErrorBanner message={error} />}
       </div>
 
-      <div className="apply__cta">
+      <div className={styles.cta}>
         <PrimaryButton
           disabled={
             isClosed ||

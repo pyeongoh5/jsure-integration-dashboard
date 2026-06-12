@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { SnsType } from "@jsure/shared";
 import type { StatusFilter } from "../filter";
-import "./ApplicationFilters.css";
+import styles from "./ApplicationFilters.module.css";
 
 const STATUS_OPTIONS: { value: Exclude<StatusFilter, "all">; label: string }[] =
   [
@@ -92,19 +92,19 @@ export function ApplicationFilters({
 
   return (
     <>
-      <div className="appf">
+      <div className={styles.bar}>
         <button
           ref={snsButtonRef}
           type="button"
-          className={`appf__chip ${
-            selectedSnsTypes.size > 0 ? "appf__chip--active" : ""
+          className={`${styles.chip} ${
+            selectedSnsTypes.size > 0 ? styles.chipActive : ""
           }`}
           onClick={() => openPopover("sns", snsButtonRef.current)}
         >
           {selectedSnsTypes.size > 0 ? `SNS: ${selectedSnsLabel}` : "+ SNS"}
           {selectedSnsTypes.size > 0 && (
             <span
-              className="appf__clear"
+              className={styles.clear}
               onClick={(event) => {
                 event.stopPropagation();
                 onClearSns();
@@ -120,8 +120,8 @@ export function ApplicationFilters({
         <button
           ref={statusButtonRef}
           type="button"
-          className={`appf__chip ${
-            statusFilter !== "all" ? "appf__chip--active" : ""
+          className={`${styles.chip} ${
+            statusFilter !== "all" ? styles.chipActive : ""
           }`}
           onClick={() => openPopover("status", statusButtonRef.current)}
         >
@@ -130,7 +130,7 @@ export function ApplicationFilters({
             : "+ 状態"}
           {statusFilter !== "all" && (
             <span
-              className="appf__clear"
+              className={styles.clear}
               onClick={(event) => {
                 event.stopPropagation();
                 onStatusChange("all");
@@ -148,21 +148,21 @@ export function ApplicationFilters({
         createPortal(
           <div
             ref={popoverRef}
-            className="appf-popover"
+            className={styles.popover}
             style={{ top: popover.rect.bottom + 6, left: popover.rect.left }}
           >
             {popover.kind === "status" ? (
               <>
-                <div className="appf-popover__title">状態を選択</div>
-                <div className="appf-popover__items">
+                <div className={styles.popoverTitle}>状態を選択</div>
+                <div className={styles.popoverItems}>
                   {STATUS_OPTIONS.map((option) => {
                     const selected = statusFilter === option.value;
                     return (
                       <button
                         key={option.value}
                         type="button"
-                        className={`appf-popover__option${
-                          selected ? " appf-popover__option--on" : ""
+                        className={`${styles.popoverOption}${
+                          selected ? ` ${styles.popoverOptionOn}` : ""
                         }`}
                         onClick={() => {
                           onStatusChange(option.value);
@@ -171,7 +171,7 @@ export function ApplicationFilters({
                       >
                         <span>{option.label}</span>
                         {selected && (
-                          <span className="appf-popover__check">✓</span>
+                          <span className={styles.popoverCheck}>✓</span>
                         )}
                       </button>
                     );
@@ -180,31 +180,31 @@ export function ApplicationFilters({
               </>
             ) : (
               <>
-                <div className="appf-popover__title">SNSを選択（複数可）</div>
-                <div className="appf-popover__items">
+                <div className={styles.popoverTitle}>SNSを選択（複数可）</div>
+                <div className={styles.popoverItems}>
                   {SNS_OPTIONS.map((option) => {
                     const selected = selectedSnsTypes.has(option.value);
                     return (
                       <button
                         key={option.value}
                         type="button"
-                        className={`appf-popover__option${
-                          selected ? " appf-popover__option--on" : ""
+                        className={`${styles.popoverOption}${
+                          selected ? ` ${styles.popoverOptionOn}` : ""
                         }`}
                         onClick={() => onToggleSns(option.value)}
                       >
                         <span>{option.label}</span>
                         {selected && (
-                          <span className="appf-popover__check">✓</span>
+                          <span className={styles.popoverCheck}>✓</span>
                         )}
                       </button>
                     );
                   })}
                 </div>
-                <div className="appf-popover__actions">
+                <div className={styles.popoverActions}>
                   <button
                     type="button"
-                    className="appf-popover__close"
+                    className={styles.popoverClose}
                     onClick={() => setPopover(null)}
                   >
                     閉じる

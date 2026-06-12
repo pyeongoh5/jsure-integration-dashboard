@@ -1,5 +1,5 @@
 import type { SnsType } from "@jsure/shared";
-import "./SnsAccountCard.css";
+import styles from "./SnsAccountCard.module.css";
 
 interface Props {
   snsType: SnsType;
@@ -33,15 +33,15 @@ export function SnsAccountCard({
   onChange,
 }: Props) {
   return (
-    <div className={`snsc ${enabled ? "snsc--on" : ""}`}>
-      <button type="button" className="snsc__head" onClick={onToggle}>
-        <i className={`${ICON[snsType]} snsc__icon`} />
-        <span className="snsc__name">{LABEL[snsType]}</span>
-        <span className={`snsc__toggle ${enabled ? "snsc__toggle--on" : ""}`} />
+    <div className={[styles.card, enabled ? styles.cardOn : ""].filter(Boolean).join(" ")}>
+      <button type="button" className={styles.head} onClick={onToggle}>
+        <i className={`${ICON[snsType]} ${styles.icon}`} />
+        <span className={styles.name}>{LABEL[snsType]}</span>
+        <span className={[styles.toggle, enabled ? styles.toggleOn : ""].filter(Boolean).join(" ")} />
       </button>
       {enabled && (
-        <div className="snsc__body">
-          <label className="snsc__field">
+        <div className={styles.body}>
+          <label className={styles.field}>
             <span>ID</span>
             <input
               type="text"
@@ -50,7 +50,7 @@ export function SnsAccountCard({
               placeholder="ID"
             />
           </label>
-          <label className="snsc__field">
+          <label className={styles.field}>
             <span>フォロワー数</span>
             <input
               type="text"

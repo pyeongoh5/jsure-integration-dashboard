@@ -1,5 +1,5 @@
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
-import "./ReceiptConfirmDialog.css";
+import styles from "./ReceiptConfirmDialog.module.css";
 
 interface Props {
   postingPeriodDays: number;
@@ -16,23 +16,23 @@ export function ReceiptConfirmDialog({
 }: Props) {
   return (
     <div
-      className="rcd__overlay"
+      className={styles.overlay}
       role="dialog"
       aria-modal="true"
       aria-labelledby="rcd-title"
     >
-      <div className="rcd__panel">
-        <h2 id="rcd-title" className="rcd__title">
+      <div className={styles.panel}>
+        <h2 id="rcd-title" className={styles.title}>
           受領を確認しますか？
         </h2>
-        <p className="rcd__body">
+        <p className={styles.body}>
           受領を確認すると、ここから投稿期間（{postingPeriodDays}日）が始まります。
         </p>
-        <p className="rcd__warn">この操作は取り消せません。</p>
-        <div className="rcd__actions">
+        <p className={styles.warn}>この操作は取り消せません。</p>
+        <div className={styles.actions}>
           <button
             type="button"
-            className="rcd__cancel"
+            className={styles.cancel}
             onClick={onCancel}
             disabled={submitting}
           >

@@ -3,7 +3,14 @@ import type { SnsType, SnsRecruit } from "@jsure/shared";
 import { useCampaign, formatYen, formatDate } from "@/domains/campaign";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
-import "./CampaignDetail.css";
+import styles from "./CampaignDetail.module.css";
+
+const SNS_ROW_CLASS: Record<SnsType, string | undefined> = {
+  INSTAGRAM: styles.snsRowInstagram,
+  TIKTOK: styles.snsRowTiktok,
+  X: styles.snsRowX,
+  YOUTUBE: styles.snsRowYoutube,
+};
 
 const SNS_ICON: Record<SnsType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",
@@ -28,7 +35,7 @@ export function CampaignDetail() {
     return (
       <div>
         <PageHeader showBack />
-        <div className="cdetail__loading">読み込み中…</div>
+        <div className={styles.loading}>読み込み中…</div>
       </div>
     );
   }
@@ -36,7 +43,7 @@ export function CampaignDetail() {
     return (
       <div>
         <PageHeader showBack />
-        <div className="cdetail__empty">読み込みに失敗しました</div>
+        <div className={styles.empty}>読み込みに失敗しました</div>
       </div>
     );
   }
@@ -47,10 +54,10 @@ export function CampaignDetail() {
     data.appliedCount >= data.recruitCount;
 
   return (
-    <div className="cdetail">
+    <div className={styles.cdetail}>
       <PageHeader showBack title={data.title} />
       <div
-        className="cdetail__hero"
+        className={styles.hero}
         style={
           data.thumbnailUrl
             ? { backgroundImage: `url(${data.thumbnailUrl})` }
@@ -58,22 +65,22 @@ export function CampaignDetail() {
         }
       />
 
-      <div className="cdetail__body">
-        <div className="cdetail__head">
-          <h1 className="cdetail__title">{data.title}</h1>
-          <div className="cdetail__reward">{formatYen(data.rewardJpy)}</div>
+      <div className={styles.body}>
+        <div className={styles.head}>
+          <h1 className={styles.title}>{data.title}</h1>
+          <div className={styles.reward}>{formatYen(data.rewardJpy)}</div>
         </div>
-        <div className="cdetail__period">
+        <div className={styles.period}>
           募集 {formatDate(data.recruitStartAt)} 〜 {formatDate(data.recruitEndAt)}
         </div>
 
-        <ul className="cdetail__sns">
+        <ul className={styles.sns}>
           {data.snsRecruits.map((r: SnsRecruit) => (
-            <li key={r.snsType} className={`cdetail__sns-row cdetail__sns-row--${r.snsType.toLowerCase()}`}>
+            <li key={r.snsType} className={`${styles.snsRow} ${SNS_ROW_CLASS[r.snsType]}`}>
               <i className={SNS_ICON[r.snsType]} aria-hidden="true" />
-              <span className="cdetail__sns-name">{SNS_LABEL[r.snsType]}</span>
-              <span className="cdetail__sns-count">募集 {r.recruitCount}名</span>
-              <span className="cdetail__sns-cond">
+              <span className={styles.snsName}>{SNS_LABEL[r.snsType]}</span>
+              <span className={styles.snsCount}>募集 {r.recruitCount}名</span>
+              <span className={styles.snsCond}>
                 条件:{" "}
                 {r.minFollowers > 0
                   ? `${r.snsType === "YOUTUBE" ? "登録者" : "フォロワー"}数 ${r.minFollowers.toLocaleString("ja-JP")}+`
@@ -83,30 +90,30 @@ export function CampaignDetail() {
           ))}
         </ul>
 
-        <section className="cdetail__section">
+        <section className={styles.section}>
           <h3>商品</h3>
           <div
-            className="cdetail__rich"
+            className={styles.rich}
             dangerouslySetInnerHTML={{ __html: data.productSummary }}
           />
           <a
             href={data.productDetailUrl}
             target="_blank"
             rel="noreferrer"
-            className="cdetail__link"
+            className={styles.link}
           >
             商品ページを見る →
           </a>
         </section>
 
-        <section className="cdetail__section">
+        <section className={styles.section}>
           <h3>ガイドライン</h3>
           <div
-            className="cdetail__rich"
+            className={styles.rich}
             dangerouslySetInnerHTML={{ __html: data.guideline }}
           />
           {data.referenceMediaUrls.length > 0 && (
-            <ul className="cdetail__refs">
+            <ul className={styles.refs}>
               {data.referenceMediaUrls.map((url: string) => (
                 <li key={url}>
                   <a href={url} target="_blank" rel="noreferrer">
@@ -118,16 +125,16 @@ export function CampaignDetail() {
           )}
         </section>
 
-        <section className="cdetail__section">
+        <section className={styles.section}>
           <h3>注意事項</h3>
           <div
-            className="cdetail__rich"
+            className={styles.rich}
             dangerouslySetInnerHTML={{ __html: data.cautions }}
           />
         </section>
       </div>
 
-      <div className="cdetail__cta">
+      <div className={styles.cta}>
         {data.appliedSnsTypes.length > 0 && (
           <PrimaryButton onClick={() => nav("/applications")}>
             応募内訳を見る

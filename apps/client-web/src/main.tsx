@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
+import "./styles/tokens.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { App } from "./App";
 import { InfluencerAuthProvider } from "./context/InfluencerAuthContext";

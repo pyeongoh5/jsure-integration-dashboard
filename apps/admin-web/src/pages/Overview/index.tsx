@@ -101,7 +101,7 @@ type UrgentRow = {
   action: string;
 };
 
-const URGENT: UrgentRow[] = [
+const _URGENT: UrgentRow[] = [
   {
     type: "응모 검토",
     tone: "warn",

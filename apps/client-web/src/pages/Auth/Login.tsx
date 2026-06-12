@@ -1,4 +1,4 @@
-import { lineAuthorizeUrl } from "../../lib/api/auth";
+import { lineAuthorizeUrl } from "@/domains/auth";
 
 export function Login() {
   return (

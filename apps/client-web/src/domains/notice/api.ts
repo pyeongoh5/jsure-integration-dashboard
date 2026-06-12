@@ -4,7 +4,7 @@ import {
   type InfluencerNoticeDetail,
   type InfluencerNoticeListItem,
 } from "@jsure/shared";
-import { api } from "../api";
+import { api } from "@/lib/api";
 
 export async function listNotices(): Promise<InfluencerNoticeListItem[]> {
   const res = await api.get("/influencer/notices");

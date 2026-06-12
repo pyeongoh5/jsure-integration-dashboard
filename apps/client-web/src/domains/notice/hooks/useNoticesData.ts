@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import type { InfluencerNoticeListItem } from "@jsure/shared";
-import { listNotices } from "../../lib/api/notices";
+import { listNotices } from "../api";
 
 type Snapshot = {
   notices: InfluencerNoticeListItem[];

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useNoticeDetail } from "../../components/Notices/useNoticeDetail";
-import { useMarkNoticeRead } from "../../components/Notices/useReadNotices";
+import { useNoticeDetail } from "@/domains/notice";
+import { useMarkNoticeRead } from "@/domains/notice";
 import "./Notices.css";
 
 function formatDate(iso: string): string {

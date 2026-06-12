@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SnsTypeSchema, type SnsType } from "@jsure/shared";
-import { fetchMe } from "../../lib/api/auth";
-import { deleteSnsAccount, upsertSnsAccount } from "../../lib/api/me";
+import { fetchMe } from "@/domains/auth";
+import { deleteSnsAccount, upsertSnsAccount } from "@/domains/me";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { SnsAccountCard } from "../../components/Signup/SnsAccountCard";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchMe } from "../../lib/api/auth";
-import { updateProfile } from "../../lib/api/me";
+import { fetchMe } from "@/domains/auth";
+import { updateProfile } from "@/domains/me";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { LabeledInput } from "../../components/composites/LabeledInput";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";

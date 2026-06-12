@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { useUnreadNoticeCount } from "../Notices/useUnreadNoticeCount";
+import { useUnreadNoticeCount } from "@/domains/notice";
 import "./BottomTabBar.css";
 
 type Tab = {

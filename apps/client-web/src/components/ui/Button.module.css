@@ -1,0 +1,33 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  font-family: inherit;
+  min-height: 36px;
+}
+.button:disabled,
+.button[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.sm { padding: var(--space-2) var(--space-3); font-size: var(--font-size-md); min-height: 36px; }
+.md { padding: var(--space-3) var(--space-4); font-size: var(--font-size-base); min-height: 44px; }
+.lg { padding: var(--space-4) var(--space-5); font-size: var(--font-size-lg); min-height: 52px; }
+.primary { background: var(--color-primary); color: #fff; }
+.primary:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--color-primary-hover); }
+.secondary {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.secondary:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--color-bg-subtle); }
+.danger { background: var(--color-danger); color: #fff; }
+.ghost { background: transparent; color: var(--color-text); }
+.ghost:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--color-bg-muted); }
+.loading { cursor: progress; }

@@ -5,8 +5,8 @@ import {
   InfluencerSignupRequestSchema,
   LineCompleteSignupRequestSchema,
 } from "@jsure/shared";
-import { LabeledInput } from "../../components/form/LabeledInput";
-import { ErrorBanner } from "../../components/form/ErrorBanner";
+import { LabeledInput } from "../../components/composites/LabeledInput";
+import { ErrorBanner } from "../../components/composites/ErrorBanner";
 import { BankSelect } from "../../components/Bank/BankSelect";
 import { WizardFooter } from "../../components/Signup/WizardFooter";
 import {

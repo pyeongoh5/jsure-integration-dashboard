@@ -3,10 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SnsTypeSchema, type SnsType } from "@jsure/shared";
 import { fetchMe } from "../../lib/api/auth";
 import { deleteSnsAccount, upsertSnsAccount } from "../../lib/api/me";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { PageHeader } from "../../components/composites/PageHeader";
 import { SnsAccountCard } from "../../components/Signup/SnsAccountCard";
-import { PrimaryButton } from "../../components/form/PrimaryButton";
-import { ErrorBanner } from "../../components/form/ErrorBanner";
+import { PrimaryButton } from "../../components/composites/PrimaryButton";
+import { ErrorBanner } from "../../components/composites/ErrorBanner";
 
 const SNS_TYPES = SnsTypeSchema.options;
 type Fields = { enabled: boolean; handle: string; followerCount: string };

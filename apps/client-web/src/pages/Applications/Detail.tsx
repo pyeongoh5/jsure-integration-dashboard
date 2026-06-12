@@ -10,8 +10,8 @@ import {
   submitPost,
 } from "../../lib/api/applications";
 import { ReceiptConfirmDialog } from "../../components/Application/ReceiptConfirmDialog";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { PrimaryButton } from "../../components/form/PrimaryButton";
+import { PageHeader } from "../../components/composites/PageHeader";
+import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { StageBadge } from "../../components/Application/StageBadge";
 import { ApplicationStepper } from "../../components/Application/ApplicationStepper";
 import { PostSubmitForm } from "../../components/Application/PostSubmitForm";

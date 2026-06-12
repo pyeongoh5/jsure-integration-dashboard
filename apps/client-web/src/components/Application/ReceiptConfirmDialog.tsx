@@ -1,4 +1,4 @@
-import { PrimaryButton } from "../form/PrimaryButton";
+import { PrimaryButton } from "../composites/PrimaryButton";
 import "./ReceiptConfirmDialog.css";
 
 interface Props {

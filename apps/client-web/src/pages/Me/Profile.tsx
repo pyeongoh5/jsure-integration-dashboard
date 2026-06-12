@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchMe } from "../../lib/api/auth";
 import { updateProfile } from "../../lib/api/me";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { LabeledInput } from "../../components/form/LabeledInput";
-import { PrimaryButton } from "../../components/form/PrimaryButton";
+import { PageHeader } from "../../components/composites/PageHeader";
+import { LabeledInput } from "../../components/composites/LabeledInput";
+import { PrimaryButton } from "../../components/composites/PrimaryButton";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
 

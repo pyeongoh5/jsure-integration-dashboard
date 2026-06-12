@@ -4,11 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { InfluencerBankAccountSchema } from "@jsure/shared";
 import { fetchMe } from "../../lib/api/auth";
 import { upsertBankAccount } from "../../lib/api/me";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { LabeledInput } from "../../components/form/LabeledInput";
-import { PrimaryButton } from "../../components/form/PrimaryButton";
+import { PageHeader } from "../../components/composites/PageHeader";
+import { LabeledInput } from "../../components/composites/LabeledInput";
+import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { BankSelect } from "../../components/Bank/BankSelect";
-import { ErrorBanner } from "../../components/form/ErrorBanner";
+import { ErrorBanner } from "../../components/composites/ErrorBanner";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
 

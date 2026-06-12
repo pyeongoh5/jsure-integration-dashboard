@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { JP_PREFECTURES } from "@jsure/shared";
-import { LabeledInput } from "../form/LabeledInput";
+import { LabeledInput } from "../composites/LabeledInput";
 import { lookupPostalCode } from "../../lib/zipcloud";
 
 const POSTAL_RE = /^\d{3}-?\d{4}$/;

@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Logo } from "@/components/Sidebar/Logo";
 import { FooterUser } from "@/components/Sidebar/FooterUser";
-import { fetchPendingSettlementCount } from "@/lib/draftReviews";
+import { fetchPendingSettlementCount } from "@/domains/application";
 
 type NavItem = { to: string; label: string; icon: ReactNode; badge?: ReactNode };
 type NavGroup = { title: string; items: NavItem[] };

@@ -1,17 +1,17 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { DraftDialogs } from "@/components/Drafts/DraftDialogs";
-import { DraftTable } from "@/components/Drafts/DraftTable";
-import { DraftTabs } from "@/components/Drafts/DraftTabs";
-import { InsightDetailDialog } from "@/components/Drafts/InsightDetailDialog";
-import { useDraftMutations } from "@/components/Drafts/useDraftMutations";
-import { useDraftReviewsData } from "@/components/Drafts/useDraftReviewsData";
 import {
+  DraftDialogs,
+  DraftTable,
+  DraftTabs,
+  InsightDetailDialog,
   REVIEW_STATUS_TO_TAB,
+  useDraftMutations,
+  useDraftReviewsData,
   type DraftReview,
   type DraftReviewTab,
-} from "@/components/Drafts/types";
+} from "@/domains/application";
 import "./Drafts.css";
 
 const VALID_TABS: DraftReviewTab[] = ["pending", "approved", "rejected"];

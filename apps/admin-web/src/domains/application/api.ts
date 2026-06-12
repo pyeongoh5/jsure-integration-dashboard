@@ -5,7 +5,7 @@ import {
   type AdminApplication,
   type ApplicationStatus,
 } from "@jsure/shared";
-import { api } from "./api";
+import { api } from "@/lib/api";
 
 export type ListApplicationsParams = {
   campaignId?: string;

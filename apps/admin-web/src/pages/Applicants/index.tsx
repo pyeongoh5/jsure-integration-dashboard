@@ -1,17 +1,17 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ApplicantTabs } from "@/components/Applicants/ApplicantTabs";
-import { ApplicantFilters } from "@/components/Applicants/ApplicantFilters";
-import { ApplicantTable } from "@/components/Applicants/ApplicantTable";
-import { ApplicantDialogs } from "@/components/Applicants/ApplicantDialogs";
-import { useApplicantsData } from "@/components/Applicants/useApplicantsData";
-import { useCampaignOptions } from "@/components/Applicants/useCampaignOptions";
-import { useApplicantMutations } from "@/components/Applicants/useApplicantMutations";
-import type {
-  ApplicantStage,
-  ApplicantStatus,
-  Media,
-} from "@/components/Applicants/types";
+import {
+  ApplicantTabs,
+  ApplicantFilters,
+  ApplicantTable,
+  ApplicantDialogs,
+  useApplicantsData,
+  useCampaignOptions,
+  useApplicantMutations,
+  type ApplicantStage,
+  type ApplicantStatus,
+  type ApplicantMedia as Media,
+} from "@/domains/application";
 import "./Applicants.css";
 
 const VALID_APPLICANT_TABS: ApplicantStatus[] = ["pending", "approved", "rejected"];

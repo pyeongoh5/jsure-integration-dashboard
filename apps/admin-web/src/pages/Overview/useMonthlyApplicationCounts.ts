@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listApplications } from "@/lib/applications";
+import { listApplications } from "@/domains/application";
 
 export type MonthlyApplicationPoint = {
   label: string;

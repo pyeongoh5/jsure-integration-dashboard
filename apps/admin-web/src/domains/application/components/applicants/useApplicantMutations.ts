@@ -6,7 +6,7 @@ import {
   rejectApplication,
   shipApplication,
   undoApplication,
-} from "@/lib/applications";
+} from "../api";
 import type { Applicant } from "./types";
 
 export type PendingActionType =

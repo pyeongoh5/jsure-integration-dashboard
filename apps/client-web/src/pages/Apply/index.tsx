@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { SnsType } from "@jsure/shared";
-import { getCampaign } from "../../lib/api/campaigns";
+import { useCampaign } from "@/domains/campaign";
 import { createApplication } from "../../lib/api/applications";
 import { fetchMe } from "../../lib/api/auth";
 import { PageHeader } from "../../components/composites/PageHeader";
@@ -47,11 +47,7 @@ export function Apply() {
   const [error, setError] = useState<string | null>(null);
   const [addressConfirmed, setAddressConfirmed] = useState(false);
 
-  const campaign = useQuery({
-    queryKey: ["influencer-campaign", id],
-    queryFn: () => getCampaign(id),
-    enabled: !!id,
-  });
+  const campaign = useCampaign(id);
   const me = useQuery({ queryKey: ["me"], queryFn: fetchMe });
 
   const qualifying = useMemo(() => {

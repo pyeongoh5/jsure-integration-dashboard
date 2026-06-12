@@ -1,7 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import type { SnsType } from "@jsure/shared";
-import { getCampaign } from "../../lib/api/campaigns";
+import type { SnsType, SnsRecruit } from "@jsure/shared";
+import { useCampaign, formatYen, formatDate } from "@/domains/campaign";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import "./CampaignDetail.css";
@@ -20,22 +19,10 @@ const SNS_LABEL: Record<SnsType, string> = {
   X: "X",
 };
 
-function formatYen(v: number) {
-  return `¥${v.toLocaleString("ja-JP")}`;
-}
-
-function formatDate(iso: string) {
-  return iso.slice(0, 10);
-}
-
 export function CampaignDetail() {
   const { id = "" } = useParams();
   const nav = useNavigate();
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["influencer-campaign", id],
-    queryFn: () => getCampaign(id),
-    enabled: !!id,
-  });
+  const { data, isLoading, isError } = useCampaign(id);
 
   if (isLoading) {
     return (
@@ -81,7 +68,7 @@ export function CampaignDetail() {
         </div>
 
         <ul className="cdetail__sns">
-          {data.snsRecruits.map((r) => (
+          {data.snsRecruits.map((r: SnsRecruit) => (
             <li key={r.snsType} className={`cdetail__sns-row cdetail__sns-row--${r.snsType.toLowerCase()}`}>
               <i className={SNS_ICON[r.snsType]} aria-hidden="true" />
               <span className="cdetail__sns-name">{SNS_LABEL[r.snsType]}</span>
@@ -120,10 +107,10 @@ export function CampaignDetail() {
           />
           {data.referenceMediaUrls.length > 0 && (
             <ul className="cdetail__refs">
-              {data.referenceMediaUrls.map((u) => (
-                <li key={u}>
-                  <a href={u} target="_blank" rel="noreferrer">
-                    {u}
+              {data.referenceMediaUrls.map((url: string) => (
+                <li key={url}>
+                  <a href={url} target="_blank" rel="noreferrer">
+                    {url}
                   </a>
                 </li>
               ))}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import "./ConfirmDialog.css";
+import styles from "./ConfirmDialog.module.css";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -37,8 +37,8 @@ export function ConfirmDialog({
 
   useEffect(() => {
     if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !busy) onCancel();
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape" && !busy) onCancel();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -48,28 +48,28 @@ export function ConfirmDialog({
 
   return createPortal(
     <div
-      className="ui-confirm__backdrop"
+      className={styles.backdrop}
       role="presentation"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget && !busy) onCancel();
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !busy) onCancel();
       }}
     >
       <div
-        className="ui-confirm__dialog"
+        className={styles.dialog}
         role="dialog"
         aria-modal="true"
         aria-labelledby="ui-confirm-title"
       >
-        <h2 id="ui-confirm-title" className="ui-confirm__title">
+        <h2 id="ui-confirm-title" className={styles.title}>
           {title}
         </h2>
         {subtitle !== undefined && (
-          <p className="ui-confirm__subtitle">{subtitle}</p>
+          <p className={styles.subtitle}>{subtitle}</p>
         )}
-        <div className="ui-confirm__actions">
+        <div className={styles.actions}>
           <button
             type="button"
-            className="ui-confirm__btn ui-confirm__btn--cancel"
+            className={`${styles.btn} ${styles.btnCancel}`}
             onClick={onCancel}
             disabled={busy}
           >
@@ -78,8 +78,8 @@ export function ConfirmDialog({
           <button
             ref={confirmRef}
             type="button"
-            className={`ui-confirm__btn ui-confirm__btn--confirm ${
-              tone === "danger" ? "ui-confirm__btn--danger" : ""
+            className={`${styles.btn} ${styles.btnConfirm} ${
+              tone === "danger" ? styles.btnDanger : ""
             }`}
             onClick={onConfirm}
             disabled={busy || confirmDisabled}

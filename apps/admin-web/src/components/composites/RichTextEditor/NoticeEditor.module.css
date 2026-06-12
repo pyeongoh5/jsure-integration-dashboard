@@ -1,0 +1,110 @@
+.root {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+
+.button {
+  padding: var(--space-1) 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+
+.button:hover {
+  background: var(--color-border);
+}
+
+.buttonActive {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.divider {
+  width: 1px;
+  background: var(--color-border);
+  margin: var(--space-1) var(--space-1);
+}
+
+.body {
+  min-height: 200px;
+  padding: var(--space-4);
+  outline: none;
+}
+
+.body :global(.ProseMirror) {
+  outline: none;
+  min-height: 160px;
+}
+
+.body :global(.ProseMirror) img {
+  max-width: 100%;
+  height: auto;
+}
+
+.body :global(.ProseMirror) :global(p.is-editor-empty:first-child)::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-text-subtle);
+  pointer-events: none;
+  height: 0;
+}
+
+.color {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: transparent;
+}
+
+.sizeInput {
+  width: 60px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) 6px;
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+}
+
+.image {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.imageSelected img {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 1px;
+}
+
+.imageHandle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #1d4ed8;
+  border: 2px solid var(--color-bg);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #1d4ed8;
+  z-index: 10;
+}
+
+.imageHandleBr {
+  right: -6px;
+  bottom: -6px;
+  cursor: nwse-resize;
+}

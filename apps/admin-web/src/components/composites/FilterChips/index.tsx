@@ -1,4 +1,4 @@
-import "./FilterChips.css";
+import styles from "./FilterChips.module.css";
 
 type FilterOption<K extends string> = { key: K; label: string };
 
@@ -14,17 +14,17 @@ export function FilterChips<K extends string>({
   onChange,
 }: FilterChipsProps<K>) {
   return (
-    <div className="ui-filter-chips">
-      {options.map((o) => (
+    <div className={styles.root}>
+      {options.map((option) => (
         <button
-          key={o.key}
+          key={option.key}
           type="button"
-          className={`ui-filter-chips__chip ${
-            value === o.key ? "ui-filter-chips__chip--active" : ""
+          className={`${styles.chip} ${
+            value === option.key ? styles.chipActive : ""
           }`}
-          onClick={() => onChange(o.key)}
+          onClick={() => onChange(option.key)}
         >
-          {o.label}
+          {option.label}
         </button>
       ))}
     </div>

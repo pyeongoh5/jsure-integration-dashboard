@@ -16,7 +16,7 @@ import {
   startRichTextImageUpload,
 } from "@/lib/richTextImages";
 import { ResizableImageView } from "./ResizableImageView";
-import "./NoticeEditor.css";
+import styles from "./NoticeEditor.module.css";
 
 type Props = {
   value: string;
@@ -61,7 +61,7 @@ const ImageWithR2Key = Image.extend({
 /**
  * 캠페인 폼 등에서 사용하는 범용 tiptap 리치 에디터.
  * - 이미지/폰트 패밀리는 빠진 슬림 버전 (NoticeEditor 대비)
- * - 스타일은 NoticeEditor.css 의 .notice-editor* 클래스를 그대로 재사용
+ * - 스타일은 NoticeEditor.module.css 의 클래스를 그대로 재사용
  */
 export function RichTextEditor({
   value,
@@ -87,7 +87,7 @@ export function RichTextEditor({
     },
     editorProps: {
       attributes: {
-        class: "notice-editor__body",
+        class: styles.body ?? "",
       },
     },
   });
@@ -107,13 +107,13 @@ export function RichTextEditor({
     // 에디터 초기화 중에도 자리를 잡아둠 (높이가 0 으로 줄어들지 않게)
     return (
       <div
-        className="notice-editor"
+        className={styles.root}
         style={{ minHeight: minHeight + 48 }}
       />
     );
   }
   return (
-    <div className="notice-editor" style={{ minHeight: minHeight + 48 }}>
+    <div className={styles.root} style={{ minHeight: minHeight + 48 }}>
       <Toolbar editor={editor} imageUploadEndpoint={imageUploadEndpoint} />
       <EditorContent editor={editor} />
     </div>
@@ -230,7 +230,7 @@ function Toolbar({
   }, [editor]);
 
   return (
-    <div className="notice-editor__toolbar">
+    <div className={styles.toolbar}>
       <ToolbarButton
         action={() => editor.chain().focus().toggleBold().run()}
         active={editor.isActive("bold")}
@@ -246,7 +246,7 @@ function Toolbar({
         active={editor.isActive("strike")}
         label="취소선"
       />
-      <span className="notice-editor__divider" />
+      <span className={styles.divider} />
       <ToolbarButton
         action={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         active={editor.isActive("heading", { level: 2 })}
@@ -272,17 +272,17 @@ function Toolbar({
         active={editor.isActive("blockquote")}
         label="인용"
       />
-      <span className="notice-editor__divider" />
+      <span className={styles.divider} />
       <input
         type="color"
-        className="notice-editor__color"
+        className={styles.color}
         title="글자 색"
         value={(editor.getAttributes("textStyle").color as string) ?? "#000000"}
         onChange={(event) => {
           editor.chain().focus().setColor(event.target.value).run();
         }}
       />
-      <span className="notice-editor__divider" />
+      <span className={styles.divider} />
       <ToolbarButton
         action={() => editor.chain().focus().setTextAlign("left").run()}
         active={editor.isActive({ textAlign: "left" })}
@@ -298,10 +298,10 @@ function Toolbar({
         active={editor.isActive({ textAlign: "right" })}
         label="우"
       />
-      <span className="notice-editor__divider" />
+      <span className={styles.divider} />
       <button
         type="button"
-        className="notice-editor__button"
+        className={styles.button}
         onClick={onSetLink}
       >
         링크
@@ -310,7 +310,7 @@ function Toolbar({
         <>
           <button
             type="button"
-            className="notice-editor__button"
+            className={styles.button}
             onClick={() => fileRef.current?.click()}
           >
             이미지
@@ -346,7 +346,7 @@ function ImageSizeControls({ editor }: { editor: Editor }) {
 
   return (
     <>
-      <span className="notice-editor__divider" />
+      <span className={styles.divider} />
       <span style={{ fontSize: 11, color: "#6b7280", alignSelf: "center" }}>
         이미지
       </span>
@@ -354,7 +354,7 @@ function ImageSizeControls({ editor }: { editor: Editor }) {
         <button
           key={preset}
           type="button"
-          className={`notice-editor__button ${currentWidth === preset ? "is-active" : ""}`}
+          className={`${styles.button} ${currentWidth === preset ? styles.buttonActive : ""}`}
           onClick={() => setWidthWithFocus(preset)}
         >
           {preset}
@@ -362,7 +362,7 @@ function ImageSizeControls({ editor }: { editor: Editor }) {
       ))}
       <input
         type="text"
-        className="notice-editor__size-input"
+        className={styles.sizeInput}
         placeholder="예: 300"
         value={pxValue}
         onChange={(event) => {
@@ -376,7 +376,7 @@ function ImageSizeControls({ editor }: { editor: Editor }) {
       </span>
       <button
         type="button"
-        className="notice-editor__button"
+        className={styles.button}
         onClick={() => setWidthWithFocus(null)}
         title="원본 크기"
       >
@@ -396,7 +396,7 @@ function ToolbarButton({ action, active, label }: ButtonProps) {
   return (
     <button
       type="button"
-      className={`notice-editor__button ${active ? "is-active" : ""}`}
+      className={`${styles.button} ${active ? styles.buttonActive : ""}`}
       onMouseDown={(event) => {
         event.preventDefault();
         action();

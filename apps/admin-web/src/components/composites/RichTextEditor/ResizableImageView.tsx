@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
+import styles from "./NoticeEditor.module.css";
 
 type Attrs = {
   src: string;
@@ -76,7 +77,7 @@ export function ResizableImageView(props: NodeViewProps) {
   return (
     <NodeViewWrapper
       as="span"
-      className={`tiptap-image ${selected ? "is-selected" : ""}`}
+      className={`${styles.image} ${selected ? styles.imageSelected : ""}`}
       style={{ display: "inline-block", position: "relative", lineHeight: 0 }}
     >
       <img
@@ -98,7 +99,7 @@ export function ResizableImageView(props: NodeViewProps) {
       {showHandles && (
         <>
           <span
-            className="tiptap-image__handle tiptap-image__handle--br"
+            className={`${styles.imageHandle} ${styles.imageHandleBr}`}
             onMouseDown={startResize}
           />
         </>

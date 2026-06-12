@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import "./Card.css";
+import styles from "./Card.module.css";
 
 type CardProps = {
   title?: ReactNode;
@@ -9,10 +9,10 @@ type CardProps = {
 
 export function Card({ title, content, bottomAffix }: CardProps) {
   return (
-    <div className="ui-card">
-      {title !== undefined && <div className="ui-card__title">{title}</div>}
-      {content !== undefined && <div className="ui-card__content">{content}</div>}
-      {bottomAffix !== undefined && <div className="ui-card__bottom-affix">{bottomAffix}</div>}
+    <div className={`${styles.root} ui-card`}>
+      {title !== undefined && <div className={styles.title}>{title}</div>}
+      {content !== undefined && <div className={styles.content}>{content}</div>}
+      {bottomAffix !== undefined && <div className={styles.bottomAffix}>{bottomAffix}</div>}
     </div>
   );
 }

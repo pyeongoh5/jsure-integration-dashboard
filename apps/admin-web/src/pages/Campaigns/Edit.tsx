@@ -5,8 +5,8 @@ import {
   CampaignForm,
   getCampaign,
   updateCampaign,
+  campaignFormStyles,
 } from "@/domains/campaign";
-import campaignFormStyles from "@/domains/campaign/components/CampaignForm.module.css";
 import styles from "./Campaigns.module.css";
 
 type LoadState =

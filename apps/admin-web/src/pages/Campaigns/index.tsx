@@ -11,8 +11,8 @@ import {
   CampaignActionsMenu,
   closeCampaign,
   listCampaigns,
+  campaignFormStyles,
 } from "@/domains/campaign";
-import campaignFormStyles from "@/domains/campaign/components/CampaignForm.module.css";
 import type { Campaign, CampaignStatus } from "@/domains/campaign";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import styles from "./Campaigns.module.css";

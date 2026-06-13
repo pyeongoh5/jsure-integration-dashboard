@@ -181,7 +181,7 @@ export function Reports() {
           onClick={() => setDownloadOpen(true)}
           disabled={rows.length === 0}
         >
-          CSV 다운로드
+          엑셀(CSV) 다운로드
         </button>
       </div>
 

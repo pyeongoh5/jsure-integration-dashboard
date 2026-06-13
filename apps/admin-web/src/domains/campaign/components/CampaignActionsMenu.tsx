@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import "./CampaignActionsMenu.css";
+import styles from "./CampaignActionsMenu.module.css";
 
 const MENU_GAP = 4;
 const VIEWPORT_PADDING = 8;
@@ -63,7 +63,7 @@ export function CampaignActionsMenu({
   return createPortal(
     <div
       ref={ref}
-      className="cam-menu"
+      className={styles.root}
       role="menu"
       style={{ left: pos.left, top: pos.top }}
       onClick={(e) => e.stopPropagation()}
@@ -71,7 +71,7 @@ export function CampaignActionsMenu({
       <button
         type="button"
         role="menuitem"
-        className="cam-menu__item"
+        className={styles.item}
         onClick={onApplicants}
       >
         응모자 관리
@@ -79,7 +79,7 @@ export function CampaignActionsMenu({
       <button
         type="button"
         role="menuitem"
-        className="cam-menu__item"
+        className={styles.item}
         onClick={onEdit}
       >
         캠페인 수정
@@ -87,7 +87,7 @@ export function CampaignActionsMenu({
       <button
         type="button"
         role="menuitem"
-        className="cam-menu__item cam-menu__item--danger"
+        className={`${styles.item} ${styles.itemDanger}`}
         onClick={onClose}
       >
         캠페인 종료

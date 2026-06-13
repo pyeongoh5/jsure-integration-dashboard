@@ -1,41 +1,44 @@
 import type { SnsRecruit, SnsType } from "@jsure/shared";
+import styles from "./CampaignForm.module.css";
 
 const OPTIONS: readonly {
   value: SnsType;
   label: string;
   followerLabel: string;
   icon: string;
-  iconClass: string;
 }[] = [
   {
     value: "INSTAGRAM",
     label: "인스타그램",
     followerLabel: "팔로워",
     icon: "fa-brands fa-instagram",
-    iconClass: "cf__sns-icon--instagram",
   },
   {
     value: "TIKTOK",
     label: "틱톡",
     followerLabel: "팔로워",
     icon: "fa-brands fa-tiktok",
-    iconClass: "cf__sns-icon--tiktok",
   },
   {
     value: "X",
     label: "X",
     followerLabel: "팔로워",
     icon: "fa-brands fa-x-twitter",
-    iconClass: "cf__sns-icon--x",
   },
   {
     value: "YOUTUBE",
     label: "유튜브",
     followerLabel: "구독자",
     icon: "fa-brands fa-youtube",
-    iconClass: "cf__sns-icon--youtube",
   },
 ];
+
+const SNS_ICON_CLASS: Record<SnsType, string | undefined> = {
+  INSTAGRAM: styles.snsIconInstagram,
+  TIKTOK: styles.snsIconTiktok,
+  X: styles.snsIconX,
+  YOUTUBE: styles.snsIconYoutube,
+};
 
 type ItemError = Partial<Record<"minFollowers" | "recruitCount", string>>;
 
@@ -72,7 +75,7 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
   };
 
   return (
-    <div className="cf__sns-recruits">
+    <div className={styles.snsRecruits}>
       {OPTIONS.map((opt) => {
         const idx = indexOf(opt.value);
         const selected = idx >= 0;
@@ -81,9 +84,9 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
         return (
           <div
             key={opt.value}
-            className={`cf__sns-row${selected ? " cf__sns-row--on" : ""}`}
+            className={`${styles.snsRow}${selected ? ` ${styles.snsRowOn}` : ""}`}
           >
-            <label className="cf__sns-toggle">
+            <label className={styles.snsToggle}>
               <input
                 type="checkbox"
                 checked={selected}
@@ -91,22 +94,22 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
                 onChange={() => toggle(opt.value)}
               />
               <i
-                className={`${opt.icon} cf__sns-icon ${opt.iconClass}`}
+                className={`${opt.icon} ${styles.snsIcon} ${SNS_ICON_CLASS[opt.value] ?? ""}`}
                 aria-hidden="true"
               />
-              <span className="cf__sns-toggle-label">{opt.label}</span>
+              <span className={styles.snsToggleLabel}>{opt.label}</span>
             </label>
             {selected && row ? (
-              <div className="cf__sns-fields">
-                <div className="cf__sns-field">
-                  <label className="cf__sub-label">
+              <div className={styles.snsFields}>
+                <div className={styles.snsField}>
+                  <label className={styles.subLabel}>
                     최소 {opt.followerLabel}
                   </label>
-                  <div className="cf__sns-count-row">
+                  <div className={styles.snsCountRow}>
                     <input
                       type="text"
                       inputMode="numeric"
-                      className="cf__input"
+                      className={styles.input}
                       placeholder="0"
                       value={
                         Number.isFinite(row.minFollowers)
@@ -114,41 +117,41 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
                           : ""
                       }
                       disabled={disabled}
-                      onChange={(e) =>
+                      onChange={(event) =>
                         updateAt(idx, {
-                          minFollowers: parseIntegerInput(e.target.value),
+                          minFollowers: parseIntegerInput(event.target.value),
                         })
                       }
                     />
-                    <span className="cf__sns-suffix">명 이상</span>
+                    <span className={styles.snsSuffix}>명 이상</span>
                   </div>
                   {err?.minFollowers && (
-                    <div className="cf__error">{err.minFollowers}</div>
+                    <div className={styles.error}>{err.minFollowers}</div>
                   )}
                 </div>
-                <div className="cf__sns-field cf__sns-field--count">
-                  <label className="cf__sub-label">모집 인원</label>
-                  <div className="cf__sns-count-row">
+                <div className={styles.snsField}>
+                  <label className={styles.subLabel}>모집 인원</label>
+                  <div className={styles.snsCountRow}>
                     <input
                       type="text"
                       inputMode="numeric"
-                      className="cf__input"
+                      className={styles.input}
                       value={
                         Number.isFinite(row.recruitCount)
                           ? String(row.recruitCount)
                           : ""
                       }
                       disabled={disabled}
-                      onChange={(e) =>
+                      onChange={(event) =>
                         updateAt(idx, {
-                          recruitCount: parseIntegerInput(e.target.value),
+                          recruitCount: parseIntegerInput(event.target.value),
                         })
                       }
                     />
-                    <span className="cf__sns-suffix">명</span>
+                    <span className={styles.snsSuffix}>명</span>
                   </div>
                   {err?.recruitCount && (
-                    <div className="cf__error">{err.recruitCount}</div>
+                    <div className={styles.error}>{err.recruitCount}</div>
                   )}
                 </div>
               </div>

@@ -1,4 +1,4 @@
-.cam-menu {
+.root {
   position: fixed;
   z-index: 1000;
   background: #fff;
@@ -10,7 +10,8 @@
   flex-direction: column;
   padding: 4px;
 }
-.cam-menu__item {
+
+.item {
   background: transparent;
   border: none;
   padding: 8px 12px;
@@ -20,16 +21,15 @@
   text-align: left;
   cursor: pointer;
 }
-.cam-menu__item:hover {
+
+.item:hover {
   background: #f3f4f6;
 }
-.cam-menu__item--danger {
+
+.itemDanger {
   color: #dc2626;
 }
-.cam-menu__item--danger:hover {
-  background: #fef2f2;
-}
 
-.cam-card-wrap > .ui-card {
-  cursor: pointer;
+.itemDanger:hover {
+  background: #fef2f2;
 }

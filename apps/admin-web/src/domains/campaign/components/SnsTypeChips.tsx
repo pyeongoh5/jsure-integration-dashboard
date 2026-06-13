@@ -1,4 +1,5 @@
 import type { SnsType } from "@jsure/shared";
+import styles from "./CampaignForm.module.css";
 
 const OPTIONS: readonly { value: SnsType; label: string }[] = [
   { value: "INSTAGRAM", label: "인스타그램" },
@@ -14,19 +15,19 @@ type Props = {
 };
 
 export function SnsTypeChips({ value, onChange, disabled }: Props) {
-  const toggle = (v: SnsType) => {
-    if (value.includes(v)) onChange(value.filter((x) => x !== v));
-    else onChange([...value, v]);
+  const toggle = (target: SnsType) => {
+    if (value.includes(target)) onChange(value.filter((current) => current !== target));
+    else onChange([...value, target]);
   };
   return (
-    <div className="cf__chips" role="group" aria-label="SNS 종류">
+    <div className={styles.chips} role="group" aria-label="SNS 종류">
       {OPTIONS.map((opt) => {
         const selected = value.includes(opt.value);
         return (
           <button
             key={opt.value}
             type="button"
-            className={`cf__chip${selected ? " cf__chip--on" : ""}`}
+            className={`${styles.chip}${selected ? ` ${styles.chipOn}` : ""}`}
             aria-pressed={selected}
             disabled={disabled}
             onClick={() => toggle(opt.value)}

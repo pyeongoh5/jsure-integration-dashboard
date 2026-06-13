@@ -1,17 +1,17 @@
-.excl {
+.root {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.excl__hint,
-.excl__empty {
+.hint,
+.empty {
   font-size: 12px;
   color: #6b7280;
   padding: 8px 10px;
 }
 
-.excl__selected {
+.selected {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -19,7 +19,7 @@
   padding: 4px 0;
 }
 
-.excl__chip {
+.chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -31,7 +31,7 @@
   padding: 4px 10px;
 }
 
-.excl__chip-remove {
+.chipRemove {
   background: transparent;
   border: none;
   color: #1d4ed8;
@@ -41,11 +41,11 @@
   line-height: 1;
 }
 
-.excl__chip-remove:hover {
+.chipRemove:hover {
   color: #1e40af;
 }
 
-.excl__search {
+.search {
   height: 34px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -54,14 +54,14 @@
   font-family: inherit;
 }
 
-.excl__list {
+.list {
   max-height: 240px;
   overflow-y: auto;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
 }
 
-.excl__row {
+.row {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -71,19 +71,19 @@
   font-size: 13px;
 }
 
-.excl__row:last-child {
+.row:last-child {
   border-bottom: none;
 }
 
-.excl__row:hover {
+.row:hover {
   background: #f9fafb;
 }
 
-.excl__row.is-checked {
+.rowChecked {
   background: #eff6ff;
 }
 
-.excl__row-title {
+.rowTitle {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -93,7 +93,7 @@
   font-weight: 500;
 }
 
-.excl__row-meta {
+.rowMeta {
   font-size: 11px;
   color: #6b7280;
   flex-shrink: 0;

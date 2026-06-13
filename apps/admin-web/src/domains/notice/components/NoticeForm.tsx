@@ -4,7 +4,7 @@ import {
   toDateTimeLocalInputValue,
 } from "./noticeTransform";
 import { NoticeEditor } from "./NoticeEditor";
-import "./NoticeForm.css";
+import styles from "./NoticeForm.module.css";
 
 export type NoticeFormValue = {
   title: string;
@@ -91,14 +91,14 @@ export function NoticeForm({
   }
 
   return (
-    <div className="notice-form">
-      <div className="notice-form__row">
-        <label className="notice-form__label" htmlFor="notice-title">
+    <div className={styles.root}>
+      <div className={styles.row}>
+        <label className={styles.label} htmlFor="notice-title">
           제목
         </label>
         <input
           id="notice-title"
-          className="notice-form__input"
+          className={styles.input}
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           maxLength={200}
@@ -107,15 +107,15 @@ export function NoticeForm({
         />
       </div>
 
-      <div className="notice-form__row notice-form__row--inline">
-        <div className="notice-form__field">
-          <label className="notice-form__label" htmlFor="notice-start-at">
+      <div className={`${styles.row} ${styles.rowInline}`}>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="notice-start-at">
             게시 시작일
           </label>
           <input
             id="notice-start-at"
             type="datetime-local"
-            className="notice-form__input"
+            className={styles.input}
             value={toDateTimeLocalInputValue(startAt)}
             onChange={(event) =>
               setStartAt(fromDateTimeLocalInputValue(event.target.value))
@@ -123,14 +123,14 @@ export function NoticeForm({
             disabled={busy}
           />
         </div>
-        <div className="notice-form__field">
-          <label className="notice-form__label" htmlFor="notice-end-at">
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="notice-end-at">
             게시 종료일
           </label>
           <input
             id="notice-end-at"
             type="datetime-local"
-            className="notice-form__input"
+            className={styles.input}
             value={toDateTimeLocalInputValue(endAt)}
             onChange={(event) =>
               setEndAt(fromDateTimeLocalInputValue(event.target.value))
@@ -140,17 +140,17 @@ export function NoticeForm({
         </div>
       </div>
 
-      <div className="notice-form__row">
-        <span className="notice-form__label">내용</span>
+      <div className={styles.row}>
+        <span className={styles.label}>내용</span>
         <NoticeEditor value={contentHtml} onChange={setContentHtml} />
       </div>
 
-      {error ? <div className="notice-form__error">{error}</div> : null}
+      {error ? <div className={styles.error}>{error}</div> : null}
 
-      <div className="notice-form__actions">
+      <div className={styles.actions}>
         <button
           type="button"
-          className="notice-form__btn"
+          className={styles.btn}
           onClick={onCancel}
           disabled={busy}
         >
@@ -158,7 +158,7 @@ export function NoticeForm({
         </button>
         <button
           type="button"
-          className="notice-form__btn notice-form__btn--primary"
+          className={`${styles.btn} ${styles.btnPrimary}`}
           onClick={handleSubmit}
           disabled={busy}
         >

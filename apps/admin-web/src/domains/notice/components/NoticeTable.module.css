@@ -1,36 +1,36 @@
-.notice-table {
+.root {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
 
-.notice-table th,
-.notice-table td {
+.root th,
+.root td {
   padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid var(--color-border, #e5e7eb);
 }
 
-.notice-table th {
+.root th {
   font-weight: 600;
   color: var(--color-text-muted, #6b7280);
   background: var(--color-surface-muted, #f9fafb);
 }
 
-.notice-table tbody tr {
+.root tbody tr {
   cursor: pointer;
 }
 
-.notice-table tbody tr:hover {
+.root tbody tr:hover {
   background: var(--color-surface-hover, #f3f4f6);
 }
 
-.notice-table__actions {
+.actions {
   display: flex;
   gap: 8px;
 }
 
-.notice-table__status {
+.status {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 999px;
@@ -38,22 +38,22 @@
   font-weight: 600;
 }
 
-.notice-table__status--published {
+.statusActive {
   background: #dcfce7;
   color: #166534;
 }
 
-.notice-table__status--scheduled {
+.statusScheduled {
   background: #fef3c7;
   color: #92400e;
 }
 
-.notice-table__status--expired {
+.statusExpired {
   background: #f3f4f6;
   color: #6b7280;
 }
 
-.notice-table__btn {
+.btn {
   height: 32px;
   padding: 0 14px;
   border: 1px solid #d1d5db;
@@ -67,25 +67,25 @@
   font-family: inherit;
 }
 
-.notice-table__btn:hover {
+.btn:hover {
   background: #f9fafb;
 }
 
-.notice-table__btn--danger {
+.btnDanger {
   color: #b91c1c;
   border-color: #fecaca;
 }
 
-.notice-table__btn--danger:hover {
+.btnDanger:hover {
   background: #fee2e2;
 }
 
-.notice-table__btn:disabled {
+.btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.notice-table__empty {
+.empty {
   text-align: center;
   padding: 48px 16px;
   color: var(--color-text-muted, #6b7280);

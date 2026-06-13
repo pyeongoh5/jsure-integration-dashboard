@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CampaignResponse } from "@jsure/shared";
-import "./ExcludedCampaignsPicker.css";
+import styles from "./ExcludedCampaignsPicker.module.css";
 
 type Props = {
   allCampaigns: CampaignResponse[] | null;
@@ -22,50 +22,52 @@ export function ExcludedCampaignsPicker({
 
   const candidates = useMemo(() => {
     if (!allCampaigns) return [];
-    return allCampaigns.filter((c) => c.id !== selfId);
+    return allCampaigns.filter((campaign) => campaign.id !== selfId);
   }, [allCampaigns, selfId]);
 
   const valueSet = useMemo(() => new Set(value), [value]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return candidates;
-    return candidates.filter((c) => c.title.toLowerCase().includes(q));
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return candidates;
+    return candidates.filter((campaign) =>
+      campaign.title.toLowerCase().includes(normalized),
+    );
   }, [candidates, query]);
 
   const selectedRows = useMemo(
-    () => candidates.filter((c) => valueSet.has(c.id)),
+    () => candidates.filter((campaign) => valueSet.has(campaign.id)),
     [candidates, valueSet],
   );
 
   const toggle = (id: string) => {
     if (valueSet.has(id)) {
-      onChange(value.filter((v) => v !== id));
+      onChange(value.filter((current) => current !== id));
     } else {
       onChange([...value, id]);
     }
   };
 
   if (allCampaigns === null) {
-    return <div className="excl__hint">캠페인 목록 불러오는 중…</div>;
+    return <div className={styles.hint}>캠페인 목록 불러오는 중…</div>;
   }
   if (candidates.length === 0) {
-    return <div className="excl__hint">선택 가능한 기존 캠페인이 없습니다.</div>;
+    return <div className={styles.hint}>선택 가능한 기존 캠페인이 없습니다.</div>;
   }
 
   return (
-    <div className="excl">
-      <div className="excl__selected">
+    <div className={styles.root}>
+      <div className={styles.selected}>
         {selectedRows.length === 0 ? (
-          <div className="excl__empty">선택된 캠페인이 없습니다.</div>
+          <div className={styles.empty}>선택된 캠페인이 없습니다.</div>
         ) : (
-          selectedRows.map((c) => (
-            <span key={c.id} className="excl__chip">
-              {c.title}
+          selectedRows.map((campaign) => (
+            <span key={campaign.id} className={styles.chip}>
+              {campaign.title}
               <button
                 type="button"
-                className="excl__chip-remove"
-                onClick={() => toggle(c.id)}
+                className={styles.chipRemove}
+                onClick={() => toggle(campaign.id)}
                 disabled={disabled}
                 aria-label="제거"
               >
@@ -78,33 +80,33 @@ export function ExcludedCampaignsPicker({
 
       <input
         type="text"
-        className="excl__search"
+        className={styles.search}
         placeholder="제목으로 검색..."
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(event) => setQuery(event.target.value)}
         disabled={disabled}
       />
 
-      <div className="excl__list">
+      <div className={styles.list}>
         {filtered.length === 0 ? (
-          <div className="excl__empty">검색 결과가 없습니다.</div>
+          <div className={styles.empty}>검색 결과가 없습니다.</div>
         ) : (
-          filtered.map((c) => {
-            const checked = valueSet.has(c.id);
+          filtered.map((campaign) => {
+            const checked = valueSet.has(campaign.id);
             return (
               <label
-                key={c.id}
-                className={`excl__row ${checked ? "is-checked" : ""}`}
+                key={campaign.id}
+                className={`${styles.row} ${checked ? styles.rowChecked : ""}`}
               >
                 <input
                   type="checkbox"
                   checked={checked}
-                  onChange={() => toggle(c.id)}
+                  onChange={() => toggle(campaign.id)}
                   disabled={disabled}
                 />
-                <span className="excl__row-title">{c.title}</span>
-                <span className="excl__row-meta">
-                  {c.recruitStartDate} ~ {c.recruitEndDate}
+                <span className={styles.rowTitle}>{campaign.title}</span>
+                <span className={styles.rowMeta}>
+                  {campaign.recruitStartDate} ~ {campaign.recruitEndDate}
                 </span>
               </label>
             );

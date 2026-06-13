@@ -1,10 +1,11 @@
-.cf {
+.root {
   display: flex;
   flex-direction: column;
   gap: 24px;
   max-width: 720px;
 }
-.cf__section {
+
+.section {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -13,24 +14,28 @@
   border-radius: 12px;
   background: #fff;
 }
-.cf__section-title {
+
+.sectionTitle {
   font-size: 14px;
   font-weight: 600;
   color: #111827;
   margin: 0;
 }
-.cf__field {
+
+.field {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.cf__label {
+
+.label {
   font-size: 13px;
   font-weight: 500;
   color: #374151;
 }
-.cf__input,
-.cf__textarea {
+
+.input,
+.textarea {
   width: 100%;
   padding: 6px 10px;
   border: 1px solid #d1d5db;
@@ -40,28 +45,34 @@
   line-height: 1.4;
   box-sizing: border-box;
 }
-.cf__input {
+
+.input {
   height: 34px;
 }
-.cf__textarea {
+
+.textarea {
   min-height: 96px;
   resize: vertical;
 }
-.cf__error {
+
+.error {
   color: #dc2626;
   font-size: 12px;
 }
-.cf__hint {
+
+.hint {
   margin: 4px 0 0;
   font-size: 12px;
   color: #6b7280;
 }
-.cf__thumbnail {
+
+.thumbnail {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.cf__thumbnail-preview {
+
+.thumbnailPreview {
   position: relative;
   width: 180px;
   border: 1px solid #e5e7eb;
@@ -69,13 +80,15 @@
   overflow: hidden;
   background: #f9fafb;
 }
-.cf__thumbnail-preview img {
+
+.thumbnailPreview img {
   width: 100%;
   height: 120px;
   object-fit: cover;
   display: block;
 }
-.cf__thumbnail-remove {
+
+.thumbnailRemove {
   position: absolute;
   top: 6px;
   right: 6px;
@@ -87,13 +100,16 @@
   font-size: 11px;
   cursor: pointer;
 }
-.cf__thumbnail-remove:hover {
+
+.thumbnailRemove:hover {
   background: rgba(0, 0, 0, 0.8);
 }
-.cf__file {
+
+.file {
   font-size: 13px;
 }
-.cf__banner {
+
+.banner {
   padding: 10px 12px;
   border-radius: 8px;
   background: #fef2f2;
@@ -101,34 +117,41 @@
   border: 1px solid #fecaca;
   font-size: 13px;
 }
-.cf__currency {
+
+.currency {
   position: relative;
   display: flex;
   align-items: center;
 }
-.cf__currency .cf__input {
+
+.currency .input {
   padding-left: 24px;
   padding-right: 32px;
 }
-.cf__currency-prefix,
-.cf__currency-suffix {
+
+.currencyPrefix,
+.currencySuffix {
   position: absolute;
   color: #6b7280;
   font-size: 14px;
   pointer-events: none;
 }
-.cf__currency-prefix {
+
+.currencyPrefix {
   left: 10px;
 }
-.cf__currency-suffix {
+
+.currencySuffix {
   right: 10px;
 }
-.cf__chips {
+
+.chips {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
-.cf__chip {
+
+.chip {
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid #d1d5db;
@@ -137,40 +160,48 @@
   font-size: 13px;
   cursor: pointer;
 }
-.cf__chip--on {
+
+.chipOn {
   background: #2563eb;
   border-color: #2563eb;
   color: #fff;
 }
-.cf__chip:disabled {
+
+.chip:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
-.cf__row-2 {
+
+.row2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
-.cf__urls {
+
+.urls {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.cf__url-row {
+
+.urlRow {
   display: flex;
   gap: 8px;
   align-items: center;
 }
-.cf__sub-label {
+
+.subLabel {
   font-size: 12px;
   color: #6b7280;
 }
-.cf__sns-recruits {
+
+.snsRecruits {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.cf__sns-row {
+
+.snsRow {
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 10px 12px;
@@ -179,11 +210,13 @@
   flex-direction: column;
   gap: 10px;
 }
-.cf__sns-row--on {
+
+.snsRowOn {
   border-color: #2563eb;
   background: #f8faff;
 }
-.cf__sns-toggle {
+
+.snsToggle {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -192,58 +225,71 @@
   cursor: pointer;
   user-select: none;
 }
-.cf__sns-toggle input[type="checkbox"] {
+
+.snsToggle input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
 }
-.cf__sns-icon {
+
+.snsIcon {
   font-size: 14px;
   color: #6b7280;
   width: 16px;
   text-align: center;
 }
-.cf__sns-row--on .cf__sns-icon--instagram {
+
+.snsRowOn .snsIconInstagram {
   color: #e1306c;
 }
-.cf__sns-row--on .cf__sns-icon--tiktok {
+
+.snsRowOn .snsIconTiktok {
   color: #111827;
 }
-.cf__sns-row--on .cf__sns-icon--x {
+
+.snsRowOn .snsIconX {
   color: #111827;
 }
-.cf__sns-row--on .cf__sns-icon--youtube {
+
+.snsRowOn .snsIconYoutube {
   color: #ff0000;
 }
-.cf__sns-toggle-label {
+
+.snsToggleLabel {
   font-weight: 500;
 }
-.cf__sns-fields {
+
+.snsFields {
   display: grid;
   grid-template-columns: 1fr 140px;
   gap: 10px;
 }
-.cf__sns-count-row {
+
+.snsCountRow {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.cf__sns-suffix {
+
+.snsSuffix {
   font-size: 12px;
   color: #6b7280;
   white-space: nowrap;
 }
-.cf__sns-field {
+
+.snsField {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.cf__actions {
+
+.actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
 }
-.cf__btn {
+
+.btn {
   padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid #2563eb;
@@ -252,11 +298,13 @@
   font-size: 14px;
   cursor: pointer;
 }
-.cf__btn:disabled {
+
+.btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
-.cf__btn--ghost {
+
+.btnGhost {
   background: #fff;
   color: #2563eb;
 }

@@ -1,3 +1,5 @@
+import styles from "./CampaignForm.module.css";
+
 type Props = {
   value: string[];
   onChange: (next: string[]) => void;
@@ -13,14 +15,14 @@ export function ReferenceMediaUrlList({
   disabled,
   errorByIndex,
 }: Props) {
-  const setAt = (i: number, v: string) => {
+  const setAt = (index: number, url: string) => {
     const next = value.slice();
-    next[i] = v;
+    next[index] = url;
     onChange(next);
   };
-  const removeAt = (i: number) => {
+  const removeAt = (index: number) => {
     const next = value.slice();
-    next.splice(i, 1);
+    next.splice(index, 1);
     onChange(next);
   };
   const add = () => {
@@ -28,34 +30,34 @@ export function ReferenceMediaUrlList({
     onChange([...value, ""]);
   };
   return (
-    <div className="cf__urls">
-      {value.map((url, i) => (
-        <div key={i} className="cf__url-row">
+    <div className={styles.urls}>
+      {value.map((url, index) => (
+        <div key={index} className={styles.urlRow}>
           <input
             type="url"
-            className="cf__input"
+            className={styles.input}
             placeholder="https://..."
             value={url}
             disabled={disabled}
-            onChange={(e) => setAt(i, e.target.value)}
+            onChange={(event) => setAt(index, event.target.value)}
           />
           <button
             type="button"
-            className="cf__btn cf__btn--ghost"
-            onClick={() => removeAt(i)}
+            className={`${styles.btn} ${styles.btnGhost}`}
+            onClick={() => removeAt(index)}
             disabled={disabled}
-            aria-label={`항목 ${i + 1} 삭제`}
+            aria-label={`항목 ${index + 1} 삭제`}
           >
             삭제
           </button>
-          {errorByIndex?.[i] && (
-            <div className="cf__error">{errorByIndex[i]}</div>
+          {errorByIndex?.[index] && (
+            <div className={styles.error}>{errorByIndex[index]}</div>
           )}
         </div>
       ))}
       <button
         type="button"
-        className="cf__btn cf__btn--ghost"
+        className={`${styles.btn} ${styles.btnGhost}`}
         onClick={add}
         disabled={disabled || value.length >= max}
       >

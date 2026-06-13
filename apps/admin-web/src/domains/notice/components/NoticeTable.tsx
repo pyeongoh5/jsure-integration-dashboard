@@ -1,5 +1,5 @@
 import type { NoticeRow } from "./noticeTransform";
-import "./NoticeTable.css";
+import styles from "./NoticeTable.module.css";
 
 type Props = {
   rows: NoticeRow[];
@@ -8,12 +8,18 @@ type Props = {
   onDelete: (id: string) => void;
 };
 
+const STATUS_CLASS: Record<NoticeRow["status"], string | undefined> = {
+  active: styles.statusActive,
+  scheduled: styles.statusScheduled,
+  expired: styles.statusExpired,
+};
+
 export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
   if (rows.length === 0) {
-    return <div className="notice-table__empty">등록된 공지사항이 없습니다</div>;
+    return <div className={styles.empty}>등록된 공지사항이 없습니다</div>;
   }
   return (
-    <table className="notice-table">
+    <table className={styles.root}>
       <thead>
         <tr>
           <th>제목</th>
@@ -30,7 +36,7 @@ export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
             <td>{notice.title}</td>
             <td>
               <span
-                className={`notice-table__status notice-table__status--${notice.status}`}
+                className={`${styles.status} ${STATUS_CLASS[notice.status] ?? ""}`}
               >
                 {notice.status === "scheduled"
                   ? "예약"
@@ -44,19 +50,19 @@ export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
             <td>{notice.authorName}</td>
             <td>
               <div
-                className="notice-table__actions"
+                className={styles.actions}
                 onClick={(event) => event.stopPropagation()}
               >
                 <button
                   type="button"
-                  className="notice-table__btn"
+                  className={styles.btn}
                   onClick={() => onEdit(notice.id)}
                 >
                   편집
                 </button>
                 <button
                   type="button"
-                  className="notice-table__btn notice-table__btn--danger"
+                  className={`${styles.btn} ${styles.btnDanger}`}
                   disabled={pendingId === notice.id}
                   onClick={() => onDelete(notice.id)}
                 >

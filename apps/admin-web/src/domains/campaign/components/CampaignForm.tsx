@@ -13,7 +13,7 @@ import { uploadCampaignThumbnail, UploadError } from "@/lib/uploads";
 import { listCampaigns } from "../api";
 import { RichTextEditor } from "@/components/composites/RichTextEditor/RichTextEditor";
 import { serializeRichTextHtml } from "@/lib/richTextImages";
-import "./CampaignForm.css";
+import styles from "./CampaignForm.module.css";
 
 const CAMPAIGN_IMAGE_ENDPOINT = "/uploads/admin/campaign-image/presign";
 
@@ -222,43 +222,43 @@ export function CampaignForm({
   return (
     <FormProvider {...methods}>
       <form
-        className="cf"
+        className={styles.root}
         onSubmit={methods.handleSubmit(submit, onInvalid)}
         noValidate
       >
-        {banner && <div className="cf__banner">{banner}</div>}
+        {banner && <div className={styles.banner}>{banner}</div>}
 
-        <section className="cf__section">
-          <h2 className="cf__section-title">기본 정보</h2>
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>기본 정보</h2>
 
-          <div className="cf__field">
-            <label className="cf__label" htmlFor="cf-title">
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="cf-title">
               캠페인 제목
             </label>
             <input
               id="cf-title"
-              className="cf__input"
+              className={styles.input}
               {...methods.register("title")}
               disabled={submitting}
             />
             {rootError("title") && (
-              <div className="cf__error">{rootError("title")}</div>
+              <div className={styles.error}>{rootError("title")}</div>
             )}
           </div>
 
-          <div className="cf__field">
-            <label className="cf__label" htmlFor="cf-reward">
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="cf-reward">
               보수 금액
             </label>
             <Controller
               control={methods.control}
               name="rewardJpy"
               render={({ field }) => (
-                <div className="cf__currency">
-                  <span className="cf__currency-prefix">¥</span>
+                <div className={styles.currency}>
+                  <span className={styles.currencyPrefix}>¥</span>
                   <input
                     id="cf-reward"
-                    className="cf__input"
+                    className={styles.input}
                     inputMode="numeric"
                     value={Number.isFinite(field.value) ? String(field.value) : ""}
                     onChange={(event) =>
@@ -267,50 +267,50 @@ export function CampaignForm({
                     onBlur={field.onBlur}
                     disabled={submitting}
                   />
-                  <span className="cf__currency-suffix">円</span>
+                  <span className={styles.currencySuffix}>円</span>
                 </div>
               )}
             />
             {rootError("rewardJpy") && (
-              <div className="cf__error">{rootError("rewardJpy")}</div>
+              <div className={styles.error}>{rootError("rewardJpy")}</div>
             )}
           </div>
 
-          <div className="cf__row-2">
-            <div className="cf__field">
-              <label className="cf__label" htmlFor="cf-start">
+          <div className={styles.row2}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="cf-start">
                 모집 시작일
               </label>
               <input
                 id="cf-start"
                 type="date"
-                className="cf__input"
+                className={styles.input}
                 {...methods.register("recruitStartDate")}
                 disabled={submitting}
               />
               {rootError("recruitStartDate") && (
-                <div className="cf__error">{rootError("recruitStartDate")}</div>
+                <div className={styles.error}>{rootError("recruitStartDate")}</div>
               )}
             </div>
-            <div className="cf__field">
-              <label className="cf__label" htmlFor="cf-end">
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="cf-end">
                 모집 종료일
               </label>
               <input
                 id="cf-end"
                 type="date"
-                className="cf__input"
+                className={styles.input}
                 {...methods.register("recruitEndDate")}
                 disabled={submitting}
               />
               {rootError("recruitEndDate") && (
-                <div className="cf__error">{rootError("recruitEndDate")}</div>
+                <div className={styles.error}>{rootError("recruitEndDate")}</div>
               )}
             </div>
           </div>
 
-          <div className="cf__field">
-            <label className="cf__label" htmlFor="cf-posting-period">
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="cf-posting-period">
               게시 기간 (수령 후 N일)
             </label>
             <Controller
@@ -319,7 +319,7 @@ export function CampaignForm({
               render={({ field }) => (
                 <input
                   id="cf-posting-period"
-                  className="cf__input"
+                  className={styles.input}
                   inputMode="numeric"
                   placeholder="예시: 14"
                   value={
@@ -334,21 +334,21 @@ export function CampaignForm({
               )}
             />
             {rootError("postingPeriodDays") && (
-              <div className="cf__error">{rootError("postingPeriodDays")}</div>
+              <div className={styles.error}>{rootError("postingPeriodDays")}</div>
             )}
           </div>
 
-          <div className="cf__field">
-            <label className="cf__label" htmlFor="cf-thumbnail">
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="cf-thumbnail">
               썸네일 이미지 (인플루언서 앱 표시용)
             </label>
-            <div className="cf__thumbnail">
+            <div className={styles.thumbnail}>
               {thumbnailPreviewSrc && (
-                <div className="cf__thumbnail-preview">
+                <div className={styles.thumbnailPreview}>
                   <img src={thumbnailPreviewSrc} alt="썸네일" />
                   <button
                     type="button"
-                    className="cf__thumbnail-remove"
+                    className={styles.thumbnailRemove}
                     onClick={removeThumbnail}
                     disabled={submitting || uploadingThumbnail}
                   >
@@ -360,7 +360,7 @@ export function CampaignForm({
                 id="cf-thumbnail"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                className="cf__file"
+                className={styles.file}
                 disabled={submitting || uploadingThumbnail}
                 onChange={(event) => {
                   const file = event.target.files?.[0] ?? null;
@@ -368,23 +368,23 @@ export function CampaignForm({
                   void handleThumbnailFile(file);
                 }}
               />
-              <p className="cf__hint">PNG · JPEG · WebP, 5MB 이하</p>
+              <p className={styles.hint}>PNG · JPEG · WebP, 5MB 이하</p>
               {uploadingThumbnail && (
-                <div className="cf__hint">업로드 중...</div>
+                <div className={styles.hint}>업로드 중...</div>
               )}
               {thumbnailError && (
-                <div className="cf__error">{thumbnailError}</div>
+                <div className={styles.error}>{thumbnailError}</div>
               )}
             </div>
             {rootError("thumbnailUrl") && (
-              <div className="cf__error">{rootError("thumbnailUrl")}</div>
+              <div className={styles.error}>{rootError("thumbnailUrl")}</div>
             )}
           </div>
         </section>
 
-        <section className="cf__section">
-          <h2 className="cf__section-title">SNS별 모집</h2>
-          <p className="cf__sub-label">
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>SNS별 모집</h2>
+          <p className={styles.subLabel}>
             사용할 SNS를 선택하고, 각 SNS에 적용할 조건과 모집 인원을 입력하세요.
           </p>
           <Controller
@@ -400,15 +400,15 @@ export function CampaignForm({
             )}
           />
           {rootError("snsRecruits") && (
-            <div className="cf__error">{rootError("snsRecruits")}</div>
+            <div className={styles.error}>{rootError("snsRecruits")}</div>
           )}
         </section>
 
-        <section className="cf__section">
-          <h2 className="cf__section-title">상품</h2>
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>상품</h2>
 
-          <div className="cf__field">
-            <label className="cf__label">상품 개요</label>
+          <div className={styles.field}>
+            <label className={styles.label}>상품 개요</label>
             <Controller
               control={methods.control}
               name="productSummary"
@@ -423,33 +423,33 @@ export function CampaignForm({
               )}
             />
             {rootError("productSummary") && (
-              <div className="cf__error">{rootError("productSummary")}</div>
+              <div className={styles.error}>{rootError("productSummary")}</div>
             )}
           </div>
 
-          <div className="cf__field">
-            <label className="cf__label" htmlFor="cf-product-url">
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="cf-product-url">
               상품 상세 URL (qoo10)
             </label>
             <input
               id="cf-product-url"
               type="url"
-              className="cf__input"
+              className={styles.input}
               placeholder="https://www.qoo10.jp/..."
               {...methods.register("productDetailUrl")}
               disabled={submitting}
             />
             {rootError("productDetailUrl") && (
-              <div className="cf__error">{rootError("productDetailUrl")}</div>
+              <div className={styles.error}>{rootError("productDetailUrl")}</div>
             )}
           </div>
         </section>
 
-        <section className="cf__section">
-          <h2 className="cf__section-title">가이드라인</h2>
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>가이드라인</h2>
 
-          <div className="cf__field">
-            <label className="cf__label">안건 개요 (투고 가이드라인)</label>
+          <div className={styles.field}>
+            <label className={styles.label}>안건 개요 (투고 가이드라인)</label>
             <Controller
               control={methods.control}
               name="guideline"
@@ -464,12 +464,12 @@ export function CampaignForm({
               )}
             />
             {rootError("guideline") && (
-              <div className="cf__error">{rootError("guideline")}</div>
+              <div className={styles.error}>{rootError("guideline")}</div>
             )}
           </div>
 
-          <div className="cf__field">
-            <label className="cf__label">투고 참고 영상/사진 URL</label>
+          <div className={styles.field}>
+            <label className={styles.label}>투고 참고 영상/사진 URL</label>
             <Controller
               control={methods.control}
               name="referenceMediaUrls"
@@ -483,12 +483,12 @@ export function CampaignForm({
               )}
             />
             {rootError("referenceMediaUrls") && (
-              <div className="cf__error">{rootError("referenceMediaUrls")}</div>
+              <div className={styles.error}>{rootError("referenceMediaUrls")}</div>
             )}
           </div>
 
-          <div className="cf__field">
-            <label className="cf__label">NG 및 주의 사항</label>
+          <div className={styles.field}>
+            <label className={styles.label}>NG 및 주의 사항</label>
             <Controller
               control={methods.control}
               name="cautions"
@@ -503,14 +503,14 @@ export function CampaignForm({
               )}
             />
             {rootError("cautions") && (
-              <div className="cf__error">{rootError("cautions")}</div>
+              <div className={styles.error}>{rootError("cautions")}</div>
             )}
           </div>
         </section>
 
-        <section className="cf__section">
-          <h2 className="cf__section-title">참여 제외 캠페인</h2>
-          <p className="cf__sub-label">
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>참여 제외 캠페인</h2>
+          <p className={styles.subLabel}>
             여기서 선택한 캠페인에 이미 응모한 인플루언서는 이 캠페인에 응모할 수
             없습니다. (CANCELLED 상태인 응모는 제외)
           </p>
@@ -529,16 +529,16 @@ export function CampaignForm({
           />
         </section>
 
-        <div className="cf__actions">
+        <div className={styles.actions}>
           <button
             type="button"
-            className="cf__btn cf__btn--ghost"
+            className={`${styles.btn} ${styles.btnGhost}`}
             onClick={onCancel}
             disabled={submitting}
           >
             취소
           </button>
-          <button type="submit" className="cf__btn" disabled={submitting}>
+          <button type="submit" className={styles.btn} disabled={submitting}>
             {submitting ? "저장 중…" : submitLabel}
           </button>
         </div>

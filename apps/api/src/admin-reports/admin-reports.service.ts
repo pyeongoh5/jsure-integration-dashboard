@@ -22,7 +22,9 @@ export class AdminReportsService {
             influencer: {
               include: { snsAccounts: true },
             },
-            posts: true,
+            posts: {
+              include: { settlement: true },
+            },
           },
         },
       },
@@ -32,7 +34,7 @@ export class AdminReportsService {
       const influencerSet = new Set<string>();
       let totalFollowers = 0;
       let postCount = 0;
-      let settledPostCount = 0;
+      let totalRewardJpy = 0;
       let totalLikes = 0;
       let totalComments = 0;
       let totalShares = 0;
@@ -50,7 +52,7 @@ export class AdminReportsService {
 
         for (const post of application.posts) {
           postCount += 1;
-          if (post.settledAt !== null) settledPostCount += 1;
+          if (post.settlement) totalRewardJpy += post.settlement.amountJpy;
           totalLikes += post.insightLikes ?? 0;
           totalComments += post.insightComments ?? 0;
           totalShares += post.insightShares ?? 0;
@@ -73,7 +75,7 @@ export class AdminReportsService {
         influencerCount: influencerSet.size,
         totalFollowers,
         postCount,
-        totalRewardJpy: settledPostCount * campaign.rewardJpy,
+        totalRewardJpy,
         totalLikes,
         totalComments,
         totalShares,

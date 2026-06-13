@@ -185,6 +185,7 @@ export function Reports() {
         </button>
       </div>
 
+      <div className={styles.card}>
       <ScrollTable minWidth={1600}>
         <table className={styles.table}>
           <thead>
@@ -252,6 +253,7 @@ export function Reports() {
           </tbody>
         </table>
       </ScrollTable>
+      </div>
 
       {downloadOpen && (
         <CsvDownloadDialog

@@ -158,7 +158,7 @@ export function Campaigns() {
   }, [cards, filter, debouncedQuery]);
 
   return (
-    <div className={styles.cmp}>
+    <div className={styles.root}>
       <div className={styles.header}>
         <h1 className={styles.title}>캠페인 관리</h1>
         <p className={styles.subtitle}>전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요.</p>

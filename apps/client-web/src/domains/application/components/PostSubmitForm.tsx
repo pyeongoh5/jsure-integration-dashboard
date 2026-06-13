@@ -25,6 +25,12 @@ interface Props {
   initial: string;
   onSubmit: (url: string) => Promise<void>;
   submitting: boolean;
+  postingDeadlineAt: string | null;
+}
+
+function formatDeadline(iso: string): string {
+  const date = new Date(iso);
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
 export function PostSubmitForm({
@@ -32,6 +38,7 @@ export function PostSubmitForm({
   initial,
   onSubmit,
   submitting,
+  postingDeadlineAt,
 }: Props) {
   const methods = useForm<Values>({
     resolver: zodResolver(schema),
@@ -72,6 +79,19 @@ export function PostSubmitForm({
         >
           ⚠ 投稿冒頭に #PR を必ず記載
         </p>
+        {postingDeadlineAt && (
+          <p
+            style={{
+              fontSize: 11,
+              color: "#dc2626",
+              marginTop: 4,
+              textAlign: "center",
+              fontWeight: 600,
+            }}
+          >
+            投稿期限: {formatDeadline(postingDeadlineAt)}
+          </p>
+        )}
       </form>
     </FormProvider>
   );

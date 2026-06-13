@@ -162,6 +162,7 @@ export function ApplicationDetail() {
               await post.mutateAsync({ snsType: data.snsType, url });
             }}
             submitting={post.isPending}
+            postingDeadlineAt={data.postingDeadlineAt}
           />
         )}
 
@@ -195,6 +196,7 @@ export function ApplicationDetail() {
                     await post.mutateAsync({ snsType: p.snsType, url });
                   }}
                   submitting={post.isPending}
+                  postingDeadlineAt={data.postingDeadlineAt}
                 />
               </div>
             ))}

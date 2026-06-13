@@ -81,7 +81,7 @@ export function Applicants() {
   );
 
   return (
-    <div className={styles.apl}>
+    <div className={styles.root}>
       <div className={styles.header}>
         <h1 className={styles.title}>응모자 관리</h1>
         <p className={styles.subtitle}>

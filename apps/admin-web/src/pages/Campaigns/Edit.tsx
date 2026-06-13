@@ -67,11 +67,11 @@ export function CampaignEdit() {
   };
 
   if (state.kind === "loading") {
-    return <div className={styles.cmp}><div className={styles.empty}>불러오는 중…</div></div>;
+    return <div className={styles.root}><div className={styles.empty}>불러오는 중…</div></div>;
   }
   if (state.kind === "error") {
     return (
-      <div className={styles.cmp}>
+      <div className={styles.root}>
         <div className={styles.empty}>
           {state.message}{" "}
           <button
@@ -87,7 +87,7 @@ export function CampaignEdit() {
   }
 
   return (
-    <div className={styles.cmp}>
+    <div className={styles.root}>
       <div className={styles.header}>
         <h1 className={styles.title}>캠페인 수정</h1>
         <p className={styles.subtitle}>캠페인 정보를 수정하세요.</p>

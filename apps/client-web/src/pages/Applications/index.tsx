@@ -15,9 +15,7 @@ export function Applications() {
   const { data, isLoading, isError } = useApplications();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [selectedSnsTypes, setSelectedSnsTypes] = useState<Set<SnsType>>(
-    new Set(),
-  );
+  const [selectedSnsTypes, setSelectedSnsTypes] = useState<Set<SnsType>>(new Set());
 
   const toggleSns = (snsType: SnsType) => {
     setSelectedSnsTypes((prev) => {
@@ -29,15 +27,12 @@ export function Applications() {
   };
 
   const applications = data ?? [];
-  const filtered = filterApplications(
-    applications,
-    statusFilter,
-    selectedSnsTypes,
-  );
+  const filtered = filterApplications(applications, statusFilter, selectedSnsTypes);
 
   return (
     <div>
       <header className={styles.header}>
+        {/* 응모내역 */}
         <h1>応募内訳</h1>
       </header>
 
@@ -52,36 +47,36 @@ export function Applications() {
       )}
 
       <div className={styles.list}>
-        {isLoading && <div className={styles.empty}>読み込み中…</div>}
+        {isLoading && (
+          <div className={styles.empty}>
+            {/* 로드 중... */}
+            読み込み中…
+          </div>
+        )}
         {isError && (
-          <div className={styles.empty}>読み込みに失敗しました</div>
+          <div className={styles.empty}>
+            {/* 로드에 실패했습니다. */}
+            読み込みに失敗しました
+          </div>
         )}
         {!isLoading && !isError && applications.length === 0 && (
           <div className={styles.empty}>
+            {/* 아직 신청하지 않았습니다. */}
             まだ応募していません
             <div style={{ marginTop: 12 }}>
-              <button
-                type="button"
-                className={styles.cta}
-                onClick={() => nav("/")}
-              >
+              <button type="button" className={styles.cta} onClick={() => nav("/")}>
+                {/* 캠페인 찾기 */}
                 キャンペーンを探す
               </button>
             </div>
           </div>
         )}
-        {!isLoading &&
-          !isError &&
-          applications.length > 0 &&
-          filtered.length === 0 && (
-            <div className={styles.empty}>該当する応募がありません</div>
-          )}
+        {!isLoading && !isError && applications.length > 0 && filtered.length === 0 && (
+          // 해당 응모 없음
+          <div className={styles.empty}>該当する応募がありません</div>
+        )}
         {filtered.map((app) => (
-          <ApplicationCard
-            key={app.id}
-            app={app}
-            onSelect={() => nav(`/applications/${app.id}`)}
-          />
+          <ApplicationCard key={app.id} app={app} onSelect={() => nav(`/applications/${app.id}`)} />
         ))}
       </div>
     </div>

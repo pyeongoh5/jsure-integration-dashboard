@@ -58,11 +58,7 @@ export function CampaignDetail() {
       <PageHeader showBack title={data.title} />
       <div
         className={styles.hero}
-        style={
-          data.thumbnailUrl
-            ? { backgroundImage: `url(${data.thumbnailUrl})` }
-            : undefined
-        }
+        style={data.thumbnailUrl ? { backgroundImage: `url(${data.thumbnailUrl})` } : undefined}
       />
 
       <div className={styles.body}>
@@ -92,26 +88,15 @@ export function CampaignDetail() {
 
         <section className={styles.section}>
           <h3>商品</h3>
-          <div
-            className={styles.rich}
-            dangerouslySetInnerHTML={{ __html: data.productSummary }}
-          />
-          <a
-            href={data.productDetailUrl}
-            target="_blank"
-            rel="noreferrer"
-            className={styles.link}
-          >
+          <div className={styles.rich} dangerouslySetInnerHTML={{ __html: data.productSummary }} />
+          <a href={data.productDetailUrl} target="_blank" rel="noreferrer" className={styles.link}>
             商品ページを見る →
           </a>
         </section>
 
         <section className={styles.section}>
           <h3>ガイドライン</h3>
-          <div
-            className={styles.rich}
-            dangerouslySetInnerHTML={{ __html: data.guideline }}
-          />
+          <div className={styles.rich} dangerouslySetInnerHTML={{ __html: data.guideline }} />
           {data.referenceMediaUrls.length > 0 && (
             <ul className={styles.refs}>
               {data.referenceMediaUrls.map((url: string) => (
@@ -127,29 +112,25 @@ export function CampaignDetail() {
 
         <section className={styles.section}>
           <h3>注意事項</h3>
-          <div
-            className={styles.rich}
-            dangerouslySetInnerHTML={{ __html: data.cautions }}
-          />
+          <div className={styles.rich} dangerouslySetInnerHTML={{ __html: data.cautions }} />
         </section>
       </div>
 
       <div className={styles.cta}>
         {data.appliedSnsTypes.length > 0 && (
           <PrimaryButton onClick={() => nav("/applications")}>
+            {/* 응모내역 보기 */}
             応募内訳を見る
           </PrimaryButton>
         )}
         {data.appliedSnsTypes.length < data.snsRecruits.length && (
-          <PrimaryButton
-            disabled={closed}
-            onClick={() => nav(`/campaigns/${data.id}/apply`)}
-          >
+          <PrimaryButton disabled={closed} onClick={() => nav(`/campaigns/${data.id}/apply`)}>
             {closed
-              ? "募集終了"
+              ? "募集終了" // 모집 종료
               : data.appliedSnsTypes.length > 0
                 ? "別のSNSで応募する"
-                : "応募する"}
+                : "応募する"}{" "}
+            {/* 다른 SNS로 신청하기 : 신청하다 */}
           </PrimaryButton>
         )}
       </div>

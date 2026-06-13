@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import type {
   AdminApplication,
   AdminSettlement,
@@ -59,7 +55,8 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
       name: row.influencer.name,
       email: row.influencer.email,
       snsAccounts: row.influencer.snsAccounts.map((account) => ({
-        snsType: account.snsType as AdminApplication["influencer"]["snsAccounts"][number]["snsType"],
+        snsType:
+          account.snsType as AdminApplication["influencer"]["snsAccounts"][number]["snsType"],
         handle: account.handle,
         followerCount: account.followerCount,
       })),
@@ -122,9 +119,7 @@ export class AdminApplicationsService {
     });
     if (!existing) throw new NotFoundException("Application not found");
     if (existing.status !== "APPLIED") {
-      throw new BadRequestException(
-        `Cannot approve from status ${existing.status}`,
-      );
+      throw new BadRequestException(`Cannot approve from status ${existing.status}`);
     }
 
     // 해당 캠페인 + SNS 의 모집 인원을 넘겨 승인할 수 없도록 막는다.
@@ -162,26 +157,19 @@ export class AdminApplicationsService {
     });
     void this.line.notifyApproved({
       influencerId: existing.influencerId,
-      applicationId: id,
       campaignTitle: existing.campaign.title,
     });
     return this.fetch(id);
   }
 
-  async reject(
-    id: string,
-    reviewerId: string,
-    reason: string,
-  ): Promise<AdminApplication> {
+  async reject(id: string, reviewerId: string, reason: string): Promise<AdminApplication> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
       include: { campaign: { select: { title: true } } },
     });
     if (!existing) throw new NotFoundException("Application not found");
     if (existing.status !== "APPLIED") {
-      throw new BadRequestException(
-        `Cannot reject from status ${existing.status}`,
-      );
+      throw new BadRequestException(`Cannot reject from status ${existing.status}`);
     }
     await this.prisma.campaignApplication.update({
       where: { id },
@@ -192,12 +180,7 @@ export class AdminApplicationsService {
         rejectReason: reason,
       },
     });
-    void this.line.notifyRejected({
-      influencerId: existing.influencerId,
-      applicationId: id,
-      campaignTitle: existing.campaign.title,
-      reason,
-    });
+
     return this.fetch(id);
   }
 
@@ -207,9 +190,7 @@ export class AdminApplicationsService {
     });
     if (!existing) throw new NotFoundException("Application not found");
     if (existing.status !== "APPROVED" && existing.status !== "REJECTED") {
-      throw new BadRequestException(
-        `Cannot undo from status ${existing.status}`,
-      );
+      throw new BadRequestException(`Cannot undo from status ${existing.status}`);
     }
     await this.prisma.campaignApplication.update({
       where: { id },
@@ -234,9 +215,7 @@ export class AdminApplicationsService {
     });
     if (!existing) throw new NotFoundException("Application not found");
     if (existing.status !== "APPROVED") {
-      throw new BadRequestException(
-        `Cannot ship from status ${existing.status}`,
-      );
+      throw new BadRequestException(`Cannot ship from status ${existing.status}`);
     }
     await this.prisma.campaignApplication.update({
       where: { id },
@@ -247,9 +226,8 @@ export class AdminApplicationsService {
         shippedAt: new Date(),
       },
     });
-    void this.line.notifyShipped({
+    void this.line.notifyShippedWithPlainText({
       influencerId: existing.influencerId,
-      applicationId: id,
       campaignTitle: existing.campaign.title,
       trackingCarrier,
       trackingNumber,
@@ -266,9 +244,7 @@ export class AdminApplicationsService {
     });
     if (!existing) throw new NotFoundException("Application not found");
     if (existing.status !== "SHIPPED") {
-      throw new BadRequestException(
-        `Cannot deliver from status ${existing.status}`,
-      );
+      throw new BadRequestException(`Cannot deliver from status ${existing.status}`);
     }
     await this.prisma.campaignApplication.update({
       where: { id },
@@ -286,9 +262,7 @@ export class AdminApplicationsService {
     return this.fetch(id);
   }
 
-  async counts(
-    campaignId?: string,
-  ): Promise<Record<ApplicationStatus, number>> {
+  async counts(campaignId?: string): Promise<Record<ApplicationStatus, number>> {
     const grouped = await this.prisma.campaignApplication.groupBy({
       by: ["status"],
       where: campaignId ? { campaignId } : undefined,
@@ -334,10 +308,7 @@ export class AdminApplicationsService {
     return Promise.all(rows.map((row) => toSubmittedPostResponse(row, this.r2)));
   }
 
-  async approveSubmittedPost(
-    postId: string,
-    reviewerId: string,
-  ): Promise<AdminSubmittedPost> {
+  async approveSubmittedPost(postId: string, reviewerId: string): Promise<AdminSubmittedPost> {
     const existing = await this.prisma.submittedPost.findUnique({
       where: { id: postId },
     });
@@ -384,9 +355,7 @@ export class AdminApplicationsService {
     return this.fetchSubmittedPost(postId);
   }
 
-  async undoSubmittedPostReview(
-    postId: string,
-  ): Promise<AdminSubmittedPost> {
+  async undoSubmittedPostReview(postId: string): Promise<AdminSubmittedPost> {
     const existing = await this.prisma.submittedPost.findUnique({
       where: { id: postId },
     });
@@ -395,9 +364,7 @@ export class AdminApplicationsService {
       throw new BadRequestException("Already pending");
     }
     if (existing.insightSubmittedAt) {
-      throw new BadRequestException(
-        "인사이트가 제출된 검토는 되돌릴 수 없습니다",
-      );
+      throw new BadRequestException("인사이트가 제출된 검토는 되돌릴 수 없습니다");
     }
     await this.prisma.submittedPost.update({
       where: { id: postId },
@@ -413,10 +380,7 @@ export class AdminApplicationsService {
     return this.fetchSubmittedPost(postId);
   }
 
-  async settleSubmittedPost(
-    postId: string,
-    settlerId: string,
-  ): Promise<AdminSubmittedPost> {
+  async settleSubmittedPost(postId: string, settlerId: string): Promise<AdminSubmittedPost> {
     const existing = await this.prisma.submittedPost.findUnique({
       where: { id: postId },
       include: {
@@ -446,9 +410,7 @@ export class AdminApplicationsService {
     return this.fetchSubmittedPost(postId);
   }
 
-  private async fetchSubmittedPost(
-    postId: string,
-  ): Promise<AdminSubmittedPost> {
+  private async fetchSubmittedPost(postId: string): Promise<AdminSubmittedPost> {
     const row = await this.prisma.submittedPost.findUnique({
       where: { id: postId },
       include: SUBMITTED_POST_INCLUDE,
@@ -648,10 +610,7 @@ type SubmittedPostRow = {
   };
 };
 
-async function resolveThumbnail(
-  raw: string | null,
-  r2: R2Service,
-): Promise<string | null> {
+async function resolveThumbnail(raw: string | null, r2: R2Service): Promise<string | null> {
   if (!raw) return null;
   if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
   return r2.presignGet(raw, 300);
@@ -686,9 +645,7 @@ async function toSubmittedPostResponse(
     insightSaves: row.insightSaves,
     insightViews: row.insightViews,
     insightReach: row.insightReach,
-    insightSubmittedAt: row.insightSubmittedAt
-      ? row.insightSubmittedAt.toISOString()
-      : null,
+    insightSubmittedAt: row.insightSubmittedAt ? row.insightSubmittedAt.toISOString() : null,
     reviewStatus: row.reviewStatus,
     reviewedAt: row.reviewedAt ? row.reviewedAt.toISOString() : null,
     settledAt: row.settledAt ? row.settledAt.toISOString() : null,
@@ -702,9 +659,7 @@ async function toSubmittedPostResponse(
           status: row.settlement.status,
           amountJpy: row.settlement.amountJpy,
           createdAt: row.settlement.createdAt.toISOString(),
-          completedAt: row.settlement.completedAt
-            ? row.settlement.completedAt.toISOString()
-            : null,
+          completedAt: row.settlement.completedAt ? row.settlement.completedAt.toISOString() : null,
         }
       : null,
     rejectionHistory: row.rejections.map((rejection) => ({
@@ -734,7 +689,6 @@ async function toSubmittedPostResponse(
     },
   };
 }
-
 
 type SettlementRow = {
   id: string;
@@ -793,9 +747,11 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
 }
 
 /** "YYYY-MM" (JST) → Settlement where 절: Settlement.createdAt(정산 등록일)이 해당 월 범위. */
-function buildMonthWhere(monthStr: string): {
-  createdAt: { gte: Date; lt: Date };
-} | Record<string, never> {
+function buildMonthWhere(monthStr: string):
+  | {
+      createdAt: { gte: Date; lt: Date };
+    }
+  | Record<string, never> {
   const m = monthStr.match(/^(\d{4})-(\d{2})$/);
   if (!m) return {};
   const year = Number(m[1]);
@@ -804,9 +760,7 @@ function buildMonthWhere(monthStr: string): {
   const start = new Date(`${monthStr}-01T00:00:00+09:00`);
   const nextYear = month === 12 ? year + 1 : year;
   const nextMonth = month === 12 ? 1 : month + 1;
-  const end = new Date(
-    `${nextYear}-${String(nextMonth).padStart(2, "0")}-01T00:00:00+09:00`,
-  );
+  const end = new Date(`${nextYear}-${String(nextMonth).padStart(2, "0")}-01T00:00:00+09:00`);
   return {
     createdAt: { gte: start, lt: end },
   };

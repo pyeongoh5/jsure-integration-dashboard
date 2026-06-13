@@ -62,17 +62,28 @@ export class LineRemindersService {
       // 이미 투고가 들어왔으면 투고기간 리마인더는 더 이상 보내지 않음.
       if (app.posts.length > 0) continue;
 
-      const deadlineMs =
-        app.receivedAt.getTime() + app.campaign.postingPeriodDays * DAY_MS;
+      const deadlineMs = app.receivedAt.getTime() + app.campaign.postingPeriodDays * DAY_MS;
       const deadlineDayStart = startOfJstDay(new Date(deadlineMs));
-      const remainingDays = Math.round(
-        (deadlineDayStart - todayStart) / DAY_MS,
-      );
+      const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);
       if (!POSTING_REMINDER_DAYS.includes(remainingDays)) continue;
 
       await this.line.pushText(
         app.influencerId,
-        `【投稿期限のお知らせ】\n「${app.campaign.title}」の投稿期限まであと${remainingDays}日です。\nお忘れなく投稿のご準備をお願いいたします。\n\n${this.line.applicationUrl(app.id)}`,
+        `⏰【期限間近】キャンペーン投稿期限まであと${remainingDays}日です！ ⏰
+お世話になっております！
+ご参加いただいている「${app.campaign.title}」の投稿期限まで、あと${remainingDays}日となりました。
+
+投稿期限に遅れのないよう、ご注意ください。
+
+✨ 投稿完了後のお願い
+SNSへご投稿いただいた後は、必ずシステムより【応募履歴 - 投稿URL提出】を完了していただけますようお願いいたします。
+
+素敵なご投稿を心より楽しみにしております。よろしくお願いいたします！
+
+※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
+※システムの行き違いで重複して届いた場合はご容赦ください。
+🕐 運営：平日 10:00〜20:00`,
+        // `【投稿期限のお知らせ】\n「${app.campaign.title}」の投稿期限まであと${remainingDays}日です。\nお忘れなく投稿のご準備をお願いいたします。\n\n${this.line.applicationUrl(app.id)}`,
       );
     }
   }
@@ -100,14 +111,28 @@ export class LineRemindersService {
 
     for (const post of posts) {
       const submittedDayStart = startOfJstDay(post.submittedAt);
-      const elapsedDays = Math.round(
-        (todayStart - submittedDayStart) / DAY_MS,
-      );
+      const elapsedDays = Math.round((todayStart - submittedDayStart) / DAY_MS);
       if (elapsedDays !== INSIGHT_REMINDER_DAY_AFTER_POST) continue;
 
       await this.line.pushText(
         post.application.influencerId,
-        `【インサイト提出のお願い】\n「${post.application.campaign.title}」の投稿から${INSIGHT_REMINDER_DAY_AFTER_POST}日が経過しました。\nインサイト（いいね・コメント・シェア・リポスト・保存・閲覧・リーチ）のご提出をお願いいたします。\n\n${this.line.applicationUrl(post.application.id)}`,
+        `📊【インサイト提出のお願い】数執の登録をお願いいたします 📊
+お世話になっております。
+ご参加いただいている「${post.application.campaign.title}」の投稿から7日が経過いたしました。素敵なご投稿をいただき、誠にありがとうございます。
+
+キャンペーンの最終精算および成果測定のため、大変お手数ですが下記のご案内をお読みいただき、インサイト資料のご提出をお願いいたします。
+
+📝 提出項目のご案内
+- 対象インサイト: いいね数・コメント数・シェア数・リポスト数・保存数・閲覧数・リーチ数などの画面スクリーンショットおよび数値入力
+
+※投稿の成果数値が確認できる画面をスクリーンショットし、サイト内の【応募履歴 - インサイト提出】よりご登録をお願いいたします。期限内にご提出いただくことで、報酬の精算手続きがスムーズに進行いたします。
+
+ご協力のほどよろしくお願いいたします。
+
+※自動送信のため返信不要ですが、ご不明な点はお気軽にお問い合わせください。
+※システムの行き違いで重複届いた場合はご容赦ください。
+🕐 運営：平日 10:00〜20:00
+>`,
       );
     }
   }

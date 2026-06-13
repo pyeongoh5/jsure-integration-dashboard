@@ -1,4 +1,5 @@
 import styles from "@/pages/Applicants/Applicants.module.css";
+import { ScrollTable } from "@/components/composites";
 import { MEDIA_META, type Applicant, type ApplicantStage } from "./types";
 
 type ActionHandlers = {
@@ -170,6 +171,7 @@ export function ApplicantTable({
 
   return (
     <div className={styles.card}>
+      <ScrollTable>
       <table className={styles.table}>
         <thead>
           <tr>
@@ -256,6 +258,7 @@ export function ApplicantTable({
           ))}
         </tbody>
       </table>
+      </ScrollTable>
     </div>
   );
 }

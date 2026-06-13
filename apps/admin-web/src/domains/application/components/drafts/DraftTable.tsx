@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { ScrollTable } from "@/components/composites";
 import { MEDIA_META, type DraftReview, type Media } from "./types";
 import styles from "@/pages/Drafts/Drafts.module.css";
 
@@ -145,6 +146,7 @@ export function DraftTable({
 
   return (
     <div className={styles.card}>
+      <ScrollTable>
       <table className={styles.table}>
         <thead>
           <tr>
@@ -248,6 +250,7 @@ export function DraftTable({
           })}
         </tbody>
       </table>
+      </ScrollTable>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { NoticeRow } from "./noticeTransform";
+import { ScrollTable } from "@/components/composites";
 import styles from "./NoticeTable.module.css";
 
 type Props = {
@@ -19,8 +20,9 @@ export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
     return <div className={styles.empty}>등록된 공지사항이 없습니다</div>;
   }
   return (
-    <table className={styles.root}>
-      <thead>
+    <ScrollTable>
+      <table className={styles.root}>
+        <thead>
         <tr>
           <th>제목</th>
           <th style={{ width: 120 }}>상태</th>
@@ -73,6 +75,7 @@ export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
           </tr>
         ))}
       </tbody>
-    </table>
+      </table>
+    </ScrollTable>
   );
 }

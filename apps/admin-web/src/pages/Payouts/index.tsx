@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AdminSettlement } from "@jsure/shared";
 import { completeSettlements, listSettlements } from "@/domains/application";
+import { ScrollTable } from "@/components/composites";
 import styles from "./Payouts.module.css";
 
 type LoadState =
@@ -250,6 +251,7 @@ export function Payouts() {
           <div className={styles.empty}>정산 대상이 없습니다.</div>
         )}
         {state.kind === "ready" && state.rows.length > 0 && (
+          <ScrollTable>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -311,6 +313,7 @@ export function Payouts() {
               })}
             </tbody>
           </table>
+          </ScrollTable>
         )}
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AdminInfluencer, SnsType } from "@jsure/shared";
 import { listInfluencers } from "@/domains/influencer";
 import { BroadcastDialog } from "@/domains/broadcast";
+import { ScrollTable } from "@/components/composites";
 import styles from "./Influencers.module.css";
 
 const SNS_ICON: Record<SnsType, string> = {
@@ -126,6 +127,7 @@ export function Influencers() {
         <div className={styles.empty}>조건에 맞는 인플루언서가 없습니다.</div>
       ) : (
         <div className={styles.card}>
+          <ScrollTable>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -195,6 +197,7 @@ export function Influencers() {
               ))}
             </tbody>
           </table>
+          </ScrollTable>
         </div>
       )}
 

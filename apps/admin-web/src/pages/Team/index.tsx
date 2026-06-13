@@ -7,6 +7,7 @@ import {
   updateAdminUserRole,
 } from "@/domains/team";
 import { getStoredUser } from "@/domains/auth";
+import { ScrollTable } from "@/components/composites";
 import styles from "./Team.module.css";
 
 const ROLE_META: Record<AdminUserRole, { label: string; className: string | undefined }> = {
@@ -163,6 +164,7 @@ export function Team() {
         <div className={styles.state}>등록된 팀원이 없습니다.</div>
       ) : (
         <div className={styles.card}>
+          <ScrollTable>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -252,6 +254,7 @@ export function Team() {
               })}
             </tbody>
           </table>
+          </ScrollTable>
         </div>
       )}
     </div>

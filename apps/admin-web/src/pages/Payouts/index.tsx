@@ -251,68 +251,68 @@ export function Payouts() {
           <div className={styles.empty}>정산 대상이 없습니다.</div>
         )}
         {state.kind === "ready" && state.rows.length > 0 && (
-          <ScrollTable>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.checkCol}>
-                  <input
-                    type="checkbox"
-                    checked={allPendingSelected}
-                    ref={(el) => {
-                      if (el) el.indeterminate = somePendingSelected;
-                    }}
-                    onChange={toggleAll}
-                    disabled={pendingRows.length === 0}
-                    aria-label="전체 선택"
-                  />
-                </th>
-                <th>인플루언서</th>
-                <th>캠페인</th>
-                <th>매체</th>
-                <th>투고 게시일</th>
-                <th>인사이트 제출일</th>
-                <th>금액</th>
-                <th>정산 등록일</th>
-                <th>정산 완료일</th>
-                <th>상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              {state.rows.map((row) => {
-                const isPending = row.status === "PENDING";
-                return (
-                  <tr key={row.id}>
-                    <td className={styles.checkCol}>
-                      {isPending ? (
-                        <input
-                          type="checkbox"
-                          checked={selected.has(row.id)}
-                          onChange={() => toggleOne(row.id)}
-                          aria-label="선택"
-                        />
-                      ) : null}
-                    </td>
-                    <td>{row.influencer.name}</td>
-                    <td>{row.campaign.title}</td>
-                    <td>{row.post.snsType}</td>
-                    <td>{formatDateTime(row.post.submittedAt)}</td>
-                    <td>{formatDateTime(row.post.insightSubmittedAt)}</td>
-                    <td className={styles.amount}>{formatJpy(row.amountJpy)}</td>
-                    <td>{formatDateTime(row.createdAt)}</td>
-                    <td>{formatDateTime(row.completedAt)}</td>
-                    <td>
-                      {row.status === "COMPLETED" ? (
-                        <span className={`${styles.pill} ${styles.pillDone}`}>완료</span>
-                      ) : (
-                        <span className={`${styles.pill} ${styles.pillPending}`}>대기</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <ScrollTable minWidth={1200}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.checkCol}>
+                    <input
+                      type="checkbox"
+                      checked={allPendingSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = somePendingSelected;
+                      }}
+                      onChange={toggleAll}
+                      disabled={pendingRows.length === 0}
+                      aria-label="전체 선택"
+                    />
+                  </th>
+                  <th>인플루언서</th>
+                  <th>캠페인</th>
+                  <th>매체</th>
+                  <th>투고 게시일</th>
+                  <th>인사이트 제출일</th>
+                  <th>금액</th>
+                  <th>정산 등록일</th>
+                  <th>정산 완료일</th>
+                  <th style={{ width: 70 }}>상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                {state.rows.map((row) => {
+                  const isPending = row.status === "PENDING";
+                  return (
+                    <tr key={row.id}>
+                      <td className={styles.checkCol}>
+                        {isPending ? (
+                          <input
+                            type="checkbox"
+                            checked={selected.has(row.id)}
+                            onChange={() => toggleOne(row.id)}
+                            aria-label="선택"
+                          />
+                        ) : null}
+                      </td>
+                      <td>{row.influencer.name}</td>
+                      <td>{row.campaign.title}</td>
+                      <td>{row.post.snsType}</td>
+                      <td>{formatDateTime(row.post.submittedAt)}</td>
+                      <td>{formatDateTime(row.post.insightSubmittedAt)}</td>
+                      <td className={styles.amount}>{formatJpy(row.amountJpy)}</td>
+                      <td>{formatDateTime(row.createdAt)}</td>
+                      <td>{formatDateTime(row.completedAt)}</td>
+                      <td>
+                        {row.status === "COMPLETED" ? (
+                          <span className={`${styles.pill} ${styles.pillDone}`}>완료</span>
+                        ) : (
+                          <span className={`${styles.pill} ${styles.pillPending}`}>대기</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </ScrollTable>
         )}
       </div>

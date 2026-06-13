@@ -9,6 +9,7 @@ export * from "./types/uploads.js";
 export * from "./types/jpBank.js";
 export * from "./types/notice.js";
 export * from "./types/adminOverview.js";
+export * from "./types/adminReport.js";
 export * from "./types/adminBroadcast.js";
 export * from "./data/influencerTerms.js";
 export { JP_BANKS } from "./data/jpBanks.js";

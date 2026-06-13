@@ -73,6 +73,13 @@ interface Props {
   initial: Metrics | null;
   onSubmit: (value: InsightInput) => Promise<void>;
   submitting: boolean;
+  postSubmittedAt: string;
+}
+
+function formatInsightDueDate(iso: string): string {
+  const date = new Date(iso);
+  date.setDate(date.getDate() + 7);
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
 function fromInitial(initial: Metrics | null): Values {
@@ -94,6 +101,7 @@ export function InsightSubmitForm({
   initial,
   onSubmit,
   submitting,
+  postSubmittedAt,
 }: Props) {
   const methods = useForm<Values>({
     resolver: zodResolver(schema),
@@ -164,11 +172,7 @@ export function InsightSubmitForm({
         }
       }
     } catch (err) {
-      setUploadError(
-        err instanceof Error
-          ? err.message
-          : "アップロード中にエラーが発生しました",
-      );
+      setUploadError(err instanceof Error ? err.message : "アップロード中にエラーが発生しました");
     }
   }
 
@@ -216,32 +220,52 @@ export function InsightSubmitForm({
           }}
         >
           投稿のインサイトをご提出ください。
+          <div
+            style={{
+              marginTop: 6,
+              color: "#dc2626",
+              fontWeight: 600,
+            }}
+          >
+            インサイト提出日: {formatInsightDueDate(postSubmittedAt)}
+          </div>
         </div>
 
         {METRIC_FIELDS.map((metric) => (
-          <FormField key={metric.key} name={metric.key} label={metric.label}>
-            {(field) => (
-              <Input
-                id={field.id}
-                type="text"
-                inputMode="numeric"
-                value={field.value}
-                onChange={(value) =>
-                  field.onChange(value.replace(/[^\d]/g, ""))
-                }
-                onBlur={field.onBlur}
-                error={field.error}
-                aria-invalid={field["aria-invalid"]}
-              />
+          <div key={metric.key}>
+            <FormField name={metric.key} label={metric.label}>
+              {(field) => (
+                <Input
+                  id={field.id}
+                  type="text"
+                  inputMode="numeric"
+                  value={field.value}
+                  onChange={(value) => field.onChange(value.replace(/[^\d]/g, ""))}
+                  onBlur={field.onBlur}
+                  error={field.error}
+                  aria-invalid={field["aria-invalid"]}
+                />
+              )}
+            </FormField>
+            {metric.key === "reach" && (
+              <p
+                style={{
+                  marginTop: -6,
+                  marginBottom: 12,
+                  fontSize: 11,
+                  color: "#6b7280",
+                  lineHeight: 1.5,
+                }}
+              >
+                リーチ数が表示されない場合は、「0」とご入力いただくようお願いいたします。
+              </p>
             )}
-          </FormField>
+          </div>
         ))}
 
         <div className={styles.section}>
           <div className={styles.sectionTitle}>インサイトのスクリーンショット</div>
-          <div className={styles.sectionHint}>
-            PNG / JPEG / WebP · 最大{MAX_FILES}枚 · 5MB以下
-          </div>
+          <div className={styles.sectionHint}>PNG / JPEG / WebP · 最大{MAX_FILES}枚 · 5MB以下</div>
 
           <div
             className={`${styles.dropzone} ${dragOver ? styles.dropzoneDrag : ""} ${
@@ -324,11 +348,7 @@ export function InsightSubmitForm({
         </div>
 
         <PrimaryButton type="submit" disabled={busy}>
-          {submitting
-            ? "送信中…"
-            : uploading
-              ? "アップロード中…"
-              : "インサイトを提出"}
+          {submitting ? "送信中…" : uploading ? "アップロード中…" : "インサイトを提出"}
         </PrimaryButton>
       </form>
     </FormProvider>

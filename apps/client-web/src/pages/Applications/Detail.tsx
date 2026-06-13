@@ -231,6 +231,7 @@ export function ApplicationDetail() {
               });
             }}
             submitting={insight.isPending}
+            postSubmittedAt={data.posts[0].submittedAt}
           />
         )}
 

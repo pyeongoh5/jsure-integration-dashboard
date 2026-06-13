@@ -7,9 +7,7 @@ import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 
 const schema = z.object({
-  url: z
-    .string()
-    .regex(/^https?:\/\/.+/i, "正しいURLを入力してください"),
+  url: z.string().regex(/^https?:\/\/.+/i, "正しいURLを入力してください"),
 });
 type Values = z.infer<typeof schema>;
 
@@ -89,7 +87,8 @@ export function PostSubmitForm({
               fontWeight: 600,
             }}
           >
-            投稿期限: {formatDeadline(postingDeadlineAt)}
+            {/* 게시 마감일 */}
+            投稿締切日: {formatDeadline(postingDeadlineAt)}
           </p>
         )}
       </form>

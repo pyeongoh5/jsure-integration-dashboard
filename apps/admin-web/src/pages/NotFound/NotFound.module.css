@@ -1,4 +1,4 @@
-.nf {
+.root {
   min-height: calc(100vh - 80px);
   display: flex;
   align-items: center;
@@ -6,7 +6,7 @@
   padding: 40px 20px;
 }
 
-.nf-card {
+.card {
   background: var(--c-card);
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
@@ -17,7 +17,7 @@
   width: 100%;
 }
 
-.nf__code {
+.code {
   font-size: 72px;
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -26,7 +26,7 @@
   margin-bottom: 16px;
 }
 
-.nf__title {
+.title {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -34,21 +34,21 @@
   color: var(--c-text);
 }
 
-.nf__subtitle {
+.subtitle {
   margin: 0 0 28px;
   color: var(--c-muted);
   font-size: 14px;
   line-height: 1.5;
 }
 
-.nf__actions {
+.actions {
   display: flex;
   gap: 8px;
   justify-content: center;
   flex-wrap: wrap;
 }
 
-.nf__btn {
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -64,17 +64,17 @@
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.nf__btn:hover {
+.btn:hover {
   background: var(--c-bg, #f9fafb);
 }
 
-.nf__btn--primary {
+.btnPrimary {
   background: var(--c-text);
   border-color: var(--c-text);
   color: #ffffff;
 }
 
-.nf__btn--primary:hover {
+.btnPrimary:hover {
   opacity: 0.9;
   background: var(--c-text);
 }

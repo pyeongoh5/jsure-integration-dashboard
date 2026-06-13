@@ -7,18 +7,18 @@ import {
   updateAdminUserRole,
 } from "@/domains/team";
 import { getStoredUser } from "@/domains/auth";
-import "./Team.css";
+import styles from "./Team.module.css";
 
-const ROLE_META: Record<AdminUserRole, { label: string; className: string }> = {
-  OWNER: { label: "소유자(Owner)", className: "team-role--owner" },
-  ADMIN: { label: "관리자(Admin)", className: "team-role--admin" },
-  GUEST: { label: "게스트(Guest)", className: "team-role--guest" },
+const ROLE_META: Record<AdminUserRole, { label: string; className: string | undefined }> = {
+  OWNER: { label: "소유자(Owner)", className: styles.roleOwner },
+  ADMIN: { label: "관리자(Admin)", className: styles.roleAdmin },
+  GUEST: { label: "게스트(Guest)", className: styles.roleGuest },
 };
 
-const STATUS_META: Record<AdminUserStatus, { label: string; className: string }> = {
-  ACTIVE: { label: "활성", className: "team-status--active" },
-  PENDING: { label: "승인 대기", className: "team-status--pending" },
-  SUSPENDED: { label: "정지", className: "team-status--suspended" },
+const STATUS_META: Record<AdminUserStatus, { label: string; className: string | undefined }> = {
+  ACTIVE: { label: "활성", className: styles.statusActive },
+  PENDING: { label: "승인 대기", className: styles.statusPending },
+  SUSPENDED: { label: "정지", className: styles.statusSuspended },
 };
 
 const AVATAR_PALETTE = [
@@ -141,29 +141,29 @@ export function Team() {
   const activeCount = users?.filter((u) => u.status === "ACTIVE").length ?? 0;
 
   return (
-    <div className="team">
-      <div className="team__header">
+    <div className={styles.root}>
+      <div className={styles.header}>
         <div>
-          <h1 className="team__title">팀원/권한</h1>
-          <p className="team__subtitle">
+          <h1 className={styles.title}>팀원/권한</h1>
+          <p className={styles.subtitle}>
             {users ? `${activeCount}명의 운영자가 활동 중` : "운영자 정보를 불러오는 중..."}
           </p>
         </div>
-        <button type="button" className="team__invite">
+        <button type="button" className={styles.invite}>
           <i className="fa-solid fa-plus" />
           팀원 초대
         </button>
       </div>
 
       {error ? (
-        <div className="team__state team__state--error">{error}</div>
+        <div className={`${styles.state} ${styles.stateError}`}>{error}</div>
       ) : !users ? (
-        <div className="team__state">불러오는 중...</div>
+        <div className={styles.state}>불러오는 중...</div>
       ) : users.length === 0 ? (
-        <div className="team__state">등록된 팀원이 없습니다.</div>
+        <div className={styles.state}>등록된 팀원이 없습니다.</div>
       ) : (
-        <div className="team__card">
-          <table className="team__table">
+        <div className={styles.card}>
+          <table className={styles.table}>
             <thead>
               <tr>
                 <th>이름</th>
@@ -182,18 +182,18 @@ export function Team() {
                 return (
                   <tr key={u.id}>
                     <td>
-                      <div className="team-name">
-                        <span className="team-avatar" style={{ background: pickAvatarColor(u.id) }}>
+                      <div className={styles.name}>
+                        <span className={styles.avatar} style={{ background: pickAvatarColor(u.id) }}>
                           {initialsOf(u.name, u.email)}
                         </span>
-                        <span className="team-name__text">{displayName}</span>
+                        <span className={styles.nameText}>{displayName}</span>
                       </div>
                     </td>
-                    <td className="team-email">{u.email}</td>
+                    <td className={styles.email}>{u.email}</td>
                     <td>
                       {canManage && currentUser?.id !== u.id ? (
                         <select
-                          className={`team-role-select ${role.className}`}
+                          className={`${styles.roleSelect} ${role.className}`}
                           value={u.role}
                           disabled={pendingId === u.id}
                           onChange={(event) =>
@@ -210,26 +210,26 @@ export function Team() {
                           <option value="GUEST">{ROLE_META.GUEST.label}</option>
                         </select>
                       ) : (
-                        <span className={`team-badge ${role.className}`}>
-                          <span className="team-badge__dot" />
+                        <span className={`${styles.badge} ${role.className}`}>
+                          <span className={styles.badgeDot} />
                           {role.label}
                         </span>
                       )}
                     </td>
-                    <td className="team-activity">{formatLastActivity(u.lastSeenAt, now)}</td>
+                    <td className={styles.activity}>{formatLastActivity(u.lastSeenAt, now)}</td>
                     <td>
-                      <span className={`team-badge ${status.className}`}>
-                        <span className="team-badge__dot" />
+                      <span className={`${styles.badge} ${status.className}`}>
+                        <span className={styles.badgeDot} />
                         {status.label}
                       </span>
                     </td>
                     {hasPending && (
-                      <td className="team-actions">
+                      <td className={styles.actions}>
                         {u.status === "PENDING" ? (
                           <>
                             <button
                               type="button"
-                              className="team-btn team-btn--primary"
+                              className={`${styles.btn} ${styles.btnPrimary}`}
                               onClick={() => handleApprove(u.id)}
                               disabled={pendingId === u.id}
                             >
@@ -237,7 +237,7 @@ export function Team() {
                             </button>
                             <button
                               type="button"
-                              className="team-btn team-btn--danger"
+                              className={`${styles.btn} ${styles.btnDanger}`}
                               onClick={() => handleReject(u.id)}
                               disabled={pendingId === u.id}
                             >

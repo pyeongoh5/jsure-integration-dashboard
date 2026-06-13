@@ -15,6 +15,7 @@ export type * from "./types";
 
 // components
 export { CampaignForm, EMPTY_CAMPAIGN_FORM } from "./components/CampaignForm";
+export { default as campaignFormStyles } from "./components/CampaignForm.module.css";
 export { CampaignActionsMenu } from "./components/CampaignActionsMenu";
 export { CampaignCardBody } from "./components/CampaignCardBody";
 export { CampaignCardFooter } from "./components/CampaignCardFooter";

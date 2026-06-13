@@ -1,5 +1,13 @@
 import { Fragment } from "react";
-import { MEDIA_META, type DraftReview } from "./types";
+import { MEDIA_META, type DraftReview, type Media } from "./types";
+import styles from "@/pages/Drafts/Drafts.module.css";
+
+const MEDIA_CLASS: Record<Media, string | undefined> = {
+  ig: styles.mediaIg,
+  yt: styles.mediaYt,
+  tt: styles.mediaTt,
+  x: styles.mediaX,
+};
 
 const AVATAR_PALETTE = [
   "#ec4899",
@@ -35,17 +43,17 @@ function formatJpy(amount: number): string {
 function renderActions(draft: DraftReview, handlers: ActionHandlers) {
   if (draft.reviewStatus === "PENDING") {
     return (
-      <div className="dr-actions">
+      <div className={styles.actions}>
         <button
           type="button"
-          className="dr-action dr-action--approve"
+          className={`${styles.action} ${styles.actionApprove}`}
           onClick={() => handlers.onApprove(draft)}
         >
           승인
         </button>
         <button
           type="button"
-          className="dr-action dr-action--reject"
+          className={`${styles.action} ${styles.actionReject}`}
           onClick={() => handlers.onReject(draft)}
         >
           반려
@@ -57,25 +65,25 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
   if (draft.reviewStatus === "APPROVED") {
     if (draft.settlement?.status === "COMPLETED") {
       return (
-        <span className="dr-settled">
+        <span className={styles.settled}>
           정산 완료
-          <span className="dr-settled__amount">{formatJpy(draft.settlement.amountJpy)}</span>
+          <span className={styles.settledAmount}>{formatJpy(draft.settlement.amountJpy)}</span>
         </span>
       );
     }
     if (draft.settlement?.status === "PENDING") {
       return (
-        <span className="dr-settled" title="정산 페이지에서 처리 대기 중">
+        <span className={styles.settled} title="정산 페이지에서 처리 대기 중">
           정산 대기
-          <span className="dr-settled__amount">{formatJpy(draft.settlement.amountJpy)}</span>
+          <span className={styles.settledAmount}>{formatJpy(draft.settlement.amountJpy)}</span>
         </span>
       );
     }
     return (
-      <div className="dr-actions">
+      <div className={styles.actions}>
         <button
           type="button"
-          className="dr-action dr-action--approve"
+          className={`${styles.action} ${styles.actionApprove}`}
           onClick={() => handlers.onSettle(draft)}
         >
           정산하기
@@ -83,7 +91,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
         {!draft.insightSubmitted && (
           <button
             type="button"
-            className="dr-action dr-action--undo"
+            className={`${styles.action} ${styles.actionUndo}`}
             onClick={() => handlers.onUndo(draft)}
           >
             되돌리기
@@ -94,13 +102,13 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
   }
 
   if (draft.insightSubmitted) {
-    return <span className="dr-locked">인사이트 제출 완료 · 되돌리기 불가</span>;
+    return <span className={styles.locked}>인사이트 제출 완료 · 되돌리기 불가</span>;
   }
 
   return (
     <button
       type="button"
-      className="dr-action dr-action--undo"
+      className={`${styles.action} ${styles.actionUndo}`}
       onClick={() => handlers.onUndo(draft)}
     >
       되돌리기
@@ -129,15 +137,15 @@ export function DraftTable({
 }: Props) {
   if (items.length === 0) {
     return (
-      <div className="dr__card">
-        <div className="dr__empty">검토할 내용이 없습니다.</div>
+      <div className={styles.card}>
+        <div className={styles.empty}>검토할 내용이 없습니다.</div>
       </div>
     );
   }
 
   return (
-    <div className="dr__card">
-      <table className="dr__table">
+    <div className={styles.card}>
+      <table className={styles.table}>
         <thead>
           <tr>
             <th>인플루언서</th>
@@ -157,17 +165,17 @@ export function DraftTable({
               <Fragment key={draft.id}>
                 <tr>
                   <td>
-                    <div className="dr-inf">
+                    <div className={styles.inf}>
                       <div
-                        className="dr-inf__avatar"
+                        className={styles.infAvatar}
                         style={{ background: pickAvatarColor(draft.id) }}
                       >
                         {draft.influencerName[0]}
                       </div>
                       <div>
-                        <div className="dr-inf__name">{draft.influencerName}</div>
+                        <div className={styles.infName}>{draft.influencerName}</div>
                         {draft.influencerHandle && (
-                          <div className="dr-inf__handle">@{draft.influencerHandle}</div>
+                          <div className={styles.infHandle}>@{draft.influencerHandle}</div>
                         )}
                       </div>
                     </div>
@@ -175,16 +183,16 @@ export function DraftTable({
                   <td>{draft.campaignTitle}</td>
                   <td>
                     <span
-                      className={`dr-media ${media.cls}`}
+                      className={`${styles.media} ${MEDIA_CLASS[draft.media]}`}
                       title={media.label}
                       aria-label={media.label}
                     >
                       <i className={media.icon} />
                     </span>
                   </td>
-                  <td className="dr-url-cell">
+                  <td className={styles.urlCell}>
                     <a
-                      className="dr-url"
+                      className={styles.url}
                       href={draft.url}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -192,18 +200,18 @@ export function DraftTable({
                       {draft.url}
                     </a>
                   </td>
-                  <td className="dr-time">{draft.submittedAt}</td>
+                  <td className={styles.time}>{draft.submittedAt}</td>
                   <td>
                     {draft.insightSubmitted ? (
                       <button
                         type="button"
-                        className="dr-insight dr-insight--done dr-insight--btn"
+                        className={`${styles.insight} ${styles.insightDone} ${styles.insightBtn}`}
                         onClick={() => onViewInsight(draft)}
                       >
                         제출됨 · 보기
                       </button>
                     ) : (
-                      <span className="dr-insight dr-insight--pending">대기</span>
+                      <span className={`${styles.insight} ${styles.insightPending}`}>대기</span>
                     )}
                   </td>
                   <td>
@@ -217,17 +225,17 @@ export function DraftTable({
                   </td>
                 </tr>
                 {showHistory && hasHistory && (
-                  <tr className="dr-history-row">
+                  <tr className={styles.historyRow}>
                     <td colSpan={7}>
-                      <div className="dr-history">
-                        <div className="dr-history__title">
+                      <div className={styles.history}>
+                        <div className={styles.historyTitle}>
                           이전 반려 사유 ({draft.rejectionHistory.length})
                         </div>
-                        <ul className="dr-history__list">
+                        <ul className={styles.historyList}>
                           {draft.rejectionHistory.map((rejection) => (
-                            <li key={rejection.id} className="dr-history__item">
-                              <span className="dr-history__time">{rejection.rejectedAt}</span>
-                              <span className="dr-history__comment">{rejection.comment}</span>
+                            <li key={rejection.id} className={styles.historyItem}>
+                              <span className={styles.historyTime}>{rejection.rejectedAt}</span>
+                              <span className={styles.historyComment}>{rejection.comment}</span>
                             </li>
                           ))}
                         </ul>

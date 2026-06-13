@@ -1,0 +1,183 @@
+.root {
+  padding: var(--space-6);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+  margin: var(--space-1) 0 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btn {
+  height: 36px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  padding: 0 14px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.btn:hover {
+  background: var(--color-bg-subtle);
+}
+
+.btnPrimary {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: var(--color-bg);
+}
+
+.btnPrimary:hover {
+  background: #1e40af;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.summary {
+  display: flex;
+  gap: var(--space-6);
+  padding: 14px var(--space-4);
+  border-bottom: 1px solid var(--color-bg-muted);
+  font-size: var(--font-size-md);
+  color: #374151;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.summaryLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.summaryValue {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 10px var(--space-3);
+  font-size: var(--font-size-md);
+  text-align: left;
+  border-bottom: 1px solid var(--color-bg-muted);
+}
+
+.table th {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+}
+
+.table td.amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.pill {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+.pillPending {
+  background: var(--color-warn-bg);
+  color: var(--color-warn-text);
+}
+
+.pillDone {
+  background: var(--color-ok-bg);
+  color: var(--color-ok-text);
+}
+
+.empty {
+  padding: var(--space-10) var(--space-5);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+}
+
+.checkCol {
+  width: 36px;
+  text-align: center;
+}
+
+.checkCol input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.month {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+}
+
+.monthLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-semibold);
+}
+
+.monthInput {
+  height: 36px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: 0 10px;
+  font-size: var(--font-size-md);
+  font-family: inherit;
+  line-height: 1;
+  margin-block-start: 0;
+}

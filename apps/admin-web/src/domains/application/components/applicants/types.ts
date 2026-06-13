@@ -39,10 +39,10 @@ export const MEDIA_META: Record<
   Media,
   { label: string; icon: string; cls: string }
 > = {
-  ig: { label: "Instagram", icon: "fa-brands fa-instagram", cls: "apl-media--ig" },
-  yt: { label: "YouTube", icon: "fa-brands fa-youtube", cls: "apl-media--yt" },
-  tt: { label: "TikTok", icon: "fa-brands fa-tiktok", cls: "apl-media--tt" },
-  x: { label: "X", icon: "fa-brands fa-x-twitter", cls: "apl-media--x" },
+  ig: { label: "Instagram", icon: "fa-brands fa-instagram", cls: "mediaIg" },
+  yt: { label: "YouTube", icon: "fa-brands fa-youtube", cls: "mediaYt" },
+  tt: { label: "TikTok", icon: "fa-brands fa-tiktok", cls: "mediaTt" },
+  x: { label: "X", icon: "fa-brands fa-x-twitter", cls: "mediaX" },
 };
 
 export const STATUS_TABS: { key: ApplicantStatus; label: string }[] = [

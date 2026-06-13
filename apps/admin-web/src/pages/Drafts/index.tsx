@@ -12,7 +12,7 @@ import {
   type DraftReview,
   type DraftReviewTab,
 } from "@/domains/application";
-import "./Drafts.css";
+import styles from "./Drafts.module.css";
 
 const VALID_TABS: DraftReviewTab[] = ["pending", "approved", "rejected"];
 
@@ -43,10 +43,10 @@ export function Drafts() {
   );
 
   return (
-    <div className="dr">
-      <div className="dr__header">
-        <h1 className="dr__title">검토</h1>
-        <p className="dr__subtitle">
+    <div className={styles.root}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>검토</h1>
+        <p className={styles.subtitle}>
           {state.kind === "ready"
             ? `현재 탭 ${visible.length}건`
             : state.kind === "loading"
@@ -58,12 +58,12 @@ export function Drafts() {
       <DraftTabs value={tab} counts={counts} onChange={setTab} />
 
       {state.kind === "loading" ? (
-        <div className="dr__card">
-          <div className="dr__empty">불러오는 중…</div>
+        <div className={styles.card}>
+          <div className={styles.empty}>불러오는 중…</div>
         </div>
       ) : state.kind === "error" ? (
-        <div className="dr__card">
-          <div className="dr__empty">{state.message}</div>
+        <div className={styles.card}>
+          <div className={styles.empty}>{state.message}</div>
         </div>
       ) : (
         <DraftTable

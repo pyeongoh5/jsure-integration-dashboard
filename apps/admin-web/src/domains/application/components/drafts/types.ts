@@ -53,12 +53,12 @@ export type DraftReviewCounts = Record<DraftReviewTab, number>;
 
 export const MEDIA_META: Record<
   Media,
-  { label: string; icon: string; cls: string }
+  { label: string; icon: string }
 > = {
-  ig: { label: "Instagram", icon: "fa-brands fa-instagram", cls: "dr-media--ig" },
-  yt: { label: "YouTube", icon: "fa-brands fa-youtube", cls: "dr-media--yt" },
-  tt: { label: "TikTok", icon: "fa-brands fa-tiktok", cls: "dr-media--tt" },
-  x: { label: "X", icon: "fa-brands fa-x-twitter", cls: "dr-media--x" },
+  ig: { label: "Instagram", icon: "fa-brands fa-instagram" },
+  yt: { label: "YouTube", icon: "fa-brands fa-youtube" },
+  tt: { label: "TikTok", icon: "fa-brands fa-tiktok" },
+  x: { label: "X", icon: "fa-brands fa-x-twitter" },
 };
 
 export const SNS_TO_MEDIA: Record<SnsType, Media> = {

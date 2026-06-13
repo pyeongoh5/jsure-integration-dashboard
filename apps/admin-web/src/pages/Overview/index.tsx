@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/composites/Card";
 import { MonthlyCampaignChart } from "./MonthlyCampaignChart";
 import { getOverviewStats } from "@/domains/overview";
-import "./Overview.css";
+import styles from "./Overview.module.css";
 import { ReactNode } from "react";
 
 type Kpi = {
@@ -132,28 +132,36 @@ export function Overview() {
   );
 
   return (
-    <div className="ov">
-      <div className="ov__header">
-        <h1 className="ov__title">
-          안녕하세요, {user?.name}님 <span className="ov__wave">👋</span>
+    <div className={styles.ov}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>
+          안녕하세요, {user?.name}님 <span className={styles.wave}>👋</span>
         </h1>
-        <p className="ov__subtitle">오늘 운영 현황을 한눈에 확인하세요.</p>
+        <p className={styles.subtitle}>오늘 운영 현황을 한눈에 확인하세요.</p>
       </div>
 
-      <div className="ov__kpis">
+      <div className={styles.kpis}>
         {kpis.map((k) => {
           const card = (
             <Card
               title={
                 <>
-                  <span className="ov-kpi__icon">{k.icon}</span>
-                  <span className="ov-kpi__label">{k.label}</span>
+                  <span className={styles.kpiIcon}>{k.icon}</span>
+                  <span className={styles.kpiLabel}>{k.label}</span>
                 </>
               }
-              content={<div className="ov-kpi__value">{k.value}</div>}
+              content={<div className={styles.kpiValue}>{k.value}</div>}
               bottomAffix={
                 k.delta && (
-                  <span className={`ov-kpi__delta ov-kpi__delta--${k.delta.tone}`}>
+                  <span
+                    className={
+                      k.delta.tone === "up"
+                        ? styles.kpiDeltaUp
+                        : k.delta.tone === "down"
+                          ? styles.kpiDeltaDown
+                          : ""
+                    }
+                  >
                     {k.delta.text}
                   </span>
                 )
@@ -161,7 +169,7 @@ export function Overview() {
             />
           );
           return k.to ? (
-            <Link key={k.label} to={k.to} className="ov-kpi-link">
+            <Link key={k.label} to={k.to} className={styles.kpiLink}>
               {card}
             </Link>
           ) : (
@@ -170,7 +178,7 @@ export function Overview() {
         })}
       </div>
 
-      <div className="ov__row">
+      <div className={styles.row}>
         <MonthlyCampaignChart />
 
         {/* <section className="ov-card ov__activity">

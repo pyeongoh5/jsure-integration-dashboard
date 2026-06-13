@@ -3,6 +3,7 @@ import {
   type DraftReviewCounts,
   type DraftReviewTab,
 } from "./types";
+import styles from "@/pages/Drafts/Drafts.module.css";
 
 type Props = {
   value: DraftReviewTab;
@@ -12,16 +13,16 @@ type Props = {
 
 export function DraftTabs({ value, counts, onChange }: Props) {
   return (
-    <div className="dr__tabs">
+    <div className={styles.tabs}>
       {DRAFT_TABS.map((tab) => (
         <button
           key={tab.key}
           type="button"
-          className={`dr-tab ${value === tab.key ? "dr-tab--active" : ""}`}
+          className={`${styles.tab} ${value === tab.key ? styles.tabActive : ""}`}
           onClick={() => onChange(tab.key)}
         >
           {tab.label}
-          <span className="dr-tab__count">{counts[tab.key]}</span>
+          <span className={styles.tabCount}>{counts[tab.key]}</span>
         </button>
       ))}
     </div>

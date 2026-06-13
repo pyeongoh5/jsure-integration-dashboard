@@ -1,4 +1,5 @@
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import styles from "@/pages/Applicants/Applicants.module.css";
 import type { Applicant } from "./types";
 
 type Props = {
@@ -27,10 +28,10 @@ export function ApplicantUndoDialog({
             {applicant.handle ? `(@${applicant.handle})` : ""} —{" "}
             {applicant.campaign}
           </div>
-          <div className="apl-dialog-hint">
+          <div className={styles.dialogHint}>
             대기 상태로 되돌립니다.
           </div>
-          {error && <div className="apl-mutation-error">{error}</div>}
+          {error && <div className={styles.mutationError}>{error}</div>}
         </>
       }
       confirmLabel={mutating ? "처리 중…" : "되돌리기"}

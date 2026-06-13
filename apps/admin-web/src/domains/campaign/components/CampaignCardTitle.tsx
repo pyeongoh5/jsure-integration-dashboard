@@ -1,3 +1,4 @@
+import styles from "@/pages/Campaigns/Campaigns.module.css";
 import { STATUS_LABEL, type CampaignStatus } from "../types";
 
 type Props = {
@@ -5,12 +6,17 @@ type Props = {
   dday: number;
 };
 
+const STATUS_CLASS: Record<CampaignStatus, string | undefined> = {
+  recruit: styles.cardStatusRecruit,
+  done: styles.cardStatusDone,
+};
+
 export function CampaignCardTitle({ status, dday }: Props) {
   return (
-    <div className="cmp-title-wrapper">
-      <span className={`cmp-card__status cmp-card__status--${status}`}>{STATUS_LABEL[status]}</span>
+    <div className={styles.titleWrapper}>
+      <span className={`${styles.cardStatus} ${STATUS_CLASS[status]}`}>{STATUS_LABEL[status]}</span>
       {status !== "done" && (
-        <span className={`cmp-card__dday ${dday <= 7 ? "cmp-card__dday--urgent" : ""}`}>
+        <span className={`${styles.cardDday} ${dday <= 7 ? styles.cardDdayUrgent : ""}`}>
           D-{dday}
         </span>
       )}

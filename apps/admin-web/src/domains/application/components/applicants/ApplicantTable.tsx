@@ -1,3 +1,4 @@
+import styles from "@/pages/Applicants/Applicants.module.css";
 import { MEDIA_META, type Applicant, type ApplicantStage } from "./types";
 
 type ActionHandlers = {
@@ -11,17 +12,17 @@ type ActionHandlers = {
 function renderActions(applicant: Applicant, handlers: ActionHandlers) {
   if (applicant.status === "pending") {
     return (
-      <div className="apl-actions">
+      <div className={styles.actions}>
         <button
           type="button"
-          className="apl-action apl-action--approve"
+          className={`${styles.action} ${styles.actionApprove}`}
           onClick={() => handlers.onApprove(applicant)}
         >
           승인
         </button>
         <button
           type="button"
-          className="apl-action apl-action--reject"
+          className={`${styles.action} ${styles.actionReject}`}
           onClick={() => handlers.onReject(applicant)}
         >
           반려
@@ -34,7 +35,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
     return (
       <button
         type="button"
-        className="apl-action apl-action--undo"
+        className={`${styles.action} ${styles.actionUndo}`}
         onClick={() => handlers.onUndo(applicant)}
       >
         되돌리기
@@ -44,19 +45,19 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
 
   // approved 탭 — rawStatus로 분기
   return (
-    <div className="apl-actions">
+    <div className={styles.actions}>
       {applicant.rawStatus === "APPROVED" && (
         <>
           <button
             type="button"
-            className="apl-action apl-action--approve"
+            className={`${styles.action} ${styles.actionApprove}`}
             onClick={() => handlers.onShip(applicant)}
           >
             운송장 입력
           </button>
           <button
             type="button"
-            className="apl-action apl-action--undo"
+            className={`${styles.action} ${styles.actionUndo}`}
             onClick={() => handlers.onUndo(applicant)}
           >
             되돌리기
@@ -68,7 +69,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
       {applicant.stage === "SHIPPING" && (
         <button
           type="button"
-          className="apl-action apl-action--approve"
+          className={`${styles.action} ${styles.actionApprove}`}
           onClick={() => handlers.onDeliver(applicant)}
         >
           배송 완료
@@ -78,14 +79,14 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
   );
 }
 
-const STAGE_LABEL: Record<ApplicantStage, { text: string; className: string }> =
+const STAGE_LABEL: Record<ApplicantStage, { text: string; className: string | undefined }> =
   {
-    PRE_SHIP: { text: "배송전", className: "apl-stage__pill--pre" },
-    SHIPPING: { text: "배송중", className: "apl-stage__pill--shipping" },
-    DELIVERED: { text: "배송완료", className: "apl-stage__pill--delivered" },
-    POST_DUE: { text: "게시 대기", className: "apl-stage__pill--post-due" },
-    REVIEW_DUE: { text: "검토 대기", className: "apl-stage__pill--review-due" },
-    COMPLETED: { text: "완료", className: "apl-stage__pill--completed" },
+    PRE_SHIP: { text: "배송전", className: styles.stagePillPre },
+    SHIPPING: { text: "배송중", className: styles.stagePillShipping },
+    DELIVERED: { text: "배송완료", className: styles.stagePillDelivered },
+    POST_DUE: { text: "게시 대기", className: styles.stagePillPostDue },
+    REVIEW_DUE: { text: "검토 대기", className: styles.stagePillReviewDue },
+    COMPLETED: { text: "완료", className: styles.stagePillCompleted },
   };
 
 function renderStage(applicant: Applicant) {
@@ -94,10 +95,10 @@ function renderStage(applicant: Applicant) {
   const showTracking =
     applicant.stage !== "PRE_SHIP" && applicant.trackingNumber !== null;
   return (
-    <div className="apl-stage">
-      <span className={`apl-stage__pill ${label.className}`}>{label.text}</span>
+    <div className={styles.stage}>
+      <span className={`${styles.stagePill} ${label.className}`}>{label.text}</span>
       {showTracking && (
-        <span className="apl-stage__tracking">
+        <span className={styles.stageTracking}>
           {applicant.trackingCarrier
             ? `${applicant.trackingCarrier} · ${applicant.trackingNumber}`
             : applicant.trackingNumber}
@@ -159,8 +160,8 @@ export function ApplicantTable({
 }: Props) {
   if (items.length === 0) {
     return (
-      <div className="apl__card">
-        <div className="apl__empty">해당 상태의 응모자가 없습니다.</div>
+      <div className={styles.card}>
+        <div className={styles.empty}>해당 상태의 응모자가 없습니다.</div>
       </div>
     );
   }
@@ -168,11 +169,11 @@ export function ApplicantTable({
   const allChecked = items.every((applicant) => selected.has(applicant.id));
 
   return (
-    <div className="apl__card">
-      <table className="apl__table">
+    <div className={styles.card}>
+      <table className={styles.table}>
         <thead>
           <tr>
-            <th className="apl-check">
+            <th className={styles.check}>
               <input
                 type="checkbox"
                 checked={allChecked}
@@ -193,7 +194,7 @@ export function ApplicantTable({
         <tbody>
           {items.map((applicant) => (
             <tr key={applicant.id}>
-              <td className="apl-check">
+              <td className={styles.check}>
                 <input
                   type="checkbox"
                   checked={selected.has(applicant.id)}
@@ -201,28 +202,28 @@ export function ApplicantTable({
                 />
               </td>
               <td>
-                <div className="apl-inf">
+                <div className={styles.inf}>
                   <div
-                    className="apl-inf__avatar"
+                    className={styles.infAvatar}
                     style={{ background: pickAvatarColor(applicant.id) }}
                   >
                     {applicant.name[0]}
                   </div>
                   <div>
-                    <div className="apl-inf__name">{applicant.name}</div>
-                    <div className="apl-inf__handle">@{applicant.handle}</div>
+                    <div className={styles.infName}>{applicant.name}</div>
+                    <div className={styles.infHandle}>@{applicant.handle}</div>
                   </div>
                 </div>
               </td>
               <td>{applicant.campaign}</td>
               <td>
-                <div className="apl-media-list">
+                <div className={styles.mediaList}>
                   {applicant.media.map((media) => {
                     const meta = MEDIA_META[media];
                     return (
                       <span
                         key={media}
-                        className={`apl-media ${meta.cls}`}
+                        className={`${styles.media} ${styles[meta.cls]}`}
                         title={meta.label}
                         aria-label={meta.label}
                       >
@@ -232,11 +233,11 @@ export function ApplicantTable({
                   })}
                 </div>
               </td>
-              <td className="apl-num">{formatFollowers(applicant.followers)}</td>
-              <td className="apl-time">{applicant.appliedAt}</td>
+              <td className={styles.num}>{formatFollowers(applicant.followers)}</td>
+              <td className={styles.time}>{applicant.appliedAt}</td>
               {showStage && (
                 <td
-                  className="apl-stage-cell"
+                  className={styles.stageCell}
                   style={{ textAlign: "center" }}
                 >
                   {renderStage(applicant)}

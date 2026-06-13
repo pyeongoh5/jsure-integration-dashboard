@@ -8,7 +8,7 @@ import { LoginRequestSchema } from "@jsure/shared";
 import { login } from "@/domains/auth";
 import { hangulToEn } from "@/lib/hangulToEn";
 import { FormField } from "@/components/composites";
-import "../_shared/Auth.css";
+import styles from "../_shared/Auth.module.css";
 
 type LocationState = { from?: string } | null;
 
@@ -66,15 +66,15 @@ export function Login() {
 
   return (
     <FormProvider {...methods}>
-      <div className="auth">
-        <div className="auth-card">
-          <div className="auth__brand">
-            <div className="auth__logo">J</div>
-            <div className="auth__brand-text">JSure Console</div>
+      <div className={styles.root}>
+        <div className={styles.card}>
+          <div className={styles.brand}>
+            <div className={styles.logo}>J</div>
+            <div className={styles.brandText}>JSure Console</div>
           </div>
 
-          <h1 className="auth__title">로그인</h1>
-          <p className="auth__subtitle">운영 콘솔 계정으로 로그인하세요.</p>
+          <h1 className={styles.title}>로그인</h1>
+          <p className={styles.subtitle}>운영 콘솔 계정으로 로그인하세요.</p>
 
           <form
             onSubmit={methods.handleSubmit(handleSubmit, onInvalid)}
@@ -85,7 +85,7 @@ export function Login() {
                 <input
                   id={field.id}
                   type="email"
-                  className="auth__input"
+                  className={styles.input}
                   value={field.value}
                   onChange={(event) => field.onChange(event.target.value)}
                   onBlur={field.onBlur}
@@ -101,7 +101,7 @@ export function Login() {
                 <input
                   id={field.id}
                   type="password"
-                  className="auth__input"
+                  className={styles.input}
                   value={field.value}
                   onChange={(event) =>
                     field.onChange(hangulToEn(event.target.value))
@@ -114,20 +114,20 @@ export function Login() {
               )}
             </FormField>
 
-            {serverError && <div className="auth__error">{serverError}</div>}
+            {serverError && <div className={styles.error}>{serverError}</div>}
 
             <button
               type="submit"
-              className="auth__submit"
+              className={styles.submit}
               disabled={submitting}
             >
               {submitting ? "로그인 중..." : "로그인"}
             </button>
           </form>
 
-          <div className="auth__footer">
+          <div className={styles.footer}>
             계정이 없으신가요?
-            <Link to="/register" className="auth__link">
+            <Link to="/register" className={styles.link}>
               회원가입
             </Link>
           </div>

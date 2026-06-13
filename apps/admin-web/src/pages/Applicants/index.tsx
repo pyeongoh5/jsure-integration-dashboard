@@ -12,7 +12,7 @@ import {
   type ApplicantStatus,
   type ApplicantMedia as Media,
 } from "@/domains/application";
-import "./Applicants.css";
+import styles from "./Applicants.module.css";
 
 const VALID_APPLICANT_TABS: ApplicantStatus[] = ["pending", "approved", "rejected"];
 
@@ -81,10 +81,10 @@ export function Applicants() {
   );
 
   return (
-    <div className="apl">
-      <div className="apl__header">
-        <h1 className="apl__title">응모자 관리</h1>
-        <p className="apl__subtitle">
+    <div className={styles.apl}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>응모자 관리</h1>
+        <p className={styles.subtitle}>
           {state.kind === "ready"
             ? `현재 탭 ${visible.length}건`
             : "불러오는 중..."}
@@ -118,12 +118,12 @@ export function Applicants() {
       />
 
       {state.kind === "loading" ? (
-        <div className="apl__card">
-          <div className="apl__empty">불러오는 중…</div>
+        <div className={styles.card}>
+          <div className={styles.empty}>불러오는 중…</div>
         </div>
       ) : state.kind === "error" ? (
-        <div className="apl__card">
-          <div className="apl__empty">{state.message}</div>
+        <div className={styles.card}>
+          <div className={styles.empty}>{state.message}</div>
         </div>
       ) : (
         <ApplicantTable

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AdminInfluencer, SnsType } from "@jsure/shared";
 import { listInfluencers } from "@/domains/influencer";
 import { BroadcastDialog } from "@/domains/broadcast";
-import "./Influencers.css";
+import styles from "./Influencers.module.css";
 
 const SNS_ICON: Record<SnsType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",
@@ -11,11 +11,11 @@ const SNS_ICON: Record<SnsType, string> = {
   YOUTUBE: "fa-brands fa-youtube",
 };
 
-const SNS_CLASS: Record<SnsType, string> = {
-  INSTAGRAM: "inf-sns--ig",
-  TIKTOK: "inf-sns--tt",
-  X: "inf-sns--x",
-  YOUTUBE: "inf-sns--yt",
+const SNS_CLASS: Record<SnsType, string | undefined> = {
+  INSTAGRAM: styles.snsIg,
+  TIKTOK: styles.snsTt,
+  X: styles.snsX,
+  YOUTUBE: styles.snsYt,
 };
 
 function formatFollowers(n: number): string {
@@ -85,16 +85,16 @@ export function Influencers() {
   }, [state, query]);
 
   return (
-    <div className="inf">
-      <div className="inf__header">
+    <div className={styles.inf}>
+      <div className={styles.header}>
         <div>
-          <h1 className="inf__title">인플루언서</h1>
-          <p className="inf__subtitle">
+          <h1 className={styles.title}>인플루언서</h1>
+          <p className={styles.subtitle}>
             {state.kind === "ready" ? `총 ${state.rows.length}명` : "목록을 불러오는 중..."}
           </p>
         </div>
-        <div className="inf__header-actions">
-          <div className="inf__search">
+        <div className={styles.headerActions}>
+          <div className={styles.search}>
             <i className="fa-solid fa-magnifying-glass" />
             <input
               placeholder="이름, 이메일, 핸들 검색"
@@ -104,7 +104,7 @@ export function Influencers() {
           </div>
           <button
             type="button"
-            className="inf__broadcast-btn"
+            className={styles.broadcastBtn}
             onClick={() => setBroadcastOpen(true)}
             disabled={state.kind !== "ready"}
           >
@@ -114,19 +114,19 @@ export function Influencers() {
       </div>
 
       {state.kind === "loading" ? (
-        <div className="inf__empty">불러오는 중…</div>
+        <div className={styles.empty}>불러오는 중…</div>
       ) : state.kind === "error" ? (
-        <div className="inf__empty">
+        <div className={styles.empty}>
           {state.message}{" "}
-          <button type="button" className="inf__retry" onClick={() => setReloadKey((k) => k + 1)}>
+          <button type="button" className={styles.retry} onClick={() => setReloadKey((k) => k + 1)}>
             다시 시도
           </button>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="inf__empty">조건에 맞는 인플루언서가 없습니다.</div>
+        <div className={styles.empty}>조건에 맞는 인플루언서가 없습니다.</div>
       ) : (
-        <div className="inf__card">
-          <table className="inf__table">
+        <div className={styles.card}>
+          <table className={styles.table}>
             <thead>
               <tr>
                 <th>이름</th>
@@ -140,34 +140,34 @@ export function Influencers() {
               {filtered.map((r) => (
                 <tr key={r.id}>
                   <td>
-                    <div className="inf-name">
-                      <span className="inf-avatar" style={{ background: pickAvatarColor(r.id) }}>
+                    <div className={styles.name}>
+                      <span className={styles.avatar} style={{ background: pickAvatarColor(r.id) }}>
                         {r.name[0]}
                       </span>
                       <div>
-                        <div className="inf-name__text">{r.name}</div>
-                        {r.nameKana && <div className="inf-name__sub">{r.nameKana}</div>}
+                        <div className={styles.nameText}>{r.name}</div>
+                        {r.nameKana && <div className={styles.nameSub}>{r.nameKana}</div>}
                       </div>
                     </div>
                   </td>
                   <td>
-                    <div className="inf-contact">{r.email}</div>
-                    <div className="inf-contact inf-contact--sub">{r.phone}</div>
+                    <div className={styles.contact}>{r.email}</div>
+                    <div className={`${styles.contact} ${styles.contactSub}`}>{r.phone}</div>
                   </td>
                   <td>
                     {r.snsAccounts.length === 0 ? (
-                      <span className="inf-empty-cell">—</span>
+                      <span className={styles.emptyCell}>—</span>
                     ) : (
-                      <div className="inf-sns-list">
+                      <div className={styles.snsList}>
                         {r.snsAccounts.map((s) => (
                           <span
                             key={s.snsType}
-                            className={`inf-sns ${SNS_CLASS[s.snsType]}`}
+                            className={`${styles.sns} ${SNS_CLASS[s.snsType]}`}
                             title={`@${s.handle}`}
                           >
                             <i className={SNS_ICON[s.snsType]} />
-                            <span className="inf-sns__handle">@{s.handle}</span>
-                            <span className="inf-sns__count">
+                            <span className={styles.snsHandle}>@{s.handle}</span>
+                            <span className={styles.snsCount}>
                               {formatFollowers(s.followerCount)}
                             </span>
                           </span>
@@ -176,11 +176,15 @@ export function Influencers() {
                     )}
                   </td>
                   <td>
-                    <span className={`inf-status inf-status--${r.status.toLowerCase()}`}>
+                    <span
+                      className={`${styles.status} ${
+                        r.status === "ACTIVE" ? styles.statusActive : styles.statusSuspended
+                      }`}
+                    >
                       {r.status === "ACTIVE" ? "활성" : "정지"}
                     </span>
                   </td>
-                  <td className="inf-date">
+                  <td className={styles.date}>
                     {new Date(r.createdAt).toLocaleDateString("ko-KR", {
                       year: "numeric",
                       month: "2-digit",

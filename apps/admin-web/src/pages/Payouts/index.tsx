@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AdminSettlement } from "@jsure/shared";
 import { completeSettlements, listSettlements } from "@/domains/application";
-import "./Payouts.css";
+import styles from "./Payouts.module.css";
 
 type LoadState =
   | { kind: "loading" }
@@ -192,24 +192,24 @@ export function Payouts() {
         : `${selectedPendingCount}건 정산 완료 처리`;
 
   return (
-    <div className="po">
-      <div className="po__header">
+    <div className={styles.root}>
+      <div className={styles.header}>
         <div>
-          <h1 className="po__title">정산 관리</h1>
-          <p className="po__subtitle">선택한 월 안에 인사이트가 제출된 건이 표시됩니다.</p>
+          <h1 className={styles.title}>정산 관리</h1>
+          <p className={styles.subtitle}>선택한 월 안에 인사이트가 제출된 건이 표시됩니다.</p>
         </div>
-        <div className="po__actions">
-          <label className="po__month">
+        <div className={styles.actions}>
+          <label className={styles.month}>
             <input
               type="month"
-              className="po__month-input"
+              className={styles.monthInput}
               value={month}
               onChange={(e) => setMonth(e.target.value)}
             />
           </label>
           <button
             type="button"
-            className="po__btn"
+            className={styles.btn}
             onClick={() => state.kind === "ready" && downloadCsv(state.rows, month)}
             disabled={state.kind !== "ready" || state.rows.length === 0}
           >
@@ -217,7 +217,7 @@ export function Payouts() {
           </button>
           <button
             type="button"
-            className="po__btn po__btn--primary"
+            className={`${styles.btn} ${styles.btnPrimary}`}
             onClick={handleComplete}
             disabled={completing || selectedPendingCount === 0}
           >
@@ -226,34 +226,34 @@ export function Payouts() {
         </div>
       </div>
 
-      <div className="po__card">
-        <div className="po__summary">
-          <div className="po__summary-item">
-            <span className="po__summary-label">전체</span>
-            <span className="po__summary-value">{summary.total}건</span>
+      <div className={styles.card}>
+        <div className={styles.summary}>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>전체</span>
+            <span className={styles.summaryValue}>{summary.total}건</span>
           </div>
-          <div className="po__summary-item">
-            <span className="po__summary-label">미완료</span>
-            <span className="po__summary-value">{summary.pendingCount}건</span>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>미완료</span>
+            <span className={styles.summaryValue}>{summary.pendingCount}건</span>
           </div>
-          <div className="po__summary-item">
-            <span className="po__summary-label">미완료 금액</span>
-            <span className="po__summary-value">
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>미완료 금액</span>
+            <span className={styles.summaryValue}>
               ¥{summary.pendingAmount.toLocaleString("ja-JP")}
             </span>
           </div>
         </div>
 
-        {state.kind === "loading" && <div className="po__empty">불러오는 중…</div>}
-        {state.kind === "error" && <div className="po__empty">{state.message}</div>}
+        {state.kind === "loading" && <div className={styles.empty}>불러오는 중…</div>}
+        {state.kind === "error" && <div className={styles.empty}>{state.message}</div>}
         {state.kind === "ready" && state.rows.length === 0 && (
-          <div className="po__empty">정산 대상이 없습니다.</div>
+          <div className={styles.empty}>정산 대상이 없습니다.</div>
         )}
         {state.kind === "ready" && state.rows.length > 0 && (
-          <table className="po__table">
+          <table className={styles.table}>
             <thead>
               <tr>
-                <th className="po__check-col">
+                <th className={styles.checkCol}>
                   <input
                     type="checkbox"
                     checked={allPendingSelected}
@@ -281,7 +281,7 @@ export function Payouts() {
                 const isPending = row.status === "PENDING";
                 return (
                   <tr key={row.id}>
-                    <td className="po__check-col">
+                    <td className={styles.checkCol}>
                       {isPending ? (
                         <input
                           type="checkbox"
@@ -296,14 +296,14 @@ export function Payouts() {
                     <td>{row.post.snsType}</td>
                     <td>{formatDateTime(row.post.submittedAt)}</td>
                     <td>{formatDateTime(row.post.insightSubmittedAt)}</td>
-                    <td className="po__amount">{formatJpy(row.amountJpy)}</td>
+                    <td className={styles.amount}>{formatJpy(row.amountJpy)}</td>
                     <td>{formatDateTime(row.createdAt)}</td>
                     <td>{formatDateTime(row.completedAt)}</td>
                     <td>
                       {row.status === "COMPLETED" ? (
-                        <span className="po__pill po__pill--done">완료</span>
+                        <span className={`${styles.pill} ${styles.pillDone}`}>완료</span>
                       ) : (
-                        <span className="po__pill po__pill--pending">대기</span>
+                        <span className={`${styles.pill} ${styles.pillPending}`}>대기</span>
                       )}
                     </td>
                   </tr>

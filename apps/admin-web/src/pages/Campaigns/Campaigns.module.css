@@ -1,4 +1,4 @@
-.cmp {
+.root {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -6,25 +6,25 @@
   margin: auto;
 }
 
-.cmp__header {
+.header {
   margin-bottom: 4px;
 }
 
-.cmp__title {
+.title {
   font-size: 26px;
   font-weight: 700;
   margin: 0 0 6px;
   letter-spacing: -0.01em;
 }
 
-.cmp__subtitle {
+.subtitle {
   margin: 0;
   color: var(--c-muted);
   font-size: 14px;
 }
 
 /* Toolbar */
-.cmp__toolbar {
+.toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -32,7 +32,7 @@
   flex-wrap: wrap;
 }
 
-.cmp__search {
+.search {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -44,7 +44,7 @@
   height: 34px;
 }
 
-.cmp__search input {
+.search input {
   border: none;
   outline: none;
   background: transparent;
@@ -53,11 +53,11 @@
   color: var(--c-text);
 }
 
-.cmp__search i {
+.search i {
   color: var(--c-subtle);
 }
 
-.cmp__new-btn {
+.newBtn {
   margin-left: auto;
 }
 
@@ -65,12 +65,12 @@
 /* Pinterest-style masonry via CSS columns. Cards flow top→bottom within
    each column instead of being row-aligned, so a shorter card never leaves
    trailing whitespace under it. */
-.cmp__list {
+.list {
   column-width: 280px;
   column-gap: 14px;
 }
 
-.cmp__list > .cam-card-wrap {
+.list > :global(.cam-card-wrap) {
   break-inside: avoid;
   -webkit-column-break-inside: avoid;
   page-break-inside: avoid;
@@ -80,7 +80,7 @@
 }
 
 /* Card hover (applies to ui-card inside the list) */
-.cmp__list .ui-card {
+:global(.cmp__list .ui-card) {
   cursor: pointer;
   transition:
     border-color 0.15s,
@@ -88,28 +88,28 @@
     transform 0.15s;
 }
 
-.cmp__list .ui-card:hover {
+:global(.cmp__list .ui-card:hover) {
   border-color: var(--c-brand);
   box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
   transform: translateY(-1px);
 }
 
 /* Card title slot: brand + status */
-.cmp-card__brand {
+.cardBrand {
   font-size: 12px;
   color: var(--c-muted);
   font-weight: 500;
   flex: 1;
 }
 
-.cmp-title-wrapper {
+.titleWrapper {
   display: flex;
   width: 100%;
   align-items: center;
   justify-content: space-between;
 }
 
-.cmp-card__status {
+.cardStatus {
   font-size: 11px;
   font-weight: 600;
   padding: 3px 8px;
@@ -117,33 +117,33 @@
   white-space: nowrap;
 }
 
-.cmp-card__status--recruit {
+.cardStatusRecruit {
   background: var(--c-brand-soft);
   color: var(--c-brand);
 }
 
-.cmp-card__status--review {
+.cardStatusReview {
   background: var(--c-amber-soft);
   color: var(--c-amber);
 }
 
-.cmp-card__status--progress {
+.cardStatusProgress {
   background: #ecfdf5;
   color: var(--c-green);
 }
 
-.cmp-card__status--done {
+.cardStatusDone {
   background: #f3f4f6;
   color: var(--c-muted);
 }
 
-.cmp-card__status--dday {
+.cardStatusDday {
   background: #f3f4f6;
   color: var(--c-muted);
 }
 
 /* Card content slot */
-.cmp-card__thumb {
+.cardThumb {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,7 +155,7 @@
   margin-bottom: 12px;
 }
 
-.cmp-card__name {
+.cardName {
   font-size: 15px;
   font-weight: 600;
   color: var(--c-text);
@@ -167,7 +167,7 @@
   overflow: hidden;
 }
 
-.cmp-card__desc {
+.cardDesc {
   font-size: 12px;
   color: var(--c-muted);
   margin: 0 0 12px;
@@ -178,13 +178,13 @@
   line-height: 1.5;
 }
 
-.cmp-card__sns {
+.cardSns {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 10px;
 }
-.cmp-card__sns-chip {
+.cardSnsChip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -195,27 +195,27 @@
   color: #374151;
   border: 1px solid #e5e7eb;
 }
-.cmp-card__sns-chip i {
+.cardSnsChip i {
   font-size: 12px;
   color: #6b7280;
 }
-.cmp-card__sns-chip--instagram i {
+.cardSnsChipInstagram i {
   color: #e1306c;
 }
-.cmp-card__sns-chip--tiktok i {
+.cardSnsChipTiktok i {
   color: #111827;
 }
-.cmp-card__sns-chip--x i {
+.cardSnsChipX i {
   color: #111827;
 }
-.cmp-card__sns-chip--youtube i {
+.cardSnsChipYoutube i {
   color: #ff0000;
 }
-.cmp-card__sns-cond {
+.cardSnsCond {
   white-space: nowrap;
 }
 
-.cmp-card__meta {
+.cardMeta {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -223,27 +223,27 @@
   color: var(--c-muted);
 }
 
-.cmp-card__meta-row {
+.cardMetaRow {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.cmp-card__meta-row i {
+.cardMetaRow i {
   width: 14px;
   text-align: center;
   color: var(--c-subtle);
 }
 
 /* Card bottom affix: progress + dday */
-.cmp-card__affix {
+.cardAffix {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
 }
 
-.cmp-card__progress {
+.cardProgress {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -251,37 +251,37 @@
   margin-right: 12px;
 }
 
-.cmp-card__progress-text {
+.cardProgressText {
   font-size: 11px;
   color: var(--c-muted);
 }
 
-.cmp-card__progress-bar {
+.cardProgressBar {
   height: 4px;
   background: var(--c-border);
   border-radius: 999px;
   overflow: hidden;
 }
 
-.cmp-card__progress-fill {
+.cardProgressFill {
   height: 100%;
   background: var(--c-brand);
   border-radius: 999px;
   transition: width 0.2s;
 }
 
-.cmp-card__dday {
+.cardDday {
   font-size: 12px;
   font-weight: 600;
   color: var(--c-text);
 }
 
-.cmp-card__dday--urgent {
+.cardDdayUrgent {
   color: var(--c-red);
 }
 
 /* Empty state */
-.cmp__empty {
+.empty {
   padding: 60px 20px;
   text-align: center;
   color: var(--c-muted);

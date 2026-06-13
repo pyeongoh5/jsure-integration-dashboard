@@ -1,5 +1,6 @@
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
 import type { DraftReview } from "./types";
+import styles from "@/pages/Drafts/Drafts.module.css";
 
 type Props = {
   draft: DraftReview;
@@ -27,8 +28,8 @@ export function DraftApproveDialog({
             {draft.influencerHandle ? `(@${draft.influencerHandle})` : ""} —{" "}
             {draft.campaignTitle}
           </div>
-          <div className="dr-dialog-hint">{draft.url}</div>
-          {error && <div className="dr-mutation-error">{error}</div>}
+          <div className={styles.dialogHint}>{draft.url}</div>
+          {error && <div className={styles.mutationError}>{error}</div>}
         </>
       }
       confirmLabel={mutating ? "처리 중…" : "승인"}

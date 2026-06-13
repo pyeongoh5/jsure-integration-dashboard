@@ -1,3 +1,4 @@
+import styles from "@/pages/Applicants/Applicants.module.css";
 import { STATUS_TABS, type ApplicantStatus, type StatusCounts } from "./types";
 
 type Props = {
@@ -8,16 +9,16 @@ type Props = {
 
 export function ApplicantTabs({ value, counts, onChange }: Props) {
   return (
-    <div className="apl__tabs">
+    <div className={styles.tabs}>
       {STATUS_TABS.map((tab) => (
         <button
           key={tab.key}
           type="button"
-          className={`apl-tab ${value === tab.key ? "apl-tab--active" : ""}`}
+          className={`${styles.tab} ${value === tab.key ? styles.tabActive : ""}`}
           onClick={() => onChange(tab.key)}
         >
           {tab.label}
-          <span className="apl-tab__count">{counts[tab.key]}</span>
+          <span className={styles.tabCount}>{counts[tab.key]}</span>
         </button>
       ))}
     </div>

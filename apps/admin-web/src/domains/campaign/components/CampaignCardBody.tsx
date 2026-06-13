@@ -1,3 +1,4 @@
+import styles from "@/pages/Campaigns/Campaigns.module.css";
 import { CampaignCardSnsRecruits } from "./CampaignCardSnsRecruits";
 import type { CampaignCardSnsRecruit } from "../types";
 
@@ -23,7 +24,7 @@ export function CampaignCardBody({
   return (
     <>
       <div
-        className="cmp-card__thumb"
+        className={styles.cardThumb}
         style={
           thumbnailUrl
             ? {
@@ -36,15 +37,15 @@ export function CampaignCardBody({
       >
         {!thumbnailUrl && thumbIcon}
       </div>
-      <h3 className="cmp-card__name">{name}</h3>
-      <p className="cmp-card__desc">{description}</p>
+      <h3 className={styles.cardName}>{name}</h3>
+      <p className={styles.cardDesc}>{description}</p>
       <CampaignCardSnsRecruits recruits={snsRecruits} />
-      <div className="cmp-card__meta">
-        <div className="cmp-card__meta-row">
+      <div className={styles.cardMeta}>
+        <div className={styles.cardMetaRow}>
           <i className="fa-regular fa-calendar" />
           <span>{period}</span>
         </div>
-        <div className="cmp-card__meta-row">
+        <div className={styles.cardMetaRow}>
           <i className="fa-solid fa-coins" />
           <span>{reward}</span>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import styles from "@/pages/Applicants/Applicants.module.css";
 import {
   MEDIA_META,
   STAGE_OPTIONS,
@@ -129,11 +130,11 @@ export function ApplicantFilters({
 
   return (
     <>
-      <div className="apl__filters">
+      <div className={styles.filters}>
         <button
           ref={campaignBtnRef}
           type="button"
-          className={`apl-filter ${campaignId ? "apl-filter--active" : ""}`}
+          className={`${styles.filter} ${campaignId ? styles.filterActive : ""}`}
           onClick={() => openPopover("campaign")}
         >
           {campaignId
@@ -141,7 +142,7 @@ export function ApplicantFilters({
             : "+ 캠페인"}
           {campaignId && (
             <span
-              className="apl-popover__btn"
+              className={styles.popoverBtn}
               onClick={(event) => {
                 event.stopPropagation();
                 clear("campaign");
@@ -157,7 +158,7 @@ export function ApplicantFilters({
         <button
           ref={followersBtnRef}
           type="button"
-          className={`apl-filter ${minFollowers !== null ? "apl-filter--active" : ""}`}
+          className={`${styles.filter} ${minFollowers !== null ? styles.filterActive : ""}`}
           onClick={() => openPopover("followers")}
         >
           {minFollowers !== null
@@ -165,7 +166,7 @@ export function ApplicantFilters({
             : "+ 팔로워 범위"}
           {minFollowers !== null && (
             <span
-              className="apl-popover__btn"
+              className={styles.popoverBtn}
               onClick={(event) => {
                 event.stopPropagation();
                 clear("followers");
@@ -181,7 +182,7 @@ export function ApplicantFilters({
         <button
           ref={mediaBtnRef}
           type="button"
-          className={`apl-filter ${mediaFilter.size > 0 ? "apl-filter--active" : ""}`}
+          className={`${styles.filter} ${mediaFilter.size > 0 ? styles.filterActive : ""}`}
           onClick={() => openPopover("media")}
         >
           {mediaFilter.size > 0
@@ -191,7 +192,7 @@ export function ApplicantFilters({
             : "+ 매체"}
           {mediaFilter.size > 0 && (
             <span
-              className="apl-popover__btn"
+              className={styles.popoverBtn}
               onClick={(event) => {
                 event.stopPropagation();
                 clear("media");
@@ -208,7 +209,7 @@ export function ApplicantFilters({
           <button
             ref={stageBtnRef}
             type="button"
-            className={`apl-filter ${stageFilter.size > 0 ? "apl-filter--active" : ""}`}
+            className={`${styles.filter} ${stageFilter.size > 0 ? styles.filterActive : ""}`}
             onClick={() => openPopover("stage")}
           >
             {stageFilter.size > 0
@@ -220,7 +221,7 @@ export function ApplicantFilters({
               : "+ 상태"}
             {stageFilter.size > 0 && (
               <span
-                className="apl-popover__btn"
+                className={styles.popoverBtn}
                 onClick={(event) => {
                   event.stopPropagation();
                   clear("stage");
@@ -239,45 +240,45 @@ export function ApplicantFilters({
         createPortal(
           <div
             ref={popoverRef}
-            className="apl-popover"
+            className={styles.popover}
             style={{ top: popover.rect.bottom + 6, left: popover.rect.left }}
           >
             {popover.kind === "campaign" ? (
               <>
-                <div className="apl-popover__title">캠페인 선택 (진행중)</div>
+                <div className={styles.popoverTitle}>캠페인 선택 (진행중)</div>
                 {campaignOptions.length === 0 ? (
-                  <div className="apl-popover__empty">진행중인 캠페인이 없습니다.</div>
+                  <div className={styles.popoverEmpty}>진행중인 캠페인이 없습니다.</div>
                 ) : (
-                  <div className="apl-popover__items apl-popover__items--scroll">
+                  <div className={`${styles.popoverItems} ${styles.popoverItemsScroll}`}>
                     {campaignOptions.map((campaign) => {
                       const selected = campaign.id === campaignId;
                       return (
                         <button
                           key={campaign.id}
                           type="button"
-                          className={`apl-popover__option${
-                            selected ? " apl-popover__option--on" : ""
+                          className={`${styles.popoverOption}${
+                            selected ? ` ${styles.popoverOptionOn}` : ""
                           }`}
                           onClick={() => {
                             onCampaignChange(campaign.id);
                             setPopover(null);
                           }}
                         >
-                          <span className="apl-popover__option-label">
+                          <span className={styles.popoverOptionLabel}>
                             {campaign.title}
                           </span>
                           {selected && (
-                            <i className="fa-solid fa-check apl-popover__option-check" />
+                            <i className={`fa-solid fa-check ${styles.popoverOptionCheck}`} />
                           )}
                         </button>
                       );
                     })}
                   </div>
                 )}
-                <div className="apl-popover__actions">
+                <div className={styles.popoverActions}>
                   <button
                     type="button"
-                    className="apl-popover__btn apl-popover__btn--primary"
+                    className={`${styles.popoverBtn} ${styles.popoverBtnPrimary}`}
                     onClick={() => setPopover(null)}
                   >
                     닫기
@@ -286,33 +287,33 @@ export function ApplicantFilters({
               </>
             ) : popover.kind === "stage" ? (
               <>
-                <div className="apl-popover__title">상태 선택 (복수 가능)</div>
-                <div className="apl-popover__items">
+                <div className={styles.popoverTitle}>상태 선택 (복수 가능)</div>
+                <div className={styles.popoverItems}>
                   {STAGE_OPTIONS.map((option) => {
                     const selected = stageFilter.has(option.key);
                     return (
                       <button
                         key={option.key}
                         type="button"
-                        className={`apl-popover__option${
-                          selected ? " apl-popover__option--on" : ""
+                        className={`${styles.popoverOption}${
+                          selected ? ` ${styles.popoverOptionOn}` : ""
                         }`}
                         onClick={() => toggleStage(option.key)}
                       >
-                        <span className="apl-popover__option-label">
+                        <span className={styles.popoverOptionLabel}>
                           {option.label}
                         </span>
                         {selected && (
-                          <i className="fa-solid fa-check apl-popover__option-check" />
+                          <i className={`fa-solid fa-check ${styles.popoverOptionCheck}`} />
                         )}
                       </button>
                     );
                   })}
                 </div>
-                <div className="apl-popover__actions">
+                <div className={styles.popoverActions}>
                   <button
                     type="button"
-                    className="apl-popover__btn apl-popover__btn--primary"
+                    className={`${styles.popoverBtn} ${styles.popoverBtnPrimary}`}
                     onClick={() => setPopover(null)}
                   >
                     닫기
@@ -321,36 +322,36 @@ export function ApplicantFilters({
               </>
             ) : popover.kind === "media" ? (
               <>
-                <div className="apl-popover__title">매체 선택 (복수 가능)</div>
-                <div className="apl-popover__items">
+                <div className={styles.popoverTitle}>매체 선택 (복수 가능)</div>
+                <div className={styles.popoverItems}>
                   {(Object.keys(MEDIA_META) as Media[]).map((media) => {
                     const selected = mediaFilter.has(media);
                     return (
                       <button
                         key={media}
                         type="button"
-                        className={`apl-popover__option${
-                          selected ? " apl-popover__option--on" : ""
+                        className={`${styles.popoverOption}${
+                          selected ? ` ${styles.popoverOptionOn}` : ""
                         }`}
                         onClick={() => toggleMedia(media)}
                       >
                         <i
-                          className={`${MEDIA_META[media].icon} apl-popover__option-icon`}
+                          className={`${MEDIA_META[media].icon} ${styles.popoverOptionIcon}`}
                         />
-                        <span className="apl-popover__option-label">
+                        <span className={styles.popoverOptionLabel}>
                           {MEDIA_META[media].label}
                         </span>
                         {selected && (
-                          <i className="fa-solid fa-check apl-popover__option-check" />
+                          <i className={`fa-solid fa-check ${styles.popoverOptionCheck}`} />
                         )}
                       </button>
                     );
                   })}
                 </div>
-                <div className="apl-popover__actions">
+                <div className={styles.popoverActions}>
                   <button
                     type="button"
-                    className="apl-popover__btn apl-popover__btn--primary"
+                    className={`${styles.popoverBtn} ${styles.popoverBtnPrimary}`}
                     onClick={() => setPopover(null)}
                   >
                     닫기
@@ -359,12 +360,12 @@ export function ApplicantFilters({
               </>
             ) : (
               <>
-                <div className="apl-popover__title">팔로워 최소값</div>
-                <div className="apl-popover__input-row">
+                <div className={styles.popoverTitle}>팔로워 최소값</div>
+                <div className={styles.popoverInputRow}>
                   <input
                     type="text"
                     inputMode="numeric"
-                    className="apl-popover__input"
+                    className={styles.popoverInput}
                     placeholder="예: 10000"
                     autoFocus
                     value={minFollowersDraft}
@@ -376,12 +377,12 @@ export function ApplicantFilters({
                       }
                     }}
                   />
-                  <span className="apl-popover__suffix">명 이상</span>
+                  <span className={styles.popoverSuffix}>명 이상</span>
                 </div>
-                <div className="apl-popover__actions">
+                <div className={styles.popoverActions}>
                   <button
                     type="button"
-                    className="apl-popover__btn apl-popover__btn--primary"
+                    className={`${styles.popoverBtn} ${styles.popoverBtnPrimary}`}
                     onClick={applyFollowers}
                   >
                     적용

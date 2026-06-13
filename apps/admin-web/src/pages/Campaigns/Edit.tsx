@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { CampaignForm as Values } from "@jsure/shared";
-import { CampaignForm, getCampaign, updateCampaign } from "@/domains/campaign";
+import {
+  CampaignForm,
+  getCampaign,
+  updateCampaign,
+} from "@/domains/campaign";
+import campaignFormStyles from "@/domains/campaign/components/CampaignForm.module.css";
+import styles from "./Campaigns.module.css";
 
 type LoadState =
   | { kind: "loading" }
@@ -61,16 +67,16 @@ export function CampaignEdit() {
   };
 
   if (state.kind === "loading") {
-    return <div className="cmp"><div className="cmp__empty">불러오는 중…</div></div>;
+    return <div className={styles.cmp}><div className={styles.empty}>불러오는 중…</div></div>;
   }
   if (state.kind === "error") {
     return (
-      <div className="cmp">
-        <div className="cmp__empty">
+      <div className={styles.cmp}>
+        <div className={styles.empty}>
           {state.message}{" "}
           <button
             type="button"
-            className="cf__btn cf__btn--ghost"
+            className={`${campaignFormStyles.btn} ${campaignFormStyles.btnGhost}`}
             onClick={() => setReloadKey((k) => k + 1)}
           >
             다시 시도
@@ -81,10 +87,10 @@ export function CampaignEdit() {
   }
 
   return (
-    <div className="cmp">
-      <div className="cmp__header">
-        <h1 className="cmp__title">캠페인 수정</h1>
-        <p className="cmp__subtitle">캠페인 정보를 수정하세요.</p>
+    <div className={styles.cmp}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>캠페인 수정</h1>
+        <p className={styles.subtitle}>캠페인 정보를 수정하세요.</p>
       </div>
       <CampaignForm
         initialValue={state.initial}

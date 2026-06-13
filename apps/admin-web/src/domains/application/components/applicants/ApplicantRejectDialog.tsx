@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import styles from "@/pages/Applicants/Applicants.module.css";
 import type { Applicant } from "./types";
 
 type Props = {
@@ -31,14 +32,14 @@ export function ApplicantRejectDialog({
             {applicant.campaign}
           </div>
           <textarea
-            className="apl-reject-reason"
+            className={styles.rejectReason}
             placeholder="반려 사유를 입력하세요"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             disabled={mutating}
             autoFocus
           />
-          {error && <div className="apl-mutation-error">{error}</div>}
+          {error && <div className={styles.mutationError}>{error}</div>}
         </>
       }
       confirmLabel={mutating ? "처리 중…" : "반려"}

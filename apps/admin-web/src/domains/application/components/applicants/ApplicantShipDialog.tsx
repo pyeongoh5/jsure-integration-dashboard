@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import styles from "@/pages/Applicants/Applicants.module.css";
 import type { Applicant } from "./types";
 
 const CARRIERS = [
@@ -57,11 +58,11 @@ export function ApplicantShipDialog({
       open
       title="운송장 정보를 입력하세요"
       subtitle={
-        <div className="apl-ship-form">
-          <div className="apl-ship-field">
-            <label className="apl-ship-label">택배사</label>
+        <div className={styles.shipForm}>
+          <div className={styles.shipField}>
+            <label className={styles.shipLabel}>택배사</label>
             <select
-              className="apl-tracking-input"
+              className={styles.trackingInput}
               value={carrierId}
               onChange={(e) => setCarrierId(e.target.value as CarrierId)}
               disabled={mutating}
@@ -75,11 +76,11 @@ export function ApplicantShipDialog({
           </div>
 
           {carrierId === "custom" && (
-            <div className="apl-ship-field">
-              <label className="apl-ship-label">택배사명</label>
+            <div className={styles.shipField}>
+              <label className={styles.shipLabel}>택배사명</label>
               <input
                 type="text"
-                className="apl-tracking-input"
+                className={styles.trackingInput}
                 placeholder="택배사 이름 직접 입력"
                 value={customLabel}
                 onChange={(e) => setCustomLabel(e.target.value)}
@@ -88,11 +89,11 @@ export function ApplicantShipDialog({
             </div>
           )}
 
-          <div className="apl-ship-field">
-            <label className="apl-ship-label">운송장 번호</label>
+          <div className={styles.shipField}>
+            <label className={styles.shipLabel}>운송장 번호</label>
             <input
               type="text"
-              className="apl-tracking-input"
+              className={styles.trackingInput}
               placeholder="운송장 번호"
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
@@ -101,7 +102,7 @@ export function ApplicantShipDialog({
             />
           </div>
 
-          {error && <div className="apl-mutation-error">{error}</div>}
+          {error && <div className={styles.mutationError}>{error}</div>}
         </div>
       }
       confirmLabel="배송 시작"

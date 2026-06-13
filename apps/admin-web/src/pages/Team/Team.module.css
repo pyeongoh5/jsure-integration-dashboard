@@ -1,248 +1,248 @@
-.team {
+.root {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-5);
   max-width: 1400px;
   margin: auto;
 }
 
-.team__header {
+.header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
-.team__title {
+.title {
   font-size: 26px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   margin: 0 0 6px;
   letter-spacing: -0.01em;
 }
 
-.team__subtitle {
+.subtitle {
   margin: 0;
-  color: var(--c-muted);
-  font-size: 14px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-base);
 }
 
-.team__invite {
+.invite {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   background: var(--c-brand);
-  color: #fff;
+  color: var(--color-bg);
   border: none;
-  border-radius: var(--r-md);
-  padding: 9px 16px;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  padding: 9px var(--space-4);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.team__invite:hover {
+.invite:hover {
   background: #1d4ed8;
 }
 
-.team__card {
+.card {
   background: var(--c-card);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
-.team__table {
+.table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--font-size-md);
 }
 
-.team__table thead th {
+.table thead th {
   text-align: left;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c-muted);
-  background: #f9fafb;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--c-border);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  background: var(--color-bg-subtle);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.team__table tbody td {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--c-border);
+.table tbody td {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
   color: var(--c-text);
   vertical-align: middle;
 }
 
-.team__table tbody tr:last-child td {
+.table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.team__table tbody tr:hover {
+.table tbody tr:hover {
   background: #fafbfc;
 }
 
 /* Name cell with avatar */
-.team-name {
+.name {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
-.team-avatar {
+.avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
+  color: var(--color-bg);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   flex-shrink: 0;
   letter-spacing: 0.02em;
 }
 
-.team-name__text {
-  font-weight: 500;
+.nameText {
+  font-weight: var(--font-weight-medium);
 }
 
-.team-email {
-  color: var(--c-muted);
+.email {
+  color: var(--color-text-muted);
 }
 
 /* Badges */
-.team-badge {
+.badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 999px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-1) 10px;
+  border-radius: var(--radius-full);
   min-width: 110px;
   box-sizing: border-box;
 }
 
-.team-badge__dot {
+.badgeDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: currentColor;
 }
 
-.team-role--owner {
+.roleOwner {
   background: #ecfdf5;
   color: var(--c-green);
 }
 
-.team-role--admin {
+.roleAdmin {
   background: var(--c-brand-soft);
   color: var(--c-brand);
 }
 
-.team-role--guest {
-  background: #f3f4f6;
-  color: var(--c-muted);
+.roleGuest {
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
 }
 
-.team-status--active {
+.statusActive {
   background: #ecfdf5;
   color: var(--c-green);
 }
 
-.team-status--pending {
+.statusPending {
   background: var(--c-amber-soft);
   color: var(--c-amber);
 }
 
-.team-status--suspended {
+.statusSuspended {
   background: #fef2f2;
   color: var(--c-red);
 }
 
-.team-activity {
-  color: var(--c-muted);
+.activity {
+  color: var(--color-text-muted);
 }
 
 /* States */
-.team__state {
-  padding: 60px 20px;
+.state {
+  padding: 60px var(--space-5);
   text-align: center;
-  color: var(--c-muted);
-  font-size: 14px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-base);
   background: var(--c-card);
-  border: 1px dashed var(--c-border);
-  border-radius: var(--r-lg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
 }
 
-.team__state--error {
+.stateError {
   color: var(--c-red);
   border-color: #fecaca;
   background: #fef2f2;
 }
 
-.team-actions {
+.actions {
   display: flex;
   gap: 6px;
   justify-content: flex-end;
 }
 
-.team-btn {
+.btn {
   height: 28px;
-  padding: 0 12px;
-  border: 1px solid #d1d5db;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
   border-radius: 6px;
-  background: #fff;
-  color: #111827;
-  font-size: 12px;
-  font-weight: 600;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   line-height: 1;
   cursor: pointer;
   font-family: inherit;
 }
 
-.team-btn:hover {
-  background: #f9fafb;
+.btn:hover {
+  background: var(--color-bg-subtle);
 }
 
-.team-btn:disabled {
+.btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.team-btn--primary {
+.btnPrimary {
   background: #1d4ed8;
-  color: #fff;
+  color: var(--color-bg);
   border-color: #1d4ed8;
 }
 
-.team-btn--primary:hover {
+.btnPrimary:hover {
   background: #1e40af;
 }
 
-.team-btn--danger {
+.btnDanger {
   color: #b91c1c;
   border-color: #fecaca;
 }
 
-.team-btn--danger:hover {
-  background: #fee2e2;
+.btnDanger:hover {
+  background: var(--color-danger-bg);
 }
 
-.team-role-select {
+.roleSelect {
   /* badge 와 동일 톤 — pill 모양, role 별 배경/문자색은 class 가 결정 */
   appearance: none;
   -webkit-appearance: none;
   display: inline-flex;
   align-items: center;
   border: none;
-  border-radius: 999px;
-  padding: 4px 22px 4px 10px;
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: var(--radius-full);
+  padding: var(--space-1) 22px var(--space-1) 10px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   font-family: inherit;
   line-height: 1.2;
   cursor: pointer;
@@ -255,18 +255,18 @@
   background-size: 8px 8px;
 }
 
-.team-role-select:focus {
+.roleSelect:focus {
   outline: 2px solid rgba(29, 78, 216, 0.2);
   outline-offset: 1px;
 }
 
-.team-role-select:disabled {
+.roleSelect:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.team-role-select option {
+.roleSelect option {
   /* 드롭다운 옵션은 OS 기본 색으로 — pill 색이 옵션 리스트에 적용되면 가독성 떨어짐 */
-  background: #fff;
-  color: #111827;
+  background: var(--color-bg);
+  color: var(--color-text);
 }

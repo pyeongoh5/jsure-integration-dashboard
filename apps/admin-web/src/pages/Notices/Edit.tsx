@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { NoticeForm, type NoticeFormValue, useNoticeMutations, getNotice } from "@/domains/notice";
-import "./Notices.css";
+import styles from "./Notices.module.css";
 
 type Mode = "create" | "edit";
 
@@ -68,8 +68,8 @@ export function NoticeEdit({ mode }: Props) {
 
   if (loadError) {
     return (
-      <div className="notices-edit">
-        <div className="notices-edit__title">
+      <div className={styles.edit}>
+        <div className={styles.editTitle}>
           {mode === "create" ? "공지 작성" : "공지 편집"}
         </div>
         <div>{loadError}</div>
@@ -79,15 +79,15 @@ export function NoticeEdit({ mode }: Props) {
 
   if (!initial) {
     return (
-      <div className="notices-edit">
-        <div className="notices-edit__title">불러오는 중…</div>
+      <div className={styles.edit}>
+        <div className={styles.editTitle}>불러오는 중…</div>
       </div>
     );
   }
 
   return (
-    <div className="notices-edit">
-      <div className="notices-edit__title">
+    <div className={styles.edit}>
+      <div className={styles.editTitle}>
         {mode === "create" ? "공지 작성" : "공지 편집"}
       </div>
       <NoticeForm

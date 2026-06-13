@@ -1,77 +1,77 @@
-.auth {
+.root {
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: var(--space-10) var(--space-5);
   background: var(--c-bg);
 }
 
-.auth-card {
+.card {
   background: var(--c-card);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 40px 36px;
+  padding: var(--space-10) 36px;
   width: 100%;
   max-width: 420px;
 }
 
-.auth__brand {
+.brand {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 28px;
 }
 
-.auth__logo {
+.logo {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--c-brand);
   color: white;
   display: grid;
   place-items: center;
-  font-weight: 700;
-  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
 }
 
-.auth__brand-text {
-  font-weight: 700;
-  font-size: 15px;
+.brandText {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
 }
 
-.auth__title {
+.title {
   font-size: 20px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: -0.01em;
   margin: 0 0 6px;
 }
 
-.auth__subtitle {
-  margin: 0 0 24px;
-  color: var(--c-muted);
-  font-size: 13px;
+.subtitle {
+  margin: 0 0 var(--space-6);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
 }
 
-.auth__field {
+.field {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-bottom: 14px;
 }
 
-.auth__label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c-muted);
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
 }
 
-.auth__input {
+.input {
   height: 38px;
-  padding: 0 12px;
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   background: var(--c-card);
   color: var(--c-text);
   font-size: 13.5px;
@@ -79,78 +79,78 @@
   transition: border-color 0.15s ease;
 }
 
-.auth__input:focus {
+.input:focus {
   border-color: var(--c-brand);
 }
 
-.auth__error {
-  margin: 4px 0 14px;
-  padding: 10px 12px;
-  border-radius: 8px;
+.error {
+  margin: var(--space-1) 0 14px;
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-md);
   background: #fef2f2;
   color: #b91c1c;
   font-size: 12.5px;
   border: 1px solid #fecaca;
 }
 
-.auth__submit {
+.submit {
   width: 100%;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--c-brand);
   background: var(--c-brand);
   color: white;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   margin-top: 6px;
   transition: background 0.15s ease;
 }
 
-.auth__submit:hover:not(:disabled) {
+.submit:hover:not(:disabled) {
   background: #1d4ed8;
 }
 
-.auth__submit:disabled {
+.submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.auth__footer {
+.footer {
   margin-top: 18px;
   text-align: center;
   font-size: 12.5px;
-  color: var(--c-muted);
+  color: var(--color-text-muted);
 }
 
-.auth__link {
+.link {
   color: var(--c-brand);
   text-decoration: none;
-  font-weight: 600;
-  margin-left: 4px;
+  font-weight: var(--font-weight-semibold);
+  margin-left: var(--space-1);
 }
 
-.auth__link:hover {
+.link:hover {
   text-decoration: underline;
 }
 
-.auth__success-icon {
+.successIcon {
   width: 48px;
   height: 48px;
   border-radius: 50%;
   background: #ecfdf5;
-  color: #10b981;
-  font-size: 24px;
-  font-weight: 700;
+  color: var(--color-ok);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
   display: grid;
   place-items: center;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
 }
 
-.auth__submit--link {
+.submitLink {
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }

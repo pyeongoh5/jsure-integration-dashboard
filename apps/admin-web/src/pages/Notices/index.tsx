@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { NoticeTable, NoticeDeleteDialog, useNoticesData, useNoticeMutations, toNoticeRow } from "@/domains/notice";
-import "./Notices.css";
+import styles from "./Notices.module.css";
 
 export function Notices() {
   const navigate = useNavigate();
@@ -24,19 +24,19 @@ export function Notices() {
   }
 
   return (
-    <div className="notices">
-      <div className="notices__header">
-        <div className="notices__title">공지사항</div>
-        <Link to="/notices/new" className="notices__new-btn">
+    <div className={styles.root}>
+      <div className={styles.header}>
+        <div className={styles.title}>공지사항</div>
+        <Link to="/notices/new" className={styles.newBtn}>
           새 공지 작성
         </Link>
       </div>
 
-      <div className="notices__card">
+      <div className={styles.card}>
         {loading ? (
-          <div className="notices__state">불러오는 중…</div>
+          <div className={styles.state}>불러오는 중…</div>
         ) : error ? (
-          <div className="notices__state">{error}</div>
+          <div className={styles.state}>{error}</div>
         ) : (
           <NoticeTable
             rows={rows}

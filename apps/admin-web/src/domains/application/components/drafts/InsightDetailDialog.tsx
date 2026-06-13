@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { DraftReview } from "./types";
-import "./InsightDetailDialog.css";
+import styles from "./InsightDetailDialog.module.css";
 
 const METRICS: { key: keyof DraftReview["insight"]; label: string }[] = [
   { key: "likes", label: "いいね数" },
@@ -26,23 +26,23 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
 
   return (
     <>
-      <div className="idd-overlay" onClick={onClose} role="presentation">
+      <div className={styles.overlay} onClick={onClose} role="presentation">
         <div
-          className="idd-panel"
+          className={styles.panel}
           role="dialog"
           aria-modal="true"
           onClick={(e) => e.stopPropagation()}
         >
-          <header className="idd-header">
+          <header className={styles.header}>
             <div>
-              <div className="idd-title">{draft.influencerName} 인사이트</div>
-              <div className="idd-sub">
+              <div className={styles.title}>{draft.influencerName} 인사이트</div>
+              <div className={styles.sub}>
                 {draft.campaignTitle} · {draft.snsType}
               </div>
             </div>
             <button
               type="button"
-              className="idd-close"
+              className={styles.close}
               onClick={onClose}
               aria-label="닫기"
             >
@@ -51,16 +51,16 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
           </header>
 
           {!draft.insightSubmitted ? (
-            <div className="idd-empty">인사이트가 아직 제출되지 않았습니다.</div>
+            <div className={styles.empty}>인사이트가 아직 제출되지 않았습니다.</div>
           ) : (
             <>
-              <section className="idd-section">
-                <h3 className="idd-section-title">수치</h3>
-                <div className="idd-metrics">
+              <section className={styles.section}>
+                <h3 className={styles.sectionTitle}>수치</h3>
+                <div className={styles.metrics}>
                   {METRICS.map((m) => (
-                    <div key={m.key} className="idd-metric">
-                      <div className="idd-metric__label">{m.label}</div>
-                      <div className="idd-metric__value">
+                    <div key={m.key} className={styles.metric}>
+                      <div className={styles.metricLabel}>{m.label}</div>
+                      <div className={styles.metricValue}>
                         {fmtNumber(draft.insight[m.key] as number | null)}
                       </div>
                     </div>
@@ -68,22 +68,22 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                 </div>
               </section>
 
-              <section className="idd-section">
-                <h3 className="idd-section-title">
+              <section className={styles.section}>
+                <h3 className={styles.sectionTitle}>
                   스크린샷
                   {draft.attachments.length > 0 && (
-                    <span className="idd-count">{draft.attachments.length}</span>
+                    <span className={styles.count}>{draft.attachments.length}</span>
                   )}
                 </h3>
                 {draft.attachments.length === 0 ? (
-                  <div className="idd-empty">첨부 이미지 없음</div>
+                  <div className={styles.empty}>첨부 이미지 없음</div>
                 ) : (
-                  <div className="idd-grid">
+                  <div className={styles.grid}>
                     {draft.attachments.map((a) => (
                       <button
                         type="button"
                         key={a.id}
-                        className="idd-tile"
+                        className={styles.tile}
                         onClick={() => setLightbox(a.viewUrl)}
                       >
                         <img src={a.viewUrl} alt="" />
@@ -93,10 +93,10 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                 )}
               </section>
 
-              <section className="idd-section">
-                <h3 className="idd-section-title">제출 URL</h3>
+              <section className={styles.section}>
+                <h3 className={styles.sectionTitle}>제출 URL</h3>
                 <a
-                  className="idd-url"
+                  className={styles.url}
                   href={draft.url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -111,7 +111,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
 
       {lightbox && (
         <div
-          className="idd-lightbox"
+          className={styles.lightbox}
           onClick={() => setLightbox(null)}
           role="presentation"
         >

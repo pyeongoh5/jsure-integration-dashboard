@@ -12,9 +12,10 @@ import {
   closeCampaign,
   listCampaigns,
 } from "@/domains/campaign";
+import campaignFormStyles from "@/domains/campaign/components/CampaignForm.module.css";
 import type { Campaign, CampaignStatus } from "@/domains/campaign";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
-import "./Campaigns.css";
+import styles from "./Campaigns.module.css";
 
 type FilterKey = "all" | CampaignStatus;
 
@@ -157,15 +158,15 @@ export function Campaigns() {
   }, [cards, filter, debouncedQuery]);
 
   return (
-    <div className="cmp">
-      <div className="cmp__header">
-        <h1 className="cmp__title">캠페인 관리</h1>
-        <p className="cmp__subtitle">전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요.</p>
+    <div className={styles.cmp}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>캠페인 관리</h1>
+        <p className={styles.subtitle}>전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요.</p>
       </div>
 
-      <div className="cmp__toolbar">
+      <div className={styles.toolbar}>
         <FilterChips options={FILTERS} value={filter} onChange={setFilter} />
-        <div className="cmp__search">
+        <div className={styles.search}>
           <i className="fa-solid fa-magnifying-glass" />
           <input
             placeholder="브랜드 또는 캠페인 이름 검색"
@@ -175,7 +176,7 @@ export function Campaigns() {
         </div>
         <button
           type="button"
-          className="admin__btn admin__btn--primary cmp__new-btn"
+          className={`admin__btn admin__btn--primary ${styles.newBtn}`}
           onClick={() => navigate("/campaigns/new")}
         >
           + 새 캠페인
@@ -183,26 +184,26 @@ export function Campaigns() {
       </div>
 
       {state.kind === "loading" ? (
-        <div className="cmp__empty">불러오는 중…</div>
+        <div className={styles.empty}>불러오는 중…</div>
       ) : state.kind === "error" ? (
-        <div className="cmp__empty">
+        <div className={styles.empty}>
           {state.message}{" "}
           <button
             type="button"
-            className="cf__btn cf__btn--ghost"
+            className={`${campaignFormStyles.btn} ${campaignFormStyles.btnGhost}`}
             onClick={() => setReloadKey((k) => k + 1)}
           >
             다시 시도
           </button>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="cmp__empty">조건에 맞는 캠페인이 없습니다.</div>
+        <div className={styles.empty}>조건에 맞는 캠페인이 없습니다.</div>
       ) : (
-        <div className="cmp__list">
+        <div className={styles.list}>
           {filtered.map((c) => (
             <div
               key={c.id}
-              className="cam-card-wrap"
+              className={styles.camCardWrap}
               onClick={(e) => {
                 if (openMenu?.id === c.id) {
                   setOpenMenu(null);

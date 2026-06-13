@@ -1,20 +1,21 @@
-import "./MonthlyCampaignChart.css";
+import overviewStyles from "./Overview.module.css";
+import styles from "./MonthlyCampaignChart.module.css";
 import { useMonthlyApplicationCounts } from "./useMonthlyApplicationCounts";
 
 export function MonthlyCampaignChart() {
   const state = useMonthlyApplicationCounts();
 
   return (
-    <section className="ov-card">
-      <header className="ov-card__head">
+    <section className={overviewStyles.card}>
+      <header className={overviewStyles.cardHead}>
         <h2>월별 캠페인 응모 추이</h2>
-        <span className="ov-card__meta">최근 12개월</span>
+        <span className={overviewStyles.cardMeta}>최근 12개월</span>
       </header>
       {state.kind === "loading" && (
-        <div className="mc-chart__empty">불러오는 중…</div>
+        <div className={styles.empty}>불러오는 중…</div>
       )}
       {state.kind === "error" && (
-        <div className="mc-chart__empty mc-chart__empty--error">
+        <div className={`${styles.empty} ${styles.emptyError}`}>
           {state.message}
         </div>
       )}
@@ -31,19 +32,19 @@ function Chart({ points }: ChartProps) {
   const max = Math.max(1, ...points.map((point) => point.count));
 
   return (
-    <div className="mc-chart">
+    <div className={styles.chart}>
       {points.map((point, index) => (
-        <div key={`${point.label}-${index}`} className="mc-chart__col">
-          <div className="mc-chart__bar-wrap">
+        <div key={`${point.label}-${index}`} className={styles.col}>
+          <div className={styles.barWrap}>
             <div
-              className="mc-chart__bar"
+              className={styles.bar}
               style={{ height: `${(point.count / max) * 100}%` }}
               title={`${point.label}: ${point.count}건`}
             >
-              <span className="mc-chart__value">{point.count}</span>
+              <span className={styles.value}>{point.count}</span>
             </div>
           </div>
-          <div className="mc-chart__label">{point.label}</div>
+          <div className={styles.label}>{point.label}</div>
         </div>
       ))}
     </div>

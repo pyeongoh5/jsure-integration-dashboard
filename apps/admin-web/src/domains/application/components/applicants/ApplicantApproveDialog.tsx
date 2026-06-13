@@ -1,4 +1,5 @@
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import styles from "@/pages/Applicants/Applicants.module.css";
 import type { Applicant } from "./types";
 
 type Props = {
@@ -27,7 +28,7 @@ export function ApplicantApproveDialog({
             {applicant.handle ? `(@${applicant.handle})` : ""} —{" "}
             {applicant.campaign}
           </div>
-          {error && <div className="apl-mutation-error">{error}</div>}
+          {error && <div className={styles.mutationError}>{error}</div>}
         </>
       }
       confirmLabel={mutating ? "처리 중…" : "승인"}

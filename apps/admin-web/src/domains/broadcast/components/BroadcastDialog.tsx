@@ -7,9 +7,9 @@ import {
   startRichTextImageUpload,
 } from "@/lib/richTextImages";
 import { sendBroadcastMessage } from "../api";
-import "./BroadcastDialog.css";
+import styles from "./BroadcastDialog.module.css";
 // SNS 칩 스타일은 인플루언서 페이지의 것을 그대로 재사용
-import "@/pages/Influencers/Influencers.css";
+import influencersStyles from "@/pages/Influencers/Influencers.module.css";
 
 const SNS_ICON: Record<SnsType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",
@@ -17,11 +17,11 @@ const SNS_ICON: Record<SnsType, string> = {
   X: "fa-brands fa-x-twitter",
   YOUTUBE: "fa-brands fa-youtube",
 };
-const SNS_CLASS: Record<SnsType, string> = {
-  INSTAGRAM: "inf-sns--ig",
-  TIKTOK: "inf-sns--tt",
-  X: "inf-sns--x",
-  YOUTUBE: "inf-sns--yt",
+const SNS_CLASS: Record<SnsType, string | undefined> = {
+  INSTAGRAM: influencersStyles.snsIg,
+  TIKTOK: influencersStyles.snsTt,
+  X: influencersStyles.snsX,
+  YOUTUBE: influencersStyles.snsYt,
 };
 
 function formatFollowers(n: number): string {
@@ -175,13 +175,13 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
   if (!open) return null;
 
   return (
-    <div className="bcast-overlay" onClick={close}>
-      <div className="bcast-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="bcast-modal__head">
+    <div className={styles.overlay} onClick={close}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHead}>
           <h2>메시지 발송</h2>
           <button
             type="button"
-            className="bcast-modal__close"
+            className={styles.modalClose}
             onClick={close}
             disabled={sending}
             aria-label="닫기"
@@ -190,47 +190,47 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
           </button>
         </div>
 
-        <div className="bcast-modal__body">
-          <section className="bcast-section">
-            <label className="bcast-label">메시지 내용</label>
+        <div className={styles.modalBody}>
+          <section className={styles.section}>
+            <label className={styles.label}>메시지 내용</label>
             <RichTextEditor
               value={contentHtml}
               onChange={setContentHtml}
               minHeight={200}
               disabled={sending}
             />
-            <p className="bcast-hint">
+            <p className={styles.hint}>
               LINE Flex 메시지로 발송되며 인라인 굵기/색은 단순화될 수 있습니다.
             </p>
           </section>
 
-          <section className="bcast-section">
-            <label className="bcast-label">상단 이미지 (선택, 1장)</label>
+          <section className={styles.section}>
+            <label className={styles.label}>상단 이미지 (선택, 1장)</label>
             {hero.kind === "none" ? (
               <button
                 type="button"
-                className="bcast-btn"
+                className={styles.btn}
                 onClick={() => heroFileRef.current?.click()}
                 disabled={sending}
               >
                 이미지 선택
               </button>
             ) : (
-              <div className="bcast-hero">
-                <img src={hero.previewUrl} alt="" className="bcast-hero__preview" />
-                <div className="bcast-hero__meta">
+              <div className={styles.hero}>
+                <img src={hero.previewUrl} alt="" className={styles.heroPreview} />
+                <div className={styles.heroMeta}>
                   {hero.kind === "uploading" && (
-                    <span className="bcast-hero__status">업로드 중…</span>
+                    <span className={styles.heroStatus}>업로드 중…</span>
                   )}
                   {hero.kind === "ready" && (
-                    <span className="bcast-hero__status is-ready">업로드 완료</span>
+                    <span className={`${styles.heroStatus} ${styles.isReady}`}>업로드 완료</span>
                   )}
                   {hero.kind === "error" && (
-                    <span className="bcast-hero__status is-error">{hero.message}</span>
+                    <span className={`${styles.heroStatus} ${styles.isError}`}>{hero.message}</span>
                   )}
                   <button
                     type="button"
-                    className="bcast-btn bcast-btn--ghost"
+                    className={`${styles.btn} ${styles.btnGhost}`}
                     onClick={removeHero}
                     disabled={sending}
                   >
@@ -252,45 +252,45 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
             />
           </section>
 
-          <section className="bcast-section">
-            <div className="bcast-recipients__head">
-              <label className="bcast-label">
+          <section className={styles.section}>
+            <div className={styles.recipientsHead}>
+              <label className={styles.label}>
                 수신자 ({visibleSelected.length}/{candidates.length}명 선택)
               </label>
               <button
                 type="button"
-                className="bcast-btn bcast-btn--ghost"
+                className={`${styles.btn} ${styles.btnGhost}`}
                 onClick={toggleAll}
                 disabled={sending || candidates.length === 0}
               >
                 {allSelected ? "전체 해제" : "전체 선택"}
               </button>
             </div>
-            <div className="bcast-recipients__list">
+            <div className={styles.recipientsList}>
               {candidates.length === 0 ? (
-                <div className="bcast-empty">표시할 인플루언서가 없습니다.</div>
+                <div className={styles.empty}>표시할 인플루언서가 없습니다.</div>
               ) : (
                 candidates.map((c) => {
                   const checked = selected.has(c.id);
                   return (
-                    <label key={c.id} className={`bcast-recipient ${checked ? "is-checked" : ""}`}>
+                    <label key={c.id} className={`${styles.recipient} ${checked ? styles.isChecked : ""}`}>
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleOne(c.id)}
                         disabled={sending}
                       />
-                      <span className="bcast-recipient__name">{c.name}</span>
-                      <span className="bcast-recipient__email">{c.email}</span>
-                      <span className="bcast-recipient__sns">
+                      <span className={styles.recipientName}>{c.name}</span>
+                      <span className={styles.recipientEmail}>{c.email}</span>
+                      <span className={styles.recipientSns}>
                         {c.snsAccounts.map((s) => (
                           <span
                             key={s.snsType}
-                            className={`inf-sns ${SNS_CLASS[s.snsType]}`}
+                            className={`${influencersStyles.sns} ${SNS_CLASS[s.snsType]}`}
                             title={`@${s.handle}`}
                           >
                             <i className={SNS_ICON[s.snsType]} />
-                            <span className="inf-sns__count">
+                            <span className={influencersStyles.snsCount}>
                               {formatFollowers(s.followerCount)}
                             </span>
                           </span>
@@ -303,17 +303,17 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
             </div>
           </section>
 
-          {error && <div className="bcast-error">{error}</div>}
-          {done && <div className="bcast-success">{done}</div>}
+          {error && <div className={styles.error}>{error}</div>}
+          {done && <div className={styles.success}>{done}</div>}
         </div>
 
-        <div className="bcast-modal__foot">
-          <button type="button" className="bcast-btn" onClick={close} disabled={sending}>
+        <div className={styles.modalFoot}>
+          <button type="button" className={styles.btn} onClick={close} disabled={sending}>
             닫기
           </button>
           <button
             type="button"
-            className="bcast-btn bcast-btn--primary"
+            className={`${styles.btn} ${styles.btnPrimary}`}
             onClick={submit}
             disabled={sending}
           >

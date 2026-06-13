@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { BroadcastJob } from "@jsure/shared";
 import { listBroadcastJobs } from "../api";
-import "./BroadcastProgressDock.css";
+import styles from "./BroadcastProgressDock.module.css";
 
 /**
  * 화면 우하단에 떠 있는 발송 진행률 패널.
@@ -56,20 +56,20 @@ export function BroadcastProgressDock() {
   ).length;
 
   return (
-    <div className={`bcast-dock ${collapsed ? "is-collapsed" : ""}`}>
+    <div className={`${styles.dock} ${collapsed ? styles.isCollapsed : ""}`}>
       <button
         type="button"
-        className="bcast-dock__head"
+        className={styles.head}
         onClick={() => setCollapsed((v) => !v)}
       >
         <span>
           발송 작업 {visible.length}건
           {activeCount > 0 ? ` · 진행 ${activeCount}` : ""}
         </span>
-        <span className="bcast-dock__toggle">{collapsed ? "▴" : "▾"}</span>
+        <span className={styles.toggle}>{collapsed ? "▴" : "▾"}</span>
       </button>
       {!collapsed && (
-        <ul className="bcast-dock__list">
+        <ul className={styles.list}>
           {visible.map((job) => (
             <BroadcastDockItem
               key={job.id}
@@ -103,20 +103,26 @@ function BroadcastDockItem({
           ? "완료"
           : "실패";
   const isDone = job.status === "COMPLETED" || job.status === "FAILED";
+  const statusClass = {
+    QUEUED: styles.statusQueued,
+    RUNNING: styles.statusRunning,
+    COMPLETED: styles.statusCompleted,
+    FAILED: styles.statusFailed,
+  }[job.status];
 
   return (
-    <li className="bcast-dock__item">
-      <div className="bcast-dock__top">
-        <span className={`bcast-dock__status bcast-dock__status--${job.status.toLowerCase()}`}>
+    <li className={styles.item}>
+      <div className={styles.top}>
+        <span className={`${styles.status} ${statusClass}`}>
           {label}
         </span>
-        <span className="bcast-dock__counts">
+        <span className={styles.counts}>
           {done}/{job.total}
         </span>
         {isDone && (
           <button
             type="button"
-            className="bcast-dock__close"
+            className={styles.close}
             onClick={onDismiss}
             aria-label="알림 닫기"
           >
@@ -124,14 +130,14 @@ function BroadcastDockItem({
           </button>
         )}
       </div>
-      <div className="bcast-dock__bar">
-        <div className="bcast-dock__fill" style={{ width: `${pct}%` }} />
+      <div className={styles.bar}>
+        <div className={styles.fill} style={{ width: `${pct}%` }} />
       </div>
-      <div className="bcast-dock__sub">
+      <div className={styles.sub}>
         성공 {job.sent} · 실패 {job.failed} · 미연동 {job.skipped}
       </div>
       {job.errorMessage && (
-        <div className="bcast-dock__error">{job.errorMessage}</div>
+        <div className={styles.error}>{job.errorMessage}</div>
       )}
     </li>
   );

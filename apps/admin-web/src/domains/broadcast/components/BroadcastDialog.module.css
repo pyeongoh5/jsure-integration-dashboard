@@ -1,0 +1,276 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-5);
+}
+
+.modal {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  /* 자식들이 round corner 를 넘지 않도록 + flex 안에서 빈 공간이 비치지 않도록 */
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(17, 24, 39, 0.2);
+}
+
+.modalHead,
+.modalFoot {
+  flex-shrink: 0;
+  background: var(--color-bg);
+}
+
+.modalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modalHead h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.modalClose {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: var(--space-1) var(--space-2);
+}
+
+.modalBody {
+  /* basis:0 + 부모 height 미지정 조합이면 body 가 0 으로 축소돼 콘텐츠가
+     안 보임. basis:auto 로 콘텐츠 기준 높이를 잡고, 모달 max-height 초과 시
+     min-height:0 + overflow-y:auto 로 스크롤되게. */
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--space-5);
+  background: var(--color-bg);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.modalFoot {
+  padding: 14px var(--space-5);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  /* 부모 (modal__body) 가 flex column 이라 기본 shrink:1 이면 0 으로 축소됨 */
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: #374151;
+}
+
+.hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.heroPreview {
+  width: 160px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.heroMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.heroStatus {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.heroStatus.isReady {
+  color: #166534;
+}
+
+.heroStatus.isError {
+  color: #b91c1c;
+}
+
+.recipientsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recipientsList {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.recipient {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-bg-muted);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  /* <label> 가 inline 성격을 유지하는 브라우저 대응 — row 가 부모 폭을 채우게 */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.recipient:last-child {
+  border-bottom: none;
+}
+
+.recipient:hover {
+  background: var(--color-bg-subtle);
+}
+
+.recipient.isChecked {
+  background: #eff6ff;
+}
+
+.recipient.isUnlinked {
+  color: var(--color-text-subtle);
+}
+
+.recipientName {
+  flex: 0 0 140px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recipient.isUnlinked .recipientName {
+  color: var(--color-text-muted);
+}
+
+.recipientEmail {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recipientSns {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.recipientWarn {
+  font-size: var(--font-size-xs);
+  color: #b45309;
+  background: var(--color-warn-bg);
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.empty {
+  padding: var(--space-5);
+  text-align: center;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-md);
+}
+
+.btn {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn:hover {
+  background: var(--color-bg-subtle);
+}
+
+.btnPrimary {
+  background: #1d4ed8;
+  color: var(--color-bg);
+  border-color: #1d4ed8;
+}
+
+.btnPrimary:hover {
+  background: #1e40af;
+}
+
+.btnGhost {
+  background: transparent;
+  border-color: transparent;
+  color: #1d4ed8;
+}
+
+.btnGhost:hover {
+  background: #eff6ff;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  background: var(--color-danger-bg);
+  color: #b91c1c;
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+}
+
+.success {
+  background: #dcfce7;
+  color: #166534;
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+}

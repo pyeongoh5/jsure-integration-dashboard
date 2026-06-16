@@ -41,6 +41,10 @@ export function deriveDisplayStage(input: DisplayStageInput): ApplicationDisplay
   }
 
   if (status === "SHIPPED" || status === "DELIVERED") {
+    // 인사이트 미제출 상태에서도 관리자가 정산을 완료시킨 경우 캠페인 참여는 종료된 것으로 간주.
+    if (posts.some((p) => p.settlementStatus === "COMPLETED")) {
+      return "SETTLED";
+    }
     if (!receivedAt) return "AWAITING_RECEIPT";
     if (posts.length === 0) return "POSTING";
 

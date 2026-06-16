@@ -4,8 +4,10 @@ import type {
   AdminSettlement,
   AdminSubmittedPost,
   ApplicationStatus,
+  ApprovedApplicantExportResponse,
   SnsType,
 } from "@jsure/shared";
+import { buildSnsProfileUrl } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 import { R2Service } from "../r2/r2.service";
@@ -538,6 +540,78 @@ export class AdminApplicationsService {
       });
     }
     return { completedCount: targets.length };
+  }
+
+  /**
+   * 캠페인 응모 승인자(APPROVED 이상 단계) 명단을 export 용으로 반환.
+   * APPLIED/REJECTED/CANCELLED 는 발송 대상이 아니므로 제외.
+   * 응답 데이터엔 phone/주소 등 PII 가 포함되므로 다른 list 응답과 분리해 두었다.
+   */
+  async exportApprovedApplicants(
+    campaignId: string,
+  ): Promise<ApprovedApplicantExportResponse> {
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: campaignId },
+      select: { id: true, title: true },
+    });
+    if (!campaign) throw new NotFoundException("Campaign not found");
+
+    const rows = await this.prisma.campaignApplication.findMany({
+      where: {
+        campaignId,
+        status: { in: ["APPROVED", "SHIPPED", "DELIVERED", "COMPLETED"] },
+      },
+      orderBy: { appliedAt: "asc" },
+      select: {
+        id: true,
+        snsType: true,
+        influencer: {
+          select: {
+            id: true,
+            name: true,
+            nameKana: true,
+            phone: true,
+            postalCode: true,
+            prefecture: true,
+            city: true,
+            addressLine1: true,
+            addressLine2: true,
+            snsAccounts: {
+              select: { snsType: true, handle: true },
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      campaignTitle: campaign.title,
+      rows: rows.map((row) => {
+        const snsAccount = row.influencer.snsAccounts.find(
+          (account) => account.snsType === row.snsType,
+        );
+        const handle = snsAccount?.handle ?? "";
+        return {
+          applicationId: row.id,
+          influencerId: row.influencer.id,
+          name: row.influencer.name,
+          nameKana: row.influencer.nameKana,
+          snsType: row.snsType,
+          snsHandle: handle,
+          profileUrl: handle ? buildSnsProfileUrl(row.snsType, handle) : "",
+          phone: row.influencer.phone,
+          postalCode: row.influencer.postalCode,
+          address: [
+            row.influencer.prefecture,
+            row.influencer.city,
+            row.influencer.addressLine1,
+            row.influencer.addressLine2,
+          ]
+            .filter((part) => part && part.length > 0)
+            .join(" "),
+        };
+      }),
+    };
   }
 }
 

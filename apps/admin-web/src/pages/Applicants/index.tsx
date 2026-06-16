@@ -1,50 +1,35 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  ApplicantTabs,
   ApplicantFilters,
+  ApplicantStatusFilter,
   ApplicantTable,
   ApplicantDialogs,
   useApplicantsData,
   useCampaignOptions,
   useApplicantMutations,
   type Applicant,
-  type ApplicantStage,
   type ApplicantStatus,
   type ApplicantMedia as Media,
 } from "@/domains/application";
 import { InfluencerNotesDialog } from "@/domains/influencer";
+import { ApprovedApplicantsDownloadDialog } from "./ApprovedApplicantsDownloadDialog";
 import styles from "./Applicants.module.css";
-
-const VALID_APPLICANT_TABS: ApplicantStatus[] = ["pending", "approved", "rejected"];
-
-function isApplicantTab(value: string | null): value is ApplicantStatus {
-  return value !== null && (VALID_APPLICANT_TABS as string[]).includes(value);
-}
 
 export function Applicants() {
   const [searchParams, setSearchParams] = useSearchParams();
   const campaignId = searchParams.get("campaignId");
-  const tab: ApplicantStatus = isApplicantTab(searchParams.get("tab"))
-    ? (searchParams.get("tab") as ApplicantStatus)
-    : "pending";
-  const setTab = (next: ApplicantStatus) => {
-    const np = new URLSearchParams(searchParams);
-    np.set("tab", next);
-    setSearchParams(np);
-  };
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [notesTarget, setNotesTarget] = useState<Applicant | null>(null);
   const [mediaFilter, setMediaFilter] = useState<Set<Media>>(() => new Set());
   const [minFollowers, setMinFollowers] = useState<number | null>(null);
-  const [stageFilter, setStageFilter] = useState<Set<ApplicantStage>>(
+  const [statusFilter, setStatusFilter] = useState<Set<ApplicantStatus>>(
     () => new Set(),
   );
+  const [query, setQuery] = useState("");
+  const [downloadOpen, setDownloadOpen] = useState(false);
 
-  const { state, applicants, counts, reload } = useApplicantsData(
-    campaignId,
-    tab,
-  );
+  const { state, applicants, reload } = useApplicantsData(campaignId);
   const {
     campaignOptions,
     campaignTitleById,
@@ -59,66 +44,74 @@ export function Applicants() {
     setSearchParams(next);
   };
 
-  const visible = useMemo(
-    () =>
-      applicants.filter((applicant) => {
-        if (applicant.status !== tab) return false;
-        if (
-          mediaFilter.size > 0 &&
-          !applicant.media.some((media) => mediaFilter.has(media))
-        ) {
-          return false;
-        }
-        if (minFollowers !== null && applicant.followers < minFollowers)
-          return false;
-        if (
-          tab === "approved" &&
-          stageFilter.size > 0 &&
-          (applicant.stage === null || !stageFilter.has(applicant.stage))
-        ) {
-          return false;
-        }
-        return true;
-      }),
-    [applicants, tab, mediaFilter, minFollowers, stageFilter],
-  );
+  const visible = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return applicants.filter((applicant) => {
+      if (
+        mediaFilter.size > 0 &&
+        !applicant.media.some((media) => mediaFilter.has(media))
+      ) {
+        return false;
+      }
+      if (minFollowers !== null && applicant.followers < minFollowers)
+        return false;
+      if (statusFilter.size > 0 && !statusFilter.has(applicant.status))
+        return false;
+      if (normalizedQuery) {
+        const haystack =
+          `${applicant.name} ${applicant.influencerId} ${applicant.allHandles.join(" ")}`.toLowerCase();
+        if (!haystack.includes(normalizedQuery)) return false;
+      }
+      return true;
+    });
+  }, [applicants, mediaFilter, minFollowers, statusFilter, query]);
 
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <h1 className={styles.title}>응모자 관리</h1>
-        <p className={styles.subtitle}>
-          {state.kind === "ready"
-            ? `현재 탭 ${visible.length}건`
-            : "불러오는 중..."}
-        </p>
+        <div className={styles.headerMain}>
+          <h1 className={styles.title}>응모자 관리</h1>
+          <p className={styles.subtitle}>
+            {state.kind === "ready"
+              ? `${visible.length}건`
+              : "불러오는 중..."}
+          </p>
+        </div>
+        <button
+          type="button"
+          className={styles.downloadBtn}
+          onClick={() => setDownloadOpen(true)}
+        >
+          <i className="fa-solid fa-file-arrow-down" /> 승인자 명단 다운로드
+        </button>
       </div>
 
-      <ApplicantTabs
-        value={tab}
-        counts={counts}
-        onChange={(next) => {
-          setTab(next);
-          setSelected(new Set());
-        }}
-      />
-
-      <ApplicantFilters
-        campaignId={campaignId}
-        campaignLabel={
-          campaignId ? (campaignTitleById.get(campaignId) ?? null) : null
-        }
-        campaignsLoaded={campaignsLoaded}
-        campaignOptions={campaignOptions}
-        onCampaignChange={setCampaignId}
-        mediaFilter={mediaFilter}
-        onMediaChange={setMediaFilter}
-        minFollowers={minFollowers}
-        onMinFollowersChange={setMinFollowers}
-        showStageFilter={tab === "approved"}
-        stageFilter={stageFilter}
-        onStageChange={setStageFilter}
-      />
+      <div className={styles.filterBar}>
+        <ApplicantFilters
+          campaignId={campaignId}
+          campaignLabel={
+            campaignId ? (campaignTitleById.get(campaignId) ?? null) : null
+          }
+          campaignsLoaded={campaignsLoaded}
+          campaignOptions={campaignOptions}
+          onCampaignChange={setCampaignId}
+          mediaFilter={mediaFilter}
+          onMediaChange={setMediaFilter}
+          minFollowers={minFollowers}
+          onMinFollowersChange={setMinFollowers}
+        />
+        <ApplicantStatusFilter value={statusFilter} onChange={setStatusFilter} />
+        <div className={styles.searchSpacer} />
+        <div className={styles.search}>
+          <i className="fa-solid fa-magnifying-glass" />
+          <input
+            type="text"
+            placeholder="이름·SNS 핸들·ID 검색"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </div>
+      </div>
 
       {state.kind === "loading" ? (
         <div className={styles.card}>
@@ -132,7 +125,6 @@ export function Applicants() {
         <ApplicantTable
           items={visible}
           selected={selected}
-          showStage={tab === "approved"}
           onToggleAll={(checked) =>
             setSelected(
               checked
@@ -172,6 +164,10 @@ export function Applicants() {
           onClose={() => setNotesTarget(null)}
           onChanged={reload}
         />
+      )}
+
+      {downloadOpen && (
+        <ApprovedApplicantsDownloadDialog onClose={() => setDownloadOpen(false)} />
       )}
     </div>
   );

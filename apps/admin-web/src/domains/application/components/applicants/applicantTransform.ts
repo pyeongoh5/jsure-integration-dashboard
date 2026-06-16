@@ -1,37 +1,15 @@
 import type {
   AdminApplication,
   AdminInfluencerSnsAccount,
-  ApplicationStatus,
   SnsType,
 } from "@jsure/shared";
-import type {
-  Applicant,
-  ApplicantStage,
-  ApplicantStatus,
-  Media,
-} from "./types";
+import type { Applicant, ApplicantStatus, Media } from "./types";
 
 export const SNS_TO_MEDIA: Record<SnsType, Media> = {
   INSTAGRAM: "ig",
   YOUTUBE: "yt",
   TIKTOK: "tt",
   X: "x",
-};
-
-export const STATUS_TO_TAB: Record<ApplicationStatus, ApplicantStatus | null> = {
-  APPLIED: "pending",
-  APPROVED: "approved",
-  SHIPPED: "approved",
-  DELIVERED: "approved",
-  COMPLETED: "approved",
-  REJECTED: "rejected",
-  CANCELLED: null,
-};
-
-export const TAB_TO_STATUSES: Record<ApplicantStatus, ApplicationStatus[]> = {
-  pending: ["APPLIED"],
-  approved: ["APPROVED", "SHIPPED", "DELIVERED", "COMPLETED"],
-  rejected: ["REJECTED"],
 };
 
 const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
@@ -64,9 +42,16 @@ export function formatRelative(iso: string, now: Date): string {
   });
 }
 
-function deriveStage(application: AdminApplication): ApplicantStage | null {
-  if (application.status === "COMPLETED") return "COMPLETED";
-  if (application.hasSubmittedPost) return "REVIEW_DUE";
+/**
+ * 응모 관리 페이지에 노출되는 단일 status 로 변환.
+ * - 검토 단계(SubmittedPost 존재) 진입 후 또는 정산 완료(COMPLETED) 또는 CANCELLED 인 경우 null 반환 → 페이지에서 숨김.
+ */
+function deriveStatus(application: AdminApplication): ApplicantStatus | null {
+  if (application.status === "CANCELLED") return null;
+  if (application.status === "COMPLETED") return null;
+  if (application.hasSubmittedPost) return null;
+  if (application.status === "APPLIED") return "APPLIED";
+  if (application.status === "REJECTED") return "REJECTED";
   if (application.receivedAt) return "POST_DUE";
   if (application.status === "DELIVERED") return "DELIVERED";
   if (application.status === "SHIPPED") return "SHIPPING";
@@ -78,8 +63,8 @@ export function toApplicant(
   application: AdminApplication,
   now: Date,
 ): Applicant | null {
-  const tab = STATUS_TO_TAB[application.status];
-  if (!tab) return null;
+  const status = deriveStatus(application);
+  if (!status) return null;
   const appliedAccount = pickAccount(
     application.influencer.snsAccounts,
     application.snsType,
@@ -95,25 +80,12 @@ export function toApplicant(
     followers: appliedAccount?.followerCount ?? 0,
     engagementRate: 0,
     appliedAt: formatRelative(application.appliedAt, now),
-    status: tab,
+    status,
     rawStatus: application.status,
     trackingCarrier: application.trackingCarrier,
     trackingNumber: application.trackingNumber,
-    stage: deriveStage(application),
+    allHandles: application.influencer.snsAccounts.map(
+      (account) => account.handle,
+    ),
   };
-}
-
-export function aggregateTabCounts(
-  raw: Record<ApplicationStatus, number> | null,
-): Record<ApplicantStatus, number> {
-  const acc: Record<ApplicantStatus, number> = {
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-  };
-  if (!raw) return acc;
-  (Object.keys(TAB_TO_STATUSES) as ApplicantStatus[]).forEach((tab) => {
-    for (const s of TAB_TO_STATUSES[tab]) acc[tab] += raw[s] ?? 0;
-  });
-  return acc;
 }

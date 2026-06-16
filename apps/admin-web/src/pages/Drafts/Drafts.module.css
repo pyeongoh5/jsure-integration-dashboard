@@ -158,6 +158,58 @@
   color: #6b7280;
 }
 
+/* Unified status cell */
+.statusCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.statusReviewPending     { background: #fef3c7; color: #92400e; }
+.statusAwaitingInsight   { background: #dbeafe; color: #1e40af; }
+.statusInsightSubmitted  { background: #e0e7ff; color: #3730a3; }
+.statusSettlementPending { background: #fde68a; color: #78350f; }
+.statusSettled           { background: #d1fae5; color: #065f46; }
+.statusRejected          { background: #fee2e2; color: #991b1b; }
+.statusRejectedLocked    { background: #f3f4f6; color: #4b5563; }
+
+.statusAmount {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  font-variant-numeric: tabular-nums;
+}
+.insightLink {
+  background: none;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.insightLink:hover {
+  background: #eff6ff;
+}
+
+/* Filter bar (캠페인/매체/상태 칩) */
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Tabs */
 .tabs {
   display: flex;

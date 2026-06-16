@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -20,6 +21,7 @@ import {
   type AdminSubmittedPost,
   type AdminSettlementListResponse,
   type AdminSubmittedPostListResponse,
+  type ApprovedApplicantExportResponse,
   type SubmittedPostAttachmentListResponse,
   type ApplicationStatus,
   type RejectApplicationRequest,
@@ -61,6 +63,17 @@ export class AdminApplicationsController {
   async submittedPosts(): Promise<AdminSubmittedPostListResponse> {
     const posts = await this.svc.listSubmittedPosts();
     return { posts };
+  }
+
+  @Get("export/approved")
+  exportApproved(
+    @Query("campaignId") campaignId?: string,
+  ): Promise<ApprovedApplicantExportResponse> {
+    const trimmed = campaignId?.trim();
+    if (!trimmed) {
+      throw new BadRequestException("campaignId is required");
+    }
+    return this.svc.exportApprovedApplicants(trimmed);
   }
 
   @Get("submitted-posts/:postId/attachments")

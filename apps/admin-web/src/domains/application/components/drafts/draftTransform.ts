@@ -1,10 +1,19 @@
 import type { AdminSubmittedPost } from "@jsure/shared";
-import {
-  REVIEW_STATUS_TO_TAB,
-  SNS_TO_MEDIA,
-  type DraftReview,
-  type DraftReviewCounts,
-} from "./types";
+import { SNS_TO_MEDIA, type DraftReview, type DraftStatus } from "./types";
+
+function deriveStatus(
+  reviewStatus: AdminSubmittedPost["reviewStatus"],
+  insightSubmitted: boolean,
+  settlementStatus: "PENDING" | "COMPLETED" | null,
+): DraftStatus {
+  if (reviewStatus === "PENDING") return "REVIEW_PENDING";
+  if (reviewStatus === "REJECTED") {
+    return insightSubmitted ? "REJECTED_LOCKED" : "REJECTED";
+  }
+  if (settlementStatus === "COMPLETED") return "SETTLED";
+  if (settlementStatus === "PENDING") return "SETTLEMENT_PENDING";
+  return insightSubmitted ? "INSIGHT_SUBMITTED" : "AWAITING_INSIGHT";
+}
 
 const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
 
@@ -32,6 +41,8 @@ export function toDraftReview(
   const matchingAccount = post.influencer.snsAccounts.find(
     (account) => account.snsType === post.snsType,
   );
+  const insightSubmitted = post.insightSubmittedAt !== null;
+  const settlementStatus = post.settlement?.status ?? null;
   return {
     id: post.id,
     influencerId: post.influencer.id,
@@ -45,7 +56,7 @@ export function toDraftReview(
     media: SNS_TO_MEDIA[post.snsType],
     url: post.url,
     submittedAt: formatRelative(post.submittedAt, now),
-    insightSubmitted: post.insightSubmittedAt !== null,
+    insightSubmitted,
     insight: {
       likes: post.insightLikes,
       comments: post.insightComments,
@@ -59,6 +70,7 @@ export function toDraftReview(
     attachments: post.attachments,
     reviewStatus: post.reviewStatus,
     applicationStatus: post.application.status,
+    status: deriveStatus(post.reviewStatus, insightSubmitted, settlementStatus),
     rejectionHistory: post.rejectionHistory.map((rejection) => ({
       id: rejection.id,
       comment: rejection.comment,
@@ -72,12 +84,4 @@ export function toDraftReview(
         }
       : null,
   };
-}
-
-export function countByTab(drafts: DraftReview[]): DraftReviewCounts {
-  const counts: DraftReviewCounts = { pending: 0, approved: 0, rejected: 0 };
-  for (const draft of drafts) {
-    counts[REVIEW_STATUS_TO_TAB[draft.reviewStatus]] += 1;
-  }
-  return counts;
 }

@@ -23,13 +23,20 @@ export class AdminOverviewService {
           recruitEndAt: { gte: now },
         },
       }),
-      // 응모자 검토 대기 = APPLIED
+      // 응모 관리 페이지에 노출되는 행 수와 일치시킨다.
+      // - CANCELLED, COMPLETED 제외
+      // - 검토 단계로 넘어간(SubmittedPost 존재) 항목 제외
+      // = 응모/승인/배송/수령확인/반려 단계에 머무는 응모 전체.
       this.prisma.campaignApplication.count({
-        where: { status: "APPLIED" },
+        where: {
+          status: { in: ["APPLIED", "APPROVED", "SHIPPED", "DELIVERED", "REJECTED"] },
+          posts: { none: {} },
+        },
       }),
-      // 게시물 검토 대기 = PENDING
+      // 검토 관리 페이지에 노출되는 행 수와 일치시킨다.
+      // - 정산 단계로 넘어간(Settlement 존재) 항목 제외.
       this.prisma.submittedPost.count({
-        where: { reviewStatus: "PENDING" },
+        where: { settlement: null },
       }),
       // 지급 대기 금액 합계 + 건수
       this.prisma.settlement.aggregate({

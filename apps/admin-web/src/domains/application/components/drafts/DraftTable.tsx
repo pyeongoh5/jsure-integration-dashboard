@@ -1,6 +1,12 @@
 import { Fragment } from "react";
 import { ScrollTable } from "@/components/composites";
-import { MEDIA_META, type DraftReview, type Media } from "./types";
+import {
+  DRAFT_STATUS_LABEL,
+  MEDIA_META,
+  type DraftReview,
+  type DraftStatus,
+  type Media,
+} from "./types";
 import styles from "@/pages/Drafts/Drafts.module.css";
 
 const MEDIA_CLASS: Record<Media, string | undefined> = {
@@ -8,6 +14,17 @@ const MEDIA_CLASS: Record<Media, string | undefined> = {
   yt: styles.mediaYt,
   tt: styles.mediaTt,
   x: styles.mediaX,
+};
+
+// 상태별 배지 색 클래스. Drafts.module.css 에서 정의.
+const STATUS_BADGE_CLASS: Record<DraftStatus, string | undefined> = {
+  REVIEW_PENDING: styles.statusReviewPending,
+  AWAITING_INSIGHT: styles.statusAwaitingInsight,
+  INSIGHT_SUBMITTED: styles.statusInsightSubmitted,
+  SETTLEMENT_PENDING: styles.statusSettlementPending,
+  SETTLED: styles.statusSettled,
+  REJECTED: styles.statusRejected,
+  REJECTED_LOCKED: styles.statusRejectedLocked,
 };
 
 const AVATAR_PALETTE = [
@@ -42,6 +59,40 @@ function formatJpy(amount: number): string {
   return `¥${amount.toLocaleString()}`;
 }
 
+function renderStatusCell(
+  draft: DraftReview,
+  onViewInsight: (draft: DraftReview) => void,
+) {
+  const badge = (
+    <span className={`${styles.statusBadge} ${STATUS_BADGE_CLASS[draft.status]}`}>
+      {DRAFT_STATUS_LABEL[draft.status]}
+    </span>
+  );
+  const insightLink = draft.insightSubmitted && (
+    <button
+      type="button"
+      className={styles.insightLink}
+      onClick={() => onViewInsight(draft)}
+    >
+      보기
+    </button>
+  );
+  const amount =
+    draft.settlement &&
+    (draft.status === "SETTLEMENT_PENDING" || draft.status === "SETTLED") ? (
+      <span className={styles.statusAmount}>
+        {formatJpy(draft.settlement.amountJpy)}
+      </span>
+    ) : null;
+  return (
+    <div className={styles.statusCell}>
+      {badge}
+      {amount}
+      {insightLink}
+    </div>
+  );
+}
+
 function renderActions(draft: DraftReview, handlers: ActionHandlers) {
   const memoButton = (
     <button
@@ -53,7 +104,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
     </button>
   );
 
-  if (draft.reviewStatus === "PENDING") {
+  if (draft.status === "REVIEW_PENDING") {
     return (
       <div className={styles.actions}>
         <button
@@ -75,29 +126,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
     );
   }
 
-  if (draft.reviewStatus === "APPROVED") {
-    if (draft.settlement?.status === "COMPLETED") {
-      return (
-        <div className={styles.actions}>
-          <span className={styles.settled}>
-            정산 완료
-            <span className={styles.settledAmount}>{formatJpy(draft.settlement.amountJpy)}</span>
-          </span>
-          {memoButton}
-        </div>
-      );
-    }
-    if (draft.settlement?.status === "PENDING") {
-      return (
-        <div className={styles.actions}>
-          <span className={styles.settled} title="정산 페이지에서 처리 대기 중">
-            정산 대기
-            <span className={styles.settledAmount}>{formatJpy(draft.settlement.amountJpy)}</span>
-          </span>
-          {memoButton}
-        </div>
-      );
-    }
+  if (draft.status === "AWAITING_INSIGHT") {
     return (
       <div className={styles.actions}>
         <button
@@ -107,41 +136,50 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
         >
           정산하기
         </button>
-        {!draft.insightSubmitted && (
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionUndo}`}
-            onClick={() => handlers.onUndo(draft)}
-          >
-            되돌리기
-          </button>
-        )}
+        <button
+          type="button"
+          className={`${styles.action} ${styles.actionUndo}`}
+          onClick={() => handlers.onUndo(draft)}
+        >
+          되돌리기
+        </button>
         {memoButton}
       </div>
     );
   }
 
-  if (draft.insightSubmitted) {
+  if (draft.status === "INSIGHT_SUBMITTED") {
     return (
       <div className={styles.actions}>
-        <span className={styles.locked}>인사이트 제출 완료 · 되돌리기 불가</span>
+        <button
+          type="button"
+          className={`${styles.action} ${styles.actionApprove}`}
+          onClick={() => handlers.onSettle(draft)}
+        >
+          정산하기
+        </button>
         {memoButton}
       </div>
     );
   }
 
-  return (
-    <div className={styles.actions}>
-      <button
-        type="button"
-        className={`${styles.action} ${styles.actionUndo}`}
-        onClick={() => handlers.onUndo(draft)}
-      >
-        되돌리기
-      </button>
-      {memoButton}
-    </div>
-  );
+  if (draft.status === "REJECTED") {
+    return (
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={`${styles.action} ${styles.actionUndo}`}
+          onClick={() => handlers.onUndo(draft)}
+        >
+          되돌리기
+        </button>
+        {memoButton}
+      </div>
+    );
+  }
+
+  // SETTLEMENT_PENDING / SETTLED / REJECTED_LOCKED — 추가 액션 없음(메모만).
+  return <div className={styles.actions}>{memoButton}</div>;
 }
 
 type Props = {
@@ -184,7 +222,7 @@ export function DraftTable({
               <th style={{ width: 70 }}>매체</th>
               <th>제출 URL</th>
               <th style={{ width: 90 }}>제출 시각</th>
-              <th style={{ width: 110 }}>인사이트</th>
+              <th style={{ width: 160 }}>상태</th>
               <th style={{ width: 200 }}>액션</th>
             </tr>
           </thead>
@@ -237,19 +275,7 @@ export function DraftTable({
                       </a>
                     </td>
                     <td className={styles.time}>{draft.submittedAt}</td>
-                    <td>
-                      {draft.insightSubmitted ? (
-                        <button
-                          type="button"
-                          className={`${styles.insight} ${styles.insightDone} ${styles.insightBtn}`}
-                          onClick={() => onViewInsight(draft)}
-                        >
-                          제출됨 · 보기
-                        </button>
-                      ) : (
-                        <span className={`${styles.insight} ${styles.insightPending}`}>대기</span>
-                      )}
-                    </td>
+                    <td>{renderStatusCell(draft, onViewInsight)}</td>
                     <td>
                       {renderActions(draft, {
                         onApprove,

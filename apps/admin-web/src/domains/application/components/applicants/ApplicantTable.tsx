@@ -1,6 +1,11 @@
 import styles from "@/pages/Applicants/Applicants.module.css";
 import { ScrollTable } from "@/components/composites";
-import { MEDIA_META, type Applicant, type ApplicantStage } from "./types";
+import {
+  APPLICANT_STATUS_LABEL,
+  MEDIA_META,
+  type Applicant,
+  type ApplicantStatus,
+} from "./types";
 
 type ActionHandlers = {
   onApprove: (applicant: Applicant) => void;
@@ -22,48 +27,30 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
     </button>
   );
 
-  if (applicant.status === "pending") {
-    return (
-      <div className={styles.actions}>
-        <button
-          type="button"
-          className={`${styles.action} ${styles.actionApprove}`}
-          onClick={() => handlers.onApprove(applicant)}
-        >
-          승인
-        </button>
-        <button
-          type="button"
-          className={`${styles.action} ${styles.actionReject}`}
-          onClick={() => handlers.onReject(applicant)}
-        >
-          반려
-        </button>
-        {memoButton}
-      </div>
-    );
-  }
-
-  if (applicant.status === "rejected") {
-    return (
-      <div className={styles.actions}>
-        <button
-          type="button"
-          className={`${styles.action} ${styles.actionUndo}`}
-          onClick={() => handlers.onUndo(applicant)}
-        >
-          되돌리기
-        </button>
-        {memoButton}
-      </div>
-    );
-  }
-
-  // approved 탭 — rawStatus로 분기
-  return (
-    <div className={styles.actions}>
-      {applicant.rawStatus === "APPROVED" && (
-        <>
+  switch (applicant.status) {
+    case "APPLIED":
+      return (
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={`${styles.action} ${styles.actionApprove}`}
+            onClick={() => handlers.onApprove(applicant)}
+          >
+            승인
+          </button>
+          <button
+            type="button"
+            className={`${styles.action} ${styles.actionReject}`}
+            onClick={() => handlers.onReject(applicant)}
+          >
+            반려
+          </button>
+          {memoButton}
+        </div>
+      );
+    case "PRE_SHIP":
+      return (
+        <div className={styles.actions}>
           <button
             type="button"
             className={`${styles.action} ${styles.actionApprove}`}
@@ -78,43 +65,61 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
           >
             되돌리기
           </button>
-        </>
-      )}
-      {/* 수령 확인(receivedAt) 전, 즉 stage가 SHIPPING일 때만 노출.
-          인플루언서가 먼저 수령 확인하면 stage가 POST_DUE(게시 대기)가 되어 숨겨진다. */}
-      {applicant.stage === "SHIPPING" && (
-        <button
-          type="button"
-          className={`${styles.action} ${styles.actionApprove}`}
-          onClick={() => handlers.onDeliver(applicant)}
-        >
-          배송 완료
-        </button>
-      )}
-      {memoButton}
-    </div>
-  );
+          {memoButton}
+        </div>
+      );
+    case "SHIPPING":
+      return (
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={`${styles.action} ${styles.actionApprove}`}
+            onClick={() => handlers.onDeliver(applicant)}
+          >
+            배송 완료
+          </button>
+          {memoButton}
+        </div>
+      );
+    case "DELIVERED":
+    case "POST_DUE":
+      // 인플루언서 측 작업 대기 단계 — 운영자가 할 액션 없음.
+      return <div className={styles.actions}>{memoButton}</div>;
+    case "REJECTED":
+      return (
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={`${styles.action} ${styles.actionUndo}`}
+            onClick={() => handlers.onUndo(applicant)}
+          >
+            되돌리기
+          </button>
+          {memoButton}
+        </div>
+      );
+  }
 }
 
-const STAGE_LABEL: Record<ApplicantStage, { text: string; className: string | undefined }> =
-  {
-    PRE_SHIP: { text: "배송전", className: styles.stagePillPre },
-    SHIPPING: { text: "배송중", className: styles.stagePillShipping },
-    DELIVERED: { text: "배송완료", className: styles.stagePillDelivered },
-    POST_DUE: { text: "게시 대기", className: styles.stagePillPostDue },
-    REVIEW_DUE: { text: "검토 대기", className: styles.stagePillReviewDue },
-    COMPLETED: { text: "완료", className: styles.stagePillCompleted },
-  };
+const STATUS_BADGE_CLASS: Record<ApplicantStatus, string | undefined> = {
+  APPLIED: styles.statusApplied,
+  PRE_SHIP: styles.stagePillPre,
+  SHIPPING: styles.stagePillShipping,
+  DELIVERED: styles.stagePillDelivered,
+  POST_DUE: styles.stagePillPostDue,
+  REJECTED: styles.statusRejected,
+};
 
-function renderStage(applicant: Applicant) {
-  if (!applicant.stage) return null;
-  const label = STAGE_LABEL[applicant.stage];
-  const showTracking =
-    applicant.stage !== "PRE_SHIP" && applicant.trackingNumber !== null;
+function renderStatus(applicant: Applicant) {
+  const trackingVisible =
+    (applicant.status === "SHIPPING" || applicant.status === "DELIVERED") &&
+    applicant.trackingNumber !== null;
   return (
     <div className={styles.stage}>
-      <span className={`${styles.stagePill} ${label.className}`}>{label.text}</span>
-      {showTracking && (
+      <span className={`${styles.stagePill} ${STATUS_BADGE_CLASS[applicant.status]}`}>
+        {APPLICANT_STATUS_LABEL[applicant.status]}
+      </span>
+      {trackingVisible && (
         <span className={styles.stageTracking}>
           {applicant.trackingCarrier
             ? `${applicant.trackingCarrier} · ${applicant.trackingNumber}`
@@ -153,7 +158,6 @@ function formatFollowers(followers: number): string {
 type Props = {
   items: Applicant[];
   selected: Set<string>;
-  showStage: boolean;
   onToggleAll: (checked: boolean) => void;
   onToggleOne: (id: string) => void;
   onApprove: (applicant: Applicant) => void;
@@ -167,7 +171,6 @@ type Props = {
 export function ApplicantTable({
   items,
   selected,
-  showStage,
   onToggleAll,
   onToggleOne,
   onApprove,
@@ -190,98 +193,94 @@ export function ApplicantTable({
   return (
     <div className={styles.card}>
       <ScrollTable>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th className={styles.check}>
-              <input
-                type="checkbox"
-                checked={allChecked}
-                onChange={(event) => onToggleAll(event.target.checked)}
-              />
-            </th>
-            <th>인플루언서</th>
-            <th>캠페인</th>
-            <th>매체</th>
-            <th>팔로워</th>
-            <th>응모 시각</th>
-            {showStage && (
-              <th style={{ textAlign: "center" }}>상태</th>
-            )}
-            <th>액션</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((applicant) => (
-            <tr key={applicant.id}>
-              <td className={styles.check}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th className={styles.check}>
                 <input
                   type="checkbox"
-                  checked={selected.has(applicant.id)}
-                  onChange={() => onToggleOne(applicant.id)}
+                  checked={allChecked}
+                  onChange={(event) => onToggleAll(event.target.checked)}
                 />
-              </td>
-              <td>
-                <div className={styles.inf}>
-                  <div
-                    className={styles.infAvatar}
-                    style={{ background: pickAvatarColor(applicant.id) }}
-                  >
-                    {applicant.name[0]}
-                  </div>
-                  <div>
-                    <div className={styles.infName}>
-                      {applicant.name}
-                      {applicant.flagged && (
-                        <span className={styles.flaggedBadge}>대상외</span>
-                      )}
+              </th>
+              <th>인플루언서</th>
+              <th>캠페인</th>
+              <th>매체</th>
+              <th>팔로워</th>
+              <th>응모 시각</th>
+              <th style={{ textAlign: "center" }}>상태</th>
+              <th>액션</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((applicant) => (
+              <tr key={applicant.id}>
+                <td className={styles.check}>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(applicant.id)}
+                    onChange={() => onToggleOne(applicant.id)}
+                  />
+                </td>
+                <td>
+                  <div className={styles.inf}>
+                    <div
+                      className={styles.infAvatar}
+                      style={{ background: pickAvatarColor(applicant.id) }}
+                    >
+                      {applicant.name[0]}
                     </div>
-                    <div className={styles.infHandle}>@{applicant.handle}</div>
+                    <div>
+                      <div className={styles.infName}>
+                        {applicant.name}
+                        {applicant.flagged && (
+                          <span className={styles.flaggedBadge}>대상외</span>
+                        )}
+                      </div>
+                      <div className={styles.infHandle}>@{applicant.handle}</div>
+                    </div>
                   </div>
-                </div>
-              </td>
-              <td>{applicant.campaign}</td>
-              <td>
-                <div className={styles.mediaList}>
-                  {applicant.media.map((media) => {
-                    const meta = MEDIA_META[media];
-                    return (
-                      <span
-                        key={media}
-                        className={`${styles.media} ${styles[meta.cls]}`}
-                        title={meta.label}
-                        aria-label={meta.label}
-                      >
-                        <i className={meta.icon} />
-                      </span>
-                    );
-                  })}
-                </div>
-              </td>
-              <td className={styles.num}>{formatFollowers(applicant.followers)}</td>
-              <td className={styles.time}>{applicant.appliedAt}</td>
-              {showStage && (
+                </td>
+                <td>{applicant.campaign}</td>
+                <td>
+                  <div className={styles.mediaList}>
+                    {applicant.media.map((media) => {
+                      const meta = MEDIA_META[media];
+                      return (
+                        <span
+                          key={media}
+                          className={`${styles.media} ${styles[meta.cls]}`}
+                          title={meta.label}
+                          aria-label={meta.label}
+                        >
+                          <i className={meta.icon} />
+                        </span>
+                      );
+                    })}
+                  </div>
+                </td>
+                <td className={styles.num}>{formatFollowers(applicant.followers)}</td>
+                <td className={styles.time}>{applicant.appliedAt}</td>
                 <td
                   className={styles.stageCell}
                   style={{ textAlign: "center" }}
                 >
-                  {renderStage(applicant)}
+                  {renderStatus(applicant)}
                 </td>
-              )}
-              <td>
-                {renderActions(applicant, {
-                  onApprove,
-                  onReject,
-                  onUndo,
-                  onShip,
-                  onDeliver,
-                  onMemo,
-                })}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                <td>
+                  {renderActions(applicant, {
+                    onApprove,
+                    onReject,
+                    onUndo,
+                    onShip,
+                    onDeliver,
+                    onMemo,
+                  })}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </ScrollTable>
     </div>
   );

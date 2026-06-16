@@ -14,6 +14,12 @@ import {
   campaignFormStyles,
 } from "@/domains/campaign";
 import type { Campaign, CampaignStatus } from "@/domains/campaign";
+import {
+  approvedApplicantsCsvFilename,
+  buildApprovedApplicantsCsv,
+  exportApprovedApplicants,
+  triggerCsvDownload,
+} from "@/domains/application";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import styles from "./Campaigns.module.css";
 
@@ -243,6 +249,23 @@ export function Campaigns() {
                   onEdit={() => {
                     setOpenMenu(null);
                     navigate(`/campaigns/${encodeURIComponent(c.id)}/edit`);
+                  }}
+                  onExportApproved={async () => {
+                    setOpenMenu(null);
+                    try {
+                      const response = await exportApprovedApplicants(c.id);
+                      const csv = buildApprovedApplicantsCsv(response);
+                      triggerCsvDownload(
+                        approvedApplicantsCsvFilename(response.campaignTitle),
+                        csv,
+                      );
+                    } catch (cause) {
+                      window.alert(
+                        cause instanceof Error
+                          ? cause.message
+                          : "승인자 명단 다운로드에 실패했습니다.",
+                      );
+                    }
                   }}
                   onClose={() => {
                     setOpenMenu(null);

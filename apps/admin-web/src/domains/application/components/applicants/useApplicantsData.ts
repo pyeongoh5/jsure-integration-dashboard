@@ -1,18 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import type {
-  AdminApplication,
-  ApplicationStatus,
-} from "@jsure/shared";
-import {
-  getApplicationCounts,
-  listApplications,
-} from "../api";
-import type { Applicant, ApplicantStatus, StatusCounts } from "./types";
-import {
-  TAB_TO_STATUSES,
-  aggregateTabCounts,
-  toApplicant,
-} from "./applicantTransform";
+import type { AdminApplication } from "@jsure/shared";
+import { listApplications } from "../api";
+import { toApplicant } from "./applicantTransform";
+import type { Applicant } from "./types";
 
 export type ApplicantsLoadState =
   | { kind: "loading" }
@@ -22,42 +12,19 @@ export type ApplicantsLoadState =
 export type UseApplicantsDataResult = {
   state: ApplicantsLoadState;
   applicants: Applicant[];
-  counts: StatusCounts;
   reload: () => void;
 };
 
 export function useApplicantsData(
   campaignId: string | null,
-  tab: ApplicantStatus,
 ): UseApplicantsDataResult {
   const [state, setState] = useState<ApplicantsLoadState>({ kind: "loading" });
-  const [statusCounts, setStatusCounts] = useState<Record<
-    ApplicationStatus,
-    number
-  > | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    getApplicationCounts(campaignId ?? undefined)
-      .then((counts) => {
-        if (!cancelled) setStatusCounts(counts);
-      })
-      .catch(() => {
-        if (!cancelled) setStatusCounts(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [campaignId, reloadKey]);
-
-  useEffect(() => {
-    let cancelled = false;
     setState({ kind: "loading" });
-    listApplications({
-      campaignId: campaignId ?? undefined,
-      statuses: TAB_TO_STATUSES[tab],
-    })
+    listApplications({ campaignId: campaignId ?? undefined })
       .then((rows) => {
         if (!cancelled) setState({ kind: "ready", rows });
       })
@@ -74,7 +41,7 @@ export function useApplicantsData(
     return () => {
       cancelled = true;
     };
-  }, [campaignId, tab, reloadKey]);
+  }, [campaignId, reloadKey]);
 
   const now = useMemo(() => new Date(), [state]);
 
@@ -82,15 +49,12 @@ export function useApplicantsData(
     if (state.kind !== "ready") return [];
     return state.rows
       .map((application) => toApplicant(application, now))
-      .filter((a): a is Applicant => a !== null);
+      .filter((applicant): applicant is Applicant => applicant !== null);
   }, [state, now]);
-
-  const counts = useMemo(() => aggregateTabCounts(statusCounts), [statusCounts]);
 
   return {
     state,
     applicants,
-    counts,
     reload: () => setReloadKey((current) => current + 1),
   };
 }

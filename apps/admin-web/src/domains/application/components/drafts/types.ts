@@ -7,7 +7,15 @@ import type {
 
 export type Media = "ig" | "yt" | "tt" | "x";
 
-export type DraftReviewTab = "pending" | "approved" | "rejected";
+// reviewStatus + 인사이트 제출 여부 + 정산 상태를 통합한 단일 상태값.
+export type DraftStatus =
+  | "REVIEW_PENDING"
+  | "AWAITING_INSIGHT"
+  | "INSIGHT_SUBMITTED"
+  | "SETTLEMENT_PENDING"
+  | "SETTLED"
+  | "REJECTED"
+  | "REJECTED_LOCKED";
 
 export type RejectionEntry = {
   id: string;
@@ -44,6 +52,7 @@ export type DraftReview = {
   attachments: SubmittedPostAttachment[];
   reviewStatus: PostReviewStatus;
   applicationStatus: ApplicationStatus;
+  status: DraftStatus;
   rejectionHistory: RejectionEntry[];
   settlement: {
     status: "PENDING" | "COMPLETED";
@@ -51,8 +60,6 @@ export type DraftReview = {
     completedAt: string | null;
   } | null;
 };
-
-export type DraftReviewCounts = Record<DraftReviewTab, number>;
 
 export const MEDIA_META: Record<
   Media,
@@ -71,20 +78,21 @@ export const SNS_TO_MEDIA: Record<SnsType, Media> = {
   X: "x",
 };
 
-export const TAB_TO_REVIEW_STATUS: Record<DraftReviewTab, PostReviewStatus> = {
-  pending: "PENDING",
-  approved: "APPROVED",
-  rejected: "REJECTED",
+export const DRAFT_STATUS_LABEL: Record<DraftStatus, string> = {
+  REVIEW_PENDING: "검토 대기",
+  AWAITING_INSIGHT: "인사이트 대기",
+  INSIGHT_SUBMITTED: "인사이트 제출",
+  SETTLEMENT_PENDING: "정산 대기",
+  SETTLED: "정산 완료",
+  REJECTED: "반려",
+  REJECTED_LOCKED: "반려·인사이트 제출",
 };
 
-export const REVIEW_STATUS_TO_TAB: Record<PostReviewStatus, DraftReviewTab> = {
-  PENDING: "pending",
-  APPROVED: "approved",
-  REJECTED: "rejected",
-};
-
-export const DRAFT_TABS: { key: DraftReviewTab; label: string }[] = [
-  { key: "pending", label: "검토 대기" },
-  { key: "approved", label: "승인" },
-  { key: "rejected", label: "반려" },
+// 검토 페이지에 노출되는 상태만. SETTLEMENT_PENDING/SETTLED 는 정산 관리 페이지에서 처리.
+export const DRAFT_STATUS_OPTIONS: { key: DraftStatus; label: string }[] = [
+  { key: "REVIEW_PENDING", label: DRAFT_STATUS_LABEL.REVIEW_PENDING },
+  { key: "AWAITING_INSIGHT", label: DRAFT_STATUS_LABEL.AWAITING_INSIGHT },
+  { key: "INSIGHT_SUBMITTED", label: DRAFT_STATUS_LABEL.INSIGHT_SUBMITTED },
+  { key: "REJECTED", label: DRAFT_STATUS_LABEL.REJECTED },
+  { key: "REJECTED_LOCKED", label: DRAFT_STATUS_LABEL.REJECTED_LOCKED },
 ];

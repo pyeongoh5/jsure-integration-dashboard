@@ -1,15 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "@/pages/Applicants/Applicants.module.css";
-import {
-  MEDIA_META,
-  STAGE_OPTIONS,
-  type ApplicantStage,
-  type CampaignOption,
-  type Media,
-} from "./types";
+import { MEDIA_META, type CampaignOption, type Media } from "./types";
 
-type PopoverKind = "campaign" | "media" | "followers" | "stage";
+type PopoverKind = "campaign" | "media" | "followers";
 
 type Props = {
   campaignId: string | null;
@@ -24,10 +18,6 @@ type Props = {
   // 팔로워 필터는 응모 관리 페이지 전용 — 검토 페이지에서는 props 자체를 생략하면 버튼이 사라진다.
   minFollowers?: number | null;
   onMinFollowersChange?: (followers: number | null) => void;
-
-  showStageFilter: boolean;
-  stageFilter: Set<ApplicantStage>;
-  onStageChange: (next: Set<ApplicantStage>) => void;
 };
 
 export function ApplicantFilters({
@@ -40,9 +30,6 @@ export function ApplicantFilters({
   onMediaChange,
   minFollowers,
   onMinFollowersChange,
-  showStageFilter,
-  stageFilter,
-  onStageChange,
 }: Props) {
   const [popover, setPopover] = useState<{ kind: PopoverKind; rect: DOMRect } | null>(null);
   const [minFollowersDraft, setMinFollowersDraft] = useState<string>("");
@@ -51,7 +38,6 @@ export function ApplicantFilters({
   const campaignBtnRef = useRef<HTMLButtonElement | null>(null);
   const mediaBtnRef = useRef<HTMLButtonElement | null>(null);
   const followersBtnRef = useRef<HTMLButtonElement | null>(null);
-  const stageBtnRef = useRef<HTMLButtonElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -64,7 +50,6 @@ export function ApplicantFilters({
       if (mediaBtnRef.current && mediaBtnRef.current.contains(target)) return;
       if (followersBtnRef.current && followersBtnRef.current.contains(target))
         return;
-      if (stageBtnRef.current && stageBtnRef.current.contains(target)) return;
       setPopover(null);
     };
     const onKey = (event: KeyboardEvent) => {
@@ -87,9 +72,7 @@ export function ApplicantFilters({
         ? campaignBtnRef.current
         : kind === "media"
           ? mediaBtnRef.current
-          : kind === "followers"
-            ? followersBtnRef.current
-            : stageBtnRef.current;
+          : followersBtnRef.current;
     if (!anchorButton) return;
     if (popover?.kind === kind) {
       setPopover(null);
@@ -113,13 +96,6 @@ export function ApplicantFilters({
     onMediaChange(next);
   };
 
-  const toggleStage = (stage: ApplicantStage) => {
-    const next = new Set(stageFilter);
-    if (next.has(stage)) next.delete(stage);
-    else next.add(stage);
-    onStageChange(next);
-  };
-
   const applyFollowers = () => {
     if (!onMinFollowersChange) {
       setPopover(null);
@@ -139,7 +115,6 @@ export function ApplicantFilters({
     if (kind === "campaign") onCampaignChange(null);
     else if (kind === "media") onMediaChange(new Set());
     else if (kind === "followers") onMinFollowersChange?.(null);
-    else onStageChange(new Set());
   };
 
   return (
@@ -220,36 +195,6 @@ export function ApplicantFilters({
             </span>
           )}
         </button>
-
-        {showStageFilter && (
-          <button
-            ref={stageBtnRef}
-            type="button"
-            className={`${styles.filter} ${stageFilter.size > 0 ? styles.filterActive : ""}`}
-            onClick={() => openPopover("stage")}
-          >
-            {stageFilter.size > 0
-              ? `상태: ${STAGE_OPTIONS.filter((option) =>
-                  stageFilter.has(option.key),
-                )
-                  .map((option) => option.label)
-                  .join(", ")}`
-              : "+ 상태"}
-            {stageFilter.size > 0 && (
-              <span
-                className={styles.popoverBtn}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  clear("stage");
-                  setPopover(null);
-                }}
-              >
-                {" "}
-                ✕
-              </span>
-            )}
-          </button>
-        )}
       </div>
 
       {popover &&
@@ -321,41 +266,6 @@ export function ApplicantFilters({
                     </div>
                   );
                 })()}
-                <div className={styles.popoverActions}>
-                  <button
-                    type="button"
-                    className={`${styles.popoverBtn} ${styles.popoverBtnPrimary}`}
-                    onClick={() => setPopover(null)}
-                  >
-                    닫기
-                  </button>
-                </div>
-              </>
-            ) : popover.kind === "stage" ? (
-              <>
-                <div className={styles.popoverTitle}>상태 선택 (복수 가능)</div>
-                <div className={styles.popoverItems}>
-                  {STAGE_OPTIONS.map((option) => {
-                    const selected = stageFilter.has(option.key);
-                    return (
-                      <button
-                        key={option.key}
-                        type="button"
-                        className={`${styles.popoverOption}${
-                          selected ? ` ${styles.popoverOptionOn}` : ""
-                        }`}
-                        onClick={() => toggleStage(option.key)}
-                      >
-                        <span className={styles.popoverOptionLabel}>
-                          {option.label}
-                        </span>
-                        {selected && (
-                          <i className={`fa-solid fa-check ${styles.popoverOptionCheck}`} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
                 <div className={styles.popoverActions}>
                   <button
                     type="button"

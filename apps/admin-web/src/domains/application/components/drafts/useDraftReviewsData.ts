@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AdminSubmittedPost } from "@jsure/shared";
 import { listSubmittedPosts } from "../draftsApi";
-import { countByTab, toDraftReview } from "./draftTransform";
-import type { DraftReview, DraftReviewCounts } from "./types";
+import { toDraftReview } from "./draftTransform";
+import type { DraftReview } from "./types";
 
 export type DraftReviewsLoadState =
   | { kind: "loading" }
@@ -12,7 +12,6 @@ export type DraftReviewsLoadState =
 export type UseDraftReviewsDataResult = {
   state: DraftReviewsLoadState;
   drafts: DraftReview[];
-  counts: DraftReviewCounts;
   reload: () => void;
 };
 
@@ -49,12 +48,9 @@ export function useDraftReviewsData(): UseDraftReviewsDataResult {
     return state.rows.map((post) => toDraftReview(post, now));
   }, [state, now]);
 
-  const counts = useMemo(() => countByTab(drafts), [drafts]);
-
   return {
     state,
     drafts,
-    counts,
     reload: () => setReloadKey((current) => current + 1),
   };
 }

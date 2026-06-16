@@ -9,6 +9,7 @@ type Props = {
   anchor: { x: number; y: number };
   onApplicants: () => void;
   onEdit: () => void;
+  onExportApproved: () => void;
   onClose: () => void;
   onDismiss: () => void;
 };
@@ -17,6 +18,7 @@ export function CampaignActionsMenu({
   anchor,
   onApplicants,
   onEdit,
+  onExportApproved,
   onClose,
   onDismiss,
 }: Props) {
@@ -83,6 +85,14 @@ export function CampaignActionsMenu({
         onClick={onEdit}
       >
         캠페인 수정
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        className={styles.item}
+        onClick={onExportApproved}
+      >
+        승인자 명단 다운로드
       </button>
       <button
         type="button"

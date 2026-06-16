@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { SnsTypeSchema, type SnsType } from "./influencer.js";
+import {
+  SnsTypeSchema,
+  EnabledSnsTypeSchema,
+  type SnsType,
+} from "./influencer.js";
 
 export { SnsTypeSchema };
 export type { SnsType };
@@ -15,8 +19,14 @@ export const SnsRecruitSchema = z.object({
 });
 export type SnsRecruit = z.infer<typeof SnsRecruitSchema>;
 
-const SnsRecruitArray = z
-  .array(SnsRecruitSchema)
+const SnsRecruitInputSchema = z.object({
+  snsType: EnabledSnsTypeSchema,
+  minFollowers: z.number().int().nonnegative("0 이상의 정수"),
+  recruitCount: z.number().int().positive("1 이상"),
+});
+
+const SnsRecruitInputArray = z
+  .array(SnsRecruitInputSchema)
   .min(1, "1개 이상의 SNS를 모집해야 합니다")
   .refine(
     (arr) => new Set(arr.map((r) => r.snsType)).size === arr.length,
@@ -34,7 +44,7 @@ export const CampaignFormSchema = z
       .int("정수만 입력")
       .min(1, "1 이상의 일수여야 합니다")
       .max(365),
-    snsRecruits: SnsRecruitArray,
+    snsRecruits: SnsRecruitInputArray,
     // HTML 본문 (tiptap) 을 저장하므로 길이 제한을 크게 둠.
     productSummary: z.string().max(50000),
     productDetailUrl: z.string().url("URL 형식이어야 합니다"),
@@ -61,7 +71,7 @@ export const UpdateCampaignRequestSchema = z
     recruitStartDate: DateOnly.optional(),
     recruitEndDate: DateOnly.optional(),
     postingPeriodDays: z.number().int().min(1).max(365).optional(),
-    snsRecruits: SnsRecruitArray.optional(),
+    snsRecruits: SnsRecruitInputArray.optional(),
     productSummary: z.string().max(50000).optional(),
     productDetailUrl: z.string().url().optional(),
     guideline: z.string().max(50000).optional(),

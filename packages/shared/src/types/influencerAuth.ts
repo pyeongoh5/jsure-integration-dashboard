@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   InfluencerBankAccountSchema,
   InfluencerSnsAccountInputSchema,
+  InfluencerSnsAccountSchema,
   ConsentItemSchema,
   InfluencerBankAccountPublicSchema,
   InfluencerAddressSchema,
@@ -74,7 +75,7 @@ export const InfluencerMeResponseSchema = z.object({
   phone: z.string(),
   birthDate: z.string().regex(DATE_ONLY_RE).nullable(),
   address: InfluencerAddressSchema.nullable(),
-  snsAccounts: z.array(InfluencerSnsAccountInputSchema),
+  snsAccounts: z.array(InfluencerSnsAccountSchema),
   bankAccount: InfluencerBankAccountPublicSchema.nullable(),
 });
 export type InfluencerMeResponse = z.infer<typeof InfluencerMeResponseSchema>;

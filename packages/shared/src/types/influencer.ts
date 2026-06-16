@@ -86,6 +86,12 @@ export type InfluencerSnsAccountInput = z.infer<
   typeof InfluencerSnsAccountInputSchema
 >;
 
+/** 응답·표시용. 비활성 SNS를 포함한 기존 데이터도 안전하게 파싱할 수 있도록 enum 전체를 허용한다. */
+export const InfluencerSnsAccountSchema = InfluencerSnsAccountInputSchema.extend({
+  snsType: SnsTypeSchema,
+});
+export type InfluencerSnsAccount = z.infer<typeof InfluencerSnsAccountSchema>;
+
 export const InfluencerBankAccountPublicSchema = InfluencerBankAccountSchema.omit({
   accountNumber: true,
 }).extend({

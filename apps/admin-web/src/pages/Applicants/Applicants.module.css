@@ -32,7 +32,9 @@
   cursor: pointer;
   white-space: nowrap;
 }
-.downloadBtn:hover { filter: brightness(0.95); }
+.downloadBtn:hover {
+  filter: brightness(0.95);
+}
 
 .title {
   font-size: 26px;
@@ -489,8 +491,9 @@
 }
 
 .mediaLabel {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1;
+  font-weight: 600;
   color: var(--color-text-muted);
 }
 

@@ -4,6 +4,30 @@ import { normalizeSnsHandle } from "../utils/snsHandle.js";
 export const SnsTypeSchema = z.enum(["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"]);
 export type SnsType = z.infer<typeof SnsTypeSchema>;
 
+/**
+ * SNS 활성 플래그. 초기 운영은 Instagram·X만 허용한다.
+ * TikTok·YouTube를 재오픈하려면 이 객체의 값만 `true`로 바꾸고 빌드한다.
+ * `Record<SnsType, boolean>`로 두어, 새 SnsType 추가 시 키 누락을 컴파일 타임에 잡는다.
+ */
+export const SNS_ENABLED: Record<SnsType, boolean> = {
+  INSTAGRAM: true,
+  TIKTOK: false,
+  X: true,
+  YOUTUBE: false,
+};
+
+export const isEnabledSnsType = (snsType: SnsType): boolean =>
+  SNS_ENABLED[snsType];
+
+export const ENABLED_SNS_TYPES: readonly SnsType[] = (
+  Object.keys(SNS_ENABLED) as SnsType[]
+).filter(isEnabledSnsType);
+
+export const EnabledSnsTypeSchema = z.enum(
+  ENABLED_SNS_TYPES as unknown as [SnsType, ...SnsType[]],
+);
+export type EnabledSnsType = z.infer<typeof EnabledSnsTypeSchema>;
+
 export const ConsentItemSchema = z.enum([
   "PR_LABEL",
   "DEADLINE",
@@ -51,7 +75,7 @@ export type InfluencerAddress = z.infer<typeof InfluencerAddressSchema>;
 export type InfluencerBankAccount = z.infer<typeof InfluencerBankAccountSchema>;
 
 export const InfluencerSnsAccountInputSchema = z.object({
-  snsType: SnsTypeSchema,
+  snsType: EnabledSnsTypeSchema,
   handle: z
     .string()
     .transform(normalizeSnsHandle)

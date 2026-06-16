@@ -1,4 +1,4 @@
-import type { SnsType } from "@jsure/shared";
+import { isEnabledSnsType, type SnsType } from "@jsure/shared";
 import styles from "./CampaignForm.module.css";
 
 const OPTIONS: readonly { value: SnsType; label: string }[] = [
@@ -7,6 +7,8 @@ const OPTIONS: readonly { value: SnsType; label: string }[] = [
   { value: "X", label: "X" },
   { value: "YOUTUBE", label: "유튜브" },
 ];
+
+const VISIBLE_OPTIONS = OPTIONS.filter((opt) => isEnabledSnsType(opt.value));
 
 type Props = {
   value: SnsType[];
@@ -21,7 +23,7 @@ export function SnsTypeChips({ value, onChange, disabled }: Props) {
   };
   return (
     <div className={styles.chips} role="group" aria-label="SNS 종류">
-      {OPTIONS.map((opt) => {
+      {VISIBLE_OPTIONS.map((opt) => {
         const selected = value.includes(opt.value);
         return (
           <button

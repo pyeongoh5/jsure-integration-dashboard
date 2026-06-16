@@ -1,4 +1,4 @@
-import type { SnsRecruit, SnsType } from "@jsure/shared";
+import { isEnabledSnsType, type SnsRecruit, type SnsType } from "@jsure/shared";
 import styles from "./CampaignForm.module.css";
 
 const OPTIONS: readonly {
@@ -32,6 +32,8 @@ const OPTIONS: readonly {
     icon: "fa-brands fa-youtube",
   },
 ];
+
+const VISIBLE_OPTIONS = OPTIONS.filter((opt) => isEnabledSnsType(opt.value));
 
 const SNS_ICON_CLASS: Record<SnsType, string | undefined> = {
   INSTAGRAM: styles.snsIconInstagram,
@@ -76,7 +78,7 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
 
   return (
     <div className={styles.snsRecruits}>
-      {OPTIONS.map((opt) => {
+      {VISIBLE_OPTIONS.map((opt) => {
         const idx = indexOf(opt.value);
         const selected = idx >= 0;
         const row = selected ? value[idx] : null;

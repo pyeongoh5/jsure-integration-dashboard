@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, FormProvider, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -72,6 +72,7 @@ export function CampaignForm({
     resolver: zodResolver(CampaignFormSchema) as unknown as Resolver<Values>,
     defaultValues: initialValue,
   });
+  const formRef = useRef<HTMLFormElement>(null);
   const [allCampaigns, setAllCampaigns] = useState<CampaignResponse[] | null>(
     null,
   );
@@ -221,11 +222,26 @@ export function CampaignForm({
     flatten(fieldErrors.referenceMediaUrls, "referenceMediaUrls");
     flatten(fieldErrors.snsRecruits, "snsRecruits");
     setPerItemErrors(items);
+
+    // render 후 첫 에러 element 로 스크롤 + 포커스
+    requestAnimationFrame(() => {
+      const form = formRef.current;
+      if (!form) return;
+      const target =
+        form.querySelector<HTMLElement>('[aria-invalid="true"]') ??
+        form.querySelector<HTMLElement>(`.${styles.error}`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (typeof (target as HTMLElement & { focus?: () => void }).focus === "function") {
+        target.focus({ preventScroll: true });
+      }
+    });
   }
 
   return (
     <FormProvider {...methods}>
       <form
+        ref={formRef}
         className={styles.root}
         onSubmit={methods.handleSubmit(submit, onInvalid)}
         noValidate

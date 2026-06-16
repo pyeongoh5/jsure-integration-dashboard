@@ -87,7 +87,7 @@ export class InfluencerCampaignsService {
       where: args.sns
         ? { snsRecruits: { some: { snsType: args.sns } } }
         : {},
-      orderBy: [{ recruitEndAt: "asc" }],
+      orderBy: [{ createdAt: "desc" }],
       include: {
         snsRecruits: {
           select: {
@@ -115,11 +115,10 @@ export class InfluencerCampaignsService {
     const cards = await Promise.all(
       rows.map((r, i) => this.resolveCard(toCard(r, counts[i] ?? 0, r.closedAt, now))),
     );
+    // DB orderBy 가 createdAt desc 이므로, isEnded 분리만 하면 그룹 내 순서가 유지된다 (stable sort).
     return cards.sort((a, b) => {
       if (a.isEnded !== b.isEnded) return a.isEnded ? 1 : -1;
-      const aTime = new Date(a.recruitEndAt).getTime();
-      const bTime = new Date(b.recruitEndAt).getTime();
-      return a.isEnded ? bTime - aTime : aTime - bTime;
+      return 0;
     });
   }
 

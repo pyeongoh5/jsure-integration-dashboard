@@ -82,9 +82,6 @@ export function Drafts() {
           onCampaignChange={setCampaignId}
           mediaFilter={mediaFilter}
           onMediaChange={setMediaFilter}
-          showStageFilter={false}
-          stageFilter={new Set()}
-          onStageChange={() => {}}
         />
         <DraftStatusFilter value={statusFilter} onChange={setStatusFilter} />
       </div>

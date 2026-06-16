@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { SubmittedPostAttachment } from "@jsure/shared";
-import { fetchSubmittedPostAttachments } from "../../draftsApi";
+import { fetchSubmittedPostAttachments } from "@/domains/application/draftsApi";
 import type { DraftReview } from "./types";
 import styles from "./InsightDetailDialog.module.css";
 

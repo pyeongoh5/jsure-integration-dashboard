@@ -1,5 +1,10 @@
 import { useLayoutEffect, useRef } from "react";
-import type { InfluencerCampaignCard, SnsType, SnsRecruit } from "@jsure/shared";
+import type {
+  InfluencerCampaignCard,
+  InstagramPostType,
+  SnsType,
+  SnsRecruit,
+} from "@jsure/shared";
 import styles from "./CampaignCard.module.css";
 
 function snsChipClass(snsType: SnsType) {
@@ -27,6 +32,11 @@ const SNS_FOLLOWER_LABEL: Record<SnsType, string> = {
   TIKTOK: "フォロワー",
   X: "フォロワー",
   YOUTUBE: "登録者",
+};
+
+const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
+  FEED: "フィード",
+  REELS: "リール",
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -66,9 +76,17 @@ const MARQUEE_SPEED_PX_PER_SEC = 15;
 const MARQUEE_PAUSE_MS = 1500;
 
 function condText(r: SnsRecruit): string {
-  return r.minFollowers > 0
-    ? `${SNS_FOLLOWER_LABEL[r.snsType]} ${r.minFollowers.toLocaleString("ja-JP")}人以上`
-    : `${SNS_FOLLOWER_LABEL[r.snsType]} 制限なし`;
+  const base =
+    r.minFollowers > 0
+      ? `${SNS_FOLLOWER_LABEL[r.snsType]} ${r.minFollowers.toLocaleString("ja-JP")}人以上`
+      : `${SNS_FOLLOWER_LABEL[r.snsType]} 制限なし`;
+  if (r.snsType === "INSTAGRAM" && r.instagramPostTypes.length > 0) {
+    const types = r.instagramPostTypes
+      .map((postType) => INSTAGRAM_POST_TYPE_LABEL[postType])
+      .join("・");
+    return `${base} ・ ${types}`;
+  }
+  return base;
 }
 
 function SnsChipList({ recruits }: { recruits: SnsRecruit[] }) {

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SnsTypeSchema, EnabledSnsTypeSchema } from "./influencer.js";
+import { InstagramPostTypeSchema } from "./campaign.js";
 
 export const ApplicationStatusSchema = z.enum([
   "APPLIED",
@@ -83,16 +84,28 @@ export const SubmitInsightRequestSchema = z.object({
 });
 export type SubmitInsightRequest = z.infer<typeof SubmitInsightRequestSchema>;
 
-export const CreateApplicationRequestSchema = z.object({
-  campaignId: z.string().min(1),
-  snsTypes: z
-    .array(EnabledSnsTypeSchema)
-    .min(1, "1つ以上のSNSを選択してください")
-    .refine(
-      (arr) => new Set(arr).size === arr.length,
-      "SNSが重複しています",
-    ),
-});
+export const CreateApplicationRequestSchema = z
+  .object({
+    campaignId: z.string().min(1),
+    snsTypes: z
+      .array(EnabledSnsTypeSchema)
+      .min(1, "1つ以上のSNSを選択してください")
+      .refine(
+        (arr) => new Set(arr).size === arr.length,
+        "SNSが重複しています",
+      ),
+    /** INSTAGRAM 응모 시 1개만 선택. 다른 SNS만 응모하는 경우 undefined. */
+    instagramPostType: InstagramPostTypeSchema.optional(),
+  })
+  .superRefine((dto, ctx) => {
+    if (dto.snsTypes.includes("INSTAGRAM") && !dto.instagramPostType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["instagramPostType"],
+        message: "投稿タイプ（フィード/リール）を選択してください",
+      });
+    }
+  });
 export type CreateApplicationRequest = z.infer<
   typeof CreateApplicationRequestSchema
 >;
@@ -123,6 +136,8 @@ export const InfluencerApplicationSchema = z.object({
   completedAt: z.string().datetime().nullable(),
   rejectReason: z.string().nullable(),
   snsType: SnsTypeSchema,
+  /** INSTAGRAM 응모인 경우 FEED/REELS, 그 외는 null. */
+  instagramPostType: InstagramPostTypeSchema.nullable(),
   posts: z.array(SubmittedPostSchema),
   postingPeriodDays: z.number().int().min(1),
   postingDeadlineAt: z.string().datetime().nullable(),

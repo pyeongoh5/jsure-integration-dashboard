@@ -1,5 +1,19 @@
-import { isEnabledSnsType, type SnsRecruit, type SnsType } from "@jsure/shared";
+import {
+  isEnabledSnsType,
+  type InstagramPostType,
+  type SnsRecruit,
+  type SnsType,
+} from "@jsure/shared";
 import styles from "./CampaignForm.module.css";
+
+const INSTAGRAM_POST_TYPE_LABELS: Record<InstagramPostType, string> = {
+  FEED: "피드",
+  REELS: "릴스",
+};
+const INSTAGRAM_POST_TYPE_OPTIONS: readonly InstagramPostType[] = [
+  "FEED",
+  "REELS",
+];
 
 const OPTIONS: readonly {
   value: SnsType;
@@ -42,7 +56,9 @@ const SNS_ICON_CLASS: Record<SnsType, string | undefined> = {
   YOUTUBE: styles.snsIconYoutube,
 };
 
-type ItemError = Partial<Record<"minFollowers" | "recruitCount", string>>;
+type ItemError = Partial<
+  Record<"minFollowers" | "recruitCount" | "instagramPostTypes", string>
+>;
 
 type Props = {
   value: SnsRecruit[];
@@ -66,8 +82,29 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
     if (idx >= 0) {
       onChange(value.filter((_, i) => i !== idx));
     } else {
-      onChange([...value, { snsType: sns, minFollowers: 0, recruitCount: 1 }]);
+      onChange([
+        ...value,
+        {
+          snsType: sns,
+          minFollowers: 0,
+          recruitCount: 1,
+          instagramPostTypes: sns === "INSTAGRAM" ? ["FEED"] : [],
+        },
+      ]);
     }
+  };
+
+  const toggleInstagramPostType = (idx: number, postType: InstagramPostType) => {
+    const current = value[idx];
+    if (!current) return;
+    const set = new Set<InstagramPostType>(current.instagramPostTypes);
+    if (set.has(postType)) set.delete(postType);
+    else set.add(postType);
+    updateAt(idx, {
+      instagramPostTypes: INSTAGRAM_POST_TYPE_OPTIONS.filter((option) =>
+        set.has(option),
+      ),
+    });
   };
 
   const updateAt = (idx: number, patch: Partial<SnsRecruit>) => {
@@ -156,6 +193,37 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
                     <div className={styles.error}>{err.recruitCount}</div>
                   )}
                 </div>
+                {opt.value === "INSTAGRAM" && (
+                  <div className={styles.snsField}>
+                    <label className={styles.subLabel}>모집 포스트 타입</label>
+                    <div className={styles.snsCountRow}>
+                      {INSTAGRAM_POST_TYPE_OPTIONS.map((postType) => (
+                        <label
+                          key={postType}
+                          className={styles.snsToggle}
+                          style={{ marginRight: 12 }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={row.instagramPostTypes.includes(postType)}
+                            disabled={disabled}
+                            onChange={() =>
+                              toggleInstagramPostType(idx, postType)
+                            }
+                          />
+                          <span className={styles.snsToggleLabel}>
+                            {INSTAGRAM_POST_TYPE_LABELS[postType]}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    {err?.instagramPostTypes && (
+                      <div className={styles.error}>
+                        {err.instagramPostTypes}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : null}
           </div>

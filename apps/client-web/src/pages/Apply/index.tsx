@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { SnsType } from "@jsure/shared";
+import type { InstagramPostType, SnsType } from "@jsure/shared";
 import { useCampaign } from "@/domains/campaign";
 import { createApplication } from "@/domains/application";
 import { fetchMe } from "@/domains/auth";
@@ -39,11 +39,18 @@ const SNS_FOLLOWER_LABEL: Record<SnsType, string> = {
   YOUTUBE: "登録者",
 };
 
+const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
+  FEED: "フィード",
+  REELS: "リール",
+};
+
 export function Apply() {
   const { id = "" } = useParams();
   const nav = useNavigate();
   const [agreed, setAgreed] = useState<Set<string>>(new Set());
   const [selectedSns, setSelectedSns] = useState<Set<SnsType>>(new Set());
+  const [instagramPostType, setInstagramPostType] =
+    useState<InstagramPostType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [addressConfirmed, setAddressConfirmed] = useState(false);
 
@@ -72,8 +79,23 @@ export function Apply() {
         campaign.data.appliedCount >= campaign.data.recruitCount),
   );
 
+  const wantsInstagram = selectedSns.has("INSTAGRAM");
+  const allowedInstagramPostTypes = useMemo<InstagramPostType[]>(() => {
+    if (!campaign.data) return [];
+    const instagramRecruit = campaign.data.snsRecruits.find(
+      (recruit) => recruit.snsType === "INSTAGRAM",
+    );
+    return instagramRecruit?.instagramPostTypes ?? [];
+  }, [campaign.data]);
+  const instagramPostTypeMissing = wantsInstagram && !instagramPostType;
+
   const apply = useMutation({
-    mutationFn: () => createApplication(id, Array.from(selectedSns)),
+    mutationFn: () =>
+      createApplication(
+        id,
+        Array.from(selectedSns),
+        wantsInstagram ? instagramPostType : null,
+      ),
     onSuccess: (app) => nav(`/applications/${app.id}`, { replace: true }),
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { message?: string } } };
@@ -97,6 +119,9 @@ export function Apply() {
       else next.add(s);
       return next;
     });
+    if (s === "INSTAGRAM") {
+      setInstagramPostType(null);
+    }
   }
 
   if (campaign.isLoading || me.isLoading) {
@@ -205,6 +230,43 @@ export function Apply() {
           )}
         </section>
 
+        {wantsInstagram && allowedInstagramPostTypes.length > 0 && (
+          <section className={styles.sec}>
+            <h3>Instagram 投稿タイプ</h3>
+            <ul className={styles.snsPick}>
+              {allowedInstagramPostTypes.map((postType) => {
+                const isSelected = instagramPostType === postType;
+                return (
+                  <li key={postType}>
+                    <label
+                      className={`${styles.snsItem} ${
+                        isSelected ? styles.snsItemSelected : ""
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="instagram-post-type"
+                        checked={isSelected}
+                        onChange={() => setInstagramPostType(postType)}
+                      />
+                      <div className={styles.snsInfo}>
+                        <div className={styles.snsName}>
+                          {INSTAGRAM_POST_TYPE_LABEL[postType]}
+                        </div>
+                      </div>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+            {instagramPostTypeMissing && (
+              <p style={{ color: "#ef4444", fontSize: 13 }}>
+                投稿タイプを選択してください
+              </p>
+            )}
+          </section>
+        )}
+
         <section className={styles.sec}>
           <h3>お届け先住所</h3>
           {me.data?.address ? (
@@ -278,6 +340,7 @@ export function Apply() {
             isClosed ||
             !allAgreed ||
             !hasSelection ||
+            instagramPostTypeMissing ||
             qualifying.length === 0 ||
             !me.data?.address ||
             !addressConfirmed ||

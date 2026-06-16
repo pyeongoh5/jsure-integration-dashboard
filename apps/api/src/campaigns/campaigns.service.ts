@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -7,6 +8,7 @@ import type {
   ApplicationStatus,
   CampaignResponse,
   CreateCampaignRequest,
+  InstagramPostType,
   SnsRecruit,
   UpdateCampaignRequest,
 } from "@jsure/shared";
@@ -30,6 +32,7 @@ type SnsRecruitRow = {
   snsType: string;
   minFollowers: number;
   recruitCount: number;
+  instagramPostTypes: InstagramPostType[];
 };
 
 type CampaignRow = {
@@ -71,10 +74,12 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     id: row.id,
     title: row.title,
     rewardJpy: row.rewardJpy,
-    snsRecruits: row.snsRecruits.map((r) => ({
-      snsType: r.snsType as SnsRecruit["snsType"],
-      minFollowers: r.minFollowers,
-      recruitCount: r.recruitCount,
+    snsRecruits: row.snsRecruits.map((recruit) => ({
+      snsType: recruit.snsType as SnsRecruit["snsType"],
+      minFollowers: recruit.minFollowers,
+      recruitCount: recruit.recruitCount,
+      instagramPostTypes:
+        recruit.snsType === "INSTAGRAM" ? recruit.instagramPostTypes : [],
     })),
     recruitStartDate: utcToJstDateStr(row.recruitStartAt),
     recruitEndDate: utcToJstDateStr(row.recruitEndAt),
@@ -98,7 +103,12 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
 
 const RECRUITS_INCLUDE = {
   snsRecruits: {
-    select: { snsType: true, minFollowers: true, recruitCount: true },
+    select: {
+      snsType: true,
+      minFollowers: true,
+      recruitCount: true,
+      instagramPostTypes: true,
+    },
     orderBy: { snsType: "asc" as const },
   },
   exclusionsAsExcluding: {
@@ -184,6 +194,7 @@ export class CampaignsService {
     const excludedCampaignIds = await this.validateExcludedCampaignIds(
       input.excludedCampaignIds,
     );
+    const snsRecruits = this.normalizeSnsRecruitsInput(input.snsRecruits);
     const row = await this.prisma.campaign.create({
       data: {
         title: input.title,
@@ -198,11 +209,7 @@ export class CampaignsService {
         cautions: input.cautions,
         thumbnailUrl: input.thumbnailUrl ?? null,
         snsRecruits: {
-          create: input.snsRecruits.map((r) => ({
-            snsType: r.snsType,
-            minFollowers: r.minFollowers,
-            recruitCount: r.recruitCount,
-          })),
+          create: snsRecruits,
         },
         exclusionsAsExcluding: {
           create: excludedCampaignIds.map((excludedCampaignId) => ({
@@ -213,6 +220,43 @@ export class CampaignsService {
       include: RECRUITS_INCLUDE,
     });
     return this.withResolved(toResponse(row, EMPTY_COUNTS));
+  }
+
+  /**
+   * 모집 SNS 입력을 DB 저장 형식으로 정규화한다.
+   * - INSTAGRAM 모집은 instagramPostTypes 가 1개 이상이어야 한다. 부족하면 BadRequest.
+   * - INSTAGRAM 이 아니면 instagramPostTypes 는 무조건 빈 배열로.
+   */
+  private normalizeSnsRecruitsInput(
+    snsRecruits: CreateCampaignRequest["snsRecruits"],
+  ): {
+    snsType: SnsRecruit["snsType"];
+    minFollowers: number;
+    recruitCount: number;
+    instagramPostTypes: InstagramPostType[];
+  }[] {
+    return snsRecruits.map((recruit) => {
+      if (recruit.snsType === "INSTAGRAM") {
+        const unique = Array.from(new Set(recruit.instagramPostTypes ?? []));
+        if (unique.length === 0) {
+          throw new BadRequestException(
+            "Instagram 모집은 FEED/REELS 중 1개 이상을 선택해야 합니다",
+          );
+        }
+        return {
+          snsType: recruit.snsType,
+          minFollowers: recruit.minFollowers,
+          recruitCount: recruit.recruitCount,
+          instagramPostTypes: unique,
+        };
+      }
+      return {
+        snsType: recruit.snsType,
+        minFollowers: recruit.minFollowers,
+        recruitCount: recruit.recruitCount,
+        instagramPostTypes: [] as InstagramPostType[],
+      };
+    });
   }
 
   /**
@@ -301,13 +345,12 @@ export class CampaignsService {
     // snsRecruits / exclusions 는 전체 교체.
     const row = await this.prisma.$transaction(async (tx) => {
       if (input.snsRecruits !== undefined) {
+        const normalized = this.normalizeSnsRecruitsInput(input.snsRecruits);
         await tx.campaignSnsRecruit.deleteMany({ where: { campaignId: id } });
         await tx.campaignSnsRecruit.createMany({
-          data: input.snsRecruits.map((r) => ({
+          data: normalized.map((recruit) => ({
             campaignId: id,
-            snsType: r.snsType,
-            minFollowers: r.minFollowers,
-            recruitCount: r.recruitCount,
+            ...recruit,
           })),
         });
       }

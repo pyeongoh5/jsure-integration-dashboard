@@ -2,6 +2,7 @@ import {
   InfluencerApplicationListResponseSchema,
   InfluencerApplicationSchema,
   type InfluencerApplication,
+  type InstagramPostType,
   type SnsType,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
@@ -21,10 +22,12 @@ export async function getApplication(
 export async function createApplication(
   campaignId: string,
   snsTypes: SnsType[],
+  instagramPostType: InstagramPostType | null,
 ): Promise<InfluencerApplication> {
   const res = await api.post("/influencer/applications", {
     campaignId,
     snsTypes,
+    instagramPostType: instagramPostType ?? undefined,
   });
   return InfluencerApplicationSchema.parse(res.data);
 }

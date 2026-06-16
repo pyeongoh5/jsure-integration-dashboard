@@ -97,6 +97,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     snsRecruits: c.snsRecruits.map((r) => ({
       snsType: r.snsType,
       minFollowers: r.minFollowers,
+      instagramPostTypes: r.instagramPostTypes,
     })),
   };
 }

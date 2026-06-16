@@ -12,18 +12,47 @@ const DateOnly = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "YYYY-MM-DD 형식이어야 합니다");
 
+export const InstagramPostTypeSchema = z.enum(["FEED", "REELS"]);
+export type InstagramPostType = z.infer<typeof InstagramPostTypeSchema>;
+
+/**
+ * INSTAGRAM 모집은 어떤 포스트 타입(FEED/REELS)을 받을지 1개 이상 지정해야 한다.
+ * 비 INSTAGRAM 모집은 빈 배열로 응답·저장한다.
+ */
 export const SnsRecruitSchema = z.object({
   snsType: SnsTypeSchema,
   minFollowers: z.number().int().nonnegative("0 이상의 정수"),
   recruitCount: z.number().int().positive("1 이상"),
+  instagramPostTypes: z.array(InstagramPostTypeSchema).default([]),
 });
 export type SnsRecruit = z.infer<typeof SnsRecruitSchema>;
 
-const SnsRecruitInputSchema = z.object({
-  snsType: EnabledSnsTypeSchema,
-  minFollowers: z.number().int().nonnegative("0 이상의 정수"),
-  recruitCount: z.number().int().positive("1 이상"),
-});
+const SnsRecruitInputSchema = z
+  .object({
+    snsType: EnabledSnsTypeSchema,
+    minFollowers: z.number().int().nonnegative("0 이상의 정수"),
+    recruitCount: z.number().int().positive("1 이상"),
+    instagramPostTypes: z.array(InstagramPostTypeSchema).default([]),
+  })
+  .superRefine((recruit, ctx) => {
+    if (recruit.snsType === "INSTAGRAM") {
+      const unique = new Set(recruit.instagramPostTypes);
+      if (unique.size === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["instagramPostTypes"],
+          message: "FEED 또는 REELS 중 1개 이상을 선택하세요",
+        });
+      }
+      if (unique.size !== recruit.instagramPostTypes.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["instagramPostTypes"],
+          message: "포스트 타입이 중복되었습니다",
+        });
+      }
+    }
+  });
 
 const SnsRecruitInputArray = z
   .array(SnsRecruitInputSchema)

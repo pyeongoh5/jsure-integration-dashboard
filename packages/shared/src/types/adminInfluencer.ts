@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SnsTypeSchema } from "./influencer.js";
+import { InstagramPostTypeSchema } from "./campaign.js";
 import {
   ApplicationStatusSchema,
   PostReviewStatusSchema,
@@ -52,6 +53,7 @@ export const AdminApplicationSchema = z.object({
   receivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   snsType: SnsTypeSchema,
+  instagramPostType: InstagramPostTypeSchema.nullable(),
   hasSubmittedPost: z.boolean(),
 
   campaign: z.object({

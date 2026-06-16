@@ -5,6 +5,7 @@ import type {
   AdminSubmittedPost,
   ApplicationStatus,
   ApprovedApplicantExportResponse,
+  InstagramPostType,
   SnsType,
 } from "@jsure/shared";
 import { buildSnsProfileUrl } from "@jsure/shared";
@@ -26,6 +27,7 @@ type AdminApplicationRow = {
   receivedAt: Date | null;
   completedAt: Date | null;
   snsType: SnsType;
+  instagramPostType: InstagramPostType | null;
   campaign: { id: string; title: string };
   influencer: {
     id: string;
@@ -51,6 +53,7 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
     receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     snsType: row.snsType,
+    instagramPostType: row.instagramPostType,
     hasSubmittedPost: row._count.posts > 0,
     campaign: row.campaign,
     influencer: {

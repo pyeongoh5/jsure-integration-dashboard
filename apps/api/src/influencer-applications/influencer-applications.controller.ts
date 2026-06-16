@@ -49,7 +49,12 @@ export class InfluencerApplicationsController {
     @Request() req: { user: AuthenticatedInfluencer },
     @Body() dto: CreateApplicationRequest,
   ) {
-    return this.svc.create(req.user.id, dto.campaignId, dto.snsTypes);
+    return this.svc.create(
+      req.user.id,
+      dto.campaignId,
+      dto.snsTypes,
+      dto.instagramPostType ?? null,
+    );
   }
 
   @Post(":id/cancel")

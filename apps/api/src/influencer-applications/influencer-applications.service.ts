@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import type {
   InfluencerApplication,
+  InstagramPostType,
   SnsType,
   SubmittedPost,
   ApplicationStatus,
@@ -55,6 +56,7 @@ type ApplicationRow = {
   completedAt: Date | null;
   rejectReason: string | null;
   snsType: SnsType;
+  instagramPostType: InstagramPostType | null;
   posts: PostRow[];
   campaign: {
     id: string;
@@ -133,6 +135,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     rejectReason: row.rejectReason,
     snsType: row.snsType,
+    instagramPostType: row.instagramPostType,
     posts: row.posts.map(toPost),
     postingPeriodDays: row.campaign.postingPeriodDays,
     postingDeadlineAt: deadline ? deadline.toISOString() : null,
@@ -215,13 +218,19 @@ export class InfluencerApplicationsService {
     influencerId: string,
     campaignId: string,
     snsTypes: SnsType[],
+    instagramPostType: InstagramPostType | null,
   ): Promise<InfluencerApplication> {
     const now = new Date();
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
       include: {
         snsRecruits: {
-          select: { snsType: true, minFollowers: true, recruitCount: true },
+          select: {
+            snsType: true,
+            minFollowers: true,
+            recruitCount: true,
+            instagramPostTypes: true,
+          },
         },
         exclusionsAsExcluding: { select: { excludedCampaignId: true } },
       },
@@ -298,6 +307,29 @@ export class InfluencerApplicationsService {
       });
     }
 
+    // INSTAGRAM 응모는 캠페인이 허용한 instagramPostTypes 중 정확히 1개를 선택해야 한다.
+    const instagramRecruit = campaign.snsRecruits.find(
+      (recruit) => recruit.snsType === "INSTAGRAM",
+    );
+    const wantsInstagram = snsTypes.includes("INSTAGRAM");
+    if (wantsInstagram) {
+      if (!instagramPostType) {
+        throw new BadRequestException({
+          code: "INSTAGRAM_POST_TYPE_REQUIRED",
+          message: "投稿タイプ（フィード/リール）を選択してください",
+        });
+      }
+      if (
+        !instagramRecruit ||
+        !instagramRecruit.instagramPostTypes.includes(instagramPostType)
+      ) {
+        throw new BadRequestException({
+          code: "INSTAGRAM_POST_TYPE_NOT_ALLOWED",
+          message: "選択した投稿タイプはこのキャンペーンで募集していません",
+        });
+      }
+    }
+
     const blockedByExclusion = snsTypes.filter((snsType) =>
       excludedSnsTypes.has(snsType),
     );
@@ -327,6 +359,8 @@ export class InfluencerApplicationsService {
         continue;
       }
 
+      const postTypeForRow =
+        snsType === "INSTAGRAM" ? instagramPostType : null;
       let row;
       if (existing) {
         row = await this.prisma.campaignApplication.update({
@@ -343,6 +377,7 @@ export class InfluencerApplicationsService {
             deliveredAt: null,
             receivedAt: null,
             completedAt: null,
+            instagramPostType: postTypeForRow,
           },
           include: INCLUDE,
         });
@@ -353,6 +388,7 @@ export class InfluencerApplicationsService {
             influencerId,
             snsType,
             status: "APPLIED",
+            instagramPostType: postTypeForRow,
           },
           include: INCLUDE,
         });

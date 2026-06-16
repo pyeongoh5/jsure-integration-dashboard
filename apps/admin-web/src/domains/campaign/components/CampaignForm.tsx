@@ -34,7 +34,7 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
 };
 
 type SnsRecruitItemError = Partial<
-  Record<"minFollowers" | "recruitCount", string>
+  Record<"minFollowers" | "recruitCount" | "instagramPostTypes", string>
 >;
 
 interface PerItemErrors {
@@ -199,7 +199,11 @@ export function CampaignForm({
         } else if (pathHead === "snsRecruits" && Number.isInteger(index)) {
           const sub = value as Record<string, { message?: unknown }>;
           const target: SnsRecruitItemError = {};
-          for (const subKey of ["minFollowers", "recruitCount"] as const) {
+          for (const subKey of [
+            "minFollowers",
+            "recruitCount",
+            "instagramPostTypes",
+          ] as const) {
             const message = sub[subKey]?.message;
             if (typeof message === "string") {
               target[subKey] = message;

@@ -60,6 +60,11 @@ enum SnsType {
   YOUTUBE
 }
 
+enum InstagramPostType {
+  FEED
+  REELS
+}
+
 enum InfluencerStatus {
   ACTIVE
   SUSPENDED
@@ -128,13 +133,15 @@ model CampaignExclusion {
 }
 
 model CampaignSnsRecruit {
-  id           String   @id @default(cuid())
-  campaignId   String
-  snsType      SnsType
-  minFollowers Int      @default(0)
-  recruitCount Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String              @id @default(cuid())
+  campaignId          String
+  snsType             SnsType
+  minFollowers        Int                 @default(0)
+  recruitCount        Int
+  /// INSTAGRAM 모집일 때만 의미가 있다. 비-INSTAGRAM 행은 항상 빈 배열.
+  instagramPostTypes  InstagramPostType[] @default([])
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
@@ -258,6 +265,8 @@ model CampaignApplication {
   campaignId   String
   influencerId String
   snsType      SnsType
+  /// INSTAGRAM 응모일 때만 의미가 있다. 비-INSTAGRAM 응모는 항상 null.
+  instagramPostType InstagramPostType?
   status       ApplicationStatus @default(APPLIED)
 
   appliedAt    DateTime  @default(now())

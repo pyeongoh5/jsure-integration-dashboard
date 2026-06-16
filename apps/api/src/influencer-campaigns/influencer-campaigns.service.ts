@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import type {
   InfluencerCampaignCard,
   InfluencerCampaignDetail,
+  InstagramPostType,
   SnsType,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
@@ -24,6 +25,7 @@ type CampaignRow = {
     snsType: SnsType;
     minFollowers: number;
     recruitCount: number;
+    instagramPostTypes: InstagramPostType[];
   }[];
 };
 
@@ -88,7 +90,12 @@ export class InfluencerCampaignsService {
       orderBy: [{ recruitEndAt: "asc" }],
       include: {
         snsRecruits: {
-          select: { snsType: true, minFollowers: true, recruitCount: true },
+          select: {
+            snsType: true,
+            minFollowers: true,
+            recruitCount: true,
+            instagramPostTypes: true,
+          },
           orderBy: { snsType: "asc" },
         },
       },
@@ -125,7 +132,12 @@ export class InfluencerCampaignsService {
       where: { id: args.campaignId },
       include: {
         snsRecruits: {
-          select: { snsType: true, minFollowers: true, recruitCount: true },
+          select: {
+            snsType: true,
+            minFollowers: true,
+            recruitCount: true,
+            instagramPostTypes: true,
+          },
           orderBy: { snsType: "asc" },
         },
         exclusionsAsExcluding: { select: { excludedCampaignId: true } },

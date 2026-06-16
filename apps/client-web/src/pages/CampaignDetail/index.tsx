@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import type { SnsType, SnsRecruit } from "@jsure/shared";
+import type { InstagramPostType, SnsType, SnsRecruit } from "@jsure/shared";
 import { useCampaign, formatYen, formatDate } from "@/domains/campaign";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
@@ -24,6 +24,11 @@ const SNS_LABEL: Record<SnsType, string> = {
   TIKTOK: "TikTok",
   YOUTUBE: "YouTube",
   X: "X",
+};
+
+const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
+  FEED: "フィード",
+  REELS: "リール",
 };
 
 export function CampaignDetail() {
@@ -71,19 +76,30 @@ export function CampaignDetail() {
         </div>
 
         <ul className={styles.sns}>
-          {data.snsRecruits.map((r: SnsRecruit) => (
-            <li key={r.snsType} className={`${styles.snsRow} ${SNS_ROW_CLASS[r.snsType]}`}>
-              <i className={SNS_ICON[r.snsType]} aria-hidden="true" />
-              <span className={styles.snsName}>{SNS_LABEL[r.snsType]}</span>
-              <span className={styles.snsCount}>募集 {r.recruitCount}名</span>
-              <span className={styles.snsCond}>
-                条件:{" "}
-                {r.minFollowers > 0
-                  ? `${r.snsType === "YOUTUBE" ? "登録者" : "フォロワー"}数 ${r.minFollowers.toLocaleString("ja-JP")}+`
-                  : "制限なし"}
-              </span>
-            </li>
-          ))}
+          {data.snsRecruits.map((r: SnsRecruit) => {
+            const instagramTypes =
+              r.snsType === "INSTAGRAM" && r.instagramPostTypes.length > 0
+                ? r.instagramPostTypes
+                    .map((postType) => INSTAGRAM_POST_TYPE_LABEL[postType])
+                    .join("・")
+                : null;
+            return (
+              <li key={r.snsType} className={`${styles.snsRow} ${SNS_ROW_CLASS[r.snsType]}`}>
+                <i className={SNS_ICON[r.snsType]} aria-hidden="true" />
+                <span className={styles.snsName}>
+                  {SNS_LABEL[r.snsType]}
+                  {instagramTypes ? ` (${instagramTypes})` : ""}
+                </span>
+                <span className={styles.snsCount}>募集 {r.recruitCount}名</span>
+                <span className={styles.snsCond}>
+                  条件:{" "}
+                  {r.minFollowers > 0
+                    ? `${r.snsType === "YOUTUBE" ? "登録者" : "フォロワー"}数 ${r.minFollowers.toLocaleString("ja-JP")}+`
+                    : "制限なし"}
+                </span>
+              </li>
+            );
+          })}
         </ul>
 
         <section className={styles.section}>

@@ -1,9 +1,10 @@
-import type { SnsType } from "@jsure/shared";
+import type { InstagramPostType, SnsType } from "@jsure/shared";
 
 export type {
   CampaignResponse,
   CreateCampaignRequest,
   UpdateCampaignRequest,
+  InstagramPostType,
   SnsRecruit,
   SnsType,
 } from "@jsure/shared";
@@ -13,6 +14,12 @@ export type CampaignStatus = "recruit" | "done";
 export type CampaignCardSnsRecruit = {
   snsType: SnsType;
   minFollowers: number;
+  instagramPostTypes: InstagramPostType[];
+};
+
+export const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
+  FEED: "피드",
+  REELS: "릴스",
 };
 
 export type Campaign = {

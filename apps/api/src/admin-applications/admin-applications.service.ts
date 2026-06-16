@@ -646,6 +646,7 @@ const SUBMITTED_POST_INCLUDE = {
     select: {
       id: true,
       status: true,
+      instagramPostType: true,
       campaign: {
         select: { id: true, title: true, thumbnailUrl: true, rewardJpy: true },
       },
@@ -704,6 +705,7 @@ type SubmittedPostRow = {
   application: {
     id: string;
     status: ApplicationStatus;
+    instagramPostType: InstagramPostType | null;
     campaign: { id: string; title: string; thumbnailUrl: string | null; rewardJpy: number };
     influencer: {
       id: string;
@@ -746,6 +748,7 @@ async function toSubmittedPostResponse(
   return {
     id: row.id,
     snsType: row.snsType,
+    instagramPostType: row.application.instagramPostType,
     url: row.url,
     submittedAt: row.submittedAt.toISOString(),
     insightLikes: row.insightLikes,

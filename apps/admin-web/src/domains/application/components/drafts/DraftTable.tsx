@@ -7,7 +7,7 @@ import {
   type DraftStatus,
   type Media,
 } from "./types";
-import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign/types";
+import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
 import styles from "@/pages/Drafts/Drafts.module.css";
 
 const MEDIA_CLASS: Record<Media, string | undefined> = {

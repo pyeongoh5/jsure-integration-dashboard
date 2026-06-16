@@ -1,12 +1,7 @@
-import styles from "@/pages/Applicants/Applicants.module.css";
 import { ScrollTable } from "@/components/composites";
-import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign/types";
-import {
-  APPLICANT_STATUS_LABEL,
-  MEDIA_META,
-  type Applicant,
-  type ApplicantStatus,
-} from "./types";
+import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
+import { APPLICANT_STATUS_LABEL, MEDIA_META, type Applicant, type ApplicantStatus } from "./types";
+import styles from "@/pages/Applicants/Applicants.module.css";
 
 type ActionHandlers = {
   onApprove: (applicant: Applicant) => void;
@@ -234,9 +229,7 @@ export function ApplicantTable({
                     <div>
                       <div className={styles.infName}>
                         {applicant.name}
-                        {applicant.flagged && (
-                          <span className={styles.flaggedBadge}>대상외</span>
-                        )}
+                        {applicant.flagged && <span className={styles.flaggedBadge}>대상외</span>}
                       </div>
                       <div className={styles.infHandle}>@{applicant.handle}</div>
                     </div>
@@ -247,8 +240,7 @@ export function ApplicantTable({
                   <div className={styles.mediaList}>
                     {applicant.media.map((media) => {
                       const meta = MEDIA_META[media];
-                      const showPostType =
-                        media === "ig" && applicant.instagramPostType !== null;
+                      const showPostType = media === "ig" && applicant.instagramPostType !== null;
                       return (
                         <span key={media} className={styles.mediaItem}>
                           <span
@@ -270,10 +262,7 @@ export function ApplicantTable({
                 </td>
                 <td className={styles.num}>{formatFollowers(applicant.followers)}</td>
                 <td className={styles.time}>{applicant.appliedAt}</td>
-                <td
-                  className={styles.stageCell}
-                  style={{ textAlign: "center" }}
-                >
+                <td className={styles.stageCell} style={{ textAlign: "center" }}>
                   {renderStatus(applicant)}
                 </td>
                 <td>

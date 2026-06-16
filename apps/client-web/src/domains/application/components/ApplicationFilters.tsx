@@ -6,16 +6,16 @@ import styles from "./ApplicationFilters.module.css";
 
 const STATUS_OPTIONS: { value: Exclude<StatusFilter, "all">; label: string }[] =
   [
-    { value: "applied", label: "申請" },
-    { value: "rejected", label: "却下" },
+    { value: "applied", label: "応募" },
+    { value: "rejected", label: "未選定" },
     { value: "in_progress", label: "進行中" },
     { value: "ended", label: "終了" },
   ];
 
 const STATUS_LABEL: Record<StatusFilter, string> = {
   all: "",
-  applied: "申請",
-  rejected: "却下",
+  applied: "応募",
+  rejected: "未選定",
   in_progress: "進行中",
   ended: "終了",
 };

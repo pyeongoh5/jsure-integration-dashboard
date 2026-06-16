@@ -261,7 +261,7 @@ export function ApplicationDetail() {
 
         {stage === "REJECTED" && (
           <p className={`${styles.msg} ${styles.msgErr}`}>
-            却下されました: {data.rejectReason ?? "—"}
+            未選定となりました: {data.rejectReason ?? "—"}
           </p>
         )}
         {stage === "CANCELLED" && <p className={`${styles.msg} ${styles.msgErr}`}>キャンセル済</p>}

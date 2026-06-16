@@ -2,7 +2,7 @@ import type { ApplicationDisplayStage } from "@jsure/shared";
 import { STAGE_PROGRESS, STAGE_TOTAL } from "../utils";
 import styles from "./ApplicationStepper.module.css";
 
-const STEPS = ["申請", "承認", "発送", "受取", "投稿", "検査", "完了"];
+const STEPS = ["応募", "承認", "発送", "受取", "投稿", "検査", "完了"];
 
 export function ApplicationStepper({
   stage,
@@ -30,7 +30,7 @@ export function ApplicationStepper({
       })}
       {terminal && (
         <div className={styles.terminal}>
-          {stage === "REJECTED" ? "却下" : "キャンセル"}
+          {stage === "REJECTED" ? "未選定" : "キャンセル"}
         </div>
       )}
       <input type="hidden" value={STAGE_TOTAL} />

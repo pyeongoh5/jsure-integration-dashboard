@@ -1,7 +1,7 @@
 import type { ApplicationDisplayStage } from "@jsure/shared";
 
 export const STAGE_LABEL: Record<ApplicationDisplayStage, string> = {
-  APPLIED: "申請済",
+  APPLIED: "応募済",
   APPROVED: "承認",
   SHIPPED: "発送中",
   AWAITING_RECEIPT: "受領確認待ち",
@@ -12,7 +12,7 @@ export const STAGE_LABEL: Record<ApplicationDisplayStage, string> = {
   REVIEWING: "検査中",
   COMPLETED: "完了",
   SETTLED: "支払完了",
-  REJECTED: "却下",
+  REJECTED: "未選定",
   CANCELLED: "キャンセル",
 };
 

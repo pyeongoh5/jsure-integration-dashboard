@@ -45,7 +45,12 @@ export class InfluencersController {
     @Body(new ZodValidationPipe(CreateInfluencerMemoRequestSchema))
     body: CreateInfluencerMemoRequest,
   ): Promise<InfluencerMemoEntry> {
-    return this.svc.createMemo(id, req.user.id, body.comment.trim());
+    return this.svc.createMemo(
+      id,
+      req.user.id,
+      body.comment.trim(),
+      body.campaignId ?? null,
+    );
   }
 
   @Post(":id/flag")

@@ -105,6 +105,7 @@ model Campaign {
 
   snsRecruits  CampaignSnsRecruit[]
   applications CampaignApplication[]
+  influencerMemos InfluencerMemo[]
 
   // 이 캠페인이 "제외 대상" 으로 지정한 다른 캠페인들 (E → A,B)
   exclusionsAsExcluding CampaignExclusion[] @relation("excludingCampaign")
@@ -185,11 +186,13 @@ model Influencer {
 model InfluencerMemo {
   id           String   @id @default(cuid())
   influencerId String
+  campaignId   String?
   comment      String
   createdAt    DateTime @default(now())
   createdById  String?
 
   influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  campaign   Campaign?  @relation(fields: [campaignId], references: [id], onDelete: SetNull)
 
   @@index([influencerId])
   @@map("influencer_memos")

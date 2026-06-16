@@ -19,7 +19,7 @@ type TimelineEntry =
       id: string;
       at: string;
       comment: string;
-      authorName: string | null;
+      campaignTitle: string | null;
     }
   | {
       kind: "application";
@@ -44,7 +44,7 @@ function buildTimeline(data: InfluencerNotesResponse): TimelineEntry[] {
       id: memo.id,
       at: memo.createdAt,
       comment: memo.comment,
-      authorName: memo.createdBy?.name ?? null,
+      campaignTitle: memo.campaignTitle,
     });
   }
   for (const rejection of data.applicationRejections) {
@@ -84,6 +84,7 @@ function formatDateTime(iso: string): string {
 type Props = {
   influencerId: string;
   influencerName: string;
+  currentCampaignId?: string | null;
   onClose: () => void;
   onChanged?: () => void;
 };
@@ -91,6 +92,7 @@ type Props = {
 export function InfluencerNotesDialog({
   influencerId,
   influencerName,
+  currentCampaignId,
   onClose,
   onChanged,
 }: Props) {
@@ -133,7 +135,11 @@ export function InfluencerNotesDialog({
     setSubmitting(true);
     setError(null);
     try {
-      const created = await createInfluencerMemo(influencerId, trimmed);
+      const created = await createInfluencerMemo(
+        influencerId,
+        trimmed,
+        currentCampaignId ?? null,
+      );
       setMemoDraft("");
       setState((current) =>
         current.kind === "ready"
@@ -296,9 +302,9 @@ export function InfluencerNotesDialog({
                             {entry.campaignTitle}
                           </span>
                         )}
-                        {entry.kind === "memo" && entry.authorName && (
+                        {entry.kind === "memo" && entry.campaignTitle && (
                           <span className={styles.entryCampaign}>
-                            {entry.authorName}
+                            {entry.campaignTitle}
                           </span>
                         )}
                         <span>{formatDateTime(entry.at)}</span>

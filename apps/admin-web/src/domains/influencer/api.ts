@@ -25,10 +25,11 @@ export async function fetchInfluencerNotes(
 export async function createInfluencerMemo(
   influencerId: string,
   comment: string,
+  campaignId: string | null = null,
 ): Promise<InfluencerMemoEntry> {
   const res = await api.post(
     `/influencers/${encodeURIComponent(influencerId)}/memos`,
-    { comment },
+    { comment, campaignId },
   );
   return InfluencerMemoEntrySchema.parse(res.data);
 }

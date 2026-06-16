@@ -7,6 +7,8 @@ export const InfluencerMemoEntrySchema = z.object({
   createdBy: z
     .object({ id: z.string(), name: z.string().nullable() })
     .nullable(),
+  campaignId: z.string().nullable(),
+  campaignTitle: z.string().nullable(),
 });
 export type InfluencerMemoEntry = z.infer<typeof InfluencerMemoEntrySchema>;
 
@@ -43,6 +45,7 @@ export type InfluencerNotesResponse = z.infer<
 
 export const CreateInfluencerMemoRequestSchema = z.object({
   comment: z.string().min(1, "메모를 입력하세요").max(2000),
+  campaignId: z.string().optional().nullable(),
 });
 export type CreateInfluencerMemoRequest = z.infer<
   typeof CreateInfluencerMemoRequestSchema

@@ -87,6 +87,7 @@ export class InfluencersService {
       this.prisma.influencerMemo.findMany({
         where: { influencerId },
         orderBy: { createdAt: "desc" },
+        include: { campaign: { select: { id: true, title: true } } },
       }),
       this.prisma.campaignApplication.findMany({
         where: { influencerId, rejectReason: { not: null } },
@@ -143,6 +144,8 @@ export class InfluencersService {
               name: creatorById.get(memo.createdById)?.name ?? null,
             }
           : null,
+        campaignId: memo.campaign?.id ?? null,
+        campaignTitle: memo.campaign?.title ?? null,
       })),
       applicationRejections: applicationRows.map((application) => ({
         applicationId: application.id,
@@ -167,6 +170,7 @@ export class InfluencersService {
     influencerId: string,
     creatorId: string,
     comment: string,
+    campaignId: string | null,
   ): Promise<InfluencerMemoEntry> {
     const influencer = await this.prisma.influencer.findUnique({
       where: { id: influencerId },
@@ -175,7 +179,13 @@ export class InfluencersService {
     if (!influencer) throw new NotFoundException("Influencer not found");
 
     const created = await this.prisma.influencerMemo.create({
-      data: { influencerId, comment, createdById: creatorId },
+      data: {
+        influencerId,
+        comment,
+        createdById: creatorId,
+        campaignId: campaignId ?? null,
+      },
+      include: { campaign: { select: { id: true, title: true } } },
     });
     const creator = await this.prisma.adminUser.findUnique({
       where: { id: creatorId },
@@ -186,6 +196,8 @@ export class InfluencersService {
       comment: created.comment,
       createdAt: created.createdAt.toISOString(),
       createdBy: creator ? { id: creator.id, name: creator.name } : null,
+      campaignId: created.campaign?.id ?? null,
+      campaignTitle: created.campaign?.title ?? null,
     };
   }
 

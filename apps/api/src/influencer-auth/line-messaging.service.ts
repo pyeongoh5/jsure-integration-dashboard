@@ -202,6 +202,27 @@ export class LineMessagingService {
   // Pre-defined message builders
   // ────────────────────────────────────────────────────────────────────────
 
+  async notifyApplied(args: { influencerId: string; campaignTitle: string }): Promise<void> {
+    await this.pushText(
+      args.influencerId,
+      `✨【お知らせ】キャンペーン受付 ✨
+
+ご応募ありがとうございます！
+「${args.campaignTitle}」への受付が正常に完了いたしました。
+
+💌 当選発表について
+
+🔹 発表: 募集終了後1週間前後
+🔹 方法: 当選者様へ個別にご連絡
+
+※大変恐縮ですが、ご当選とならなかった方へのご連絡は省略させていただきます。ご了承ください。
+
+※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
+※システムの行き違いで重複で届いた場合はご容赦ください。
+🕐 運営：平日 10:00〜20:00`,
+    );
+  }
+
   async notifyApproved(args: { influencerId: string; campaignTitle: string }): Promise<void> {
     await this.pushText(
       args.influencerId,

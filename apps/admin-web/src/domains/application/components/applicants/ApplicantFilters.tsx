@@ -21,8 +21,9 @@ type Props = {
   mediaFilter: Set<Media>;
   onMediaChange: (next: Set<Media>) => void;
 
-  minFollowers: number | null;
-  onMinFollowersChange: (followers: number | null) => void;
+  // 팔로워 필터는 응모 관리 페이지 전용 — 검토 페이지에서는 props 자체를 생략하면 버튼이 사라진다.
+  minFollowers?: number | null;
+  onMinFollowersChange?: (followers: number | null) => void;
 
   showStageFilter: boolean;
   stageFilter: Set<ApplicantStage>;
@@ -45,6 +46,7 @@ export function ApplicantFilters({
 }: Props) {
   const [popover, setPopover] = useState<{ kind: PopoverKind; rect: DOMRect } | null>(null);
   const [minFollowersDraft, setMinFollowersDraft] = useState<string>("");
+  const [campaignQuery, setCampaignQuery] = useState<string>("");
 
   const campaignBtnRef = useRef<HTMLButtonElement | null>(null);
   const mediaBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -76,6 +78,9 @@ export function ApplicantFilters({
     };
   }, [popover]);
 
+  const followersEnabled = onMinFollowersChange !== undefined;
+  const currentMinFollowers = minFollowers ?? null;
+
   const openPopover = (kind: PopoverKind) => {
     const anchorButton =
       kind === "campaign"
@@ -91,7 +96,12 @@ export function ApplicantFilters({
       return;
     }
     if (kind === "followers") {
-      setMinFollowersDraft(minFollowers !== null ? String(minFollowers) : "");
+      setMinFollowersDraft(
+        currentMinFollowers !== null ? String(currentMinFollowers) : "",
+      );
+    }
+    if (kind === "campaign") {
+      setCampaignQuery("");
     }
     setPopover({ kind, rect: anchorButton.getBoundingClientRect() });
   };
@@ -111,6 +121,10 @@ export function ApplicantFilters({
   };
 
   const applyFollowers = () => {
+    if (!onMinFollowersChange) {
+      setPopover(null);
+      return;
+    }
     const raw = minFollowersDraft.trim();
     if (raw === "") {
       onMinFollowersChange(null);
@@ -124,7 +138,7 @@ export function ApplicantFilters({
   const clear = (kind: PopoverKind) => {
     if (kind === "campaign") onCampaignChange(null);
     else if (kind === "media") onMediaChange(new Set());
-    else if (kind === "followers") onMinFollowersChange(null);
+    else if (kind === "followers") onMinFollowersChange?.(null);
     else onStageChange(new Set());
   };
 
@@ -155,29 +169,31 @@ export function ApplicantFilters({
           )}
         </button>
 
-        <button
-          ref={followersBtnRef}
-          type="button"
-          className={`${styles.filter} ${minFollowers !== null ? styles.filterActive : ""}`}
-          onClick={() => openPopover("followers")}
-        >
-          {minFollowers !== null
-            ? `팔로워 ${minFollowers.toLocaleString()}명 이상`
-            : "+ 팔로워 범위"}
-          {minFollowers !== null && (
-            <span
-              className={styles.popoverBtn}
-              onClick={(event) => {
-                event.stopPropagation();
-                clear("followers");
-                setPopover(null);
-              }}
-            >
-              {" "}
-              ✕
-            </span>
-          )}
-        </button>
+        {followersEnabled && (
+          <button
+            ref={followersBtnRef}
+            type="button"
+            className={`${styles.filter} ${currentMinFollowers !== null ? styles.filterActive : ""}`}
+            onClick={() => openPopover("followers")}
+          >
+            {currentMinFollowers !== null
+              ? `팔로워 ${currentMinFollowers.toLocaleString()}명 이상`
+              : "+ 팔로워 범위"}
+            {currentMinFollowers !== null && (
+              <span
+                className={styles.popoverBtn}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  clear("followers");
+                  setPopover(null);
+                }}
+              >
+                {" "}
+                ✕
+              </span>
+            )}
+          </button>
+        )}
 
         <button
           ref={mediaBtnRef}
@@ -246,35 +262,65 @@ export function ApplicantFilters({
             {popover.kind === "campaign" ? (
               <>
                 <div className={styles.popoverTitle}>캠페인 선택 (진행중)</div>
-                {campaignOptions.length === 0 ? (
-                  <div className={styles.popoverEmpty}>진행중인 캠페인이 없습니다.</div>
-                ) : (
-                  <div className={`${styles.popoverItems} ${styles.popoverItemsScroll}`}>
-                    {campaignOptions.map((campaign) => {
-                      const selected = campaign.id === campaignId;
-                      return (
-                        <button
-                          key={campaign.id}
-                          type="button"
-                          className={`${styles.popoverOption}${
-                            selected ? ` ${styles.popoverOptionOn}` : ""
-                          }`}
-                          onClick={() => {
-                            onCampaignChange(campaign.id);
-                            setPopover(null);
-                          }}
-                        >
-                          <span className={styles.popoverOptionLabel}>
-                            {campaign.title}
-                          </span>
-                          {selected && (
-                            <i className={`fa-solid fa-check ${styles.popoverOptionCheck}`} />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <div className={styles.popoverInputRow}>
+                  <input
+                    type="text"
+                    className={styles.popoverInput}
+                    placeholder="캠페인 검색"
+                    autoFocus
+                    value={campaignQuery}
+                    onChange={(event) => setCampaignQuery(event.target.value)}
+                  />
+                </div>
+                {(() => {
+                  const query = campaignQuery.trim().toLowerCase();
+                  const filteredCampaigns = query
+                    ? campaignOptions.filter((campaign) =>
+                        campaign.title.toLowerCase().includes(query),
+                      )
+                    : campaignOptions;
+                  if (campaignOptions.length === 0) {
+                    return (
+                      <div className={styles.popoverEmpty}>
+                        진행중인 캠페인이 없습니다.
+                      </div>
+                    );
+                  }
+                  if (filteredCampaigns.length === 0) {
+                    return (
+                      <div className={styles.popoverEmpty}>
+                        검색 결과가 없습니다.
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className={`${styles.popoverItems} ${styles.popoverItemsScroll}`}>
+                      {filteredCampaigns.map((campaign) => {
+                        const selected = campaign.id === campaignId;
+                        return (
+                          <button
+                            key={campaign.id}
+                            type="button"
+                            className={`${styles.popoverOption}${
+                              selected ? ` ${styles.popoverOptionOn}` : ""
+                            }`}
+                            onClick={() => {
+                              onCampaignChange(campaign.id);
+                              setPopover(null);
+                            }}
+                          >
+                            <span className={styles.popoverOptionLabel}>
+                              {campaign.title}
+                            </span>
+                            {selected && (
+                              <i className={`fa-solid fa-check ${styles.popoverOptionCheck}`} />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
                 <div className={styles.popoverActions}>
                   <button
                     type="button"

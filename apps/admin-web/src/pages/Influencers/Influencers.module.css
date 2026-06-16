@@ -259,6 +259,32 @@
   color: var(--c-red);
 }
 
+.flaggedBadge {
+  display: inline-block;
+  margin-left: 6px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.memoBtn {
+  background: #fff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.memoBtn:hover {
+  background: #eff6ff;
+}
+
 .date {
   color: var(--c-muted);
   font-variant-numeric: tabular-nums;

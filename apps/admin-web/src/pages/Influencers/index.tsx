@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AdminInfluencer, SnsType } from "@jsure/shared";
-import { listInfluencers } from "@/domains/influencer";
+import { InfluencerNotesDialog, listInfluencers } from "@/domains/influencer";
 import { BroadcastDialog } from "@/domains/broadcast";
 import { ScrollTable } from "@/components/composites";
 import styles from "./Influencers.module.css";
@@ -54,6 +54,7 @@ export function Influencers() {
   const [reloadKey, setReloadKey] = useState(0);
   const [query, setQuery] = useState("");
   const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [notesTarget, setNotesTarget] = useState<AdminInfluencer | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,6 +137,7 @@ export function Influencers() {
                 <th>SNS 계정</th>
                 <th>상태</th>
                 <th>가입일</th>
+                <th style={{ width: 90 }}>액션</th>
               </tr>
             </thead>
             <tbody>
@@ -147,7 +149,12 @@ export function Influencers() {
                         {r.name[0]}
                       </span>
                       <div>
-                        <div className={styles.nameText}>{r.name}</div>
+                        <div className={styles.nameText}>
+                          {r.name}
+                          {r.flagged && (
+                            <span className={styles.flaggedBadge}>대상외</span>
+                          )}
+                        </div>
                         {r.nameKana && <div className={styles.nameSub}>{r.nameKana}</div>}
                       </div>
                     </div>
@@ -193,6 +200,15 @@ export function Influencers() {
                       day: "2-digit",
                     })}
                   </td>
+                  <td>
+                    <button
+                      type="button"
+                      className={styles.memoBtn}
+                      onClick={() => setNotesTarget(r)}
+                    >
+                      메모
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -206,6 +222,15 @@ export function Influencers() {
         candidates={filtered}
         onClose={() => setBroadcastOpen(false)}
       />
+
+      {notesTarget && (
+        <InfluencerNotesDialog
+          influencerId={notesTarget.id}
+          influencerName={notesTarget.name}
+          onClose={() => setNotesTarget(null)}
+          onChanged={() => setReloadKey((current) => current + 1)}
+        />
+      )}
     </div>
   );
 }

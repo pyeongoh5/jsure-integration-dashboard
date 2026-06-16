@@ -160,6 +160,8 @@ model Influencer {
   addressLine2  String               @default("")
   memo          String?
   status        InfluencerStatus     @default(ACTIVE)
+  flaggedAt     DateTime?
+  flaggedById   String?
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
@@ -168,8 +170,22 @@ model Influencer {
   consents     InfluencerConsent[]
   bankAccount  InfluencerBankAccount?
   sessions     InfluencerSession[]
+  memos        InfluencerMemo[]
 
   @@map("influencers")
+}
+
+model InfluencerMemo {
+  id           String   @id @default(cuid())
+  influencerId String
+  comment      String
+  createdAt    DateTime @default(now())
+  createdById  String?
+
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@index([influencerId])
+  @@map("influencer_memos")
 }
 
 model InfluencerSession {

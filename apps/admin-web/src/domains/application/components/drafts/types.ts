@@ -28,8 +28,11 @@ export type InsightMetrics = {
 
 export type DraftReview = {
   id: string;
+  influencerId: string;
   influencerName: string;
   influencerHandle: string;
+  influencerFlagged: boolean;
+  campaignId: string;
   campaignTitle: string;
   campaignThumbnailUrl: string | null;
   snsType: SnsType;

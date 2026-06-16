@@ -17,6 +17,7 @@ import {
   postingDeadline,
 } from "../influencer-campaigns/display-stage";
 import { ensureSettlementForPost } from "../settlements/ensure-settlement";
+import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 
 type PostRow = {
   id: string;
@@ -168,6 +169,7 @@ export class InfluencerApplicationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly uploads: UploadsService,
+    private readonly line: LineMessagingService,
   ) {}
 
   private async resolveResponse(
@@ -364,6 +366,10 @@ export class InfluencerApplicationsService {
         message: "選択したSNSはすでに応募済みです",
       });
     }
+    await this.line.notifyApplied({
+      influencerId,
+      campaignTitle: campaign.title,
+    });
     return results[0]!;
   }
 

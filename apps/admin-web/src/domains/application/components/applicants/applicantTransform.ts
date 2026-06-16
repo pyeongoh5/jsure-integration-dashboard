@@ -86,8 +86,10 @@ export function toApplicant(
   );
   return {
     id: application.id,
+    influencerId: application.influencer.id,
     name: application.influencer.name,
     handle: appliedAccount?.handle ?? "",
+    flagged: application.influencer.flagged,
     campaign: application.campaign.title,
     media: pickMedia(application.snsType),
     followers: appliedAccount?.followerCount ?? 0,

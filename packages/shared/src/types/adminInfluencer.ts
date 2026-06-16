@@ -26,6 +26,7 @@ export const AdminInfluencerSchema = z.object({
   phone: z.string(),
   status: z.enum(["ACTIVE", "SUSPENDED"]),
   memo: z.string().nullable(),
+  flagged: z.boolean(),
   snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   createdAt: z.string().datetime(),
 });
@@ -62,6 +63,7 @@ export const AdminApplicationSchema = z.object({
     id: z.string(),
     name: z.string(),
     email: z.string().email(),
+    flagged: z.boolean(),
     snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   }),
 });
@@ -152,6 +154,7 @@ export const AdminSubmittedPostSchema = z.object({
   influencer: z.object({
     id: z.string(),
     name: z.string(),
+    flagged: z.boolean(),
     snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   }),
 });

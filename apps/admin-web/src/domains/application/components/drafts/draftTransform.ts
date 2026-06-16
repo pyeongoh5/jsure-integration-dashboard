@@ -34,8 +34,11 @@ export function toDraftReview(
   );
   return {
     id: post.id,
+    influencerId: post.influencer.id,
     influencerName: post.influencer.name,
     influencerHandle: matchingAccount?.handle ?? "",
+    influencerFlagged: post.influencer.flagged,
+    campaignId: post.campaign.id,
     campaignTitle: post.campaign.title,
     campaignThumbnailUrl: post.campaign.thumbnailUrl,
     snsType: post.snsType,

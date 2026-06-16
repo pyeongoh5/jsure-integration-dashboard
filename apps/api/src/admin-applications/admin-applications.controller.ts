@@ -20,6 +20,7 @@ import {
   type AdminSubmittedPost,
   type AdminSettlementListResponse,
   type AdminSubmittedPostListResponse,
+  type SubmittedPostAttachmentListResponse,
   type ApplicationStatus,
   type RejectApplicationRequest,
   type RejectSubmittedPostRequest,
@@ -60,6 +61,14 @@ export class AdminApplicationsController {
   async submittedPosts(): Promise<AdminSubmittedPostListResponse> {
     const posts = await this.svc.listSubmittedPosts();
     return { posts };
+  }
+
+  @Get("submitted-posts/:postId/attachments")
+  async submittedPostAttachments(
+    @Param("postId") postId: string,
+  ): Promise<SubmittedPostAttachmentListResponse> {
+    const attachments = await this.svc.listSubmittedPostAttachments(postId);
+    return { attachments };
   }
 
   @Post("submitted-posts/:postId/approve")

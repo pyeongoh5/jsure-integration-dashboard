@@ -29,6 +29,7 @@ type AdminApplicationRow = {
     id: string;
     name: string;
     email: string;
+    flaggedAt: Date | null;
     snsAccounts: { snsType: string; handle: string; followerCount: number }[];
   };
   _count: { posts: number };
@@ -54,6 +55,7 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
       id: row.influencer.id,
       name: row.influencer.name,
       email: row.influencer.email,
+      flagged: row.influencer.flaggedAt !== null,
       snsAccounts: row.influencer.snsAccounts.map((account) => ({
         snsType:
           account.snsType as AdminApplication["influencer"]["snsAccounts"][number]["snsType"],
@@ -86,6 +88,7 @@ const APPLICATION_INCLUDE = {
       id: true,
       name: true,
       email: true,
+      flaggedAt: true,
       snsAccounts: {
         select: { snsType: true, handle: true, followerCount: true },
         orderBy: { snsType: "asc" as const },
@@ -306,6 +309,32 @@ export class AdminApplicationsService {
       include: SUBMITTED_POST_INCLUDE,
     });
     return Promise.all(rows.map((row) => toSubmittedPostResponse(row, this.r2)));
+  }
+
+  /**
+   * 특정 submittedPost 의 첨부 이미지에 대해 presigned GET URL 을 즉시 발급.
+   * 인사이트 모달을 여는 시점에 호출되어, 목록에서 받아온 만료된 URL 대신 신선한 URL 을 받는다.
+   */
+  async listSubmittedPostAttachments(postId: string) {
+    const post = await this.prisma.submittedPost.findUnique({
+      where: { id: postId },
+      select: { id: true },
+    });
+    if (!post) throw new NotFoundException("Post not found");
+    const rows = await this.prisma.submittedPostAttachment.findMany({
+      where: { postId },
+      orderBy: { uploadedAt: "asc" },
+    });
+    return Promise.all(
+      rows.map(async (row) => ({
+        id: row.id,
+        objectKey: row.objectKey,
+        contentType: row.contentType,
+        sizeBytes: row.sizeBytes,
+        uploadedAt: row.uploadedAt.toISOString(),
+        viewUrl: await this.r2.presignGet(row.objectKey, 300),
+      })),
+    );
   }
 
   async approveSubmittedPost(postId: string, reviewerId: string): Promise<AdminSubmittedPost> {
@@ -547,6 +576,7 @@ const SUBMITTED_POST_INCLUDE = {
         select: {
           id: true,
           name: true,
+          flaggedAt: true,
           snsAccounts: {
             select: {
               snsType: true,
@@ -601,6 +631,7 @@ type SubmittedPostRow = {
     influencer: {
       id: string;
       name: string;
+      flaggedAt: Date | null;
       snsAccounts: {
         snsType: string;
         handle: string;
@@ -620,19 +651,21 @@ async function toSubmittedPostResponse(
   row: SubmittedPostRow,
   r2: R2Service,
 ): Promise<AdminSubmittedPost> {
-  const [attachments, campaignThumbnailUrl] = await Promise.all([
-    Promise.all(
-      row.attachments.map(async (attachment) => ({
-        id: attachment.id,
-        objectKey: attachment.objectKey,
-        contentType: attachment.contentType,
-        sizeBytes: attachment.sizeBytes,
-        uploadedAt: attachment.uploadedAt.toISOString(),
-        viewUrl: await r2.presignGet(attachment.objectKey, 300),
-      })),
-    ),
-    resolveThumbnail(row.application.campaign.thumbnailUrl, r2),
-  ]);
+  // viewUrl 은 presigned URL 의 만료 시간이 짧아 목록 시점에서 발급하면
+  // 인사이트 모달을 여는 시점에 이미 만료되어 있을 수 있다. 실제 보기 시점에
+  // 별도 엔드포인트(`GET submitted-posts/:postId/attachments`)로 발급한다.
+  const attachments = row.attachments.map((attachment) => ({
+    id: attachment.id,
+    objectKey: attachment.objectKey,
+    contentType: attachment.contentType,
+    sizeBytes: attachment.sizeBytes,
+    uploadedAt: attachment.uploadedAt.toISOString(),
+    viewUrl: null,
+  }));
+  const campaignThumbnailUrl = await resolveThumbnail(
+    row.application.campaign.thumbnailUrl,
+    r2,
+  );
   return {
     id: row.id,
     snsType: row.snsType,
@@ -681,6 +714,7 @@ async function toSubmittedPostResponse(
     influencer: {
       id: row.application.influencer.id,
       name: row.application.influencer.name,
+      flagged: row.application.influencer.flaggedAt !== null,
       snsAccounts: row.application.influencer.snsAccounts.map((account) => ({
         snsType: account.snsType as SnsType,
         handle: account.handle,

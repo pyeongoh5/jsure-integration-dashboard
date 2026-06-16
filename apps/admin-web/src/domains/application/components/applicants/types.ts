@@ -14,8 +14,10 @@ export type ApplicantStage =
 
 export type Applicant = {
   id: string;
+  influencerId: string;
   name: string;
   handle: string;
+  flagged: boolean;
   campaign: string;
   media: Media[];
   followers: number;

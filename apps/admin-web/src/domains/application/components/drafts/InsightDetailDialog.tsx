@@ -1,6 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { SubmittedPostAttachment } from "@jsure/shared";
+import { fetchSubmittedPostAttachments } from "../../draftsApi";
 import type { DraftReview } from "./types";
 import styles from "./InsightDetailDialog.module.css";
+
+type AttachmentsState =
+  | { kind: "loading" }
+  | { kind: "ready"; items: SubmittedPostAttachment[] }
+  | { kind: "error"; message: string };
 
 const METRICS: { key: keyof DraftReview["insight"]; label: string }[] = [
   { key: "likes", label: "いいね数" },
@@ -23,6 +30,32 @@ function fmtNumber(n: number | null): string {
 
 export function InsightDetailDialog({ draft, onClose }: Props) {
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [attachmentsState, setAttachmentsState] = useState<AttachmentsState>({
+    kind: "loading",
+  });
+
+  useEffect(() => {
+    if (!draft.insightSubmitted) return;
+    let cancelled = false;
+    setAttachmentsState({ kind: "loading" });
+    fetchSubmittedPostAttachments(draft.id)
+      .then((items) => {
+        if (!cancelled) setAttachmentsState({ kind: "ready", items });
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setAttachmentsState({
+          kind: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "첨부 이미지를 불러올 수 없습니다.",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [draft.id, draft.insightSubmitted]);
 
   return (
     <>
@@ -71,22 +104,29 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
               <section className={styles.section}>
                 <h3 className={styles.sectionTitle}>
                   스크린샷
-                  {draft.attachments.length > 0 && (
-                    <span className={styles.count}>{draft.attachments.length}</span>
+                  {attachmentsState.kind === "ready" && attachmentsState.items.length > 0 && (
+                    <span className={styles.count}>{attachmentsState.items.length}</span>
                   )}
                 </h3>
-                {draft.attachments.length === 0 ? (
+                {attachmentsState.kind === "loading" ? (
+                  <div className={styles.empty}>불러오는 중…</div>
+                ) : attachmentsState.kind === "error" ? (
+                  <div className={styles.empty}>{attachmentsState.message}</div>
+                ) : attachmentsState.items.length === 0 ? (
                   <div className={styles.empty}>첨부 이미지 없음</div>
                 ) : (
                   <div className={styles.grid}>
-                    {draft.attachments.map((a) => (
+                    {attachmentsState.items.map((attachment) => (
                       <button
                         type="button"
-                        key={a.id}
+                        key={attachment.id}
                         className={styles.tile}
-                        onClick={() => setLightbox(a.viewUrl)}
+                        onClick={() =>
+                          attachment.viewUrl && setLightbox(attachment.viewUrl)
+                        }
+                        disabled={!attachment.viewUrl}
                       >
-                        <img src={a.viewUrl} alt="" />
+                        {attachment.viewUrl && <img src={attachment.viewUrl} alt="" />}
                       </button>
                     ))}
                   </div>

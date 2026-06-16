@@ -8,9 +8,20 @@ type ActionHandlers = {
   onUndo: (applicant: Applicant) => void;
   onShip: (applicant: Applicant) => void;
   onDeliver: (applicant: Applicant) => void;
+  onMemo: (applicant: Applicant) => void;
 };
 
 function renderActions(applicant: Applicant, handlers: ActionHandlers) {
+  const memoButton = (
+    <button
+      type="button"
+      className={`${styles.action} ${styles.actionMemo}`}
+      onClick={() => handlers.onMemo(applicant)}
+    >
+      메모
+    </button>
+  );
+
   if (applicant.status === "pending") {
     return (
       <div className={styles.actions}>
@@ -28,19 +39,23 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
         >
           반려
         </button>
+        {memoButton}
       </div>
     );
   }
 
   if (applicant.status === "rejected") {
     return (
-      <button
-        type="button"
-        className={`${styles.action} ${styles.actionUndo}`}
-        onClick={() => handlers.onUndo(applicant)}
-      >
-        되돌리기
-      </button>
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={`${styles.action} ${styles.actionUndo}`}
+          onClick={() => handlers.onUndo(applicant)}
+        >
+          되돌리기
+        </button>
+        {memoButton}
+      </div>
     );
   }
 
@@ -76,6 +91,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
           배송 완료
         </button>
       )}
+      {memoButton}
     </div>
   );
 }
@@ -145,6 +161,7 @@ type Props = {
   onUndo: (applicant: Applicant) => void;
   onShip: (applicant: Applicant) => void;
   onDeliver: (applicant: Applicant) => void;
+  onMemo: (applicant: Applicant) => void;
 };
 
 export function ApplicantTable({
@@ -158,6 +175,7 @@ export function ApplicantTable({
   onUndo,
   onShip,
   onDeliver,
+  onMemo,
 }: Props) {
   if (items.length === 0) {
     return (
@@ -212,7 +230,12 @@ export function ApplicantTable({
                     {applicant.name[0]}
                   </div>
                   <div>
-                    <div className={styles.infName}>{applicant.name}</div>
+                    <div className={styles.infName}>
+                      {applicant.name}
+                      {applicant.flagged && (
+                        <span className={styles.flaggedBadge}>대상외</span>
+                      )}
+                    </div>
                     <div className={styles.infHandle}>@{applicant.handle}</div>
                   </div>
                 </div>
@@ -252,6 +275,7 @@ export function ApplicantTable({
                   onUndo,
                   onShip,
                   onDeliver,
+                  onMemo,
                 })}
               </td>
             </tr>

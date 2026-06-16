@@ -110,7 +110,8 @@ export type CampaignImageUploadPresignResponse = z.infer<
 >;
 
 /**
- * admin 조회용 — viewUrl은 presigned GET URL (단기 만료)
+ * admin 조회용 — viewUrl은 presigned GET URL (단기 만료).
+ * 목록 응답에서는 null 로 내려가며, 실제 보기 시점에 별도 엔드포인트로 발급한다.
  */
 export const SubmittedPostAttachmentSchema = z.object({
   id: z.string(),
@@ -118,8 +119,15 @@ export const SubmittedPostAttachmentSchema = z.object({
   contentType: z.string(),
   sizeBytes: z.number().int().nonnegative(),
   uploadedAt: z.string().datetime(),
-  viewUrl: z.string().url(),
+  viewUrl: z.string().url().nullable(),
 });
+
+export const SubmittedPostAttachmentListResponseSchema = z.object({
+  attachments: z.array(SubmittedPostAttachmentSchema),
+});
+export type SubmittedPostAttachmentListResponse = z.infer<
+  typeof SubmittedPostAttachmentListResponseSchema
+>;
 export type SubmittedPostAttachment = z.infer<
   typeof SubmittedPostAttachmentSchema
 >;

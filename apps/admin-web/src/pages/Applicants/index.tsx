@@ -8,10 +8,12 @@ import {
   useApplicantsData,
   useCampaignOptions,
   useApplicantMutations,
+  type Applicant,
   type ApplicantStage,
   type ApplicantStatus,
   type ApplicantMedia as Media,
 } from "@/domains/application";
+import { InfluencerNotesDialog } from "@/domains/influencer";
 import styles from "./Applicants.module.css";
 
 const VALID_APPLICANT_TABS: ApplicantStatus[] = ["pending", "approved", "rejected"];
@@ -32,6 +34,7 @@ export function Applicants() {
     setSearchParams(np);
   };
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [notesTarget, setNotesTarget] = useState<Applicant | null>(null);
   const [mediaFilter, setMediaFilter] = useState<Set<Media>>(() => new Set());
   const [minFollowers, setMinFollowers] = useState<number | null>(null);
   const [stageFilter, setStageFilter] = useState<Set<ApplicantStage>>(
@@ -150,6 +153,7 @@ export function Applicants() {
           onUndo={mutations.openUndo}
           onShip={mutations.openShip}
           onDeliver={mutations.openDeliver}
+          onMemo={setNotesTarget}
         />
       )}
 
@@ -160,6 +164,15 @@ export function Applicants() {
         onConfirm={mutations.confirm}
         onCancel={mutations.cancel}
       />
+
+      {notesTarget && (
+        <InfluencerNotesDialog
+          influencerId={notesTarget.influencerId}
+          influencerName={notesTarget.name}
+          onClose={() => setNotesTarget(null)}
+          onChanged={reload}
+        />
+      )}
     </div>
   );
 }

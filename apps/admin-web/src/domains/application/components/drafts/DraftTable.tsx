@@ -35,6 +35,7 @@ type ActionHandlers = {
   onUndo: (draft: DraftReview) => void;
   onSettle: (draft: DraftReview) => void;
   onViewInsight: (draft: DraftReview) => void;
+  onMemo: (draft: DraftReview) => void;
 };
 
 function formatJpy(amount: number): string {
@@ -42,6 +43,16 @@ function formatJpy(amount: number): string {
 }
 
 function renderActions(draft: DraftReview, handlers: ActionHandlers) {
+  const memoButton = (
+    <button
+      type="button"
+      className={`${styles.action} ${styles.actionMemo}`}
+      onClick={() => handlers.onMemo(draft)}
+    >
+      메모
+    </button>
+  );
+
   if (draft.reviewStatus === "PENDING") {
     return (
       <div className={styles.actions}>
@@ -59,6 +70,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
         >
           반려
         </button>
+        {memoButton}
       </div>
     );
   }
@@ -66,18 +78,24 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
   if (draft.reviewStatus === "APPROVED") {
     if (draft.settlement?.status === "COMPLETED") {
       return (
-        <span className={styles.settled}>
-          정산 완료
-          <span className={styles.settledAmount}>{formatJpy(draft.settlement.amountJpy)}</span>
-        </span>
+        <div className={styles.actions}>
+          <span className={styles.settled}>
+            정산 완료
+            <span className={styles.settledAmount}>{formatJpy(draft.settlement.amountJpy)}</span>
+          </span>
+          {memoButton}
+        </div>
       );
     }
     if (draft.settlement?.status === "PENDING") {
       return (
-        <span className={styles.settled} title="정산 페이지에서 처리 대기 중">
-          정산 대기
-          <span className={styles.settledAmount}>{formatJpy(draft.settlement.amountJpy)}</span>
-        </span>
+        <div className={styles.actions}>
+          <span className={styles.settled} title="정산 페이지에서 처리 대기 중">
+            정산 대기
+            <span className={styles.settledAmount}>{formatJpy(draft.settlement.amountJpy)}</span>
+          </span>
+          {memoButton}
+        </div>
       );
     }
     return (
@@ -98,22 +116,31 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
             되돌리기
           </button>
         )}
+        {memoButton}
       </div>
     );
   }
 
   if (draft.insightSubmitted) {
-    return <span className={styles.locked}>인사이트 제출 완료 · 되돌리기 불가</span>;
+    return (
+      <div className={styles.actions}>
+        <span className={styles.locked}>인사이트 제출 완료 · 되돌리기 불가</span>
+        {memoButton}
+      </div>
+    );
   }
 
   return (
-    <button
-      type="button"
-      className={`${styles.action} ${styles.actionUndo}`}
-      onClick={() => handlers.onUndo(draft)}
-    >
-      되돌리기
-    </button>
+    <div className={styles.actions}>
+      <button
+        type="button"
+        className={`${styles.action} ${styles.actionUndo}`}
+        onClick={() => handlers.onUndo(draft)}
+      >
+        되돌리기
+      </button>
+      {memoButton}
+    </div>
   );
 }
 
@@ -125,6 +152,7 @@ type Props = {
   onUndo: (draft: DraftReview) => void;
   onSettle: (draft: DraftReview) => void;
   onViewInsight: (draft: DraftReview) => void;
+  onMemo: (draft: DraftReview) => void;
 };
 
 export function DraftTable({
@@ -135,6 +163,7 @@ export function DraftTable({
   onUndo,
   onSettle,
   onViewInsight,
+  onMemo,
 }: Props) {
   if (items.length === 0) {
     return (
@@ -175,7 +204,12 @@ export function DraftTable({
                           {draft.influencerName[0]}
                         </div>
                         <div>
-                          <div className={styles.infName}>{draft.influencerName}</div>
+                          <div className={styles.infName}>
+                            {draft.influencerName}
+                            {draft.influencerFlagged && (
+                              <span className={styles.flaggedBadge}>대상외</span>
+                            )}
+                          </div>
                           {draft.influencerHandle && (
                             <div className={styles.infHandle}>@{draft.influencerHandle}</div>
                           )}
@@ -223,6 +257,7 @@ export function DraftTable({
                         onUndo,
                         onSettle,
                         onViewInsight,
+                        onMemo,
                       })}
                     </td>
                   </tr>

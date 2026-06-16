@@ -2,14 +2,25 @@ import {
   AdminSettlementListResponseSchema,
   AdminSubmittedPostListResponseSchema,
   AdminSubmittedPostSchema,
+  SubmittedPostAttachmentListResponseSchema,
   type AdminSettlement,
   type AdminSubmittedPost,
+  type SubmittedPostAttachment,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
 export async function listSubmittedPosts(): Promise<AdminSubmittedPost[]> {
   const res = await api.get("/campaign-applications/submitted-posts");
   return AdminSubmittedPostListResponseSchema.parse(res.data).posts;
+}
+
+export async function fetchSubmittedPostAttachments(
+  postId: string,
+): Promise<SubmittedPostAttachment[]> {
+  const res = await api.get(
+    `/campaign-applications/submitted-posts/${encodeURIComponent(postId)}/attachments`,
+  );
+  return SubmittedPostAttachmentListResponseSchema.parse(res.data).attachments;
 }
 
 export async function approveSubmittedPost(

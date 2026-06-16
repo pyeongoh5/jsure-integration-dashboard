@@ -39,6 +39,9 @@ export function ApplicationCard({ app, onSelect }: Props) {
         <div className={styles.title}>
           {app.campaignTitle}
           <span className={styles.sns}>{app.snsType}</span>
+          {app.snsType === "INSTAGRAM" && app.instagramPostType && (
+            <span className={styles.sns}>{app.instagramPostType}</span>
+          )}
         </div>
         <StageBadge stage={app.displayStage} />
       </div>

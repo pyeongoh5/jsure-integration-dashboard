@@ -1,44 +1,64 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { BroadcastJob } from "@jsure/shared";
 import { listBroadcastJobs } from "../api";
+import { subscribeToBroadcastStarted } from "../broadcastEvents";
 import styles from "./BroadcastProgressDock.module.css";
+
+const ACTIVE_POLL_MS = 1000;
 
 /**
  * 화면 우하단에 떠 있는 발송 진행률 패널.
- * - 활성 (QUEUED/RUNNING) 작업이 하나라도 있으면 1초 폴링, 모두 끝나면 5초로 늦춤
- * - 완료/실패 항목은 사용자가 닫기 전까지 패널에 남아 있음 (사용자가 결과 확인 후 닫음)
- * - 여러 broadcast 동시에 떠도 각각 row 로 표시
+ * - 첫 마운트에 1회 조회. 활성 작업이 있으면 1초 폴링, 모두 끝나면 폴링 정지.
+ * - "메시지 발송" 다이얼로그가 발송을 시작하면 broadcast-started 이벤트로 즉시 폴링 재개.
+ * - 완료/실패 항목은 사용자가 닫기 전까지 패널에 남음.
  */
 export function BroadcastProgressDock() {
   const [jobs, setJobs] = useState<BroadcastJob[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [collapsed, setCollapsed] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+  const cancelledRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const tick = async () => {
-      let next: BroadcastJob[] = [];
-      try {
-        next = await listBroadcastJobs();
-        if (!cancelled) setJobs(next);
-      } catch {
-        // 폴링 실패 무시
-      }
-      if (cancelled) return;
-      const hasActive = next.some(
-        (j) => j.status === "QUEUED" || j.status === "RUNNING",
-      );
-      timer = setTimeout(tick, hasActive ? 1000 : 5000);
-    };
-
-    tick();
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
   }, []);
+
+  const tick = useCallback(async () => {
+    let next: BroadcastJob[] = [];
+    try {
+      next = await listBroadcastJobs();
+      if (!cancelledRef.current) setJobs(next);
+    } catch {
+      // 폴링 실패 무시 — 다음 tick 에서 다시 시도
+    }
+    if (cancelledRef.current) return;
+    const hasActive = next.some(
+      (job) => job.status === "QUEUED" || job.status === "RUNNING",
+    );
+    clearTimer();
+    if (hasActive) {
+      timerRef.current = setTimeout(tick, ACTIVE_POLL_MS);
+    }
+    // active 가 없으면 폴링을 멈춘다. 새 발송이 일어나면 broadcastStarted 이벤트가 재개시킴.
+  }, [clearTimer]);
+
+  useEffect(() => {
+    cancelledRef.current = false;
+    tick();
+    const unsubscribe = subscribeToBroadcastStarted(() => {
+      clearTimer();
+      tick();
+    });
+    return () => {
+      cancelledRef.current = true;
+      clearTimer();
+      unsubscribe();
+    };
+  }, [tick, clearTimer]);
 
   // 활성이거나 최근 10분 안에 끝난 작업만 보여줌
   const RECENT_MS = 10 * 60 * 1000;

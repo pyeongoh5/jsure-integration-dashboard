@@ -7,6 +7,7 @@ import {
   startRichTextImageUpload,
 } from "@/lib/richTextImages";
 import { sendBroadcastMessage } from "../api";
+import { notifyBroadcastStarted } from "../broadcastEvents";
 import styles from "./BroadcastDialog.module.css";
 // SNS 칩 스타일은 인플루언서 페이지의 것을 그대로 재사용
 import influencersStyles from "@/pages/Influencers/Influencers.module.css";
@@ -162,6 +163,7 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
         contentHtml: serializeRichTextHtml(contentHtml),
         heroImageR2Key: hero.kind === "ready" ? hero.objectKey : null,
       });
+      notifyBroadcastStarted();
       // 즉시 모달 닫기. 진행률은 화면 우하단 Dock 에서 확인.
       setSending(false);
       close();

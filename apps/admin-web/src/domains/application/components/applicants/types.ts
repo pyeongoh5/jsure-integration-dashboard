@@ -1,4 +1,4 @@
-import type { ApplicationStatus } from "@jsure/shared";
+import type { ApplicationStatus, InstagramPostType } from "@jsure/shared";
 
 // 검토/정산 단계로 넘어가지 않은 응모만 응모 관리에 노출한다.
 // 검토 단계 = SubmittedPost 존재(application.hasSubmittedPost=true).
@@ -19,8 +19,10 @@ export type Applicant = {
   name: string;
   handle: string;
   flagged: boolean;
+  campaignId: string;
   campaign: string;
   media: Media[];
+  instagramPostType: InstagramPostType | null;
   followers: number;
   engagementRate: number;
   appliedAt: string;

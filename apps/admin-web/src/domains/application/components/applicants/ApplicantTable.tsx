@@ -1,5 +1,6 @@
 import styles from "@/pages/Applicants/Applicants.module.css";
 import { ScrollTable } from "@/components/composites";
+import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign/types";
 import {
   APPLICANT_STATUS_LABEL,
   MEDIA_META,
@@ -246,14 +247,22 @@ export function ApplicantTable({
                   <div className={styles.mediaList}>
                     {applicant.media.map((media) => {
                       const meta = MEDIA_META[media];
+                      const showPostType =
+                        media === "ig" && applicant.instagramPostType !== null;
                       return (
-                        <span
-                          key={media}
-                          className={`${styles.media} ${styles[meta.cls]}`}
-                          title={meta.label}
-                          aria-label={meta.label}
-                        >
-                          <i className={meta.icon} />
+                        <span key={media} className={styles.mediaItem}>
+                          <span
+                            className={`${styles.media} ${styles[meta.cls]}`}
+                            title={meta.label}
+                            aria-label={meta.label}
+                          >
+                            <i className={meta.icon} />
+                          </span>
+                          {showPostType && (
+                            <span className={styles.mediaLabel}>
+                              {INSTAGRAM_POST_TYPE_LABEL[applicant.instagramPostType!]}
+                            </span>
+                          )}
                         </span>
                       );
                     })}

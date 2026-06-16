@@ -481,6 +481,19 @@
   flex-wrap: wrap;
 }
 
+.mediaItem {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.mediaLabel {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
 .media {
   display: inline-flex;
   width: 28px;

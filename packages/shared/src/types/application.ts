@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SnsTypeSchema } from "./influencer.js";
+import { SnsTypeSchema, EnabledSnsTypeSchema } from "./influencer.js";
 
 export const ApplicationStatusSchema = z.enum([
   "APPLIED",
@@ -86,7 +86,7 @@ export type SubmitInsightRequest = z.infer<typeof SubmitInsightRequestSchema>;
 export const CreateApplicationRequestSchema = z.object({
   campaignId: z.string().min(1),
   snsTypes: z
-    .array(SnsTypeSchema)
+    .array(EnabledSnsTypeSchema)
     .min(1, "1つ以上のSNSを選択してください")
     .refine(
       (arr) => new Set(arr).size === arr.length,

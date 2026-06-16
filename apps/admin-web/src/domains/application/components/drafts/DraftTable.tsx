@@ -7,6 +7,7 @@ import {
   type DraftStatus,
   type Media,
 } from "./types";
+import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign/types";
 import styles from "@/pages/Drafts/Drafts.module.css";
 
 const MEDIA_CLASS: Record<Media, string | undefined> = {
@@ -256,12 +257,19 @@ export function DraftTable({
                     </td>
                     <td>{draft.campaignTitle}</td>
                     <td>
-                      <span
-                        className={`${styles.media} ${MEDIA_CLASS[draft.media]}`}
-                        title={media.label}
-                        aria-label={media.label}
-                      >
-                        <i className={media.icon} />
+                      <span className={styles.mediaItem}>
+                        <span
+                          className={`${styles.media} ${MEDIA_CLASS[draft.media]}`}
+                          title={media.label}
+                          aria-label={media.label}
+                        >
+                          <i className={media.icon} />
+                        </span>
+                        {draft.media === "ig" && draft.instagramPostType !== null && (
+                          <span className={styles.mediaLabel}>
+                            {INSTAGRAM_POST_TYPE_LABEL[draft.instagramPostType]}
+                          </span>
+                        )}
                       </span>
                     </td>
                     <td className={styles.urlCell}>

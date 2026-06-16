@@ -104,6 +104,18 @@
   font-size: 14px;
   line-height: 1;
 }
+.mediaItem {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.mediaLabel {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--color-text-muted);
+}
 .mediaIg {
   background: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
 }

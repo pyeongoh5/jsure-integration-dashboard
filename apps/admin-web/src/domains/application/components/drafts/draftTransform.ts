@@ -54,6 +54,7 @@ export function toDraftReview(
     campaignThumbnailUrl: post.campaign.thumbnailUrl,
     snsType: post.snsType,
     media: SNS_TO_MEDIA[post.snsType],
+    instagramPostType: post.instagramPostType,
     url: post.url,
     submittedAt: formatRelative(post.submittedAt, now),
     insightSubmitted,

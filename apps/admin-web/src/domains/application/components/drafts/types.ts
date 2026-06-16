@@ -1,5 +1,6 @@
 import type {
   ApplicationStatus,
+  InstagramPostType,
   PostReviewStatus,
   SnsType,
   SubmittedPostAttachment,
@@ -45,6 +46,7 @@ export type DraftReview = {
   campaignThumbnailUrl: string | null;
   snsType: SnsType;
   media: Media;
+  instagramPostType: InstagramPostType | null;
   url: string;
   submittedAt: string; // relative
   insightSubmitted: boolean;

@@ -138,6 +138,16 @@ export class AdminApplicationsController {
     return this.svc.pendingSettlementCount();
   }
 
+  @Get("applied-count")
+  appliedCount(): Promise<{ count: number }> {
+    return this.svc.appliedCount();
+  }
+
+  @Get("submitted-posts/pending-count")
+  pendingReviewCount(): Promise<{ count: number }> {
+    return this.svc.pendingReviewCount();
+  }
+
   @Post("settlements/complete")
   @HttpCode(200)
   completeSettlements(

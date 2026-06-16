@@ -3,7 +3,11 @@ import { NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Logo } from "@/components/Sidebar/Logo";
 import { FooterUser } from "@/components/Sidebar/FooterUser";
-import { fetchPendingSettlementCount } from "@/domains/application";
+import {
+  fetchAppliedCount,
+  fetchPendingReviewCount,
+  fetchPendingSettlementCount,
+} from "@/domains/application";
 
 type NavItem = { to: string; label: string; icon: ReactNode; badge?: ReactNode };
 type NavGroup = { title: string; items: NavItem[] };
@@ -68,10 +72,28 @@ export const Sidebar = () => {
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
+  const { data: pendingApplicants } = useQuery({
+    queryKey: ["applications-applied-count"],
+    queryFn: fetchAppliedCount,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const { data: pendingReviews } = useQuery({
+    queryKey: ["submitted-posts-pending-count"],
+    queryFn: fetchPendingReviewCount,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
 
   const dynamicBadge = (to: string): ReactNode => {
     if (to === "/payouts" && pendingPayouts && pendingPayouts > 0) {
       return pendingPayouts;
+    }
+    if (to === "/applicants" && pendingApplicants && pendingApplicants > 0) {
+      return pendingApplicants;
+    }
+    if (to === "/drafts" && pendingReviews && pendingReviews > 0) {
+      return pendingReviews;
     }
     return undefined;
   };

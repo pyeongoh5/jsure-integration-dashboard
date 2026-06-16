@@ -83,3 +83,13 @@ export async function fetchPendingSettlementCount(): Promise<number> {
   const res = await api.get("/campaign-applications/settlements/pending-count");
   return (res.data as { count: number }).count;
 }
+
+export async function fetchAppliedCount(): Promise<number> {
+  const res = await api.get("/campaign-applications/applied-count");
+  return (res.data as { count: number }).count;
+}
+
+export async function fetchPendingReviewCount(): Promise<number> {
+  const res = await api.get("/campaign-applications/submitted-posts/pending-count");
+  return (res.data as { count: number }).count;
+}

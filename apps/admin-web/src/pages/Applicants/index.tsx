@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ApplicantFilters,
   ApplicantStatusFilter,
@@ -29,13 +30,17 @@ export function Applicants() {
   const [query, setQuery] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
 
+  const qc = useQueryClient();
   const { state, applicants, reload } = useApplicantsData(campaignId);
   const {
     campaignOptions,
     campaignTitleById,
     loaded: campaignsLoaded,
   } = useCampaignOptions();
-  const mutations = useApplicantMutations(reload);
+  const mutations = useApplicantMutations(() => {
+    reload();
+    qc.invalidateQueries({ queryKey: ["applications-applied-count"] });
+  });
 
   const setCampaignId = (id: string | null) => {
     const next = new URLSearchParams(searchParams);
@@ -161,6 +166,7 @@ export function Applicants() {
         <InfluencerNotesDialog
           influencerId={notesTarget.influencerId}
           influencerName={notesTarget.name}
+          currentCampaignId={notesTarget.campaignId}
           onClose={() => setNotesTarget(null)}
           onChanged={reload}
         />

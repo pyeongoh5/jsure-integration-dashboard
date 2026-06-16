@@ -41,7 +41,10 @@ export function Drafts() {
     campaignTitleById,
     loaded: campaignsLoaded,
   } = useCampaignOptions();
-  const mutations = useDraftMutations(reload);
+  const mutations = useDraftMutations(() => {
+    reload();
+    qc.invalidateQueries({ queryKey: ["submitted-posts-pending-count"] });
+  });
 
   const visible = useMemo(
     () =>
@@ -131,6 +134,7 @@ export function Drafts() {
         <InfluencerNotesDialog
           influencerId={notesTarget.influencerId}
           influencerName={notesTarget.influencerName}
+          currentCampaignId={notesTarget.campaignId}
           onClose={() => setNotesTarget(null)}
           onChanged={reload}
         />

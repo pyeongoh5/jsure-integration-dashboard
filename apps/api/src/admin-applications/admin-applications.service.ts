@@ -500,6 +500,29 @@ export class AdminApplicationsService {
     return { count };
   }
 
+  /**
+   * 응모자 관리 페이지의 테이블 로우 수와 동일.
+   * - CANCELLED/COMPLETED 제외
+   * - 검토 단계로 넘어간(SubmittedPost 존재) 응모 제외
+   */
+  async appliedCount(): Promise<{ count: number }> {
+    const count = await this.prisma.campaignApplication.count({
+      where: {
+        status: { notIn: ["CANCELLED", "COMPLETED"] },
+        posts: { none: {} },
+      },
+    });
+    return { count };
+  }
+
+  /** 검토 페이지의 테이블 로우 수와 동일. 정산 흐름(SETTLEMENT_PENDING/SETTLED)에 들어간 투고는 제외. */
+  async pendingReviewCount(): Promise<{ count: number }> {
+    const count = await this.prisma.submittedPost.count({
+      where: { settlement: null },
+    });
+    return { count };
+  }
+
   /** PENDING Settlement 들을 COMPLETED 로. ids 가 비어있으면 모든 PENDING 대상. */
   async completeSettlements(
     completerId: string,

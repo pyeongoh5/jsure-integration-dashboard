@@ -112,6 +112,7 @@ export type SubmittedPostRejection = z.infer<
 export const AdminSubmittedPostSchema = z.object({
   id: z.string(),
   snsType: SnsTypeSchema,
+  instagramPostType: InstagramPostTypeSchema.nullable(),
   url: z.string().url(),
   submittedAt: z.string().datetime(),
   insightLikes: z.number().int().nullable(),

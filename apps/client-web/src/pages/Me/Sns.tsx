@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { SnsTypeSchema, type SnsType } from "@jsure/shared";
+import { ENABLED_SNS_TYPES, type SnsType } from "@jsure/shared";
 import { fetchMe } from "@/domains/auth";
 import { deleteSnsAccount, upsertSnsAccount } from "@/domains/me";
 import { PageHeader } from "../../components/composites/PageHeader";
@@ -11,7 +11,7 @@ import { SnsAccountCard } from "@/domains/auth";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 
-const SNS_TYPES = SnsTypeSchema.options;
+const SNS_TYPES = ENABLED_SNS_TYPES;
 
 const fieldsSchema = z.object({
   enabled: z.boolean(),

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { SnsType } from "@jsure/shared";
+import { isEnabledSnsType, type SnsType } from "@jsure/shared";
 import type { StatusFilter } from "../filter";
 import styles from "./ApplicationFilters.module.css";
 
@@ -26,6 +26,9 @@ const SNS_OPTIONS: { value: SnsType; label: string }[] = [
   { value: "X", label: "X" },
   { value: "YOUTUBE", label: "YouTube" },
 ];
+const VISIBLE_SNS_OPTIONS = SNS_OPTIONS.filter((opt) =>
+  isEnabledSnsType(opt.value),
+);
 
 type PopoverKind = "status" | "sns";
 
@@ -84,7 +87,7 @@ export function ApplicationFilters({
     setPopover({ kind, rect: anchor.getBoundingClientRect() });
   };
 
-  const selectedSnsLabel = SNS_OPTIONS.filter((option) =>
+  const selectedSnsLabel = VISIBLE_SNS_OPTIONS.filter((option) =>
     selectedSnsTypes.has(option.value),
   )
     .map((option) => option.label)
@@ -182,7 +185,7 @@ export function ApplicationFilters({
               <>
                 <div className={styles.popoverTitle}>SNSを選択（複数可）</div>
                 <div className={styles.popoverItems}>
-                  {SNS_OPTIONS.map((option) => {
+                  {VISIBLE_SNS_OPTIONS.map((option) => {
                     const selected = selectedSnsTypes.has(option.value);
                     return (
                       <button

@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { SnsTypeSchema, type SnsType } from "@jsure/shared";
+import { ENABLED_SNS_TYPES, type SnsType } from "@jsure/shared";
 import { SnsAccountCard } from "@/domains/auth";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
-const SNS_TYPES = SnsTypeSchema.options;
+const SNS_TYPES = ENABLED_SNS_TYPES;
 
 const fieldsSchema = z.object({
   enabled: z.boolean(),

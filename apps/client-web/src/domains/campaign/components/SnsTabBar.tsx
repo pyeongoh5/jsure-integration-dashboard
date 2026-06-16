@@ -1,7 +1,7 @@
-import { SnsTypeSchema, type SnsType } from "@jsure/shared";
+import { ENABLED_SNS_TYPES, type SnsType } from "@jsure/shared";
 import styles from "./SnsTabBar.module.css";
 
-const SNS_TYPES = SnsTypeSchema.options;
+const SNS_TYPES = ENABLED_SNS_TYPES;
 const LABEL: Record<SnsType, string> = {
   INSTAGRAM: "Instagram",
   TIKTOK: "TikTok",

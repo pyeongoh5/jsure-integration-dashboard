@@ -1,7 +1,8 @@
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
 import {
   CampaignReportSortKeySchema,
   CampaignReportSortOrderSchema,
+  type CampaignParticipantsResponse,
   type CampaignReportResponse,
   type CampaignReportSortKey,
   type CampaignReportSortOrder,
@@ -28,5 +29,21 @@ export class AdminReportsController {
         ? (order as CampaignReportSortOrder)
         : "desc";
     return this.svc.campaignReports(sortKey, sortOrder);
+  }
+
+  @Get("campaigns/:campaignId/participants")
+  campaignParticipants(
+    @Param("campaignId") campaignId: string,
+    @Query("page") page?: string,
+    @Query("pageSize") pageSize?: string,
+  ): Promise<CampaignParticipantsResponse> {
+    const parsedPage = Number.parseInt(page ?? "0", 10);
+    const parsedPageSize = Number.parseInt(pageSize ?? "20", 10);
+    const safePage = Number.isFinite(parsedPage) && parsedPage >= 0 ? parsedPage : 0;
+    const safePageSize =
+      Number.isFinite(parsedPageSize) && parsedPageSize > 0 && parsedPageSize <= 10000
+        ? parsedPageSize
+        : 20;
+    return this.svc.campaignParticipants(campaignId, safePage, safePageSize);
   }
 }

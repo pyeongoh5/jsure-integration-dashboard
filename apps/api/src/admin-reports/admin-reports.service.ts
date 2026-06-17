@@ -1,5 +1,7 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import type {
+  CampaignParticipantsResponse,
+  CampaignReportParticipant,
   CampaignReportResponse,
   CampaignReportRow,
   CampaignReportSortKey,
@@ -42,6 +44,7 @@ export class AdminReportsService {
       let totalSaves = 0;
       let totalViews = 0;
       let totalReach = 0;
+      let participantCount = 0;
 
       for (const application of campaign.applications) {
         influencerSet.add(application.influencerId);
@@ -60,14 +63,16 @@ export class AdminReportsService {
           totalSaves += post.insightSaves ?? 0;
           totalViews += post.insightViews ?? 0;
           totalReach += post.insightReach ?? 0;
+
+          if (post.settlement?.status === "COMPLETED") {
+            participantCount += 1;
+          }
         }
       }
 
       const totalEngagement = totalLikes + totalComments + totalSaves;
-      const erByViews =
-        totalViews > 0 ? (totalEngagement / totalViews) * 100 : null;
-      const erByFollowers =
-        totalFollowers > 0 ? (totalEngagement / totalFollowers) * 100 : null;
+      const erByViews = totalViews > 0 ? (totalEngagement / totalViews) * 100 : null;
+      const erByFollowers = totalFollowers > 0 ? (totalEngagement / totalFollowers) * 100 : null;
 
       return {
         campaignId: campaign.id,
@@ -86,12 +91,86 @@ export class AdminReportsService {
         totalEngagement,
         erByViews,
         erByFollowers,
+        participantCount,
       };
     });
 
     rows.sort((rowA, rowB) => compareRows(rowA, rowB, sort, order));
 
     return { rows };
+  }
+
+  /**
+   * 캠페인 단위 정산 완료 참여자 목록. page 는 0-base, pageSize 는 1 이상.
+   * pageSize 를 매우 크게 주면 전체를 한 번에 받을 수 있어 다운로드 시점에도 그대로 사용한다.
+   */
+  async campaignParticipants(
+    campaignId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<CampaignParticipantsResponse> {
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: campaignId },
+      select: { id: true },
+    });
+    if (!campaign) throw new NotFoundException("Campaign not found");
+
+    const participants = await this.collectParticipants(campaignId);
+    const total = participants.length;
+    const start = page * pageSize;
+    return {
+      total,
+      participants: participants.slice(start, start + pageSize),
+    };
+  }
+
+  private async collectParticipants(campaignId: string): Promise<CampaignReportParticipant[]> {
+    const posts = await this.prisma.submittedPost.findMany({
+      where: {
+        application: { campaignId },
+        settlement: { status: "COMPLETED" },
+      },
+      orderBy: { submittedAt: "asc" },
+      include: {
+        application: {
+          select: {
+            snsType: true,
+            instagramPostType: true,
+            influencer: {
+              select: {
+                id: true,
+                name: true,
+                snsAccounts: {
+                  select: { snsType: true, handle: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return posts.map((post) => {
+      const matchedAccount = post.application.influencer.snsAccounts.find(
+        (account) => account.snsType === post.application.snsType,
+      );
+      return {
+        influencerId: post.application.influencer.id,
+        influencerName: post.application.influencer.name,
+        handle: matchedAccount?.handle ?? "",
+        snsType: post.application.snsType,
+        instagramPostType: post.application.instagramPostType,
+        insight: {
+          likes: post.insightLikes,
+          comments: post.insightComments,
+          shares: post.insightShares,
+          reposts: post.insightReposts,
+          saves: post.insightSaves,
+          views: post.insightViews,
+          reach: post.insightReach,
+        },
+      };
+    });
   }
 }
 

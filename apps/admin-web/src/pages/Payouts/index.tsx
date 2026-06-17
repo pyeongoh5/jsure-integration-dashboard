@@ -122,14 +122,30 @@ export function Payouts() {
 
   const summary = useMemo(() => {
     if (state.kind !== "ready") {
-      return { total: 0, pendingCount: 0, pendingAmount: 0 };
+      return {
+        total: 0,
+        pendingCount: 0,
+        pendingAmount: 0,
+        completedCount: 0,
+        completedAmount: 0,
+      };
     }
     let pendingAmount = 0;
+    let completedCount = 0;
+    let completedAmount = 0;
     for (const row of pendingRows) pendingAmount += row.amountJpy;
+    for (const row of state.rows) {
+      if (row.status === "COMPLETED") {
+        completedCount += 1;
+        completedAmount += row.amountJpy;
+      }
+    }
     return {
       total: state.rows.length,
       pendingCount: pendingRows.length,
       pendingAmount,
+      completedCount,
+      completedAmount,
     };
   }, [state, pendingRows]);
 
@@ -244,6 +260,16 @@ export function Payouts() {
             <span className={styles.summaryLabel}>미완료 금액</span>
             <span className={styles.summaryValue}>
               ¥{summary.pendingAmount.toLocaleString("ja-JP")}
+            </span>
+          </div>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>완료</span>
+            <span className={styles.summaryValue}>{summary.completedCount}건</span>
+          </div>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>완료 금액</span>
+            <span className={styles.summaryValue}>
+              ¥{summary.completedAmount.toLocaleString("ja-JP")}
             </span>
           </div>
         </div>

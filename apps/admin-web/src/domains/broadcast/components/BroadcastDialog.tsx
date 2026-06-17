@@ -8,6 +8,7 @@ import {
 } from "@/lib/richTextImages";
 import { sendBroadcastMessage } from "../api";
 import { notifyBroadcastStarted } from "../broadcastEvents";
+import { Button } from "@/components/ui";
 import styles from "./BroadcastDialog.module.css";
 // SNS 칩 스타일은 인플루언서 페이지의 것을 그대로 재사용
 import influencersStyles from "@/pages/Influencers/Influencers.module.css";
@@ -209,14 +210,14 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
           <section className={styles.section}>
             <label className={styles.label}>상단 이미지 (선택, 1장)</label>
             {hero.kind === "none" ? (
-              <button
-                type="button"
-                className={styles.btn}
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => heroFileRef.current?.click()}
                 disabled={sending}
               >
                 이미지 선택
-              </button>
+              </Button>
             ) : (
               <div className={styles.hero}>
                 <img src={hero.previewUrl} alt="" className={styles.heroPreview} />
@@ -230,14 +231,14 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
                   {hero.kind === "error" && (
                     <span className={`${styles.heroStatus} ${styles.isError}`}>{hero.message}</span>
                   )}
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnGhost}`}
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={removeHero}
                     disabled={sending}
                   >
                     제거
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -259,14 +260,14 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
               <label className={styles.label}>
                 수신자 ({visibleSelected.length}/{candidates.length}명 선택)
               </label>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnGhost}`}
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={toggleAll}
                 disabled={sending || candidates.length === 0}
               >
                 {allSelected ? "전체 해제" : "전체 선택"}
-              </button>
+              </Button>
             </div>
             <div className={styles.recipientsList}>
               {candidates.length === 0 ? (
@@ -310,17 +311,18 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
         </div>
 
         <div className={styles.modalFoot}>
-          <button type="button" className={styles.btn} onClick={close} disabled={sending}>
+          <Button variant="secondary" size="md" onClick={close} disabled={sending}>
             닫기
-          </button>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary}`}
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
             onClick={submit}
             disabled={sending}
+            loading={sending}
           >
             {sending ? "발송 중…" : "발송"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import type { CampaignResponse } from "@jsure/shared";
 import { Card } from "@/components/composites/Card";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
 import { FilterChips } from "@/components/composites/FilterChips";
+import { Button } from "@/components/ui";
 import {
   CampaignCardTitle,
   CampaignCardBody,
@@ -181,13 +182,14 @@ export function Campaigns() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <button
-          type="button"
-          className={`admin__btn admin__btn--primary ${styles.newBtn}`}
+        <Button
+          variant="primary"
+          size="md"
           onClick={() => navigate("/campaigns/new")}
+          className={styles.newBtn}
         >
           + 새 캠페인
-        </button>
+        </Button>
       </div>
 
       {state.kind === "loading" ? (

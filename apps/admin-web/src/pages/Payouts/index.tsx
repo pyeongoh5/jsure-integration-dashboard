@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { AdminSettlement } from "@jsure/shared";
 import { completeSettlements, listSettlements } from "@/domains/application";
 import { ScrollTable } from "@/components/composites";
+import { Button } from "@/components/ui";
 import styles from "./Payouts.module.css";
 
 type LoadState =
@@ -208,22 +209,24 @@ export function Payouts() {
               onChange={(e) => setMonth(e.target.value)}
             />
           </label>
-          <button
-            type="button"
-            className={styles.btn}
+          <Button
+            variant="success"
+            size="md"
             onClick={() => state.kind === "ready" && downloadCsv(state.rows, month)}
             disabled={state.kind !== "ready" || state.rows.length === 0}
+            iconLeft={<i className="fa-solid fa-file-excel" aria-hidden="true" />}
           >
-            엑셀(CSV) 다운로드
-          </button>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary}`}
+            엑셀 다운로드
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
             onClick={handleComplete}
             disabled={completing || selectedPendingCount === 0}
+            loading={completing}
           >
             {completing ? "처리 중…" : completeLabel}
-          </button>
+          </Button>
         </div>
       </div>
 

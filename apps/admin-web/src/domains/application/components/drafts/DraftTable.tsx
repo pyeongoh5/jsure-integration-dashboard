@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { ScrollTable } from "@/components/composites";
+import { Button } from "@/components/ui";
 import {
   DRAFT_STATUS_LABEL,
   MEDIA_META,
@@ -96,32 +97,20 @@ function renderStatusCell(
 
 function renderActions(draft: DraftReview, handlers: ActionHandlers) {
   const memoButton = (
-    <button
-      type="button"
-      className={`${styles.action} ${styles.actionMemo}`}
-      onClick={() => handlers.onMemo(draft)}
-    >
+    <Button variant="secondary" size="sm" onClick={() => handlers.onMemo(draft)}>
       메모
-    </button>
+    </Button>
   );
 
   if (draft.status === "REVIEW_PENDING") {
     return (
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={`${styles.action} ${styles.actionApprove}`}
-          onClick={() => handlers.onApprove(draft)}
-        >
+        <Button variant="primary" size="sm" onClick={() => handlers.onApprove(draft)}>
           승인
-        </button>
-        <button
-          type="button"
-          className={`${styles.action} ${styles.actionReject}`}
-          onClick={() => handlers.onReject(draft)}
-        >
+        </Button>
+        <Button variant="danger" size="sm" onClick={() => handlers.onReject(draft)}>
           반려
-        </button>
+        </Button>
         {memoButton}
       </div>
     );
@@ -130,20 +119,12 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
   if (draft.status === "AWAITING_INSIGHT") {
     return (
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={`${styles.action} ${styles.actionApprove}`}
-          onClick={() => handlers.onSettle(draft)}
-        >
+        <Button variant="primary" size="sm" onClick={() => handlers.onSettle(draft)}>
           정산하기
-        </button>
-        <button
-          type="button"
-          className={`${styles.action} ${styles.actionUndo}`}
-          onClick={() => handlers.onUndo(draft)}
-        >
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(draft)}>
           되돌리기
-        </button>
+        </Button>
         {memoButton}
       </div>
     );
@@ -152,13 +133,9 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
   if (draft.status === "INSIGHT_SUBMITTED") {
     return (
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={`${styles.action} ${styles.actionApprove}`}
-          onClick={() => handlers.onSettle(draft)}
-        >
+        <Button variant="primary" size="sm" onClick={() => handlers.onSettle(draft)}>
           정산하기
-        </button>
+        </Button>
         {memoButton}
       </div>
     );
@@ -167,13 +144,9 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
   if (draft.status === "REJECTED") {
     return (
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={`${styles.action} ${styles.actionUndo}`}
-          onClick={() => handlers.onUndo(draft)}
-        >
+        <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(draft)}>
           되돌리기
-        </button>
+        </Button>
         {memoButton}
       </div>
     );

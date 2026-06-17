@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { NoticeTable, NoticeDeleteDialog, useNoticesData, useNoticeMutations, toNoticeRow } from "@/domains/notice";
+import { buttonClassNames } from "@/components/ui";
 import styles from "./Notices.module.css";
 
 export function Notices() {
@@ -27,7 +28,10 @@ export function Notices() {
     <div className={styles.root}>
       <div className={styles.header}>
         <div className={styles.title}>공지사항</div>
-        <Link to="/notices/new" className={styles.newBtn}>
+        <Link
+          to="/notices/new"
+          className={buttonClassNames({ variant: "primary", size: "md" })}
+        >
           새 공지 작성
         </Link>
       </div>

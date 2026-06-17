@@ -35,39 +35,6 @@
   font-size: 13px;
 }
 
-.btn {
-  height: 36px;
-  padding: 0 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
-  color: #111827;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.btn:hover {
-  background: #f9fafb;
-}
-
-.btnPrimary {
-  background: #1d4ed8;
-  color: #fff;
-  border-color: #1d4ed8;
-}
-
-.btnPrimary:hover {
-  background: #1e40af;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .rowInline {
   flex-direction: row;
   gap: 16px;

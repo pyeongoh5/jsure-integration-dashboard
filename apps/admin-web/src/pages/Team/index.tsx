@@ -8,6 +8,7 @@ import {
 } from "@/domains/team";
 import { getStoredUser } from "@/domains/auth";
 import { ScrollTable } from "@/components/composites";
+import { Button } from "@/components/ui";
 import styles from "./Team.module.css";
 
 const ROLE_META: Record<AdminUserRole, { label: string; className: string | undefined }> = {
@@ -150,10 +151,13 @@ export function Team() {
             {users ? `${activeCount}명의 운영자가 활동 중` : "운영자 정보를 불러오는 중..."}
           </p>
         </div>
-        <button type="button" className={styles.invite}>
-          <i className="fa-solid fa-plus" />
+        <Button
+          variant="primary"
+          size="md"
+          iconLeft={<i className="fa-solid fa-plus" aria-hidden="true" />}
+        >
           팀원 초대
-        </button>
+        </Button>
       </div>
 
       {error ? (
@@ -229,22 +233,22 @@ export function Team() {
                       <td className={styles.actions}>
                         {u.status === "PENDING" ? (
                           <>
-                            <button
-                              type="button"
-                              className={`${styles.btn} ${styles.btnPrimary}`}
+                            <Button
+                              variant="primary"
+                              size="sm"
                               onClick={() => handleApprove(u.id)}
                               disabled={pendingId === u.id}
                             >
                               승인
-                            </button>
-                            <button
-                              type="button"
-                              className={`${styles.btn} ${styles.btnDanger}`}
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
                               onClick={() => handleReject(u.id)}
                               disabled={pendingId === u.id}
                             >
                               반려
-                            </button>
+                            </Button>
                           </>
                         ) : null}
                       </td>

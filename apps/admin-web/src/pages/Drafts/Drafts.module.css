@@ -276,46 +276,6 @@
   display: inline-flex;
   gap: 6px;
 }
-.action {
-  border: 1px solid var(--c-border);
-  background: #fff;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    color 0.15s;
-}
-.actionApprove {
-  border-color: var(--c-brand);
-  color: var(--c-brand);
-}
-.actionApprove:hover {
-  background: rgba(37, 99, 235, 0.08);
-}
-.actionReject {
-  border-color: #ef4444;
-  color: #ef4444;
-}
-.actionReject:hover {
-  background: rgba(239, 68, 68, 0.08);
-}
-.actionUndo {
-  color: var(--c-muted);
-}
-.actionUndo:hover {
-  background: #f3f4f6;
-  color: var(--c-text);
-}
-.actionMemo {
-  color: #1e40af;
-  border-color: #bfdbfe;
-}
-.actionMemo:hover {
-  background: #eff6ff;
-}
 
 .flaggedBadge {
   display: inline-block;

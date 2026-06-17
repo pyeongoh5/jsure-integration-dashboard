@@ -6,6 +6,7 @@ import {
   triggerCsvDownload,
   useCampaignOptions,
 } from "@/domains/application";
+import { Button } from "@/components/ui";
 import styles from "./ApprovedApplicantsDownloadDialog.module.css";
 
 type Props = {
@@ -94,22 +95,19 @@ export function ApprovedApplicantsDownloadDialog({ onClose }: Props) {
         </div>
 
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={onClose}
-            disabled={downloading}
-          >
+          <Button variant="secondary" size="md" onClick={onClose} disabled={downloading}>
             취소
-          </button>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary}`}
+          </Button>
+          <Button
+            variant="success"
+            size="md"
             onClick={handleDownload}
             disabled={downloading || !campaignId}
+            loading={downloading}
+            iconLeft={<i className="fa-solid fa-file-excel" aria-hidden="true" />}
           >
             {downloading ? "생성 중…" : "다운로드"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

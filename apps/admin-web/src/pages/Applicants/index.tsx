@@ -14,6 +14,7 @@ import {
   type ApplicantMedia as Media,
 } from "@/domains/application";
 import { InfluencerNotesDialog } from "@/domains/influencer";
+import { Button } from "@/components/ui";
 import { ApprovedApplicantsDownloadDialog } from "./ApprovedApplicantsDownloadDialog";
 import styles from "./Applicants.module.css";
 
@@ -82,13 +83,14 @@ export function Applicants() {
               : "불러오는 중..."}
           </p>
         </div>
-        <button
-          type="button"
-          className={styles.downloadBtn}
+        <Button
+          variant="success"
+          size="md"
           onClick={() => setDownloadOpen(true)}
+          iconLeft={<i className="fa-solid fa-file-excel" aria-hidden="true" />}
         >
-          <i className="fa-solid fa-file-arrow-down" /> 승인자 명단 다운로드
-        </button>
+          승인자 명단 다운로드
+        </Button>
       </div>
 
       <div className={styles.filterBar}>

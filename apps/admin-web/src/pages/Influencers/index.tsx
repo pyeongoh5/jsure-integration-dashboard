@@ -3,6 +3,7 @@ import type { AdminInfluencer, SnsType } from "@jsure/shared";
 import { InfluencerNotesDialog, listInfluencers } from "@/domains/influencer";
 import { BroadcastDialog } from "@/domains/broadcast";
 import { ScrollTable } from "@/components/composites";
+import { Button } from "@/components/ui";
 import styles from "./Influencers.module.css";
 
 const SNS_ICON: Record<SnsType, string> = {
@@ -104,14 +105,15 @@ export function Influencers() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          <button
-            type="button"
-            className={styles.broadcastBtn}
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => setBroadcastOpen(true)}
             disabled={state.kind !== "ready"}
+            iconLeft={<i className="fa-regular fa-paper-plane" aria-hidden="true" />}
           >
-            <i className="fa-regular fa-paper-plane" /> 메시지 발송
-          </button>
+            메시지 발송
+          </Button>
         </div>
       </div>
 
@@ -120,9 +122,13 @@ export function Influencers() {
       ) : state.kind === "error" ? (
         <div className={styles.empty}>
           {state.message}{" "}
-          <button type="button" className={styles.retry} onClick={() => setReloadKey((k) => k + 1)}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setReloadKey((k) => k + 1)}
+          >
             다시 시도
-          </button>
+          </Button>
         </div>
       ) : filtered.length === 0 ? (
         <div className={styles.empty}>조건에 맞는 인플루언서가 없습니다.</div>
@@ -201,13 +207,13 @@ export function Influencers() {
                     })}
                   </td>
                   <td>
-                    <button
-                      type="button"
-                      className={styles.memoBtn}
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setNotesTarget(r)}
                     >
                       메모
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}

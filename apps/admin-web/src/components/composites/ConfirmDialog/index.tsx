@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "@/components/ui";
 import styles from "./ConfirmDialog.module.css";
 
 type ConfirmDialogProps = {
@@ -67,25 +68,24 @@ export function ConfirmDialog({
           <p className={styles.subtitle}>{subtitle}</p>
         )}
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnCancel}`}
+          <Button
+            variant="secondary"
+            size="md"
             onClick={onCancel}
             disabled={busy}
           >
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             ref={confirmRef}
-            type="button"
-            className={`${styles.btn} ${styles.btnConfirm} ${
-              tone === "danger" ? styles.btnDanger : ""
-            }`}
+            variant={tone === "danger" ? "danger" : "primary"}
+            size="md"
             onClick={onConfirm}
             disabled={busy || confirmDisabled}
+            loading={busy}
           >
             {busy ? "처리 중..." : confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

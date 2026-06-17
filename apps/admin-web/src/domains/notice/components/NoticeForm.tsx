@@ -4,6 +4,7 @@ import {
   toDateTimeLocalInputValue,
 } from "./noticeTransform";
 import { NoticeEditor } from "./NoticeEditor";
+import { Button } from "@/components/ui";
 import styles from "./NoticeForm.module.css";
 
 export type NoticeFormValue = {
@@ -148,22 +149,18 @@ export function NoticeForm({
       {error ? <div className={styles.error}>{error}</div> : null}
 
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.btn}
-          onClick={onCancel}
-          disabled={busy}
-        >
+        <Button variant="secondary" size="md" onClick={onCancel} disabled={busy}>
           취소
-        </button>
-        <button
-          type="button"
-          className={`${styles.btn} ${styles.btnPrimary}`}
+        </Button>
+        <Button
+          variant="primary"
+          size="md"
           onClick={handleSubmit}
           disabled={busy}
+          loading={busy}
         >
           {submitLabel}
-        </button>
+        </Button>
       </div>
     </div>
   );

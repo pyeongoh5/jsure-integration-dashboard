@@ -1,5 +1,6 @@
 import type { NoticeRow } from "./noticeTransform";
 import { ScrollTable } from "@/components/composites";
+import { Button } from "@/components/ui";
 import styles from "./NoticeTable.module.css";
 
 type Props = {
@@ -55,21 +56,17 @@ export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
                 className={styles.actions}
                 onClick={(event) => event.stopPropagation()}
               >
-                <button
-                  type="button"
-                  className={styles.btn}
-                  onClick={() => onEdit(notice.id)}
-                >
+                <Button variant="secondary" size="sm" onClick={() => onEdit(notice.id)}>
                   편집
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnDanger}`}
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
                   disabled={pendingId === notice.id}
                   onClick={() => onDelete(notice.id)}
                 >
                   삭제
-                </button>
+                </Button>
               </div>
             </td>
           </tr>

@@ -18,24 +18,6 @@
   flex: 1;
 }
 
-.downloadBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--c-brand, #2563eb);
-  color: #fff;
-  border: none;
-  border-radius: var(--r-md);
-  padding: 8px 14px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.downloadBtn:hover {
-  filter: brightness(0.95);
-}
-
 .title {
   font-size: 26px;
   font-weight: 700;
@@ -548,58 +530,6 @@
 .actions {
   display: flex;
   gap: 6px;
-}
-
-.action {
-  border: 1px solid transparent;
-  border-radius: 6px;
-  padding: 5px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    border-color 0.15s,
-    color 0.15s;
-}
-
-.actionApprove {
-  background: #10b981;
-  color: #fff;
-}
-
-.actionApprove:hover {
-  background: #059669;
-}
-
-.actionReject {
-  background: #fff;
-  border-color: #fecaca;
-  color: var(--c-red);
-}
-
-.actionReject:hover {
-  background: #fef2f2;
-}
-
-.actionUndo {
-  background: #fff;
-  border-color: var(--c-border);
-  color: var(--c-muted);
-}
-
-.actionUndo:hover {
-  background: #f9fafb;
-  color: var(--c-text);
-}
-
-.actionMemo {
-  background: #fff;
-  border-color: #bfdbfe;
-  color: #1e40af;
-}
-.actionMemo:hover {
-  background: #eff6ff;
 }
 
 .flaggedBadge {

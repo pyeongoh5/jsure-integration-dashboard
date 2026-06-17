@@ -12,6 +12,7 @@ import { ExcludedCampaignsPicker } from "./ExcludedCampaignsPicker";
 import { uploadCampaignThumbnail, UploadError } from "@/lib/uploads";
 import { listCampaigns } from "../api";
 import { RichTextEditor } from "@/components/composites/RichTextEditor/RichTextEditor";
+import { Button } from "@/components/ui";
 import { serializeRichTextHtml } from "@/lib/richTextImages";
 import styles from "./CampaignForm.module.css";
 
@@ -550,17 +551,12 @@ export function CampaignForm({
         </section>
 
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnGhost}`}
-            onClick={onCancel}
-            disabled={submitting}
-          >
+          <Button variant="ghost" size="md" onClick={onCancel} disabled={submitting}>
             취소
-          </button>
-          <button type="submit" className={styles.btn} disabled={submitting}>
+          </Button>
+          <Button type="submit" variant="primary" size="md" disabled={submitting} loading={submitting}>
             {submitting ? "저장 중…" : submitLabel}
-          </button>
+          </Button>
         </div>
       </form>
     </FormProvider>

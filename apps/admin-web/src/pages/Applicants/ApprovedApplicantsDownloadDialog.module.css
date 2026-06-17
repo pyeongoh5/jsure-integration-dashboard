@@ -36,11 +36,16 @@
 .close {
   width: 28px;
   height: 28px;
+  padding: 0;
   border: none;
   border-radius: 50%;
   background: #f3f4f6;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 16px;
+  line-height: 1;
   color: #4b5563;
 }
 .field {
@@ -75,23 +80,4 @@
   justify-content: end;
   gap: 8px;
   margin-top: 8px;
-}
-.btn {
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #374151;
-  font-size: 14px;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.btnPrimary {
-  border: none;
-  background: var(--c-brand, #2563eb);
-  color: #fff;
-  font-weight: 600;
-}
-.btnPrimary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }

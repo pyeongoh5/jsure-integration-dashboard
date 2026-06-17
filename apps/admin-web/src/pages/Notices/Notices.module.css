@@ -17,22 +17,6 @@
   font-weight: var(--font-weight-bold);
 }
 
-.newBtn {
-  padding: 10px 18px;
-  background: var(--color-primary-hover);
-  color: var(--color-bg);
-  border: 1px solid var(--color-primary-hover);
-  border-radius: 6px;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.newBtn:hover {
-  background: #1d4ed8;
-}
-
 .state {
   text-align: center;
   padding: 48px var(--space-4);

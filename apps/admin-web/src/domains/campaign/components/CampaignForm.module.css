@@ -289,22 +289,3 @@
   justify-content: flex-end;
 }
 
-.btn {
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid #2563eb;
-  background: #2563eb;
-  color: #fff;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btnGhost {
-  background: #fff;
-  color: #2563eb;
-}

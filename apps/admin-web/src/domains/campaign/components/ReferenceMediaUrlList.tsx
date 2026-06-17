@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui";
 import styles from "./CampaignForm.module.css";
 
 type Props = {
@@ -41,28 +42,28 @@ export function ReferenceMediaUrlList({
             disabled={disabled}
             onChange={(event) => setAt(index, event.target.value)}
           />
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnGhost}`}
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => removeAt(index)}
             disabled={disabled}
             aria-label={`항목 ${index + 1} 삭제`}
           >
             삭제
-          </button>
+          </Button>
           {errorByIndex?.[index] && (
             <div className={styles.error}>{errorByIndex[index]}</div>
           )}
         </div>
       ))}
-      <button
-        type="button"
-        className={`${styles.btn} ${styles.btnGhost}`}
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={add}
         disabled={disabled || value.length >= max}
       >
         URL 추가 ({value.length}/{max})
-      </button>
+      </Button>
     </div>
   );
 }

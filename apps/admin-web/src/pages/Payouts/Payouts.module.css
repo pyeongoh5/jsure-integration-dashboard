@@ -29,38 +29,6 @@
   gap: var(--space-2);
 }
 
-.btn {
-  height: 36px;
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-bg);
-  color: var(--color-text);
-  border-radius: var(--radius-md);
-  padding: 0 14px;
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  line-height: 1;
-}
-
-.btn:hover {
-  background: var(--color-bg-subtle);
-}
-
-.btnPrimary {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: var(--color-bg);
-}
-
-.btnPrimary:hover {
-  background: #1e40af;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .card {
   background: var(--color-bg);
   border: 1px solid var(--color-border);

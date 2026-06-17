@@ -48,33 +48,3 @@
   flex-wrap: wrap;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 8px;
-  border: 1px solid var(--c-border);
-  background: var(--c-card);
-  color: var(--c-text);
-  font-size: 13px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.btn:hover {
-  background: var(--c-bg, #f9fafb);
-}
-
-.btnPrimary {
-  background: var(--c-text);
-  border-color: var(--c-text);
-  color: #ffffff;
-}
-
-.btnPrimary:hover {
-  opacity: 0.9;
-  background: var(--c-text);
-}

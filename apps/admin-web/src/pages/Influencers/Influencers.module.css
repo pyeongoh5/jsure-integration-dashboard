@@ -59,32 +59,6 @@
   flex-wrap: wrap;
 }
 
-.broadcastBtn {
-  height: 34px;
-  padding: 0 14px;
-  border: 1px solid #1d4ed8;
-  border-radius: var(--r-md);
-  background: #1d4ed8;
-  color: var(--color-bg);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  line-height: 1;
-  cursor: pointer;
-  font-family: inherit;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.broadcastBtn:hover {
-  background: #1e40af;
-}
-
-.broadcastBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .empty {
   padding: 60px var(--space-5);
   text-align: center;
@@ -93,17 +67,6 @@
   background: var(--c-card);
   border: 1px dashed var(--c-border);
   border-radius: var(--r-lg);
-}
-
-.retry {
-  margin-left: var(--space-2);
-  border: 1px solid var(--c-border);
-  background: var(--color-bg);
-  color: var(--c-brand);
-  padding: var(--space-1) 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: var(--font-size-sm);
 }
 
 .card {
@@ -271,19 +234,6 @@
   vertical-align: middle;
 }
 
-.memoBtn {
-  background: #fff;
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  padding: 4px 10px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-}
-.memoBtn:hover {
-  background: #eff6ff;
-}
 
 .date {
   color: var(--c-muted);

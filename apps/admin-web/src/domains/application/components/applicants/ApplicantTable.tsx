@@ -1,4 +1,5 @@
 import { ScrollTable } from "@/components/composites";
+import { Button } from "@/components/ui";
 import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
 import { APPLICANT_STATUS_LABEL, MEDIA_META, type Applicant, type ApplicantStatus } from "./types";
 import styles from "@/pages/Applicants/Applicants.module.css";
@@ -14,66 +15,42 @@ type ActionHandlers = {
 
 function renderActions(applicant: Applicant, handlers: ActionHandlers) {
   const memoButton = (
-    <button
-      type="button"
-      className={`${styles.action} ${styles.actionMemo}`}
-      onClick={() => handlers.onMemo(applicant)}
-    >
+    <Button variant="secondary" size="sm" onClick={() => handlers.onMemo(applicant)}>
       메모
-    </button>
+    </Button>
   );
 
   switch (applicant.status) {
     case "APPLIED":
       return (
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionApprove}`}
-            onClick={() => handlers.onApprove(applicant)}
-          >
+          <Button variant="primary" size="sm" onClick={() => handlers.onApprove(applicant)}>
             승인
-          </button>
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionReject}`}
-            onClick={() => handlers.onReject(applicant)}
-          >
+          </Button>
+          <Button variant="danger" size="sm" onClick={() => handlers.onReject(applicant)}>
             반려
-          </button>
+          </Button>
           {memoButton}
         </div>
       );
     case "PRE_SHIP":
       return (
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionApprove}`}
-            onClick={() => handlers.onShip(applicant)}
-          >
+          <Button variant="primary" size="sm" onClick={() => handlers.onShip(applicant)}>
             운송장 입력
-          </button>
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionUndo}`}
-            onClick={() => handlers.onUndo(applicant)}
-          >
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(applicant)}>
             되돌리기
-          </button>
+          </Button>
           {memoButton}
         </div>
       );
     case "SHIPPING":
       return (
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionApprove}`}
-            onClick={() => handlers.onDeliver(applicant)}
-          >
+          <Button variant="primary" size="sm" onClick={() => handlers.onDeliver(applicant)}>
             배송 완료
-          </button>
+          </Button>
           {memoButton}
         </div>
       );
@@ -84,13 +61,9 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
     case "REJECTED":
       return (
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionUndo}`}
-            onClick={() => handlers.onUndo(applicant)}
-          >
+          <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(applicant)}>
             되돌리기
-          </button>
+          </Button>
           {memoButton}
         </div>
       );

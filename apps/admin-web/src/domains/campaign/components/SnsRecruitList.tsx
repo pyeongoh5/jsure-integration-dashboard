@@ -225,7 +225,7 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
                     )}
                   </div>
                 )}
-                <div className={styles.snsField}>
+                <div className={`${styles.snsField} ${styles.snsFieldRight}`}>
                   <label className={styles.snsToggle}>
                     <input
                       type="checkbox"

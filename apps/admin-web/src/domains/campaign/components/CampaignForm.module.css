@@ -283,6 +283,11 @@
   gap: 4px;
 }
 
+/** snsFields 그리드의 오른쪽 컬럼에 강제 배치. SNS 종류와 무관하게 위치 일관성을 유지한다. */
+.snsFieldRight {
+  grid-column: 2;
+}
+
 .actions {
   display: flex;
   gap: 8px;

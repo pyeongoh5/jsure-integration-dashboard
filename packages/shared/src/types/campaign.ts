@@ -176,8 +176,10 @@ export const InfluencerCampaignDetailSchema =
     guideline: z.string(),
     referenceMediaUrls: z.array(z.string().url()),
     cautions: z.string(),
-    /** 인플루언서가 이 캠페인에 이미 신청한(취소 제외) SNS 목록 */
+    /** 인플루언서가 이 캠페인에 이미 신청한(취소 포함) SNS 목록 — 신규 응모 차단용 */
     appliedSnsTypes: z.array(SnsTypeSchema),
+    /** 이 캠페인에서 인플루언서가 직접 취소한 SNS 목록 — 재응모 불가 안내용 */
+    cancelledSnsTypes: z.array(SnsTypeSchema),
     /** 과거 응모 이력(제외 캠페인) 때문에 이 캠페인에서 응모할 수 없는 SNS 목록 */
     excludedSnsTypes: z.array(SnsTypeSchema),
   });

@@ -158,13 +158,14 @@ export class InfluencerCampaignsService {
       (exclusion) => exclusion.excludedCampaignId,
     );
     const [existing, applicationsOnExcludedCampaigns] = await Promise.all([
-      // 취소된 응모도 재응모 불가 대상이므로 appliedSnsTypes 에 포함시킨다.
+      // 취소된 응모도 재응모 불가 대상이므로 appliedSnsTypes 에 포함시키고,
+      // 취소 여부도 별도로 구분해 UI 에서 안내 문구를 달리 표시할 수 있게 한다.
       this.prisma.campaignApplication.findMany({
         where: {
           campaignId: row.id,
           influencerId: args.influencerId,
         },
-        select: { snsType: true },
+        select: { snsType: true, status: true },
       }),
       excludedCampaignIds.length > 0
         ? this.prisma.campaignApplication.findMany({
@@ -197,6 +198,9 @@ export class InfluencerCampaignsService {
       referenceMediaUrls: row.referenceMediaUrls,
       cautions,
       appliedSnsTypes: existing.map((r) => r.snsType),
+      cancelledSnsTypes: existing
+        .filter((r) => r.status === "CANCELLED")
+        .map((r) => r.snsType),
       excludedSnsTypes,
     };
   }

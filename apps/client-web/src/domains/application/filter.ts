@@ -9,9 +9,10 @@ export type StatusFilter =
   | "applied"
   | "rejected"
   | "in_progress"
-  | "ended";
+  | "ended"
+  | "cancelled";
 
-/** 상태 필터 → 실제 status 집합. null 이면 전체. CANCELLED 는 서버에서 이미 제외됨. */
+/** 상태 필터 → 실제 status 집합. null 이면 전체. */
 export const STATUS_FILTER_GROUPS: Record<
   StatusFilter,
   ApplicationStatus[] | null
@@ -21,6 +22,7 @@ export const STATUS_FILTER_GROUPS: Record<
   rejected: ["REJECTED"],
   in_progress: ["APPROVED", "SHIPPED", "DELIVERED"],
   ended: ["COMPLETED"],
+  cancelled: ["CANCELLED"],
 };
 
 export function filterApplications(

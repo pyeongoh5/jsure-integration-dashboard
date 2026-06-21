@@ -199,8 +199,9 @@ export class InfluencerApplicationsService {
   async listForInfluencer(
     influencerId: string,
   ): Promise<InfluencerApplication[]> {
+    // 취소된 응모도 재응모 불가 이력으로 노출되어야 하므로 목록에 포함.
     const rows = await this.prisma.campaignApplication.findMany({
-      where: { influencerId, status: { not: "CANCELLED" } },
+      where: { influencerId },
       orderBy: { appliedAt: "desc" },
       include: INCLUDE,
     });

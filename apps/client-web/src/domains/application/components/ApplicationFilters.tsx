@@ -10,6 +10,7 @@ const STATUS_OPTIONS: { value: Exclude<StatusFilter, "all">; label: string }[] =
     { value: "rejected", label: "未選定" },
     { value: "in_progress", label: "進行中" },
     { value: "ended", label: "終了" },
+    { value: "cancelled", label: "キャンセル" },
   ];
 
 const STATUS_LABEL: Record<StatusFilter, string> = {
@@ -18,6 +19,7 @@ const STATUS_LABEL: Record<StatusFilter, string> = {
   rejected: "未選定",
   in_progress: "進行中",
   ended: "終了",
+  cancelled: "キャンセル",
 };
 
 const SNS_OPTIONS: { value: SnsType; label: string }[] = [

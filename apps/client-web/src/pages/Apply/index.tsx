@@ -170,15 +170,19 @@ export function Apply() {
             <ul className={styles.snsPick}>
               {campaign.data.snsRecruits.map((r) => {
                 const isQualifying = qualifying.includes(r.snsType);
-                const alreadyApplied = campaign.data.appliedSnsTypes.includes(
+                const isCancelled = campaign.data.cancelledSnsTypes.includes(
                   r.snsType,
                 );
+                const alreadyApplied =
+                  !isCancelled &&
+                  campaign.data.appliedSnsTypes.includes(r.snsType);
                 const isExcluded = campaign.data.excludedSnsTypes.includes(
                   r.snsType,
                 );
                 const myFollowers = followerByMySns.get(r.snsType);
                 const isSelected = selectedSns.has(r.snsType);
-                const disabled = !isQualifying || alreadyApplied || isExcluded;
+                const disabled =
+                  !isQualifying || alreadyApplied || isCancelled || isExcluded;
                 return (
                   <li key={r.snsType}>
                     <label
@@ -200,7 +204,12 @@ export function Apply() {
                               応募済み
                             </span>
                           )}
-                          {!alreadyApplied && isExcluded && (
+                          {isCancelled && (
+                            <span style={{ marginLeft: 8, color: "#ef4444", fontSize: 11 }}>
+                              応募キャンセル済（再応募不可）
+                            </span>
+                          )}
+                          {!alreadyApplied && !isCancelled && isExcluded && (
                             <span style={{ marginLeft: 8, color: "#ef4444", fontSize: 11 }}>
                               参加不可（類似キャンペーンに応募済み）
                             </span>

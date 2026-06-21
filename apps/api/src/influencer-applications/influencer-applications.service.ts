@@ -20,6 +20,9 @@ import {
 import { ensureSettlementForPost } from "../settlements/ensure-settlement";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 
+/** 응모 후 인플루언서가 직접 취소할 수 있는 기간(2일, 밀리초). */
+const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
+
 type PostRow = {
   id: string;
   snsType: SnsType;
@@ -64,6 +67,7 @@ type ApplicationRow = {
     thumbnailUrl: string | null;
     rewardJpy: number;
     postingPeriodDays: number;
+    snsRecruits: { snsType: SnsType; insightRequired: boolean }[];
   };
 };
 
@@ -124,6 +128,9 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
         insightSubmittedAt: p.insightSubmittedAt,
         reviewStatus: p.reviewStatus,
         settlementStatus: p.settlement?.status ?? null,
+        insightRequired:
+          row.campaign.snsRecruits.find((recruit) => recruit.snsType === p.snsType)
+            ?.insightRequired ?? true,
       })),
     }),
     appliedAt: row.appliedAt.toISOString(),
@@ -163,6 +170,9 @@ const INCLUDE = {
       thumbnailUrl: true,
       rewardJpy: true,
       postingPeriodDays: true,
+      snsRecruits: {
+        select: { snsType: true, insightRequired: true },
+      },
     },
   },
 } as const;
@@ -341,7 +351,8 @@ export class InfluencerApplicationsService {
       });
     }
 
-    // 각 snsType 별로 application row를 생성하거나 (CANCELLED 면) reopen.
+    // 각 snsType 별로 신규 application row 를 생성한다.
+    // 한 번이라도 응모했다가 취소된 경우 재응모 불가 — CANCELLED row 가 그대로 차단 역할.
     const results: InfluencerApplication[] = [];
     for (const snsType of snsTypes) {
       const existing = await this.prisma.campaignApplication.findUnique({
@@ -354,45 +365,23 @@ export class InfluencerApplicationsService {
         },
       });
 
-      if (existing && existing.status !== "CANCELLED") {
-        // 이미 활성 응모가 있는 SNS는 스킵 (이미 신청된 항목 중복 방지)
+      if (existing) {
+        // 활성 응모 / 취소 이력 모두 재응모 차단. 신규 SNS 만 진행.
         continue;
       }
 
       const postTypeForRow =
         snsType === "INSTAGRAM" ? instagramPostType : null;
-      let row;
-      if (existing) {
-        row = await this.prisma.campaignApplication.update({
-          where: { id: existing.id },
-          data: {
-            status: "APPLIED",
-            appliedAt: new Date(),
-            reviewedAt: null,
-            reviewedById: null,
-            rejectReason: null,
-            trackingCarrier: null,
-            trackingNumber: null,
-            shippedAt: null,
-            deliveredAt: null,
-            receivedAt: null,
-            completedAt: null,
-            instagramPostType: postTypeForRow,
-          },
-          include: INCLUDE,
-        });
-      } else {
-        row = await this.prisma.campaignApplication.create({
-          data: {
-            campaignId,
-            influencerId,
-            snsType,
-            status: "APPLIED",
-            instagramPostType: postTypeForRow,
-          },
-          include: INCLUDE,
-        });
-      }
+      const row = await this.prisma.campaignApplication.create({
+        data: {
+          campaignId,
+          influencerId,
+          snsType,
+          status: "APPLIED",
+          instagramPostType: postTypeForRow,
+        },
+        include: INCLUDE,
+      });
       results.push(await this.resolveResponse(row));
     }
 
@@ -418,6 +407,14 @@ export class InfluencerApplicationsService {
       throw new BadRequestException({
         code: "CANCEL_NOT_ALLOWED",
         message: "承認後はキャンセルできません",
+      });
+    }
+    // 응모 후 2일 이내에만 취소 가능. 이 시점이 지나면 취소 불가.
+    const elapsedMs = Date.now() - app.appliedAt.getTime();
+    if (elapsedMs > CANCEL_WINDOW_MS) {
+      throw new BadRequestException({
+        code: "CANCEL_WINDOW_EXPIRED",
+        message: "応募から2日を過ぎたためキャンセルできません",
       });
     }
     const updated = await this.prisma.campaignApplication.update({

@@ -1,12 +1,15 @@
 import type { PrismaService } from "../prisma/prisma.service";
 
 /**
- * 투고(SubmittedPost)가 승인(APPROVED) 되고 인사이트까지 제출된 경우에만
- * 정산(Settlement, PENDING)을 멱등하게 생성한다.
+ * 투고(SubmittedPost)가 승인(APPROVED) 되고 정산 가능 상태가 되면 정산(Settlement,
+ * PENDING)을 멱등하게 생성한다.
+ *
+ * 캠페인의 SNS 슬롯 설정(insightRequired)에 따라 정산 조건이 갈린다.
+ * - insightRequired=true (기본): 승인 + 인사이트 제출 둘 다 필요
+ * - insightRequired=false: 승인만 되면 충분
  *
  * 인사이트 제출 시점(upsertInsight)과 투고 승인 시점(approveSubmittedPost)
  * 어느 쪽에서 호출해도 안전하며, 이미 정산이 있으면 그대로 둔다.
- * 두 조건 중 하나라도 미충족이면 아무것도 하지 않는다.
  */
 export async function ensureSettlementForPost(
   prisma: PrismaService,
@@ -17,15 +20,28 @@ export async function ensureSettlementForPost(
     select: {
       reviewStatus: true,
       insightSubmittedAt: true,
+      snsType: true,
       application: {
-        select: { campaign: { select: { rewardJpy: true } } },
+        select: {
+          campaign: {
+            select: {
+              rewardJpy: true,
+              snsRecruits: {
+                select: { snsType: true, insightRequired: true },
+              },
+            },
+          },
+        },
       },
     },
   });
   if (!post) return;
-  if (post.reviewStatus !== "APPROVED" || post.insightSubmittedAt === null) {
-    return;
-  }
+  if (post.reviewStatus !== "APPROVED") return;
+  const insightRequired =
+    post.application.campaign.snsRecruits.find(
+      (recruit) => recruit.snsType === post.snsType,
+    )?.insightRequired ?? true;
+  if (insightRequired && post.insightSubmittedAt === null) return;
   await prisma.settlement.upsert({
     where: { postId },
     create: {

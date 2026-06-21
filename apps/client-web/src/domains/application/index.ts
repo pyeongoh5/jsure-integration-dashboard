@@ -9,4 +9,5 @@ export { ApplicationStepper } from "./components/ApplicationStepper";
 export { InsightSubmitForm } from "./components/InsightSubmitForm";
 export { PostSubmitForm } from "./components/PostSubmitForm";
 export { ReceiptConfirmDialog } from "./components/ReceiptConfirmDialog";
+export { CancelConfirmDialog } from "./components/CancelConfirmDialog";
 export { StageBadge } from "./components/StageBadge";

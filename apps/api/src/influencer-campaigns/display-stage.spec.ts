@@ -108,6 +108,24 @@ describe("deriveDisplayStage", () => {
     ).toBe("REVIEWING");
   });
 
+  it("DELIVERED, insightRequired=false 면 인사이트 미제출이어도 REVIEWING", () => {
+    expect(
+      deriveDisplayStage({
+        status: "DELIVERED",
+        receivedAt: new Date(NOW.getTime() - 10 * 86400000),
+        posts: [
+          {
+            submittedAt: new Date(NOW.getTime() - 8 * 86400000),
+            insightSubmittedAt: null,
+            reviewStatus: "APPROVED",
+            insightRequired: false,
+          },
+        ],
+        now: NOW,
+      }),
+    ).toBe("REVIEWING");
+  });
+
   it("DELIVERED, 인사이트 미제출이어도 정산 COMPLETED 면 SETTLED", () => {
     expect(
       deriveDisplayStage({

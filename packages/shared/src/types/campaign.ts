@@ -24,6 +24,8 @@ export const SnsRecruitSchema = z.object({
   minFollowers: z.number().int().nonnegative("0 이상의 정수"),
   recruitCount: z.number().int().positive("1 이상"),
   instagramPostTypes: z.array(InstagramPostTypeSchema).default([]),
+  /** false 면 인플루언서가 인사이트를 제출하지 않아도 정산이 진행될 수 있다. */
+  insightRequired: z.boolean().default(true),
 });
 export type SnsRecruit = z.infer<typeof SnsRecruitSchema>;
 
@@ -33,6 +35,7 @@ const SnsRecruitInputSchema = z
     minFollowers: z.number().int().nonnegative("0 이상의 정수"),
     recruitCount: z.number().int().positive("1 이상"),
     instagramPostTypes: z.array(InstagramPostTypeSchema).default([]),
+    insightRequired: z.boolean().default(true),
   })
   .superRefine((recruit, ctx) => {
     if (recruit.snsType === "INSTAGRAM") {

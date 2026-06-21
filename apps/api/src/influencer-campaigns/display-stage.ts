@@ -20,6 +20,8 @@ interface DisplayStageInput {
     insightSubmittedAt: Date | null;
     reviewStatus: "PENDING" | "APPROVED" | "REJECTED";
     settlementStatus?: "PENDING" | "COMPLETED" | null;
+    /** 이 SNS 슬롯이 인사이트 제출을 요구하는지. 기본 true(기존 동작 유지). */
+    insightRequired?: boolean;
   }[];
   now?: Date;
 }
@@ -52,8 +54,11 @@ export function deriveDisplayStage(input: DisplayStageInput): ApplicationDisplay
       return "POST_REJECTED";
     }
 
-    const allInsightsSubmitted = posts.every((p) => p.insightSubmittedAt !== null);
-    if (allInsightsSubmitted) {
+    // insightRequired=false 인 슬롯은 인사이트 미제출이어도 충족된 것으로 본다.
+    const allInsightsSatisfied = posts.every(
+      (p) => p.insightRequired === false || p.insightSubmittedAt !== null,
+    );
+    if (allInsightsSatisfied) {
       const anySettled = posts.some(
         (p) => p.settlementStatus === "COMPLETED",
       );

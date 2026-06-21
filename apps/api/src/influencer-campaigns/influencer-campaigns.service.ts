@@ -26,6 +26,7 @@ type CampaignRow = {
     minFollowers: number;
     recruitCount: number;
     instagramPostTypes: InstagramPostType[];
+    insightRequired: boolean;
   }[];
 };
 
@@ -95,6 +96,7 @@ export class InfluencerCampaignsService {
             minFollowers: true,
             recruitCount: true,
             instagramPostTypes: true,
+            insightRequired: true,
           },
           orderBy: { snsType: "asc" },
         },
@@ -136,6 +138,7 @@ export class InfluencerCampaignsService {
             minFollowers: true,
             recruitCount: true,
             instagramPostTypes: true,
+            insightRequired: true,
           },
           orderBy: { snsType: "asc" },
         },
@@ -155,11 +158,11 @@ export class InfluencerCampaignsService {
       (exclusion) => exclusion.excludedCampaignId,
     );
     const [existing, applicationsOnExcludedCampaigns] = await Promise.all([
+      // 취소된 응모도 재응모 불가 대상이므로 appliedSnsTypes 에 포함시킨다.
       this.prisma.campaignApplication.findMany({
         where: {
           campaignId: row.id,
           influencerId: args.influencerId,
-          status: { not: "CANCELLED" },
         },
         select: { snsType: true },
       }),

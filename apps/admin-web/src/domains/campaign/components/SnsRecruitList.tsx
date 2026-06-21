@@ -89,6 +89,7 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
           minFollowers: 0,
           recruitCount: 1,
           instagramPostTypes: sns === "INSTAGRAM" ? ["FEED"] : [],
+          insightRequired: true,
         },
       ]);
     }
@@ -224,6 +225,21 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
                     )}
                   </div>
                 )}
+                <div className={styles.snsField}>
+                  <label className={styles.snsToggle}>
+                    <input
+                      type="checkbox"
+                      checked={row.insightRequired}
+                      disabled={disabled}
+                      onChange={() =>
+                        updateAt(idx, { insightRequired: !row.insightRequired })
+                      }
+                    />
+                    <span className={styles.snsToggleLabel}>
+                      인사이트 제출 필수
+                    </span>
+                  </label>
+                </div>
               </div>
             ) : null}
           </div>

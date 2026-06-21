@@ -4,6 +4,7 @@ import type { SnsType } from "@jsure/shared";
 import { useState } from "react";
 import {
   ApplicationStepper,
+  CancelConfirmDialog,
   InsightSubmitForm,
   PostSubmitForm,
   ReceiptConfirmDialog,
@@ -33,6 +34,7 @@ export function ApplicationDetail() {
   }
 
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const cancel = useMutation({
     mutationFn: () => cancelApplication(id),
@@ -97,7 +99,11 @@ export function ApplicationDetail() {
   }
 
   const stage = data.displayStage;
-  const canCancel = data.status === "APPLIED";
+  // 응모 후 2일 이내에만 인플루언서가 직접 취소 가능. 이후엔 버튼 자체를 숨김.
+  const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
+  const appliedAtMs = new Date(data.appliedAt).getTime();
+  const withinCancelWindow = Date.now() - appliedAtMs <= CANCEL_WINDOW_MS;
+  const canCancel = data.status === "APPLIED" && withinCancelWindow;
 
   return (
     <div>
@@ -264,16 +270,18 @@ export function ApplicationDetail() {
             未選定となりました: {data.rejectReason ?? "—"}
           </p>
         )}
-        {stage === "CANCELLED" && <p className={`${styles.msg} ${styles.msgErr}`}>キャンセル済</p>}
+        {stage === "CANCELLED" && (
+          <p className={`${styles.msg} ${styles.msgErr}`}>
+            キャンセル済（同じキャンペーンに再応募はできません）
+          </p>
+        )}
 
         {canCancel && (
           <button
             type="button"
             className={styles.cancel}
             disabled={cancel.isPending}
-            onClick={() => {
-              if (window.confirm("本当にキャンセルしますか？")) cancel.mutate();
-            }}
+            onClick={() => setShowCancelDialog(true)}
           >
             応募をキャンセル
           </button>
@@ -285,6 +293,17 @@ export function ApplicationDetail() {
           submitting={receive.isPending}
           onConfirm={() => receive.mutate()}
           onCancel={() => setShowReceiptDialog(false)}
+        />
+      )}
+      {showCancelDialog && (
+        <CancelConfirmDialog
+          submitting={cancel.isPending}
+          onConfirm={() => {
+            cancel.mutate(undefined, {
+              onSettled: () => setShowCancelDialog(false),
+            });
+          }}
+          onCancel={() => setShowCancelDialog(false)}
         />
       )}
     </div>

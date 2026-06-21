@@ -33,6 +33,7 @@ type SnsRecruitRow = {
   minFollowers: number;
   recruitCount: number;
   instagramPostTypes: InstagramPostType[];
+  insightRequired: boolean;
 };
 
 type CampaignRow = {
@@ -80,6 +81,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
       recruitCount: recruit.recruitCount,
       instagramPostTypes:
         recruit.snsType === "INSTAGRAM" ? recruit.instagramPostTypes : [],
+      insightRequired: recruit.insightRequired,
     })),
     recruitStartDate: utcToJstDateStr(row.recruitStartAt),
     recruitEndDate: utcToJstDateStr(row.recruitEndAt),
@@ -108,6 +110,7 @@ const RECRUITS_INCLUDE = {
       minFollowers: true,
       recruitCount: true,
       instagramPostTypes: true,
+      insightRequired: true,
     },
     orderBy: { snsType: "asc" as const },
   },
@@ -234,8 +237,10 @@ export class CampaignsService {
     minFollowers: number;
     recruitCount: number;
     instagramPostTypes: InstagramPostType[];
+    insightRequired: boolean;
   }[] {
     return snsRecruits.map((recruit) => {
+      const insightRequired = recruit.insightRequired ?? true;
       if (recruit.snsType === "INSTAGRAM") {
         const unique = Array.from(new Set(recruit.instagramPostTypes ?? []));
         if (unique.length === 0) {
@@ -248,6 +253,7 @@ export class CampaignsService {
           minFollowers: recruit.minFollowers,
           recruitCount: recruit.recruitCount,
           instagramPostTypes: unique,
+          insightRequired,
         };
       }
       return {
@@ -255,6 +261,7 @@ export class CampaignsService {
         minFollowers: recruit.minFollowers,
         recruitCount: recruit.recruitCount,
         instagramPostTypes: [] as InstagramPostType[],
+        insightRequired,
       };
     });
   }

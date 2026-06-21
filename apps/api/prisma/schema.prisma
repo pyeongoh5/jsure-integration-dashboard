@@ -141,6 +141,8 @@ model CampaignSnsRecruit {
   recruitCount        Int
   /// INSTAGRAM 모집일 때만 의미가 있다. 비-INSTAGRAM 행은 항상 빈 배열.
   instagramPostTypes  InstagramPostType[] @default([])
+  /// false 이면 인사이트 제출 단계를 건너뛰고, 투고 승인만으로 정산이 가능하다.
+  insightRequired     Boolean             @default(true)
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 

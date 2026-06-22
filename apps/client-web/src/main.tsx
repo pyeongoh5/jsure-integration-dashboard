@@ -6,7 +6,10 @@ import "./styles/tokens.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { App } from "./App";
 import { InfluencerAuthProvider } from "./context/InfluencerAuthContext";
+import { initSentry } from "./lib/sentry";
 import "./index.css";
+
+initSentry();
 
 const queryClient = new QueryClient({
   defaultOptions: {

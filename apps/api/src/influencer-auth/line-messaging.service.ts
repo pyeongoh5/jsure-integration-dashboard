@@ -212,7 +212,7 @@ export class LineMessagingService {
 
 💌 当選発表について
 
-🔹 発表: 募集終了後1週間前後
+🔹 発表: 応募後1週間前後
 🔹 方法: 当選者様へ個別にご連絡
 
 ※大変恐縮ですが、ご当選とならなかった方へのご連絡は省略させていただきます。ご了承ください。
@@ -342,6 +342,71 @@ export class LineMessagingService {
     );
   }
 
+  async notifyPostRejected(args: {
+    influencerId: string;
+    applicationId: string;
+    campaignTitle: string;
+    rejectReason: string;
+    resubmitDeadlineAt: Date;
+  }): Promise<void> {
+    const deadline = formatJstMonthDay(args.resubmitDeadlineAt);
+    const applicationUrl = this.applicationUrl(args.applicationId);
+    await this.pushText(
+      args.influencerId,
+      `⚠️【要確認】キャンペーン投稿 修正・再提出のお願い ⚠️
+
+お世話になっております。
+「${args.campaignTitle}」の投稿URLをご提出いただき、誠にありがとうございます。
+
+ご提出いただいたコンテンツを運営事務局にて確認いたしましたところ、誠に恐縮ではございますが、一部修正および補完が必要な箇所が見つかり、再審査処理とさせていただきました。
+
+大変お手数ですが、下記の修正理由をご確認いただき、ご対応いただけますようお願いいたします。🙏
+
+📝 修正ご依頼内容
+- 修正の理由: ${args.rejectReason}
+- 再提出期限: ${deadline} までに修正の上、URLの再提出をお願いいたします。
+
+🔗 確認および再提出はこちら: ${applicationUrl}
+
+※ガイドラインに沿って投稿を修正いただいた後、上記のリンクより必ずURLの再提出をお願いいたします。再提出が完了した時点で、最終検収へと進みます。
+
+お手数をおかけして大変申し訳ございませんが、ご協力のほどよろしくお願いいたします。
+
+※自動送信のため返信不要ですが、ご不明な点はお気軽にお問い合わせください。
+※システムの行き違いで重複届いた場合はご容赦ください。
+🕐 運営：平日 10:00〜20:00`,
+    );
+  }
+
+  async notifyPostRejectionReminder(args: {
+    influencerId: string;
+    applicationId: string;
+    campaignTitle: string;
+    rejectReason: string;
+    finalDeadlineAt: Date;
+  }): Promise<void> {
+    const deadline = formatJstMonthDay(args.finalDeadlineAt);
+    const applicationUrl = this.applicationUrl(args.applicationId);
+    await this.pushText(
+      args.influencerId,
+      `🚨【再送】キャンペーン投稿修正のお願い 🚨
+
+お世話になっております。
+「${args.campaignTitle}」の修正ご依頼につきまして、まだ再提出が確認できていないため再度ご連絡いたしました。
+
+🔹 修正の理由: ${args.rejectReason}
+🔹 最終期限: ${deadline} まで(期限厳守)
+
+🔗 修正・再提出はこちら: ${applicationUrl}
+
+※ 期限内に修正およびURLの再提出が確認できない場合、報酬の支給制限やペナルティが科される場合がございます。必ずご確認の上、ご対応をお願いいたします。
+
+※自動送信のため返信不要ですが、ご不明な点はお気軽にお問い合わせください。
+※システムの行き違いで重複届いた場合はご容赦ください。
+🕐 運営：平日 10:00〜20:00`,
+    );
+  }
+
   async notifySettlementComplete(args: {
     influencerId: string;
     applicationId: string;
@@ -381,6 +446,17 @@ export class LineMessagingService {
 // ──────────────────────────────────────────────────────────────────────────
 
 type FlexSpan = { type: "span"; text: string; weight?: "bold" };
+
+function formatJstMonthDay(d: Date): string {
+  const parts = new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(d);
+  const month = parts.find((p) => p.type === "month")?.value ?? "";
+  const day = parts.find((p) => p.type === "day")?.value ?? "";
+  return `${month}月${day}日`;
+}
 
 function parseBoldSpans(line: string): FlexSpan[] {
   const parts = line.split(/(\*\*[^*]+\*\*)/g).filter((part) => part.length > 0);

@@ -6,6 +6,7 @@ import { LineMessagingService } from "./line-messaging.service";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const POSTING_REMINDER_DAYS = [3, 1];
 const INSIGHT_REMINDER_DAY_AFTER_POST = 7;
+const POST_REJECTION_RESUBMIT_DAYS = 1;
 const JST_TZ = "Asia/Tokyo";
 
 /** JST 기준 그 날의 00:00 UTC 타임스탬프 (밀리초). */
@@ -31,6 +32,7 @@ export class LineRemindersService {
     try {
       await this.runPostingReminders();
       await this.runInsightReminders();
+      await this.runPostRejectionReminders();
     } catch (err) {
       this.logger.error("Reminder daily run failed", err as Error);
     }
@@ -85,6 +87,45 @@ SNSへご投稿いただいた後は、必ずシステムより【応募履歴 -
 🕐 運営：平日 10:00〜20:00`,
         // `【投稿期限のお知らせ】\n「${app.campaign.title}」の投稿期限まであと${remainingDays}日です。\nお忘れなく投稿のご準備をお願いいたします。\n\n${this.line.applicationUrl(app.id)}`,
       );
+    }
+  }
+
+  private async runPostRejectionReminders(): Promise<void> {
+    const todayStart = startOfJstDay(new Date());
+    const yesterdayStart = todayStart - DAY_MS;
+
+    const posts = await this.prisma.submittedPost.findMany({
+      where: { reviewStatus: "REJECTED" },
+      include: {
+        application: {
+          select: {
+            id: true,
+            influencerId: true,
+            campaign: { select: { title: true } },
+          },
+        },
+        rejections: {
+          orderBy: { rejectedAt: "desc" },
+          take: 1,
+        },
+      },
+    });
+
+    for (const post of posts) {
+      const latest = post.rejections[0];
+      if (!latest) continue;
+      if (startOfJstDay(latest.rejectedAt) !== yesterdayStart) continue;
+
+      const finalDeadlineAt = new Date(
+        latest.rejectedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS,
+      );
+      await this.line.notifyPostRejectionReminder({
+        influencerId: post.application.influencerId,
+        applicationId: post.application.id,
+        campaignTitle: post.application.campaign.title,
+        rejectReason: latest.comment,
+        finalDeadlineAt,
+      });
     }
   }
 

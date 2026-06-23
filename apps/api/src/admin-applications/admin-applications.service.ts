@@ -14,6 +14,9 @@ import { LineMessagingService } from "../influencer-auth/line-messaging.service"
 import { R2Service } from "../r2/r2.service";
 import { ensureSettlementForPost } from "../settlements/ensure-settlement";
 
+const POST_REJECTION_RESUBMIT_DAYS = 1;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 type AdminApplicationRow = {
   id: string;
   status: ApplicationStatus;
@@ -367,14 +370,24 @@ export class AdminApplicationsService {
   ): Promise<AdminSubmittedPost> {
     const existing = await this.prisma.submittedPost.findUnique({
       where: { id: postId },
+      include: {
+        application: {
+          select: {
+            id: true,
+            influencerId: true,
+            campaign: { select: { title: true } },
+          },
+        },
+      },
     });
     if (!existing) throw new NotFoundException("Post not found");
+    const rejectedAt = new Date();
     await this.prisma.$transaction([
       this.prisma.submittedPost.update({
         where: { id: postId },
         data: {
           reviewStatus: "REJECTED",
-          reviewedAt: new Date(),
+          reviewedAt: rejectedAt,
           reviewedById: reviewerId,
         },
       }),
@@ -383,9 +396,17 @@ export class AdminApplicationsService {
           postId,
           comment,
           rejectedById: reviewerId,
+          rejectedAt,
         },
       }),
     ]);
+    void this.line.notifyPostRejected({
+      influencerId: existing.application.influencerId,
+      applicationId: existing.application.id,
+      campaignTitle: existing.application.campaign.title,
+      rejectReason: comment,
+      resubmitDeadlineAt: new Date(rejectedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS),
+    });
     return this.fetchSubmittedPost(postId);
   }
 

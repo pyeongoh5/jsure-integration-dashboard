@@ -94,8 +94,10 @@ SNSへご投稿いただいた後は、必ずシステムより【応募履歴 -
     const todayStart = startOfJstDay(new Date());
     const yesterdayStart = todayStart - DAY_MS;
 
+    // post.reviewedAt 은 rejectSubmittedPost 시점에 가장 최근 반려와 동일하게 갱신되므로
+    // "현재 활성 반려"의 시각을 그대로 나타낸다. 과거 반려 row 는 reviewedAt 과 무관.
     const posts = await this.prisma.submittedPost.findMany({
-      where: { reviewStatus: "REJECTED" },
+      where: { reviewStatus: "REJECTED", reviewedAt: { not: null } },
       include: {
         application: {
           select: {
@@ -104,20 +106,21 @@ SNSへご投稿いただいた後は、必ずシステムより【応募履歴 -
             campaign: { select: { title: true } },
           },
         },
-        rejections: {
-          orderBy: { rejectedAt: "desc" },
-          take: 1,
-        },
       },
     });
 
     for (const post of posts) {
-      const latest = post.rejections[0];
+      if (!post.reviewedAt) continue;
+      if (startOfJstDay(post.reviewedAt) !== yesterdayStart) continue;
+
+      const latest = await this.prisma.submittedPostRejection.findFirst({
+        where: { postId: post.id },
+        orderBy: { rejectedAt: "desc" },
+      });
       if (!latest) continue;
-      if (startOfJstDay(latest.rejectedAt) !== yesterdayStart) continue;
 
       const finalDeadlineAt = new Date(
-        latest.rejectedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS,
+        post.reviewedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS,
       );
       await this.line.notifyPostRejectionReminder({
         influencerId: post.application.influencerId,

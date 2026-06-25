@@ -27,7 +27,7 @@ export class LineRemindersService {
   ) {}
 
   /** 매일 JST 09:00에 1회. 그날 시간이 도래한 대상에게 리마인더 발송. */
-  @Cron("0 9 * * *", { timeZone: JST_TZ })
+  @Cron("30 9 * * *", { timeZone: JST_TZ })
   async runDaily(): Promise<void> {
     try {
       await this.runPostingReminders();

@@ -19,8 +19,9 @@ model AdminUser {
   updatedAt    DateTime        @updatedAt
   testLineUserId String?
 
-  sessions AdminUserSession[]
-  notices  Notice[]
+  sessions             AdminUserSession[]
+  notices              Notice[]
+  lineMessageTemplates LineMessageTemplate[]
 
   @@map("admin_users")
 }
@@ -477,6 +478,7 @@ model LineMessageTemplate {
   updatedAt   DateTime            @updatedAt
   updatedById String?
 
+  updatedBy    AdminUser?         @relation(fields: [updatedById], references: [id], onDelete: SetNull)
   dispatchLogs LineDispatchLog[]
 
   @@unique([category, subType, triggerKey])

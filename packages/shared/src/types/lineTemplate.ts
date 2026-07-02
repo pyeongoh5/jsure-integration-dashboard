@@ -41,6 +41,7 @@ export const LineMessageTemplateResponseSchema = z.object({
   body: z.string(),
   updatedAt: z.string().datetime({ offset: true }).nullable(),
   updatedById: z.string().nullable(),
+  updatedByName: z.string().nullable(),
 });
 export type LineMessageTemplateResponse = z.infer<typeof LineMessageTemplateResponseSchema>;
 
@@ -48,6 +49,7 @@ export const LineMessageTemplateListItemSchema = z.object({
   triggerKey: LineTriggerKeySchema,
   enabled: z.boolean(),
   updatedAt: z.string().datetime({ offset: true }).nullable(),
+  updatedByName: z.string().nullable(),
 });
 export type LineMessageTemplateListItem = z.infer<typeof LineMessageTemplateListItemSchema>;
 

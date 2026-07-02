@@ -27,7 +27,12 @@ export class AdminLineTemplatesService {
     const triggerKeys = listTriggersForCategory(category);
     const rows = await this.prisma.lineMessageTemplate.findMany({
       where: { category, subType },
-      select: { triggerKey: true, enabled: true, updatedAt: true },
+      select: {
+        triggerKey: true,
+        enabled: true,
+        updatedAt: true,
+        updatedBy: { select: { name: true } },
+      },
     });
     const byKey = new Map(rows.map((r) => [r.triggerKey, r]));
     return {
@@ -39,6 +44,7 @@ export class AdminLineTemplatesService {
           triggerKey: k,
           enabled: row?.enabled ?? false,
           updatedAt: row?.updatedAt?.toISOString() ?? null,
+          updatedByName: row?.updatedBy?.name ?? null,
         };
       }),
     };
@@ -55,6 +61,7 @@ export class AdminLineTemplatesService {
     }
     const row = await this.prisma.lineMessageTemplate.findFirst({
       where: { category, subType, triggerKey },
+      include: { updatedBy: { select: { name: true } } },
     });
     const template: LineMessageTemplateResponse = row
       ? {
@@ -65,6 +72,7 @@ export class AdminLineTemplatesService {
           body: row.body,
           updatedAt: row.updatedAt.toISOString(),
           updatedById: row.updatedById,
+          updatedByName: row.updatedBy?.name ?? null,
         }
       : {
           category,
@@ -74,6 +82,7 @@ export class AdminLineTemplatesService {
           body: "",
           updatedAt: null,
           updatedById: null,
+          updatedByName: null,
         };
     return {
       template,
@@ -113,6 +122,7 @@ export class AdminLineTemplatesService {
             body: input.body,
             updatedById,
           },
+          include: { updatedBy: { select: { name: true } } },
         })
       : await this.prisma.lineMessageTemplate.create({
           data: {
@@ -123,6 +133,7 @@ export class AdminLineTemplatesService {
             body: input.body,
             updatedById,
           },
+          include: { updatedBy: { select: { name: true } } },
         });
     return {
       category: row.category,
@@ -132,6 +143,7 @@ export class AdminLineTemplatesService {
       body: row.body,
       updatedAt: row.updatedAt.toISOString(),
       updatedById: row.updatedById,
+      updatedByName: row.updatedBy?.name ?? null,
     };
   }
 

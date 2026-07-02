@@ -71,6 +71,7 @@ export function MessageTemplates(): JSX.Element {
               <th>Trigger</th>
               <th>Status</th>
               <th>Last Updated</th>
+              <th>Updated By</th>
             </tr>
           </thead>
           <tbody>
@@ -83,6 +84,7 @@ export function MessageTemplates(): JSX.Element {
                 </td>
                 <td>{it.enabled ? "✅ ON" : "⚪ OFF"}</td>
                 <td>{it.updatedAt ? new Date(it.updatedAt).toLocaleString("ja-JP") : "-"}</td>
+                <td>{it.updatedByName ?? "-"}</td>
               </tr>
             ))}
           </tbody>

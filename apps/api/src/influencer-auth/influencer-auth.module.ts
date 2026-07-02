@@ -6,7 +6,6 @@ import { InfluencerAuthController } from "./influencer-auth.controller";
 import { InfluencerAuthService } from "./influencer-auth.service";
 import { InfluencerLineAuthService } from "./influencer-line-auth.service";
 import { LineMessagingService } from "./line-messaging.service";
-import { LineRemindersService } from "./line-reminders.service";
 import { InfluencerSessionsService } from "./influencer-sessions.service";
 import { InfluencerJwtStrategy } from "./strategies/influencer-jwt.strategy";
 import { InfluencersModule } from "../influencers/influencers.module";
@@ -30,7 +29,6 @@ import { InfluencersModule } from "../influencers/influencers.module";
     InfluencerAuthService,
     InfluencerLineAuthService,
     LineMessagingService,
-    LineRemindersService,
     InfluencerSessionsService,
     InfluencerJwtStrategy,
   ],

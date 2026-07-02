@@ -1,25 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { isEnabledSnsType, type SnsType } from "@jsure/shared";
+import { t } from "@/i18n";
 import type { StatusFilter } from "../filter";
 import styles from "./ApplicationFilters.module.css";
 
 const STATUS_OPTIONS: { value: Exclude<StatusFilter, "all">; label: string }[] =
   [
-    { value: "applied", label: "応募" },
-    { value: "rejected", label: "未選定" },
-    { value: "in_progress", label: "進行中" },
-    { value: "ended", label: "終了" },
-    { value: "cancelled", label: "キャンセル" },
+    { value: "applied", label: t("application.filters.statusApplied") },
+    { value: "rejected", label: t("application.filters.statusRejected") },
+    { value: "in_progress", label: t("application.filters.statusInProgress") },
+    { value: "ended", label: t("application.filters.statusEnded") },
+    { value: "cancelled", label: t("application.filters.statusCancelled") },
   ];
 
 const STATUS_LABEL: Record<StatusFilter, string> = {
   all: "",
-  applied: "応募",
-  rejected: "未選定",
-  in_progress: "進行中",
-  ended: "終了",
-  cancelled: "キャンセル",
+  applied: t("application.filters.statusApplied"),
+  rejected: t("application.filters.statusRejected"),
+  in_progress: t("application.filters.statusInProgress"),
+  ended: t("application.filters.statusEnded"),
+  cancelled: t("application.filters.statusCancelled"),
 };
 
 const SNS_OPTIONS: { value: SnsType; label: string }[] = [
@@ -106,7 +107,9 @@ export function ApplicationFilters({
           }`}
           onClick={() => openPopover("sns", snsButtonRef.current)}
         >
-          {selectedSnsTypes.size > 0 ? `SNS: ${selectedSnsLabel}` : "+ SNS"}
+          {selectedSnsTypes.size > 0
+            ? `${t("application.filters.snsChipPrefix")}: ${selectedSnsLabel}`
+            : t("application.filters.snsChipEmpty")}
           {selectedSnsTypes.size > 0 && (
             <span
               className={styles.clear}
@@ -131,8 +134,8 @@ export function ApplicationFilters({
           onClick={() => openPopover("status", statusButtonRef.current)}
         >
           {statusFilter !== "all"
-            ? `状態: ${STATUS_LABEL[statusFilter]}`
-            : "+ 状態"}
+            ? `${t("application.filters.statusChipPrefix")}: ${STATUS_LABEL[statusFilter]}`
+            : t("application.filters.statusChipEmpty")}
           {statusFilter !== "all" && (
             <span
               className={styles.clear}
@@ -158,7 +161,7 @@ export function ApplicationFilters({
           >
             {popover.kind === "status" ? (
               <>
-                <div className={styles.popoverTitle}>状態を選択</div>
+                <div className={styles.popoverTitle}>{t("application.filters.popoverStatusTitle")}</div>
                 <div className={styles.popoverItems}>
                   {STATUS_OPTIONS.map((option) => {
                     const selected = statusFilter === option.value;
@@ -185,7 +188,7 @@ export function ApplicationFilters({
               </>
             ) : (
               <>
-                <div className={styles.popoverTitle}>SNSを選択（複数可）</div>
+                <div className={styles.popoverTitle}>{t("application.filters.popoverSnsTitle")}</div>
                 <div className={styles.popoverItems}>
                   {VISIBLE_SNS_OPTIONS.map((option) => {
                     const selected = selectedSnsTypes.has(option.value);
@@ -212,7 +215,7 @@ export function ApplicationFilters({
                     className={styles.popoverClose}
                     onClick={() => setPopover(null)}
                   >
-                    閉じる
+                    {t("application.filters.popoverClose")}
                   </button>
                 </div>
               </>

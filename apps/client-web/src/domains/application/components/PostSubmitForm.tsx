@@ -5,9 +5,10 @@ import type { SnsType } from "@jsure/shared";
 import { Input } from "@/components/ui";
 import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
+import { t } from "@/i18n";
 
 const schema = z.object({
-  url: z.string().regex(/^https?:\/\/.+/i, "正しいURLを入力してください"),
+  url: z.string().regex(/^https?:\/\/.+/i, t("application.postForm.urlInvalid")),
 });
 type Values = z.infer<typeof schema>;
 
@@ -28,7 +29,7 @@ interface Props {
 
 function formatDeadline(iso: string): string {
   const date = new Date(iso);
-  return `${date.getMonth() + 1}月${date.getDate()}日`;
+  return `${date.getMonth() + 1}${t("application.dateFormat.monthSuffix")}${date.getDate()}${t("application.dateFormat.daySuffix")}`;
 }
 
 export function PostSubmitForm({
@@ -50,7 +51,7 @@ export function PostSubmitForm({
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(handle)}>
-        <FormField name="url" label={`${snsType} 投稿URL`}>
+        <FormField name="url" label={`${snsType} ${t("application.postForm.labelSuffix")}`}>
           {(field) => (
             <Input
               id={field.id}
@@ -65,7 +66,11 @@ export function PostSubmitForm({
           )}
         </FormField>
         <PrimaryButton type="submit" disabled={submitting}>
-          {submitting ? "送信中…" : initial ? "投稿URLを更新" : "投稿URLを提出"}
+          {submitting
+            ? t("application.postForm.submitting")
+            : initial
+              ? t("application.postForm.update")
+              : t("application.postForm.submit")}
         </PrimaryButton>
         <p
           style={{
@@ -75,7 +80,7 @@ export function PostSubmitForm({
             textAlign: "center",
           }}
         >
-          ⚠ 投稿冒頭に #PR を必ず記載
+          {t("application.postForm.prHint")}
         </p>
         {postingDeadlineAt && (
           <p
@@ -88,7 +93,8 @@ export function PostSubmitForm({
             }}
           >
             {/* 게시 마감일 */}
-            投稿締切日: {formatDeadline(postingDeadlineAt)}
+            {t("application.postForm.deadlineLabelPrefix")}
+            {formatDeadline(postingDeadlineAt)}
           </p>
         )}
       </form>

@@ -17,6 +17,7 @@ import {
 } from "@/domains/application";
 import { PageHeader } from "@/components/composites/PageHeader";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
+import { t } from "@/i18n";
 import styles from "./ApplicationDetail.module.css";
 
 export function ApplicationDetail() {
@@ -85,7 +86,7 @@ export function ApplicationDetail() {
     return (
       <div>
         <PageHeader showBack />
-        <div className={styles.center}>読み込み中…</div>
+        <div className={styles.center}>{t("pages.applications.detail.loading")}</div>
       </div>
     );
   }
@@ -93,7 +94,7 @@ export function ApplicationDetail() {
     return (
       <div>
         <PageHeader showBack />
-        <div className={styles.center}>読み込みに失敗しました</div>
+        <div className={styles.center}>{t("pages.applications.detail.loadError")}</div>
       </div>
     );
   }
@@ -120,42 +121,55 @@ export function ApplicationDetail() {
       </div>
 
       <div className={styles.sections}>
-        {stage === "APPLIED" && <p className={styles.msg}>承認をお待ちください。</p>}
-        {stage === "APPROVED" && <p className={styles.msg}>JSUREで発送準備中です。</p>}
+        {stage === "APPLIED" && (
+          <p className={styles.msg}>{t("pages.applications.detail.msgApplied")}</p>
+        )}
+        {stage === "APPROVED" && (
+          <p className={styles.msg}>{t("pages.applications.detail.msgApproved")}</p>
+        )}
         {stage === "SHIPPED" && (
           <div>
             <div className={styles.tracking}>
-              <div className={styles.trackingLabel}>配送業者</div>
+              <div className={styles.trackingLabel}>
+                {t("pages.applications.detail.trackingCarrier")}
+              </div>
               <div className={styles.trackingValue}>
                 {data.trackingCarrier ?? "—"}
               </div>
-              <div className={styles.trackingLabel}>運送番号</div>
+              <div className={styles.trackingLabel}>
+                {t("pages.applications.detail.trackingNumber")}
+              </div>
               <div className={styles.trackingValue}>
                 {data.trackingNumber ?? "—"}
               </div>
             </div>
-            <p className={styles.msg}>配送状況を確認しています。</p>
+            <p className={styles.msg}>{t("pages.applications.detail.msgShipped")}</p>
           </div>
         )}
 
         {stage === "AWAITING_RECEIPT" && (
           <div>
             <div className={styles.tracking}>
-              <div className={styles.trackingLabel}>配送業者</div>
+              <div className={styles.trackingLabel}>
+                {t("pages.applications.detail.trackingCarrier")}
+              </div>
               <div className={styles.trackingValue}>
                 {data.trackingCarrier ?? "—"}
               </div>
-              <div className={styles.trackingLabel}>運送番号</div>
+              <div className={styles.trackingLabel}>
+                {t("pages.applications.detail.trackingNumber")}
+              </div>
               <div className={styles.trackingValue}>
                 {data.trackingNumber ?? "—"}
               </div>
             </div>
             <p className={styles.msg}>
-              商品が届きましたか？受領を確認すると投稿期間（{data.postingPeriodDays}
-              日）が始まります。
+              {t("pages.applications.detail.awaitingReceiptPrefix")}
+              {data.postingPeriodDays}
+              {t("pages.applications.detail.awaitingReceiptSuffix")}
             </p>
             <PrimaryButton onClick={() => setShowReceiptDialog(true)} disabled={receive.isPending}>
-              受領を確認する
+              {t("pages.applications.detail.actionConfirmReceipt")}
             </PrimaryButton>
           </div>
         )}
@@ -178,11 +192,13 @@ export function ApplicationDetail() {
             .map((p) => (
               <div key={p.id} className={styles.reject}>
                 <div className={styles.rejectHead}>
-                  <span className={styles.rejectBadge}>差し戻し</span>
+                  <span className={styles.rejectBadge}>
+                    {t("pages.applications.detail.rejectBadge")}
+                  </span>
                   <span className={styles.rejectSns}>{p.snsType}</span>
                 </div>
                 <div className={styles.rejectUrl}>
-                  提出URL:{" "}
+                  {t("pages.applications.detail.rejectUrlPrefix")}
                   <a href={p.url} target="_blank" rel="noreferrer">
                     {p.url}
                   </a>
@@ -190,7 +206,7 @@ export function ApplicationDetail() {
                 {p.lastRejectionComment && (
                   <div className={styles.rejectComment}>
                     <div className={styles.rejectCommentLabel}>
-                      管理者コメント
+                      {t("pages.applications.detail.adminComment")}
                     </div>
                     <p>{p.lastRejectionComment}</p>
                   </div>
@@ -208,9 +224,7 @@ export function ApplicationDetail() {
             ))}
 
         {stage === "POSTED" && (
-          <p className={styles.msg}>
-            投稿を確認しました。投稿から7日後にインサイトを提出してください。
-          </p>
+          <p className={styles.msg}>{t("pages.applications.detail.msgPosted")}</p>
         )}
 
         {stage === "INSIGHT_DUE" && data.posts[0] && (
@@ -241,25 +255,30 @@ export function ApplicationDetail() {
           />
         )}
 
-        {stage === "REVIEWING" && <p className={styles.msg}>ブランドが検査中です。</p>}
+        {stage === "REVIEWING" && (
+          <p className={styles.msg}>{t("pages.applications.detail.msgReviewing")}</p>
+        )}
 
         {stage === "COMPLETED" && (
-          <p className={styles.msg}>完了しました。振込予定をお待ちください。</p>
+          <p className={styles.msg}>{t("pages.applications.detail.msgCompleted")}</p>
         )}
 
         {stage === "SETTLED" && data.settlement && (
           <div className={styles.thanks}>
             <p className={styles.thanksTitle}>
-              キャンペーンにご参加いただきありがとうございます。
+              {t("pages.applications.detail.thanksTitle")}
             </p>
             <dl className={styles.thanksMeta}>
               <div>
-                <dt>報酬</dt>
-                <dd>¥{data.settlement.amountJpy.toLocaleString("ja-JP")}円</dd>
+                <dt>{t("pages.applications.detail.labelReward")}</dt>
+                <dd>
+                  ¥{data.settlement.amountJpy.toLocaleString("ja-JP")}
+                  {t("pages.applications.detail.yenSuffix")}
+                </dd>
               </div>
               <div>
-                <dt>振込人</dt>
-                <dd>株式会社J-SURE</dd>
+                <dt>{t("pages.applications.detail.labelPayer")}</dt>
+                <dd>{t("pages.applications.detail.companyName")}</dd>
               </div>
             </dl>
           </div>
@@ -267,12 +286,13 @@ export function ApplicationDetail() {
 
         {stage === "REJECTED" && (
           <p className={`${styles.msg} ${styles.msgErr}`}>
-            未選定となりました: {data.rejectReason ?? "—"}
+            {t("pages.applications.detail.rejectPrefix")}
+            {data.rejectReason ?? "—"}
           </p>
         )}
         {stage === "CANCELLED" && (
           <p className={`${styles.msg} ${styles.msgErr}`}>
-            キャンセル済（同じキャンペーンに再応募はできません）
+            {t("pages.applications.detail.cancelledNotice")}
           </p>
         )}
 
@@ -283,7 +303,7 @@ export function ApplicationDetail() {
             disabled={cancel.isPending}
             onClick={() => setShowCancelDialog(true)}
           >
-            応募をキャンセル
+            {t("pages.applications.detail.actionCancel")}
           </button>
         )}
       </div>

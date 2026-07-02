@@ -11,6 +11,7 @@ import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { AddressFormFields, AddressZodSchema } from "@/domains/me";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
+import { t } from "@/i18n";
 
 const schema = AddressZodSchema;
 type Values = z.infer<typeof schema>;
@@ -55,7 +56,7 @@ export function MeAddress() {
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      setServerError(error?.response?.data?.message ?? "保存に失敗しました");
+      setServerError(error?.response?.data?.message ?? t("pages.me.address.saveFailed"));
     },
   });
 
@@ -67,7 +68,7 @@ export function MeAddress() {
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(save)}>
-        <PageHeader showBack title="配送先住所" />
+        <PageHeader showBack title={t("pages.me.address.title")} />
         <div style={{ padding: 16 }}>
           {serverError && <ErrorBanner message={serverError} />}
           <AddressFormFields showHeading={false} />
@@ -75,7 +76,7 @@ export function MeAddress() {
             onClick={() => methods.handleSubmit(save)()}
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? "保存中…" : "保存"}
+            {mutation.isPending ? t("pages.me.address.saving") : t("pages.me.address.save")}
           </PrimaryButton>
         </div>
       </form>

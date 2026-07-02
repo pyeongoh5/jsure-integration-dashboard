@@ -13,22 +13,23 @@ import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { BankSelect } from "@/domains/me";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
+import { t } from "@/i18n";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
 
 const schema = z
   .object({
     bank: z.object({ code: z.string(), name: z.string() }).nullable(),
-    branchName: z.string().refine((value) => value.trim().length > 0, "必須"),
-    branchCode: z.string().regex(/^\d{3}$/, "3桁"),
-    accountNumber: z.string().regex(/^\d{6,8}$/, "6~8桁"),
-    accountHolderKana: z.string().regex(KANA_RE, "カナで入力"),
+    branchName: z.string().refine((value) => value.trim().length > 0, t("pages.me.bank.required")),
+    branchCode: z.string().regex(/^\d{3}$/, t("pages.me.bank.branchCodeError")),
+    accountNumber: z.string().regex(/^\d{6,8}$/, t("pages.me.bank.accountNumberError")),
+    accountHolderKana: z.string().regex(KANA_RE, t("pages.me.bank.kanaError")),
   })
   .superRefine((values, ctx) => {
     if (!values.bank) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "銀行を選択",
+        message: t("pages.me.bank.bankRequired"),
         path: ["bank"],
       });
     }
@@ -88,7 +89,7 @@ export function MeBank() {
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      setServerError(error?.response?.data?.message ?? "保存に失敗しました");
+      setServerError(error?.response?.data?.message ?? t("pages.me.bank.saveFailed"));
     },
   });
 
@@ -100,7 +101,7 @@ export function MeBank() {
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(save)}>
-        <PageHeader showBack title="振込先口座" />
+        <PageHeader showBack title={t("pages.me.bank.title")} />
         <div style={{ padding: 16 }}>
           {serverError && <ErrorBanner message={serverError} />}
           {data?.bankAccount && (
@@ -114,7 +115,7 @@ export function MeBank() {
                 marginBottom: 14,
               }}
             >
-              セキュリティのため口座番号は再入力してください
+              {t("pages.me.bank.reenterAccount")}
             </div>
           )}
           <div
@@ -125,7 +126,7 @@ export function MeBank() {
               marginBottom: 6,
             }}
           >
-            銀行
+            {t("pages.me.bank.bankLabel")}
           </div>
           <Controller
             control={methods.control}
@@ -149,7 +150,7 @@ export function MeBank() {
                     >
                       {typeof errorMessage === "string"
                         ? errorMessage
-                        : "銀行を選択"}
+                        : t("pages.me.bank.bankRequired")}
                     </div>
                   )}
                 </>
@@ -163,7 +164,7 @@ export function MeBank() {
               columnGap: 12,
             }}
           >
-            <FormField name="branchName" label="支店名">
+            <FormField name="branchName" label={t("pages.me.bank.branchName")}>
               {(field) => (
                 <Input
                   id={field.id}
@@ -175,7 +176,7 @@ export function MeBank() {
                 />
               )}
             </FormField>
-            <FormField name="branchCode" label="支店コード (3桁)">
+            <FormField name="branchCode" label={t("pages.me.bank.branchCode")}>
               {(field) => (
                 <Input
                   id={field.id}
@@ -192,7 +193,7 @@ export function MeBank() {
               )}
             </FormField>
           </div>
-          <FormField name="accountNumber" label="口座番号">
+          <FormField name="accountNumber" label={t("pages.me.bank.accountNumber")}>
             {(field) => (
               <Input
                 id={field.id}
@@ -209,7 +210,7 @@ export function MeBank() {
               />
             )}
           </FormField>
-          <FormField name="accountHolderKana" label="口座名義 (カナ)">
+          <FormField name="accountHolderKana" label={t("pages.me.bank.accountHolderKana")}>
             {(field) => (
               <Input
                 id={field.id}
@@ -222,7 +223,7 @@ export function MeBank() {
             )}
           </FormField>
           <PrimaryButton type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? "保存中…" : "保存"}
+            {mutation.isPending ? t("pages.me.bank.saving") : t("pages.me.bank.save")}
           </PrimaryButton>
         </div>
       </form>

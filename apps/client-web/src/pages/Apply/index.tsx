@@ -5,6 +5,7 @@ import type { InstagramPostType, SnsType } from "@jsure/shared";
 import { useCampaign } from "@/domains/campaign";
 import { createApplication } from "@/domains/application";
 import { fetchMe } from "@/domains/auth";
+import { t } from "@/i18n";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
@@ -18,11 +19,11 @@ const CONFIRM_KEYS = [
   "GUIDELINE",
 ] as const;
 const CONFIRM_LABELS: Record<(typeof CONFIRM_KEYS)[number], string> = {
-  PR_LABEL: "投稿冒頭に「#PR」または「ブランドから提供」表記",
-  DEADLINE: "受取後2週間以内に投稿",
-  INSIGHTS: "投稿7日後にインサイト提出",
-  YAKKIHO: "薬機法の遵守",
-  GUIDELINE: "ガイドラインの確認・遵守",
+  PR_LABEL: t("pages.apply.confirmPr"),
+  DEADLINE: t("pages.apply.confirmDeadline"),
+  INSIGHTS: t("pages.apply.confirmInsights"),
+  YAKKIHO: t("pages.apply.confirmYakkiho"),
+  GUIDELINE: t("pages.apply.confirmGuideline"),
 };
 
 const SNS_LABEL: Record<SnsType, string> = {
@@ -33,15 +34,15 @@ const SNS_LABEL: Record<SnsType, string> = {
 };
 
 const SNS_FOLLOWER_LABEL: Record<SnsType, string> = {
-  INSTAGRAM: "フォロワー",
-  TIKTOK: "フォロワー",
-  X: "フォロワー",
-  YOUTUBE: "登録者",
+  INSTAGRAM: t("pages.apply.snsFollower"),
+  TIKTOK: t("pages.apply.snsFollower"),
+  X: t("pages.apply.snsFollower"),
+  YOUTUBE: t("pages.apply.snsSubscriber"),
 };
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
-  FEED: "フィード",
-  REELS: "リール",
+  FEED: t("pages.apply.instagramFeed"),
+  REELS: t("pages.apply.instagramReels"),
 };
 
 export function Apply() {
@@ -99,7 +100,7 @@ export function Apply() {
     onSuccess: (app) => nav(`/applications/${app.id}`, { replace: true }),
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { message?: string } } };
-      setError(e?.response?.data?.message ?? "応募に失敗しました");
+      setError(e?.response?.data?.message ?? t("pages.apply.errorFallback"));
     },
   });
 
@@ -129,7 +130,7 @@ export function Apply() {
       <div>
         <PageHeader showBack />
         <div style={{ padding: 60, textAlign: "center", color: "#6b7280" }}>
-          読み込み中…
+          {t("pages.apply.loading")}
         </div>
       </div>
     );
@@ -139,7 +140,7 @@ export function Apply() {
       <div>
         <PageHeader showBack />
         <div style={{ padding: 60, textAlign: "center", color: "#6b7280" }}>
-          キャンペーンが見つかりません
+          {t("pages.apply.notFound")}
         </div>
       </div>
     );
@@ -151,7 +152,7 @@ export function Apply() {
 
   return (
     <div className={styles.apply}>
-      <PageHeader showBack title="応募確認" />
+      <PageHeader showBack title={t("pages.apply.title")} />
       <div className={styles.body}>
         <div className={styles.cam}>
           <div className={styles.camTitle}>{campaign.data.title}</div>
@@ -161,10 +162,10 @@ export function Apply() {
         </div>
 
         <section className={styles.sec}>
-          <h3>応募に使用するSNSを選択</h3>
+          <h3>{t("pages.apply.snsSectionTitle")}</h3>
           {qualifying.length === 0 ? (
             <p style={{ color: "#ef4444", fontSize: 13 }}>
-              応募条件を満たすSNSアカウントがありません
+              {t("pages.apply.noQualifying")}
             </p>
           ) : (
             <ul className={styles.snsPick}>
@@ -201,33 +202,34 @@ export function Apply() {
                           {SNS_LABEL[r.snsType]}
                           {alreadyApplied && (
                             <span style={{ marginLeft: 8, color: "#10b981", fontSize: 11 }}>
-                              応募済み
+                              {t("pages.apply.appliedTag")}
                             </span>
                           )}
                           {isCancelled && (
                             <span style={{ marginLeft: 8, color: "#ef4444", fontSize: 11 }}>
-                              応募キャンセル済（再応募不可）
+                              {t("pages.apply.cancelledTag")}
                             </span>
                           )}
                           {!alreadyApplied && !isCancelled && isExcluded && (
                             <span style={{ marginLeft: 8, color: "#ef4444", fontSize: 11 }}>
-                              参加不可（類似キャンペーンに応募済み）
+                              {t("pages.apply.excludedTag")}
                             </span>
                           )}
                         </div>
                         <div className={styles.snsCond}>
-                          応募条件: {SNS_FOLLOWER_LABEL[r.snsType]}{" "}
+                          {t("pages.apply.condPrefix")}{SNS_FOLLOWER_LABEL[r.snsType]}{" "}
                           {r.minFollowers > 0
-                            ? `${r.minFollowers.toLocaleString("ja-JP")}人以上`
-                            : "制限なし"}
+                            ? `${r.minFollowers.toLocaleString("ja-JP")}${t("pages.apply.followerMinSuffix")}`
+                            : t("pages.apply.noLimit")}
                           {myFollowers !== undefined && (
                             <>
-                              {" "}
-                              （現在: {myFollowers.toLocaleString("ja-JP")}人）
+                              {t("pages.apply.currentPrefix")}
+                              {myFollowers.toLocaleString("ja-JP")}
+                              {t("pages.apply.currentSuffix")}
                             </>
                           )}
                           {myFollowers === undefined && (
-                            <>（アカウント未登録）</>
+                            <>{t("pages.apply.notRegistered")}</>
                           )}
                         </div>
                       </div>
@@ -241,7 +243,7 @@ export function Apply() {
 
         {wantsInstagram && allowedInstagramPostTypes.length > 0 && (
           <section className={styles.sec}>
-            <h3>Instagram 投稿タイプ</h3>
+            <h3>{t("pages.apply.instagramPostTypeTitle")}</h3>
             <ul className={styles.snsPick}>
               {allowedInstagramPostTypes.map((postType) => {
                 const isSelected = instagramPostType === postType;
@@ -270,14 +272,14 @@ export function Apply() {
             </ul>
             {instagramPostTypeMissing && (
               <p style={{ color: "#ef4444", fontSize: 13 }}>
-                投稿タイプを選択してください
+                {t("pages.apply.selectPostType")}
               </p>
             )}
           </section>
         )}
 
         <section className={styles.sec}>
-          <h3>お届け先住所</h3>
+          <h3>{t("pages.apply.addressTitle")}</h3>
           {me.data?.address ? (
             <>
               <div className={styles.address}>
@@ -296,38 +298,38 @@ export function Apply() {
                   checked={addressConfirmed}
                   onChange={() => setAddressConfirmed((prev) => !prev)}
                 />
-                <span>この住所で受け取ります</span>
+                <span>{t("pages.apply.confirmAddress")}</span>
               </label>
               <button
                 type="button"
                 className={styles.addressEdit}
                 onClick={() => nav("/me/address")}
               >
-                住所を修正する
+                {t("pages.apply.editAddress")}
               </button>
               <p className={styles.addressNotice}>
-                上記の内容に変更がある場合は、マイページで更新のうえ、再度ご応募ください。
+                {t("pages.apply.addressNotice")}
               </p>
               <p className={`${styles.addressNotice} ${styles.addressNoticeCaution}`}>
-                ※住所の転送手続きを行う場合、転送費用をご負担いただくことがございますので、あらかじめご了承ください。
+                {t("pages.apply.addressCaution")}
               </p>
             </>
           ) : (
             <div className={`${styles.address} ${styles.addressMissing}`}>
-              お届け先住所が未登録です。
+              {t("pages.apply.addressMissing")}
               <button
                 type="button"
                 className={styles.addressEdit}
                 onClick={() => nav("/me/address")}
               >
-                住所を登録する
+                {t("pages.apply.registerAddress")}
               </button>
             </div>
           )}
         </section>
 
         <section className={styles.sec}>
-          <h3>応募にあたっての再確認</h3>
+          <h3>{t("pages.apply.confirmSectionTitle")}</h3>
           {CONFIRM_KEYS.map((k) => (
             <label key={k} className={styles.chk}>
               <input
@@ -358,10 +360,10 @@ export function Apply() {
           onClick={() => apply.mutate()}
         >
           {isClosed
-            ? "募集終了"
+            ? t("pages.apply.ctaClosed")
             : apply.isPending
-              ? "送信中…"
-              : "応募を送信"}
+              ? t("pages.apply.ctaSubmitting")
+              : t("pages.apply.ctaSubmit")}
         </PrimaryButton>
       </div>
     </div>

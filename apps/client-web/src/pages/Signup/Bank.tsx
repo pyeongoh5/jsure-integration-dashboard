@@ -9,6 +9,7 @@ import {
   LineCompleteSignupRequestSchema,
 } from "@jsure/shared";
 import { Input } from "@/components/ui";
+import { t } from "@/i18n";
 import { FormField } from "@/components/composites";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 import { BankSelect } from "@/domains/me";
@@ -31,16 +32,16 @@ const schema = z
     bank: z.object({ code: z.string(), name: z.string() }).nullable(),
     branchName: z
       .string()
-      .refine((value) => value.trim().length > 0, "支店名は必須"),
-    branchCode: z.string().regex(/^\d{3}$/, "支店コードは3桁"),
-    accountNumber: z.string().regex(/^\d{6,8}$/, "口座番号は6~8桁"),
-    accountHolderKana: z.string().regex(KANA_RE, "カナで入力してください"),
+      .refine((value) => value.trim().length > 0, t("pages.signup.bank.branchNameRequired")),
+    branchCode: z.string().regex(/^\d{3}$/, t("pages.signup.bank.branchCodeInvalid")),
+    accountNumber: z.string().regex(/^\d{6,8}$/, t("pages.signup.bank.accountNumberInvalid")),
+    accountHolderKana: z.string().regex(KANA_RE, t("pages.signup.bank.kanaInvalid")),
   })
   .superRefine((values, ctx) => {
     if (!values.bank) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "銀行を選択してください",
+        message: t("pages.signup.bank.bankRequired"),
         path: ["bank"],
       });
     }
@@ -112,7 +113,7 @@ export function SignupBank() {
       : InfluencerSignupRequestSchema.safeParse(payload);
     if (!parsed.success) {
       setServerError(
-        parsed.error.issues[0]?.message ?? "入力内容を再度ご確認ください",
+        parsed.error.issues[0]?.message ?? t("pages.signup.bank.reviewInputs"),
       );
       return;
     }
@@ -140,7 +141,7 @@ export function SignupBank() {
       const error = err as { response?: { data?: { message?: string } } };
       setServerError(
         error?.response?.data?.message ??
-          "登録に失敗しました。しばらくしてから再度お試しください。",
+          t("pages.signup.bank.signupFailed"),
       );
     } finally {
       setSubmitting(false);
@@ -151,7 +152,7 @@ export function SignupBank() {
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(submit)}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>
-          振込先口座
+          {t("pages.signup.bank.heading")}
         </h2>
         {serverError && <ErrorBanner message={serverError} />}
 
@@ -163,7 +164,7 @@ export function SignupBank() {
             marginBottom: 6,
           }}
         >
-          銀行
+          {t("pages.signup.bank.bankLabel")}
         </div>
         <Controller
           control={methods.control}
@@ -187,7 +188,7 @@ export function SignupBank() {
                   >
                     {typeof errorMessage === "string"
                       ? errorMessage
-                      : "銀行を選択してください"}
+                      : t("pages.signup.bank.bankRequired")}
                   </div>
                 )}
               </>
@@ -202,7 +203,7 @@ export function SignupBank() {
             columnGap: 12,
           }}
         >
-          <FormField name="branchName" label="支店名">
+          <FormField name="branchName" label={t("pages.signup.bank.branchNameLabel")}>
             {(field) => (
               <Input
                 id={field.id}
@@ -210,12 +211,12 @@ export function SignupBank() {
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 error={field.error}
-                placeholder="渋谷支店"
+                placeholder={t("pages.signup.bank.branchNamePlaceholder")}
                 aria-invalid={field["aria-invalid"]}
               />
             )}
           </FormField>
-          <FormField name="branchCode" label="支店コード (3桁)">
+          <FormField name="branchCode" label={t("pages.signup.bank.branchCodeLabel")}>
             {(field) => (
               <Input
                 id={field.id}
@@ -234,7 +235,7 @@ export function SignupBank() {
           </FormField>
         </div>
 
-        <FormField name="accountNumber" label="口座番号 (6~8桁)">
+        <FormField name="accountNumber" label={t("pages.signup.bank.accountNumberLabel")}>
           {(field) => (
             <Input
               id={field.id}
@@ -254,8 +255,8 @@ export function SignupBank() {
 
         <FormField
           name="accountHolderKana"
-          label="口座名義 (カナ)"
-          hint="例: ヤマダ ハナコ"
+          label={t("pages.signup.bank.accountHolderKanaLabel")}
+          hint={t("pages.signup.bank.kanaHint")}
         >
           {(field) => (
             <Input
@@ -272,7 +273,7 @@ export function SignupBank() {
         <WizardFooter
           onBack={() => nav(-1)}
           onNext={methods.handleSubmit(submit)}
-          nextLabel="登録完了"
+          nextLabel={t("pages.signup.bank.submit")}
           loading={submitting}
         />
       </form>

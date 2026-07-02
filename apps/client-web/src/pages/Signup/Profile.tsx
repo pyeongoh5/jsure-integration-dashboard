@@ -3,6 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui";
+import { t } from "@/i18n";
 import { FormField } from "@/components/composites";
 import labeledInputStyles from "@/components/composites/LabeledInput.module.css";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
@@ -16,19 +17,19 @@ const TODAY_YMD = new Date().toISOString().slice(0, 10);
 const schema = z.object({
   name: z
     .string()
-    .refine((value) => value.trim().length > 0, "お名前は必須"),
-  nameKana: z.string().regex(KANA_RE, "カナで入力してください"),
+    .refine((value) => value.trim().length > 0, t("pages.signup.profile.nameRequired")),
+  nameKana: z.string().regex(KANA_RE, t("pages.signup.profile.kanaInvalid")),
   phone: z
     .string()
     .refine(
       (value) => /^\d{10,15}$|^[\d-]{10,20}$/.test(value),
-      "電話番号は10~15桁",
+      t("pages.signup.profile.phoneInvalid"),
     ),
   birthDate: z
     .string()
     .refine(
       (value) => BIRTH_RE.test(value) && value <= TODAY_YMD,
-      "生年月日を入力してください",
+      t("pages.signup.profile.birthDateInvalid"),
     ),
   address: AddressZodSchema,
 });
@@ -73,9 +74,9 @@ export function SignupProfile() {
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(next)}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>
-          プロフィール
+          {t("pages.signup.profile.heading")}
         </h2>
-        <FormField name="name" label="お名前">
+        <FormField name="name" label={t("pages.signup.profile.nameLabel")}>
           {(field) => (
             <Input
               id={field.id}
@@ -89,8 +90,8 @@ export function SignupProfile() {
         </FormField>
         <FormField
           name="nameKana"
-          label="お名前 (カナ)"
-          hint="例: ヤマダ ハナコ"
+          label={t("pages.signup.profile.nameKanaLabel")}
+          hint={t("pages.signup.profile.kanaHint")}
         >
           {(field) => (
             <Input
@@ -103,7 +104,7 @@ export function SignupProfile() {
             />
           )}
         </FormField>
-        <FormField name="phone" label="電話番号">
+        <FormField name="phone" label={t("pages.signup.profile.phoneLabel")}>
           {(field) => (
             <Input
               id={field.id}
@@ -113,12 +114,12 @@ export function SignupProfile() {
               onChange={field.onChange}
               onBlur={field.onBlur}
               error={field.error}
-              placeholder="09012345678"
+              placeholder={t("pages.signup.profile.phonePlaceholder")}
               aria-invalid={field["aria-invalid"]}
             />
           )}
         </FormField>
-        <FormField name="birthDate" label="生年月日">
+        <FormField name="birthDate" label={t("pages.signup.profile.birthDateLabel")}>
           {(field) => (
             <input
               id={field.id}

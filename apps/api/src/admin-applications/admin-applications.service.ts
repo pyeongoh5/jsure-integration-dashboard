@@ -11,6 +11,7 @@ import type {
 import { buildSnsProfileUrl } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
+import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
 import { R2Service } from "../r2/r2.service";
 import { ensureSettlementForPost } from "../settlements/ensure-settlement";
 
@@ -111,6 +112,7 @@ export class AdminApplicationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly line: LineMessagingService,
+    private readonly dispatcher: LineDispatcherService,
     private readonly r2: R2Service,
   ) {}
 
@@ -126,7 +128,10 @@ export class AdminApplicationsService {
   async approve(id: string, reviewerId: string): Promise<AdminApplication> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
-      include: { campaign: { select: { title: true } } },
+      include: {
+        campaign: { select: { id: true, title: true, postingPeriodDays: true } },
+        influencer: { select: { id: true, name: true, lineUserId: true } },
+      },
     });
     if (!existing) throw new NotFoundException("Application not found");
     if (existing.status !== "APPLIED") {
@@ -166,10 +171,7 @@ export class AdminApplicationsService {
         rejectReason: null,
       },
     });
-    void this.line.notifyApproved({
-      influencerId: existing.influencerId,
-      campaignTitle: existing.campaign.title,
-    });
+    void this.dispatcher.dispatch("SNS_APPLICATION_APPROVED", { application: existing });
     return this.fetch(id);
   }
 
@@ -222,7 +224,10 @@ export class AdminApplicationsService {
   ): Promise<AdminApplication> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
-      include: { campaign: { select: { title: true } } },
+      include: {
+        campaign: { select: { id: true, title: true, postingPeriodDays: true } },
+        influencer: { select: { id: true, name: true, lineUserId: true } },
+      },
     });
     if (!existing) throw new NotFoundException("Application not found");
     if (existing.status !== "APPROVED") {
@@ -237,11 +242,8 @@ export class AdminApplicationsService {
         shippedAt: new Date(),
       },
     });
-    void this.line.notifyShippedWithPlainText({
-      influencerId: existing.influencerId,
-      campaignTitle: existing.campaign.title,
-      trackingCarrier,
-      trackingNumber,
+    void this.dispatcher.dispatch("SNS_APPLICATION_SHIPPED", {
+      application: { ...existing, trackingCarrier, trackingNumber },
     });
     return this.fetch(id);
   }
@@ -250,7 +252,8 @@ export class AdminApplicationsService {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
       include: {
-        campaign: { select: { title: true, postingPeriodDays: true } },
+        campaign: { select: { id: true, title: true, postingPeriodDays: true } },
+        influencer: { select: { id: true, name: true, lineUserId: true } },
       },
     });
     if (!existing) throw new NotFoundException("Application not found");
@@ -264,12 +267,7 @@ export class AdminApplicationsService {
         deliveredAt: new Date(),
       },
     });
-    void this.line.notifyDelivered({
-      influencerId: existing.influencerId,
-      applicationId: id,
-      campaignTitle: existing.campaign.title,
-      postingPeriodDays: existing.campaign.postingPeriodDays,
-    });
+    void this.dispatcher.dispatch("SNS_APPLICATION_DELIVERED", { application: existing });
     return this.fetch(id);
   }
 
@@ -372,10 +370,9 @@ export class AdminApplicationsService {
       where: { id: postId },
       include: {
         application: {
-          select: {
-            id: true,
-            influencerId: true,
-            campaign: { select: { title: true } },
+          include: {
+            campaign: { select: { id: true, title: true, postingPeriodDays: true } },
+            influencer: { select: { id: true, name: true, lineUserId: true } },
           },
         },
       },
@@ -400,12 +397,13 @@ export class AdminApplicationsService {
         },
       }),
     ]);
-    void this.line.notifyPostRejected({
-      influencerId: existing.application.influencerId,
-      applicationId: existing.application.id,
-      campaignTitle: existing.application.campaign.title,
-      rejectReason: comment,
-      resubmitDeadlineAt: new Date(rejectedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS),
+    const resubmitDeadlineAt = new Date(
+      rejectedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS,
+    );
+    void this.dispatcher.dispatch("SNS_POST_REJECTED", {
+      application: existing.application,
+      rejection: { comment } as never,
+      extra: { resubmitDeadlineAt },
     });
     return this.fetchSubmittedPost(postId);
   }
@@ -562,7 +560,11 @@ export class AdminApplicationsService {
               select: {
                 id: true,
                 influencerId: true,
-                campaign: { select: { title: true } },
+                snsType: true,
+                trackingCarrier: true,
+                trackingNumber: true,
+                campaign: { select: { id: true, title: true, postingPeriodDays: true } },
+                influencer: { select: { id: true, name: true, lineUserId: true } },
               },
             },
           },
@@ -579,11 +581,9 @@ export class AdminApplicationsService {
       },
     });
     for (const target of targets) {
-      void this.line.notifySettlementComplete({
-        influencerId: target.post.application.influencerId,
-        applicationId: target.post.application.id,
-        campaignTitle: target.post.application.campaign.title,
-        rewardJpy: target.amountJpy,
+      void this.dispatcher.dispatch("SNS_SETTLEMENT_COMPLETED", {
+        application: target.post.application as never,
+        settlement: target,
       });
     }
     return { completedCount: targets.length };

@@ -16,7 +16,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "seed:line-templates": "ts-node -T prisma/seeds/line-templates.seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1057.0",

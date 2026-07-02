@@ -10,6 +10,8 @@
     "dev:api": "turbo dev --filter=@jsure/api",
     "dev:admin-web": "turbo dev --filter=@jsure/admin-web",
     "dev:client-web": "turbo dev --filter=@jsure/client-web",
+    "dev:client-web:kr": "VITE_I18N_REGION=kr turbo dev --filter=@jsure/client-web",
+    "dev:client-web:jp": "VITE_I18N_REGION=jp turbo dev --filter=@jsure/client-web",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",

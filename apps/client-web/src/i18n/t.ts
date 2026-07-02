@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { messages } from "./messages";
 
-const regionSchema = z.enum(["ko", "ja"]).catch("ko");
+const regionSchema = z.enum(["kr", "jp"]).catch("kr");
 const region = regionSchema.parse(import.meta.env.VITE_I18N_REGION);
 
-type Leaf = { readonly ko: string; readonly ja: string };
+type Leaf = { readonly kr: string; readonly jp: string };
 
 type DotPath<T> = T extends Leaf
   ? ""

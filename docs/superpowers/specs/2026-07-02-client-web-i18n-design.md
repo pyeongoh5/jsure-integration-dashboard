@@ -19,9 +19,9 @@
 
 ### 1. 언어 결정 방식
 
-- **빌드타임 고정**: 환경변수 `VITE_I18N_REGION` (`ko` | `ja`) 값에 따라 `t()`가 반환할 locale이 결정된다.
+- **빌드타임 고정**: 환경변수 `VITE_I18N_REGION` (`kr` | `jp`) 값에 따라 `t()`가 반환할 locale이 결정된다.
 - 언어 스위처 UI는 만들지 않는다.
-- dev 서버는 기본 `ko`, 프로덕션 빌드는 `ja`.
+- dev 서버는 기본 `kr`, 프로덕션 빌드는 `jp`.
 
 ### 2. 파일 구조
 
@@ -40,12 +40,12 @@ apps/client-web/scripts/
 // apps/client-web/src/i18n/messages.ts
 export const messages = {
   home: {
-    title:  { ko: '메인',   ja: 'ホーム' },
-    submit: { ko: '확인',   ja: 'OK' },
+    title:  { kr: '메인',   jp: 'ホーム' },
+    submit: { kr: '확인',   jp: 'OK' },
   },
   auth: {
     terms: {
-      agreeAll: { ko: '모든 항목에 동의합니다', ja: 'すべての項目に同意します' },
+      agreeAll: { kr: '모든 항목에 동의합니다', jp: 'すべての項目に同意します' },
     },
   },
 } as const;
@@ -54,7 +54,7 @@ export const messages = {
 규칙:
 
 - 중첩 구조 자유 (feature/subfeature 단위 그룹핑 권장).
-- 모든 leaf는 `{ ko: string; ja: string }` 두 필드를 갖는다.
+- 모든 leaf는 `{ kr: string; jp: string }` 두 필드를 갖는다.
 - `as const`로 리터럴 타입을 유지해 `t()`의 key 자동완성/오타 감지에 활용한다.
 
 ### 4. `t()` API
@@ -74,20 +74,20 @@ import { t } from '@/i18n';
 ### 5. 빌드 검증
 
 - `apps/client-web/scripts/validate-i18n.mjs`
-  - `messages.ts`를 파싱해서 모든 leaf가 `ko`, `ja` 두 필드를 갖고 두 값 모두 non-empty 문자열인지 확인.
+  - `messages.ts`를 파싱해서 모든 leaf가 `kr`, `jp` 두 필드를 갖고 두 값 모두 non-empty 문자열인지 확인.
   - 누락된 key 경로 리스트를 출력하고 `process.exit(1)`.
 - `apps/client-web/package.json`의 `build` 스크립트를 다음 순서로 구성:
   ```
   node scripts/validate-i18n.mjs && tsc -b && vite build
   ```
-- dev 서버(`vite`)에서는 검증하지 않는다. 개발 중엔 `ja`가 비어있는 상태가 정상이기 때문.
+- dev 서버(`vite`)에서는 검증하지 않는다. 개발 중엔 `jp`가 비어있는 상태가 정상이기 때문.
 
 ### 6. 환경변수
 
-- `apps/client-web/.env.development`: `VITE_I18N_REGION=ko`
-- 프로덕션 빌드 명령: `VITE_I18N_REGION=ja pnpm --filter @jsure/client-web build`
-- Railway 배포 환경변수에 `VITE_I18N_REGION=ja` 명시.
-- QA가 로컬에서 일본어 확인이 필요할 경우 `VITE_I18N_REGION=ja pnpm --filter @jsure/client-web dev` 로 실행.
+- `apps/client-web/.env.development`: `VITE_I18N_REGION=kr`
+- 프로덕션 빌드 명령: `VITE_I18N_REGION=jp pnpm --filter @jsure/client-web build`
+- Railway 배포 환경변수에 `VITE_I18N_REGION=jp` 명시.
+- QA가 로컬에서 일본어 확인이 필요할 경우 `VITE_I18N_REGION=jp pnpm --filter @jsure/client-web dev` 로 실행.
 
 ## 마이그레이션
 
@@ -97,7 +97,7 @@ import { t } from '@/i18n';
 
 1. i18n 인프라 세팅 (`messages.ts` 빈 골격, `t.ts`, `validate-i18n.mjs`).
 2. 각 컴포넌트/모듈을 순회하며:
-   - 하드코딩된 일본어 → 적절한 key로 `messages.ts`에 등록 (`ja`는 원문 그대로, `ko`는 초안 번역).
+   - 하드코딩된 일본어 → 적절한 key로 `messages.ts`에 등록 (`jp`는 원문 그대로, `kr`는 초안 번역).
    - 사용측 코드는 `t('...')`로 치환.
 3. 마이그레이션 완료 후엔 하드코딩된 일본어가 코드에 남지 않도록 lint 규칙 도입 검토 (별도 후속 작업).
 
@@ -106,7 +106,7 @@ import { t } from '@/i18n';
 ## QA 작업 흐름
 
 1. QA는 GitHub 웹 에디터에서 `apps/client-web/src/i18n/messages.ts`만 편집한다.
-2. `ja` 필드를 채우거나 수정하고 PR을 연다.
+2. `jp` 필드를 채우거나 수정하고 PR을 연다.
 3. 개발자가 리뷰·머지.
 4. 프로덕션 빌드 시 `validate-i18n.mjs`가 누락 여부를 재확인.
 

@@ -3,11 +3,13 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["VITE_I18N_REGION"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "dev": {
       "cache": false,
       "persistent": true,
+      "env": ["VITE_I18N_REGION"],
       "dependsOn": ["^build"]
     },
     "lint": {

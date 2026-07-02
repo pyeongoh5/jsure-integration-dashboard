@@ -11,10 +11,10 @@ function walk(node: unknown, path: string[]): void {
   }
   const record = node as UnknownRecord;
   const keys = Object.keys(record);
-  const hasKo = "ko" in record;
-  const hasJa = "ja" in record;
-  if (hasKo || hasJa) {
-    for (const locale of ["ko", "ja"] as const) {
+  const hasKr = "kr" in record;
+  const hasJp = "jp" in record;
+  if (hasKr || hasJp) {
+    for (const locale of ["kr", "jp"] as const) {
       const value = record[locale];
       if (typeof value !== "string" || value.trim() === "") {
         missing.push(`${path.join(".")}.${locale}: 값이 비어있음`);

@@ -11,7 +11,7 @@ import {
   type LineTriggerKey,
   type LineTriggerSubType,
 } from "@/domains/messageTemplate";
-import { Button, Checkbox, Dialog, Textarea } from "@/components/ui";
+import { Button, Dialog, Textarea } from "@/components/ui";
 import styles from "./MessageTemplates.module.css";
 
 const VAR_PATTERN = /\{\{\s*(\w+)\s*\}\}/g;
@@ -44,7 +44,6 @@ export function MessageTemplateEdit(): JSX.Element {
 
   const [detail, setDetail] = useState<LineMessageTemplateDetailResponse | null>(null);
   const [body, setBody] = useState("");
-  const [enabled, setEnabled] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +53,6 @@ export function MessageTemplateEdit(): JSX.Element {
     getTemplate(category, subType, triggerKey).then((res) => {
       setDetail(res);
       setBody(res.template.body);
-      setEnabled(res.template.enabled);
     });
   }, [category, subType, triggerKey]);
 
@@ -75,9 +73,7 @@ export function MessageTemplateEdit(): JSX.Element {
       ? "본문이 5,000자를 초과했습니다"
       : unknownVars.length > 0
         ? `알 수 없는 변수: ${unknownVars.map((k) => `{{${k}}}`).join(", ")}`
-        : enabled && body.trim().length === 0
-          ? "발송 활성화 상태에서 본문은 비어있을 수 없습니다"
-          : null;
+        : null;
 
   const insertVariable = (key: string): void => {
     const textarea = textareaRef.current;
@@ -98,7 +94,7 @@ export function MessageTemplateEdit(): JSX.Element {
     setSaving(true);
     setError(null);
     try {
-      await updateTemplate(category, subType, triggerKey, { enabled, body });
+      await updateTemplate(category, subType, triggerKey, { body });
       navigate("/message-templates");
     } catch (err) {
       setError(err instanceof Error ? err.message : "저장 실패");
@@ -131,8 +127,6 @@ export function MessageTemplateEdit(): JSX.Element {
         <div className={styles.editTitle}>{TRIGGER_LABELS[triggerKey]}</div>
         {subType && <span className={styles.editSubBadge}>{subType}</span>}
       </div>
-
-      <Checkbox checked={enabled} onChange={setEnabled} label="발송 활성화" />
 
       <div className={styles.editBody}>
         <div className={styles.editLeft}>
@@ -169,6 +163,7 @@ export function MessageTemplateEdit(): JSX.Element {
         open={preview !== null}
         onClose={() => setPreview(null)}
         title="미리보기"
+        className={styles.previewDialog}
         footer={
           <Button variant="secondary" onClick={() => setPreview(null)}>
             닫기

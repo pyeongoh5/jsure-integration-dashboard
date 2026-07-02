@@ -61,6 +61,20 @@ export class LineDispatcherService {
 
     const renderedBody = renderTemplate(template.body, meta.variables, context);
 
+    if (renderedBody.trim().length === 0) {
+      await this.logDispatch({
+        category,
+        subType,
+        triggerKey,
+        templateId: template.id,
+        applicationId,
+        toLineUserId,
+        renderedBody: "",
+        status: "SKIPPED_DISABLED",
+      });
+      return;
+    }
+
     try {
       await this.line.pushText(context.application.influencerId, renderedBody);
       await this.logDispatch({

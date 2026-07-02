@@ -67,7 +67,6 @@ export const LineMessageTemplateDetailResponseSchema = z.object({
 export type LineMessageTemplateDetailResponse = z.infer<typeof LineMessageTemplateDetailResponseSchema>;
 
 export const UpdateLineMessageTemplateRequestSchema = z.object({
-  enabled: z.boolean(),
   body: z.string().max(5000),
 });
 export type UpdateLineMessageTemplateRequest = z.infer<typeof UpdateLineMessageTemplateRequestSchema>;

@@ -101,9 +101,6 @@ export class AdminLineTemplatesService {
     if (meta.category !== category) {
       throw new BadRequestException("Trigger does not belong to the given category");
     }
-    if (input.enabled && input.body.trim().length === 0) {
-      throw new BadRequestException("Body cannot be empty when enabled");
-    }
     const validation = validateBodyVariables(input.body, meta.variables);
     if (!validation.ok) {
       throw new BadRequestException(
@@ -118,7 +115,6 @@ export class AdminLineTemplatesService {
       ? await this.prisma.lineMessageTemplate.update({
           where: { id: existing.id },
           data: {
-            enabled: input.enabled,
             body: input.body,
             updatedById,
           },
@@ -129,7 +125,7 @@ export class AdminLineTemplatesService {
             category,
             subType,
             triggerKey,
-            enabled: input.enabled,
+            enabled: false,
             body: input.body,
             updatedById,
           },
@@ -164,9 +160,6 @@ export class AdminLineTemplatesService {
     });
     if (!existing) {
       throw new NotFoundException("Template not found");
-    }
-    if (enabled && existing.body.trim().length === 0) {
-      throw new BadRequestException("발송 활성화 상태에서 본문은 비어있을 수 없습니다");
     }
     const row = await this.prisma.lineMessageTemplate.update({
       where: { id: existing.id },

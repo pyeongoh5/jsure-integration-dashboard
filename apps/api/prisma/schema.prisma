@@ -17,6 +17,7 @@ model AdminUser {
   status       AdminUserStatus @default(PENDING)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
+  testLineUserId String?
 
   sessions AdminUserSession[]
   notices  Notice[]
@@ -292,6 +293,7 @@ model CampaignApplication {
   campaign   Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   influencer Influencer      @relation(fields: [influencerId], references: [id], onDelete: Restrict)
   posts      SubmittedPost[]
+  lineDispatchLogs LineDispatchLog[]
 
   @@unique([campaignId, influencerId, snsType])
   @@index([campaignId, status])
@@ -428,4 +430,75 @@ model BroadcastJob {
 
   @@index([status, createdAt])
   @@map("broadcast_jobs")
+}
+
+enum CampaignCategory {
+  SNS
+  FAKE_PURCHASE
+}
+
+enum LineTriggerKey {
+  SNS_APPLICATION_APPLIED
+  SNS_APPLICATION_APPROVED
+  SNS_APPLICATION_REJECTED
+  SNS_APPLICATION_SHIPPED
+  SNS_APPLICATION_DELIVERED
+  SNS_APPLICATION_RECEIPT_CONFIRMED
+  SNS_POST_SUBMITTED
+  SNS_POST_DEADLINE_REMINDER
+  SNS_POST_APPROVED
+  SNS_POST_REJECTED
+  SNS_POST_REJECTION_REMINDER
+  SNS_INSIGHT_SUBMITTED
+  SNS_INSIGHT_REMINDER
+  SNS_SETTLEMENT_COMPLETED
+  SNS_CAMPAIGN_COMPLETED
+}
+
+enum LineTriggerSubType {
+  INSTAGRAM
+  X
+}
+
+enum LineDispatchStatus {
+  SUCCESS
+  FAILED
+  SKIPPED_DISABLED
+  SKIPPED_NO_TEMPLATE
+}
+
+model LineMessageTemplate {
+  id          String              @id @default(cuid())
+  category    CampaignCategory
+  subType     LineTriggerSubType?
+  triggerKey  LineTriggerKey
+  enabled     Boolean             @default(false)
+  body        String
+  updatedAt   DateTime            @updatedAt
+  updatedById String?
+
+  dispatchLogs LineDispatchLog[]
+
+  @@unique([category, subType, triggerKey])
+  @@map("line_message_templates")
+}
+
+model LineDispatchLog {
+  id            String                 @id @default(cuid())
+  category      CampaignCategory
+  subType       LineTriggerSubType?
+  triggerKey    LineTriggerKey
+  templateId    String?
+  template      LineMessageTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  applicationId String?
+  application   CampaignApplication?   @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  toLineUserId  String
+  renderedBody  String
+  status        LineDispatchStatus
+  errorMessage  String?
+  createdAt     DateTime               @default(now())
+
+  @@index([applicationId, triggerKey])
+  @@index([createdAt])
+  @@map("line_dispatch_logs")
 }

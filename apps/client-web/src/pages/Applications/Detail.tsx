@@ -17,7 +17,7 @@ import {
 } from "@/domains/application";
 import { PageHeader } from "@/components/composites/PageHeader";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./ApplicationDetail.module.css";
 
 export function ApplicationDetail() {

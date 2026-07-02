@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { isEnabledSnsType, type SnsType } from "@jsure/shared";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import type { StatusFilter } from "../filter";
 import styles from "./ApplicationFilters.module.css";
 

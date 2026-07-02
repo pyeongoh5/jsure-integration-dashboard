@@ -5,7 +5,7 @@ import type {
   SnsType,
   SnsRecruit,
 } from "@jsure/shared";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./CampaignCard.module.css";
 
 function snsChipClass(snsType: SnsType) {

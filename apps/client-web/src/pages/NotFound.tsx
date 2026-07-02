@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 
 export function NotFound() {
   return (

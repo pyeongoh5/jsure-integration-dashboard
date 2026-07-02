@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { JP_BANKS, type JpBank } from "@jsure/shared";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./BankSelect.module.css";
 
 interface Props {

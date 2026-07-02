@@ -13,7 +13,7 @@ import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { BankSelect } from "@/domains/me";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
 

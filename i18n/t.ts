@@ -1,8 +1,8 @@
-import { z } from "zod";
 import { messages } from "./messages";
 
-const regionSchema = z.enum(["kr", "jp"]).catch("kr");
-const region = regionSchema.parse(import.meta.env.VITE_I18N_REGION);
+type Region = "kr" | "jp";
+const raw = import.meta.env.VITE_I18N_REGION;
+const region: Region = raw === "jp" ? "jp" : "kr";
 
 type Leaf = { readonly kr: string; readonly jp: string };
 

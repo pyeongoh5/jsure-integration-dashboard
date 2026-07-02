@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ENABLED_SNS_TYPES, type SnsType } from "@jsure/shared";
 import { SnsAccountCard } from "@/domains/auth";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 

@@ -1,4 +1,4 @@
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./WizardFooter.module.css";
 
 interface Props {

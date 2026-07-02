@@ -3,7 +3,7 @@ import type { InstagramPostType, SnsType, SnsRecruit } from "@jsure/shared";
 import { useCampaign, formatYen, formatDate } from "@/domains/campaign";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./CampaignDetail.module.css";
 
 const SNS_ROW_CLASS: Record<SnsType, string | undefined> = {

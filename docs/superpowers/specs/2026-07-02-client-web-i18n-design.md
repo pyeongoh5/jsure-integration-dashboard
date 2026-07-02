@@ -26,18 +26,18 @@
 ### 2. 파일 구조
 
 ```
-apps/client-web/src/i18n/
-  messages.ts    # 소스 오브 트루스 (QA가 GitHub 웹 에디터에서 편집)
-  t.ts           # t() 함수 및 타입 유틸
-  index.ts       # 재export
-apps/client-web/scripts/
-  validate-i18n.mjs   # 빌드 전 검증 스크립트
+i18n/                # 저장소 최상위 (QA 접근성 우선)
+  messages.ts        # 소스 오브 트루스 (QA가 GitHub 웹 에디터에서 편집)
+  t.ts               # t() 함수 및 타입 유틸
+  index.ts           # 재export
+  scripts/
+    validate-i18n.ts # 빌드 전 검증 스크립트
 ```
 
 ### 3. 소스 파일 형태
 
 ```ts
-// apps/client-web/src/i18n/messages.ts
+// i18n/messages.ts
 export const messages = {
   home: {
     title:  { kr: '메인',   jp: 'ホーム' },
@@ -60,7 +60,7 @@ export const messages = {
 ### 4. `t()` API
 
 ```ts
-import { t } from '@/i18n';
+import { t } from '@i18n';
 
 <button>{t('home.submit')}</button>
 <span>{t('auth.terms.agreeAll')}</span>
@@ -73,12 +73,12 @@ import { t } from '@/i18n';
 
 ### 5. 빌드 검증
 
-- `apps/client-web/scripts/validate-i18n.mjs`
+- `i18n/scripts/validate-i18n.ts`
   - `messages.ts`를 파싱해서 모든 leaf가 `kr`, `jp` 두 필드를 갖고 두 값 모두 non-empty 문자열인지 확인.
   - 누락된 key 경로 리스트를 출력하고 `process.exit(1)`.
 - `apps/client-web/package.json`의 `build` 스크립트를 다음 순서로 구성:
   ```
-  node scripts/validate-i18n.mjs && tsc -b && vite build
+  tsx ../../i18n/scripts/validate-i18n.ts && tsc -b && vite build
   ```
 - dev 서버(`vite`)에서는 검증하지 않는다. 개발 중엔 `jp`가 비어있는 상태가 정상이기 때문.
 
@@ -105,10 +105,10 @@ import { t } from '@/i18n';
 
 ## QA 작업 흐름
 
-1. QA는 GitHub 웹 에디터에서 `apps/client-web/src/i18n/messages.ts`만 편집한다.
+1. QA는 GitHub 웹 에디터에서 `i18n/messages.ts`만 편집한다.
 2. `jp` 필드를 채우거나 수정하고 PR을 연다.
 3. 개발자가 리뷰·머지.
-4. 프로덕션 빌드 시 `validate-i18n.mjs`가 누락 여부를 재확인.
+4. 프로덕션 빌드 시 `validate-i18n.ts`가 누락 여부를 재확인.
 
 ## 안 하는 것
 

@@ -6,7 +6,7 @@ import type { SnsType } from "@jsure/shared";
 import { Input } from "@/components/ui";
 import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import { presignInsightUpload } from "../api";
 import styles from "./InsightSubmitForm.module.css";
 

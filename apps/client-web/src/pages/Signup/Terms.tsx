@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { INFLUENCER_TERMS, ConsentItemSchema, type ConsentItem } from "@jsure/shared";
 import { TermsAccordion } from "@/domains/auth";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 

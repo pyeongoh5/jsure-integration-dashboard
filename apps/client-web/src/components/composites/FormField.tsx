@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useFormContext, useController } from "react-hook-form";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./FormField.module.css";
 
 interface FieldRenderProps {

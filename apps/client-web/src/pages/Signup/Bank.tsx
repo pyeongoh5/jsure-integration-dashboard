@@ -9,7 +9,7 @@ import {
   LineCompleteSignupRequestSchema,
 } from "@jsure/shared";
 import { Input } from "@/components/ui";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import { FormField } from "@/components/composites";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 import { BankSelect } from "@/domains/me";

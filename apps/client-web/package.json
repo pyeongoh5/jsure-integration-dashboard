@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsx scripts/validate-i18n.ts && tsc -b && vite build",
+    "build": "tsx ../../i18n/scripts/validate-i18n.ts && tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -b --noEmit",

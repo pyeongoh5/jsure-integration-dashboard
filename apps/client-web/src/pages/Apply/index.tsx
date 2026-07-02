@@ -5,7 +5,7 @@ import type { InstagramPostType, SnsType } from "@jsure/shared";
 import { useCampaign } from "@/domains/campaign";
 import { createApplication } from "@/domains/application";
 import { fetchMe } from "@/domains/auth";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";

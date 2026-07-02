@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./PageHeader.module.css";
 
 interface Props {

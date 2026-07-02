@@ -8,7 +8,7 @@ import {
   useApplications,
   type StatusFilter,
 } from "@/domains/application";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./Applications.module.css";
 
 export function Applications() {

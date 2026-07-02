@@ -10,7 +10,7 @@ import { PageHeader } from "../../components/composites/PageHeader";
 import { SnsAccountCard } from "@/domains/auth";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 
 const SNS_TYPES = ENABLED_SNS_TYPES;
 

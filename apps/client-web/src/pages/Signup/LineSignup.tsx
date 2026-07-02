@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { setLineSignupTokenStorage } from "../../context/SignupContext";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 
 export function LineSignup() {
   const [params] = useSearchParams();

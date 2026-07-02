@@ -1,5 +1,5 @@
 import type { ApplicationDisplayStage } from "@jsure/shared";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import { STAGE_PROGRESS, STAGE_TOTAL } from "../utils";
 import styles from "./ApplicationStepper.module.css";
 

@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMe } from "@/domains/auth";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./Me.module.css";
 
 export function Me() {

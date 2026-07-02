@@ -1,5 +1,5 @@
 import type { ApplicationDisplayStage } from "@jsure/shared";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 
 export const STAGE_LABEL: Record<ApplicationDisplayStage, string> = {
   APPLIED: t("application.stageLabel.APPLIED"),

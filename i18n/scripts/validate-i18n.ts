@@ -1,4 +1,4 @@
-import { messages } from "../src/i18n/messages";
+import { messages } from "../messages";
 
 type UnknownRecord = Record<string, unknown>;
 

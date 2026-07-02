@@ -1,5 +1,5 @@
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./ReceiptConfirmDialog.module.css";
 
 interface Props {

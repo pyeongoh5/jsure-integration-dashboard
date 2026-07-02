@@ -1,5 +1,5 @@
 import { lineAuthorizeUrl } from "@/domains/auth";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 
 export function Login() {
   return (

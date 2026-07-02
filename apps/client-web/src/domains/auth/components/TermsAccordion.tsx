@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ConsentItem } from "@jsure/shared";
 import { INFLUENCER_TERMS } from "@jsure/shared";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 import styles from "./TermsAccordion.module.css";
 
 interface Props {

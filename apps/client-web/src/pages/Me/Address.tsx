@@ -11,7 +11,7 @@ import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { AddressFormFields, AddressZodSchema } from "@/domains/me";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 
 const schema = AddressZodSchema;
 type Values = z.infer<typeof schema>;

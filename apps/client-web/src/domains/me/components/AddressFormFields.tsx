@@ -6,7 +6,7 @@ import { LabeledInput } from "@/components/composites/LabeledInput";
 import labeledInputStyles from "@/components/composites/LabeledInput.module.css";
 import { FormField } from "@/components/composites";
 import { lookupPostalCode } from "@/lib/zipcloud";
-import { t } from "@/i18n";
+import { t } from "@i18n";
 
 const POSTAL_RE = /^\d{3}-?\d{4}$/;
 

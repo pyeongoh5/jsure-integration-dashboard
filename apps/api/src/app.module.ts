@@ -19,6 +19,7 @@ import { AdminNoticesModule } from "./admin-notices/admin-notices.module";
 import { InfluencerNoticesModule } from "./influencer-notices/influencer-notices.module";
 import { R2Module } from "./r2/r2.module";
 import { UploadsModule } from "./uploads/uploads.module";
+import { LineTemplatesModule } from "./line-templates/line-templates.module";
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { UploadsModule } from "./uploads/uploads.module";
     InfluencerNoticesModule,
     R2Module,
     UploadsModule,
+    LineTemplatesModule,
   ],
 })
 export class AppModule {}

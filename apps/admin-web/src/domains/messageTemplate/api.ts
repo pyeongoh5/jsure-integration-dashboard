@@ -74,6 +74,16 @@ export async function testSendTemplate(
   return TestSendLineMessageTemplateResponseSchema.parse(res.data);
 }
 
+export async function setTemplateEnabled(
+  category: CampaignCategory,
+  subType: LineTriggerSubType | null,
+  triggerKey: LineTriggerKey,
+  enabled: boolean,
+): Promise<LineMessageTemplateResponse> {
+  const res = await api.patch(`${pathOf(category, subType, triggerKey)}/enabled`, { enabled });
+  return LineMessageTemplateResponseSchema.parse(res.data);
+}
+
 export async function updateAdminTestLineUserId(
   testLineUserId: string | null,
 ): Promise<{ testLineUserId: string | null }> {

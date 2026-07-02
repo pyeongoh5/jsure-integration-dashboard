@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   listTemplates,
+  setTemplateEnabled,
   TRIGGER_LABELS,
   type CampaignCategory,
   type LineMessageTemplateListItem,
+  type LineTriggerKey,
   type LineTriggerSubType,
 } from "@/domains/messageTemplate";
 import styles from "./MessageTemplates.module.css";
@@ -21,6 +23,7 @@ export function MessageTemplates(): JSX.Element {
   const [subType, setSubType] = useState<LineTriggerSubType>("INSTAGRAM");
   const [items, setItems] = useState<LineMessageTemplateListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [togglingKey, setTogglingKey] = useState<LineTriggerKey | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -28,6 +31,41 @@ export function MessageTemplates(): JSX.Element {
       .then((res) => setItems(res.items))
       .finally(() => setLoading(false));
   }, [category, subType]);
+
+  const handleToggle = async (
+    triggerKey: LineTriggerKey,
+    nextEnabled: boolean,
+  ): Promise<void> => {
+    const previous = items;
+    setItems((prev) =>
+      prev.map((item) =>
+        item.triggerKey === triggerKey ? { ...item, enabled: nextEnabled } : item,
+      ),
+    );
+    setTogglingKey(triggerKey);
+    try {
+      const updated = await setTemplateEnabled(category, subType, triggerKey, nextEnabled);
+      setItems((prev) =>
+        prev.map((item) =>
+          item.triggerKey === triggerKey
+            ? {
+                ...item,
+                enabled: updated.enabled,
+                updatedAt: updated.updatedAt,
+                updatedByName: updated.updatedByName,
+              }
+            : item,
+        ),
+      );
+    } catch (err) {
+      setItems(previous);
+      const message =
+        err instanceof Error ? err.message : "활성화 상태 변경에 실패했습니다";
+      alert(message);
+    } finally {
+      setTogglingKey(null);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -48,7 +86,7 @@ export function MessageTemplates(): JSX.Element {
 
       {category === "SNS" && (
         <div className={styles.filter}>
-          <span>Sub-type:</span>
+          <span>SNS 유형:</span>
           {SUB_TYPES.map((s) => (
             <label key={s}>
               <input
@@ -68,10 +106,10 @@ export function MessageTemplates(): JSX.Element {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Trigger</th>
-              <th>Status</th>
-              <th>Last Updated</th>
-              <th>Updated By</th>
+              <th>트리거</th>
+              <th>상태</th>
+              <th>수정일</th>
+              <th>수정자</th>
             </tr>
           </thead>
           <tbody>
@@ -82,7 +120,19 @@ export function MessageTemplates(): JSX.Element {
                     {TRIGGER_LABELS[it.triggerKey]}
                   </Link>
                 </td>
-                <td>{it.enabled ? "✅ ON" : "⚪ OFF"}</td>
+                <td>
+                  <label className={styles.switch}>
+                    <input
+                      type="checkbox"
+                      checked={it.enabled}
+                      disabled={togglingKey === it.triggerKey}
+                      onChange={(event) =>
+                        void handleToggle(it.triggerKey, event.target.checked)
+                      }
+                    />
+                    <span className={styles.slider} />
+                  </label>
+                </td>
                 <td>{it.updatedAt ? new Date(it.updatedAt).toLocaleString("ja-JP") : "-"}</td>
                 <td>{it.updatedByName ?? "-"}</td>
               </tr>

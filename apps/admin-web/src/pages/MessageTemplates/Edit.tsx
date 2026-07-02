@@ -134,7 +134,7 @@ export function MessageTemplateEdit(): JSX.Element {
           checked={enabled}
           onChange={(e) => setEnabled(e.target.checked)}
         />
-        enabled
+        발송 활성화
       </label>
 
       <div className={styles.editor}>
@@ -146,7 +146,7 @@ export function MessageTemplateEdit(): JSX.Element {
             onChange={(e) => setBody(e.target.value)}
             rows={20}
           />
-          <div className={styles.counter}>{body.length} / 5000 chars</div>
+          <div className={styles.counter}>{body.length} / 5000 자</div>
           {validationError && <div className={styles.error}>{validationError}</div>}
           {error && <div className={styles.error}>{error}</div>}
         </div>
@@ -157,14 +157,14 @@ export function MessageTemplateEdit(): JSX.Element {
 
       <div className={styles.actions}>
         <button onClick={doPreview} disabled={!!validationError}>
-          Preview
+          미리보기
         </button>
         <button onClick={doTestSend} disabled={!!validationError}>
-          Send Test to My LINE
+          내 LINE으로 테스트 발송
         </button>
-        <button onClick={() => navigate("/message-templates")}>Cancel</button>
+        <button onClick={() => navigate("/message-templates")}>취소</button>
         <button onClick={doSave} disabled={!!validationError || saving}>
-          {saving ? "저장중..." : "Save"}
+          {saving ? "저장중..." : "저장"}
         </button>
       </div>
 

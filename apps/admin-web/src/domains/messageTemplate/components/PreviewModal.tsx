@@ -28,7 +28,7 @@ export function PreviewModal({ renderedBody, onClose }: Props): JSX.Element {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3>Preview</h3>
+        <h3>미리보기</h3>
         <pre
           style={{
             whiteSpace: "pre-wrap",
@@ -39,7 +39,7 @@ export function PreviewModal({ renderedBody, onClose }: Props): JSX.Element {
         >
           {renderedBody}
         </pre>
-        <button onClick={onClose}>Close</button>
+        <button onClick={onClose}>닫기</button>
       </div>
     </div>
   );

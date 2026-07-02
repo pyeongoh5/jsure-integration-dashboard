@@ -7,12 +7,12 @@ import {
   updateTemplate,
   TRIGGER_LABELS,
   VariablesPanel,
-  PreviewModal,
   type CampaignCategory,
   type LineMessageTemplateDetailResponse,
   type LineTriggerKey,
   type LineTriggerSubType,
 } from "@/domains/messageTemplate";
+import { Button, Checkbox, Dialog, Textarea } from "@/components/ui";
 import styles from "./MessageTemplates.module.css";
 
 const VAR_PATTERN = /\{\{\s*(\w+)\s*\}\}/g;
@@ -21,8 +21,8 @@ function findUnknownVariables(body: string, allowed: string[]): string[] {
   const set = new Set(allowed);
   const seen = new Set<string>();
   const result: string[] = [];
-  for (const m of body.matchAll(VAR_PATTERN)) {
-    const key = m[1];
+  for (const match of body.matchAll(VAR_PATTERN)) {
+    const key = match[1];
     if (key === undefined) continue;
     if (!set.has(key) && !seen.has(key)) {
       seen.add(key);
@@ -59,7 +59,13 @@ export function MessageTemplateEdit(): JSX.Element {
     });
   }, [category, subType, triggerKey]);
 
-  if (!detail) return <p>로딩중...</p>;
+  if (!detail) {
+    return (
+      <div className={styles.edit}>
+        <div className={styles.state}>불러오는 중…</div>
+      </div>
+    );
+  }
 
   const unknownVars = findUnknownVariables(
     body,
@@ -67,24 +73,24 @@ export function MessageTemplateEdit(): JSX.Element {
   );
   const validationError =
     body.length > 5000
-      ? "본문이 5000자를 초과했습니다"
+      ? "본문이 5,000자를 초과했습니다"
       : unknownVars.length > 0
         ? `알 수 없는 변수: ${unknownVars.map((k) => `{{${k}}}`).join(", ")}`
         : enabled && body.trim().length === 0
-          ? "활성화 상태에서 본문은 비어있을 수 없습니다"
+          ? "발송 활성화 상태에서 본문은 비어있을 수 없습니다"
           : null;
 
   const insertVariable = (key: string): void => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
     const next = `${body.substring(0, start)}{{${key}}}${body.substring(end)}`;
     setBody(next);
     setTimeout(() => {
       const pos = start + `{{${key}}}`.length;
-      ta.focus();
-      ta.setSelectionRange(pos, pos);
+      textarea.focus();
+      textarea.setSelectionRange(pos, pos);
     }, 0);
   };
 
@@ -123,54 +129,60 @@ export function MessageTemplateEdit(): JSX.Element {
   };
 
   return (
-    <div className={styles.container}>
-      <h1>
-        {TRIGGER_LABELS[triggerKey]} {subType ? `(${subType})` : ""}
-      </h1>
+    <div className={styles.edit}>
+      <div className={styles.editHeader}>
+        <div className={styles.editTitle}>{TRIGGER_LABELS[triggerKey]}</div>
+        {subType && <span className={styles.editSubBadge}>{subType}</span>}
+      </div>
 
-      <label className={styles.toggle}>
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => setEnabled(e.target.checked)}
-        />
-        발송 활성화
-      </label>
+      <Checkbox checked={enabled} onChange={setEnabled} label="발송 활성화" />
 
-      <div className={styles.editor}>
-        <div className={styles.editorLeft}>
-          <textarea
+      <div className={styles.editBody}>
+        <div className={styles.editLeft}>
+          <Textarea
             ref={textareaRef}
-            className={styles.textarea}
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={setBody}
             rows={20}
+            placeholder="LINE으로 발송할 메시지 본문을 입력하세요"
           />
-          <div className={styles.counter}>{body.length} / 5000 자</div>
+          <div className={styles.counter}>{body.length.toLocaleString()} / 5,000 자</div>
           {validationError && <div className={styles.error}>{validationError}</div>}
           {error && <div className={styles.error}>{error}</div>}
         </div>
-        <div className={styles.editorRight}>
+
+        <aside className={styles.editRight}>
           <VariablesPanel variables={detail.variables} onInsert={insertVariable} />
-        </div>
+        </aside>
       </div>
 
       <div className={styles.actions}>
-        <button onClick={doPreview} disabled={!!validationError}>
+        <Button variant="secondary" onClick={() => navigate("/message-templates")}>
+          취소
+        </Button>
+        <Button variant="ghost" onClick={doPreview} disabled={!!validationError}>
           미리보기
-        </button>
-        <button onClick={doTestSend} disabled={!!validationError}>
+        </Button>
+        <Button variant="ghost" onClick={doTestSend} disabled={!!validationError}>
           내 LINE으로 테스트 발송
-        </button>
-        <button onClick={() => navigate("/message-templates")}>취소</button>
-        <button onClick={doSave} disabled={!!validationError || saving}>
-          {saving ? "저장중..." : "저장"}
-        </button>
+        </Button>
+        <Button variant="primary" onClick={doSave} disabled={!!validationError || saving}>
+          {saving ? "저장 중…" : "저장"}
+        </Button>
       </div>
 
-      {preview !== null && (
-        <PreviewModal renderedBody={preview} onClose={() => setPreview(null)} />
-      )}
+      <Dialog
+        open={preview !== null}
+        onClose={() => setPreview(null)}
+        title="미리보기"
+        footer={
+          <Button variant="secondary" onClick={() => setPreview(null)}>
+            닫기
+          </Button>
+        }
+      >
+        <div className={styles.previewBox}>{preview}</div>
+      </Dialog>
     </div>
   );
 }

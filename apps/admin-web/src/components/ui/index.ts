@@ -9,3 +9,4 @@ export { Radio } from "./Radio";
 export { Badge } from "./Badge";
 export { Spinner } from "./Spinner";
 export { Dialog } from "./Dialog";
+export { Switch } from "./Switch";

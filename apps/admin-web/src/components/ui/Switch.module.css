@@ -1,0 +1,53 @@
+.wrap {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+  transition: background 0.15s ease;
+}
+
+.track::before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  top: 2px;
+  background: var(--color-bg);
+  border-radius: var(--radius-full);
+  transition: transform 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.input:checked + .track {
+  background: var(--color-primary);
+}
+
+.input:checked + .track::before {
+  transform: translateX(16px);
+}
+
+.input:focus-visible + .track {
+  box-shadow: 0 0 0 3px rgba(29, 108, 243, 0.2);
+}

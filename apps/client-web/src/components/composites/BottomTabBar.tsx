@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useUnreadNoticeCount } from "@/domains/notice";
+import { t } from "@/i18n";
 import styles from "./BottomTabBar.module.css";
 
 type Tab = {
@@ -10,10 +11,10 @@ type Tab = {
 };
 
 const TABS: readonly Tab[] = [
-  { to: "/", icon: "fa-magnifying-glass", label: "探す", end: true },
-  { to: "/applications", icon: "fa-clipboard-check", label: "応募内訳", end: false },
-  { to: "/notices", icon: "fa-bell", label: "お知らせ", end: false },
-  { to: "/me", icon: "fa-user", label: "マイページ", end: false },
+  { to: "/", icon: "fa-magnifying-glass", label: t("components.bottomTab.search"), end: true },
+  { to: "/applications", icon: "fa-clipboard-check", label: t("components.bottomTab.applications"), end: false },
+  { to: "/notices", icon: "fa-bell", label: t("components.bottomTab.notices"), end: false },
+  { to: "/me", icon: "fa-user", label: t("components.bottomTab.myPage"), end: false },
 ];
 
 export function BottomTabBar() {

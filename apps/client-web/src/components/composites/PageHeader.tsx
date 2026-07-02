@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { t } from "@/i18n";
 import styles from "./PageHeader.module.css";
 
 interface Props {
@@ -17,7 +18,7 @@ export function PageHeader({ title, showBack, right }: Props) {
             type="button"
             className={styles.back}
             onClick={() => navigate(-1)}
-            aria-label="戻る"
+            aria-label={t("components.pageHeader.backAriaLabel")}
           >
             <i className="fa-solid fa-chevron-left" />
           </button>

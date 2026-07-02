@@ -5,6 +5,7 @@ import type {
   SnsType,
   SnsRecruit,
 } from "@jsure/shared";
+import { t } from "@/i18n";
 import styles from "./CampaignCard.module.css";
 
 function snsChipClass(snsType: SnsType) {
@@ -28,15 +29,15 @@ const SNS_ICON: Record<SnsType, string> = {
 };
 
 const SNS_FOLLOWER_LABEL: Record<SnsType, string> = {
-  INSTAGRAM: "フォロワー",
-  TIKTOK: "フォロワー",
-  X: "フォロワー",
-  YOUTUBE: "登録者",
+  INSTAGRAM: t("campaign.card.followerLabel"),
+  TIKTOK: t("campaign.card.followerLabel"),
+  X: t("campaign.card.followerLabel"),
+  YOUTUBE: t("campaign.card.subscriberLabel"),
 };
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
-  FEED: "フィード",
-  REELS: "リール",
+  FEED: t("campaign.card.instagramFeed"),
+  REELS: t("campaign.card.instagramReels"),
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -47,7 +48,7 @@ interface Props {
 }
 
 function formatYen(v: number): string {
-  return `¥${v.toLocaleString("ja-JP")}円`;
+  return `¥${v.toLocaleString("ja-JP")}${t("campaign.card.yenSuffix")}`;
 }
 
 function stripHtml(html: string): string {
@@ -78,8 +79,8 @@ const MARQUEE_PAUSE_MS = 1500;
 function condText(r: SnsRecruit): string {
   const base =
     r.minFollowers > 0
-      ? `${SNS_FOLLOWER_LABEL[r.snsType]} ${r.minFollowers.toLocaleString("ja-JP")}人以上`
-      : `${SNS_FOLLOWER_LABEL[r.snsType]} 制限なし`;
+      ? `${SNS_FOLLOWER_LABEL[r.snsType]} ${r.minFollowers.toLocaleString("ja-JP")}${t("campaign.card.followerMinSuffix")}`
+      : `${SNS_FOLLOWER_LABEL[r.snsType]} ${t("campaign.card.noLimit")}`;
   if (r.snsType === "INSTAGRAM" && r.instagramPostTypes.length > 0) {
     const types = r.instagramPostTypes
       .map((postType) => INSTAGRAM_POST_TYPE_LABEL[postType])
@@ -189,7 +190,7 @@ export function CampaignCard({ card, onSelect }: Props) {
         style={card.thumbnailUrl ? { backgroundImage: `url(${card.thumbnailUrl})` } : undefined}
       >
         {card.isNew && <div className={styles.new}>NEW</div>}
-        {card.isEnded && <div className={styles.endedBadge}>終了</div>}
+        {card.isEnded && <div className={styles.endedBadge}>{t("campaign.card.ended")}</div>}
       </div>
 
       <div className={styles.body}>
@@ -212,14 +213,15 @@ export function CampaignCard({ card, onSelect }: Props) {
         <div className={styles.affix}>
           <div className={styles.progress}>
             <div className={styles.progressText}>
-              募集 {card.appliedCount}/{card.recruitCount}名 ({ratio}%)
+              {t("campaign.card.recruitPrefix")} {card.appliedCount}/{card.recruitCount}
+              {t("campaign.card.peopleSuffix")} ({ratio}%)
             </div>
             <div className={styles.progressBar}>
               <div className={styles.progressFill} style={{ width: `${ratio}%` }} />
             </div>
           </div>
           {card.isEnded ? (
-            <span className={`${styles.dday} ${styles.ddayEnded}`}>終了</span>
+            <span className={`${styles.dday} ${styles.ddayEnded}`}>{t("campaign.card.ended")}</span>
           ) : (
             <span className={`${styles.dday} ${dday <= 7 ? styles.ddayUrgent : ""}`}>
               D-{dday}

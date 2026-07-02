@@ -1,4 +1,5 @@
 import type { SnsType } from "@jsure/shared";
+import { t } from "@/i18n";
 import styles from "./SnsAccountCard.module.css";
 
 interface Props {
@@ -51,7 +52,7 @@ export function SnsAccountCard({
             />
           </label>
           <label className={styles.field}>
-            <span>フォロワー数</span>
+            <span>{t("auth.snsAccount.followerCount")}</span>
             <input
               type="text"
               inputMode="numeric"

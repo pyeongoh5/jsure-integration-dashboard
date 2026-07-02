@@ -214,9 +214,10 @@ export class AdminLineTemplatesService {
       select: { testLineUserId: true },
     });
     if (!admin?.testLineUserId) {
-      throw new BadRequestException(
-        "Register your LINE user ID in your admin profile before sending a test",
-      );
+      throw new BadRequestException({
+        code: "TEST_LINE_USER_ID_MISSING",
+        message: "테스트 발송에 사용할 LINE 사용자 ID가 등록되어 있지 않습니다",
+      });
     }
     const rendered = renderTemplate(body, meta.variables, {} as never, { useSample: true });
     await this.line.pushToLineUserId(admin.testLineUserId, [{ type: "text", text: rendered }]);

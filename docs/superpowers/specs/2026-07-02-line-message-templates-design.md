@@ -1,7 +1,7 @@
 # LINE 메시지 템플릿 관리 시스템 설계
 
 - 작성일: 2026-07-02
-- 상태: Draft (설계 확정, 구현 계획 대기)
+- 상태: Implemented (feat/line-message-templates 브랜치)
 
 ## 배경
 

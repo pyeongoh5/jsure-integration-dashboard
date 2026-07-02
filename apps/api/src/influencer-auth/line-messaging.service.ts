@@ -134,6 +134,34 @@ export class LineMessagingService {
   }
 
   /**
+   * Push messages directly to a raw LINE user ID (bypasses influencer lookup).
+   * Used by admin test-send and other flows where the lineUserId is already known.
+   */
+  async pushToLineUserId(lineUserId: string, messages: LineMessage[]): Promise<void> {
+    const token = await this.resolveToken();
+    if (!token) {
+      this.logger.warn("LINE messaging token not configured; skipping push");
+      return;
+    }
+    try {
+      const res = await fetch(LINE_PUSH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ to: lineUserId, messages }),
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        this.logger.warn(`LINE push failed (${res.status}) for lineUserId=${lineUserId}: ${body}`);
+      }
+    } catch (err) {
+      this.logger.error(`LINE push error for lineUserId=${lineUserId}`, err as Error);
+    }
+  }
+
+  /**
    * 여러 lineUserId 에게 동일한 메시지 전송. 500명씩 chunk 하고
    * 결과(성공/실패 카운트) 반환. 실패한 ID 는 errors 에 기록.
    */

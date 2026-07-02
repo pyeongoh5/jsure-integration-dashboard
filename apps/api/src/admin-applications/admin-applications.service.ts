@@ -12,6 +12,7 @@ import { buildSnsProfileUrl } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
+import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
 import { R2Service } from "../r2/r2.service";
 import { ensureSettlementForPost } from "../settlements/ensure-settlement";
 
@@ -129,8 +130,7 @@ export class AdminApplicationsService {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
       include: {
-        campaign: { select: { id: true, title: true, postingPeriodDays: true } },
-        influencer: { select: { id: true, name: true, lineUserId: true } },
+        ...DISPATCH_APPLICATION_INCLUDE,
       },
     });
     if (!existing) throw new NotFoundException("Application not found");
@@ -225,8 +225,7 @@ export class AdminApplicationsService {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
       include: {
-        campaign: { select: { id: true, title: true, postingPeriodDays: true } },
-        influencer: { select: { id: true, name: true, lineUserId: true } },
+        ...DISPATCH_APPLICATION_INCLUDE,
       },
     });
     if (!existing) throw new NotFoundException("Application not found");
@@ -252,8 +251,7 @@ export class AdminApplicationsService {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
       include: {
-        campaign: { select: { id: true, title: true, postingPeriodDays: true } },
-        influencer: { select: { id: true, name: true, lineUserId: true } },
+        ...DISPATCH_APPLICATION_INCLUDE,
       },
     });
     if (!existing) throw new NotFoundException("Application not found");
@@ -371,8 +369,7 @@ export class AdminApplicationsService {
       include: {
         application: {
           include: {
-            campaign: { select: { id: true, title: true, postingPeriodDays: true } },
-            influencer: { select: { id: true, name: true, lineUserId: true } },
+            ...DISPATCH_APPLICATION_INCLUDE,
           },
         },
       },
@@ -563,8 +560,7 @@ export class AdminApplicationsService {
                 snsType: true,
                 trackingCarrier: true,
                 trackingNumber: true,
-                campaign: { select: { id: true, title: true, postingPeriodDays: true } },
-                influencer: { select: { id: true, name: true, lineUserId: true } },
+                ...DISPATCH_APPLICATION_INCLUDE,
               },
             },
           },

@@ -20,6 +20,7 @@ import {
 import { ensureSettlementForPost } from "../settlements/ensure-settlement";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
+import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
 
 /** 응모 후 인플루언서가 직접 취소할 수 있는 기간(2일, 밀리초). */
 const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
@@ -396,14 +397,7 @@ export class InfluencerApplicationsService {
     }
     const createdApplications = await this.prisma.campaignApplication.findMany({
       where: { id: { in: results.map((r) => r.id) } },
-      include: {
-        campaign: {
-          select: { id: true, title: true, postingPeriodDays: true },
-        },
-        influencer: {
-          select: { id: true, name: true, lineUserId: true },
-        },
-      },
+      include: DISPATCH_APPLICATION_INCLUDE,
     });
     for (const application of createdApplications) {
       void this.dispatcher.dispatch("SNS_APPLICATION_APPLIED", { application });

@@ -9,7 +9,10 @@ import type {
 } from "@prisma/client";
 
 export type ApplicationWithRels = CampaignApplication & {
-  campaign: Pick<Campaign, "id" | "title" | "postingPeriodDays">;
+  campaign: Pick<
+    Campaign,
+    "id" | "title" | "postingPeriodDays" | "rewardJpy" | "productSummary"
+  >;
   influencer: Pick<Influencer, "id" | "name" | "lineUserId">;
 };
 
@@ -35,6 +38,31 @@ export type TriggerMetaEntry = {
   variables: TriggerVariableWithResolver[];
 };
 
+/**
+ * Prisma include 형태 상수. 디스패치 컨텍스트에 필요한 캠페인/인플루언서 필드를
+ * 5개 이상의 호출부에서 동일하게 사용하도록 하나의 상수로 통일한다.
+ */
+export const DISPATCH_APPLICATION_INCLUDE = {
+  campaign: {
+    select: {
+      id: true,
+      title: true,
+      postingPeriodDays: true,
+      rewardJpy: true,
+      productSummary: true,
+    },
+  },
+  influencer: {
+    select: {
+      id: true,
+      name: true,
+      lineUserId: true,
+    },
+  },
+} as const;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function formatJstMonthDay(d: Date): string {
   const parts = new Intl.DateTimeFormat("ja-JP", {
     timeZone: "Asia/Tokyo",
@@ -50,51 +78,116 @@ function formatJpy(n: number): string {
   return new Intl.NumberFormat("ja-JP").format(n);
 }
 
-const COMMON_VARS = {
-  influencerName: {
-    key: "influencerName",
-    label: "Influencer Name",
-    description: "Name of the influencer who applied",
-    sample: "Hanako Yamada",
-    resolver: (ctx) => ctx.application.influencer.name ?? "",
-  },
-  campaignTitle: {
-    key: "campaignTitle",
-    label: "Campaign Title",
-    description: "Title of the campaign the influencer applied to",
-    sample: "Summer Cosmetics PR Campaign",
-    resolver: (ctx) => ctx.application.campaign.title,
-  },
-} satisfies Record<string, TriggerVariableWithResolver>;
+const influencerName: TriggerVariableWithResolver = {
+  key: "influencerName",
+  label: "인플루언서 이름",
+  description: "신청자 인플루언서의 이름",
+  sample: "山田花子",
+  resolver: (ctx) => ctx.application.influencer.name ?? "",
+};
+
+const campaignTitle: TriggerVariableWithResolver = {
+  key: "campaignTitle",
+  label: "캠페인 제목",
+  description: "신청한 캠페인의 제목",
+  sample: "夏のコスメPRキャンペーン",
+  resolver: (ctx) => ctx.application.campaign.title,
+};
+
+const campaignRewardJpy: TriggerVariableWithResolver = {
+  key: "campaignRewardJpy",
+  label: "보수액(엔)",
+  description: "캠페인 보수 금액 (엔, 쉼표 포함)",
+  sample: "15,000",
+  resolver: (ctx) => formatJpy(ctx.application.campaign.rewardJpy),
+};
+
+const campaignPostingPeriodDays: TriggerVariableWithResolver = {
+  key: "campaignPostingPeriodDays",
+  label: "게시 기간(일)",
+  description: "상품 수령 후 게시까지 허용 일수",
+  sample: "7",
+  resolver: (ctx) => String(ctx.application.campaign.postingPeriodDays),
+};
+
+const campaignProductSummary: TriggerVariableWithResolver = {
+  key: "campaignProductSummary",
+  label: "상품 요약",
+  description: "캠페인 상품 간단 설명",
+  sample: "新発売のフェイスマスク",
+  resolver: (ctx) => ctx.application.campaign.productSummary ?? "",
+};
 
 const trackingCarrier: TriggerVariableWithResolver = {
   key: "trackingCarrier",
-  label: "Shipping Carrier",
-  description: "Carrier registered at shipment",
-  sample: "Yamato Transport",
+  label: "배송업체",
+  description: "발송 시 등록한 배송업체명",
+  sample: "ヤマト運輸",
   resolver: (ctx) => ctx.application.trackingCarrier ?? "",
 };
 
 const trackingNumber: TriggerVariableWithResolver = {
   key: "trackingNumber",
-  label: "Tracking Number",
-  description: "Tracking number provided by the carrier",
+  label: "추적번호",
+  description: "배송업체에서 제공한 추적번호",
   sample: "1234-5678-9012",
   resolver: (ctx) => ctx.application.trackingNumber ?? "",
 };
 
+const applicationShippedDate: TriggerVariableWithResolver = {
+  key: "applicationShippedDate",
+  label: "발송일",
+  description: "상품이 발송된 날짜 (JST 월/일)",
+  sample: "7月10日",
+  resolver: (ctx) =>
+    ctx.application.shippedAt ? formatJstMonthDay(ctx.application.shippedAt) : "",
+};
+
+const applicationDeliveredDate: TriggerVariableWithResolver = {
+  key: "applicationDeliveredDate",
+  label: "배송완료일",
+  description: "상품이 배송 완료된 날짜 (JST)",
+  sample: "7月12日",
+  resolver: (ctx) =>
+    ctx.application.deliveredAt ? formatJstMonthDay(ctx.application.deliveredAt) : "",
+};
+
+const applicationReceivedDate: TriggerVariableWithResolver = {
+  key: "applicationReceivedDate",
+  label: "수령일",
+  description: "인플루언서가 수령 확인한 날짜 (JST)",
+  sample: "7月13日",
+  resolver: (ctx) =>
+    ctx.application.receivedAt ? formatJstMonthDay(ctx.application.receivedAt) : "",
+};
+
+const postingDeadline: TriggerVariableWithResolver = {
+  key: "postingDeadline",
+  label: "게시 마감일",
+  description: "수령일로부터 계산된 게시 마감일 (JST)",
+  sample: "7月20日",
+  resolver: (ctx) => {
+    if (!ctx.application.receivedAt) return "";
+    const deadline = new Date(
+      ctx.application.receivedAt.getTime() +
+        ctx.application.campaign.postingPeriodDays * DAY_MS,
+    );
+    return formatJstMonthDay(deadline);
+  },
+};
+
 const rejectReason: TriggerVariableWithResolver = {
   key: "rejectReason",
-  label: "Reject Reason",
-  description: "Latest reject comment from the reviewer",
-  sample: "Please add the required hashtag",
+  label: "반려 사유",
+  description: "관리자가 입력한 반려 코멘트",
+  sample: "必須ハッシュタグを追加してください",
   resolver: (ctx) => ctx.rejection?.comment ?? "",
 };
 
 const resubmitDeadline: TriggerVariableWithResolver = {
   key: "resubmitDeadline",
-  label: "Resubmission Deadline",
-  description: "Deadline for resubmitting the post (JST month/day)",
+  label: "재제출 기한",
+  description: "반려 후 재제출 마감일 (JST)",
   sample: "7月20日",
   resolver: (ctx) =>
     ctx.extra?.resubmitDeadlineAt ? formatJstMonthDay(ctx.extra.resubmitDeadlineAt) : "",
@@ -102,8 +195,8 @@ const resubmitDeadline: TriggerVariableWithResolver = {
 
 const finalDeadline: TriggerVariableWithResolver = {
   key: "finalDeadline",
-  label: "Final Deadline",
-  description: "Absolute last deadline shown in the rejection reminder",
+  label: "최종 기한",
+  description: "반려 리마인더의 최종 기한 (JST)",
   sample: "7月21日",
   resolver: (ctx) =>
     ctx.extra?.finalDeadlineAt ? formatJstMonthDay(ctx.extra.finalDeadlineAt) : "",
@@ -111,110 +204,112 @@ const finalDeadline: TriggerVariableWithResolver = {
 
 const remainingDays: TriggerVariableWithResolver = {
   key: "remainingDays",
-  label: "Remaining Days",
-  description: "Days remaining until the posting deadline",
+  label: "남은 일수",
+  description: "게시 마감까지 남은 일수",
   sample: "3",
   resolver: (ctx) => (ctx.extra?.remainingDays != null ? String(ctx.extra.remainingDays) : ""),
 };
 
 const rewardJpy: TriggerVariableWithResolver = {
   key: "rewardJpy",
-  label: "Reward Amount (JPY)",
-  description: "Settlement amount in JPY with thousands separator",
+  label: "정산 금액(엔)",
+  description: "정산 금액 (엔, 쉼표 포함)",
   sample: "15,000",
   resolver: (ctx) => (ctx.settlement ? formatJpy(ctx.settlement.amountJpy) : ""),
 };
+
+const BASE_VARS: TriggerVariableWithResolver[] = [
+  influencerName,
+  campaignTitle,
+  campaignRewardJpy,
+  campaignPostingPeriodDays,
+  campaignProductSummary,
+];
+
+function withBase(...extra: TriggerVariableWithResolver[]): TriggerVariableWithResolver[] {
+  return [...BASE_VARS, ...extra];
+}
 
 export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   SNS_APPLICATION_APPLIED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle],
+    variables: withBase(),
   },
   SNS_APPLICATION_APPROVED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle],
+    variables: withBase(),
   },
   SNS_APPLICATION_REJECTED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle],
+    variables: withBase(),
   },
   SNS_APPLICATION_SHIPPED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [
-      COMMON_VARS.influencerName,
-      COMMON_VARS.campaignTitle,
-      trackingCarrier,
-      trackingNumber,
-    ],
+    variables: withBase(trackingCarrier, trackingNumber, applicationShippedDate),
   },
   SNS_APPLICATION_DELIVERED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle],
+    variables: withBase(
+      trackingCarrier,
+      trackingNumber,
+      applicationShippedDate,
+      applicationDeliveredDate,
+    ),
   },
   SNS_APPLICATION_RECEIPT_CONFIRMED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle],
+    variables: withBase(applicationDeliveredDate, applicationReceivedDate, postingDeadline),
   },
   SNS_POST_SUBMITTED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle],
+    variables: withBase(applicationReceivedDate, postingDeadline),
   },
   SNS_POST_DEADLINE_REMINDER: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle, remainingDays],
+    variables: withBase(remainingDays, postingDeadline),
   },
   SNS_POST_APPROVED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle],
+    variables: withBase(),
   },
   SNS_POST_REJECTED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [
-      COMMON_VARS.influencerName,
-      COMMON_VARS.campaignTitle,
-      rejectReason,
-      resubmitDeadline,
-    ],
+    variables: withBase(rejectReason, resubmitDeadline),
   },
   SNS_POST_REJECTION_REMINDER: {
     category: "SNS",
     requiresSubType: true,
-    variables: [
-      COMMON_VARS.influencerName,
-      COMMON_VARS.campaignTitle,
-      rejectReason,
-      finalDeadline,
-    ],
+    variables: withBase(rejectReason, finalDeadline),
   },
   SNS_INSIGHT_SUBMITTED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle],
+    variables: withBase(),
   },
   SNS_INSIGHT_REMINDER: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle],
+    variables: withBase(),
   },
   SNS_SETTLEMENT_COMPLETED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle, rewardJpy],
+    variables: withBase(rewardJpy),
   },
   SNS_CAMPAIGN_COMPLETED: {
     category: "SNS",
     requiresSubType: true,
-    variables: [COMMON_VARS.influencerName, COMMON_VARS.campaignTitle],
+    variables: withBase(),
   },
 };
 

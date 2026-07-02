@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
 import { LineDispatcherService } from "./line-dispatcher.service";
+import { DISPATCH_APPLICATION_INCLUDE } from "./trigger-meta";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const POSTING_REMINDER_DAYS = [3, 1];
@@ -52,12 +53,7 @@ export class LineRemindersService {
         status: { in: ["SHIPPED", "DELIVERED"] },
       },
       include: {
-        campaign: {
-          select: { id: true, title: true, postingPeriodDays: true },
-        },
-        influencer: {
-          select: { id: true, name: true, lineUserId: true },
-        },
+        ...DISPATCH_APPLICATION_INCLUDE,
         posts: { select: { id: true } },
       },
     });
@@ -89,14 +85,7 @@ export class LineRemindersService {
       where: { reviewStatus: "REJECTED", reviewedAt: { not: null } },
       include: {
         application: {
-          include: {
-            campaign: {
-              select: { id: true, title: true, postingPeriodDays: true },
-            },
-            influencer: {
-              select: { id: true, name: true, lineUserId: true },
-            },
-          },
+          include: DISPATCH_APPLICATION_INCLUDE,
         },
       },
     });
@@ -134,14 +123,7 @@ export class LineRemindersService {
       },
       include: {
         application: {
-          include: {
-            campaign: {
-              select: { id: true, title: true, postingPeriodDays: true },
-            },
-            influencer: {
-              select: { id: true, name: true, lineUserId: true },
-            },
-          },
+          include: DISPATCH_APPLICATION_INCLUDE,
         },
       },
     });

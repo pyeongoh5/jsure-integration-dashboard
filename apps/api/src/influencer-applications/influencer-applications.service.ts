@@ -394,21 +394,20 @@ export class InfluencerApplicationsService {
         message: "選択したSNSはすでに応募済みです",
       });
     }
-    const applicationWithRels =
-      await this.prisma.campaignApplication.findUniqueOrThrow({
-        where: { id: results[0]!.id },
-        include: {
-          campaign: {
-            select: { id: true, title: true, postingPeriodDays: true },
-          },
-          influencer: {
-            select: { id: true, name: true, lineUserId: true },
-          },
+    const createdApplications = await this.prisma.campaignApplication.findMany({
+      where: { id: { in: results.map((r) => r.id) } },
+      include: {
+        campaign: {
+          select: { id: true, title: true, postingPeriodDays: true },
         },
-      });
-    void this.dispatcher.dispatch("SNS_APPLICATION_APPLIED", {
-      application: applicationWithRels,
+        influencer: {
+          select: { id: true, name: true, lineUserId: true },
+        },
+      },
     });
+    for (const application of createdApplications) {
+      void this.dispatcher.dispatch("SNS_APPLICATION_APPLIED", { application });
+    }
     return results[0]!;
   }
 

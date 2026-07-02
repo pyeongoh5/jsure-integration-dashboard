@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SnsTypeSchema, type SnsType } from "@jsure/shared";
 import { CampaignCard, SnsTabBar, useCampaignList } from "@/domains/campaign";
+import { t } from "@/i18n";
 import styles from "./Browse.module.css";
 
 export function Browse() {
@@ -26,9 +27,9 @@ export function Browse() {
             <div className={styles.skel} />
           </>
         )}
-        {!isLoading && isError && <div className={styles.empty}>読み込みに失敗しました</div>}
+        {!isLoading && isError && <div className={styles.empty}>{t("pages.browse.loadError")}</div>}
         {!isLoading && !isError && data && data.length === 0 && (
-          <div className={styles.empty}>対象のキャンペーンはまだありません</div>
+          <div className={styles.empty}>{t("pages.browse.empty")}</div>
         )}
         {!isLoading &&
           !isError &&

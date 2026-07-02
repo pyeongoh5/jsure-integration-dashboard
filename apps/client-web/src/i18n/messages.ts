@@ -450,5 +450,30 @@ export const messages = {
         save: { ja: "保存", ko: "저장" },
       },
     },
+    auth: {
+      lineReturn: {
+        errorReceive: { ja: "ログイン情報を受信できませんでした", ko: "로그인 정보를 수신하지 못했습니다" },
+        errorLogin: { ja: "ログインに失敗しました", ko: "로그인에 실패했습니다" },
+        loggingIn: { ja: "LINEでログイン中…", ko: "LINE으로 로그인 중…" },
+      },
+      login: {
+        intro: {
+          ja: "LINEアカウントでログイン・新規登録できます。",
+          ko: "LINE 계정으로 로그인·회원가입할 수 있습니다.",
+        },
+        continueWithLine: { ja: "LINEで続行", ko: "LINE으로 계속하기" },
+      },
+    },
+    browse: {
+      loadError: { ja: "読み込みに失敗しました", ko: "불러오지 못했습니다" },
+      empty: { ja: "対象のキャンペーンはまだありません", ko: "대상 캠페인이 아직 없습니다" },
+    },
+    notices: {
+      title: { ja: "お知らせ", ko: "알림" },
+    },
+    notFound: {
+      heading: { ja: "ページが見つかりません", ko: "페이지를 찾을 수 없습니다" },
+      home: { ja: "ホームへ", ko: "홈으로" },
+    },
   },
 } as const;

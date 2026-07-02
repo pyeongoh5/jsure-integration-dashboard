@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useNoticesData } from "@/domains/notice";
 import { useReadNoticeIds } from "@/domains/notice";
+import { t } from "@/i18n";
 import styles from "./Notices.module.css";
 
 function formatDate(iso: string): string {
@@ -18,7 +19,7 @@ export function Notices() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageTitle}>お知らせ</div>
+      <div className={styles.pageTitle}>{t("pages.notices.title")}</div>
 
       {loading ? (
         <div className={styles.pageState}>불러오는 중…</div>

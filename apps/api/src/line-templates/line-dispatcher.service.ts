@@ -27,14 +27,8 @@ export class LineDispatcherService {
     const toLineUserId = context.application.influencer.lineUserId ?? "";
     const applicationId = context.application.id;
 
-    const template = await this.prisma.lineMessageTemplate.findUnique({
-      where: {
-        category_subType_triggerKey: {
-          category,
-          subType,
-          triggerKey,
-        },
-      },
+    const template = await this.prisma.lineMessageTemplate.findFirst({
+      where: { category, subType, triggerKey },
     });
 
     if (!template) {

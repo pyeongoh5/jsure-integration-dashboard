@@ -7,7 +7,7 @@ export function extractVariableKeys(body: string): string[] {
   const result: string[] = [];
   for (const match of body.matchAll(VAR_PATTERN)) {
     const key = match[1];
-    if (!seen.has(key)) {
+    if (key && !seen.has(key)) {
       seen.add(key);
       result.push(key);
     }

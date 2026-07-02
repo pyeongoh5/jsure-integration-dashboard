@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import type {
   CampaignCategory,
   LineMessageTemplateDetailResponse,
@@ -135,6 +135,44 @@ export class AdminLineTemplatesService {
           },
           include: { updatedBy: { select: { name: true } } },
         });
+    return {
+      category: row.category,
+      subType: row.subType,
+      triggerKey: row.triggerKey,
+      enabled: row.enabled,
+      body: row.body,
+      updatedAt: row.updatedAt.toISOString(),
+      updatedById: row.updatedById,
+      updatedByName: row.updatedBy?.name ?? null,
+    };
+  }
+
+  async setEnabled(
+    category: CampaignCategory,
+    subType: LineTriggerSubType | null,
+    triggerKey: LineTriggerKey,
+    updatedById: string,
+    enabled: boolean,
+  ): Promise<LineMessageTemplateResponse> {
+    const meta = getMeta(triggerKey);
+    if (meta.category !== category) {
+      throw new BadRequestException("Trigger does not belong to the given category");
+    }
+    const existing = await this.prisma.lineMessageTemplate.findFirst({
+      where: { category, subType, triggerKey },
+      select: { id: true, body: true },
+    });
+    if (!existing) {
+      throw new NotFoundException("Template not found");
+    }
+    if (enabled && existing.body.trim().length === 0) {
+      throw new BadRequestException("발송 활성화 상태에서 본문은 비어있을 수 없습니다");
+    }
+    const row = await this.prisma.lineMessageTemplate.update({
+      where: { id: existing.id },
+      data: { enabled, updatedById },
+      include: { updatedBy: { select: { name: true } } },
+    });
     return {
       category: row.category,
       subType: row.subType,

@@ -72,6 +72,13 @@ export const UpdateLineMessageTemplateRequestSchema = z.object({
 });
 export type UpdateLineMessageTemplateRequest = z.infer<typeof UpdateLineMessageTemplateRequestSchema>;
 
+export const ToggleLineMessageTemplateEnabledRequestSchema = z.object({
+  enabled: z.boolean(),
+});
+export type ToggleLineMessageTemplateEnabledRequest = z.infer<
+  typeof ToggleLineMessageTemplateEnabledRequestSchema
+>;
+
 export const PreviewLineMessageTemplateRequestSchema = z.object({
   body: z.string().max(5000),
 });

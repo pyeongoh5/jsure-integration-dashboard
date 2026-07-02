@@ -1,10 +1,22 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import {
   CampaignCategorySchema,
   LineTriggerKeySchema,
   LineTriggerSubTypeSchema,
   PreviewLineMessageTemplateRequestSchema,
   TestSendLineMessageTemplateRequestSchema,
+  ToggleLineMessageTemplateEnabledRequestSchema,
   UpdateLineMessageTemplateRequestSchema,
   type CampaignCategory,
   type LineMessageTemplateDetailResponse,
@@ -16,6 +28,7 @@ import {
   type PreviewLineMessageTemplateResponse,
   type TestSendLineMessageTemplateRequest,
   type TestSendLineMessageTemplateResponse,
+  type ToggleLineMessageTemplateEnabledRequest,
   type UpdateLineMessageTemplateRequest,
 } from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -71,6 +84,19 @@ export class AdminLineTemplatesController {
   ): Promise<LineMessageTemplateResponse> {
     const p = parseParams(category, subType, triggerKey);
     return this.svc.update(p.category, p.subType, p.triggerKey, req.user.id, input);
+  }
+
+  @Patch(":category/:subType/:triggerKey/enabled")
+  async setEnabled(
+    @Param("category") category: string,
+    @Param("subType") subType: string,
+    @Param("triggerKey") triggerKey: string,
+    @Body(new ZodValidationPipe(ToggleLineMessageTemplateEnabledRequestSchema))
+    input: ToggleLineMessageTemplateEnabledRequest,
+    @Req() req: { user: AuthenticatedUser },
+  ): Promise<LineMessageTemplateResponse> {
+    const p = parseParams(category, subType, triggerKey);
+    return this.svc.setEnabled(p.category, p.subType, p.triggerKey, req.user.id, input.enabled);
   }
 
   @Post(":category/:subType/:triggerKey/preview")

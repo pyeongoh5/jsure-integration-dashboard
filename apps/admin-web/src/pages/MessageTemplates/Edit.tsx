@@ -3,8 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   getTemplate,
   previewTemplate,
-  testSendTemplate,
-  updateAdminTestLineUserId,
   updateTemplate,
   TRIGGER_LABELS,
   VariablesPanel,
@@ -13,7 +11,7 @@ import {
   type LineTriggerKey,
   type LineTriggerSubType,
 } from "@/domains/messageTemplate";
-import { Button, Checkbox, Dialog, Input, Textarea } from "@/components/ui";
+import { Button, Checkbox, Dialog, Textarea } from "@/components/ui";
 import styles from "./MessageTemplates.module.css";
 
 const VAR_PATTERN = /\{\{\s*(\w+)\s*\}\}/g;
@@ -50,9 +48,6 @@ export function MessageTemplateEdit(): JSX.Element {
   const [preview, setPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [testLineIdDialogOpen, setTestLineIdDialogOpen] = useState(false);
-  const [testLineIdInput, setTestLineIdInput] = useState("");
-  const [testLineIdSaving, setTestLineIdSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -122,39 +117,6 @@ export function MessageTemplateEdit(): JSX.Element {
     }
   };
 
-  const doTestSend = async (): Promise<void> => {
-    if (validationError) return;
-    setError(null);
-    try {
-      await testSendTemplate(category, subType, triggerKey, body);
-      alert("테스트 발송 완료");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "테스트 발송 실패";
-      if (message.includes("TEST_LINE_USER_ID_MISSING") || message.includes("LINE 사용자 ID")) {
-        setTestLineIdInput("");
-        setTestLineIdDialogOpen(true);
-      } else {
-        setError(message);
-      }
-    }
-  };
-
-  const saveTestLineIdAndRetry = async (): Promise<void> => {
-    const trimmed = testLineIdInput.trim();
-    if (!trimmed) return;
-    setTestLineIdSaving(true);
-    try {
-      await updateAdminTestLineUserId(trimmed);
-      setTestLineIdDialogOpen(false);
-      await testSendTemplate(category, subType, triggerKey, body);
-      alert("테스트 발송 완료");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "테스트 발송 실패");
-    } finally {
-      setTestLineIdSaving(false);
-    }
-  };
-
   return (
     <div className={styles.edit}>
       <button
@@ -198,9 +160,6 @@ export function MessageTemplateEdit(): JSX.Element {
         <Button variant="secondary" onClick={doPreview} disabled={!!validationError}>
           미리보기
         </Button>
-        <Button variant="secondary" onClick={doTestSend} disabled={!!validationError}>
-          내 LINE으로 테스트 발송
-        </Button>
         <Button variant="primary" onClick={doSave} disabled={!!validationError || saving}>
           {saving ? "저장 중…" : "저장"}
         </Button>
@@ -217,43 +176,6 @@ export function MessageTemplateEdit(): JSX.Element {
         }
       >
         <div className={styles.previewBox}>{preview}</div>
-      </Dialog>
-
-      <Dialog
-        open={testLineIdDialogOpen}
-        onClose={() => setTestLineIdDialogOpen(false)}
-        title="LINE 사용자 ID 등록"
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => setTestLineIdDialogOpen(false)}
-              disabled={testLineIdSaving}
-            >
-              취소
-            </Button>
-            <Button
-              variant="primary"
-              onClick={saveTestLineIdAndRetry}
-              disabled={testLineIdSaving || testLineIdInput.trim().length === 0}
-            >
-              {testLineIdSaving ? "발송 중…" : "저장 후 발송"}
-            </Button>
-          </>
-        }
-      >
-        <div className={styles.testDialogBody}>
-          <div className={styles.testDialogHint}>
-            테스트 발송에 사용할 본인의 LINE 사용자 ID를 등록해 주세요. 등록 후 바로 테스트
-            메시지가 발송됩니다.
-          </div>
-          <Input
-            value={testLineIdInput}
-            onChange={setTestLineIdInput}
-            placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            autoFocus
-          />
-        </div>
       </Dialog>
     </div>
   );

@@ -38,6 +38,7 @@ export const NAV: NavGroup[] = [
     title: "시스템",
     items: [
       { to: "/notices", label: "공지사항", icon: "✉" },
+      { to: "/message-templates", label: "메시지 템플릿", icon: "✎" },
       { to: "/team", label: "팀원/권한", icon: "♕" },
     ],
   },

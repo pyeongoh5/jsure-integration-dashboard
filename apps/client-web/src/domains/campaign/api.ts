@@ -3,11 +3,11 @@ import {
   InfluencerCampaignListResponseSchema,
   type InfluencerCampaignCard,
   type InfluencerCampaignDetail,
-  type SnsType,
+  type CampaignSubType,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
-export async function listCampaigns(sns?: SnsType): Promise<InfluencerCampaignCard[]> {
+export async function listCampaigns(sns?: CampaignSubType): Promise<InfluencerCampaignCard[]> {
   const res = await api.get("/influencer/campaigns", {
     params: sns ? { sns } : undefined,
   });

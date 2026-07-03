@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { SnsType } from "@jsure/shared";
+import type { CampaignSubType } from "@jsure/shared";
 import {
   ApplicationCard,
   ApplicationFilters,
@@ -15,10 +15,10 @@ export function Applications() {
   const { data, isLoading, isError } = useApplications();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [selectedSnsTypes, setSelectedSnsTypes] = useState<Set<SnsType>>(new Set());
+  const [selectedSubTypes, setSelectedCampaignSubTypes] = useState<Set<CampaignSubType>>(new Set());
 
-  const toggleSns = (snsType: SnsType) => {
-    setSelectedSnsTypes((prev) => {
+  const toggleSns = (snsType: CampaignSubType) => {
+    setSelectedCampaignSubTypes((prev) => {
       const next = new Set(prev);
       if (next.has(snsType)) next.delete(snsType);
       else next.add(snsType);
@@ -27,7 +27,7 @@ export function Applications() {
   };
 
   const applications = data ?? [];
-  const filtered = filterApplications(applications, statusFilter, selectedSnsTypes);
+  const filtered = filterApplications(applications, statusFilter, selectedSubTypes);
 
   return (
     <div>
@@ -40,9 +40,9 @@ export function Applications() {
         <ApplicationFilters
           statusFilter={statusFilter}
           onStatusChange={setStatusFilter}
-          selectedSnsTypes={selectedSnsTypes}
+          selectedSubTypes={selectedSubTypes}
           onToggleSns={toggleSns}
-          onClearSns={() => setSelectedSnsTypes(new Set())}
+          onClearSns={() => setSelectedCampaignSubTypes(new Set())}
         />
       )}
 

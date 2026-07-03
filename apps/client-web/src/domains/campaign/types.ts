@@ -1,6 +1,6 @@
 export type {
   InfluencerCampaignCard,
   InfluencerCampaignDetail,
-  SnsRecruit,
-  SnsType,
+  CampaignRecruit,
+  CampaignSubType,
 } from "@jsure/shared";

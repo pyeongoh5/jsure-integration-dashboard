@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { isEnabledSnsType, type SnsType } from "@jsure/shared";
+import { isEnabledSnsType, type CampaignSubType, type SnsAccountSubType } from "@jsure/shared";
 import type { StatusFilter } from "../filter";
 import styles from "./ApplicationFilters.module.css";
 
@@ -22,14 +22,14 @@ const STATUS_LABEL: Record<StatusFilter, string> = {
   cancelled: "キャンセル",
 };
 
-const SNS_OPTIONS: { value: SnsType; label: string }[] = [
+const SNS_OPTIONS: { value: CampaignSubType; label: string }[] = [
   { value: "INSTAGRAM", label: "Instagram" },
   { value: "TIKTOK", label: "TikTok" },
   { value: "X", label: "X" },
   { value: "YOUTUBE", label: "YouTube" },
 ];
 const VISIBLE_SNS_OPTIONS = SNS_OPTIONS.filter((opt) =>
-  isEnabledSnsType(opt.value),
+  isEnabledSnsType(opt.value as SnsAccountSubType),
 );
 
 type PopoverKind = "status" | "sns";
@@ -37,15 +37,15 @@ type PopoverKind = "status" | "sns";
 type Props = {
   statusFilter: StatusFilter;
   onStatusChange: (status: StatusFilter) => void;
-  selectedSnsTypes: Set<SnsType>;
-  onToggleSns: (snsType: SnsType) => void;
+  selectedSubTypes: Set<CampaignSubType>;
+  onToggleSns: (snsType: CampaignSubType) => void;
   onClearSns: () => void;
 };
 
 export function ApplicationFilters({
   statusFilter,
   onStatusChange,
-  selectedSnsTypes,
+  selectedSubTypes,
   onToggleSns,
   onClearSns,
 }: Props) {
@@ -90,7 +90,7 @@ export function ApplicationFilters({
   };
 
   const selectedSnsLabel = VISIBLE_SNS_OPTIONS.filter((option) =>
-    selectedSnsTypes.has(option.value),
+    selectedSubTypes.has(option.value),
   )
     .map((option) => option.label)
     .join(", ");
@@ -102,12 +102,12 @@ export function ApplicationFilters({
           ref={snsButtonRef}
           type="button"
           className={`${styles.chip} ${
-            selectedSnsTypes.size > 0 ? styles.chipActive : ""
+            selectedSubTypes.size > 0 ? styles.chipActive : ""
           }`}
           onClick={() => openPopover("sns", snsButtonRef.current)}
         >
-          {selectedSnsTypes.size > 0 ? `SNS: ${selectedSnsLabel}` : "+ SNS"}
-          {selectedSnsTypes.size > 0 && (
+          {selectedSubTypes.size > 0 ? `SNS: ${selectedSnsLabel}` : "+ SNS"}
+          {selectedSubTypes.size > 0 && (
             <span
               className={styles.clear}
               onClick={(event) => {
@@ -188,7 +188,7 @@ export function ApplicationFilters({
                 <div className={styles.popoverTitle}>SNSを選択（複数可）</div>
                 <div className={styles.popoverItems}>
                   {VISIBLE_SNS_OPTIONS.map((option) => {
-                    const selected = selectedSnsTypes.has(option.value);
+                    const selected = selectedSubTypes.has(option.value);
                     return (
                       <button
                         key={option.value}

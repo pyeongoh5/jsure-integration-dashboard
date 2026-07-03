@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ENABLED_SNS_TYPES, type SnsType } from "@jsure/shared";
+import { ENABLED_SNS_TYPES, type SnsAccountSubType } from "@jsure/shared";
 import { fetchMe } from "@/domains/auth";
 import { deleteSnsAccount, upsertSnsAccount } from "@/domains/me";
 import { PageHeader } from "../../components/composites/PageHeader";
@@ -59,7 +59,7 @@ const schema = z
 type Values = z.infer<typeof schema>;
 type ValuesKey = keyof Values;
 
-const TYPE_TO_KEY: Record<SnsType, ValuesKey> = {
+const TYPE_TO_KEY: Record<SnsAccountSubType, ValuesKey> = {
   INSTAGRAM: "instagram",
   TIKTOK: "tiktok",
   X: "x",
@@ -105,7 +105,7 @@ export function MeSns() {
   const existing = new Set(data?.snsAccounts.map((sns) => sns.snsType) ?? []);
 
   const upsert = useMutation({
-    mutationFn: (snsType: SnsType) => {
+    mutationFn: (snsType: SnsAccountSubType) => {
       const fields = methods.getValues(TYPE_TO_KEY[snsType]);
       return upsertSnsAccount({
         snsType,
@@ -115,7 +115,7 @@ export function MeSns() {
     },
   });
   const remove = useMutation({
-    mutationFn: (snsType: SnsType) => deleteSnsAccount(snsType),
+    mutationFn: (snsType: SnsAccountSubType) => deleteSnsAccount(snsType),
   });
 
   const isValid =
@@ -152,7 +152,7 @@ export function MeSns() {
     }
   }
 
-  function toggle(type: SnsType) {
+  function toggle(type: SnsAccountSubType) {
     const key = TYPE_TO_KEY[type];
     const current = methods.getValues(key);
     methods.setValue(
@@ -162,7 +162,7 @@ export function MeSns() {
     );
   }
   function changeField(
-    type: SnsType,
+    type: SnsAccountSubType,
     field: "handle" | "followerCount",
     value: string,
   ) {

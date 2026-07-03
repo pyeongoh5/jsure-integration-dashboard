@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ENABLED_SNS_TYPES, type SnsType } from "@jsure/shared";
+import { ENABLED_SNS_TYPES, type SnsAccountSubType } from "@jsure/shared";
 import { SnsAccountCard } from "@/domains/auth";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
@@ -57,7 +57,7 @@ const schema = z
 type Values = z.infer<typeof schema>;
 type ValuesKey = keyof Values;
 
-const TYPE_TO_KEY: Record<SnsType, ValuesKey> = {
+const TYPE_TO_KEY: Record<SnsAccountSubType, ValuesKey> = {
   INSTAGRAM: "instagram",
   TIKTOK: "tiktok",
   X: "x",
@@ -65,7 +65,7 @@ const TYPE_TO_KEY: Record<SnsType, ValuesKey> = {
 };
 
 function buildDefaults(
-  existing: { snsType: SnsType; handle: string; followerCount: number }[],
+  existing: { snsType: SnsAccountSubType; handle: string; followerCount: number }[],
 ): Values {
   const base: Values = {
     instagram: { enabled: false, handle: "", followerCount: "" },
@@ -111,7 +111,7 @@ export function SignupSns() {
       );
     });
 
-  function toggle(type: SnsType) {
+  function toggle(type: SnsAccountSubType) {
     const key = TYPE_TO_KEY[type];
     const current = methods.getValues(key);
     methods.setValue(
@@ -122,7 +122,7 @@ export function SignupSns() {
   }
 
   function changeField(
-    type: SnsType,
+    type: SnsAccountSubType,
     field: "handle" | "followerCount",
     value: string,
   ) {

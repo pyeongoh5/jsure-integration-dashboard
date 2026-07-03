@@ -2,13 +2,13 @@ import { useLayoutEffect, useRef } from "react";
 import type {
   InfluencerCampaignCard,
   InstagramPostType,
-  SnsType,
-  SnsRecruit,
+  CampaignSubType,
+  CampaignRecruit,
 } from "@jsure/shared";
 import styles from "./CampaignCard.module.css";
 
-function snsChipClass(snsType: SnsType) {
-  switch (snsType) {
+function snsChipClass(subType: CampaignSubType) {
+  switch (subType) {
     case "INSTAGRAM":
       return styles.snsChipInstagram;
     case "TIKTOK":
@@ -17,21 +17,29 @@ function snsChipClass(snsType: SnsType) {
       return styles.snsChipX;
     case "YOUTUBE":
       return styles.snsChipYoutube;
+    default:
+      return undefined;
   }
 }
 
-const SNS_ICON: Record<SnsType, string> = {
+const SNS_ICON: Record<CampaignSubType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",
   TIKTOK: "fa-brands fa-tiktok",
   YOUTUBE: "fa-brands fa-youtube",
   X: "fa-brands fa-x-twitter",
+  QOO10: "fa-solid fa-bag-shopping",
+  LIPS: "fa-solid fa-bag-shopping",
+  ATCOSME: "fa-solid fa-bag-shopping",
 };
 
-const SNS_FOLLOWER_LABEL: Record<SnsType, string> = {
+const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   INSTAGRAM: "フォロワー",
   TIKTOK: "フォロワー",
   X: "フォロワー",
   YOUTUBE: "登録者",
+  QOO10: "フォロワー",
+  LIPS: "フォロワー",
+  ATCOSME: "フォロワー",
 };
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
@@ -75,12 +83,12 @@ function daysUntil(endIso: string, now: Date): number {
 const MARQUEE_SPEED_PX_PER_SEC = 15;
 const MARQUEE_PAUSE_MS = 1500;
 
-function condText(r: SnsRecruit): string {
+function condText(r: CampaignRecruit): string {
   const base =
     r.minFollowers > 0
-      ? `${SNS_FOLLOWER_LABEL[r.snsType]} ${r.minFollowers.toLocaleString("ja-JP")}人以上`
-      : `${SNS_FOLLOWER_LABEL[r.snsType]} 制限なし`;
-  if (r.snsType === "INSTAGRAM" && r.instagramPostTypes.length > 0) {
+      ? `${SNS_FOLLOWER_LABEL[r.subType]} ${r.minFollowers.toLocaleString("ja-JP")}人以上`
+      : `${SNS_FOLLOWER_LABEL[r.subType]} 制限なし`;
+  if (r.subType === "INSTAGRAM" && r.instagramPostTypes.length > 0) {
     const types = r.instagramPostTypes
       .map((postType) => INSTAGRAM_POST_TYPE_LABEL[postType])
       .join("・");
@@ -89,7 +97,7 @@ function condText(r: SnsRecruit): string {
   return base;
 }
 
-function SnsChipList({ recruits }: { recruits: SnsRecruit[] }) {
+function SnsChipList({ recruits }: { recruits: CampaignRecruit[] }) {
   const wrapRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const trackRefs = useRef<Array<HTMLSpanElement | null>>([]);
 
@@ -148,10 +156,10 @@ function SnsChipList({ recruits }: { recruits: SnsRecruit[] }) {
     <div className={styles.sns}>
       {recruits.map((r, i) => (
         <span
-          key={r.snsType}
-          className={`${styles.snsChip} ${snsChipClass(r.snsType)}`}
+          key={r.subType}
+          className={`${styles.snsChip} ${snsChipClass(r.subType) ?? ""}`}
         >
-          <i className={SNS_ICON[r.snsType]} aria-hidden="true" />
+          <i className={SNS_ICON[r.subType]} aria-hidden="true" />
           <span
             ref={(el) => {
               wrapRefs.current[i] = el;
@@ -196,7 +204,7 @@ export function CampaignCard({ card, onSelect }: Props) {
         <h3 className={styles.title}>{card.title}</h3>
         <p className={styles.desc}>{stripHtml(card.productSummary)}</p>
 
-        {card.snsRecruits.length > 0 && <SnsChipList recruits={card.snsRecruits} />}
+        {card.recruits.length > 0 && <SnsChipList recruits={card.recruits} />}
 
         <div className={styles.meta}>
           <div className={styles.metaRow}>

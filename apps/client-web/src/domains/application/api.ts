@@ -3,7 +3,7 @@ import {
   InfluencerApplicationSchema,
   type InfluencerApplication,
   type InstagramPostType,
-  type SnsType,
+  type CampaignSubType,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
@@ -21,12 +21,12 @@ export async function getApplication(
 
 export async function createApplication(
   campaignId: string,
-  snsTypes: SnsType[],
+  subTypes: CampaignSubType[],
   instagramPostType: InstagramPostType | null,
 ): Promise<InfluencerApplication> {
   const res = await api.post("/influencer/applications", {
     campaignId,
-    snsTypes,
+    subTypes,
     instagramPostType: instagramPostType ?? undefined,
   });
   return InfluencerApplicationSchema.parse(res.data);
@@ -50,11 +50,11 @@ export async function confirmReceipt(
 
 export async function submitPost(
   id: string,
-  snsType: SnsType,
+  subType: CampaignSubType,
   url: string,
 ): Promise<InfluencerApplication> {
   const res = await api.put(
-    `/influencer/applications/${id}/posts/${snsType}`,
+    `/influencer/applications/${id}/posts/${subType}`,
     { url },
   );
   return InfluencerApplicationSchema.parse(res.data);
@@ -62,7 +62,7 @@ export async function submitPost(
 
 export async function submitInsight(
   id: string,
-  snsType: SnsType,
+  subType: CampaignSubType,
   input: {
     likes: number;
     comments: number;
@@ -79,7 +79,7 @@ export async function submitInsight(
   },
 ): Promise<InfluencerApplication> {
   const res = await api.put(
-    `/influencer/applications/${id}/posts/${snsType}/insight`,
+    `/influencer/applications/${id}/posts/${subType}/insight`,
     input,
   );
   return InfluencerApplicationSchema.parse(res.data);
@@ -87,7 +87,7 @@ export async function submitInsight(
 
 export async function presignInsightUpload(input: {
   applicationId: string;
-  snsType: SnsType;
+  subType: CampaignSubType;
   contentType: "image/png" | "image/jpeg" | "image/webp";
   sizeBytes: number;
 }): Promise<{ objectKey: string; uploadUrl: string; expiresInSec: number }> {

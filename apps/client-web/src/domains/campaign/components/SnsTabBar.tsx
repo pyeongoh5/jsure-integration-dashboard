@@ -1,8 +1,8 @@
-import { ENABLED_SNS_TYPES, type SnsType } from "@jsure/shared";
+import { ENABLED_SNS_TYPES, type SnsAccountSubType } from "@jsure/shared";
 import styles from "./SnsTabBar.module.css";
 
 const SNS_TYPES = ENABLED_SNS_TYPES;
-const LABEL: Record<SnsType, string> = {
+const LABEL: Record<SnsAccountSubType, string> = {
   INSTAGRAM: "Instagram",
   TIKTOK: "TikTok",
   YOUTUBE: "YouTube",
@@ -10,8 +10,8 @@ const LABEL: Record<SnsType, string> = {
 };
 
 interface Props {
-  value: SnsType;
-  onChange: (s: SnsType) => void;
+  value: SnsAccountSubType;
+  onChange: (s: SnsAccountSubType) => void;
 }
 
 export function SnsTabBar({ value, onChange }: Props) {

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { SnsTypeSchema, type SnsType } from "@jsure/shared";
+import { EnabledSnsTypeSchema, type SnsAccountSubType } from "@jsure/shared";
 import { CampaignCard, SnsTabBar, useCampaignList } from "@/domains/campaign";
 import styles from "./Browse.module.css";
 
 export function Browse() {
   const nav = useNavigate();
-  const [sns, setSns] = useState<SnsType>(SnsTypeSchema.options[0]);
+  const [sns, setSns] = useState<SnsAccountSubType>(EnabledSnsTypeSchema.options[0]);
 
   const { data, isLoading, isError } = useCampaignList(sns);
 

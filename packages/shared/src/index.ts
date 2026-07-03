@@ -17,3 +17,4 @@ export * from "./types/lineTemplate.js";
 export * from "./data/influencerTerms.js";
 export { JP_BANKS } from "./data/jpBanks.js";
 export * from "./utils/snsHandle.js";
+export * from "./ui/labels.js";

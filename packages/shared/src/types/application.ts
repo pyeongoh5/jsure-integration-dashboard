@@ -29,6 +29,10 @@ export const ApplicationDisplayStageSchema = z.enum([
   "SETTLED",
   "REJECTED",
   "CANCELLED",
+  "AWAITING_ORDER",
+  "AWAITING_REVIEW",
+  "REVIEW_PENDING",
+  "REVIEW_REJECTED",
 ]);
 export type ApplicationDisplayStage = z.infer<
   typeof ApplicationDisplayStageSchema
@@ -85,6 +89,31 @@ export const SubmitInsightRequestSchema = z.object({
     .optional(),
 });
 export type SubmitInsightRequest = z.infer<typeof SubmitInsightRequestSchema>;
+
+export const AttachmentUploadInputSchema = z.object({
+  objectKey: z.string().min(1),
+  contentType: z.enum(["image/png", "image/jpeg", "image/webp"]),
+  sizeBytes: z.number().int().positive(),
+});
+export type AttachmentUploadInput = z.infer<typeof AttachmentUploadInputSchema>;
+
+export const SubmitOrderRequestSchema = z.object({
+  orderNumber: z.string().min(1, "注文番号を入力してください").max(200),
+  receipts: z
+    .array(AttachmentUploadInputSchema)
+    .min(1, "注文明細のスクリーンショットを1枚以上ご提出ください")
+    .max(10),
+});
+export type SubmitOrderRequest = z.infer<typeof SubmitOrderRequestSchema>;
+
+export const SubmitReviewRequestSchema = z.object({
+  reviewUrl: z.string().url("有効なURLを入力してください"),
+  screenshots: z
+    .array(AttachmentUploadInputSchema)
+    .min(2, "レビューのスクリーンショットを2枚以上ご提出ください")
+    .max(10),
+});
+export type SubmitReviewRequest = z.infer<typeof SubmitReviewRequestSchema>;
 
 export const CreateApplicationRequestSchema = z
   .object({

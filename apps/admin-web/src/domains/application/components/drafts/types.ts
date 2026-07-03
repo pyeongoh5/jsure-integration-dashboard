@@ -3,7 +3,7 @@ import type {
   CampaignSubType,
   InstagramPostType,
   PostReviewStatus,
-  SubmittedPostAttachment,
+  Attachment,
 } from "@jsure/shared";
 
 export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
@@ -51,7 +51,7 @@ export type DraftReview = {
   submittedAt: string; // relative
   insightSubmitted: boolean;
   insight: InsightMetrics;
-  attachments: SubmittedPostAttachment[];
+  attachments: Attachment[];
   reviewStatus: PostReviewStatus;
   applicationStatus: ApplicationStatus;
   status: DraftStatus;

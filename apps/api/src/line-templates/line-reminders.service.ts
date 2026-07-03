@@ -34,6 +34,7 @@ export class LineRemindersService {
       await this.runPostingReminders();
       await this.runInsightReminders();
       await this.runPostRejectionReminders();
+      await this.runFakePurchaseReviewReminders();
     } catch (err) {
       this.logger.error("Reminder daily run failed", err as Error);
     }
@@ -135,6 +136,38 @@ export class LineRemindersService {
 
       await this.dispatcher.dispatch("SNS_INSIGHT_REMINDER", {
         application: post.application,
+      });
+    }
+  }
+
+  private async runFakePurchaseReviewReminders(): Promise<void> {
+    const todayStart = startOfJstDay(new Date());
+    const applications = await this.prisma.campaignApplication.findMany({
+      where: {
+        status: "ORDER_SUBMITTED",
+        orderSubmittedAt: { not: null },
+        campaign: { category: "FAKE_PURCHASE" },
+      },
+      include: {
+        ...DISPATCH_APPLICATION_INCLUDE,
+        posts: { select: { id: true } },
+      },
+    });
+
+    for (const application of applications) {
+      if (!application.orderSubmittedAt) continue;
+      if (application.posts.length > 0) continue;
+
+      const deadlineMs =
+        application.orderSubmittedAt.getTime() +
+        application.campaign.postingPeriodDays * DAY_MS;
+      const deadlineDayStart = startOfJstDay(new Date(deadlineMs));
+      const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);
+      if (!POSTING_REMINDER_DAYS.includes(remainingDays)) continue;
+
+      await this.dispatcher.dispatch("FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER", {
+        application,
+        extra: { remainingDays },
       });
     }
   }

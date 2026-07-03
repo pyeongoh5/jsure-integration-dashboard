@@ -2,6 +2,7 @@ import type { CampaignCategory, LineTriggerKey, TriggerVariable } from "@jsure/s
 import type {
   CampaignApplication,
   Campaign,
+  CampaignRecruit,
   Influencer,
   Settlement,
   SubmittedPost,
@@ -11,7 +12,7 @@ import type {
 export type ApplicationWithRels = CampaignApplication & {
   campaign: Pick<
     Campaign,
-    "id" | "title" | "postingPeriodDays" | "rewardJpy" | "productSummary"
+    "id" | "title" | "postingPeriodDays" | "rewardJpy" | "productSummary" | "category"
   >;
   influencer: Pick<Influencer, "id" | "name" | "lineUserId">;
 };
@@ -21,6 +22,7 @@ export type DispatchContext = {
   post?: SubmittedPost | null;
   rejection?: SubmittedPostRejection | null;
   settlement?: Settlement | null;
+  recruit?: CampaignRecruit | null;
   extra?: {
     resubmitDeadlineAt?: Date;
     finalDeadlineAt?: Date;
@@ -50,6 +52,7 @@ export const DISPATCH_APPLICATION_INCLUDE = {
       postingPeriodDays: true,
       rewardJpy: true,
       productSummary: true,
+      category: true,
     },
   },
   influencer: {
@@ -218,6 +221,105 @@ const rewardJpy: TriggerVariableWithResolver = {
   resolver: (ctx) => (ctx.settlement ? formatJpy(ctx.settlement.amountJpy) : ""),
 };
 
+function subTypeLabel(value: string): string {
+  switch (value) {
+    case "INSTAGRAM":
+      return "Instagram";
+    case "TIKTOK":
+      return "TikTok";
+    case "X":
+      return "X";
+    case "YOUTUBE":
+      return "YouTube";
+    case "QOO10":
+      return "Qoo10";
+    case "LIPS":
+      return "LIPS";
+    case "ATCOSME":
+      return "@cosme";
+    default:
+      return value;
+  }
+}
+
+const subType: TriggerVariableWithResolver = {
+  key: "subType",
+  label: "서브타입",
+  description: "応募したプラットフォームの表示ラベル",
+  sample: "Qoo10",
+  resolver: (ctx) => subTypeLabel(ctx.application.subType),
+};
+
+const productPriceJpy: TriggerVariableWithResolver = {
+  key: "productPriceJpy",
+  label: "상품가격(엔)",
+  description: "サブタイプごとの商品価格 (エン、カンマ入り)",
+  sample: "3,000",
+  resolver: (ctx) =>
+    ctx.recruit?.productPriceJpy != null ? formatJpy(ctx.recruit.productPriceJpy) : "",
+};
+
+const productUrl: TriggerVariableWithResolver = {
+  key: "productUrl",
+  label: "상품 URL",
+  description: "商品ページのリンク",
+  sample: "https://qoo10.jp/g/...",
+  resolver: (ctx) => ctx.recruit?.productUrl ?? "",
+};
+
+const totalSettlementJpy: TriggerVariableWithResolver = {
+  key: "totalSettlementJpy",
+  label: "정산 예상액(엔)",
+  description: "報酬 + 商品価格 の合計 (エン、カンマ入り)",
+  sample: "8,000",
+  resolver: (ctx) => {
+    const price = ctx.recruit?.productPriceJpy ?? 0;
+    return formatJpy(ctx.application.campaign.rewardJpy + price);
+  },
+};
+
+const orderNumber: TriggerVariableWithResolver = {
+  key: "orderNumber",
+  label: "주문번호",
+  description: "インフルエンサーが提出した注文番号",
+  sample: "ORD-20260703-0001",
+  resolver: (ctx) => ctx.application.orderNumber ?? "",
+};
+
+const orderSubmittedDate: TriggerVariableWithResolver = {
+  key: "orderSubmittedDate",
+  label: "주문 제출일",
+  description: "注文情報を提出した日 (JST 月日)",
+  sample: "7月3日",
+  resolver: (ctx) =>
+    ctx.application.orderSubmittedAt
+      ? formatJstMonthDay(ctx.application.orderSubmittedAt)
+      : "",
+};
+
+const reviewDeadline: TriggerVariableWithResolver = {
+  key: "reviewDeadline",
+  label: "리뷰 마감일",
+  description: "レビュー提出期限 (orderSubmittedAt + postingPeriodDays)",
+  sample: "7月17日",
+  resolver: (ctx) => {
+    if (!ctx.application.orderSubmittedAt) return "";
+    const deadline = new Date(
+      ctx.application.orderSubmittedAt.getTime() +
+        ctx.application.campaign.postingPeriodDays * DAY_MS,
+    );
+    return formatJstMonthDay(deadline);
+  },
+};
+
+const reviewUrl: TriggerVariableWithResolver = {
+  key: "reviewUrl",
+  label: "리뷰 URL",
+  description: "提出されたレビューURL",
+  sample: "https://www.cosme.net/...",
+  resolver: (ctx) => ctx.post?.url ?? "",
+};
+
 const BASE_VARS: TriggerVariableWithResolver[] = [
   influencerName,
   campaignTitle,
@@ -311,17 +413,15 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     requiresSubType: true,
     variables: withBase(),
   },
-  // 가구매 캠페인 트리거는 후속 태스크에서 변수·리마인더가 세팅될 예정이며,
-  // 여기서는 dispatch 컴파일 오류를 막기 위해 최소 스텁을 둔다.
   FAKE_PURCHASE_APPLICATION_APPLIED: {
     category: "FAKE_PURCHASE",
     requiresSubType: true,
-    variables: withBase(),
+    variables: withBase(subType, productPriceJpy, productUrl, totalSettlementJpy),
   },
   FAKE_PURCHASE_APPLICATION_APPROVED: {
     category: "FAKE_PURCHASE",
     requiresSubType: true,
-    variables: withBase(),
+    variables: withBase(subType, productPriceJpy, productUrl, totalSettlementJpy),
   },
   FAKE_PURCHASE_APPLICATION_REJECTED: {
     category: "FAKE_PURCHASE",
@@ -331,32 +431,32 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   FAKE_PURCHASE_ORDER_SUBMITTED: {
     category: "FAKE_PURCHASE",
     requiresSubType: true,
-    variables: withBase(),
+    variables: withBase(subType, orderNumber, orderSubmittedDate, reviewDeadline),
   },
   FAKE_PURCHASE_REVIEW_SUBMITTED: {
     category: "FAKE_PURCHASE",
     requiresSubType: true,
-    variables: withBase(),
+    variables: withBase(subType, reviewUrl),
   },
   FAKE_PURCHASE_REVIEW_APPROVED: {
     category: "FAKE_PURCHASE",
     requiresSubType: true,
-    variables: withBase(),
+    variables: withBase(subType, reviewUrl, totalSettlementJpy),
   },
   FAKE_PURCHASE_REVIEW_REJECTED: {
     category: "FAKE_PURCHASE",
     requiresSubType: true,
-    variables: withBase(rejectReason),
+    variables: withBase(subType, reviewUrl, rejectReason),
   },
   FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER: {
     category: "FAKE_PURCHASE",
     requiresSubType: true,
-    variables: withBase(remainingDays),
+    variables: withBase(subType, reviewDeadline, remainingDays),
   },
   FAKE_PURCHASE_SETTLEMENT_COMPLETED: {
     category: "FAKE_PURCHASE",
     requiresSubType: true,
-    variables: withBase(rewardJpy),
+    variables: withBase(subType, totalSettlementJpy),
   },
   FAKE_PURCHASE_CAMPAIGN_COMPLETED: {
     category: "FAKE_PURCHASE",

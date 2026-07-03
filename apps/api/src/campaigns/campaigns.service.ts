@@ -29,6 +29,73 @@ export function utcToJstDateStr(d: Date): string {
   return shifted.toISOString().slice(0, 10);
 }
 
+const SNS_SUB_TYPES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
+const FAKE_PURCHASE_SUB_TYPES = ["QOO10", "LIPS", "ATCOSME"] as const;
+
+export function validateRecruitsForCategory(
+  category: CampaignCategory,
+  recruits: {
+    subType: string;
+    minFollowers?: number | null;
+    insightRequired?: boolean;
+    productPriceJpy: number | null;
+    productUrl: string | null;
+    instagramPostTypes?: string[];
+  }[],
+): void {
+  for (const recruit of recruits) {
+    if (category === "SNS") {
+      if (
+        !SNS_SUB_TYPES.includes(
+          recruit.subType as (typeof SNS_SUB_TYPES)[number],
+        )
+      ) {
+        throw new BadRequestException(
+          `SNSキャンペーンでは ${recruit.subType} を募集できません`,
+        );
+      }
+      if (recruit.productPriceJpy !== null || recruit.productUrl !== null) {
+        throw new BadRequestException(
+          "SNSキャンペーンでは productPriceJpy/productUrl を指定できません",
+        );
+      }
+    } else {
+      if (
+        !FAKE_PURCHASE_SUB_TYPES.includes(
+          recruit.subType as (typeof FAKE_PURCHASE_SUB_TYPES)[number],
+        )
+      ) {
+        throw new BadRequestException(
+          `買取レビューキャンペーンでは ${recruit.subType} を募集できません`,
+        );
+      }
+      if (recruit.productPriceJpy == null || recruit.productPriceJpy <= 0) {
+        throw new BadRequestException(
+          "productPriceJpy は正の整数を指定してください",
+        );
+      }
+      if (!recruit.productUrl || recruit.productUrl.trim().length === 0) {
+        throw new BadRequestException("productUrl を入力してください");
+      }
+      if ((recruit.minFollowers ?? 0) !== 0) {
+        throw new BadRequestException(
+          "買取レビューキャンペーンの minFollowers は 0 にしてください",
+        );
+      }
+      if (recruit.insightRequired === true) {
+        throw new BadRequestException(
+          "買取レビューキャンペーンでは insightRequired=false のみサポートします",
+        );
+      }
+      if (recruit.instagramPostTypes && recruit.instagramPostTypes.length > 0) {
+        throw new BadRequestException(
+          "買取レビューキャンペーンでは instagramPostTypes を指定できません",
+        );
+      }
+    }
+  }
+}
+
 type CampaignRecruitRow = {
   subType: string;
   minFollowers: number;
@@ -207,6 +274,7 @@ export class CampaignsService {
       input.excludedCampaignIds,
     );
     const recruits = this.normalizeCampaignRecruitsInput(input.recruits);
+    validateRecruitsForCategory(input.category, recruits);
     const row = await this.prisma.campaign.create({
       data: {
         category: input.category,
@@ -372,6 +440,7 @@ export class CampaignsService {
     const row = await this.prisma.$transaction(async (tx) => {
       if (input.recruits !== undefined) {
         const normalized = this.normalizeCampaignRecruitsInput(input.recruits);
+        validateRecruitsForCategory(existing.category, normalized);
         await tx.campaignRecruit.deleteMany({ where: { campaignId: id } });
         await tx.campaignRecruit.createMany({
           data: normalized.map((recruit) => ({

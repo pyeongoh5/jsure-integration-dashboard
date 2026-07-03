@@ -7,6 +7,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "APPLIED",
+        category: "SNS",
         receivedAt: null,
         posts: [],
         now: NOW,
@@ -18,6 +19,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "SHIPPED",
+        category: "SNS",
         receivedAt: null,
         posts: [],
         now: NOW,
@@ -29,6 +31,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        category: "SNS",
         receivedAt: null,
         posts: [],
         now: NOW,
@@ -40,6 +43,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "SHIPPED",
+        category: "SNS",
         receivedAt: new Date(NOW.getTime() - 86400000),
         posts: [],
         now: NOW,
@@ -51,6 +55,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        category: "SNS",
         receivedAt: new Date(NOW.getTime() - 86400000),
         posts: [],
         now: NOW,
@@ -62,6 +67,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        category: "SNS",
         receivedAt: new Date(NOW.getTime() - 3 * 86400000),
         posts: [
           {
@@ -80,6 +86,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        category: "SNS",
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
@@ -96,6 +103,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        category: "SNS",
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
@@ -112,6 +120,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        category: "SNS",
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
@@ -130,6 +139,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        category: "SNS",
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
@@ -148,6 +158,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
+        category: "SNS",
         receivedAt: new Date(NOW.getTime() - 3 * 86400000),
         posts: [
           {
@@ -165,6 +176,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "REJECTED",
+        category: "SNS",
         receivedAt: null,
         posts: [],
         now: NOW,
@@ -173,6 +185,7 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "CANCELLED",
+        category: "SNS",
         receivedAt: null,
         posts: [],
         now: NOW,
@@ -181,11 +194,116 @@ describe("deriveDisplayStage", () => {
     expect(
       deriveDisplayStage({
         status: "COMPLETED",
+        category: "SNS",
         receivedAt: null,
         posts: [],
         now: NOW,
       }),
     ).toBe("COMPLETED");
+  });
+});
+
+describe("deriveDisplayStage — 가구매 카테고리", () => {
+  const base = { receivedAt: null, posts: [] as never[] };
+
+  it("APPROVED → AWAITING_ORDER", () => {
+    expect(
+      deriveDisplayStage({
+        ...base,
+        status: "APPROVED",
+        category: "FAKE_PURCHASE",
+      }),
+    ).toBe("AWAITING_ORDER");
+  });
+
+  it("ORDER_SUBMITTED → AWAITING_REVIEW", () => {
+    expect(
+      deriveDisplayStage({
+        ...base,
+        status: "ORDER_SUBMITTED",
+        category: "FAKE_PURCHASE",
+      }),
+    ).toBe("AWAITING_REVIEW");
+  });
+
+  it("REVIEW_SUBMITTED + post PENDING → REVIEW_PENDING", () => {
+    expect(
+      deriveDisplayStage({
+        status: "REVIEW_SUBMITTED",
+        category: "FAKE_PURCHASE",
+        receivedAt: null,
+        posts: [
+          { submittedAt: new Date(), insightSubmittedAt: null, reviewStatus: "PENDING" },
+        ],
+      }),
+    ).toBe("REVIEW_PENDING");
+  });
+
+  it("REVIEW_SUBMITTED + post REJECTED → REVIEW_REJECTED", () => {
+    expect(
+      deriveDisplayStage({
+        status: "REVIEW_SUBMITTED",
+        category: "FAKE_PURCHASE",
+        receivedAt: null,
+        posts: [
+          { submittedAt: new Date(), insightSubmittedAt: null, reviewStatus: "REJECTED" },
+        ],
+      }),
+    ).toBe("REVIEW_REJECTED");
+  });
+
+  it("REVIEW_SUBMITTED + post APPROVED + settlement PENDING → REVIEWING", () => {
+    expect(
+      deriveDisplayStage({
+        status: "REVIEW_SUBMITTED",
+        category: "FAKE_PURCHASE",
+        receivedAt: null,
+        posts: [
+          {
+            submittedAt: new Date(),
+            insightSubmittedAt: null,
+            reviewStatus: "APPROVED",
+            settlementStatus: "PENDING",
+          },
+        ],
+      }),
+    ).toBe("REVIEWING");
+  });
+
+  it("REVIEW_SUBMITTED + post APPROVED + settlement COMPLETED → SETTLED", () => {
+    expect(
+      deriveDisplayStage({
+        status: "REVIEW_SUBMITTED",
+        category: "FAKE_PURCHASE",
+        receivedAt: null,
+        posts: [
+          {
+            submittedAt: new Date(),
+            insightSubmittedAt: null,
+            reviewStatus: "APPROVED",
+            settlementStatus: "COMPLETED",
+          },
+        ],
+      }),
+    ).toBe("SETTLED");
+  });
+
+  it("COMPLETED (settlement COMPLETED) → SETTLED", () => {
+    expect(
+      deriveDisplayStage({
+        status: "COMPLETED",
+        category: "FAKE_PURCHASE",
+        receivedAt: null,
+        posts: [
+          {
+            submittedAt: new Date(),
+            insightSubmittedAt: null,
+            reviewStatus: "APPROVED",
+            settlementStatus: "COMPLETED",
+          },
+        ],
+      }),
+    ).toBe("SETTLED");
   });
 });
 

@@ -26,6 +26,9 @@ import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
 /** 응모 후 인플루언서가 직접 취소할 수 있는 기간(2일, 밀리초). */
 const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
 
+const SNS_SUB_TYPES: CampaignSubType[] = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"];
+const FAKE_PURCHASE_SUB_TYPES: CampaignSubType[] = ["QOO10", "LIPS", "ATCOSME"];
+
 type PostRow = {
   id: string;
   subType: CampaignSubType;
@@ -103,8 +106,12 @@ function toPost(row: PostRow): SubmittedPost {
 }
 
 function toResponse(row: ApplicationRow): InfluencerApplication {
+  const deadlineAnchor =
+    row.campaign.category === "FAKE_PURCHASE"
+      ? row.orderSubmittedAt
+      : row.receivedAt;
   const deadline = postingDeadline(
-    row.receivedAt,
+    deadlineAnchor,
     row.campaign.postingPeriodDays,
   );
   // 가장 최근에 완료된 정산을 대표로 사용 (1 application = 1 SNS = 1 post 흐름)
@@ -130,6 +137,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     status: row.status,
     displayStage: deriveDisplayStage({
       status: row.status,
+      category: row.campaign.category,
       receivedAt: row.receivedAt,
       posts: row.posts.map((p) => ({
         submittedAt: p.submittedAt,
@@ -278,6 +286,18 @@ export class InfluencerApplicationsService {
       });
     }
 
+    const allowedSubTypes =
+      campaign.category === "SNS" ? SNS_SUB_TYPES : FAKE_PURCHASE_SUB_TYPES;
+    const invalidSubTypes = subTypes.filter(
+      (subType) => !allowedSubTypes.includes(subType),
+    );
+    if (invalidSubTypes.length > 0) {
+      throw new BadRequestException({
+        code: "SUBTYPE_CATEGORY_MISMATCH",
+        message: "選択したSNSはこのキャンペーンで募集していません",
+      });
+    }
+
     // 제외 캠페인에 "같은 SNS"로 응모한 이력이 있으면 그 SNS 응모만 차단 (CANCELLED 제외)
     const excludedCampaignIds = campaign.exclusionsAsExcluding.map(
       (exclusion) => exclusion.excludedCampaignId,
@@ -298,37 +318,42 @@ export class InfluencerApplicationsService {
       }
     }
 
-    const influencerSns = await this.prisma.influencerSnsAccount.findMany({
-      where: { influencerId },
-    });
-    const minFollowersBySubType = new Map(
-      campaign.recruits.map((r) => [r.subType, r.minFollowers]),
-    );
-    const followerByMySubType = new Map(
-      influencerSns.map((s) => [s.snsType as CampaignSubType, s.followerCount]),
-    );
-
-    const qualifyingSubTypes = Array.from(minFollowersBySubType.entries())
-      .filter(([subType, min]) => {
-        const f = followerByMySubType.get(subType);
-        return f !== undefined && f >= min;
-      })
-      .map(([subType]) => subType);
-
-    if (qualifyingSubTypes.length === 0) {
-      throw new BadRequestException({
-        code: "SNS_MISMATCH",
-        message: "対象SNSの応募条件を満たすアカウントがありません",
+    if (campaign.category === "SNS") {
+      const influencerSns = await this.prisma.influencerSnsAccount.findMany({
+        where: { influencerId },
       });
-    }
+      const minFollowersBySubType = new Map(
+        campaign.recruits.map((recruit) => [recruit.subType, recruit.minFollowers]),
+      );
+      const followerByMySubType = new Map(
+        influencerSns.map((account) => [
+          account.snsType as CampaignSubType,
+          account.followerCount,
+        ]),
+      );
 
-    const qualifyingSet = new Set(qualifyingSubTypes);
-    const invalid = subTypes.filter((subType) => !qualifyingSet.has(subType));
-    if (invalid.length > 0) {
-      throw new BadRequestException({
-        code: "SNS_NOT_QUALIFIED",
-        message: "応募条件を満たさないSNSが含まれています",
-      });
+      const qualifyingSubTypes = Array.from(minFollowersBySubType.entries())
+        .filter(([subType, min]) => {
+          const followerCount = followerByMySubType.get(subType);
+          return followerCount !== undefined && followerCount >= min;
+        })
+        .map(([subType]) => subType);
+
+      if (qualifyingSubTypes.length === 0) {
+        throw new BadRequestException({
+          code: "SNS_MISMATCH",
+          message: "対象SNSの応募条件を満たすアカウントがありません",
+        });
+      }
+
+      const qualifyingSet = new Set(qualifyingSubTypes);
+      const invalid = subTypes.filter((subType) => !qualifyingSet.has(subType));
+      if (invalid.length > 0) {
+        throw new BadRequestException({
+          code: "SNS_NOT_QUALIFIED",
+          message: "応募条件を満たさないSNSが含まれています",
+        });
+      }
     }
 
     // INSTAGRAM 응모는 캠페인이 허용한 instagramPostTypes 중 정확히 1개를 선택해야 한다.
@@ -409,8 +434,12 @@ export class InfluencerApplicationsService {
       where: { id: { in: results.map((r) => r.id) } },
       include: DISPATCH_APPLICATION_INCLUDE,
     });
+    const triggerKey =
+      campaign.category === "FAKE_PURCHASE"
+        ? "FAKE_PURCHASE_APPLICATION_APPLIED"
+        : "SNS_APPLICATION_APPLIED";
     for (const application of createdApplications) {
-      void this.dispatcher.dispatch("SNS_APPLICATION_APPLIED", { application });
+      void this.dispatcher.dispatch(triggerKey, { application });
     }
     return results[0]!;
   }
@@ -446,7 +475,13 @@ export class InfluencerApplicationsService {
     influencerId: string,
     applicationId: string,
   ): Promise<InfluencerApplication> {
-    const app = await this.assertOwned(influencerId, applicationId);
+    const app = await this.assertOwnedWithCampaign(influencerId, applicationId);
+    if (app.campaign.category !== "SNS") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "SNSキャンペーンのみ対応しています",
+      });
+    }
     if (app.status !== "SHIPPED" && app.status !== "DELIVERED") {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
@@ -473,7 +508,13 @@ export class InfluencerApplicationsService {
     subType: CampaignSubType,
     url: string,
   ): Promise<InfluencerApplication> {
-    const app = await this.assertOwned(influencerId, applicationId);
+    const app = await this.assertOwnedWithCampaign(influencerId, applicationId);
+    if (app.campaign.category !== "SNS") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "SNSキャンペーンのみ対応しています",
+      });
+    }
     if (!app.receivedAt) {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
@@ -535,7 +576,13 @@ export class InfluencerApplicationsService {
       }[];
     },
   ): Promise<InfluencerApplication> {
-    await this.assertOwned(influencerId, applicationId);
+    const app = await this.assertOwnedWithCampaign(influencerId, applicationId);
+    if (app.campaign.category !== "SNS") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "SNSキャンペーンのみ対応しています",
+      });
+    }
     const post = await this.prisma.submittedPost.findUnique({
       where: { applicationId_subType: { applicationId, subType } },
     });
@@ -566,6 +613,217 @@ export class InfluencerApplicationsService {
     return this.getForInfluencer(influencerId, applicationId);
   }
 
+  async submitOrder(
+    influencerId: string,
+    applicationId: string,
+    orderNumber: string,
+    receipts: {
+      objectKey: string;
+      contentType: "image/png" | "image/jpeg" | "image/webp";
+      sizeBytes: number;
+    }[],
+  ): Promise<InfluencerApplication> {
+    const application = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      include: { campaign: { select: { category: true } } },
+    });
+    if (!application) throw new NotFoundException("Application not found");
+    if (application.influencerId !== influencerId) {
+      throw new ForbiddenException();
+    }
+    if (application.campaign.category !== "FAKE_PURCHASE") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "買取レビューキャンペーンのみ対応しています",
+      });
+    }
+    if (
+      application.status !== "APPROVED" &&
+      application.status !== "ORDER_SUBMITTED"
+    ) {
+      throw new BadRequestException({
+        code: "INVALID_TRANSITION",
+        message: "この状態では注文情報を提出できません",
+      });
+    }
+    const trimmedOrderNumber = orderNumber.trim();
+    if (trimmedOrderNumber.length === 0) {
+      throw new BadRequestException({
+        code: "ORDER_NUMBER_REQUIRED",
+        message: "注文番号を入力してください",
+      });
+    }
+    if (receipts.length < 1) {
+      throw new BadRequestException({
+        code: "RECEIPT_REQUIRED",
+        message: "注文明細のスクリーンショットを1枚以上ご提出ください",
+      });
+    }
+
+    await this.uploads.verifyAttachmentUploads(receipts, "attachments/");
+
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await tx.attachment.deleteMany({
+        where: { applicationId, kind: "ORDER_RECEIPT" },
+      });
+      await tx.attachment.createMany({
+        data: receipts.map((receipt) => ({
+          kind: "ORDER_RECEIPT" as const,
+          applicationId,
+          postId: null,
+          objectKey: receipt.objectKey,
+          contentType: receipt.contentType,
+          sizeBytes: receipt.sizeBytes,
+        })),
+        skipDuplicates: true,
+      });
+      await tx.campaignApplication.update({
+        where: { id: applicationId },
+        data: {
+          orderNumber: trimmedOrderNumber,
+          orderSubmittedAt: now,
+          status: "ORDER_SUBMITTED",
+        },
+      });
+    });
+
+    const refreshed = await this.prisma.campaignApplication.findUniqueOrThrow({
+      where: { id: applicationId },
+      include: DISPATCH_APPLICATION_INCLUDE,
+    });
+    void this.dispatcher.dispatch("FAKE_PURCHASE_ORDER_SUBMITTED", {
+      application: refreshed,
+    });
+    return this.getForInfluencer(influencerId, applicationId);
+  }
+
+  async submitReview(
+    influencerId: string,
+    applicationId: string,
+    reviewUrl: string,
+    screenshots: {
+      objectKey: string;
+      contentType: "image/png" | "image/jpeg" | "image/webp";
+      sizeBytes: number;
+    }[],
+  ): Promise<InfluencerApplication> {
+    const application = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      include: {
+        campaign: { select: { category: true } },
+        posts: {
+          select: { id: true, reviewStatus: true },
+        },
+      },
+    });
+    if (!application) throw new NotFoundException("Application not found");
+    if (application.influencerId !== influencerId) {
+      throw new ForbiddenException();
+    }
+    if (application.campaign.category !== "FAKE_PURCHASE") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "買取レビューキャンペーンのみ対応しています",
+      });
+    }
+
+    const existingPost = application.posts[0] ?? null;
+    const isResubmission =
+      application.status === "REVIEW_SUBMITTED" &&
+      existingPost?.reviewStatus === "REJECTED";
+    const isFirstSubmission = application.status === "ORDER_SUBMITTED";
+
+    if (!isFirstSubmission && !isResubmission) {
+      throw new BadRequestException({
+        code: "INVALID_TRANSITION",
+        message: "この状態ではレビューを提出できません",
+      });
+    }
+
+    const trimmedUrl = reviewUrl.trim();
+    if (trimmedUrl.length === 0) {
+      throw new BadRequestException({
+        code: "REVIEW_URL_REQUIRED",
+        message: "レビューURLを入力してください",
+      });
+    }
+    if (screenshots.length < 2) {
+      throw new BadRequestException({
+        code: "REVIEW_SCREENSHOTS_REQUIRED",
+        message: "レビューのスクリーンショットを2枚以上ご提出ください",
+      });
+    }
+
+    await this.uploads.verifyAttachmentUploads(screenshots, "attachments/");
+
+    const now = new Date();
+    const subType = application.subType;
+
+    const postId = await this.prisma.$transaction(async (tx) => {
+      let currentPostId: string;
+      if (existingPost) {
+        await tx.submittedPost.update({
+          where: { id: existingPost.id },
+          data: {
+            url: trimmedUrl,
+            submittedAt: now,
+            reviewStatus: "PENDING",
+            reviewedAt: null,
+            reviewedById: null,
+          },
+        });
+        await tx.attachment.deleteMany({
+          where: { postId: existingPost.id, kind: "REVIEW_SCREENSHOT" },
+        });
+        currentPostId = existingPost.id;
+      } else {
+        const created = await tx.submittedPost.create({
+          data: {
+            applicationId,
+            subType,
+            url: trimmedUrl,
+            submittedAt: now,
+            reviewStatus: "PENDING",
+          },
+        });
+        currentPostId = created.id;
+      }
+      await tx.attachment.createMany({
+        data: screenshots.map((screenshot) => ({
+          kind: "REVIEW_SCREENSHOT" as const,
+          applicationId,
+          postId: currentPostId,
+          objectKey: screenshot.objectKey,
+          contentType: screenshot.contentType,
+          sizeBytes: screenshot.sizeBytes,
+        })),
+        skipDuplicates: true,
+      });
+      await tx.campaignApplication.update({
+        where: { id: applicationId },
+        data: {
+          reviewSubmittedAt: now,
+          status: "REVIEW_SUBMITTED",
+        },
+      });
+      return currentPostId;
+    });
+
+    const refreshed = await this.prisma.campaignApplication.findUniqueOrThrow({
+      where: { id: applicationId },
+      include: DISPATCH_APPLICATION_INCLUDE,
+    });
+    const post = await this.prisma.submittedPost.findUnique({
+      where: { id: postId },
+    });
+    void this.dispatcher.dispatch("FAKE_PURCHASE_REVIEW_SUBMITTED", {
+      application: refreshed,
+      post,
+    });
+    return this.getForInfluencer(influencerId, applicationId);
+  }
+
   private async assertOwned(influencerId: string, applicationId: string) {
     const app = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
@@ -573,5 +831,18 @@ export class InfluencerApplicationsService {
     if (!app) throw new NotFoundException("Application not found");
     if (app.influencerId !== influencerId) throw new ForbiddenException();
     return app;
+  }
+
+  private async assertOwnedWithCampaign(
+    influencerId: string,
+    applicationId: string,
+  ) {
+    const application = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      include: { campaign: { select: { category: true } } },
+    });
+    if (!application) throw new NotFoundException("Application not found");
+    if (application.influencerId !== influencerId) throw new ForbiddenException();
+    return application;
   }
 }

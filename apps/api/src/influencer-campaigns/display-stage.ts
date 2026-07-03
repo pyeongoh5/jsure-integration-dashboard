@@ -1,4 +1,8 @@
-import type { ApplicationDisplayStage, ApplicationStatus } from "@jsure/shared";
+import type {
+  ApplicationDisplayStage,
+  ApplicationStatus,
+  CampaignCategory,
+} from "@jsure/shared";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 // 테스트 중: 0 (투고 직후 인사이트 제출 가능). 운영 복귀 시 7 로 돌릴 것.
@@ -14,6 +18,7 @@ function startOfJstDay(d: Date): number {
 
 interface DisplayStageInput {
   status: ApplicationStatus;
+  category: CampaignCategory;
   receivedAt: Date | null;
   posts: {
     submittedAt: Date;
@@ -26,7 +31,40 @@ interface DisplayStageInput {
   now?: Date;
 }
 
-export function deriveDisplayStage(input: DisplayStageInput): ApplicationDisplayStage {
+export function deriveDisplayStage(
+  input: DisplayStageInput,
+): ApplicationDisplayStage {
+  if (input.category === "FAKE_PURCHASE") {
+    return deriveFakePurchaseStage(input);
+  }
+  return deriveSnsStage(input);
+}
+
+function deriveFakePurchaseStage(
+  input: DisplayStageInput,
+): ApplicationDisplayStage {
+  const { status, posts } = input;
+  if (status === "APPLIED") return "APPLIED";
+  if (status === "REJECTED") return "REJECTED";
+  if (status === "CANCELLED") return "CANCELLED";
+  if (status === "APPROVED") return "AWAITING_ORDER";
+  if (status === "ORDER_SUBMITTED") return "AWAITING_REVIEW";
+  if (status === "REVIEW_SUBMITTED") {
+    const post = posts[0];
+    if (!post) return "AWAITING_REVIEW";
+    if (post.reviewStatus === "REJECTED") return "REVIEW_REJECTED";
+    if (post.reviewStatus === "PENDING") return "REVIEW_PENDING";
+    if (post.settlementStatus === "COMPLETED") return "SETTLED";
+    return "REVIEWING";
+  }
+  if (status === "COMPLETED") {
+    const anySettled = posts.some((p) => p.settlementStatus === "COMPLETED");
+    return anySettled ? "SETTLED" : "COMPLETED";
+  }
+  return "APPLIED";
+}
+
+function deriveSnsStage(input: DisplayStageInput): ApplicationDisplayStage {
   const { status, receivedAt, posts } = input;
   const now = input.now ?? new Date();
 
@@ -66,16 +104,24 @@ export function deriveDisplayStage(input: DisplayStageInput): ApplicationDisplay
     }
 
     const first = posts[0]!.submittedAt;
-    const earliest = posts.reduce((acc, p) => (p.submittedAt < acc ? p.submittedAt : acc), first);
+    const earliest = posts.reduce(
+      (acc, p) => (p.submittedAt < acc ? p.submittedAt : acc),
+      first,
+    );
     // JST 일자 기준으로 N일째 되는 날(자정 이후)에 INSIGHT_DUE 로 전환.
-    const daysPassed = Math.round((startOfJstDay(now) - startOfJstDay(earliest)) / DAY_MS);
+    const daysPassed = Math.round(
+      (startOfJstDay(now) - startOfJstDay(earliest)) / DAY_MS,
+    );
     return daysPassed >= INSIGHT_DUE_DAYS ? "INSIGHT_DUE" : "POSTED";
   }
 
   return "APPLIED";
 }
 
-export function postingDeadline(receivedAt: Date | null, postingPeriodDays: number): Date | null {
-  if (!receivedAt) return null;
-  return new Date(receivedAt.getTime() + postingPeriodDays * DAY_MS);
+export function postingDeadline(
+  anchor: Date | null,
+  postingPeriodDays: number,
+): Date | null {
+  if (!anchor) return null;
+  return new Date(anchor.getTime() + postingPeriodDays * DAY_MS);
 }

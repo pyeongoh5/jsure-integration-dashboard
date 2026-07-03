@@ -143,6 +143,12 @@ export class AdminApplicationsService {
       where: { id },
       include: {
         ...DISPATCH_APPLICATION_INCLUDE,
+        campaign: {
+          select: {
+            ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
+            category: true,
+          },
+        },
       },
     });
     if (!existing) throw new NotFoundException("Application not found");
@@ -183,14 +189,26 @@ export class AdminApplicationsService {
         rejectReason: null,
       },
     });
-    void this.dispatcher.dispatch("SNS_APPLICATION_APPROVED", { application: existing });
+    const approveTriggerKey =
+      existing.campaign.category === "FAKE_PURCHASE"
+        ? "FAKE_PURCHASE_APPLICATION_APPROVED"
+        : "SNS_APPLICATION_APPROVED";
+    void this.dispatcher.dispatch(approveTriggerKey, { application: existing });
     return this.fetch(id);
   }
 
   async reject(id: string, reviewerId: string, reason: string): Promise<AdminApplication> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
-      include: { campaign: { select: { title: true } } },
+      include: {
+        ...DISPATCH_APPLICATION_INCLUDE,
+        campaign: {
+          select: {
+            ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
+            category: true,
+          },
+        },
+      },
     });
     if (!existing) throw new NotFoundException("Application not found");
     if (existing.status !== "APPLIED") {
@@ -205,6 +223,11 @@ export class AdminApplicationsService {
         rejectReason: reason,
       },
     });
+    const rejectTriggerKey =
+      existing.campaign.category === "FAKE_PURCHASE"
+        ? "FAKE_PURCHASE_APPLICATION_REJECTED"
+        : "SNS_APPLICATION_REJECTED";
+    void this.dispatcher.dispatch(rejectTriggerKey, { application: existing });
 
     return this.fetch(id);
   }
@@ -238,9 +261,20 @@ export class AdminApplicationsService {
       where: { id },
       include: {
         ...DISPATCH_APPLICATION_INCLUDE,
+        campaign: {
+          select: {
+            ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
+            category: true,
+          },
+        },
       },
     });
     if (!existing) throw new NotFoundException("Application not found");
+    if (existing.campaign.category !== "SNS") {
+      throw new BadRequestException(
+        "買取レビューキャンペーンでは発送操作は使用できません",
+      );
+    }
     if (existing.status !== "APPROVED") {
       throw new BadRequestException(`Cannot ship from status ${existing.status}`);
     }
@@ -264,9 +298,20 @@ export class AdminApplicationsService {
       where: { id },
       include: {
         ...DISPATCH_APPLICATION_INCLUDE,
+        campaign: {
+          select: {
+            ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
+            category: true,
+          },
+        },
       },
     });
     if (!existing) throw new NotFoundException("Application not found");
+    if (existing.campaign.category !== "SNS") {
+      throw new BadRequestException(
+        "買取レビューキャンペーンでは配達操作は使用できません",
+      );
+    }
     if (existing.status !== "SHIPPED") {
       throw new BadRequestException(`Cannot deliver from status ${existing.status}`);
     }
@@ -346,6 +391,7 @@ export class AdminApplicationsService {
     return Promise.all(
       rows.map(async (row) => ({
         id: row.id,
+        kind: row.kind,
         objectKey: row.objectKey,
         contentType: row.contentType,
         sizeBytes: row.sizeBytes,
@@ -370,6 +416,34 @@ export class AdminApplicationsService {
     });
     // 인사이트가 이미 제출돼 있던 경우, 승인 시점에 자동 정산.
     await ensureSettlementForPost(this.prisma, postId);
+    const refreshed = await this.prisma.submittedPost.findUnique({
+      where: { id: postId },
+      include: {
+        application: {
+          include: {
+            ...DISPATCH_APPLICATION_INCLUDE,
+            campaign: {
+              select: {
+                ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
+                category: true,
+              },
+            },
+          },
+        },
+        settlement: true,
+      },
+    });
+    if (refreshed) {
+      const approveTriggerKey =
+        refreshed.application.campaign.category === "FAKE_PURCHASE"
+          ? "FAKE_PURCHASE_REVIEW_APPROVED"
+          : "SNS_POST_APPROVED";
+      void this.dispatcher.dispatch(approveTriggerKey, {
+        application: refreshed.application,
+        post: refreshed,
+        settlement: refreshed.settlement,
+      });
+    }
     return this.fetchSubmittedPost(postId);
   }
 
@@ -384,6 +458,12 @@ export class AdminApplicationsService {
         application: {
           include: {
             ...DISPATCH_APPLICATION_INCLUDE,
+            campaign: {
+              select: {
+                ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
+                category: true,
+              },
+            },
           },
         },
       },
@@ -411,7 +491,11 @@ export class AdminApplicationsService {
     const resubmitDeadlineAt = new Date(
       rejectedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS,
     );
-    void this.dispatcher.dispatch("SNS_POST_REJECTED", {
+    const rejectPostTriggerKey =
+      existing.application.campaign.category === "FAKE_PURCHASE"
+        ? "FAKE_PURCHASE_REVIEW_REJECTED"
+        : "SNS_POST_REJECTED";
+    void this.dispatcher.dispatch(rejectPostTriggerKey, {
       application: existing.application,
       rejection: { comment } as never,
       extra: { resubmitDeadlineAt },
@@ -577,6 +661,12 @@ export class AdminApplicationsService {
                 trackingCarrier: true,
                 trackingNumber: true,
                 ...DISPATCH_APPLICATION_INCLUDE,
+                campaign: {
+                  select: {
+                    ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
+                    category: true,
+                  },
+                },
               },
             },
           },
@@ -593,7 +683,11 @@ export class AdminApplicationsService {
       },
     });
     for (const target of targets) {
-      void this.dispatcher.dispatch("SNS_SETTLEMENT_COMPLETED", {
+      const settlementTriggerKey =
+        target.post.application.campaign.category === "FAKE_PURCHASE"
+          ? "FAKE_PURCHASE_SETTLEMENT_COMPLETED"
+          : "SNS_SETTLEMENT_COMPLETED";
+      void this.dispatcher.dispatch(settlementTriggerKey, {
         application: target.post.application as never,
         settlement: target,
       });
@@ -701,6 +795,7 @@ const SUBMITTED_POST_INCLUDE = {
     orderBy: { uploadedAt: "asc" as const },
     select: {
       id: true,
+      kind: true,
       objectKey: true,
       contentType: true,
       sizeBytes: true,
@@ -762,6 +857,7 @@ type SubmittedPostRow = {
   rejections: { id: string; comment: string; rejectedAt: Date }[];
   attachments: {
     id: string;
+    kind: "INSIGHT_SCREENSHOT" | "ORDER_RECEIPT" | "REVIEW_SCREENSHOT";
     objectKey: string;
     contentType: string;
     sizeBytes: number;
@@ -806,6 +902,7 @@ async function toSubmittedPostResponse(
   // 별도 엔드포인트(`GET submitted-posts/:postId/attachments`)로 발급한다.
   const attachments = row.attachments.map((attachment) => ({
     id: attachment.id,
+    kind: attachment.kind,
     objectKey: attachment.objectKey,
     contentType: attachment.contentType,
     sizeBytes: attachment.sizeBytes,

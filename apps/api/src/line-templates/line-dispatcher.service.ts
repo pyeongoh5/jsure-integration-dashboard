@@ -29,6 +29,20 @@ export class LineDispatcherService {
       ? campaignSubTypeToTriggerSubType(context.application.subType)
       : null;
     const category = meta.category;
+
+    let recruit = context.recruit ?? null;
+    if (category === "FAKE_PURCHASE" && !recruit) {
+      recruit = await this.prisma.campaignRecruit.findUnique({
+        where: {
+          campaignId_subType: {
+            campaignId: context.application.campaignId,
+            subType: context.application.subType,
+          },
+        },
+      });
+    }
+    const enrichedContext: DispatchContext = { ...context, recruit };
+
     const toLineUserId = context.application.influencer.lineUserId ?? "";
     const applicationId = context.application.id;
 
@@ -64,7 +78,7 @@ export class LineDispatcherService {
       return;
     }
 
-    const renderedBody = renderTemplate(template.body, meta.variables, context);
+    const renderedBody = renderTemplate(template.body, meta.variables, enrichedContext);
 
     if (renderedBody.trim().length === 0) {
       await this.logDispatch({

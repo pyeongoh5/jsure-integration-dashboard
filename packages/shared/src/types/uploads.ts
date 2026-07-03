@@ -16,7 +16,7 @@ export type UploadContentType = z.infer<typeof UploadContentTypeSchema>;
  */
 export const InsightUploadPresignRequestSchema = z.object({
   applicationId: z.string().min(1),
-  snsType: z.enum(["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"]),
+  subType: z.enum(["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"]),
   contentType: UploadContentTypeSchema,
   sizeBytes: z.number().int().positive().max(UPLOAD_MAX_BYTES),
 });

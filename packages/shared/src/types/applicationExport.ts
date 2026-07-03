@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { SnsTypeSchema } from "./influencer.js";
+import { CampaignSubTypeSchema } from "./influencer.js";
 
 export const ApprovedApplicantExportRowSchema = z.object({
   applicationId: z.string(),
   influencerId: z.string(),
   name: z.string(),
   nameKana: z.string().nullable(),
-  snsType: SnsTypeSchema,
+  subType: CampaignSubTypeSchema,
   snsHandle: z.string(),
   profileUrl: z.string(),
   phone: z.string(),

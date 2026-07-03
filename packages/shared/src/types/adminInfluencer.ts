@@ -1,6 +1,9 @@
 import { z } from "zod";
-import { SnsTypeSchema } from "./influencer.js";
-import { InstagramPostTypeSchema } from "./campaign.js";
+import {
+  CampaignSubTypeSchema,
+  SnsAccountSubTypeSchema,
+} from "./influencer.js";
+import { CampaignCategorySchema, InstagramPostTypeSchema } from "./campaign.js";
 import {
   ApplicationStatusSchema,
   PostReviewStatusSchema,
@@ -11,7 +14,7 @@ export { PostReviewStatusSchema };
 export type { PostReviewStatus } from "./application.js";
 
 export const AdminInfluencerSnsAccountSchema = z.object({
-  snsType: SnsTypeSchema,
+  snsType: SnsAccountSubTypeSchema,
   handle: z.string(),
   followerCount: z.number().int().nonnegative(),
 });
@@ -52,12 +55,16 @@ export const AdminApplicationSchema = z.object({
   deliveredAt: z.string().datetime().nullable(),
   receivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
-  snsType: SnsTypeSchema,
+  subType: CampaignSubTypeSchema,
   instagramPostType: InstagramPostTypeSchema.nullable(),
   hasSubmittedPost: z.boolean(),
+  orderNumber: z.string().nullable(),
+  orderSubmittedAt: z.string().datetime().nullable(),
+  reviewSubmittedAt: z.string().datetime().nullable(),
 
   campaign: z.object({
     id: z.string(),
+    category: CampaignCategorySchema,
     title: z.string(),
   }),
 
@@ -111,7 +118,7 @@ export type SubmittedPostRejection = z.infer<
 
 export const AdminSubmittedPostSchema = z.object({
   id: z.string(),
-  snsType: SnsTypeSchema,
+  subType: CampaignSubTypeSchema,
   instagramPostType: InstagramPostTypeSchema.nullable(),
   url: z.string().url(),
   submittedAt: z.string().datetime(),
@@ -149,6 +156,7 @@ export const AdminSubmittedPostSchema = z.object({
 
   campaign: z.object({
     id: z.string(),
+    category: CampaignCategorySchema,
     title: z.string(),
     thumbnailUrl: z.string().url().nullable(),
     rewardJpy: z.number().int().nonnegative(),
@@ -200,7 +208,7 @@ export const AdminSettlementSchema = z.object({
   post: z.object({
     id: z.string(),
     url: z.string().url(),
-    snsType: SnsTypeSchema,
+    subType: CampaignSubTypeSchema,
     submittedAt: z.string().datetime(),
     insightSubmittedAt: z.string().datetime().nullable(),
   }),

@@ -1,30 +1,53 @@
 import { z } from "zod";
 import { normalizeSnsHandle } from "../utils/snsHandle.js";
 
-export const SnsTypeSchema = z.enum(["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"]);
-export type SnsType = z.infer<typeof SnsTypeSchema>;
+/**
+ * 캠페인 서브타입.
+ * - SNS 캠페인: INSTAGRAM / TIKTOK / X / YOUTUBE
+ * - 가구매 캠페인: QOO10 / LIPS / ATCOSME
+ * 인플루언서의 SNS 계정 프로필에는 SNS 계열만 사용된다(`SnsAccountSubType` 참고).
+ */
+export const CampaignSubTypeSchema = z.enum([
+  "INSTAGRAM",
+  "TIKTOK",
+  "X",
+  "YOUTUBE",
+  "QOO10",
+  "LIPS",
+  "ATCOSME",
+]);
+export type CampaignSubType = z.infer<typeof CampaignSubTypeSchema>;
+
+/** 인플루언서 SNS 계정에 사용 가능한 서브타입(가구매용 서브타입은 제외). */
+export const SnsAccountSubTypeSchema = z.enum([
+  "INSTAGRAM",
+  "TIKTOK",
+  "X",
+  "YOUTUBE",
+]);
+export type SnsAccountSubType = z.infer<typeof SnsAccountSubTypeSchema>;
 
 /**
  * SNS 활성 플래그. 초기 운영은 Instagram·X만 허용한다.
  * TikTok·YouTube를 재오픈하려면 이 객체의 값만 `true`로 바꾸고 빌드한다.
- * `Record<SnsType, boolean>`로 두어, 새 SnsType 추가 시 키 누락을 컴파일 타임에 잡는다.
+ * `Record<SnsAccountSubType, boolean>`로 두어, 새 서브타입 추가 시 키 누락을 컴파일 타임에 잡는다.
  */
-export const SNS_ENABLED: Record<SnsType, boolean> = {
+export const SNS_ENABLED: Record<SnsAccountSubType, boolean> = {
   INSTAGRAM: true,
   TIKTOK: false,
   X: true,
   YOUTUBE: false,
 };
 
-export const isEnabledSnsType = (snsType: SnsType): boolean =>
-  SNS_ENABLED[snsType];
+export const isEnabledSnsType = (subType: SnsAccountSubType): boolean =>
+  SNS_ENABLED[subType];
 
-export const ENABLED_SNS_TYPES: readonly SnsType[] = (
-  Object.keys(SNS_ENABLED) as SnsType[]
+export const ENABLED_SNS_TYPES: readonly SnsAccountSubType[] = (
+  Object.keys(SNS_ENABLED) as SnsAccountSubType[]
 ).filter(isEnabledSnsType);
 
 export const EnabledSnsTypeSchema = z.enum(
-  ENABLED_SNS_TYPES as unknown as [SnsType, ...SnsType[]],
+  ENABLED_SNS_TYPES as unknown as [SnsAccountSubType, ...SnsAccountSubType[]],
 );
 export type EnabledSnsType = z.infer<typeof EnabledSnsTypeSchema>;
 
@@ -86,9 +109,9 @@ export type InfluencerSnsAccountInput = z.infer<
   typeof InfluencerSnsAccountInputSchema
 >;
 
-/** 응답·표시용. 비활성 SNS를 포함한 기존 데이터도 안전하게 파싱할 수 있도록 enum 전체를 허용한다. */
+/** 응답·표시용. 비활성 SNS를 포함한 기존 데이터도 안전하게 파싱할 수 있도록 SNS 계열 전체를 허용한다. */
 export const InfluencerSnsAccountSchema = InfluencerSnsAccountInputSchema.extend({
-  snsType: SnsTypeSchema,
+  snsType: SnsAccountSubTypeSchema,
 });
 export type InfluencerSnsAccount = z.infer<typeof InfluencerSnsAccountSchema>;
 

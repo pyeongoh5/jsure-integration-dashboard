@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { SnsTypeSchema, EnabledSnsTypeSchema } from "./influencer.js";
-import { InstagramPostTypeSchema } from "./campaign.js";
+import { CampaignSubTypeSchema, EnabledSnsTypeSchema } from "./influencer.js";
+import { CampaignCategorySchema, InstagramPostTypeSchema } from "./campaign.js";
 
 export const ApplicationStatusSchema = z.enum([
   "APPLIED",
@@ -10,6 +10,8 @@ export const ApplicationStatusSchema = z.enum([
   "DELIVERED",
   "COMPLETED",
   "CANCELLED",
+  "ORDER_SUBMITTED",
+  "REVIEW_SUBMITTED",
 ]);
 export type ApplicationStatus = z.infer<typeof ApplicationStatusSchema>;
 
@@ -41,7 +43,7 @@ export type PostReviewStatus = z.infer<typeof PostReviewStatusSchema>;
 
 export const SubmittedPostSchema = z.object({
   id: z.string(),
-  snsType: SnsTypeSchema,
+  subType: CampaignSubTypeSchema,
   url: z.string().url(),
   submittedAt: z.string().datetime(),
   insightLikes: z.number().int().nullable(),
@@ -87,7 +89,7 @@ export type SubmitInsightRequest = z.infer<typeof SubmitInsightRequestSchema>;
 export const CreateApplicationRequestSchema = z
   .object({
     campaignId: z.string().min(1),
-    snsTypes: z
+    subTypes: z
       .array(EnabledSnsTypeSchema)
       .min(1, "1つ以上のSNSを選択してください")
       .refine(
@@ -98,7 +100,7 @@ export const CreateApplicationRequestSchema = z
     instagramPostType: InstagramPostTypeSchema.optional(),
   })
   .superRefine((dto, ctx) => {
-    if (dto.snsTypes.includes("INSTAGRAM") && !dto.instagramPostType) {
+    if (dto.subTypes.includes("INSTAGRAM") && !dto.instagramPostType) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["instagramPostType"],
@@ -122,6 +124,7 @@ export type InfluencerApplicationSettlement = z.infer<
 export const InfluencerApplicationSchema = z.object({
   id: z.string(),
   campaignId: z.string(),
+  campaignCategory: CampaignCategorySchema,
   campaignTitle: z.string(),
   campaignThumbnailUrl: z.string().url().nullable(),
   rewardJpy: z.number().int().nonnegative(),
@@ -135,13 +138,19 @@ export const InfluencerApplicationSchema = z.object({
   receivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   rejectReason: z.string().nullable(),
-  snsType: SnsTypeSchema,
+  subType: CampaignSubTypeSchema,
   /** INSTAGRAM 응모인 경우 FEED/REELS, 그 외는 null. */
   instagramPostType: InstagramPostTypeSchema.nullable(),
   posts: z.array(SubmittedPostSchema),
   postingPeriodDays: z.number().int().min(1),
   postingDeadlineAt: z.string().datetime().nullable(),
   settlement: InfluencerApplicationSettlementSchema.nullable(),
+  /** 가구매 캠페인용: 주문 번호(인플루언서가 제출). SNS 캠페인은 null. */
+  orderNumber: z.string().nullable(),
+  /** 가구매 캠페인용: 주문 정보 제출 시각. */
+  orderSubmittedAt: z.string().datetime().nullable(),
+  /** 가구매 캠페인용: 리뷰 제출 시각. */
+  reviewSubmittedAt: z.string().datetime().nullable(),
 });
 export type InfluencerApplication = z.infer<typeof InfluencerApplicationSchema>;
 

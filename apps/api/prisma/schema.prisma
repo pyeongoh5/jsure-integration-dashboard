@@ -55,11 +55,14 @@ enum AdminUserStatus {
   SUSPENDED
 }
 
-enum SnsType {
+enum CampaignSubType {
   INSTAGRAM
   TIKTOK
   X
   YOUTUBE
+  QOO10
+  LIPS
+  ATCOSME
 }
 
 enum InstagramPostType {
@@ -80,6 +83,8 @@ enum ApplicationStatus {
   DELIVERED
   COMPLETED
   CANCELLED
+  ORDER_SUBMITTED
+  REVIEW_SUBMITTED
 }
 
 enum PostReviewStatus {
@@ -89,7 +94,8 @@ enum PostReviewStatus {
 }
 
 model Campaign {
-  id                 String    @id @default(cuid())
+  id                 String           @id @default(cuid())
+  category           CampaignCategory @default(SNS)
   title              String
   rewardJpy          Int
   recruitStartAt     DateTime
@@ -105,7 +111,7 @@ model Campaign {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  snsRecruits  CampaignSnsRecruit[]
+  recruits     CampaignRecruit[]
   applications CampaignApplication[]
   influencerMemos InfluencerMemo[]
 
@@ -135,24 +141,23 @@ model CampaignExclusion {
   @@map("campaign_exclusions")
 }
 
-model CampaignSnsRecruit {
-  id                  String              @id @default(cuid())
-  campaignId          String
-  snsType             SnsType
-  minFollowers        Int                 @default(0)
-  recruitCount        Int
-  /// INSTAGRAM 모집일 때만 의미가 있다. 비-INSTAGRAM 행은 항상 빈 배열.
-  instagramPostTypes  InstagramPostType[] @default([])
-  /// false 이면 인사이트 제출 단계를 건너뛰고, 투고 승인만으로 정산이 가능하다.
-  insightRequired     Boolean             @default(true)
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+model CampaignRecruit {
+  id                 String              @id @default(cuid())
+  campaignId         String
+  subType            CampaignSubType
+  minFollowers       Int                 @default(0)
+  recruitCount       Int
+  instagramPostTypes InstagramPostType[]
+  insightRequired    Boolean             @default(true)
+  productPriceJpy    Int?
+  productUrl         String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
-  @@unique([campaignId, snsType])
-  @@index([campaignId])
-  @@map("campaign_sns_recruits")
+  @@unique([campaignId, subType])
+  @@map("campaign_recruits")
 }
 
 model Influencer {
@@ -222,7 +227,7 @@ model InfluencerSession {
 model InfluencerSnsAccount {
   id            String   @id @default(cuid())
   influencerId  String
-  snsType       SnsType
+  snsType       CampaignSubType
   handle        String
   followerCount Int      @default(0)
   createdAt     DateTime @default(now())
@@ -271,7 +276,7 @@ model CampaignApplication {
   id           String            @id @default(cuid())
   campaignId   String
   influencerId String
-  snsType      SnsType
+  subType      CampaignSubType
   /// INSTAGRAM 응모일 때만 의미가 있다. 비-INSTAGRAM 응모는 항상 null.
   instagramPostType InstagramPostType?
   status       ApplicationStatus @default(APPLIED)
@@ -288,15 +293,20 @@ model CampaignApplication {
   receivedAt     DateTime?
   completedAt    DateTime?
 
+  orderNumber        String?
+  orderSubmittedAt   DateTime?
+  reviewSubmittedAt  DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   campaign   Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   influencer Influencer      @relation(fields: [influencerId], references: [id], onDelete: Restrict)
   posts      SubmittedPost[]
+  attachments Attachment[]
   lineDispatchLogs LineDispatchLog[]
 
-  @@unique([campaignId, influencerId, snsType])
+  @@unique([campaignId, influencerId, subType])
   @@index([campaignId, status])
   @@index([influencerId, status])
   @@map("campaign_applications")
@@ -305,7 +315,7 @@ model CampaignApplication {
 model SubmittedPost {
   id                  String    @id @default(cuid())
   applicationId       String
-  snsType             SnsType
+  subType             CampaignSubType
   url                 String
   submittedAt         DateTime  @default(now())
   insightLikes        Int?
@@ -332,10 +342,10 @@ model SubmittedPost {
 
   application CampaignApplication      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   rejections  SubmittedPostRejection[]
-  attachments SubmittedPostAttachment[]
+  attachments Attachment[]
   settlement  Settlement?
 
-  @@unique([applicationId, snsType])
+  @@unique([applicationId, subType])
   @@index([applicationId])
   @@index([reviewStatus])
   @@map("submitted_posts")
@@ -350,6 +360,8 @@ model Settlement {
   id            String           @id @default(cuid())
   postId        String           @unique
   amountJpy     Int
+  rewardAmountJpy   Int              @default(0)
+  productRefundJpy  Int              @default(0)
   status        SettlementStatus @default(PENDING)
   createdAt     DateTime         @default(now())
   completedAt   DateTime?
@@ -361,18 +373,22 @@ model Settlement {
   @@map("settlements")
 }
 
-model SubmittedPostAttachment {
-  id          String   @id @default(cuid())
-  postId      String
-  objectKey   String   @unique
-  contentType String
-  sizeBytes   Int
-  uploadedAt  DateTime @default(now())
+model Attachment {
+  id            String              @id @default(cuid())
+  kind          AttachmentKind
+  applicationId String
+  postId        String?
+  objectKey     String              @unique
+  contentType   String
+  sizeBytes     Int
+  uploadedAt    DateTime            @default(now())
 
-  post SubmittedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  application CampaignApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  post        SubmittedPost?      @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@index([postId])
-  @@map("submitted_post_attachments")
+  @@index([applicationId, kind])
+  @@index([postId, kind])
+  @@map("attachments")
 }
 
 model SubmittedPostRejection {
@@ -454,11 +470,30 @@ enum LineTriggerKey {
   SNS_INSIGHT_REMINDER
   SNS_SETTLEMENT_COMPLETED
   SNS_CAMPAIGN_COMPLETED
+  FAKE_PURCHASE_APPLICATION_APPLIED
+  FAKE_PURCHASE_APPLICATION_APPROVED
+  FAKE_PURCHASE_APPLICATION_REJECTED
+  FAKE_PURCHASE_ORDER_SUBMITTED
+  FAKE_PURCHASE_REVIEW_SUBMITTED
+  FAKE_PURCHASE_REVIEW_APPROVED
+  FAKE_PURCHASE_REVIEW_REJECTED
+  FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER
+  FAKE_PURCHASE_SETTLEMENT_COMPLETED
+  FAKE_PURCHASE_CAMPAIGN_COMPLETED
+}
+
+enum AttachmentKind {
+  INSIGHT_SCREENSHOT
+  ORDER_RECEIPT
+  REVIEW_SCREENSHOT
 }
 
 enum LineTriggerSubType {
   INSTAGRAM
   X
+  QOO10
+  LIPS
+  ATCOSME
 }
 
 enum LineDispatchStatus {

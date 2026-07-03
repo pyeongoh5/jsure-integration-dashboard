@@ -1,6 +1,7 @@
 import {
   InfluencerApplicationListResponseSchema,
   InfluencerApplicationSchema,
+  type AttachmentUploadInput,
   type InfluencerApplication,
   type InstagramPostType,
   type CampaignSubType,
@@ -81,6 +82,18 @@ export async function submitInsight(
   const res = await api.put(
     `/influencer/applications/${id}/posts/${subType}/insight`,
     input,
+  );
+  return InfluencerApplicationSchema.parse(res.data);
+}
+
+export async function submitOrder(
+  applicationId: string,
+  orderNumber: string,
+  receipts: AttachmentUploadInput[],
+): Promise<InfluencerApplication> {
+  const res = await api.post(
+    `/influencer/applications/${applicationId}/order`,
+    { orderNumber, receipts },
   );
   return InfluencerApplicationSchema.parse(res.data);
 }

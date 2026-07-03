@@ -1,7 +1,12 @@
 import {
+  InfluencerAttachmentPresignResponseSchema,
   InsightUploadPresignResponseSchema,
   UPLOAD_ALLOWED_CONTENT_TYPES,
   UPLOAD_MAX_BYTES,
+  type AttachmentKind,
+  type AttachmentUploadInput,
+  type InfluencerAttachmentPresignRequest,
+  type InfluencerAttachmentPresignResponse,
   type InsightAttachmentInput,
   type InsightUploadPresignResponse,
   type UploadContentType,
@@ -52,6 +57,46 @@ export async function uploadInsightImage(
   const presign = await presignInsight({
     applicationId,
     subType,
+    contentType,
+    sizeBytes: file.size,
+  });
+
+  const putRes = await fetch(presign.uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: file,
+  });
+  if (!putRes.ok) {
+    throw new UploadError(`업로드에 실패했습니다 (HTTP ${putRes.status})`);
+  }
+
+  return {
+    objectKey: presign.objectKey,
+    contentType,
+    sizeBytes: file.size,
+  };
+}
+
+export async function presignInfluencerAttachment(
+  body: InfluencerAttachmentPresignRequest,
+): Promise<InfluencerAttachmentPresignResponse> {
+  const res = await api.post("/uploads/influencer/attachment/presign", body);
+  return InfluencerAttachmentPresignResponseSchema.parse(res.data);
+}
+
+/**
+ * 가구매 주문 명세서/리뷰 스크린샷 등 인플루언서 첨부 업로드.
+ * kind 에 따라 objectKey prefix 가 결정된다.
+ */
+export async function uploadInfluencerAttachment(
+  applicationId: string,
+  kind: AttachmentKind,
+  file: File,
+): Promise<AttachmentUploadInput> {
+  const contentType = assertAllowed(file);
+  const presign = await presignInfluencerAttachment({
+    applicationId,
+    kind,
     contentType,
     sizeBytes: file.size,
   });

@@ -7,6 +7,7 @@ export { ApplicationCard } from "./components/ApplicationCard";
 export { ApplicationFilters } from "./components/ApplicationFilters";
 export { ApplicationStepper } from "./components/ApplicationStepper";
 export { InsightSubmitForm } from "./components/InsightSubmitForm";
+export { OrderSubmitForm } from "./components/OrderSubmitForm";
 export { PostSubmitForm } from "./components/PostSubmitForm";
 export { ReceiptConfirmDialog } from "./components/ReceiptConfirmDialog";
 export { CancelConfirmDialog } from "./components/CancelConfirmDialog";

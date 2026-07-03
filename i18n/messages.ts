@@ -161,6 +161,57 @@ export const messages = {
       submitting: { jp: "送信中…", kr: "전송 중…" },
       confirm: { jp: "受領を確認する", kr: "수령 확인" },
     },
+    attachmentUpload: {
+      unsupportedPrefix: { jp: "対応していない形式: ", kr: "지원하지 않는 형식: " },
+      oversizedPrefix: { jp: "5MB を超えるファイル: ", kr: "5MB를 초과하는 파일: " },
+      maxFilesPrefix: { jp: "最大", kr: "최대 " },
+      maxFilesSuffix: { jp: "枚まで添付できます", kr: "장까지 첨부할 수 있습니다" },
+      genericError: {
+        jp: "アップロード中にエラーが発生しました",
+        kr: "업로드 중 오류가 발생했습니다",
+      },
+      dropzoneMain: {
+        jp: "クリックまたはドラッグして画像を追加",
+        kr: "클릭 또는 드래그하여 이미지 추가",
+      },
+      uploading: { jp: "アップロード中…", kr: "업로드 중…" },
+      limitReached: {
+        jp: "添付枚数が上限に達しました",
+        kr: "첨부 매수가 상한에 도달했습니다",
+      },
+      unitSuffix: { jp: "枚", kr: "장" },
+      removeAriaLabel: { jp: "削除", kr: "삭제" },
+      hintPrefix: { jp: "PNG / JPEG / WebP · 最大", kr: "PNG / JPEG / WebP · 최대 " },
+      hintSuffix: { jp: "枚 · 5MB以下", kr: "장 · 5MB 이하" },
+    },
+    orderForm: {
+      orderNumberPlaceholder: {
+        jp: "注文番号を入力",
+        kr: "주문번호를 입력해 주세요",
+      },
+      orderNumberRequired: {
+        jp: "注文番号を入力してください",
+        kr: "주문번호를 입력해 주세요",
+      },
+      receiptsRequired: {
+        jp: "注文明細のスクリーンショットを1枚以上ご提出ください",
+        kr: "주문 명세서 스크린샷을 1장 이상 제출해 주세요",
+      },
+      submitting: { jp: "送信中…", kr: "전송 중…" },
+    },
+    reviewForm: {
+      urlPlaceholder: { jp: "https://…", kr: "https://…" },
+      urlInvalid: {
+        jp: "有効なURLを入力してください",
+        kr: "올바른 URL을 입력해 주세요",
+      },
+      screenshotsRequired: {
+        jp: "レビューのスクリーンショットを2枚以上ご提出ください",
+        kr: "리뷰 스크린샷을 2장 이상 제출해 주세요",
+      },
+      submitting: { jp: "送信中…", kr: "전송 중…" },
+      deadlinePassed: { jp: "投稿期限を過ぎています", kr: "게시 기한이 지났습니다" },
+    },
     insightForm: {
       metricInvalid: { jp: "数字を入力", kr: "숫자를 입력해 주세요" },
       metricLikes: { jp: "いいね数", kr: "좋아요 수" },

@@ -346,6 +346,7 @@ export class AdminApplicationsService {
     return Promise.all(
       rows.map(async (row) => ({
         id: row.id,
+        kind: row.kind,
         objectKey: row.objectKey,
         contentType: row.contentType,
         sizeBytes: row.sizeBytes,
@@ -701,6 +702,7 @@ const SUBMITTED_POST_INCLUDE = {
     orderBy: { uploadedAt: "asc" as const },
     select: {
       id: true,
+      kind: true,
       objectKey: true,
       contentType: true,
       sizeBytes: true,
@@ -762,6 +764,7 @@ type SubmittedPostRow = {
   rejections: { id: string; comment: string; rejectedAt: Date }[];
   attachments: {
     id: string;
+    kind: "INSIGHT_SCREENSHOT" | "ORDER_RECEIPT" | "REVIEW_SCREENSHOT";
     objectKey: string;
     contentType: string;
     sizeBytes: number;
@@ -806,6 +809,7 @@ async function toSubmittedPostResponse(
   // 별도 엔드포인트(`GET submitted-posts/:postId/attachments`)로 발급한다.
   const attachments = row.attachments.map((attachment) => ({
     id: attachment.id,
+    kind: attachment.kind,
     objectKey: attachment.objectKey,
     contentType: attachment.contentType,
     sizeBytes: attachment.sizeBytes,

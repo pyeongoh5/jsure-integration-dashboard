@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { EnabledSnsTypeSchema } from "./influencer.js";
+
 export const UPLOAD_MAX_BYTES = 5 * 1024 * 1024; // 5MB
 export const UPLOAD_ALLOWED_CONTENT_TYPES = [
   "image/png",
@@ -16,7 +18,7 @@ export type UploadContentType = z.infer<typeof UploadContentTypeSchema>;
  */
 export const InsightUploadPresignRequestSchema = z.object({
   applicationId: z.string().min(1),
-  subType: z.enum(["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"]),
+  subType: EnabledSnsTypeSchema,
   contentType: UploadContentTypeSchema,
   sizeBytes: z.number().int().positive().max(UPLOAD_MAX_BYTES),
 });
@@ -113,21 +115,49 @@ export type CampaignImageUploadPresignResponse = z.infer<
  * admin 조회용 — viewUrl은 presigned GET URL (단기 만료).
  * 목록 응답에서는 null 로 내려가며, 실제 보기 시점에 별도 엔드포인트로 발급한다.
  */
-export const SubmittedPostAttachmentSchema = z.object({
+export const AttachmentKindSchema = z.enum([
+  "INSIGHT_SCREENSHOT",
+  "ORDER_RECEIPT",
+  "REVIEW_SCREENSHOT",
+]);
+export type AttachmentKind = z.infer<typeof AttachmentKindSchema>;
+
+export const AttachmentSchema = z.object({
   id: z.string(),
+  kind: AttachmentKindSchema,
   objectKey: z.string(),
   contentType: z.string(),
   sizeBytes: z.number().int().nonnegative(),
   uploadedAt: z.string().datetime(),
   viewUrl: z.string().url().nullable(),
 });
+export type Attachment = z.infer<typeof AttachmentSchema>;
 
-export const SubmittedPostAttachmentListResponseSchema = z.object({
-  attachments: z.array(SubmittedPostAttachmentSchema),
+export const AttachmentListResponseSchema = z.object({
+  attachments: z.array(AttachmentSchema),
 });
-export type SubmittedPostAttachmentListResponse = z.infer<
-  typeof SubmittedPostAttachmentListResponseSchema
+export type AttachmentListResponse = z.infer<typeof AttachmentListResponseSchema>;
+
+/**
+ * 인플루언서 첨부(가구매 주문 명세서/리뷰 스크린샷/SNS 인사이트) 통합 presign.
+ * kind 에 따라 objectKey prefix 를 결정하고, 서버는 applicationId 소유권 및
+ * kind–카테고리 매칭을 검증한다.
+ */
+export const InfluencerAttachmentPresignRequestSchema = z.object({
+  applicationId: z.string().min(1),
+  kind: AttachmentKindSchema,
+  contentType: UploadContentTypeSchema,
+  sizeBytes: z.number().int().positive().max(UPLOAD_MAX_BYTES),
+});
+export type InfluencerAttachmentPresignRequest = z.infer<
+  typeof InfluencerAttachmentPresignRequestSchema
 >;
-export type SubmittedPostAttachment = z.infer<
-  typeof SubmittedPostAttachmentSchema
+
+export const InfluencerAttachmentPresignResponseSchema = z.object({
+  objectKey: z.string(),
+  uploadUrl: z.string().url(),
+  expiresInSec: z.number().int().positive(),
+});
+export type InfluencerAttachmentPresignResponse = z.infer<
+  typeof InfluencerAttachmentPresignResponseSchema
 >;

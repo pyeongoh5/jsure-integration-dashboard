@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import type { SubmittedPostAttachment } from "@jsure/shared";
-import { fetchSubmittedPostAttachments } from "@/domains/application/draftsApi";
+import type { Attachment } from "@jsure/shared";
+import { fetchAttachments } from "@/domains/application/draftsApi";
 import type { DraftReview } from "./types";
 import styles from "./InsightDetailDialog.module.css";
 
 type AttachmentsState =
   | { kind: "loading" }
-  | { kind: "ready"; items: SubmittedPostAttachment[] }
+  | { kind: "ready"; items: Attachment[] }
   | { kind: "error"; message: string };
 
 const METRICS: { key: keyof DraftReview["insight"]; label: string }[] = [
@@ -38,7 +38,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
     if (!draft.insightSubmitted) return;
     let cancelled = false;
     setAttachmentsState({ kind: "loading" });
-    fetchSubmittedPostAttachments(draft.id)
+    fetchAttachments(draft.id)
       .then((items) => {
         if (!cancelled) setAttachmentsState({ kind: "ready", items });
       })

@@ -8,7 +8,7 @@ import {
   ApplicationStatusSchema,
   PostReviewStatusSchema,
 } from "./application.js";
-import { SubmittedPostAttachmentSchema } from "./uploads.js";
+import { AttachmentSchema } from "./uploads.js";
 
 export { PostReviewStatusSchema };
 export type { PostReviewStatus } from "./application.js";
@@ -134,7 +134,7 @@ export const AdminSubmittedPostSchema = z.object({
   reviewStatus: PostReviewStatusSchema,
   reviewedAt: z.string().datetime().nullable(),
   rejectionHistory: z.array(SubmittedPostRejectionSchema),
-  attachments: z.array(SubmittedPostAttachmentSchema),
+  attachments: z.array(AttachmentSchema),
 
   settledAt: z.string().datetime().nullable(),
   settledAmountJpy: z.number().int().nonnegative().nullable(),

@@ -16,7 +16,7 @@ import {
   type CampaignImageUploadPresignResponse,
   type NoticeImageUploadPresignRequest,
   type NoticeImageUploadPresignResponse,
-  type SubmittedPostAttachment as SharedAttachment,
+  type Attachment as SharedAttachment,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { R2Service } from "../r2/r2.service";
@@ -242,6 +242,7 @@ export class UploadsService {
     return Promise.all(
       rows.map(async (row) => ({
         id: row.id,
+        kind: row.kind,
         objectKey: row.objectKey,
         contentType: row.contentType,
         sizeBytes: row.sizeBytes,

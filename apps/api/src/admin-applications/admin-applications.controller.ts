@@ -22,7 +22,7 @@ import {
   type AdminSettlementListResponse,
   type AdminSubmittedPostListResponse,
   type ApprovedApplicantExportResponse,
-  type SubmittedPostAttachmentListResponse,
+  type AttachmentListResponse,
   type ApplicationStatus,
   type RejectApplicationRequest,
   type RejectSubmittedPostRequest,
@@ -79,7 +79,7 @@ export class AdminApplicationsController {
   @Get("submitted-posts/:postId/attachments")
   async submittedPostAttachments(
     @Param("postId") postId: string,
-  ): Promise<SubmittedPostAttachmentListResponse> {
+  ): Promise<AttachmentListResponse> {
     const attachments = await this.svc.listSubmittedPostAttachments(postId);
     return { attachments };
   }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Attachment } from "@jsure/shared";
-import { fetchAttachments } from "@/domains/application/draftsApi";
+import { fetchSubmittedPostAttachments } from "@/domains/application/draftsApi";
 import type { DraftReview } from "./types";
 import styles from "./InsightDetailDialog.module.css";
 
@@ -38,7 +38,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
     if (!draft.insightSubmitted) return;
     let cancelled = false;
     setAttachmentsState({ kind: "loading" });
-    fetchAttachments(draft.id)
+    fetchSubmittedPostAttachments(draft.id)
       .then((items) => {
         if (!cancelled) setAttachmentsState({ kind: "ready", items });
       })

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { Attachment } from "@jsure/shared";
+import { useEffect, useMemo, useState } from "react";
+import type { Attachment, AttachmentKind } from "@jsure/shared";
 import { fetchSubmittedPostAttachments } from "@/domains/application/draftsApi";
 import type { DraftReview } from "./types";
 import styles from "./InsightDetailDialog.module.css";
@@ -33,6 +33,21 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
   const [attachmentsState, setAttachmentsState] = useState<AttachmentsState>({
     kind: "loading",
   });
+  const isFakePurchase = draft.category === "FAKE_PURCHASE";
+  const dialogTitle = isFakePurchase
+    ? `${draft.influencerName} 리뷰`
+    : `${draft.influencerName} 인사이트`;
+  const emptyLabel = isFakePurchase
+    ? "리뷰가 아직 제출되지 않았습니다."
+    : "인사이트가 아직 제출되지 않았습니다.";
+  const screenshotTitle = isFakePurchase ? "리뷰 스크린샷" : "스크린샷";
+  const attachmentKind: AttachmentKind = isFakePurchase
+    ? "REVIEW_SCREENSHOT"
+    : "INSIGHT_SCREENSHOT";
+  const filteredAttachments = useMemo(() => {
+    if (attachmentsState.kind !== "ready") return [];
+    return attachmentsState.items.filter((item) => item.kind === attachmentKind);
+  }, [attachmentsState, attachmentKind]);
 
   useEffect(() => {
     if (!draft.insightSubmitted) return;
@@ -68,7 +83,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
         >
           <header className={styles.header}>
             <div>
-              <div className={styles.title}>{draft.influencerName} 인사이트</div>
+              <div className={styles.title}>{dialogTitle}</div>
               <div className={styles.sub}>
                 {draft.campaignTitle} · {draft.subType}
               </div>
@@ -84,39 +99,41 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
           </header>
 
           {!draft.insightSubmitted ? (
-            <div className={styles.empty}>인사이트가 아직 제출되지 않았습니다.</div>
+            <div className={styles.empty}>{emptyLabel}</div>
           ) : (
             <>
-              <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>수치</h3>
-                <div className={styles.metrics}>
-                  {METRICS.map((m) => (
-                    <div key={m.key} className={styles.metric}>
-                      <div className={styles.metricLabel}>{m.label}</div>
-                      <div className={styles.metricValue}>
-                        {fmtNumber(draft.insight[m.key] as number | null)}
+              {!isFakePurchase && (
+                <section className={styles.section}>
+                  <h3 className={styles.sectionTitle}>수치</h3>
+                  <div className={styles.metrics}>
+                    {METRICS.map((m) => (
+                      <div key={m.key} className={styles.metric}>
+                        <div className={styles.metricLabel}>{m.label}</div>
+                        <div className={styles.metricValue}>
+                          {fmtNumber(draft.insight[m.key] as number | null)}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               <section className={styles.section}>
                 <h3 className={styles.sectionTitle}>
-                  스크린샷
-                  {attachmentsState.kind === "ready" && attachmentsState.items.length > 0 && (
-                    <span className={styles.count}>{attachmentsState.items.length}</span>
+                  {screenshotTitle}
+                  {attachmentsState.kind === "ready" && filteredAttachments.length > 0 && (
+                    <span className={styles.count}>{filteredAttachments.length}</span>
                   )}
                 </h3>
                 {attachmentsState.kind === "loading" ? (
                   <div className={styles.empty}>불러오는 중…</div>
                 ) : attachmentsState.kind === "error" ? (
                   <div className={styles.empty}>{attachmentsState.message}</div>
-                ) : attachmentsState.items.length === 0 ? (
+                ) : filteredAttachments.length === 0 ? (
                   <div className={styles.empty}>첨부 이미지 없음</div>
                 ) : (
                   <div className={styles.grid}>
-                    {attachmentsState.items.map((attachment) => (
+                    {filteredAttachments.map((attachment) => (
                       <button
                         type="button"
                         key={attachment.id}

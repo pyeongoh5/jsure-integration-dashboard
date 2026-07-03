@@ -1,5 +1,6 @@
 import type {
   ApplicationStatus,
+  CampaignCategory,
   CampaignSubType,
   InstagramPostType,
   PostReviewStatus,
@@ -44,6 +45,7 @@ export type DraftReview = {
   campaignId: string;
   campaignTitle: string;
   campaignThumbnailUrl: string | null;
+  category: CampaignCategory;
   subType: CampaignSubType;
   media: Media;
   instagramPostType: InstagramPostType | null;

@@ -52,6 +52,7 @@ export function toDraftReview(
     campaignId: post.campaign.id,
     campaignTitle: post.campaign.title,
     campaignThumbnailUrl: post.campaign.thumbnailUrl,
+    category: post.campaign.category,
     subType: post.subType,
     media: SNS_TO_MEDIA[post.subType],
     instagramPostType: post.instagramPostType,

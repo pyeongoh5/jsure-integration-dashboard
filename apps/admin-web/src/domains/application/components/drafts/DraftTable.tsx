@@ -1,6 +1,8 @@
 import { Fragment } from "react";
+import { SUB_TYPE_LABEL } from "@jsure/shared";
 import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
+import { CATEGORY_LABEL_KO } from "../applicants/types";
 import {
   DRAFT_STATUS_LABEL,
   MEDIA_META,
@@ -62,6 +64,21 @@ type ActionHandlers = {
 
 function formatJpy(amount: number): string {
   return `¥${amount.toLocaleString()}`;
+}
+
+function renderCategoryCell(draft: DraftReview) {
+  const badgeClass =
+    draft.category === "SNS" ? styles.categoryBadgeSns : styles.categoryBadgeFake;
+  return (
+    <div className={styles.categoryCell}>
+      <span className={`${styles.categoryBadge} ${badgeClass}`}>
+        {CATEGORY_LABEL_KO[draft.category]}
+      </span>
+      <span className={styles.categorySubType}>
+        {SUB_TYPE_LABEL[draft.subType]}
+      </span>
+    </div>
+  );
 }
 
 function renderStatusCell(
@@ -196,6 +213,7 @@ export function DraftTable({
             <tr>
               <th>인플루언서</th>
               <th>캠페인</th>
+              <th style={{ width: 120 }}>카테고리</th>
               <th style={{ width: 70 }}>매체</th>
               <th>제출 URL</th>
               <th style={{ width: 90 }}>제출 시각</th>
@@ -232,6 +250,7 @@ export function DraftTable({
                       </div>
                     </td>
                     <td>{draft.campaignTitle}</td>
+                    <td>{renderCategoryCell(draft)}</td>
                     <td>
                       <span className={styles.mediaItem}>
                         <span
@@ -273,7 +292,7 @@ export function DraftTable({
                   </tr>
                   {showHistory && hasHistory && (
                     <tr className={styles.historyRow}>
-                      <td colSpan={7}>
+                      <td colSpan={8}>
                         <div className={styles.history}>
                           <div className={styles.historyTitle}>
                             이전 반려 사유 ({draft.rejectionHistory.length})

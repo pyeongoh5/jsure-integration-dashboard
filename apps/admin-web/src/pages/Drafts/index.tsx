@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import type { CampaignCategory } from "@jsure/shared";
 import {
   ApplicantFilters,
   DraftDialogs,
@@ -33,6 +34,8 @@ export function Drafts() {
   const [statusFilter, setStatusFilter] = useState<Set<DraftStatus>>(
     () => new Set(),
   );
+  const [categoryFilter, setCategoryFilter] =
+    useState<CampaignCategory | null>(null);
   const [insightView, setInsightView] = useState<DraftReview | null>(null);
   const [notesTarget, setNotesTarget] = useState<DraftReview | null>(null);
   const { state, drafts, reload } = useDraftReviewsData();
@@ -56,9 +59,10 @@ export function Drafts() {
         if (campaignId && draft.campaignId !== campaignId) return false;
         if (mediaFilter.size > 0 && !mediaFilter.has(draft.media)) return false;
         if (statusFilter.size > 0 && !statusFilter.has(draft.status)) return false;
+        if (categoryFilter !== null && draft.category !== categoryFilter) return false;
         return true;
       }),
-    [drafts, campaignId, mediaFilter, statusFilter],
+    [drafts, campaignId, mediaFilter, statusFilter, categoryFilter],
   );
 
   return (
@@ -85,6 +89,8 @@ export function Drafts() {
           onCampaignChange={setCampaignId}
           mediaFilter={mediaFilter}
           onMediaChange={setMediaFilter}
+          category={categoryFilter}
+          onCategoryChange={setCategoryFilter}
         />
         <DraftStatusFilter value={statusFilter} onChange={setStatusFilter} />
       </div>

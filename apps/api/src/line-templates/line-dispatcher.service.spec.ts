@@ -21,7 +21,7 @@ function makeLineMock(pushTextImpl: (id: string, text: string) => Promise<void> 
 const application = {
   id: "app1",
   influencerId: "inf1",
-  snsType: "INSTAGRAM",
+  subType: "INSTAGRAM",
   trackingCarrier: null,
   trackingNumber: null,
   campaign: { id: "c1", title: "Test Campaign", postingPeriodDays: 14 },
@@ -120,7 +120,7 @@ describe("LineDispatcherService", () => {
     (prisma.lineMessageTemplate.findFirst as jest.Mock).mockResolvedValue(null);
     const svc = new LineDispatcherService(prisma, makeLineMock());
     await svc.dispatch("SNS_APPLICATION_APPLIED", {
-      application: { ...(application as object), snsType: "X" } as never,
+      application: { ...(application as object), subType: "X" } as never,
     });
     expect(prisma.lineMessageTemplate.findFirst).toHaveBeenCalledWith({
       where: {

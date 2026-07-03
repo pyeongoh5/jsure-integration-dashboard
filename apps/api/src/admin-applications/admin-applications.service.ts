@@ -5,8 +5,9 @@ import type {
   AdminSubmittedPost,
   ApplicationStatus,
   ApprovedApplicantExportResponse,
+  CampaignCategory,
+  CampaignSubType,
   InstagramPostType,
-  SnsType,
 } from "@jsure/shared";
 import { buildSnsProfileUrl } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
@@ -31,9 +32,12 @@ type AdminApplicationRow = {
   deliveredAt: Date | null;
   receivedAt: Date | null;
   completedAt: Date | null;
-  snsType: SnsType;
+  subType: CampaignSubType;
   instagramPostType: InstagramPostType | null;
-  campaign: { id: string; title: string };
+  orderNumber: string | null;
+  orderSubmittedAt: Date | null;
+  reviewSubmittedAt: Date | null;
+  campaign: { id: string; title: string; category: CampaignCategory };
   influencer: {
     id: string;
     name: string;
@@ -57,9 +61,12 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
     deliveredAt: row.deliveredAt ? row.deliveredAt.toISOString() : null,
     receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
-    snsType: row.snsType,
+    subType: row.subType,
     instagramPostType: row.instagramPostType,
     hasSubmittedPost: row._count.posts > 0,
+    orderNumber: row.orderNumber,
+    orderSubmittedAt: row.orderSubmittedAt ? row.orderSubmittedAt.toISOString() : null,
+    reviewSubmittedAt: row.reviewSubmittedAt ? row.reviewSubmittedAt.toISOString() : null,
     campaign: row.campaign,
     influencer: {
       id: row.influencer.id,
@@ -82,17 +89,22 @@ const SLOT_CONSUMING_STATUSES: ApplicationStatus[] = [
   "SHIPPED",
   "DELIVERED",
   "COMPLETED",
+  "ORDER_SUBMITTED",
+  "REVIEW_SUBMITTED",
 ];
 
-const SNS_LABEL: Record<SnsType, string> = {
+const SUB_TYPE_LABEL: Record<CampaignSubType, string> = {
   INSTAGRAM: "Instagram",
   TIKTOK: "TikTok",
   X: "X",
   YOUTUBE: "YouTube",
+  QOO10: "Qoo10",
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
 };
 
 const APPLICATION_INCLUDE = {
-  campaign: { select: { id: true, title: true } },
+  campaign: { select: { id: true, title: true, category: true } },
   influencer: {
     select: {
       id: true,
@@ -138,12 +150,12 @@ export class AdminApplicationsService {
       throw new BadRequestException(`Cannot approve from status ${existing.status}`);
     }
 
-    // 해당 캠페인 + SNS 의 모집 인원을 넘겨 승인할 수 없도록 막는다.
-    const recruit = await this.prisma.campaignSnsRecruit.findUnique({
+    // 해당 캠페인 + 서브타입 의 모집 인원을 넘겨 승인할 수 없도록 막는다.
+    const recruit = await this.prisma.campaignRecruit.findUnique({
       where: {
-        campaignId_snsType: {
+        campaignId_subType: {
           campaignId: existing.campaignId,
-          snsType: existing.snsType,
+          subType: existing.subType,
         },
       },
       select: { recruitCount: true },
@@ -152,13 +164,13 @@ export class AdminApplicationsService {
     const approvedCount = await this.prisma.campaignApplication.count({
       where: {
         campaignId: existing.campaignId,
-        snsType: existing.snsType,
+        subType: existing.subType,
         status: { in: SLOT_CONSUMING_STATUSES },
       },
     });
     if (approvedCount >= recruitCount) {
       throw new BadRequestException(
-        `${SNS_LABEL[existing.snsType]} 모집 인원(${recruitCount}명)이 모두 충족되어 더 이상 승인할 수 없습니다`,
+        `${SUB_TYPE_LABEL[existing.subType]} 모집 인원(${recruitCount}명)이 모두 충족되어 더 이상 승인할 수 없습니다`,
       );
     }
 
@@ -283,6 +295,8 @@ export class AdminApplicationsService {
       COMPLETED: 0,
       REJECTED: 0,
       CANCELLED: 0,
+      ORDER_SUBMITTED: 0,
+      REVIEW_SUBMITTED: 0,
     };
     for (const g of grouped) {
       out[g.status as ApplicationStatus] = g._count._all;
@@ -325,7 +339,7 @@ export class AdminApplicationsService {
       select: { id: true },
     });
     if (!post) throw new NotFoundException("Post not found");
-    const rows = await this.prisma.submittedPostAttachment.findMany({
+    const rows = await this.prisma.attachment.findMany({
       where: { postId },
       orderBy: { uploadedAt: "asc" },
     });
@@ -453,6 +467,8 @@ export class AdminApplicationsService {
       create: {
         postId,
         amountJpy: existing.application.campaign.rewardJpy,
+        rewardAmountJpy: existing.application.campaign.rewardJpy,
+        productRefundJpy: 0,
         status: "PENDING",
       },
       update: {},
@@ -483,7 +499,7 @@ export class AdminApplicationsService {
           select: {
             id: true,
             url: true,
-            snsType: true,
+            subType: true,
             submittedAt: true,
             insightSubmittedAt: true,
             application: {
@@ -557,7 +573,7 @@ export class AdminApplicationsService {
               select: {
                 id: true,
                 influencerId: true,
-                snsType: true,
+                subType: true,
                 trackingCarrier: true,
                 trackingNumber: true,
                 ...DISPATCH_APPLICATION_INCLUDE,
@@ -607,7 +623,7 @@ export class AdminApplicationsService {
       orderBy: { appliedAt: "asc" },
       select: {
         id: true,
-        snsType: true,
+        subType: true,
         influencer: {
           select: {
             id: true,
@@ -631,17 +647,26 @@ export class AdminApplicationsService {
       campaignTitle: campaign.title,
       rows: rows.map((row) => {
         const snsAccount = row.influencer.snsAccounts.find(
-          (account) => account.snsType === row.snsType,
+          (account) => account.snsType === row.subType,
         );
         const handle = snsAccount?.handle ?? "";
+        // SNS 계열 (INSTAGRAM/TIKTOK/X/YOUTUBE) 만 프로필 URL 을 만든다.
+        const profileUrl =
+          handle &&
+          (row.subType === "INSTAGRAM" ||
+            row.subType === "TIKTOK" ||
+            row.subType === "X" ||
+            row.subType === "YOUTUBE")
+            ? buildSnsProfileUrl(row.subType, handle)
+            : "";
         return {
           applicationId: row.id,
           influencerId: row.influencer.id,
           name: row.influencer.name,
           nameKana: row.influencer.nameKana,
-          snsType: row.snsType,
+          subType: row.subType,
           snsHandle: handle,
-          profileUrl: handle ? buildSnsProfileUrl(row.snsType, handle) : "",
+          profileUrl,
           phone: row.influencer.phone,
           postalCode: row.influencer.postalCode,
           address: [
@@ -688,7 +713,7 @@ const SUBMITTED_POST_INCLUDE = {
       status: true,
       instagramPostType: true,
       campaign: {
-        select: { id: true, title: true, thumbnailUrl: true, rewardJpy: true },
+        select: { id: true, title: true, category: true, thumbnailUrl: true, rewardJpy: true },
       },
       influencer: {
         select: {
@@ -711,7 +736,7 @@ const SUBMITTED_POST_INCLUDE = {
 
 type SubmittedPostRow = {
   id: string;
-  snsType: SnsType;
+  subType: CampaignSubType;
   url: string;
   submittedAt: Date;
   insightLikes: number | null;
@@ -746,7 +771,13 @@ type SubmittedPostRow = {
     id: string;
     status: ApplicationStatus;
     instagramPostType: InstagramPostType | null;
-    campaign: { id: string; title: string; thumbnailUrl: string | null; rewardJpy: number };
+    campaign: {
+      id: string;
+      title: string;
+      category: CampaignCategory;
+      thumbnailUrl: string | null;
+      rewardJpy: number;
+    };
     influencer: {
       id: string;
       name: string;
@@ -787,7 +818,7 @@ async function toSubmittedPostResponse(
   );
   return {
     id: row.id,
-    snsType: row.snsType,
+    subType: row.subType,
     instagramPostType: row.application.instagramPostType,
     url: row.url,
     submittedAt: row.submittedAt.toISOString(),
@@ -827,6 +858,7 @@ async function toSubmittedPostResponse(
     },
     campaign: {
       id: row.application.campaign.id,
+      category: row.application.campaign.category,
       title: row.application.campaign.title,
       thumbnailUrl: campaignThumbnailUrl,
       rewardJpy: row.application.campaign.rewardJpy,
@@ -836,7 +868,8 @@ async function toSubmittedPostResponse(
       name: row.application.influencer.name,
       flagged: row.application.influencer.flaggedAt !== null,
       snsAccounts: row.application.influencer.snsAccounts.map((account) => ({
-        snsType: account.snsType as SnsType,
+        snsType:
+          account.snsType as AdminSubmittedPost["influencer"]["snsAccounts"][number]["snsType"],
         handle: account.handle,
         followerCount: account.followerCount,
       })),
@@ -854,7 +887,7 @@ type SettlementRow = {
   post: {
     id: string;
     url: string;
-    snsType: SnsType;
+    subType: CampaignSubType;
     submittedAt: Date;
     insightSubmittedAt: Date | null;
     application: {
@@ -862,7 +895,7 @@ type SettlementRow = {
       influencer: {
         id: string;
         name: string;
-        snsAccounts: { snsType: SnsType; handle: string }[];
+        snsAccounts: { snsType: string; handle: string }[];
       };
     };
   };
@@ -870,7 +903,7 @@ type SettlementRow = {
 
 function toSettlementResponse(row: SettlementRow): AdminSettlement {
   const matchingAccount = row.post.application.influencer.snsAccounts.find(
-    (a) => a.snsType === row.post.snsType,
+    (a) => a.snsType === row.post.subType,
   );
   return {
     id: row.id,
@@ -891,7 +924,7 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
     post: {
       id: row.post.id,
       url: row.post.url,
-      snsType: row.post.snsType,
+      subType: row.post.subType,
       submittedAt: row.post.submittedAt.toISOString(),
       insightSubmittedAt: row.post.insightSubmittedAt
         ? row.post.insightSubmittedAt.toISOString()

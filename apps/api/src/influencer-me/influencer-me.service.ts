@@ -6,7 +6,7 @@ import {
 import type {
   InfluencerBankAccount,
   InfluencerSnsAccountInput,
-  SnsType,
+  SnsAccountSubType,
   UpdateInfluencerAddressRequest,
   UpdateInfluencerProfileRequest,
 } from "@jsure/shared";
@@ -72,7 +72,7 @@ export class InfluencerMeService {
 
   async deleteSnsAccount(
     influencerId: string,
-    snsType: SnsType,
+    snsType: SnsAccountSubType,
   ): Promise<void> {
     const count = await this.prisma.influencerSnsAccount.count({
       where: { influencerId },

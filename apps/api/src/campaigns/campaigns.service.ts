@@ -6,10 +6,11 @@ import {
 } from "@nestjs/common";
 import type {
   ApplicationStatus,
+  CampaignCategory,
   CampaignResponse,
   CreateCampaignRequest,
   InstagramPostType,
-  SnsRecruit,
+  CampaignRecruit,
   UpdateCampaignRequest,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
@@ -28,16 +29,19 @@ export function utcToJstDateStr(d: Date): string {
   return shifted.toISOString().slice(0, 10);
 }
 
-type SnsRecruitRow = {
-  snsType: string;
+type CampaignRecruitRow = {
+  subType: string;
   minFollowers: number;
   recruitCount: number;
   instagramPostTypes: InstagramPostType[];
   insightRequired: boolean;
+  productPriceJpy: number | null;
+  productUrl: string | null;
 };
 
 type CampaignRow = {
   id: string;
+  category: CampaignCategory;
   title: string;
   rewardJpy: number;
   recruitStartAt: Date;
@@ -52,7 +56,7 @@ type CampaignRow = {
   thumbnailUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
-  snsRecruits: SnsRecruitRow[];
+  recruits: CampaignRecruitRow[];
   exclusionsAsExcluding: { excludedCampaignId: string }[];
 };
 
@@ -73,15 +77,18 @@ const APPROVED_LIKE_STATUSES: ApplicationStatus[] = [
 function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse {
   return {
     id: row.id,
+    category: row.category,
     title: row.title,
     rewardJpy: row.rewardJpy,
-    snsRecruits: row.snsRecruits.map((recruit) => ({
-      snsType: recruit.snsType as SnsRecruit["snsType"],
+    recruits: row.recruits.map((recruit) => ({
+      subType: recruit.subType as CampaignRecruit["subType"],
       minFollowers: recruit.minFollowers,
       recruitCount: recruit.recruitCount,
       instagramPostTypes:
-        recruit.snsType === "INSTAGRAM" ? recruit.instagramPostTypes : [],
+        recruit.subType === "INSTAGRAM" ? recruit.instagramPostTypes : [],
       insightRequired: recruit.insightRequired,
+      productPriceJpy: recruit.productPriceJpy,
+      productUrl: recruit.productUrl,
     })),
     recruitStartDate: utcToJstDateStr(row.recruitStartAt),
     recruitEndDate: utcToJstDateStr(row.recruitEndAt),
@@ -104,15 +111,17 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
 }
 
 const RECRUITS_INCLUDE = {
-  snsRecruits: {
+  recruits: {
     select: {
-      snsType: true,
+      subType: true,
       minFollowers: true,
       recruitCount: true,
       instagramPostTypes: true,
       insightRequired: true,
+      productPriceJpy: true,
+      productUrl: true,
     },
-    orderBy: { snsType: "asc" as const },
+    orderBy: { subType: "asc" as const },
   },
   exclusionsAsExcluding: {
     select: { excludedCampaignId: true },
@@ -197,9 +206,10 @@ export class CampaignsService {
     const excludedCampaignIds = await this.validateExcludedCampaignIds(
       input.excludedCampaignIds,
     );
-    const snsRecruits = this.normalizeSnsRecruitsInput(input.snsRecruits);
+    const recruits = this.normalizeCampaignRecruitsInput(input.recruits);
     const row = await this.prisma.campaign.create({
       data: {
+        category: input.category,
         title: input.title,
         rewardJpy: input.rewardJpy,
         recruitStartAt: jstDayStartUtc(input.recruitStartDate),
@@ -211,8 +221,8 @@ export class CampaignsService {
         referenceMediaUrls: input.referenceMediaUrls,
         cautions: input.cautions,
         thumbnailUrl: input.thumbnailUrl ?? null,
-        snsRecruits: {
-          create: snsRecruits,
+        recruits: {
+          create: recruits,
         },
         exclusionsAsExcluding: {
           create: excludedCampaignIds.map((excludedCampaignId) => ({
@@ -230,18 +240,22 @@ export class CampaignsService {
    * - INSTAGRAM 모집은 instagramPostTypes 가 1개 이상이어야 한다. 부족하면 BadRequest.
    * - INSTAGRAM 이 아니면 instagramPostTypes 는 무조건 빈 배열로.
    */
-  private normalizeSnsRecruitsInput(
-    snsRecruits: CreateCampaignRequest["snsRecruits"],
+  private normalizeCampaignRecruitsInput(
+    recruits: CreateCampaignRequest["recruits"],
   ): {
-    snsType: SnsRecruit["snsType"];
+    subType: CampaignRecruit["subType"];
     minFollowers: number;
     recruitCount: number;
     instagramPostTypes: InstagramPostType[];
     insightRequired: boolean;
+    productPriceJpy: number | null;
+    productUrl: string | null;
   }[] {
-    return snsRecruits.map((recruit) => {
+    return recruits.map((recruit) => {
       const insightRequired = recruit.insightRequired ?? true;
-      if (recruit.snsType === "INSTAGRAM") {
+      const productPriceJpy = recruit.productPriceJpy ?? null;
+      const productUrl = recruit.productUrl ?? null;
+      if (recruit.subType === "INSTAGRAM") {
         const unique = Array.from(new Set(recruit.instagramPostTypes ?? []));
         if (unique.length === 0) {
           throw new BadRequestException(
@@ -249,19 +263,23 @@ export class CampaignsService {
           );
         }
         return {
-          snsType: recruit.snsType,
+          subType: recruit.subType,
           minFollowers: recruit.minFollowers,
           recruitCount: recruit.recruitCount,
           instagramPostTypes: unique,
           insightRequired,
+          productPriceJpy,
+          productUrl,
         };
       }
       return {
-        snsType: recruit.snsType,
+        subType: recruit.subType,
         minFollowers: recruit.minFollowers,
         recruitCount: recruit.recruitCount,
         instagramPostTypes: [] as InstagramPostType[],
         insightRequired,
+        productPriceJpy,
+        productUrl,
       };
     });
   }
@@ -326,6 +344,7 @@ export class CampaignsService {
     if (!existing) throw new NotFoundException("Campaign not found");
 
     const data: Record<string, unknown> = {};
+    if (input.category !== undefined) data.category = input.category;
     if (input.title !== undefined) data.title = input.title;
     if (input.rewardJpy !== undefined) data.rewardJpy = input.rewardJpy;
     if (input.recruitStartDate !== undefined) {
@@ -349,12 +368,12 @@ export class CampaignsService {
         ? await this.validateExcludedCampaignIds(input.excludedCampaignIds, id)
         : null;
 
-    // snsRecruits / exclusions 는 전체 교체.
+    // recruits / exclusions 는 전체 교체.
     const row = await this.prisma.$transaction(async (tx) => {
-      if (input.snsRecruits !== undefined) {
-        const normalized = this.normalizeSnsRecruitsInput(input.snsRecruits);
-        await tx.campaignSnsRecruit.deleteMany({ where: { campaignId: id } });
-        await tx.campaignSnsRecruit.createMany({
+      if (input.recruits !== undefined) {
+        const normalized = this.normalizeCampaignRecruitsInput(input.recruits);
+        await tx.campaignRecruit.deleteMany({ where: { campaignId: id } });
+        await tx.campaignRecruit.createMany({
           data: normalized.map((recruit) => ({
             campaignId: id,
             ...recruit,

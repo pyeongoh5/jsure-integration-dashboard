@@ -151,7 +151,7 @@ export class InfluencerAuthController {
           }
         : null,
       snsAccounts: inf.snsAccounts.map((s) => ({
-        snsType: s.snsType,
+        snsType: s.snsType as InfluencerMeResponse["snsAccounts"][number]["snsType"],
         handle: s.handle,
         followerCount: s.followerCount,
       })),

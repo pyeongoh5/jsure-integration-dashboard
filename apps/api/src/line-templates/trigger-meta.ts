@@ -311,6 +311,58 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     requiresSubType: true,
     variables: withBase(),
   },
+  // 가구매 캠페인 트리거는 후속 태스크에서 변수·리마인더가 세팅될 예정이며,
+  // 여기서는 dispatch 컴파일 오류를 막기 위해 최소 스텁을 둔다.
+  FAKE_PURCHASE_APPLICATION_APPLIED: {
+    category: "FAKE_PURCHASE",
+    requiresSubType: true,
+    variables: withBase(),
+  },
+  FAKE_PURCHASE_APPLICATION_APPROVED: {
+    category: "FAKE_PURCHASE",
+    requiresSubType: true,
+    variables: withBase(),
+  },
+  FAKE_PURCHASE_APPLICATION_REJECTED: {
+    category: "FAKE_PURCHASE",
+    requiresSubType: true,
+    variables: withBase(rejectReason),
+  },
+  FAKE_PURCHASE_ORDER_SUBMITTED: {
+    category: "FAKE_PURCHASE",
+    requiresSubType: true,
+    variables: withBase(),
+  },
+  FAKE_PURCHASE_REVIEW_SUBMITTED: {
+    category: "FAKE_PURCHASE",
+    requiresSubType: true,
+    variables: withBase(),
+  },
+  FAKE_PURCHASE_REVIEW_APPROVED: {
+    category: "FAKE_PURCHASE",
+    requiresSubType: true,
+    variables: withBase(),
+  },
+  FAKE_PURCHASE_REVIEW_REJECTED: {
+    category: "FAKE_PURCHASE",
+    requiresSubType: true,
+    variables: withBase(rejectReason),
+  },
+  FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER: {
+    category: "FAKE_PURCHASE",
+    requiresSubType: true,
+    variables: withBase(remainingDays),
+  },
+  FAKE_PURCHASE_SETTLEMENT_COMPLETED: {
+    category: "FAKE_PURCHASE",
+    requiresSubType: true,
+    variables: withBase(rewardJpy),
+  },
+  FAKE_PURCHASE_CAMPAIGN_COMPLETED: {
+    category: "FAKE_PURCHASE",
+    requiresSubType: true,
+    variables: withBase(),
+  },
 };
 
 export function getMeta(triggerKey: LineTriggerKey): TriggerMetaEntry {

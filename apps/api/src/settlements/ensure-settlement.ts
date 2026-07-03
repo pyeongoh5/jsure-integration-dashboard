@@ -20,14 +20,14 @@ export async function ensureSettlementForPost(
     select: {
       reviewStatus: true,
       insightSubmittedAt: true,
-      snsType: true,
+      subType: true,
       application: {
         select: {
           campaign: {
             select: {
               rewardJpy: true,
-              snsRecruits: {
-                select: { snsType: true, insightRequired: true },
+              recruits: {
+                select: { subType: true, insightRequired: true },
               },
             },
           },
@@ -38,8 +38,8 @@ export async function ensureSettlementForPost(
   if (!post) return;
   if (post.reviewStatus !== "APPROVED") return;
   const insightRequired =
-    post.application.campaign.snsRecruits.find(
-      (recruit) => recruit.snsType === post.snsType,
+    post.application.campaign.recruits.find(
+      (recruit) => recruit.subType === post.subType,
     )?.insightRequired ?? true;
   if (insightRequired && post.insightSubmittedAt === null) return;
   await prisma.settlement.upsert({
@@ -47,6 +47,8 @@ export async function ensureSettlementForPost(
     create: {
       postId,
       amountJpy: post.application.campaign.rewardJpy,
+      rewardAmountJpy: post.application.campaign.rewardJpy,
+      productRefundJpy: 0,
       status: "PENDING",
     },
     update: {},

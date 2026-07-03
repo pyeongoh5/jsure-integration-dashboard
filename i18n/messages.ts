@@ -42,6 +42,20 @@ export const messages = {
       recruitPrefix: { jp: "募集", kr: "모집" },
       peopleSuffix: { jp: "名", kr: "명" },
     },
+    category: {
+      sns: { jp: "SNS", kr: "SNS" },
+      fakePurchase: { jp: "買取レビュー", kr: "가구매" },
+    },
+    subType: {
+      qoo10: { jp: "Qoo10", kr: "Qoo10" },
+      lips: { jp: "LIPS", kr: "LIPS" },
+      atcosme: { jp: "@cosme", kr: "@cosme" },
+    },
+    detail: {
+      productUrl: { jp: "商品ページ", kr: "상품 페이지" },
+      expectedSettlement: { jp: "予定精算金額", kr: "예상 정산액" },
+      productPrice: { jp: "商品価格", kr: "상품 가격" },
+    },
   },
   me: {
     address: {
@@ -187,6 +201,53 @@ export const messages = {
       submit: { jp: "投稿URLを提出", kr: "게시 URL 제출" },
       prHint: { jp: "⚠ 投稿冒頭に #PR を必ず記載", kr: "⚠ 게시물 처음에 #PR을 반드시 기재해 주세요" },
       deadlineLabelPrefix: { jp: "投稿締切日: ", kr: "게시 마감일: " },
+    },
+    stage: {
+      awaitingOrder: {
+        heading: { jp: "ご注文をお願いいたします", kr: "주문을 진행해 주세요" },
+        description: {
+          jp: "商品をご購入後、注文番号と注文明細のスクリーンショットをご提出ください",
+          kr: "상품 구매 후 주문번호와 주문 명세서 스크린샷을 제출해 주세요",
+        },
+        orderNumberLabel: { jp: "注文番号", kr: "주문번호" },
+        receiptsLabel: {
+          jp: "注文明細のスクリーンショット (1枚以上)",
+          kr: "주문 명세서 스크린샷 (1장 이상)",
+        },
+        submit: { jp: "提出する", kr: "제출" },
+      },
+      awaitingReview: {
+        heading: { jp: "レビューの投稿をお願いいたします", kr: "리뷰를 작성해 주세요" },
+        description: {
+          jp: "各プラットフォームでレビューを投稿後、URLとスクリーンショットをご提出ください",
+          kr: "각 플랫폼에 리뷰를 게시한 뒤 URL과 스크린샷을 제출해 주세요",
+        },
+        urlLabel: { jp: "レビューURL", kr: "리뷰 URL" },
+        screenshotsLabel: {
+          jp: "レビューのスクリーンショット (2枚以上)",
+          kr: "리뷰 스크린샷 (2장 이상)",
+        },
+        deadlineDaysPrefix: { jp: "投稿期限まであと", kr: "리뷰 마감까지 " },
+        deadlineDaysSuffix: { jp: "日", kr: "일" },
+        submit: { jp: "提出する", kr: "제출" },
+      },
+      reviewPending: {
+        description: {
+          jp: "提出いただいたレビューを審査中です",
+          kr: "제출한 리뷰를 검토 중입니다",
+        },
+      },
+      reviewRejected: {
+        heading: {
+          jp: "レビューの再提出をお願いいたします",
+          kr: "리뷰 재제출이 필요합니다",
+        },
+        reasonLabel: { jp: "修正の理由", kr: "반려 사유" },
+        description: {
+          jp: "ガイドラインに沿ってレビューを修正し、URLとスクリーンショットを再度ご提出ください",
+          kr: "가이드라인에 맞게 리뷰를 수정한 뒤 URL과 스크린샷을 다시 제출해 주세요",
+        },
+      },
     },
   },
   pages: {

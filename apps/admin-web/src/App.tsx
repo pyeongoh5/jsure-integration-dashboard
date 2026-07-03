@@ -14,6 +14,8 @@ import { Reports } from "./pages/Reports";
 import { Team } from "./pages/Team";
 import { Notices } from "./pages/Notices";
 import { NoticeEdit } from "./pages/Notices/Edit";
+import { MessageTemplates } from "./pages/MessageTemplates";
+import { MessageTemplateEdit } from "./pages/MessageTemplates/Edit";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { NotFound } from "./pages/NotFound";
@@ -45,6 +47,11 @@ export function App() {
         <Route path="/notices" element={<Notices />} />
         <Route path="/notices/new" element={<NoticeEdit mode="create" />} />
         <Route path="/notices/:id/edit" element={<NoticeEdit mode="edit" />} />
+        <Route path="/message-templates" element={<MessageTemplates />} />
+        <Route
+          path="/message-templates/:category/:subType/:triggerKey"
+          element={<MessageTemplateEdit />}
+        />
       </Route>
       <Route path="/*" element={<NotFound />} />
     </Routes>

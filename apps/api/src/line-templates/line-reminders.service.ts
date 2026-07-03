@@ -1,7 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
-import { LineMessagingService } from "./line-messaging.service";
+import { LineDispatcherService } from "./line-dispatcher.service";
+import { DISPATCH_APPLICATION_INCLUDE } from "./trigger-meta";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const POSTING_REMINDER_DAYS = [3, 1];
@@ -23,7 +24,7 @@ export class LineRemindersService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly line: LineMessagingService,
+    private readonly dispatcher: LineDispatcherService,
   ) {}
 
   /** 매일 JST 09:00에 1회. 그날 시간이 도래한 대상에게 리마인더 발송. */
@@ -52,9 +53,7 @@ export class LineRemindersService {
         status: { in: ["SHIPPED", "DELIVERED"] },
       },
       include: {
-        campaign: {
-          select: { title: true, postingPeriodDays: true },
-        },
+        ...DISPATCH_APPLICATION_INCLUDE,
         posts: { select: { id: true } },
       },
     });
@@ -69,24 +68,10 @@ export class LineRemindersService {
       const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);
       if (!POSTING_REMINDER_DAYS.includes(remainingDays)) continue;
 
-      await this.line.pushText(
-        app.influencerId,
-        `⏰【期限間近】キャンペーン投稿期限まであと${remainingDays}日です！ ⏰
-お世話になっております！
-ご参加いただいている「${app.campaign.title}」の投稿期限まで、あと${remainingDays}日となりました。
-
-投稿期限に遅れのないよう、ご注意ください。
-
-✨ 投稿完了後のお願い
-SNSへご投稿いただいた後は、必ずシステムより【応募履歴 - 投稿URL提出】を完了していただけますようお願いいたします。
-
-素敵なご投稿を心より楽しみにしております。よろしくお願いいたします！
-
-※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
-※システムの行き違いで重複して届いた場合はご容赦ください。
-🕐 運営：平日 10:00〜20:00`,
-        // `【投稿期限のお知らせ】\n「${app.campaign.title}」の投稿期限まであと${remainingDays}日です。\nお忘れなく投稿のご準備をお願いいたします。\n\n${this.line.applicationUrl(app.id)}`,
-      );
+      await this.dispatcher.dispatch("SNS_POST_DEADLINE_REMINDER", {
+        application: app,
+        extra: { remainingDays },
+      });
     }
   }
 
@@ -100,11 +85,7 @@ SNSへご投稿いただいた後は、必ずシステムより【応募履歴 -
       where: { reviewStatus: "REJECTED", reviewedAt: { not: null } },
       include: {
         application: {
-          select: {
-            id: true,
-            influencerId: true,
-            campaign: { select: { title: true } },
-          },
+          include: DISPATCH_APPLICATION_INCLUDE,
         },
       },
     });
@@ -122,12 +103,10 @@ SNSへご投稿いただいた後は、必ずシステムより【応募履歴 -
       const finalDeadlineAt = new Date(
         post.reviewedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS,
       );
-      await this.line.notifyPostRejectionReminder({
-        influencerId: post.application.influencerId,
-        applicationId: post.application.id,
-        campaignTitle: post.application.campaign.title,
-        rejectReason: latest.comment,
-        finalDeadlineAt,
+      await this.dispatcher.dispatch("SNS_POST_REJECTION_REMINDER", {
+        application: post.application,
+        rejection: latest,
+        extra: { finalDeadlineAt },
       });
     }
   }
@@ -144,11 +123,7 @@ SNSへご投稿いただいた後は、必ずシステムより【応募履歴 -
       },
       include: {
         application: {
-          select: {
-            id: true,
-            influencerId: true,
-            campaign: { select: { title: true } },
-          },
+          include: DISPATCH_APPLICATION_INCLUDE,
         },
       },
     });
@@ -158,26 +133,9 @@ SNSへご投稿いただいた後は、必ずシステムより【応募履歴 -
       const elapsedDays = Math.round((todayStart - submittedDayStart) / DAY_MS);
       if (elapsedDays !== INSIGHT_REMINDER_DAY_AFTER_POST) continue;
 
-      await this.line.pushText(
-        post.application.influencerId,
-        `📊【インサイト提出のお願い】数執の登録をお願いいたします 📊
-お世話になっております。
-ご参加いただいている「${post.application.campaign.title}」の投稿から7日が経過いたしました。素敵なご投稿をいただき、誠にありがとうございます。
-
-キャンペーンの最終精算および成果測定のため、大変お手数ですが下記のご案内をお読みいただき、インサイト資料のご提出をお願いいたします。
-
-📝 提出項目のご案内
-- 対象インサイト: いいね数・コメント数・シェア数・リポスト数・保存数・閲覧数・リーチ数などの画面スクリーンショットおよび数値入力
-
-※投稿の成果数値が確認できる画面をスクリーンショットし、サイト内の【応募履歴 - インサイト提出】よりご登録をお願いいたします。期限内にご提出いただくことで、報酬の精算手続きがスムーズに進行いたします。
-
-ご協力のほどよろしくお願いいたします。
-
-※自動送信のため返信不要ですが、ご不明な点はお気軽にお問い合わせください。
-※システムの行き違いで重複届いた場合はご容赦ください。
-🕐 運営：平日 10:00〜20:00
->`,
-      );
+      await this.dispatcher.dispatch("SNS_INSIGHT_REMINDER", {
+        application: post.application,
+      });
     }
   }
 }

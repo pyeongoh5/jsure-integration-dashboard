@@ -89,10 +89,6 @@ export class LineMessagingService {
     }
   }
 
-  private appBaseUrl(): string {
-    return this.config.get<string>("APP_BASE_URL") ?? "http://localhost:5174";
-  }
-
   /**
    * Push messages to an influencer via their linked LINE user ID.
    * Silently no-ops if:
@@ -137,8 +133,32 @@ export class LineMessagingService {
     return this.pushToInfluencer(influencerId, [{ type: "text", text }]);
   }
 
-  pushFlex(influencerId: string, altText: string, contents: unknown): Promise<void> {
-    return this.pushToInfluencer(influencerId, [{ type: "flex", altText, contents }]);
+  /**
+   * Push messages directly to a raw LINE user ID (bypasses influencer lookup).
+   * Used by admin test-send and other flows where the lineUserId is already known.
+   */
+  async pushToLineUserId(lineUserId: string, messages: LineMessage[]): Promise<void> {
+    const token = await this.resolveToken();
+    if (!token) {
+      this.logger.warn("LINE messaging token not configured; skipping push");
+      return;
+    }
+    try {
+      const res = await fetch(LINE_PUSH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ to: lineUserId, messages }),
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        this.logger.warn(`LINE push failed (${res.status}) for lineUserId=${lineUserId}: ${body}`);
+      }
+    } catch (err) {
+      this.logger.error(`LINE push error for lineUserId=${lineUserId}`, err as Error);
+    }
   }
 
   /**
@@ -193,300 +213,4 @@ export class LineMessagingService {
     }
     return { sent, failed, errors };
   }
-
-  applicationUrl(applicationId: string): string {
-    return `${this.appBaseUrl()}/applications/${applicationId}`;
-  }
-
-  // ────────────────────────────────────────────────────────────────────────
-  // Pre-defined message builders
-  // ────────────────────────────────────────────────────────────────────────
-
-  async notifyApplied(args: { influencerId: string; campaignTitle: string }): Promise<void> {
-    await this.pushText(
-      args.influencerId,
-      `✨【お知らせ】キャンペーン受付 ✨
-
-ご応募ありがとうございます！
-「${args.campaignTitle}」への受付が正常に完了いたしました。
-
-💌 当選発表について
-
-🔹 発表: 応募後1週間前後
-🔹 方法: 当選者様へ個別にご連絡
-
-※大変恐縮ですが、ご当選とならなかった方へのご連絡は省略させていただきます。ご了承ください。
-
-※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
-※システムの行き違いで重複で届いた場合はご容赦ください。
-🕐 運営：平日 10:00〜20:00`,
-    );
-  }
-
-  async notifyApproved(args: { influencerId: string; campaignTitle: string }): Promise<void> {
-    await this.pushText(
-      args.influencerId,
-      `🎉【当選おめでとうございます！】キャンペーンのご案内 🎉
-
-お世話になっております。
-「${args.campaignTitle}」の当選者に選出されました！👏✨
-
-ご応募誠にありがとうございました。現在、心を込めて商品の発送準備を進めております。📦
-発送が完了いたしましたら、改めてご案内メッセージをお送りいたします。
-
-※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
-※システムの行き違いで重複して届いた場合はご容赦ください。
-🕐 運営:平日 10:00〜20:00`,
-    );
-  }
-
-  async notifyShipped(args: {
-    influencerId: string;
-    campaignTitle: string;
-    trackingCarrier: string;
-    trackingNumber: string;
-  }): Promise<void> {
-    const lines = [
-      `**📦【発送完了】キャンペーン商品発送のお知らせ 📦**`,
-      ``,
-      `お世話になっております！`,
-      `お待ちかねの**「${args.campaignTitle}」**のキャンペーン商品が、本日無事に発送されました！🎉`,
-      ``,
-      `配送状況は下記の情報よりご確認いただけます。`,
-      ``,
-      `🚚 **配送情報のご案内**`,
-      `- **配送業者:** ${args.trackingCarrier}`,
-      `- **追跡番号:** [${args.trackingNumber}]`,
-      ``,
-      `💡 **お届け期間および追跡に関するご案内**`,
-      `- **日本国内から発送の場合:** 発送後、約2日でお届け`,
-      `- **韓国から発送の場合:** 発送後、約7日でお届け`,
-      `※韓国からの発送の場合、通関等の事情により、システムへの追跡情報の反映に遅れが生じる場合がございます。何卒ご理解いただけますようお願いいたします。`,
-      ``,
-      `✨ **お願い:商品が到着いたしましたら、必ず【応募履歴 - 受取確認】ボタンを押してください！**`,
-      ``,
-      `それでは、商品の到着まで今しばらくお待ちください。よろしくお願いいたします！`,
-      ``,
-      `※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。`,
-      `※システムの行き違いで重複して届いた場合はご容赦ください。`,
-      `🕐 運営:平日 10:00〜20:00`,
-    ];
-    await this.pushFlex(
-      args.influencerId,
-      `【発送完了】「${args.campaignTitle}」のキャンペーン商品を発送しました`,
-      buildBubble(lines),
-    );
-  }
-
-  async notifyShippedWithPlainText(args: {
-    influencerId: string;
-    campaignTitle: string;
-    trackingCarrier: string;
-    trackingNumber: string;
-  }): Promise<void> {
-    await this.pushText(
-      args.influencerId,
-      `📦【発送完了】キャンペーン商品発送のお知らせ 📦
-
-お世話になっております！
-お待ちかねの「${args.campaignTitle}」のキャンペーン商品が、本日無事に発送されました！🎉
-
-配送状況は下記の情報よりご確認いただけます。
-
-🚚 配送情報のご案内
-- 配送業者:${args.trackingCarrier}
-- 追跡番号:${args.trackingNumber}
-
-💡 お届け期間および追跡に関するご案内
-- 日本国内から発送の場合:発送後、約2日でお届け
-- 韓国から発送の場合:発送後、約7日でお届け
-※韓国からの発送の場合、通関等の事情により、システムへの追跡情報の反映に遅れが生じる場合がございます。何卒ご理解いただけますようお願いいたします。
-
-✨ お願い:商品が到着いたしましたら、必ず【応募履歴 - 受取確認】ボタンを押してください！
-
-それでは、商品の到着まで今しばらくお待ちください。よろしくお願いいたします！
-
-※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
-※システムの行き違いで重複して届いた場合はご容赦ください。
-🕐 運営:平日 10:00〜20:00`,
-    );
-  }
-
-  async notifyDelivered(args: {
-    influencerId: string;
-    applicationId: string;
-    campaignTitle: string;
-    postingPeriodDays: number;
-  }): Promise<void> {
-    await this.pushText(
-      args.influencerId,
-      `🎁【配達完了】商品は無事に届きましたでしょうか？ 🎁
-お世話になっております！
-ご応募いただいた「${args.campaignTitle}」のキャンペーン商品が、無事に配達完了となりました。
-
-商品がお手元に届きましたら、下記の内容を必ずご確認いただけますようお願いいたします。
-
-✨ 必須チェックリスト
-1️⃣ 受取確認: 商品が到着いたしましたら、必ず【応募履歴 - 受取確認】ボタンを押してください！
-2️⃣ レビュー投稿: 事前にご案内したガイドラインに沿って、素敵なご投稿をお願いいたします。📸
-3️⃣ URL提出: 投稿完了後、必ず【応募履歴 - 投稿URL提出】をお願いいたします。
-
-⚠️ 万が一、商品に問題がある場合
-配送中の破損や商品に不具合などがございましたら、ご投稿前にこのメッセージへお気軽にご連絡ください。迅速に対応させていただきます。
-
-商品がお気に召していただけますと幸いです。素敵なご投稿を心より楽しみにしております。よろしくお願いいたします！
-
-※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
-※システムの行き違いで重複して届いた場合はご容赦ください。
-🕐 運営:平日 10:00〜20:00`,
-    );
-  }
-
-  async notifyPostRejected(args: {
-    influencerId: string;
-    applicationId: string;
-    campaignTitle: string;
-    rejectReason: string;
-    resubmitDeadlineAt: Date;
-  }): Promise<void> {
-    const deadline = formatJstMonthDay(args.resubmitDeadlineAt);
-    const applicationUrl = this.applicationUrl(args.applicationId);
-    await this.pushText(
-      args.influencerId,
-      `⚠️【要確認】キャンペーン投稿 修正・再提出のお願い ⚠️
-
-お世話になっております。
-「${args.campaignTitle}」の投稿URLをご提出いただき、誠にありがとうございます。
-
-ご提出いただいたコンテンツを運営事務局にて確認いたしましたところ、誠に恐縮ではございますが、一部修正および補完が必要な箇所が見つかり、再審査処理とさせていただきました。
-
-大変お手数ですが、下記の修正理由をご確認いただき、ご対応いただけますようお願いいたします。🙏
-
-📝 修正ご依頼内容
-- 修正の理由: ${args.rejectReason}
-- 再提出期限: ${deadline} までに修正の上、URLの再提出をお願いいたします。
-
-🔗 確認および再提出はこちら: ${applicationUrl}
-
-※ガイドラインに沿って投稿を修正いただいた後、上記のリンクより必ずURLの再提出をお願いいたします。再提出が完了した時点で、最終検収へと進みます。
-
-お手数をおかけして大変申し訳ございませんが、ご協力のほどよろしくお願いいたします。
-
-※自動送信のため返信不要ですが、ご不明な点はお気軽にお問い合わせください。
-※システムの行き違いで重複届いた場合はご容赦ください。
-🕐 運営：平日 10:00〜20:00`,
-    );
-  }
-
-  async notifyPostRejectionReminder(args: {
-    influencerId: string;
-    applicationId: string;
-    campaignTitle: string;
-    rejectReason: string;
-    finalDeadlineAt: Date;
-  }): Promise<void> {
-    const deadline = formatJstMonthDay(args.finalDeadlineAt);
-    const applicationUrl = this.applicationUrl(args.applicationId);
-    await this.pushText(
-      args.influencerId,
-      `🚨【再送】キャンペーン投稿修正のお願い 🚨
-
-お世話になっております。
-「${args.campaignTitle}」の修正ご依頼につきまして、まだ再提出が確認できていないため再度ご連絡いたしました。
-
-🔹 修正の理由: ${args.rejectReason}
-🔹 最終期限: ${deadline} まで(期限厳守)
-
-🔗 修正・再提出はこちら: ${applicationUrl}
-
-※ 期限内に修正およびURLの再提出が確認できない場合、報酬の支給制限やペナルティが科される場合がございます。必ずご確認の上、ご対応をお願いいたします。
-
-※自動送信のため返信不要ですが、ご不明な点はお気軽にお問い合わせください。
-※システムの行き違いで重複届いた場合はご容赦ください。
-🕐 運営：平日 10:00〜20:00`,
-    );
-  }
-
-  async notifySettlementComplete(args: {
-    influencerId: string;
-    applicationId: string;
-    campaignTitle: string;
-    rewardJpy: number;
-  }): Promise<void> {
-    await this.pushText(
-      args.influencerId,
-      `💰【お振込完了】キャンペーン報酬支給のお知らせ 💰
-お世話になっております！
-ご参加いただいた「${args.campaignTitle}」のレポート確認が完了し、キャンペーン報酬のお振込手続きが完了いたしました。🎉
-
-お振込情報は下記をご確認ください。
-💳 お振込情報のご案内
-- 振込名義: 株）ジェイシュア
-- お振込金額: ${args.rewardJpy} 円
-
-💡 ご確認のお願い
-- 複数のキャンペーンに同時にご参加いただいた場合、個別ではなく合算された金額で一括してお振込いたします。
-- 本通知メッセージはシステム上、キャンペーンの案件ごとにそれぞれ自動送信されます。実際の口座には合算金額で入金されますので、あらかじめご了承いただけますようお願いいたします。
-
-この度は、弊社のキャンペーンのために素敵なご投稿をいただき誠にありがとうございました。またのご参加を心よりお待ちしております！
-
-※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
-※システムの行き違いで重複して届いた場合はご容赦ください。
-🕐 運営:平日 10:00〜20:00`,
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-// Flex builder helpers
-//
-// 텍스트 라인 배열을 받아 LINE Flex bubble JSON 으로 변환.
-// 라인 안의 `**...**` 부분은 bold span 으로 처리된다. 빈 문자열 라인은
-// 시각적 여백(filler box)으로 변환된다.
-// ──────────────────────────────────────────────────────────────────────────
-
-type FlexSpan = { type: "span"; text: string; weight?: "bold" };
-
-function formatJstMonthDay(d: Date): string {
-  const parts = new Intl.DateTimeFormat("ja-JP", {
-    timeZone: "Asia/Tokyo",
-    month: "numeric",
-    day: "numeric",
-  }).formatToParts(d);
-  const month = parts.find((p) => p.type === "month")?.value ?? "";
-  const day = parts.find((p) => p.type === "day")?.value ?? "";
-  return `${month}月${day}日`;
-}
-
-function parseBoldSpans(line: string): FlexSpan[] {
-  const parts = line.split(/(\*\*[^*]+\*\*)/g).filter((part) => part.length > 0);
-  return parts.map((part) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return { type: "span", text: part.slice(2, -2), weight: "bold" };
-    }
-    return { type: "span", text: part };
-  });
-}
-
-function buildBubble(lines: string[]): unknown {
-  const contents = lines.map((line) => {
-    if (line === "") {
-      return { type: "box", layout: "vertical", contents: [], height: "8px" };
-    }
-    return {
-      type: "text",
-      wrap: true,
-      size: "sm",
-      contents: parseBoldSpans(line),
-    };
-  });
-  return {
-    type: "bubble",
-    body: {
-      type: "box",
-      layout: "vertical",
-      spacing: "sm",
-      contents,
-    },
-  };
 }

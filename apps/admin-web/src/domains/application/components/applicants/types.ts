@@ -14,6 +14,8 @@ export type ApplicantStatus =
   | "SHIPPING"
   | "DELIVERED"
   | "POST_DUE"
+  | "AWAITING_ORDER"
+  | "AWAITING_REVIEW"
   | "REJECTED";
 
 export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
@@ -66,6 +68,8 @@ export const APPLICANT_STATUS_LABEL: Record<ApplicantStatus, string> = {
   SHIPPING: "배송중",
   DELIVERED: "수령 확인 대기",
   POST_DUE: "투고 대기",
+  AWAITING_ORDER: "주문 대기",
+  AWAITING_REVIEW: "리뷰 대기",
   REJECTED: "반려",
 };
 
@@ -85,5 +89,7 @@ export const APPLICANT_STATUS_OPTIONS: { key: ApplicantStatus; label: string }[]
   { key: "SHIPPING", label: APPLICANT_STATUS_LABEL.SHIPPING },
   { key: "DELIVERED", label: APPLICANT_STATUS_LABEL.DELIVERED },
   { key: "POST_DUE", label: APPLICANT_STATUS_LABEL.POST_DUE },
+  { key: "AWAITING_ORDER", label: APPLICANT_STATUS_LABEL.AWAITING_ORDER },
+  { key: "AWAITING_REVIEW", label: APPLICANT_STATUS_LABEL.AWAITING_REVIEW },
   { key: "REJECTED", label: APPLICANT_STATUS_LABEL.REJECTED },
 ];

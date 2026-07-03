@@ -55,6 +55,14 @@ function deriveStatus(application: AdminApplication): ApplicantStatus | null {
   if (application.hasSubmittedPost) return null;
   if (application.status === "APPLIED") return "APPLIED";
   if (application.status === "REJECTED") return "REJECTED";
+
+  const isFakePurchase = application.campaign.category === "FAKE_PURCHASE";
+  if (isFakePurchase) {
+    if (application.status === "APPROVED") return "AWAITING_ORDER";
+    if (application.status === "ORDER_SUBMITTED") return "AWAITING_REVIEW";
+    return null;
+  }
+
   if (application.receivedAt) return "POST_DUE";
   if (application.status === "DELIVERED") return "DELIVERED";
   if (application.status === "SHIPPED") return "SHIPPING";

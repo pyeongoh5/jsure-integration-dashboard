@@ -82,9 +82,20 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
       );
     case "DELIVERED":
     case "POST_DUE":
+    case "AWAITING_REVIEW":
       // 인플루언서 측 작업 대기 단계 — 운영자가 할 액션 없음.
       return (
         <div className={styles.actions}>
+          {detailButton}
+          {memoButton}
+        </div>
+      );
+    case "AWAITING_ORDER":
+      return (
+        <div className={styles.actions}>
+          <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(applicant)}>
+            되돌리기
+          </Button>
           {detailButton}
           {memoButton}
         </div>
@@ -123,6 +134,8 @@ const STATUS_BADGE_CLASS: Record<ApplicantStatus, string | undefined> = {
   SHIPPING: styles.stagePillShipping,
   DELIVERED: styles.stagePillDelivered,
   POST_DUE: styles.stagePillPostDue,
+  AWAITING_ORDER: styles.stagePillPre,
+  AWAITING_REVIEW: styles.stagePillReviewDue,
   REJECTED: styles.statusRejected,
 };
 

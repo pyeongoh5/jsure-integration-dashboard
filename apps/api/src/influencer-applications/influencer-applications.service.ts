@@ -26,6 +26,9 @@ import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
 /** 응모 후 인플루언서가 직접 취소할 수 있는 기간(2일, 밀리초). */
 const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
 
+const SNS_SUB_TYPES: CampaignSubType[] = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"];
+const FAKE_PURCHASE_SUB_TYPES: CampaignSubType[] = ["QOO10", "LIPS", "ATCOSME"];
+
 type PostRow = {
   id: string;
   subType: CampaignSubType;
@@ -283,6 +286,18 @@ export class InfluencerApplicationsService {
       });
     }
 
+    const allowedSubTypes =
+      campaign.category === "SNS" ? SNS_SUB_TYPES : FAKE_PURCHASE_SUB_TYPES;
+    const invalidSubTypes = subTypes.filter(
+      (subType) => !allowedSubTypes.includes(subType),
+    );
+    if (invalidSubTypes.length > 0) {
+      throw new BadRequestException({
+        code: "SUBTYPE_CATEGORY_MISMATCH",
+        message: "選択したSNSはこのキャンペーンで募集していません",
+      });
+    }
+
     // 제외 캠페인에 "같은 SNS"로 응모한 이력이 있으면 그 SNS 응모만 차단 (CANCELLED 제외)
     const excludedCampaignIds = campaign.exclusionsAsExcluding.map(
       (exclusion) => exclusion.excludedCampaignId,
@@ -303,37 +318,42 @@ export class InfluencerApplicationsService {
       }
     }
 
-    const influencerSns = await this.prisma.influencerSnsAccount.findMany({
-      where: { influencerId },
-    });
-    const minFollowersBySubType = new Map(
-      campaign.recruits.map((r) => [r.subType, r.minFollowers]),
-    );
-    const followerByMySubType = new Map(
-      influencerSns.map((s) => [s.snsType as CampaignSubType, s.followerCount]),
-    );
-
-    const qualifyingSubTypes = Array.from(minFollowersBySubType.entries())
-      .filter(([subType, min]) => {
-        const f = followerByMySubType.get(subType);
-        return f !== undefined && f >= min;
-      })
-      .map(([subType]) => subType);
-
-    if (qualifyingSubTypes.length === 0) {
-      throw new BadRequestException({
-        code: "SNS_MISMATCH",
-        message: "対象SNSの応募条件を満たすアカウントがありません",
+    if (campaign.category === "SNS") {
+      const influencerSns = await this.prisma.influencerSnsAccount.findMany({
+        where: { influencerId },
       });
-    }
+      const minFollowersBySubType = new Map(
+        campaign.recruits.map((recruit) => [recruit.subType, recruit.minFollowers]),
+      );
+      const followerByMySubType = new Map(
+        influencerSns.map((account) => [
+          account.snsType as CampaignSubType,
+          account.followerCount,
+        ]),
+      );
 
-    const qualifyingSet = new Set(qualifyingSubTypes);
-    const invalid = subTypes.filter((subType) => !qualifyingSet.has(subType));
-    if (invalid.length > 0) {
-      throw new BadRequestException({
-        code: "SNS_NOT_QUALIFIED",
-        message: "応募条件を満たさないSNSが含まれています",
-      });
+      const qualifyingSubTypes = Array.from(minFollowersBySubType.entries())
+        .filter(([subType, min]) => {
+          const followerCount = followerByMySubType.get(subType);
+          return followerCount !== undefined && followerCount >= min;
+        })
+        .map(([subType]) => subType);
+
+      if (qualifyingSubTypes.length === 0) {
+        throw new BadRequestException({
+          code: "SNS_MISMATCH",
+          message: "対象SNSの応募条件を満たすアカウントがありません",
+        });
+      }
+
+      const qualifyingSet = new Set(qualifyingSubTypes);
+      const invalid = subTypes.filter((subType) => !qualifyingSet.has(subType));
+      if (invalid.length > 0) {
+        throw new BadRequestException({
+          code: "SNS_NOT_QUALIFIED",
+          message: "応募条件を満たさないSNSが含まれています",
+        });
+      }
     }
 
     // INSTAGRAM 응모는 캠페인이 허용한 instagramPostTypes 중 정확히 1개를 선택해야 한다.
@@ -414,8 +434,12 @@ export class InfluencerApplicationsService {
       where: { id: { in: results.map((r) => r.id) } },
       include: DISPATCH_APPLICATION_INCLUDE,
     });
+    const triggerKey =
+      campaign.category === "FAKE_PURCHASE"
+        ? "FAKE_PURCHASE_APPLICATION_APPLIED"
+        : "SNS_APPLICATION_APPLIED";
     for (const application of createdApplications) {
-      void this.dispatcher.dispatch("SNS_APPLICATION_APPLIED", { application });
+      void this.dispatcher.dispatch(triggerKey, { application });
     }
     return results[0]!;
   }
@@ -451,7 +475,13 @@ export class InfluencerApplicationsService {
     influencerId: string,
     applicationId: string,
   ): Promise<InfluencerApplication> {
-    const app = await this.assertOwned(influencerId, applicationId);
+    const app = await this.assertOwnedWithCampaign(influencerId, applicationId);
+    if (app.campaign.category !== "SNS") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "SNSキャンペーンのみ対応しています",
+      });
+    }
     if (app.status !== "SHIPPED" && app.status !== "DELIVERED") {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
@@ -478,7 +508,13 @@ export class InfluencerApplicationsService {
     subType: CampaignSubType,
     url: string,
   ): Promise<InfluencerApplication> {
-    const app = await this.assertOwned(influencerId, applicationId);
+    const app = await this.assertOwnedWithCampaign(influencerId, applicationId);
+    if (app.campaign.category !== "SNS") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "SNSキャンペーンのみ対応しています",
+      });
+    }
     if (!app.receivedAt) {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
@@ -540,7 +576,13 @@ export class InfluencerApplicationsService {
       }[];
     },
   ): Promise<InfluencerApplication> {
-    await this.assertOwned(influencerId, applicationId);
+    const app = await this.assertOwnedWithCampaign(influencerId, applicationId);
+    if (app.campaign.category !== "SNS") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "SNSキャンペーンのみ対応しています",
+      });
+    }
     const post = await this.prisma.submittedPost.findUnique({
       where: { applicationId_subType: { applicationId, subType } },
     });
@@ -789,5 +831,18 @@ export class InfluencerApplicationsService {
     if (!app) throw new NotFoundException("Application not found");
     if (app.influencerId !== influencerId) throw new ForbiddenException();
     return app;
+  }
+
+  private async assertOwnedWithCampaign(
+    influencerId: string,
+    applicationId: string,
+  ) {
+    const application = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      include: { campaign: { select: { category: true } } },
+    });
+    if (!application) throw new NotFoundException("Application not found");
+    if (application.influencerId !== influencerId) throw new ForbiddenException();
+    return application;
   }
 }

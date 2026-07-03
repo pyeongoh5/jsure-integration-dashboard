@@ -232,6 +232,31 @@ export class UploadsService {
   }
 
   /**
+   * 인플루언서 첨부 업로드 검증 — R2 HEAD 로 실제 업로드 여부 및 크기 확인.
+   */
+  async verifyAttachmentUploads(
+    attachments: { objectKey: string; sizeBytes: number }[],
+    requiredPrefix: string,
+  ): Promise<void> {
+    for (const attachment of attachments) {
+      if (!attachment.objectKey.startsWith(requiredPrefix)) {
+        throw new BadRequestException("잘못된 객체 경로입니다");
+      }
+      const head = await this.r2
+        .headObject(attachment.objectKey)
+        .catch(() => null);
+      if (!head) {
+        throw new BadRequestException(
+          `업로드 객체를 찾을 수 없습니다: ${attachment.objectKey}`,
+        );
+      }
+      if (head.contentLength !== null && head.contentLength > UPLOAD_MAX_BYTES) {
+        throw new BadRequestException("파일 크기 한도를 초과했습니다");
+      }
+    }
+  }
+
+  /**
    * admin 조회용 — DB에 저장된 attachment를 presigned GET URL과 함께 반환.
    */
   async listAttachmentsForPost(postId: string): Promise<SharedAttachment[]> {

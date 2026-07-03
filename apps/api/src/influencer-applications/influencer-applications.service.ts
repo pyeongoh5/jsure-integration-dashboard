@@ -571,6 +571,91 @@ export class InfluencerApplicationsService {
     return this.getForInfluencer(influencerId, applicationId);
   }
 
+  async submitOrder(
+    influencerId: string,
+    applicationId: string,
+    orderNumber: string,
+    receipts: {
+      objectKey: string;
+      contentType: "image/png" | "image/jpeg" | "image/webp";
+      sizeBytes: number;
+    }[],
+  ): Promise<InfluencerApplication> {
+    const application = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      include: { campaign: { select: { category: true } } },
+    });
+    if (!application) throw new NotFoundException("Application not found");
+    if (application.influencerId !== influencerId) {
+      throw new ForbiddenException();
+    }
+    if (application.campaign.category !== "FAKE_PURCHASE") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "買取レビューキャンペーンのみ対応しています",
+      });
+    }
+    if (
+      application.status !== "APPROVED" &&
+      application.status !== "ORDER_SUBMITTED"
+    ) {
+      throw new BadRequestException({
+        code: "INVALID_TRANSITION",
+        message: "この状態では注文情報を提出できません",
+      });
+    }
+    const trimmedOrderNumber = orderNumber.trim();
+    if (trimmedOrderNumber.length === 0) {
+      throw new BadRequestException({
+        code: "ORDER_NUMBER_REQUIRED",
+        message: "注文番号を入力してください",
+      });
+    }
+    if (receipts.length < 1) {
+      throw new BadRequestException({
+        code: "RECEIPT_REQUIRED",
+        message: "注文明細のスクリーンショットを1枚以上ご提出ください",
+      });
+    }
+
+    await this.uploads.verifyAttachmentUploads(receipts, "attachments/");
+
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await tx.attachment.deleteMany({
+        where: { applicationId, kind: "ORDER_RECEIPT" },
+      });
+      await tx.attachment.createMany({
+        data: receipts.map((receipt) => ({
+          kind: "ORDER_RECEIPT" as const,
+          applicationId,
+          postId: null,
+          objectKey: receipt.objectKey,
+          contentType: receipt.contentType,
+          sizeBytes: receipt.sizeBytes,
+        })),
+        skipDuplicates: true,
+      });
+      await tx.campaignApplication.update({
+        where: { id: applicationId },
+        data: {
+          orderNumber: trimmedOrderNumber,
+          orderSubmittedAt: now,
+          status: "ORDER_SUBMITTED",
+        },
+      });
+    });
+
+    const refreshed = await this.prisma.campaignApplication.findUniqueOrThrow({
+      where: { id: applicationId },
+      include: DISPATCH_APPLICATION_INCLUDE,
+    });
+    void this.dispatcher.dispatch("FAKE_PURCHASE_ORDER_SUBMITTED", {
+      application: refreshed,
+    });
+    return this.getForInfluencer(influencerId, applicationId);
+  }
+
   private async assertOwned(influencerId: string, applicationId: string) {
     const app = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },

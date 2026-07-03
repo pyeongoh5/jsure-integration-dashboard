@@ -11,20 +11,37 @@ import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 import styles from "./Apply.module.css";
 
-const CONFIRM_KEYS = [
+const CONFIRM_KEYS_SNS = [
   "PR_LABEL",
   "DEADLINE",
   "INSIGHTS",
   "YAKKIHO",
   "GUIDELINE",
 ] as const;
-const CONFIRM_LABELS: Record<(typeof CONFIRM_KEYS)[number], string> = {
+const CONFIRM_KEYS_FAKE_PURCHASE = [
+  "PR_LABEL",
+  "DEADLINE",
+  "YAKKIHO",
+  "GUIDELINE",
+] as const;
+type ConfirmKey = (typeof CONFIRM_KEYS_SNS)[number];
+const CONFIRM_LABELS: Record<ConfirmKey, string> = {
   PR_LABEL: t("pages.apply.confirmPr"),
   DEADLINE: t("pages.apply.confirmDeadline"),
   INSIGHTS: t("pages.apply.confirmInsights"),
   YAKKIHO: t("pages.apply.confirmYakkiho"),
   GUIDELINE: t("pages.apply.confirmGuideline"),
 };
+
+const FAKE_PURCHASE_SUB_TYPES: readonly CampaignSubType[] = [
+  "QOO10",
+  "LIPS",
+  "ATCOSME",
+];
+
+function isFakePurchaseSubType(subType: CampaignSubType): boolean {
+  return FAKE_PURCHASE_SUB_TYPES.includes(subType);
+}
 
 const SNS_LABEL: Record<CampaignSubType, string> = {
   INSTAGRAM: "Instagram",
@@ -64,8 +81,16 @@ export function Apply() {
   const campaign = useCampaign(id);
   const me = useQuery({ queryKey: ["me"], queryFn: fetchMe });
 
+  const isFakePurchaseCampaign = campaign.data?.category === "FAKE_PURCHASE";
+  const activeConfirmKeys: readonly ConfirmKey[] = isFakePurchaseCampaign
+    ? CONFIRM_KEYS_FAKE_PURCHASE
+    : CONFIRM_KEYS_SNS;
+
   const qualifying = useMemo(() => {
     if (!campaign.data || !me.data) return [];
+    if (campaign.data.category === "FAKE_PURCHASE") {
+      return campaign.data.recruits.map((r) => r.subType);
+    }
     const followerByMySns = new Map(
       me.data.snsAccounts.map((a) => [a.snsType, a.followerCount]),
     );
@@ -79,7 +104,7 @@ export function Apply() {
       .map((r) => r.subType);
   }, [campaign.data, me.data]);
 
-  const allAgreed = CONFIRM_KEYS.every((k) => agreed.has(k));
+  const allAgreed = activeConfirmKeys.every((k) => agreed.has(k));
   const hasSelection = selectedSns.size > 0;
   const isClosed = Boolean(
     campaign.data &&
@@ -226,22 +251,29 @@ export function Apply() {
                             </span>
                           )}
                         </div>
-                        <div className={styles.snsCond}>
-                          {t("pages.apply.condPrefix")}{SNS_FOLLOWER_LABEL[r.subType]}{" "}
-                          {r.minFollowers > 0
-                            ? `${r.minFollowers.toLocaleString("ja-JP")}${t("pages.apply.followerMinSuffix")}`
-                            : t("pages.apply.noLimit")}
-                          {myFollowers !== undefined && (
-                            <>
-                              {t("pages.apply.currentPrefix")}
-                              {myFollowers.toLocaleString("ja-JP")}
-                              {t("pages.apply.currentSuffix")}
-                            </>
-                          )}
-                          {myFollowers === undefined && (
-                            <>{t("pages.apply.notRegistered")}</>
-                          )}
-                        </div>
+                        {isFakePurchaseSubType(r.subType) ? (
+                          <div className={styles.snsCond}>
+                            {t("campaign.detail.productPrice")}: ¥
+                            {(r.productPriceJpy ?? 0).toLocaleString("ja-JP")}
+                          </div>
+                        ) : (
+                          <div className={styles.snsCond}>
+                            {t("pages.apply.condPrefix")}{SNS_FOLLOWER_LABEL[r.subType]}{" "}
+                            {r.minFollowers > 0
+                              ? `${r.minFollowers.toLocaleString("ja-JP")}${t("pages.apply.followerMinSuffix")}`
+                              : t("pages.apply.noLimit")}
+                            {myFollowers !== undefined && (
+                              <>
+                                {t("pages.apply.currentPrefix")}
+                                {myFollowers.toLocaleString("ja-JP")}
+                                {t("pages.apply.currentSuffix")}
+                              </>
+                            )}
+                            {myFollowers === undefined && (
+                              <>{t("pages.apply.notRegistered")}</>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </label>
                   </li>
@@ -340,7 +372,7 @@ export function Apply() {
 
         <section className={styles.sec}>
           <h3>{t("pages.apply.confirmSectionTitle")}</h3>
-          {CONFIRM_KEYS.map((k) => (
+          {activeConfirmKeys.map((k) => (
             <label key={k} className={styles.chk}>
               <input
                 type="checkbox"

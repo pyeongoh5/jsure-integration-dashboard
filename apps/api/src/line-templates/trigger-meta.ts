@@ -12,7 +12,7 @@ import type {
 export type ApplicationWithRels = CampaignApplication & {
   campaign: Pick<
     Campaign,
-    "id" | "title" | "postingPeriodDays" | "rewardJpy" | "productSummary"
+    "id" | "title" | "postingPeriodDays" | "rewardJpy" | "productSummary" | "category"
   >;
   influencer: Pick<Influencer, "id" | "name" | "lineUserId">;
 };
@@ -52,6 +52,7 @@ export const DISPATCH_APPLICATION_INCLUDE = {
       postingPeriodDays: true,
       rewardJpy: true,
       productSummary: true,
+      category: true,
     },
   },
   influencer: {

@@ -1,8 +1,9 @@
 import { useNavigate, useParams } from "react-router-dom";
-import type {
-  InstagramPostType,
-  CampaignSubType,
-  CampaignRecruit,
+import {
+  SUB_TYPE_LABEL,
+  type InstagramPostType,
+  type CampaignSubType,
+  type CampaignRecruit,
 } from "@jsure/shared";
 import { useCampaign, formatYen, formatDate } from "@/domains/campaign";
 import { PageHeader } from "../../components/composites/PageHeader";
@@ -30,15 +31,21 @@ const SNS_ICON: Record<CampaignSubType, string> = {
   ATCOSME: "fa-solid fa-bag-shopping",
 };
 
-const SNS_LABEL: Record<CampaignSubType, string> = {
-  INSTAGRAM: "Instagram",
-  TIKTOK: "TikTok",
-  YOUTUBE: "YouTube",
-  X: "X",
-  QOO10: "Qoo10",
-  LIPS: "LIPS",
-  ATCOSME: "@cosme",
-};
+const SNS_LABEL = SUB_TYPE_LABEL;
+
+const FAKE_PURCHASE_SUB_TYPES: readonly CampaignSubType[] = [
+  "QOO10",
+  "LIPS",
+  "ATCOSME",
+];
+
+function isFakePurchaseSubType(subType: CampaignSubType): boolean {
+  return FAKE_PURCHASE_SUB_TYPES.includes(subType);
+}
+
+function formatJpy(value: number): string {
+  return `¥${value.toLocaleString("ja-JP")}`;
+}
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
   FEED: t("pages.campaignDetail.instagramFeed"),
@@ -92,6 +99,40 @@ export function CampaignDetail() {
 
         <ul className={styles.sns}>
           {data.recruits.map((r: CampaignRecruit) => {
+            if (isFakePurchaseSubType(r.subType)) {
+              const productPrice = r.productPriceJpy ?? 0;
+              const expectedSettlement = data.rewardJpy + productPrice;
+              return (
+                <li
+                  key={r.subType}
+                  className={`${styles.snsRow} ${SNS_ROW_CLASS[r.subType] ?? ""}`}
+                >
+                  <i className={SNS_ICON[r.subType]} aria-hidden="true" />
+                  <span className={styles.snsName}>{SNS_LABEL[r.subType]}</span>
+                  <span className={styles.snsCount}>
+                    {t("pages.campaignDetail.recruitLabel")} {r.recruitCount}
+                    {t("pages.campaignDetail.recruitCountSuffix")}
+                  </span>
+                  <span className={styles.snsCond}>
+                    {t("campaign.detail.productPrice")}: {formatJpy(productPrice)}
+                  </span>
+                  {r.productUrl && (
+                    <a
+                      href={r.productUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.link}
+                    >
+                      {t("campaign.detail.productUrl")}
+                    </a>
+                  )}
+                  <span className={styles.snsCond}>
+                    {t("campaign.detail.expectedSettlement")}:{" "}
+                    {formatJpy(expectedSettlement)}
+                  </span>
+                </li>
+              );
+            }
             const instagramTypes =
               r.subType === "INSTAGRAM" && r.instagramPostTypes.length > 0
                 ? r.instagramPostTypes

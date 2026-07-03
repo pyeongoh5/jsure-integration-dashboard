@@ -14,9 +14,11 @@ import {
   CampaignSubTypeSchema,
   CreateApplicationRequestSchema,
   SubmitInsightRequestSchema,
+  SubmitOrderRequestSchema,
   SubmitPostRequestSchema,
   type CreateApplicationRequest,
   type SubmitInsightRequest,
+  type SubmitOrderRequest,
   type SubmitPostRequest,
 } from "@jsure/shared";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
@@ -64,6 +66,17 @@ export class InfluencerApplicationsController {
     @Param("id") id: string,
   ) {
     return this.svc.cancel(req.user.id, id);
+  }
+
+  @Post(":id/order")
+  @HttpCode(200)
+  submitOrder(
+    @Request() req: { user: AuthenticatedInfluencer },
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(SubmitOrderRequestSchema))
+    dto: SubmitOrderRequest,
+  ) {
+    return this.svc.submitOrder(req.user.id, id, dto.orderNumber, dto.receipts);
   }
 
   @Post(":id/confirm-receipt")

@@ -32,7 +32,8 @@
 | 가구매 서브타입 | QOO10, LIPS, ATCOSME (@cosme) |
 | 서브타입별 설정 | `recruitCount`, `productPriceJpy`, `productUrl` (모두 필수) |
 | 팔로워 조건 | 가구매엔 없음 |
-| 관리자 검토 | 신청 승인/반려만. 주문/리뷰 제출은 자동 통과 |
+| 관리자 검토 | 신청 승인/반려 + 리뷰 제출 승인/반려. 주문 제출은 자동 통과 |
+| 리뷰 재제출 | 반려 시 인플루언서가 URL과 스크린샷 재제출 가능. 재제출 후 다시 관리자 승인 대기 |
 | 정산 | Settlement에 `rewardAmountJpy` + `productRefundJpy` 증빙 분리, `amountJpy` 는 합계 |
 | 주문 명세서 | 최소 1장, 재제출은 REVIEW_SUBMITTED 이전까지 허용 |
 | 리뷰 스크린샷 | 최소 2장, 리뷰 제출 이후 재제출 불가 |
@@ -120,6 +121,8 @@ enum LineTriggerKey {
   FAKE_PURCHASE_APPLICATION_REJECTED
   FAKE_PURCHASE_ORDER_SUBMITTED
   FAKE_PURCHASE_REVIEW_SUBMITTED
+  FAKE_PURCHASE_REVIEW_APPROVED
+  FAKE_PURCHASE_REVIEW_REJECTED
   FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER
   FAKE_PURCHASE_SETTLEMENT_COMPLETED
   FAKE_PURCHASE_CAMPAIGN_COMPLETED
@@ -282,21 +285,35 @@ model Settlement {
 
 ### 3-1. 가구매 상태 전이
 
-```
-APPLIED ─(admin.approve)→ APPROVED ─(inf.submitOrder: orderNumber + ORDER_RECEIPT ≥ 1)→ ORDER_SUBMITTED
-                                                                                              │
-                                              ┌───────────────────────────────────────────────┘
-                                              ↓ (inf.submitReview: url + REVIEW_SCREENSHOT ≥ 2)
-                                       REVIEW_SUBMITTED ← Settlement 자동 생성 (PENDING)
-                                              │
-                                              ↓ (admin.completeSettlements: 실제 이체)
-                                       COMPLETED
+Application 상태와 SubmittedPost 상태가 함께 흐름을 결정한다.
 
-  APPLIED ─(admin.reject)→ REJECTED
-  APPLIED ─(inf.cancel)→ CANCELLED
+```
+APPLIED ─(admin.approve)→ APPROVED ─(inf.submitOrder)→ ORDER_SUBMITTED
+                                                              │
+                                                              │ inf.submitReview
+                                                              │   → SubmittedPost (reviewStatus=PENDING)
+                                                              ↓
+                                                       REVIEW_SUBMITTED
+
+REVIEW_SUBMITTED
+   ├── admin.approveSubmittedPost (post PENDING → APPROVED)
+   │        → Settlement 자동 생성 (PENDING)
+   │        → admin.completeSettlements → application COMPLETED
+   │
+   ├── admin.rejectSubmittedPost (post PENDING → REJECTED, reason)
+   │        → 인플루언서에게 반려 통보
+   │        → inf.submitReview 재호출 (post REJECTED → PENDING, url/screenshots 갱신)
+   │
+   └── (반복)
+
+APPLIED ─(admin.reject)→ REJECTED
+APPLIED ─(inf.cancel)→ CANCELLED
 ```
 
-`undo` 액션은 APPROVED/REJECTED → APPLIED 만 허용 (SNS 와 동일).
+**핵심 원칙**:
+- Application.status 는 리뷰 검토 사이클 동안 `REVIEW_SUBMITTED` 로 고정. Post 의 `reviewStatus` 가 서브 스테이트 (PENDING / APPROVED / REJECTED)
+- `undo` 액션 (application 승인/반려 취소): APPROVED/REJECTED → APPLIED 만 허용 (SNS 와 동일)
+- 게시물 검토 되돌리기(`undoSubmittedPostReview`): 기존 SNS 로직 재사용 (Settlement 미완료 상태에서만 PENDING 으로 회복)
 
 ### 3-2. 신규 서비스 액션
 
@@ -328,17 +345,25 @@ async submitReview(
   screenshotObjectKeys: { objectKey: string; contentType: string; sizeBytes: number }[],
 ): Promise<InfluencerApplication>
 ```
-- 소유권 / 카테고리 / 상태 (`ORDER_SUBMITTED` 만) 검증
+- 소유권 / 카테고리 검증
+- 상태 검증: 다음 중 하나만 허용
+  - `ORDER_SUBMITTED` (첫 제출)
+  - `REVIEW_SUBMITTED` 이면서 관련 `SubmittedPost.reviewStatus === REJECTED` (재제출)
+- 상태 잠금: `REVIEW_SUBMITTED` 이면서 post `reviewStatus === PENDING` 또는 `APPROVED` 이면 400 반환
 - 입력 검증: `reviewUrl.trim().length > 0`, `screenshotObjectKeys.length >= 2`
 - 트랜잭션:
-  1. `SubmittedPost` create — `applicationId`, `subType = application.subType`, `url = reviewUrl`, `reviewStatus = APPROVED` (자동 승인)
-  2. `Attachment[]` create — 각 스크린샷을 `kind=REVIEW_SCREENSHOT, postId, applicationId`
-  3. `CampaignApplication` 업데이트: `reviewSubmittedAt = new Date()`, `status = REVIEW_SUBMITTED`
-  4. `ensureSettlementForPost(post)` — Settlement PENDING 생성
+  1. 기존 `SubmittedPost` 존재 여부 확인 (application 당 최대 1개)
+     - 없으면 새 `SubmittedPost` create — `applicationId`, `subType = application.subType`, `url = reviewUrl`, `reviewStatus = PENDING`
+     - 있으면 (재제출) update — `url = reviewUrl`, `reviewStatus = PENDING`, `reviewedAt = null`, `reviewedById = null`
+  2. 재제출 시 기존 `Attachment (kind=REVIEW_SCREENSHOT, postId)` 전체 삭제
+  3. 새 `Attachment[]` create — `kind=REVIEW_SCREENSHOT, postId, applicationId`
+  4. `CampaignApplication` 업데이트: `reviewSubmittedAt = new Date()`, `status = REVIEW_SUBMITTED`
 - 발송: `dispatcher.dispatch("FAKE_PURCHASE_REVIEW_SUBMITTED", { application, post })`
-- **재제출 불가** (정산 이슈)
+- **Settlement 자동 생성 없음** (관리자 승인 시점으로 이동)
 
 ### 3-3. `ensureSettlementForPost` 확장
+
+`submitReview` 대신 `approveSubmittedPost` 시점에 호출됨 (SNS 와 동일 트리거).
 
 ```ts
 // application 은 SubmittedPost.application (campaign include)
@@ -374,17 +399,24 @@ if (application.campaign.category === "FAKE_PURCHASE") {
 | status = APPLIED | `APPLIED` |
 | status = APPROVED (가구매) | `AWAITING_ORDER` |
 | status = ORDER_SUBMITTED | `AWAITING_REVIEW` |
-| status = REVIEW_SUBMITTED + Settlement PENDING | `REVIEWING` |
-| status = REVIEW_SUBMITTED + Settlement COMPLETED | `SETTLED` |
+| status = REVIEW_SUBMITTED + post.reviewStatus = PENDING | `REVIEW_PENDING` (관리자 심사중) |
+| status = REVIEW_SUBMITTED + post.reviewStatus = REJECTED | `REVIEW_REJECTED` (재제출 필요) |
+| status = REVIEW_SUBMITTED + post.reviewStatus = APPROVED + Settlement PENDING | `REVIEWING` (정산 대기) |
+| status = REVIEW_SUBMITTED + post.reviewStatus = APPROVED + Settlement COMPLETED | `SETTLED` |
 | status = COMPLETED | `SETTLED` |
 | REJECTED / CANCELLED | 동일 |
 
-기존 SNS stage 그대로 유지. 신규 stage: `AWAITING_ORDER`, `AWAITING_REVIEW`.
+기존 SNS stage 그대로 유지. 신규 stage: `AWAITING_ORDER`, `AWAITING_REVIEW`, `REVIEW_PENDING`, `REVIEW_REJECTED`.
 
 ### 3-5. 관리자 액션 정책
 
 - `approve`, `reject`, `undo`, `completeSettlements`: 카테고리 무관 공통
-- `ship`, `deliver`, `approveSubmittedPost`, `rejectSubmittedPost`, `settleSubmittedPost`: 카테고리 = SNS 만 허용 (가드 검증)
+- `ship`, `deliver`: 카테고리 = SNS 만 허용
+- `approveSubmittedPost`, `rejectSubmittedPost`, `undoSubmittedPostReview`: **양 카테고리 공통**. 카테고리별 차이:
+  - SNS: 승인 후 `insightRequired` 에 따라 인사이트 대기 → Settlement 생성
+  - 가구매: 승인 즉시 Settlement 생성 (인사이트 없음)
+  - 반려 시 인플루언서에게 재제출 알림 (SNS: `SNS_POST_REJECTED` / 가구매: `FAKE_PURCHASE_REVIEW_REJECTED`)
+- `settleSubmittedPost`: SNS 만 (기존 로직 유지)
 
 ### 3-6. 인플루언서 액션 정책
 
@@ -430,7 +462,7 @@ SNS 카테고리:
 
 - **Applicants**: 카테고리 컬럼 + 필터 추가. 액션: 승인/반려 공통, ship/deliver 은 SNS 만
 - **응모자 상세**: 카테고리별 진행 데이터 표시 (가구매: 주문번호/명세서 썸네일/리뷰 URL/스크린샷 썸네일)
-- **Drafts (게시물 검토)**: 카테고리 = SNS 필터 고정 (가구매는 자동 승인이므로 검토 없음)
+- **Drafts (게시물 검토)**: SNS 게시물 + 가구매 리뷰 둘 다 노출. 카테고리 컬럼 + 필터 추가. 액션(승인/반려) 동일하게 작동
 - **Payouts (정산)**: 컬럼 추가 — `rewardAmountJpy`, `productRefundJpy`, `amountJpy(합계)`. 카테고리 필터
 
 ### 4-3. 인플루언서 앱 (client-web)
@@ -444,11 +476,15 @@ SNS 카테고리:
 | APPLIED | "심사 중" 안내 |
 | AWAITING_ORDER | 안내 + `submitOrder` 폼 (orderNumber input + 파일 업로드 ≥ 1) + 상품 URL 링크 |
 | AWAITING_REVIEW | 안내 + `submitReview` 폼 (URL input + 파일 업로드 ≥ 2) + D-day |
+| REVIEW_PENDING | "관리자 검토 중" 안내 + 제출한 URL/스크린샷 읽기전용 표시 |
+| REVIEW_REJECTED | "재제출 필요" 안내 + 반려 사유 표시 + `submitReview` 폼 (URL/스크린샷 새로 입력) |
 | REVIEWING | "정산 진행 중" |
 | SETTLED | "정산 완료" |
 | REJECTED / CANCELLED | 상태 표시 |
 
-`submitOrder` 는 ORDER_SUBMITTED 상태에서도 재제출 가능 (폼 노출). REVIEW_SUBMITTED 이후 잠금.
+`submitOrder` 는 ORDER_SUBMITTED 상태에서도 재제출 가능 (폼 노출). 리뷰 제출(REVIEW_SUBMITTED) 이후 잠금.
+
+`submitReview` 재제출 조건: `REVIEW_REJECTED` stage 에서만 폼 노출. `REVIEW_PENDING`/`REVIEWING`/`SETTLED` 에서는 읽기전용.
 
 ### 4-4. i18n (client-web)
 
@@ -468,6 +504,10 @@ SNS 카테고리:
 | 리뷰 URL 라벨 | `application.stage.awaitingReview.url.label` | レビューURL |
 | 리뷰 스크린샷 라벨 | `application.stage.awaitingReview.screenshots.label` | レビューのスクリーンショット (2枚以上) |
 | 마감 D-day 포맷 | `application.stage.awaitingReview.deadlineDays` | 投稿期限まであと{days}日 |
+| 리뷰 심사 중 안내 | `application.stage.reviewPending.description` | 提出いただいたレビューを審査中です |
+| 리뷰 반려 헤딩 | `application.stage.reviewRejected.heading` | レビューの再提出をお願いいたします |
+| 리뷰 반려 사유 라벨 | `application.stage.reviewRejected.reasonLabel` | 修正の理由 |
+| 리뷰 반려 재제출 안내 | `application.stage.reviewRejected.description` | ガイドラインに沿ってレビューを修正し、URLとスクリーンショットを再度ご提出ください |
 | 정산 진행 안내 | `application.stage.reviewing.description` | 精算処理中です |
 | 정산 완료 안내 | `application.stage.settled.description` | 精算が完了しました |
 | 상품 URL | `campaign.detail.productUrl` | 商品ページ |
@@ -505,15 +545,19 @@ body: { kind, applicationId, contentType, sizeBytes }
 | `FAKE_PURCHASE_APPLICATION_REJECTED` | `reject()` 성공 | 즉시 | disabled |
 | `FAKE_PURCHASE_ORDER_SUBMITTED` | `submitOrder()` 성공 | 즉시 | disabled |
 | `FAKE_PURCHASE_REVIEW_SUBMITTED` | `submitReview()` 성공 | 즉시 | disabled |
+| `FAKE_PURCHASE_REVIEW_APPROVED` | `approveSubmittedPost()` 카테고리=FAKE_PURCHASE 시 | 즉시 | disabled |
+| `FAKE_PURCHASE_REVIEW_REJECTED` | `rejectSubmittedPost()` 카테고리=FAKE_PURCHASE 시 | 즉시 | enabled + 초안 |
 | `FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER` | 마감 3/1일 전 크론 | 크론 09:00 JST | enabled + 초안 |
 | `FAKE_PURCHASE_SETTLEMENT_COMPLETED` | `completeSettlements()` 시 | 즉시 | enabled + 초안 |
 | `FAKE_PURCHASE_CAMPAIGN_COMPLETED` | (자동 종료 시) | 즉시 | disabled |
+
+트리거 총 **10개** (기존 8개 + 리뷰 승인/반려 2개).
 
 ### 5-2. 변수 태그
 
 트리거 편집 페이지 우측 태그 패널에 노출:
 
-**재사용 (SNS 공통)**: `influencerName`, `campaignTitle`, `campaignRewardJpy`, `campaignPostingPeriodDays`, `campaignProductSummary`, `remainingDays` (REVIEW_DEADLINE_REMINDER 전용)
+**재사용 (SNS 공통)**: `influencerName`, `campaignTitle`, `campaignRewardJpy`, `campaignPostingPeriodDays`, `campaignProductSummary`, `remainingDays` (REVIEW_DEADLINE_REMINDER 전용), `rejectReason` (REVIEW_REJECTED 전용)
 
 **신규 (가구매 전용)**:
 
@@ -536,7 +580,9 @@ body: { kind, applicationId, contentType, sizeBytes }
 | APPLICATION_REJECTED | 재사용 기본 |
 | ORDER_SUBMITTED | 재사용 기본 + subType + orderNumber + orderSubmittedDate + reviewDeadline |
 | REVIEW_DEADLINE_REMINDER | 재사용 기본 + subType + reviewDeadline + remainingDays |
-| REVIEW_SUBMITTED | 재사용 기본 + subType + reviewUrl + totalSettlementJpy |
+| REVIEW_SUBMITTED | 재사용 기본 + subType + reviewUrl |
+| REVIEW_APPROVED | 재사용 기본 + subType + reviewUrl + totalSettlementJpy |
+| REVIEW_REJECTED | 재사용 기본 + subType + reviewUrl + rejectReason |
 | SETTLEMENT_COMPLETED | 재사용 기본 + subType + totalSettlementJpy |
 | CAMPAIGN_COMPLETED | 재사용 기본 |
 
@@ -548,9 +594,9 @@ recruit 정보 접근을 위해 컨텍스트에 `recruit?: CampaignRecruit | nul
 
 ### 5-5. Seed
 
-8개 트리거 × 3 subType (QOO10, LIPS, ATCOSME) = **24 row** 추가.
-- REVIEW_DEADLINE_REMINDER, APPLICATION_APPLIED, APPLICATION_APPROVED, SETTLEMENT_COMPLETED: `enabled=true` + 일본어 초안 body
-- 나머지 4개: `enabled=false, body=""`
+10개 트리거 × 3 subType (QOO10, LIPS, ATCOSME) = **30 row** 추가.
+- REVIEW_DEADLINE_REMINDER, APPLICATION_APPLIED, APPLICATION_APPROVED, REVIEW_REJECTED, SETTLEMENT_COMPLETED: `enabled=true` + 일본어 초안 body
+- 나머지 5개: `enabled=false, body=""`
 
 기존 30개 SNS row 는 `update: {}` 로 보존.
 

@@ -98,6 +98,18 @@ export async function submitOrder(
   return InfluencerApplicationSchema.parse(res.data);
 }
 
+export async function submitReview(
+  applicationId: string,
+  reviewUrl: string,
+  screenshots: AttachmentUploadInput[],
+): Promise<InfluencerApplication> {
+  const res = await api.post(
+    `/influencer/applications/${applicationId}/review`,
+    { reviewUrl, screenshots },
+  );
+  return InfluencerApplicationSchema.parse(res.data);
+}
+
 export async function presignInsightUpload(input: {
   applicationId: string;
   subType: CampaignSubType;

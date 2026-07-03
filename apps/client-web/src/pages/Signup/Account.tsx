@@ -3,6 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui";
+import { t } from "@i18n";
 import { FormField } from "@/components/composites";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
@@ -12,7 +13,7 @@ const schema = z.object({
     .string()
     .regex(
       /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
-      "正しいメールアドレスを入力してください",
+      t("pages.signup.account.emailInvalid"),
     ),
 });
 type Values = z.infer<typeof schema>;
@@ -34,7 +35,7 @@ export function SignupAccount() {
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(next)}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>
-          メールアドレス
+          {t("pages.signup.account.heading")}
         </h2>
         <p
           style={{
@@ -45,9 +46,9 @@ export function SignupAccount() {
             lineHeight: 1.6,
           }}
         >
-          LINEでのご連絡が届かない場合に備えて、メールアドレスをご登録ください。
+          {t("pages.signup.account.hint")}
         </p>
-        <FormField name="email" label="メールアドレス">
+        <FormField name="email" label={t("pages.signup.account.emailLabel")}>
           {(field) => (
             <Input
               id={field.id}

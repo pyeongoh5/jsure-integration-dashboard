@@ -1,19 +1,20 @@
 import type { ApplicationDisplayStage } from "@jsure/shared";
+import { t } from "@i18n";
 
 export const STAGE_LABEL: Record<ApplicationDisplayStage, string> = {
-  APPLIED: "応募済",
-  APPROVED: "承認",
-  SHIPPED: "発送中",
-  AWAITING_RECEIPT: "受領確認待ち",
-  POSTING: "投稿期間",
-  POSTED: "投稿完了",
-  POST_REJECTED: "投稿を伴う",
-  INSIGHT_DUE: "インサイト提出",
-  REVIEWING: "検査中",
-  COMPLETED: "完了",
-  SETTLED: "支払完了",
-  REJECTED: "未選定",
-  CANCELLED: "キャンセル",
+  APPLIED: t("application.stageLabel.APPLIED"),
+  APPROVED: t("application.stageLabel.APPROVED"),
+  SHIPPED: t("application.stageLabel.SHIPPED"),
+  AWAITING_RECEIPT: t("application.stageLabel.AWAITING_RECEIPT"),
+  POSTING: t("application.stageLabel.POSTING"),
+  POSTED: t("application.stageLabel.POSTED"),
+  POST_REJECTED: t("application.stageLabel.POST_REJECTED"),
+  INSIGHT_DUE: t("application.stageLabel.INSIGHT_DUE"),
+  REVIEWING: t("application.stageLabel.REVIEWING"),
+  COMPLETED: t("application.stageLabel.COMPLETED"),
+  SETTLED: t("application.stageLabel.SETTLED"),
+  REJECTED: t("application.stageLabel.REJECTED"),
+  CANCELLED: t("application.stageLabel.CANCELLED"),
 };
 
 export const STAGE_VARIANT: Record<ApplicationDisplayStage, string> = {

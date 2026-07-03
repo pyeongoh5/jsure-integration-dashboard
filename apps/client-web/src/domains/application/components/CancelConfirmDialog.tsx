@@ -1,4 +1,5 @@
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
+import { t } from "@i18n";
 import styles from "./ReceiptConfirmDialog.module.css";
 
 interface Props {
@@ -17,16 +18,16 @@ export function CancelConfirmDialog({ submitting, onConfirm, onCancel }: Props) 
     >
       <div className={styles.panel}>
         <h2 id="ccd-title" className={styles.title}>
-          【ご注意】 応募の取り消し確認
+          {t("application.cancelConfirm.title")}
         </h2>
         <p className={styles.body}>
-          一度取り消しを行うと、元の状態に戻すことはできません。
-          また、本キャンペーンへの再応募も不可となります。
-          本当に取り消しますか？
+          {t("application.cancelConfirm.body")}
         </p>
         <div className={styles.actions}>
           <PrimaryButton onClick={onConfirm} disabled={submitting}>
-            {submitting ? "処理中…" : "はい"}
+            {submitting
+              ? t("application.cancelConfirm.submitting")
+              : t("application.cancelConfirm.confirm")}
           </PrimaryButton>
           <button
             type="button"
@@ -34,7 +35,7 @@ export function CancelConfirmDialog({ submitting, onConfirm, onCancel }: Props) 
             onClick={onCancel}
             disabled={submitting}
           >
-            いいえ
+            {t("application.cancelConfirm.cancel")}
           </button>
         </div>
       </div>

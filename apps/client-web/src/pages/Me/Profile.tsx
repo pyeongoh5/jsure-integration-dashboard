@@ -11,17 +11,18 @@ import { FormField } from "@/components/composites";
 import labeledInputStyles from "@/components/composites/LabeledInput.module.css";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
+import { t } from "@i18n";
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
 
 const schema = z.object({
-  name: z.string().refine((value) => value.trim().length > 0, "必須"),
-  nameKana: z.string().regex(KANA_RE, "カナで入力"),
+  name: z.string().refine((value) => value.trim().length > 0, t("pages.me.profile.required")),
+  nameKana: z.string().regex(KANA_RE, t("pages.me.profile.kanaError")),
   phone: z
     .string()
     .refine(
       (value) => /^\d{10,15}$|^[\d-]{10,20}$/.test(value),
-      "10~15桁",
+      t("pages.me.profile.phoneError"),
     ),
 });
 type Values = z.infer<typeof schema>;
@@ -68,9 +69,9 @@ export function MeProfile() {
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(save)}>
-        <PageHeader showBack title="プロフィール" />
+        <PageHeader showBack title={t("pages.me.profile.title")} />
         <div style={{ padding: 16 }}>
-          <FormField name="name" label="お名前">
+          <FormField name="name" label={t("pages.me.profile.nameLabel")}>
             {(field) => (
               <Input
                 id={field.id}
@@ -82,7 +83,7 @@ export function MeProfile() {
               />
             )}
           </FormField>
-          <FormField name="nameKana" label="お名前 (カナ)">
+          <FormField name="nameKana" label={t("pages.me.profile.nameKanaLabel")}>
             {(field) => (
               <Input
                 id={field.id}
@@ -94,7 +95,7 @@ export function MeProfile() {
               />
             )}
           </FormField>
-          <FormField name="phone" label="電話番号">
+          <FormField name="phone" label={t("pages.me.profile.phoneLabel")}>
             {(field) => (
               <Input
                 id={field.id}
@@ -110,7 +111,7 @@ export function MeProfile() {
           </FormField>
 
           <div className={labeledInputStyles.field}>
-            <span className={labeledInputStyles.label}>メールアドレス</span>
+            <span className={labeledInputStyles.label}>{t("pages.me.profile.emailLabel")}</span>
             <div
               className={labeledInputStyles.input}
               style={{
@@ -124,7 +125,7 @@ export function MeProfile() {
             </div>
           </div>
           <div className={labeledInputStyles.field}>
-            <span className={labeledInputStyles.label}>生年月日</span>
+            <span className={labeledInputStyles.label}>{t("pages.me.profile.birthDateLabel")}</span>
             <div
               className={labeledInputStyles.input}
               style={{
@@ -139,7 +140,7 @@ export function MeProfile() {
           </div>
 
           <PrimaryButton type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? "保存中…" : "保存"}
+            {mutation.isPending ? t("pages.me.profile.saving") : t("pages.me.profile.save")}
           </PrimaryButton>
         </div>
       </form>

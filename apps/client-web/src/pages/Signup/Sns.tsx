@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ENABLED_SNS_TYPES, type SnsType } from "@jsure/shared";
 import { SnsAccountCard } from "@/domains/auth";
+import { t } from "@i18n";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
@@ -30,7 +31,7 @@ const schema = z
     if (enabled.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "1つ以上のSNSアカウントを追加してください",
+        message: t("pages.signup.sns.atLeastOne"),
         path: ["instagram"],
       });
       return;
@@ -40,14 +41,14 @@ const schema = z
       if (fields.handle.trim().length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "ハンドルを入力してください",
+          message: t("pages.signup.sns.handleRequired"),
           path: [key, "handle"],
         });
       }
       if (!/^\d+$/.test(fields.followerCount)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "フォロワー数は数字のみ",
+          message: t("pages.signup.sns.followerCountInvalid"),
           path: [key, "followerCount"],
         });
       }
@@ -157,10 +158,10 @@ export function SignupSns() {
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(next)}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
-          SNSアカウント
+          {t("pages.signup.sns.heading")}
         </h2>
         <p style={{ color: "#4b5563", fontSize: 12, marginBottom: 12 }}>
-          登録するSNSを選択して情報を入力 (1つ以上必須)
+          {t("pages.signup.sns.hint")}
         </p>
         {SNS_TYPES.map((type) => {
           const fields = values?.[TYPE_TO_KEY[type]];

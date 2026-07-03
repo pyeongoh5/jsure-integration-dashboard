@@ -1,4 +1,5 @@
 import type { InfluencerApplication } from "@jsure/shared";
+import { t } from "@i18n";
 import { STAGE_PROGRESS, STAGE_TOTAL } from "../utils";
 import { StageBadge } from "./StageBadge";
 import styles from "./ApplicationCard.module.css";
@@ -11,11 +12,11 @@ interface Props {
 function nextAction(app: InfluencerApplication): string | null {
   switch (app.displayStage) {
     case "AWAITING_RECEIPT":
-      return "受領を確認";
+      return t("application.card.actionAwaitingReceipt");
     case "POSTING":
-      return "投稿URLを提出";
+      return t("application.card.actionPosting");
     case "INSIGHT_DUE":
-      return "インサイトを提出";
+      return t("application.card.actionInsightDue");
     default:
       return null;
   }
@@ -31,7 +32,7 @@ export function ApplicationCard({ app, onSelect }: Props) {
   const action = nextAction(app);
   const settled =
     app.displayStage === "SETTLED" && app.settlement?.completedAt
-      ? `¥${app.settlement.amountJpy.toLocaleString("ja-JP")} (${formatDate(app.settlement.completedAt)} 振込)`
+      ? `¥${app.settlement.amountJpy.toLocaleString("ja-JP")} (${formatDate(app.settlement.completedAt)} ${t("application.card.transferSuffix")})`
       : null;
   return (
     <button type="button" className={styles.card} onClick={onSelect}>
@@ -51,7 +52,11 @@ export function ApplicationCard({ app, onSelect }: Props) {
       <div className={styles.bar}>
         <div className={styles.barFill} style={{ width: `${ratio}%` }} />
       </div>
-      {settled && <div className={styles.settled}>支払完了 — {settled}</div>}
+      {settled && (
+        <div className={styles.settled}>
+          {t("application.stageLabel.SETTLED")} — {settled}
+        </div>
+      )}
       {action && <div className={styles.cta}>{action}</div>}
     </button>
   );

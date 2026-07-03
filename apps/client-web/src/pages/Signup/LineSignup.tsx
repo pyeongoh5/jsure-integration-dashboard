@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { setLineSignupTokenStorage } from "../../context/SignupContext";
+import { t } from "@i18n";
 
 export function LineSignup() {
   const [params] = useSearchParams();
@@ -28,7 +29,7 @@ export function LineSignup() {
 
   return (
     <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>
-      LINEアカウントを連携中…
+      {t("pages.signup.lineSignup.linking")}
     </div>
   );
 }

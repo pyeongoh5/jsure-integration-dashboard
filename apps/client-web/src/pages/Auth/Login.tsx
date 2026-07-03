@@ -1,4 +1,5 @@
 import { lineAuthorizeUrl } from "@/domains/auth";
+import { t } from "@i18n";
 
 export function Login() {
   return (
@@ -12,7 +13,7 @@ export function Login() {
           lineHeight: 1.6,
         }}
       >
-        LINEアカウントでログイン・新規登録できます。
+        {t("pages.auth.login.intro")}
       </p>
       <a
         href={lineAuthorizeUrl()}
@@ -32,7 +33,7 @@ export function Login() {
         }}
       >
         <i className="fa-brands fa-line" />
-        LINEで続行
+        {t("pages.auth.login.continueWithLine")}
       </a>
     </div>
   );

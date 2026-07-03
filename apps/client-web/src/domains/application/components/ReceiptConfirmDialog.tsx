@@ -1,4 +1,5 @@
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
+import { t } from "@i18n";
 import styles from "./ReceiptConfirmDialog.module.css";
 
 interface Props {
@@ -23,12 +24,14 @@ export function ReceiptConfirmDialog({
     >
       <div className={styles.panel}>
         <h2 id="rcd-title" className={styles.title}>
-          受領を確認しますか？
+          {t("application.receiptConfirm.title")}
         </h2>
         <p className={styles.body}>
-          受領を確認すると、ここから投稿期間（{postingPeriodDays}日）が始まります。
+          {t("application.receiptConfirm.bodyPrefix")}
+          {postingPeriodDays}
+          {t("application.receiptConfirm.bodySuffix")}
         </p>
-        <p className={styles.warn}>この操作は取り消せません。</p>
+        <p className={styles.warn}>{t("application.receiptConfirm.warn")}</p>
         <div className={styles.actions}>
           <button
             type="button"
@@ -36,10 +39,12 @@ export function ReceiptConfirmDialog({
             onClick={onCancel}
             disabled={submitting}
           >
-            キャンセル
+            {t("application.receiptConfirm.cancel")}
           </button>
           <PrimaryButton onClick={onConfirm} disabled={submitting}>
-            {submitting ? "送信中…" : "受領を確認する"}
+            {submitting
+              ? t("application.receiptConfirm.submitting")
+              : t("application.receiptConfirm.confirm")}
           </PrimaryButton>
         </div>
       </div>

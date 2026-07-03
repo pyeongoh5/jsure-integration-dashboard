@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { INFLUENCER_TERMS, ConsentItemSchema, type ConsentItem } from "@jsure/shared";
 import { TermsAccordion } from "@/domains/auth";
+import { t } from "@i18n";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
@@ -13,7 +14,7 @@ const schema = z.object({
   agreedItems: z
     .array(ConsentItemSchema)
     .refine((items) => ALL_KEYS.every((key) => items.includes(key)), {
-      message: "全ての利用規約に同意してください",
+      message: t("pages.signup.terms.agreeAllRequired"),
     }),
 });
 type Values = z.infer<typeof schema>;
@@ -58,7 +59,7 @@ export function SignupTerms() {
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(next)}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>
-          利用規約への同意
+          {t("pages.signup.terms.heading")}
         </h2>
         <TermsAccordion
           agreed={agreedSet}

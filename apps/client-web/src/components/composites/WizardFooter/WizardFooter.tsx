@@ -1,3 +1,4 @@
+import { t } from "@i18n";
 import styles from "./WizardFooter.module.css";
 
 interface Props {
@@ -12,8 +13,8 @@ interface Props {
 export function WizardFooter({
   onBack,
   onNext,
-  nextLabel = "次へ",
-  backLabel = "戻る",
+  nextLabel = t("components.wizardFooter.next"),
+  backLabel = t("components.wizardFooter.back"),
   disabled,
   loading,
 }: Props) {
@@ -36,7 +37,7 @@ export function WizardFooter({
           onClick={onNext}
           disabled={disabled || loading}
         >
-          {loading ? "送信中…" : nextLabel}
+          {loading ? t("components.wizardFooter.submitting") : nextLabel}
         </button>
       </div>
     </div>

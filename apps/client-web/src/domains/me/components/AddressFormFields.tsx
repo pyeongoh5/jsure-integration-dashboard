@@ -6,6 +6,7 @@ import { LabeledInput } from "@/components/composites/LabeledInput";
 import labeledInputStyles from "@/components/composites/LabeledInput.module.css";
 import { FormField } from "@/components/composites";
 import { lookupPostalCode } from "@/lib/zipcloud";
+import { t } from "@i18n";
 
 const POSTAL_RE = /^\d{3}-?\d{4}$/;
 
@@ -29,26 +30,33 @@ export type AddressErrors = Partial<
 
 export function validateAddress(values: AddressValues): AddressErrors {
   return {
-    postalCode: POSTAL_RE.test(values.postalCode) ? undefined : "郵便番号は7桁",
+    postalCode: POSTAL_RE.test(values.postalCode)
+      ? undefined
+      : t("me.address.postalCodeError"),
     prefecture: (JP_PREFECTURES as readonly string[]).includes(values.prefecture)
       ? undefined
-      : "都道府県を選択してください",
-    city: values.city.trim() ? undefined : "市区町村は必須",
-    addressLine1: values.addressLine1.trim() ? undefined : "番地は必須",
+      : t("me.address.prefectureError"),
+    city: values.city.trim() ? undefined : t("me.address.cityError"),
+    addressLine1: values.addressLine1.trim()
+      ? undefined
+      : t("me.address.addressLine1Error"),
   };
 }
 
 export const AddressZodSchema = z.object({
-  postalCode: z.string().regex(POSTAL_RE, "郵便番号は7桁"),
+  postalCode: z.string().regex(POSTAL_RE, t("me.address.postalCodeError")),
   prefecture: z.enum(JP_PREFECTURES, {
-    errorMap: () => ({ message: "都道府県を選択してください" }),
+    errorMap: () => ({ message: t("me.address.prefectureError") }),
   }),
   city: z
     .string()
-    .refine((value) => value.trim().length > 0, "市区町村は必須"),
+    .refine((value) => value.trim().length > 0, t("me.address.cityError")),
   addressLine1: z
     .string()
-    .refine((value) => value.trim().length > 0, "番地は必須"),
+    .refine(
+      (value) => value.trim().length > 0,
+      t("me.address.addressLine1Error"),
+    ),
   addressLine2: z.string(),
 });
 
@@ -133,12 +141,12 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
             color: "#111",
           }}
         >
-          住所
+          {t("me.address.heading")}
         </div>
       )}
 
       <LabeledInput
-        label="郵便番号"
+        label={t("me.address.postalCodeLabel")}
         value={typeof postal.field.value === "string" ? postal.field.value : ""}
         onChange={handlePostalChange}
         error={
@@ -148,12 +156,12 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
         }
         hint={
           lookupState === "loading"
-            ? "住所を検索中…"
+            ? t("me.address.lookupLoading")
             : lookupState === "notFound"
-              ? "該当する住所が見つかりませんでした"
+              ? t("me.address.lookupNotFound")
               : lookupState === "error"
-                ? "住所検索に失敗しました。手動で入力してください"
-                : "例: 150-0001 (入力すると自動補完されます)"
+                ? t("me.address.lookupError")
+                : t("me.address.postalHint")
         }
         placeholder="1500001"
         inputMode="numeric"
@@ -161,7 +169,7 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
       />
 
       <label className={labeledInputStyles.field}>
-        <span className={labeledInputStyles.label}>都道府県</span>
+        <span className={labeledInputStyles.label}>{t("me.address.prefectureLabel")}</span>
         <select
           className={[
             labeledInputStyles.input,
@@ -177,7 +185,7 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
           onChange={(event) => prefecture.field.onChange(event.target.value)}
           onBlur={prefecture.field.onBlur}
         >
-          <option value="">選択してください</option>
+          <option value="">{t("me.address.prefecturePlaceholder")}</option>
           {JP_PREFECTURES.map((name) => (
             <option key={name} value={name}>
               {name}
@@ -188,12 +196,12 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
           <span className={labeledInputStyles.errorText}>
             {typeof prefecture.fieldState.error?.message === "string"
               ? prefecture.fieldState.error.message
-              : "都道府県を選択してください"}
+              : t("me.address.prefectureError")}
           </span>
         )}
       </label>
 
-      <FormField name={fieldName("city")} label="市区町村">
+      <FormField name={fieldName("city")} label={t("me.address.cityLabel")}>
         {(field) => (
           <input
             id={field.id}
@@ -207,12 +215,12 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
             value={typeof field.value === "string" ? field.value : ""}
             onChange={(event) => field.onChange(event.target.value)}
             onBlur={field.onBlur}
-            placeholder="渋谷区神宮前"
+            placeholder={t("me.address.cityPlaceholder")}
             aria-invalid={field["aria-invalid"]}
           />
         )}
       </FormField>
-      <FormField name={fieldName("addressLine1")} label="番地">
+      <FormField name={fieldName("addressLine1")} label={t("me.address.addressLine1Label")}>
         {(field) => (
           <input
             id={field.id}
@@ -231,7 +239,7 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
           />
         )}
       </FormField>
-      <FormField name={fieldName("addressLine2")} label="建物名・部屋番号 (任意)">
+      <FormField name={fieldName("addressLine2")} label={t("me.address.addressLine2Label")}>
         {(field) => (
           <input
             id={field.id}
@@ -240,7 +248,7 @@ export function AddressFormFields({ prefix = "", showHeading = true }: Props) {
             value={typeof field.value === "string" ? field.value : ""}
             onChange={(event) => field.onChange(event.target.value)}
             onBlur={field.onBlur}
-            placeholder="ABCビル 502号室"
+            placeholder={t("me.address.addressLine2Placeholder")}
           />
         )}
       </FormField>

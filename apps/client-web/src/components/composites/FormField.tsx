@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useFormContext, useController } from "react-hook-form";
+import { t } from "@i18n";
 import styles from "./FormField.module.css";
 
 interface FieldRenderProps {
@@ -57,7 +58,7 @@ export function FormField({ name, label, hint, required, children }: Props) {
         <span className={styles.error}>
           {typeof errorMessage === "string" && errorMessage.length > 0
             ? errorMessage
-            : "入力内容を確認してください"}
+            : t("components.formField.defaultError")}
         </span>
       )}
       {!showError && hint && <span className={styles.hint}>{hint}</span>}

@@ -6,6 +6,7 @@ import type { SnsType } from "@jsure/shared";
 import { Input } from "@/components/ui";
 import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
+import { t } from "@i18n";
 import { presignInsightUpload } from "../api";
 import styles from "./InsightSubmitForm.module.css";
 
@@ -16,19 +17,21 @@ const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_FILES = 10;
 
 const METRIC_FIELDS = [
-  { key: "likes", label: "いいね数" },
-  { key: "comments", label: "コメント数" },
-  { key: "shares", label: "シェア数" },
-  { key: "reposts", label: "リポスト数" },
-  { key: "saves", label: "保存数" },
-  { key: "views", label: "閲覧数" },
-  { key: "reach", label: "リーチ数" },
+  { key: "likes", label: t("application.insightForm.metricLikes") },
+  { key: "comments", label: t("application.insightForm.metricComments") },
+  { key: "shares", label: t("application.insightForm.metricShares") },
+  { key: "reposts", label: t("application.insightForm.metricReposts") },
+  { key: "saves", label: t("application.insightForm.metricSaves") },
+  { key: "views", label: t("application.insightForm.metricViews") },
+  { key: "reach", label: t("application.insightForm.metricReach") },
 ] as const;
 
 type MetricKey = (typeof METRIC_FIELDS)[number]["key"];
 type Metrics = Record<MetricKey, number>;
 
-const metricSchema = z.string().regex(/^\d+$/, "数字を入力");
+const metricSchema = z
+  .string()
+  .regex(/^\d+$/, t("application.insightForm.metricInvalid"));
 
 const schema = z.object({
   likes: metricSchema,
@@ -79,7 +82,7 @@ interface Props {
 function formatInsightDueDate(iso: string): string {
   const date = new Date(iso);
   date.setDate(date.getDate() + 7);
-  return `${date.getMonth() + 1}月${date.getDate()}日`;
+  return `${date.getMonth() + 1}${t("application.dateFormat.monthSuffix")}${date.getDate()}${t("application.dateFormat.daySuffix")}`;
 }
 
 function fromInitial(initial: Metrics | null): Values {
@@ -119,11 +122,11 @@ export function InsightSubmitForm({
 
   async function uploadOne(file: File): Promise<Attachment | null> {
     if (!ALLOWED.includes(file.type as ImgContentType)) {
-      setUploadError(`対応していない形式: ${file.name}`);
+      setUploadError(`${t("application.insightForm.unsupportedFilePrefix")}${file.name}`);
       return null;
     }
     if (file.size > MAX_BYTES) {
-      setUploadError(`5MB を超えるファイル: ${file.name}`);
+      setUploadError(`${t("application.insightForm.oversizedFilePrefix")}${file.name}`);
       return null;
     }
     const contentType = file.type as ImgContentType;
@@ -139,7 +142,7 @@ export function InsightSubmitForm({
       body: file,
     });
     if (!put.ok) {
-      setUploadError(`アップロード失敗: ${file.name}`);
+      setUploadError(`${t("application.insightForm.uploadFailedPrefix")}${file.name}`);
       return null;
     }
     return {
@@ -155,7 +158,9 @@ export function InsightSubmitForm({
     if (!files || files.length === 0) return;
     setUploadError(null);
     if (remaining <= 0) {
-      setUploadError(`最大${MAX_FILES}枚まで添付できます`);
+      setUploadError(
+        `${t("application.insightForm.maxFilesPrefix")}${MAX_FILES}${t("application.insightForm.maxFilesSuffix")}`,
+      );
       return;
     }
     const list = Array.from(files).slice(0, remaining);
@@ -172,7 +177,11 @@ export function InsightSubmitForm({
         }
       }
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "アップロード中にエラーが発生しました");
+      setUploadError(
+        err instanceof Error
+          ? err.message
+          : t("application.insightForm.uploadGenericError"),
+      );
     }
   }
 
@@ -219,7 +228,7 @@ export function InsightSubmitForm({
             marginBottom: 14,
           }}
         >
-          投稿のインサイトをご提出ください。
+          {t("application.insightForm.guidance")}
           <div
             style={{
               marginTop: 6,
@@ -227,7 +236,8 @@ export function InsightSubmitForm({
               fontWeight: 600,
             }}
           >
-            インサイト提出日: {formatInsightDueDate(postSubmittedAt)}
+            {t("application.insightForm.dueLabelPrefix")}
+            {formatInsightDueDate(postSubmittedAt)}
           </div>
         </div>
 
@@ -257,15 +267,19 @@ export function InsightSubmitForm({
                   lineHeight: 1.5,
                 }}
               >
-                リーチ数が表示されない場合は、「0」とご入力いただくようお願いいたします。
+                {t("application.insightForm.reachHint")}
               </p>
             )}
           </div>
         ))}
 
         <div className={styles.section}>
-          <div className={styles.sectionTitle}>インサイトのスクリーンショット</div>
-          <div className={styles.sectionHint}>PNG / JPEG / WebP · 最大{MAX_FILES}枚 · 5MB以下</div>
+          <div className={styles.sectionTitle}>{t("application.insightForm.screenshotTitle")}</div>
+          <div className={styles.sectionHint}>
+            {t("application.insightForm.screenshotHintPrefix")}
+            {MAX_FILES}
+            {t("application.insightForm.screenshotHintSuffix")}
+          </div>
 
           <div
             className={`${styles.dropzone} ${dragOver ? styles.dropzoneDrag : ""} ${
@@ -294,13 +308,13 @@ export function InsightSubmitForm({
             <i className={`${styles.dropzoneIcon} fa-regular fa-image`} />
             <div className={styles.dropzoneMain}>
               {uploading
-                ? "アップロード中…"
+                ? t("application.insightForm.uploading")
                 : remaining <= 0
-                  ? "添付枚数が上限に達しました"
-                  : "クリックまたはドラッグして画像を追加"}
+                  ? t("application.insightForm.limitReached")
+                  : t("application.insightForm.dropzoneMain")}
             </div>
             <div className={styles.dropzoneSub}>
-              {attachments.length}/{MAX_FILES} 枚
+              {attachments.length}/{MAX_FILES} {t("application.insightForm.unitSuffix")}
             </div>
             <input
               ref={fileInputRef}
@@ -332,7 +346,7 @@ export function InsightSubmitForm({
                     className={styles.tileRemove}
                     onClick={() => removeAttachment(index)}
                     disabled={busy}
-                    aria-label="削除"
+                    aria-label={t("application.insightForm.removeAriaLabel")}
                   >
                     ×
                   </button>
@@ -340,7 +354,7 @@ export function InsightSubmitForm({
               ))}
               {Array.from({ length: pendingCount }).map((_, index) => (
                 <div key={`pending-${index}`} className={styles.tile}>
-                  <div className={styles.tileLoading}>アップロード中…</div>
+                  <div className={styles.tileLoading}>{t("application.insightForm.uploading")}</div>
                 </div>
               ))}
             </div>
@@ -348,7 +362,11 @@ export function InsightSubmitForm({
         </div>
 
         <PrimaryButton type="submit" disabled={busy}>
-          {submitting ? "送信中…" : uploading ? "アップロード中…" : "インサイトを提出"}
+          {submitting
+            ? t("application.insightForm.submitting")
+            : uploading
+              ? t("application.insightForm.uploading")
+              : t("application.insightForm.submit")}
         </PrimaryButton>
       </form>
     </FormProvider>

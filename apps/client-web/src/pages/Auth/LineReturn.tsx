@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchMe } from "@/domains/auth";
+import { t } from "@i18n";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
 import { TOKEN_STORAGE_KEY } from "../../lib/api";
 
@@ -27,7 +28,7 @@ export function LineReturn() {
 
     const token = params.get("line_access_token");
     if (!token) {
-      setError("ログイン情報を受信できませんでした");
+      setError(t("pages.auth.lineReturn.errorReceive"));
       return;
     }
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
@@ -41,7 +42,7 @@ export function LineReturn() {
         nav("/", { replace: true });
       })
       .catch(() => {
-        setError("ログインに失敗しました");
+        setError(t("pages.auth.lineReturn.errorLogin"));
       });
   }, [params, nav, auth]);
 
@@ -54,7 +55,7 @@ export function LineReturn() {
   }
   return (
     <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>
-      LINEでログイン中…
+      {t("pages.auth.lineReturn.loggingIn")}
     </div>
   );
 }

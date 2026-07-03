@@ -3,6 +3,7 @@ import type { InstagramPostType, SnsType, SnsRecruit } from "@jsure/shared";
 import { useCampaign, formatYen, formatDate } from "@/domains/campaign";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
+import { t } from "@i18n";
 import styles from "./CampaignDetail.module.css";
 
 const SNS_ROW_CLASS: Record<SnsType, string | undefined> = {
@@ -27,8 +28,8 @@ const SNS_LABEL: Record<SnsType, string> = {
 };
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
-  FEED: "フィード",
-  REELS: "リール",
+  FEED: t("pages.campaignDetail.instagramFeed"),
+  REELS: t("pages.campaignDetail.instagramReels"),
 };
 
 export function CampaignDetail() {
@@ -40,7 +41,7 @@ export function CampaignDetail() {
     return (
       <div>
         <PageHeader showBack />
-        <div className={styles.loading}>読み込み中…</div>
+        <div className={styles.loading}>{t("pages.campaignDetail.loading")}</div>
       </div>
     );
   }
@@ -48,7 +49,7 @@ export function CampaignDetail() {
     return (
       <div>
         <PageHeader showBack />
-        <div className={styles.empty}>読み込みに失敗しました</div>
+        <div className={styles.empty}>{t("pages.campaignDetail.loadError")}</div>
       </div>
     );
   }
@@ -72,7 +73,8 @@ export function CampaignDetail() {
           <div className={styles.reward}>{formatYen(data.rewardJpy)}</div>
         </div>
         <div className={styles.period}>
-          募集 {formatDate(data.recruitStartAt)} 〜 {formatDate(data.recruitEndAt)}
+          {t("pages.campaignDetail.recruitLabel")} {formatDate(data.recruitStartAt)} 〜{" "}
+          {formatDate(data.recruitEndAt)}
         </div>
 
         <ul className={styles.sns}>
@@ -90,12 +92,15 @@ export function CampaignDetail() {
                   {SNS_LABEL[r.snsType]}
                   {instagramTypes ? ` (${instagramTypes})` : ""}
                 </span>
-                <span className={styles.snsCount}>募集 {r.recruitCount}名</span>
+                <span className={styles.snsCount}>
+                  {t("pages.campaignDetail.recruitLabel")} {r.recruitCount}
+                  {t("pages.campaignDetail.recruitCountSuffix")}
+                </span>
                 <span className={styles.snsCond}>
-                  条件:{" "}
+                  {t("pages.campaignDetail.condLabel")}
                   {r.minFollowers > 0
-                    ? `${r.snsType === "YOUTUBE" ? "登録者" : "フォロワー"}数 ${r.minFollowers.toLocaleString("ja-JP")}+`
-                    : "制限なし"}
+                    ? `${r.snsType === "YOUTUBE" ? t("pages.campaignDetail.condSubscriber") : t("pages.campaignDetail.condFollower")} ${r.minFollowers.toLocaleString("ja-JP")}+`
+                    : t("pages.campaignDetail.noLimit")}
                 </span>
               </li>
             );
@@ -103,15 +108,15 @@ export function CampaignDetail() {
         </ul>
 
         <section className={styles.section}>
-          <h3>商品</h3>
+          <h3>{t("pages.campaignDetail.sectionProduct")}</h3>
           <div className={styles.rich} dangerouslySetInnerHTML={{ __html: data.productSummary }} />
           <a href={data.productDetailUrl} target="_blank" rel="noreferrer" className={styles.link}>
-            商品ページを見る →
+            {t("pages.campaignDetail.productLinkText")}
           </a>
         </section>
 
         <section className={styles.section}>
-          <h3>ガイドライン</h3>
+          <h3>{t("pages.campaignDetail.sectionGuideline")}</h3>
           <div className={styles.rich} dangerouslySetInnerHTML={{ __html: data.guideline }} />
           {data.referenceMediaUrls.length > 0 && (
             <ul className={styles.refs}>
@@ -127,7 +132,7 @@ export function CampaignDetail() {
         </section>
 
         <section className={styles.section}>
-          <h3>注意事項</h3>
+          <h3>{t("pages.campaignDetail.sectionCautions")}</h3>
           <div className={styles.rich} dangerouslySetInnerHTML={{ __html: data.cautions }} />
         </section>
       </div>
@@ -135,18 +140,16 @@ export function CampaignDetail() {
       <div className={styles.cta}>
         {data.appliedSnsTypes.length > 0 && (
           <PrimaryButton onClick={() => nav("/applications")}>
-            {/* 응모내역 보기 */}
-            応募内訳を見る
+            {t("pages.campaignDetail.viewApplications")}
           </PrimaryButton>
         )}
         {data.appliedSnsTypes.length < data.snsRecruits.length && (
           <PrimaryButton disabled={closed} onClick={() => nav(`/campaigns/${data.id}/apply`)}>
             {closed
-              ? "募集終了" // 모집 종료
+              ? t("pages.campaignDetail.ctaClosed")
               : data.appliedSnsTypes.length > 0
-                ? "別のSNSで応募する"
-                : "応募する"}{" "}
-            {/* 다른 SNS로 신청하기 : 신청하다 */}
+                ? t("pages.campaignDetail.ctaAppliedOther")
+                : t("pages.campaignDetail.ctaApply")}
           </PrimaryButton>
         )}
       </div>

@@ -10,6 +10,7 @@ import { PageHeader } from "../../components/composites/PageHeader";
 import { SnsAccountCard } from "@/domains/auth";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
+import { t } from "@i18n";
 
 const SNS_TYPES = ENABLED_SNS_TYPES;
 
@@ -32,7 +33,7 @@ const schema = z
     if (enabled.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "1つ以上のSNSアカウントを追加してください",
+        message: t("pages.me.sns.atLeastOne"),
         path: ["instagram"],
       });
       return;
@@ -42,14 +43,14 @@ const schema = z
       if (fields.handle.trim().length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "ハンドルを入力してください",
+          message: t("pages.me.sns.handleRequired"),
           path: [key, "handle"],
         });
       }
       if (!/^\d+$/.test(fields.followerCount)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "フォロワー数は数字のみ",
+          message: t("pages.me.sns.followerInvalid"),
           path: [key, "followerCount"],
         });
       }
@@ -148,7 +149,7 @@ export function MeSns() {
       qc.invalidateQueries({ queryKey: ["me"] });
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      setServerError(error?.response?.data?.message ?? "保存に失敗しました");
+      setServerError(error?.response?.data?.message ?? t("pages.me.sns.saveFailed"));
     }
   }
 
@@ -180,7 +181,7 @@ export function MeSns() {
 
   return (
     <FormProvider {...methods}>
-      <PageHeader showBack title="SNSアカウント" />
+      <PageHeader showBack title={t("pages.me.sns.title")} />
       <div style={{ padding: 16 }}>
         {serverError && <ErrorBanner message={serverError} />}
         {SNS_TYPES.map((type) => {
@@ -207,7 +208,7 @@ export function MeSns() {
           onClick={save}
           disabled={!isValid || upsert.isPending || remove.isPending}
         >
-          {upsert.isPending || remove.isPending ? "保存中…" : "保存"}
+          {upsert.isPending || remove.isPending ? t("pages.me.sns.saving") : t("pages.me.sns.save")}
         </PrimaryButton>
       </div>
     </FormProvider>

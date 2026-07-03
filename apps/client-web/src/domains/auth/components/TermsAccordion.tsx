@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ConsentItem } from "@jsure/shared";
 import { INFLUENCER_TERMS } from "@jsure/shared";
+import { t } from "@i18n";
 import styles from "./TermsAccordion.module.css";
 
 interface Props {
@@ -32,7 +33,7 @@ export function TermsAccordion({ agreed, onToggle, onToggleAll }: Props) {
         <span className={[styles.chk, allChecked ? styles.chkOn : ""].filter(Boolean).join(" ")}>
           {allChecked ? "✓" : ""}
         </span>
-        <span>すべての項目に同意します</span>
+        <span>{t("auth.terms.agreeAll")}</span>
       </button>
 
       {INFLUENCER_TERMS.map((term) => {
@@ -44,7 +45,7 @@ export function TermsAccordion({ agreed, onToggle, onToggleAll }: Props) {
               <button
                 type="button"
                 className={styles.chkBtn}
-                aria-label={on ? "解除" : "同意"}
+                aria-label={on ? t("auth.terms.uncheckAriaLabel") : t("auth.terms.checkAriaLabel")}
                 onClick={() => onToggle(term.key)}
               >
                 <span className={[styles.chk, on ? styles.chkOn : ""].filter(Boolean).join(" ")}>
@@ -56,7 +57,7 @@ export function TermsAccordion({ agreed, onToggle, onToggleAll }: Props) {
                 className={styles.labelBtn}
                 onClick={() => toggleExpand(term.key)}
               >
-                <span className={styles.req}>[必須]</span>
+                <span className={styles.req}>{t("auth.terms.requiredTag")}</span>
                 <span className={styles.title}>{term.title}</span>
                 <i
                   className={`fa-solid fa-chevron-down ${styles.caret} ${open ? styles.caretOpen : ""}`}

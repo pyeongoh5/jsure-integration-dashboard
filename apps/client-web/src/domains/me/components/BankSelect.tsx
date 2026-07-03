@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { JP_BANKS, type JpBank } from "@jsure/shared";
+import { t } from "@i18n";
 import styles from "./BankSelect.module.css";
 
 interface Props {
@@ -33,7 +34,7 @@ export function BankSelect({ value, onChange }: Props) {
         onClick={() => setOpen(true)}
       >
         <i className={`fa-solid fa-magnifying-glass ${styles.icon}`} />
-        {value ? `${value.name} (${value.code})` : "銀行を検索"}
+        {value ? `${value.name} (${value.code})` : t("me.bank.searchTrigger")}
       </button>
 
       {open && (
@@ -43,7 +44,7 @@ export function BankSelect({ value, onChange }: Props) {
               type="button"
               className={styles.close}
               onClick={() => setOpen(false)}
-              aria-label="閉じる"
+              aria-label={t("me.bank.closeAriaLabel")}
             >
               <i className="fa-solid fa-xmark" />
             </button>
@@ -53,12 +54,12 @@ export function BankSelect({ value, onChange }: Props) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="銀行名 / 4桁コード"
+              placeholder={t("me.bank.searchPlaceholder")}
             />
           </div>
           <div className={styles.list}>
             {filtered.length === 0 && (
-              <div className={styles.empty}>該当する銀行がありません</div>
+              <div className={styles.empty}>{t("me.bank.empty")}</div>
             )}
             {filtered.map((b) => (
               <button

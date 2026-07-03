@@ -12,17 +12,35 @@ import { Radio, Switch } from "@/components/ui";
 import { ScrollTable } from "@/components/composites";
 import styles from "./MessageTemplates.module.css";
 
-const CATEGORIES: { key: CampaignCategory; label: string; disabled?: boolean }[] = [
+const CATEGORIES: { key: CampaignCategory; label: string }[] = [
   { key: "SNS", label: "SNS 캠페인" },
-  { key: "FAKE_PURCHASE", label: "가구매 (준비 중)", disabled: true },
+  { key: "FAKE_PURCHASE", label: "가구매 캠페인" },
 ];
 
-const SUB_TYPES: LineTriggerSubType[] = ["INSTAGRAM", "X"];
+const SNS_SUB_TYPES = ["INSTAGRAM", "X"] as const satisfies readonly LineTriggerSubType[];
+const FAKE_PURCHASE_SUB_TYPES = ["QOO10", "LIPS", "ATCOSME"] as const satisfies readonly LineTriggerSubType[];
+
+const SUB_TYPE_LABEL: Record<LineTriggerSubType, string> = {
+  INSTAGRAM: "Instagram",
+  X: "X",
+  QOO10: "Qoo10",
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
+};
+
+function subTypesFor(category: CampaignCategory): readonly LineTriggerSubType[] {
+  return category === "FAKE_PURCHASE" ? FAKE_PURCHASE_SUB_TYPES : SNS_SUB_TYPES;
+}
 
 export function MessageTemplates(): JSX.Element {
   const navigate = useNavigate();
   const [category, setCategory] = useState<CampaignCategory>("SNS");
   const [subType, setSubType] = useState<LineTriggerSubType>("INSTAGRAM");
+
+  const handleCategoryChange = (next: CampaignCategory): void => {
+    setCategory(next);
+    setSubType(next === "FAKE_PURCHASE" ? "QOO10" : "INSTAGRAM");
+  };
   const [items, setItems] = useState<LineMessageTemplateListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
@@ -78,35 +96,32 @@ export function MessageTemplates(): JSX.Element {
 
       <div className={styles.filters}>
         <div className={styles.tabs}>
-          {CATEGORIES.map((c) => (
+          {CATEGORIES.map((entry) => (
             <button
-              key={c.key}
+              key={entry.key}
               type="button"
-              className={`${styles.tab} ${category === c.key ? styles.tabActive : ""}`}
-              disabled={c.disabled}
-              onClick={() => setCategory(c.key)}
+              className={`${styles.tab} ${category === entry.key ? styles.tabActive : ""}`}
+              onClick={() => handleCategoryChange(entry.key)}
             >
-              {c.label}
+              {entry.label}
             </button>
           ))}
         </div>
 
-        {category === "SNS" && (
-          <div className={styles.subTypeRow}>
-            <span>SNS 유형</span>
-            <div className={styles.subTypeGroup}>
-              {SUB_TYPES.map((s) => (
-                <Radio
-                  key={s}
-                  name="subType"
-                  checked={subType === s}
-                  onChange={() => setSubType(s)}
-                  label={s}
-                />
-              ))}
-            </div>
+        <div className={styles.subTypeRow}>
+          <span>{category === "FAKE_PURCHASE" ? "플랫폼" : "SNS 유형"}</span>
+          <div className={styles.subTypeGroup}>
+            {subTypesFor(category).map((option) => (
+              <Radio
+                key={option}
+                name="subType"
+                checked={subType === option}
+                onChange={() => setSubType(option)}
+                label={SUB_TYPE_LABEL[option]}
+              />
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
       <div className={styles.card}>

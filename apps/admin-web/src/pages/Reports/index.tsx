@@ -13,11 +13,14 @@ import {
 import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
 import styles from "./Reports.module.css";
 
-const SNS_LABEL: Record<CampaignReportParticipant["snsType"], string> = {
+const SNS_LABEL: Record<CampaignReportParticipant["subType"], string> = {
   INSTAGRAM: "Instagram",
   YOUTUBE: "YouTube",
   TIKTOK: "TikTok",
   X: "X",
+  QOO10: "Qoo10",
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
 };
 
 type ColumnDef = {
@@ -562,8 +565,8 @@ const PARTICIPANT_COLUMNS: Array<{
 ];
 
 function formatSns(participant: CampaignReportParticipant): string {
-  const snsLabel = SNS_LABEL[participant.snsType];
-  return participant.snsType === "INSTAGRAM" && participant.instagramPostType
+  const snsLabel = SNS_LABEL[participant.subType];
+  return participant.subType === "INSTAGRAM" && participant.instagramPostType
     ? `${snsLabel}(${INSTAGRAM_POST_TYPE_LABEL[participant.instagramPostType]})`
     : snsLabel;
 }
@@ -644,7 +647,7 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
             ) : (
               participants.map((participant, index) => (
                 <tr
-                  key={`${participant.influencerId}-${participant.snsType}-${safePage * PARTICIPANTS_PER_PAGE + index}`}
+                  key={`${participant.influencerId}-${participant.subType}-${safePage * PARTICIPANTS_PER_PAGE + index}`}
                 >
                   {PARTICIPANT_COLUMNS.map((column) => (
                     <td key={column.key} className={column.numeric ? styles.numeric : undefined}>

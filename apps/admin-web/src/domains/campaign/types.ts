@@ -1,18 +1,23 @@
-import type { InstagramPostType, SnsType } from "@jsure/shared";
+import type { CampaignForm, CampaignSubType, InstagramPostType } from "@jsure/shared";
 
 export type {
   CampaignResponse,
   CreateCampaignRequest,
   UpdateCampaignRequest,
   InstagramPostType,
-  SnsRecruit,
-  SnsType,
+  CampaignRecruit,
+  CampaignSubType,
 } from "@jsure/shared";
+
+/** CampaignForm.recruits 의 요소 타입 (SNS 4종 한정) */
+export type CampaignFormRecruit = CampaignForm["recruits"][number];
+/** CampaignFormRecruit.subType (INSTAGRAM/TIKTOK/X/YOUTUBE) */
+export type CampaignFormRecruitSubType = CampaignFormRecruit["subType"];
 
 export type CampaignStatus = "recruit" | "done";
 
-export type CampaignCardSnsRecruit = {
-  snsType: SnsType;
+export type CampaignCardRecruit = {
+  subType: CampaignSubType;
   minFollowers: number;
   instagramPostTypes: InstagramPostType[];
 };
@@ -36,21 +41,27 @@ export type Campaign = {
   applied: number;
   capacity: number;
   dday: number;
-  snsRecruits: CampaignCardSnsRecruit[];
+  recruits: CampaignCardRecruit[];
 };
 
-export const SNS_ICON_CLASS: Record<SnsType, string> = {
+export const SNS_ICON_CLASS: Record<CampaignSubType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",
   TIKTOK: "fa-brands fa-tiktok",
   X: "fa-brands fa-x-twitter",
   YOUTUBE: "fa-brands fa-youtube",
+  QOO10: "fa-solid fa-bag-shopping",
+  LIPS: "fa-solid fa-bag-shopping",
+  ATCOSME: "fa-solid fa-bag-shopping",
 };
 
-export const SNS_FOLLOWER_LABEL: Record<SnsType, string> = {
+export const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   INSTAGRAM: "팔로워",
   TIKTOK: "팔로워",
   X: "팔로워",
   YOUTUBE: "구독자",
+  QOO10: "팔로워",
+  LIPS: "팔로워",
+  ATCOSME: "팔로워",
 };
 
 export const STATUS_LABEL: Record<CampaignStatus, string> = {

@@ -16,6 +16,9 @@ const MEDIA_CLASS: Record<Media, string | undefined> = {
   yt: styles.mediaYt,
   tt: styles.mediaTt,
   x: styles.mediaX,
+  qoo10: styles.mediaQoo10,
+  lips: styles.mediaLips,
+  atcosme: styles.mediaAtcosme,
 };
 
 // 상태별 배지 색 클래스. Drafts.module.css 에서 정의.

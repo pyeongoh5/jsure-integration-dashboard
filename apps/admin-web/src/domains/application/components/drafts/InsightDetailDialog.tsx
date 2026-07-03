@@ -70,7 +70,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
             <div>
               <div className={styles.title}>{draft.influencerName} 인사이트</div>
               <div className={styles.sub}>
-                {draft.campaignTitle} · {draft.snsType}
+                {draft.campaignTitle} · {draft.subType}
               </div>
             </div>
             <button

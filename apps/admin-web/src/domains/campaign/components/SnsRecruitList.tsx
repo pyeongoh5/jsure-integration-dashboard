@@ -1,9 +1,5 @@
-import {
-  isEnabledSnsType,
-  type InstagramPostType,
-  type SnsRecruit,
-  type SnsType,
-} from "@jsure/shared";
+import { isEnabledSnsType, type InstagramPostType } from "@jsure/shared";
+import type { CampaignFormRecruit, CampaignFormRecruitSubType } from "../types";
 import styles from "./CampaignForm.module.css";
 
 const INSTAGRAM_POST_TYPE_LABELS: Record<InstagramPostType, string> = {
@@ -16,7 +12,7 @@ const INSTAGRAM_POST_TYPE_OPTIONS: readonly InstagramPostType[] = [
 ];
 
 const OPTIONS: readonly {
-  value: SnsType;
+  value: CampaignFormRecruitSubType;
   label: string;
   followerLabel: string;
   icon: string;
@@ -49,7 +45,7 @@ const OPTIONS: readonly {
 
 const VISIBLE_OPTIONS = OPTIONS.filter((opt) => isEnabledSnsType(opt.value));
 
-const SNS_ICON_CLASS: Record<SnsType, string | undefined> = {
+const SNS_ICON_CLASS: Record<CampaignFormRecruitSubType, string | undefined> = {
   INSTAGRAM: styles.snsIconInstagram,
   TIKTOK: styles.snsIconTiktok,
   X: styles.snsIconX,
@@ -61,8 +57,8 @@ type ItemError = Partial<
 >;
 
 type Props = {
-  value: SnsRecruit[];
-  onChange: (next: SnsRecruit[]) => void;
+  value: CampaignFormRecruit[];
+  onChange: (next: CampaignFormRecruit[]) => void;
   disabled?: boolean;
   errorByIndex?: Record<number, ItemError | undefined>;
 };
@@ -74,10 +70,10 @@ function parseIntegerInput(raw: string): number {
 }
 
 export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Props) {
-  const indexOf = (sns: SnsType): number =>
-    value.findIndex((r) => r.snsType === sns);
+  const indexOf = (sns: CampaignFormRecruitSubType): number =>
+    value.findIndex((r) => r.subType === sns);
 
-  const toggle = (sns: SnsType) => {
+  const toggle = (sns: CampaignFormRecruitSubType) => {
     const idx = indexOf(sns);
     if (idx >= 0) {
       onChange(value.filter((_, i) => i !== idx));
@@ -85,11 +81,13 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
       onChange([
         ...value,
         {
-          snsType: sns,
+          subType: sns,
           minFollowers: 0,
           recruitCount: 1,
           instagramPostTypes: sns === "INSTAGRAM" ? ["FEED"] : [],
           insightRequired: true,
+          productPriceJpy: null,
+          productUrl: null,
         },
       ]);
     }
@@ -108,9 +106,9 @@ export function SnsRecruitList({ value, onChange, disabled, errorByIndex }: Prop
     });
   };
 
-  const updateAt = (idx: number, patch: Partial<SnsRecruit>) => {
+  const updateAt = (idx: number, patch: Partial<CampaignFormRecruit>) => {
     const next = value.slice();
-    next[idx] = { ...next[idx], ...patch } as SnsRecruit;
+    next[idx] = { ...next[idx], ...patch } as CampaignFormRecruit;
     onChange(next);
   };
 

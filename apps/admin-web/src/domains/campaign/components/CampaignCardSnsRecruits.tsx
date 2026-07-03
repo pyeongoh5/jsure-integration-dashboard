@@ -3,19 +3,22 @@ import {
   INSTAGRAM_POST_TYPE_LABEL,
   SNS_FOLLOWER_LABEL,
   SNS_ICON_CLASS,
-  type CampaignCardSnsRecruit,
+  type CampaignCardRecruit,
 } from "../types";
-import type { SnsType } from "@jsure/shared";
+import type { CampaignSubType } from "@jsure/shared";
 
 type Props = {
-  recruits: CampaignCardSnsRecruit[];
+  recruits: CampaignCardRecruit[];
 };
 
-const CHIP_CLASS: Record<SnsType, string | undefined> = {
+const CHIP_CLASS: Record<CampaignSubType, string | undefined> = {
   INSTAGRAM: styles.cardSnsChipInstagram,
   TIKTOK: styles.cardSnsChipTiktok,
   X: styles.cardSnsChipX,
   YOUTUBE: styles.cardSnsChipYoutube,
+  QOO10: styles.cardSnsChipQoo10,
+  LIPS: styles.cardSnsChipLips,
+  ATCOSME: styles.cardSnsChipAtcosme,
 };
 
 export function CampaignCardSnsRecruits({ recruits }: Props) {
@@ -24,18 +27,18 @@ export function CampaignCardSnsRecruits({ recruits }: Props) {
     <div className={styles.cardSns}>
       {recruits.map((r) => {
         const instagramTypes =
-          r.snsType === "INSTAGRAM" && r.instagramPostTypes.length > 0
+          r.subType === "INSTAGRAM" && r.instagramPostTypes.length > 0
             ? r.instagramPostTypes
                 .map((postType) => INSTAGRAM_POST_TYPE_LABEL[postType])
                 .join("·")
             : null;
         return (
-          <span key={r.snsType} className={`${styles.cardSnsChip} ${CHIP_CLASS[r.snsType]}`}>
-            <i className={SNS_ICON_CLASS[r.snsType]} aria-hidden="true" />
+          <span key={r.subType} className={`${styles.cardSnsChip} ${CHIP_CLASS[r.subType] ?? ""}`}>
+            <i className={SNS_ICON_CLASS[r.subType]} aria-hidden="true" />
             <span className={styles.cardSnsCond}>
               {r.minFollowers > 0
-                ? `${SNS_FOLLOWER_LABEL[r.snsType]} ${r.minFollowers.toLocaleString()}명 이상`
-                : `${SNS_FOLLOWER_LABEL[r.snsType]} 제한 없음`}
+                ? `${SNS_FOLLOWER_LABEL[r.subType]} ${r.minFollowers.toLocaleString()}명 이상`
+                : `${SNS_FOLLOWER_LABEL[r.subType]} 제한 없음`}
               {instagramTypes ? ` · ${instagramTypes}` : ""}
             </span>
           </span>

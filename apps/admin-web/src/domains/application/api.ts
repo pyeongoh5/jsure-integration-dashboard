@@ -43,6 +43,8 @@ export async function getApplicationCounts(
     COMPLETED: parsed.counts.COMPLETED ?? 0,
     REJECTED: parsed.counts.REJECTED ?? 0,
     CANCELLED: parsed.counts.CANCELLED ?? 0,
+    ORDER_SUBMITTED: parsed.counts.ORDER_SUBMITTED ?? 0,
+    REVIEW_SUBMITTED: parsed.counts.REVIEW_SUBMITTED ?? 0,
   };
 }
 

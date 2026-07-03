@@ -1,7 +1,7 @@
-import { isEnabledSnsType, type SnsType } from "@jsure/shared";
+import { isEnabledSnsType, type SnsAccountSubType } from "@jsure/shared";
 import styles from "./CampaignForm.module.css";
 
-const OPTIONS: readonly { value: SnsType; label: string }[] = [
+const OPTIONS: readonly { value: SnsAccountSubType; label: string }[] = [
   { value: "INSTAGRAM", label: "인스타그램" },
   { value: "TIKTOK", label: "틱톡" },
   { value: "X", label: "X" },
@@ -11,13 +11,13 @@ const OPTIONS: readonly { value: SnsType; label: string }[] = [
 const VISIBLE_OPTIONS = OPTIONS.filter((opt) => isEnabledSnsType(opt.value));
 
 type Props = {
-  value: SnsType[];
-  onChange: (next: SnsType[]) => void;
+  value: SnsAccountSubType[];
+  onChange: (next: SnsAccountSubType[]) => void;
   disabled?: boolean;
 };
 
 export function SnsTypeChips({ value, onChange, disabled }: Props) {
-  const toggle = (target: SnsType) => {
+  const toggle = (target: SnsAccountSubType) => {
     if (value.includes(target)) onChange(value.filter((current) => current !== target));
     else onChange([...value, target]);
   };

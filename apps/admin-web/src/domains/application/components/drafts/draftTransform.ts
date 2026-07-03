@@ -39,7 +39,7 @@ export function toDraftReview(
   now: Date,
 ): DraftReview {
   const matchingAccount = post.influencer.snsAccounts.find(
-    (account) => account.snsType === post.snsType,
+    (account) => account.snsType === post.subType,
   );
   const insightSubmitted = post.insightSubmittedAt !== null;
   const settlementStatus = post.settlement?.status ?? null;
@@ -52,8 +52,8 @@ export function toDraftReview(
     campaignId: post.campaign.id,
     campaignTitle: post.campaign.title,
     campaignThumbnailUrl: post.campaign.thumbnailUrl,
-    snsType: post.snsType,
-    media: SNS_TO_MEDIA[post.snsType],
+    subType: post.subType,
+    media: SNS_TO_MEDIA[post.subType],
     instagramPostType: post.instagramPostType,
     url: post.url,
     submittedAt: formatRelative(post.submittedAt, now),

@@ -12,6 +12,8 @@ import {
   type InsightAttachmentInput,
   type InsightUploadPresignRequest,
   type InsightUploadPresignResponse,
+  type InfluencerAttachmentPresignRequest,
+  type InfluencerAttachmentPresignResponse,
   type CampaignImageUploadPresignRequest,
   type CampaignImageUploadPresignResponse,
   type NoticeImageUploadPresignRequest,
@@ -76,6 +78,53 @@ export class UploadsService {
       PRESIGN_EXPIRES_SEC,
     );
 
+    return { objectKey, uploadUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
+  }
+
+  async presignInfluencerAttachment(
+    influencerId: string,
+    body: InfluencerAttachmentPresignRequest,
+  ): Promise<InfluencerAttachmentPresignResponse> {
+    if (body.sizeBytes > UPLOAD_MAX_BYTES) {
+      throw new BadRequestException("파일 크기 한도를 초과했습니다");
+    }
+    const application = await this.prisma.campaignApplication.findUnique({
+      where: { id: body.applicationId },
+      select: {
+        influencerId: true,
+        campaign: { select: { category: true } },
+      },
+    });
+    if (!application) throw new NotFoundException("Application not found");
+    if (application.influencerId !== influencerId) {
+      throw new ForbiddenException();
+    }
+
+    const category = application.campaign.category;
+    if (body.kind === "ORDER_RECEIPT" || body.kind === "REVIEW_SCREENSHOT") {
+      if (category !== "FAKE_PURCHASE") {
+        throw new BadRequestException(
+          "この添付タイプは買取レビューキャンペーンでのみ使用できます",
+        );
+      }
+    }
+    if (body.kind === "INSIGHT_SCREENSHOT" && category !== "SNS") {
+      throw new BadRequestException(
+        "この添付タイプはSNSキャンペーンでのみ使用できます",
+      );
+    }
+
+    const objectKey =
+      `attachments/${body.applicationId}/${body.kind}/` +
+      `${randomUUID()}.${extOf(body.contentType)}`;
+    const uploadUrl = await this.r2.presignPut(
+      {
+        objectKey,
+        contentType: body.contentType,
+        contentLength: body.sizeBytes,
+      },
+      PRESIGN_EXPIRES_SEC,
+    );
     return { objectKey, uploadUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
   }
 
@@ -199,7 +248,10 @@ export class UploadsService {
     if (attachments.length === 0) return;
 
     for (const attachment of attachments) {
-      if (!attachment.objectKey.startsWith("insights/")) {
+      if (
+        !attachment.objectKey.startsWith("insights/") &&
+        !attachment.objectKey.startsWith("attachments/")
+      ) {
         throw new BadRequestException("잘못된 객체 경로입니다");
       }
       const head = await this.r2.headObject(attachment.objectKey).catch(() => null);

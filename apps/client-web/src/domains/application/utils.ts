@@ -15,6 +15,10 @@ export const STAGE_LABEL: Record<ApplicationDisplayStage, string> = {
   SETTLED: t("application.stageLabel.SETTLED"),
   REJECTED: t("application.stageLabel.REJECTED"),
   CANCELLED: t("application.stageLabel.CANCELLED"),
+  AWAITING_ORDER: t("application.stage.awaitingOrder.heading"),
+  AWAITING_REVIEW: t("application.stage.awaitingReview.heading"),
+  REVIEW_PENDING: t("application.stageLabel.REVIEWING"),
+  REVIEW_REJECTED: t("application.stage.reviewRejected.heading"),
 };
 
 export const STAGE_VARIANT: Record<ApplicationDisplayStage, string> = {
@@ -31,6 +35,10 @@ export const STAGE_VARIANT: Record<ApplicationDisplayStage, string> = {
   SETTLED: "ok",
   REJECTED: "danger",
   CANCELLED: "danger",
+  AWAITING_ORDER: "info",
+  AWAITING_REVIEW: "warn",
+  REVIEW_PENDING: "neutral",
+  REVIEW_REJECTED: "danger",
 };
 
 export const STAGE_PROGRESS: Record<ApplicationDisplayStage, number> = {
@@ -47,6 +55,10 @@ export const STAGE_PROGRESS: Record<ApplicationDisplayStage, number> = {
   SETTLED: 9,
   REJECTED: 0,
   CANCELLED: 0,
+  AWAITING_ORDER: 3,
+  AWAITING_REVIEW: 5,
+  REVIEW_PENDING: 7,
+  REVIEW_REJECTED: 5,
 };
 
 export const STAGE_TOTAL = 9;

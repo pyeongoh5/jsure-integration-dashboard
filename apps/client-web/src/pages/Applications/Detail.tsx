@@ -6,15 +6,20 @@ import {
   ApplicationStepper,
   CancelConfirmDialog,
   InsightSubmitForm,
+  OrderSubmitForm,
   PostSubmitForm,
   ReceiptConfirmDialog,
+  ReviewSubmitForm,
   StageBadge,
   cancelApplication,
   confirmReceipt,
   submitInsight,
+  submitOrder,
   submitPost,
+  submitReview,
   useApplication,
 } from "@/domains/application";
+import type { AttachmentUploadInput } from "@jsure/shared";
 import { PageHeader } from "@/components/composites/PageHeader";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import { t } from "@i18n";
@@ -56,6 +61,26 @@ export function ApplicationDetail() {
   const post = useMutation({
     mutationFn: ({ subType, url }: { subType: CampaignSubType; url: string }) =>
       submitPost(id, subType, url),
+    onSuccess: () => invalidate(),
+  });
+  const order = useMutation({
+    mutationFn: ({
+      orderNumber,
+      receipts,
+    }: {
+      orderNumber: string;
+      receipts: AttachmentUploadInput[];
+    }) => submitOrder(id, orderNumber, receipts),
+    onSuccess: () => invalidate(),
+  });
+  const review = useMutation({
+    mutationFn: ({
+      reviewUrl,
+      screenshots,
+    }: {
+      reviewUrl: string;
+      screenshots: AttachmentUploadInput[];
+    }) => submitReview(id, reviewUrl, screenshots),
     onSuccess: () => invalidate(),
   });
   const insight = useMutation({
@@ -253,6 +278,83 @@ export function ApplicationDetail() {
             submitting={insight.isPending}
             postSubmittedAt={data.posts[0].submittedAt}
           />
+        )}
+
+        {stage === "AWAITING_ORDER" && (
+          <OrderSubmitForm
+            applicationId={data.id}
+            onSubmit={async (orderNumber, receipts) => {
+              await order.mutateAsync({ orderNumber, receipts });
+            }}
+            submitting={order.isPending}
+          />
+        )}
+
+        {stage === "AWAITING_REVIEW" && (
+          <ReviewSubmitForm
+            applicationId={data.id}
+            orderSubmittedAt={data.orderSubmittedAt ?? data.appliedAt}
+            postingPeriodDays={data.postingPeriodDays}
+            onSubmit={async (reviewUrl, screenshots) => {
+              await review.mutateAsync({ reviewUrl, screenshots });
+            }}
+            submitting={review.isPending}
+          />
+        )}
+
+        {stage === "REVIEW_PENDING" && (
+          <div>
+            {data.posts[0]?.url && (
+              <div className={styles.rejectUrl}>
+                {t("pages.applications.detail.rejectUrlPrefix")}
+                <a href={data.posts[0].url} target="_blank" rel="noreferrer">
+                  {data.posts[0].url}
+                </a>
+              </div>
+            )}
+            <p className={styles.msg}>
+              {t("application.stage.reviewPending.description")}
+            </p>
+          </div>
+        )}
+
+        {stage === "REVIEW_REJECTED" && data.posts[0] && (
+          <div className={styles.reject}>
+            <div className={styles.rejectHead}>
+              <span className={styles.rejectBadge}>
+                {t("pages.applications.detail.rejectBadge")}
+              </span>
+              <span className={styles.rejectSns}>
+                {t("application.stage.reviewRejected.heading")}
+              </span>
+            </div>
+            <div className={styles.rejectUrl}>
+              {t("pages.applications.detail.rejectUrlPrefix")}
+              <a href={data.posts[0].url} target="_blank" rel="noreferrer">
+                {data.posts[0].url}
+              </a>
+            </div>
+            {data.posts[0].lastRejectionComment && (
+              <div className={styles.rejectComment}>
+                <div className={styles.rejectCommentLabel}>
+                  {t("application.stage.reviewRejected.reasonLabel")}
+                </div>
+                <p>{data.posts[0].lastRejectionComment}</p>
+              </div>
+            )}
+            <p className={styles.msg}>
+              {t("application.stage.reviewRejected.description")}
+            </p>
+            <ReviewSubmitForm
+              applicationId={data.id}
+              orderSubmittedAt={data.orderSubmittedAt ?? data.appliedAt}
+              postingPeriodDays={data.postingPeriodDays}
+              onSubmit={async (reviewUrl, screenshots) => {
+                await review.mutateAsync({ reviewUrl, screenshots });
+              }}
+              submitting={review.isPending}
+            />
+          </div>
         )}
 
         {stage === "REVIEWING" && (

@@ -76,6 +76,14 @@ export class AdminApplicationsController {
     return this.svc.exportApprovedApplicants(trimmed);
   }
 
+  @Get(":id/attachments")
+  async applicationAttachments(
+    @Param("id") id: string,
+  ): Promise<AttachmentListResponse> {
+    const attachments = await this.svc.listApplicationAttachments(id);
+    return { attachments };
+  }
+
   @Get("submitted-posts/:postId/attachments")
   async submittedPostAttachments(
     @Param("postId") postId: string,

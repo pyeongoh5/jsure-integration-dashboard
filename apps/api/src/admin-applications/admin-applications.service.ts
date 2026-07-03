@@ -401,6 +401,33 @@ export class AdminApplicationsService {
     );
   }
 
+  /**
+   * 특정 CampaignApplication 의 첨부 이미지에 대해 presigned GET URL 을 발급.
+   * 가구매 응모 상세에서 주문 명세서/리뷰 스크린샷을 통합 조회할 때 사용.
+   */
+  async listApplicationAttachments(applicationId: string) {
+    const application = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      select: { id: true },
+    });
+    if (!application) throw new NotFoundException("Application not found");
+    const rows = await this.prisma.attachment.findMany({
+      where: { applicationId },
+      orderBy: { uploadedAt: "asc" },
+    });
+    return Promise.all(
+      rows.map(async (row) => ({
+        id: row.id,
+        kind: row.kind,
+        objectKey: row.objectKey,
+        contentType: row.contentType,
+        sizeBytes: row.sizeBytes,
+        uploadedAt: row.uploadedAt.toISOString(),
+        viewUrl: await this.r2.presignGet(row.objectKey, 300),
+      })),
+    );
+  }
+
   async approveSubmittedPost(postId: string, reviewerId: string): Promise<AdminSubmittedPost> {
     const existing = await this.prisma.submittedPost.findUnique({
       where: { id: postId },

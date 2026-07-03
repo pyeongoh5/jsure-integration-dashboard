@@ -1,30 +1,32 @@
-import { ENABLED_SNS_TYPES, type SnsAccountSubType } from "@jsure/shared";
+import {
+  ENABLED_SNS_TYPES,
+  FAKE_PURCHASE_SUB_TYPES,
+  SUB_TYPE_LABEL,
+  type CampaignSubType,
+} from "@jsure/shared";
 import styles from "./SnsTabBar.module.css";
 
-const SNS_TYPES = ENABLED_SNS_TYPES;
-const LABEL: Record<SnsAccountSubType, string> = {
-  INSTAGRAM: "Instagram",
-  TIKTOK: "TikTok",
-  YOUTUBE: "YouTube",
-  X: "X",
-};
+const TAB_SUB_TYPES: readonly CampaignSubType[] = [
+  ...ENABLED_SNS_TYPES,
+  ...FAKE_PURCHASE_SUB_TYPES,
+];
 
 interface Props {
-  value: SnsAccountSubType;
-  onChange: (s: SnsAccountSubType) => void;
+  value: CampaignSubType;
+  onChange: (subType: CampaignSubType) => void;
 }
 
 export function SnsTabBar({ value, onChange }: Props) {
   return (
     <div className={styles.bar}>
-      {SNS_TYPES.map((t) => (
+      {TAB_SUB_TYPES.map((subType) => (
         <button
-          key={t}
+          key={subType}
           type="button"
-          className={`${styles.pill} ${value === t ? styles.pillOn : ""}`}
-          onClick={() => onChange(t)}
+          className={`${styles.pill} ${value === subType ? styles.pillOn : ""}`}
+          onClick={() => onChange(subType)}
         >
-          {LABEL[t]}
+          {SUB_TYPE_LABEL[subType]}
         </button>
       ))}
     </div>

@@ -1,12 +1,19 @@
 import { useLayoutEffect, useRef } from "react";
-import type {
-  InfluencerCampaignCard,
-  InstagramPostType,
-  CampaignSubType,
-  CampaignRecruit,
+import {
+  SUB_TYPE_LABEL,
+  type InfluencerCampaignCard,
+  type InstagramPostType,
+  type CampaignSubType,
+  type CampaignRecruit,
 } from "@jsure/shared";
 import { t } from "@i18n";
 import styles from "./CampaignCard.module.css";
+
+function categoryLabel(category: InfluencerCampaignCard["category"]): string {
+  return category === "FAKE_PURCHASE"
+    ? t("campaign.category.fakePurchase")
+    : t("campaign.category.sns");
+}
 
 function snsChipClass(subType: CampaignSubType) {
   switch (subType) {
@@ -85,6 +92,13 @@ const MARQUEE_SPEED_PX_PER_SEC = 15;
 const MARQUEE_PAUSE_MS = 1500;
 
 function condText(r: CampaignRecruit): string {
+  if (
+    r.subType === "QOO10" ||
+    r.subType === "LIPS" ||
+    r.subType === "ATCOSME"
+  ) {
+    return SUB_TYPE_LABEL[r.subType];
+  }
   const base =
     r.minFollowers > 0
       ? `${SNS_FOLLOWER_LABEL[r.subType]} ${r.minFollowers.toLocaleString("ja-JP")}${t("campaign.card.followerMinSuffix")}`
@@ -202,6 +216,12 @@ export function CampaignCard({ card, onSelect }: Props) {
       </div>
 
       <div className={styles.body}>
+        <span
+          className={styles.categoryBadge}
+          data-category={card.category}
+        >
+          {categoryLabel(card.category)}
+        </span>
         <h3 className={styles.title}>{card.title}</h3>
         <p className={styles.desc}>{stripHtml(card.productSummary)}</p>
 

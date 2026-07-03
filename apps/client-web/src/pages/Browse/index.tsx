@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { EnabledSnsTypeSchema, type SnsAccountSubType } from "@jsure/shared";
+import { EnabledSnsTypeSchema, type CampaignSubType } from "@jsure/shared";
 import { CampaignCard, SnsTabBar, useCampaignList } from "@/domains/campaign";
 import { t } from "@i18n";
 import styles from "./Browse.module.css";
 
 export function Browse() {
   const nav = useNavigate();
-  const [sns, setSns] = useState<SnsAccountSubType>(EnabledSnsTypeSchema.options[0]);
+  const [subType, setSubType] = useState<CampaignSubType>(
+    EnabledSnsTypeSchema.options[0],
+  );
 
-  const { data, isLoading, isError } = useCampaignList(sns);
+  const { data, isLoading, isError } = useCampaignList(subType);
 
   return (
     <div className={styles.browse}>
@@ -17,7 +19,7 @@ export function Browse() {
         <div className={styles.brandTitle}>J-SURE</div>
         <div className={styles.brandSubtitle}>influencer</div>
       </div>
-      <SnsTabBar value={sns} onChange={setSns} />
+      <SnsTabBar value={subType} onChange={setSubType} />
       <div className={styles.grid}>
         {isLoading && (
           <>

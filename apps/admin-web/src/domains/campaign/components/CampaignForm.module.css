@@ -66,6 +66,36 @@
   color: #6b7280;
 }
 
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.radioOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  background: #ffffff;
+}
+
+.radioOption:has(input:checked) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.radioOption:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .thumbnail {
   display: flex;
   flex-direction: column;

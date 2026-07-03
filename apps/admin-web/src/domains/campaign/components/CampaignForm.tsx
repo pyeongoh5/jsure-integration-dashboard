@@ -254,6 +254,65 @@ export function CampaignForm({
           <h2 className={styles.sectionTitle}>기본 정보</h2>
 
           <div className={styles.field}>
+            <label className={styles.label}>카테고리</label>
+            <Controller
+              control={methods.control}
+              name="category"
+              render={({ field }) => {
+                const isEditMode = Boolean(selfCampaignId);
+                return (
+                  <>
+                    <div className={styles.radioGroup}>
+                      <label className={styles.radioOption}>
+                        <input
+                          type="radio"
+                          name="cf-category"
+                          value="SNS"
+                          checked={field.value === "SNS"}
+                          disabled={isEditMode || submitting}
+                          onChange={() => {
+                            field.onChange("SNS");
+                            methods.setValue("recruits", [], {
+                              shouldValidate: false,
+                              shouldDirty: true,
+                            });
+                          }}
+                        />
+                        SNS
+                      </label>
+                      <label className={styles.radioOption}>
+                        <input
+                          type="radio"
+                          name="cf-category"
+                          value="FAKE_PURCHASE"
+                          checked={field.value === "FAKE_PURCHASE"}
+                          disabled={isEditMode || submitting}
+                          onChange={() => {
+                            field.onChange("FAKE_PURCHASE");
+                            methods.setValue("recruits", [], {
+                              shouldValidate: false,
+                              shouldDirty: true,
+                            });
+                          }}
+                        />
+                        가구매
+                      </label>
+                    </div>
+                    {isEditMode && (
+                      <p className={styles.hint}>
+                        카테고리는 생성 후 변경할 수 없습니다.
+                      </p>
+                    )}
+                  </>
+                );
+              }}
+            />
+            {rootError("category") && (
+              <div className={styles.error}>{rootError("category")}</div>
+            )}
+          </div>
+
+          <div className={styles.field}>
             <label className={styles.label} htmlFor="cf-title">
               캠페인 제목
             </label>

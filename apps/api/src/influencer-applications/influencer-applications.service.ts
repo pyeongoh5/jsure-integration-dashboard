@@ -103,8 +103,12 @@ function toPost(row: PostRow): SubmittedPost {
 }
 
 function toResponse(row: ApplicationRow): InfluencerApplication {
+  const deadlineAnchor =
+    row.campaign.category === "FAKE_PURCHASE"
+      ? row.orderSubmittedAt
+      : row.receivedAt;
   const deadline = postingDeadline(
-    row.receivedAt,
+    deadlineAnchor,
     row.campaign.postingPeriodDays,
   );
   // 가장 최근에 완료된 정산을 대표로 사용 (1 application = 1 SNS = 1 post 흐름)
@@ -130,6 +134,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     status: row.status,
     displayStage: deriveDisplayStage({
       status: row.status,
+      category: row.campaign.category,
       receivedAt: row.receivedAt,
       posts: row.posts.map((p) => ({
         submittedAt: p.submittedAt,

@@ -23,6 +23,8 @@ export type {
 export {
   APPLICANT_STATUS_LABEL,
   APPLICANT_STATUS_OPTIONS,
+  CATEGORY_LABEL_KO,
+  CATEGORY_FILTER_OPTIONS,
 } from "./components/applicants/types";
 
 // draft sub-domain types

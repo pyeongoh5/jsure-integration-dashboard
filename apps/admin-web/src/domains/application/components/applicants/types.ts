@@ -1,4 +1,9 @@
-import type { ApplicationStatus, InstagramPostType } from "@jsure/shared";
+import type {
+  ApplicationStatus,
+  CampaignCategory,
+  CampaignSubType,
+  InstagramPostType,
+} from "@jsure/shared";
 
 // 검토/정산 단계로 넘어가지 않은 응모만 응모 관리에 노출한다.
 // 검토 단계 = SubmittedPost 존재(application.hasSubmittedPost=true).
@@ -21,6 +26,9 @@ export type Applicant = {
   flagged: boolean;
   campaignId: string;
   campaign: string;
+  category: CampaignCategory;
+  subType: CampaignSubType;
+  orderNumber: string | null;
   media: Media[];
   instagramPostType: InstagramPostType | null;
   followers: number;
@@ -60,6 +68,16 @@ export const APPLICANT_STATUS_LABEL: Record<ApplicantStatus, string> = {
   POST_DUE: "투고 대기",
   REJECTED: "반려",
 };
+
+export const CATEGORY_LABEL_KO: Record<CampaignCategory, string> = {
+  SNS: "SNS",
+  FAKE_PURCHASE: "가구매",
+};
+
+export const CATEGORY_FILTER_OPTIONS: { key: CampaignCategory; label: string }[] = [
+  { key: "SNS", label: CATEGORY_LABEL_KO.SNS },
+  { key: "FAKE_PURCHASE", label: CATEGORY_LABEL_KO.FAKE_PURCHASE },
+];
 
 export const APPLICANT_STATUS_OPTIONS: { key: ApplicantStatus; label: string }[] = [
   { key: "APPLIED", label: APPLICANT_STATUS_LABEL.APPLIED },

@@ -1,7 +1,14 @@
+import { SUB_TYPE_LABEL } from "@jsure/shared";
 import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
-import { APPLICANT_STATUS_LABEL, MEDIA_META, type Applicant, type ApplicantStatus } from "./types";
+import {
+  APPLICANT_STATUS_LABEL,
+  CATEGORY_LABEL_KO,
+  MEDIA_META,
+  type Applicant,
+  type ApplicantStatus,
+} from "./types";
 import styles from "@/pages/Applicants/Applicants.module.css";
 
 type ActionHandlers = {
@@ -11,6 +18,7 @@ type ActionHandlers = {
   onShip: (applicant: Applicant) => void;
   onDeliver: (applicant: Applicant) => void;
   onMemo: (applicant: Applicant) => void;
+  onDetail: (applicant: Applicant) => void;
 };
 
 function renderActions(applicant: Applicant, handlers: ActionHandlers) {
@@ -19,6 +27,17 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
       메모
     </Button>
   );
+  const detailButton =
+    applicant.category === "FAKE_PURCHASE" ? (
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => handlers.onDetail(applicant)}
+      >
+        상세
+      </Button>
+    ) : null;
+  const isSns = applicant.category === "SNS";
 
   switch (applicant.status) {
     case "APPLIED":
@@ -30,44 +49,72 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
           <Button variant="danger" size="sm" onClick={() => handlers.onReject(applicant)}>
             반려
           </Button>
+          {detailButton}
           {memoButton}
         </div>
       );
     case "PRE_SHIP":
       return (
         <div className={styles.actions}>
-          <Button variant="primary" size="sm" onClick={() => handlers.onShip(applicant)}>
-            운송장 입력
-          </Button>
+          {isSns && (
+            <Button variant="primary" size="sm" onClick={() => handlers.onShip(applicant)}>
+              운송장 입력
+            </Button>
+          )}
           <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(applicant)}>
             되돌리기
           </Button>
+          {detailButton}
           {memoButton}
         </div>
       );
     case "SHIPPING":
       return (
         <div className={styles.actions}>
-          <Button variant="primary" size="sm" onClick={() => handlers.onDeliver(applicant)}>
-            배송 완료
-          </Button>
+          {isSns && (
+            <Button variant="primary" size="sm" onClick={() => handlers.onDeliver(applicant)}>
+              배송 완료
+            </Button>
+          )}
+          {detailButton}
           {memoButton}
         </div>
       );
     case "DELIVERED":
     case "POST_DUE":
       // 인플루언서 측 작업 대기 단계 — 운영자가 할 액션 없음.
-      return <div className={styles.actions}>{memoButton}</div>;
+      return (
+        <div className={styles.actions}>
+          {detailButton}
+          {memoButton}
+        </div>
+      );
     case "REJECTED":
       return (
         <div className={styles.actions}>
           <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(applicant)}>
             되돌리기
           </Button>
+          {detailButton}
           {memoButton}
         </div>
       );
   }
+}
+
+function renderCategory(applicant: Applicant) {
+  const className =
+    applicant.category === "SNS" ? styles.categoryBadgeSns : styles.categoryBadgeFake;
+  return (
+    <div className={styles.categoryCell}>
+      <span className={`${styles.categoryBadge} ${className}`}>
+        {CATEGORY_LABEL_KO[applicant.category]}
+      </span>
+      <span className={styles.categorySubType}>
+        {SUB_TYPE_LABEL[applicant.subType]}
+      </span>
+    </div>
+  );
 }
 
 const STATUS_BADGE_CLASS: Record<ApplicantStatus, string | undefined> = {
@@ -135,6 +182,7 @@ type Props = {
   onShip: (applicant: Applicant) => void;
   onDeliver: (applicant: Applicant) => void;
   onMemo: (applicant: Applicant) => void;
+  onDetail: (applicant: Applicant) => void;
 };
 
 export function ApplicantTable({
@@ -148,6 +196,7 @@ export function ApplicantTable({
   onShip,
   onDeliver,
   onMemo,
+  onDetail,
 }: Props) {
   if (items.length === 0) {
     return (
@@ -174,6 +223,7 @@ export function ApplicantTable({
               </th>
               <th>인플루언서</th>
               <th>캠페인</th>
+              <th>카테고리</th>
               <th>매체</th>
               <th>팔로워</th>
               <th>응모 시각</th>
@@ -209,6 +259,7 @@ export function ApplicantTable({
                   </div>
                 </td>
                 <td>{applicant.campaign}</td>
+                <td>{renderCategory(applicant)}</td>
                 <td>
                   <div className={styles.mediaList}>
                     {applicant.media.map((media) => {
@@ -246,6 +297,7 @@ export function ApplicantTable({
                     onShip,
                     onDeliver,
                     onMemo,
+                    onDetail,
                   })}
                 </td>
               </tr>

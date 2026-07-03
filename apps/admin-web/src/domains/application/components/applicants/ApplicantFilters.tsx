@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "@/pages/Applicants/Applicants.module.css";
-import { MEDIA_META, type CampaignOption, type Media } from "./types";
+import type { CampaignCategory } from "@jsure/shared";
+import {
+  CATEGORY_FILTER_OPTIONS,
+  CATEGORY_LABEL_KO,
+  MEDIA_META,
+  type CampaignOption,
+  type Media,
+} from "./types";
 
-type PopoverKind = "campaign" | "media" | "followers";
+type PopoverKind = "campaign" | "media" | "followers" | "category";
 
 type Props = {
   campaignId: string | null;
@@ -18,6 +25,10 @@ type Props = {
   // 팔로워 필터는 응모 관리 페이지 전용 — 검토 페이지에서는 props 자체를 생략하면 버튼이 사라진다.
   minFollowers?: number | null;
   onMinFollowersChange?: (followers: number | null) => void;
+
+  // 카테고리 필터도 응모 관리 페이지 전용. props 를 생략하면 버튼이 사라진다.
+  category?: CampaignCategory | null;
+  onCategoryChange?: (category: CampaignCategory | null) => void;
 };
 
 export function ApplicantFilters({
@@ -30,6 +41,8 @@ export function ApplicantFilters({
   onMediaChange,
   minFollowers,
   onMinFollowersChange,
+  category,
+  onCategoryChange,
 }: Props) {
   const [popover, setPopover] = useState<{ kind: PopoverKind; rect: DOMRect } | null>(null);
   const [minFollowersDraft, setMinFollowersDraft] = useState<string>("");
@@ -38,6 +51,7 @@ export function ApplicantFilters({
   const campaignBtnRef = useRef<HTMLButtonElement | null>(null);
   const mediaBtnRef = useRef<HTMLButtonElement | null>(null);
   const followersBtnRef = useRef<HTMLButtonElement | null>(null);
+  const categoryBtnRef = useRef<HTMLButtonElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -49,6 +63,8 @@ export function ApplicantFilters({
         return;
       if (mediaBtnRef.current && mediaBtnRef.current.contains(target)) return;
       if (followersBtnRef.current && followersBtnRef.current.contains(target))
+        return;
+      if (categoryBtnRef.current && categoryBtnRef.current.contains(target))
         return;
       setPopover(null);
     };
@@ -64,7 +80,9 @@ export function ApplicantFilters({
   }, [popover]);
 
   const followersEnabled = onMinFollowersChange !== undefined;
+  const categoryEnabled = onCategoryChange !== undefined;
   const currentMinFollowers = minFollowers ?? null;
+  const currentCategory = category ?? null;
 
   const openPopover = (kind: PopoverKind) => {
     const anchorButton =
@@ -72,7 +90,9 @@ export function ApplicantFilters({
         ? campaignBtnRef.current
         : kind === "media"
           ? mediaBtnRef.current
-          : followersBtnRef.current;
+          : kind === "followers"
+            ? followersBtnRef.current
+            : categoryBtnRef.current;
     if (!anchorButton) return;
     if (popover?.kind === kind) {
       setPopover(null);
@@ -115,6 +135,7 @@ export function ApplicantFilters({
     if (kind === "campaign") onCampaignChange(null);
     else if (kind === "media") onMediaChange(new Set());
     else if (kind === "followers") onMinFollowersChange?.(null);
+    else if (kind === "category") onCategoryChange?.(null);
   };
 
   return (
@@ -143,6 +164,32 @@ export function ApplicantFilters({
             </span>
           )}
         </button>
+
+        {categoryEnabled && (
+          <button
+            ref={categoryBtnRef}
+            type="button"
+            className={`${styles.filter} ${currentCategory !== null ? styles.filterActive : ""}`}
+            onClick={() => openPopover("category")}
+          >
+            {currentCategory !== null
+              ? `카테고리: ${CATEGORY_LABEL_KO[currentCategory]}`
+              : "+ 카테고리"}
+            {currentCategory !== null && (
+              <span
+                className={styles.popoverBtn}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  clear("category");
+                  setPopover(null);
+                }}
+              >
+                {" "}
+                ✕
+              </span>
+            )}
+          </button>
+        )}
 
         {followersEnabled && (
           <button
@@ -266,6 +313,44 @@ export function ApplicantFilters({
                     </div>
                   );
                 })()}
+                <div className={styles.popoverActions}>
+                  <button
+                    type="button"
+                    className={`${styles.popoverBtn} ${styles.popoverBtnPrimary}`}
+                    onClick={() => setPopover(null)}
+                  >
+                    닫기
+                  </button>
+                </div>
+              </>
+            ) : popover.kind === "category" ? (
+              <>
+                <div className={styles.popoverTitle}>카테고리 선택</div>
+                <div className={styles.popoverItems}>
+                  {CATEGORY_FILTER_OPTIONS.map((option) => {
+                    const selected = option.key === currentCategory;
+                    return (
+                      <button
+                        key={option.key}
+                        type="button"
+                        className={`${styles.popoverOption}${
+                          selected ? ` ${styles.popoverOptionOn}` : ""
+                        }`}
+                        onClick={() => {
+                          onCategoryChange?.(option.key);
+                          setPopover(null);
+                        }}
+                      >
+                        <span className={styles.popoverOptionLabel}>
+                          {option.label}
+                        </span>
+                        {selected && (
+                          <i className={`fa-solid fa-check ${styles.popoverOptionCheck}`} />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className={styles.popoverActions}>
                   <button
                     type="button"

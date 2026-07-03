@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import type { CampaignCategory } from "@jsure/shared";
 import {
   ApplicantFilters,
   ApplicantStatusFilter,
@@ -15,6 +16,7 @@ import {
 } from "@/domains/application";
 import { InfluencerNotesDialog } from "@/domains/influencer";
 import { Button } from "@/components/ui";
+import { ApplicantDetailDialog } from "./ApplicantDetailDialog";
 import { ApprovedApplicantsDownloadDialog } from "./ApprovedApplicantsDownloadDialog";
 import styles from "./Applicants.module.css";
 
@@ -28,6 +30,9 @@ export function Applicants() {
   const [statusFilter, setStatusFilter] = useState<Set<ApplicantStatus>>(
     () => new Set(),
   );
+  const [categoryFilter, setCategoryFilter] =
+    useState<CampaignCategory | null>(null);
+  const [detailTarget, setDetailTarget] = useState<Applicant | null>(null);
   const [query, setQuery] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
 
@@ -63,6 +68,8 @@ export function Applicants() {
         return false;
       if (statusFilter.size > 0 && !statusFilter.has(applicant.status))
         return false;
+      if (categoryFilter !== null && applicant.category !== categoryFilter)
+        return false;
       if (normalizedQuery) {
         const haystack =
           `${applicant.name} ${applicant.influencerId} ${applicant.allHandles.join(" ")}`.toLowerCase();
@@ -70,7 +77,7 @@ export function Applicants() {
       }
       return true;
     });
-  }, [applicants, mediaFilter, minFollowers, statusFilter, query]);
+  }, [applicants, mediaFilter, minFollowers, statusFilter, categoryFilter, query]);
 
   return (
     <div className={styles.root}>
@@ -106,6 +113,8 @@ export function Applicants() {
           onMediaChange={setMediaFilter}
           minFollowers={minFollowers}
           onMinFollowersChange={setMinFollowers}
+          category={categoryFilter}
+          onCategoryChange={setCategoryFilter}
         />
         <ApplicantStatusFilter value={statusFilter} onChange={setStatusFilter} />
         <div className={styles.searchSpacer} />
@@ -153,6 +162,7 @@ export function Applicants() {
           onShip={mutations.openShip}
           onDeliver={mutations.openDeliver}
           onMemo={setNotesTarget}
+          onDetail={setDetailTarget}
         />
       )}
 
@@ -176,6 +186,13 @@ export function Applicants() {
 
       {downloadOpen && (
         <ApprovedApplicantsDownloadDialog onClose={() => setDownloadOpen(false)} />
+      )}
+
+      {detailTarget && (
+        <ApplicantDetailDialog
+          applicant={detailTarget}
+          onClose={() => setDetailTarget(null)}
+        />
       )}
     </div>
   );

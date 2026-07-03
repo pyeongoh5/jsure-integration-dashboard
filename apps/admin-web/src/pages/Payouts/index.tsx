@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { AdminSettlement } from "@jsure/shared";
-import { completeSettlements, listSettlements } from "@/domains/application";
+import type { AdminSettlement, CampaignCategory } from "@jsure/shared";
+import {
+  completeSettlements,
+  listSettlements,
+  CATEGORY_LABEL_KO,
+  CATEGORY_FILTER_OPTIONS,
+} from "@/domains/application";
 import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
 import styles from "./Payouts.module.css";
@@ -27,6 +32,10 @@ function formatDateTime(iso: string | null): string {
   });
 }
 
+function formatRefund(amount: number): string {
+  return amount === 0 ? "—" : `¥${amount.toLocaleString("ja-JP")}`;
+}
+
 function csvEscape(value: string | number | null): string {
   if (value === null || value === undefined) return "";
   const s = String(value);
@@ -39,11 +48,14 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
     "정산 ID",
     "인플루언서",
     "캠페인",
+    "카테고리",
     "SNS",
     "투고 URL",
     "투고 게시일",
     "인사이트 제출일",
-    "정산 금액(JPY)",
+    "보수(JPY)",
+    "상품환급(JPY)",
+    "합계(JPY)",
     "정산 등록일",
     "정산 완료일",
     "상태",
@@ -55,10 +67,13 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
         row.id,
         row.influencer.name,
         row.campaign.title,
+        CATEGORY_LABEL_KO[row.campaign.category],
         row.post.subType,
         row.post.url,
         formatDateTime(row.post.submittedAt),
         formatDateTime(row.post.insightSubmittedAt),
+        row.rewardAmountJpy,
+        row.productRefundJpy,
         row.amountJpy,
         formatDateTime(row.createdAt),
         formatDateTime(row.completedAt),
@@ -94,6 +109,8 @@ export function Payouts() {
   const [reloadKey, setReloadKey] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [month, setMonth] = useState<string>(currentJstMonth);
+  const [categoryFilter, setCategoryFilter] =
+    useState<CampaignCategory | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,9 +132,15 @@ export function Payouts() {
     };
   }, [reloadKey, month]);
 
+  const visibleRows = useMemo(() => {
+    if (state.kind !== "ready") return [];
+    if (categoryFilter === null) return state.rows;
+    return state.rows.filter((row) => row.campaign.category === categoryFilter);
+  }, [state, categoryFilter]);
+
   const pendingRows = useMemo(
-    () => (state.kind === "ready" ? state.rows.filter((r) => r.status === "PENDING") : []),
-    [state],
+    () => visibleRows.filter((r) => r.status === "PENDING"),
+    [visibleRows],
   );
 
   const summary = useMemo(() => {
@@ -134,14 +157,14 @@ export function Payouts() {
     let completedCount = 0;
     let completedAmount = 0;
     for (const row of pendingRows) pendingAmount += row.amountJpy;
-    for (const row of state.rows) {
+    for (const row of visibleRows) {
       if (row.status === "COMPLETED") {
         completedCount += 1;
         completedAmount += row.amountJpy;
       }
     }
     return {
-      total: state.rows.length,
+      total: visibleRows.length,
       pendingCount: pendingRows.length,
       pendingAmount,
       completedCount,
@@ -225,11 +248,27 @@ export function Payouts() {
               onChange={(e) => setMonth(e.target.value)}
             />
           </label>
+          <select
+            className={styles.monthInput}
+            value={categoryFilter ?? ""}
+            onChange={(event) => {
+              const value = event.target.value;
+              setCategoryFilter(value === "" ? null : (value as CampaignCategory));
+            }}
+            aria-label="카테고리 필터"
+          >
+            <option value="">전체 카테고리</option>
+            {CATEGORY_FILTER_OPTIONS.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
           <Button
             variant="success"
             size="md"
-            onClick={() => state.kind === "ready" && downloadCsv(state.rows, month)}
-            disabled={state.kind !== "ready" || state.rows.length === 0}
+            onClick={() => state.kind === "ready" && downloadCsv(visibleRows, month)}
+            disabled={state.kind !== "ready" || visibleRows.length === 0}
             iconLeft={<i className="fa-solid fa-file-excel" aria-hidden="true" />}
           >
             엑셀 다운로드
@@ -276,11 +315,11 @@ export function Payouts() {
 
         {state.kind === "loading" && <div className={styles.empty}>불러오는 중…</div>}
         {state.kind === "error" && <div className={styles.empty}>{state.message}</div>}
-        {state.kind === "ready" && state.rows.length === 0 && (
+        {state.kind === "ready" && visibleRows.length === 0 && (
           <div className={styles.empty}>정산 대상이 없습니다.</div>
         )}
-        {state.kind === "ready" && state.rows.length > 0 && (
-          <ScrollTable minWidth={1200}>
+        {state.kind === "ready" && visibleRows.length > 0 && (
+          <ScrollTable minWidth={1400}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -298,18 +337,25 @@ export function Payouts() {
                   </th>
                   <th>인플루언서</th>
                   <th>캠페인</th>
+                  <th>카테고리</th>
                   <th>매체</th>
                   <th>투고 게시일</th>
                   <th>인사이트 제출일</th>
-                  <th>금액</th>
+                  <th>보수</th>
+                  <th>상품환급</th>
+                  <th>합계</th>
                   <th>정산 등록일</th>
                   <th>정산 완료일</th>
                   <th style={{ width: 70 }}>상태</th>
                 </tr>
               </thead>
               <tbody>
-                {state.rows.map((row) => {
+                {visibleRows.map((row) => {
                   const isPending = row.status === "PENDING";
+                  const categoryBadgeCls =
+                    row.campaign.category === "SNS"
+                      ? styles.categoryBadgeSns
+                      : styles.categoryBadgeFake;
                   return (
                     <tr key={row.id}>
                       <td className={styles.checkCol}>
@@ -324,9 +370,16 @@ export function Payouts() {
                       </td>
                       <td>{row.influencer.name}</td>
                       <td>{row.campaign.title}</td>
+                      <td>
+                        <span className={`${styles.categoryBadge} ${categoryBadgeCls}`}>
+                          {CATEGORY_LABEL_KO[row.campaign.category]}
+                        </span>
+                      </td>
                       <td>{row.post.subType}</td>
                       <td>{formatDateTime(row.post.submittedAt)}</td>
                       <td>{formatDateTime(row.post.insightSubmittedAt)}</td>
+                      <td className={styles.amount}>{formatJpy(row.rewardAmountJpy)}</td>
+                      <td className={styles.amount}>{formatRefund(row.productRefundJpy)}</td>
                       <td className={styles.amount}>{formatJpy(row.amountJpy)}</td>
                       <td>{formatDateTime(row.createdAt)}</td>
                       <td>{formatDateTime(row.completedAt)}</td>

@@ -138,6 +138,24 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.categoryBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.categoryBadgeSns {
+  background: #eef2ff;
+  color: #4338ca;
+}
+.categoryBadgeFake {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .monthInput {
   height: 36px;
   box-sizing: border-box;

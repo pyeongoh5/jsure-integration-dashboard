@@ -192,6 +192,8 @@ export const AdminSettlementSchema = z.object({
   id: z.string(),
   postId: z.string(),
   amountJpy: z.number().int().nonnegative(),
+  rewardAmountJpy: z.number().int().nonnegative(),
+  productRefundJpy: z.number().int().nonnegative(),
   status: SettlementStatusSchema,
   createdAt: z.string().datetime(),
   completedAt: z.string().datetime().nullable(),
@@ -203,6 +205,7 @@ export const AdminSettlementSchema = z.object({
   }),
   campaign: z.object({
     id: z.string(),
+    category: CampaignCategorySchema,
     title: z.string(),
   }),
   post: z.object({

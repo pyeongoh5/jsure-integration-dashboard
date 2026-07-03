@@ -616,7 +616,7 @@ export class AdminApplicationsService {
             application: {
               select: {
                 influencerId: true,
-                campaign: { select: { id: true, title: true } },
+                campaign: { select: { id: true, title: true, category: true } },
                 influencer: {
                   select: {
                     id: true,
@@ -1005,6 +1005,8 @@ type SettlementRow = {
   id: string;
   postId: string;
   amountJpy: number;
+  rewardAmountJpy: number;
+  productRefundJpy: number;
   status: "PENDING" | "COMPLETED";
   createdAt: Date;
   completedAt: Date | null;
@@ -1015,7 +1017,7 @@ type SettlementRow = {
     submittedAt: Date;
     insightSubmittedAt: Date | null;
     application: {
-      campaign: { id: string; title: string };
+      campaign: { id: string; title: string; category: CampaignCategory };
       influencer: {
         id: string;
         name: string;
@@ -1033,6 +1035,8 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
     id: row.id,
     postId: row.postId,
     amountJpy: row.amountJpy,
+    rewardAmountJpy: row.rewardAmountJpy,
+    productRefundJpy: row.productRefundJpy,
     status: row.status,
     createdAt: row.createdAt.toISOString(),
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
@@ -1043,6 +1047,7 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
     },
     campaign: {
       id: row.post.application.campaign.id,
+      category: row.post.application.campaign.category,
       title: row.post.application.campaign.title,
     },
     post: {

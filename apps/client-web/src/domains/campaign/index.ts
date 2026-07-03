@@ -4,8 +4,8 @@ export { formatYen, formatDate, isCampaignClosed } from "./utils";
 export type {
   InfluencerCampaignCard,
   InfluencerCampaignDetail,
-  SnsRecruit,
-  SnsType,
+  CampaignRecruit,
+  CampaignSubType,
 } from "./types";
 export { CampaignCard } from "./components/CampaignCard";
 export { SnsTabBar } from "./components/SnsTabBar";

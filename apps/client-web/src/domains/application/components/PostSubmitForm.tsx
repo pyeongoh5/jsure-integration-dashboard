@@ -1,7 +1,7 @@
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { SnsType } from "@jsure/shared";
+import type { CampaignSubType } from "@jsure/shared";
 import { Input } from "@/components/ui";
 import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
@@ -12,15 +12,18 @@ const schema = z.object({
 });
 type Values = z.infer<typeof schema>;
 
-const PLACEHOLDER_BY_SNS: Record<SnsType, string> = {
+const PLACEHOLDER_BY_SNS: Record<CampaignSubType, string> = {
   INSTAGRAM: "https://www.instagram.com/p/...",
   TIKTOK: "https://www.tiktok.com/@user/video/...",
   X: "https://x.com/user/status/...",
   YOUTUBE: "https://www.youtube.com/watch?v=...",
+  QOO10: "https://...",
+  LIPS: "https://...",
+  ATCOSME: "https://...",
 };
 
 interface Props {
-  snsType: SnsType;
+  subType: CampaignSubType;
   initial: string;
   onSubmit: (url: string) => Promise<void>;
   submitting: boolean;
@@ -33,7 +36,7 @@ function formatDeadline(iso: string): string {
 }
 
 export function PostSubmitForm({
-  snsType,
+  subType,
   initial,
   onSubmit,
   submitting,
@@ -51,7 +54,7 @@ export function PostSubmitForm({
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(handle)}>
-        <FormField name="url" label={`${snsType} ${t("application.postForm.labelSuffix")}`}>
+        <FormField name="url" label={`${subType} ${t("application.postForm.labelSuffix")}`}>
           {(field) => (
             <Input
               id={field.id}
@@ -60,7 +63,7 @@ export function PostSubmitForm({
               onChange={field.onChange}
               onBlur={field.onBlur}
               error={field.error}
-              placeholder={PLACEHOLDER_BY_SNS[snsType]}
+              placeholder={PLACEHOLDER_BY_SNS[subType]}
               aria-invalid={field["aria-invalid"]}
             />
           )}

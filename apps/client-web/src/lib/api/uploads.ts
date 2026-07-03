@@ -29,7 +29,7 @@ function assertAllowed(file: File): UploadContentType {
 
 async function presignInsight(input: {
   applicationId: string;
-  snsType: "INSTAGRAM" | "TIKTOK" | "X" | "YOUTUBE";
+  subType: "INSTAGRAM" | "TIKTOK" | "X" | "YOUTUBE";
   contentType: UploadContentType;
   sizeBytes: number;
 }): Promise<InsightUploadPresignResponse> {
@@ -45,13 +45,13 @@ async function presignInsight(input: {
  */
 export async function uploadInsightImage(
   applicationId: string,
-  snsType: "INSTAGRAM" | "TIKTOK" | "X" | "YOUTUBE",
+  subType: "INSTAGRAM" | "TIKTOK" | "X" | "YOUTUBE",
   file: File,
 ): Promise<InsightAttachmentInput> {
   const contentType = assertAllowed(file);
   const presign = await presignInsight({
     applicationId,
-    snsType,
+    subType,
     contentType,
     sizeBytes: file.size,
   });

@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import type {
+  CampaignCategory,
+  CampaignSubType,
   InfluencerCampaignCard,
   InfluencerCampaignDetail,
   InstagramPostType,
-  SnsType,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
@@ -12,6 +13,7 @@ const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
 type CampaignRow = {
   id: string;
+  category: CampaignCategory;
   title: string;
   productSummary: string;
   rewardJpy: number;
@@ -21,17 +23,19 @@ type CampaignRow = {
   postingPeriodDays: number;
   createdAt: Date;
   closedAt: Date | null;
-  snsRecruits: {
-    snsType: SnsType;
+  recruits: {
+    subType: CampaignSubType;
     minFollowers: number;
     recruitCount: number;
     instagramPostTypes: InstagramPostType[];
     insightRequired: boolean;
+    productPriceJpy: number | null;
+    productUrl: string | null;
   }[];
 };
 
-function totalRecruitCount(snsRecruits: { recruitCount: number }[]) {
-  return snsRecruits.reduce((acc, r) => acc + r.recruitCount, 0);
+function totalRecruitCount(recruits: { recruitCount: number }[]) {
+  return recruits.reduce((acc, r) => acc + r.recruitCount, 0);
 }
 
 function isNew(createdAt: Date, now: Date): boolean {
@@ -47,12 +51,13 @@ function toCard(
   const isEnded = closedAt !== null || row.recruitEndAt.getTime() < now.getTime();
   return {
     id: row.id,
+    category: row.category,
     title: row.title,
     productSummary: row.productSummary,
     thumbnailUrl: row.thumbnailUrl,
     rewardJpy: row.rewardJpy,
-    snsRecruits: row.snsRecruits,
-    recruitCount: totalRecruitCount(row.snsRecruits),
+    recruits: row.recruits,
+    recruitCount: totalRecruitCount(row.recruits),
     appliedCount,
     recruitStartAt: row.recruitStartAt.toISOString(),
     recruitEndAt: row.recruitEndAt.toISOString(),
@@ -81,24 +86,26 @@ export class InfluencerCampaignsService {
 
   async list(args: {
     influencerId: string;
-    sns?: SnsType;
+    sns?: CampaignSubType;
   }): Promise<InfluencerCampaignCard[]> {
     const now = new Date();
     const rows = await this.prisma.campaign.findMany({
       where: args.sns
-        ? { snsRecruits: { some: { snsType: args.sns } } }
+        ? { recruits: { some: { subType: args.sns } } }
         : {},
       orderBy: [{ createdAt: "desc" }],
       include: {
-        snsRecruits: {
+        recruits: {
           select: {
-            snsType: true,
+            subType: true,
             minFollowers: true,
             recruitCount: true,
             instagramPostTypes: true,
             insightRequired: true,
+            productPriceJpy: true,
+            productUrl: true,
           },
-          orderBy: { snsType: "asc" },
+          orderBy: { subType: "asc" },
         },
       },
     });
@@ -132,15 +139,17 @@ export class InfluencerCampaignsService {
     const row = await this.prisma.campaign.findUnique({
       where: { id: args.campaignId },
       include: {
-        snsRecruits: {
+        recruits: {
           select: {
-            snsType: true,
+            subType: true,
             minFollowers: true,
             recruitCount: true,
             instagramPostTypes: true,
             insightRequired: true,
+            productPriceJpy: true,
+            productUrl: true,
           },
-          orderBy: { snsType: "asc" },
+          orderBy: { subType: "asc" },
         },
         exclusionsAsExcluding: { select: { excludedCampaignId: true } },
       },
@@ -158,14 +167,14 @@ export class InfluencerCampaignsService {
       (exclusion) => exclusion.excludedCampaignId,
     );
     const [existing, applicationsOnExcludedCampaigns] = await Promise.all([
-      // 취소된 응모도 재응모 불가 대상이므로 appliedSnsTypes 에 포함시키고,
+      // 취소된 응모도 재응모 불가 대상이므로 appliedCampaignSubTypes 에 포함시키고,
       // 취소 여부도 별도로 구분해 UI 에서 안내 문구를 달리 표시할 수 있게 한다.
       this.prisma.campaignApplication.findMany({
         where: {
           campaignId: row.id,
           influencerId: args.influencerId,
         },
-        select: { snsType: true, status: true },
+        select: { subType: true, status: true },
       }),
       excludedCampaignIds.length > 0
         ? this.prisma.campaignApplication.findMany({
@@ -174,17 +183,17 @@ export class InfluencerCampaignsService {
               campaignId: { in: excludedCampaignIds },
               status: { not: "CANCELLED" },
             },
-            select: { snsType: true },
-            distinct: ["snsType"],
+            select: { subType: true },
+            distinct: ["subType"],
           })
-        : Promise.resolve([] as { snsType: SnsType }[]),
+        : Promise.resolve([] as { subType: CampaignSubType }[]),
     ]);
-    const recruitedSnsTypes = new Set(
-      row.snsRecruits.map((recruit) => recruit.snsType),
+    const recruitedCampaignSubTypes = new Set(
+      row.recruits.map((recruit) => recruit.subType),
     );
-    const excludedSnsTypes = applicationsOnExcludedCampaigns
-      .map((application) => application.snsType)
-      .filter((snsType) => recruitedSnsTypes.has(snsType));
+    const excludedCampaignSubTypes = applicationsOnExcludedCampaigns
+      .map((application) => application.subType)
+      .filter((subType) => recruitedCampaignSubTypes.has(subType));
 
     const card = await this.resolveCard(toCard(row, appliedCount, row.closedAt, now));
     const [guideline, cautions] = await Promise.all([
@@ -197,11 +206,11 @@ export class InfluencerCampaignsService {
       guideline,
       referenceMediaUrls: row.referenceMediaUrls,
       cautions,
-      appliedSnsTypes: existing.map((r) => r.snsType),
-      cancelledSnsTypes: existing
+      appliedSubTypes: existing.map((r) => r.subType),
+      cancelledSubTypes: existing
         .filter((r) => r.status === "CANCELLED")
-        .map((r) => r.snsType),
-      excludedSnsTypes,
+        .map((r) => r.subType),
+      excludedSubTypes: excludedCampaignSubTypes,
     };
   }
 }

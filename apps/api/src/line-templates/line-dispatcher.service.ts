@@ -5,9 +5,12 @@ import { LineMessagingService } from "../influencer-auth/line-messaging.service"
 import { getMeta, type DispatchContext } from "./trigger-meta";
 import { renderTemplate } from "./template-renderer";
 
-function snsTypeToSubType(snsType: string): LineTriggerSubType | null {
-  if (snsType === "INSTAGRAM") return "INSTAGRAM";
-  if (snsType === "X") return "X";
+function campaignSubTypeToTriggerSubType(subType: string): LineTriggerSubType | null {
+  if (subType === "INSTAGRAM") return "INSTAGRAM";
+  if (subType === "X") return "X";
+  if (subType === "QOO10") return "QOO10";
+  if (subType === "LIPS") return "LIPS";
+  if (subType === "ATCOSME") return "ATCOSME";
   return null;
 }
 
@@ -22,7 +25,9 @@ export class LineDispatcherService {
 
   async dispatch(triggerKey: LineTriggerKey, context: DispatchContext): Promise<void> {
     const meta = getMeta(triggerKey);
-    const subType = meta.requiresSubType ? snsTypeToSubType(context.application.snsType) : null;
+    const subType = meta.requiresSubType
+      ? campaignSubTypeToTriggerSubType(context.application.subType)
+      : null;
     const category = meta.category;
     const toLineUserId = context.application.influencer.lineUserId ?? "";
     const applicationId = context.application.id;

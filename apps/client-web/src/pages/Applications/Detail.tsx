@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { SnsType } from "@jsure/shared";
+import type { CampaignSubType } from "@jsure/shared";
 import { useState } from "react";
 import {
   ApplicationStepper,
@@ -54,16 +54,16 @@ export function ApplicationDetail() {
     },
   });
   const post = useMutation({
-    mutationFn: ({ snsType, url }: { snsType: SnsType; url: string }) =>
-      submitPost(id, snsType, url),
+    mutationFn: ({ subType, url }: { subType: CampaignSubType; url: string }) =>
+      submitPost(id, subType, url),
     onSuccess: () => invalidate(),
   });
   const insight = useMutation({
     mutationFn: ({
-      snsType,
+      subType,
       input,
     }: {
-      snsType: SnsType;
+      subType: CampaignSubType;
       input: {
         likes: number;
         comments: number;
@@ -78,7 +78,7 @@ export function ApplicationDetail() {
           sizeBytes: number;
         }[];
       };
-    }) => submitInsight(id, snsType, input),
+    }) => submitInsight(id, subType, input),
     onSuccess: () => invalidate(),
   });
 
@@ -176,10 +176,10 @@ export function ApplicationDetail() {
 
         {stage === "POSTING" && (
           <PostSubmitForm
-            snsType={data.snsType}
+            subType={data.subType}
             initial=""
             onSubmit={async (url) => {
-              await post.mutateAsync({ snsType: data.snsType, url });
+              await post.mutateAsync({ subType: data.subType, url });
             }}
             submitting={post.isPending}
             postingDeadlineAt={data.postingDeadlineAt}
@@ -195,7 +195,7 @@ export function ApplicationDetail() {
                   <span className={styles.rejectBadge}>
                     {t("pages.applications.detail.rejectBadge")}
                   </span>
-                  <span className={styles.rejectSns}>{p.snsType}</span>
+                  <span className={styles.rejectSns}>{p.subType}</span>
                 </div>
                 <div className={styles.rejectUrl}>
                   {t("pages.applications.detail.rejectUrlPrefix")}
@@ -212,10 +212,10 @@ export function ApplicationDetail() {
                   </div>
                 )}
                 <PostSubmitForm
-                  snsType={p.snsType}
+                  subType={p.subType}
                   initial={p.url}
                   onSubmit={async (url) => {
-                    await post.mutateAsync({ snsType: p.snsType, url });
+                    await post.mutateAsync({ subType: p.subType, url });
                   }}
                   submitting={post.isPending}
                   postingDeadlineAt={data.postingDeadlineAt}
@@ -230,7 +230,7 @@ export function ApplicationDetail() {
         {stage === "INSIGHT_DUE" && data.posts[0] && (
           <InsightSubmitForm
             applicationId={data.id}
-            snsType={data.posts[0].snsType}
+            subType={data.posts[0].subType}
             initial={
               data.posts[0].insightSubmittedAt
                 ? {
@@ -246,7 +246,7 @@ export function ApplicationDetail() {
             }
             onSubmit={async (input) => {
               await insight.mutateAsync({
-                snsType: data.posts[0]!.snsType,
+                subType: data.posts[0]!.subType,
                 input,
               });
             }}

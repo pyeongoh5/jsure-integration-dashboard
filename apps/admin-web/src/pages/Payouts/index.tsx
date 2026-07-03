@@ -55,7 +55,7 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
         row.id,
         row.influencer.name,
         row.campaign.title,
-        row.post.snsType,
+        row.post.subType,
         row.post.url,
         formatDateTime(row.post.submittedAt),
         formatDateTime(row.post.insightSubmittedAt),
@@ -324,7 +324,7 @@ export function Payouts() {
                       </td>
                       <td>{row.influencer.name}</td>
                       <td>{row.campaign.title}</td>
-                      <td>{row.post.snsType}</td>
+                      <td>{row.post.subType}</td>
                       <td>{formatDateTime(row.post.submittedAt)}</td>
                       <td>{formatDateTime(row.post.insightSubmittedAt)}</td>
                       <td className={styles.amount}>{formatJpy(row.amountJpy)}</td>

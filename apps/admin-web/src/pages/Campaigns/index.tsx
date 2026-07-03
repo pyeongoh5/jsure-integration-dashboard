@@ -80,7 +80,7 @@ function stripHtml(html: string): string {
 
 function toCard(c: CampaignResponse, now: Date): Campaign {
   const status = deriveStatus(c, now);
-  const capacity = c.snsRecruits.reduce((sum, r) => sum + r.recruitCount, 0);
+  const capacity = c.recruits.reduce((sum, r) => sum + r.recruitCount, 0);
   return {
     id: c.id,
     brand: "",
@@ -95,8 +95,8 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     applied: c.appliedCount,
     capacity,
     dday: daysUntil(c.recruitEndAt, now),
-    snsRecruits: c.snsRecruits.map((r) => ({
-      snsType: r.snsType,
+    recruits: c.recruits.map((r) => ({
+      subType: r.subType,
       minFollowers: r.minFollowers,
       instagramPostTypes: r.instagramPostTypes,
     })),
@@ -231,7 +231,7 @@ export function Campaigns() {
                     description={c.description}
                     period={c.period}
                     reward={c.reward}
-                    snsRecruits={c.snsRecruits}
+                    recruits={c.recruits}
                   />
                 }
                 bottomAffix={

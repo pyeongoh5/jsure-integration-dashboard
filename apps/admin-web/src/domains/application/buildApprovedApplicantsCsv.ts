@@ -1,7 +1,7 @@
 import type {
   ApprovedApplicantExportResponse,
   ApprovedApplicantExportRow,
-  SnsType,
+  CampaignSubType,
 } from "@jsure/shared";
 
 const HEADERS = [
@@ -15,11 +15,14 @@ const HEADERS = [
   "주소",
 ] as const;
 
-const SNS_LABEL: Record<SnsType, string> = {
+const SNS_LABEL: Record<CampaignSubType, string> = {
   INSTAGRAM: "Instagram",
   TIKTOK: "TikTok",
   X: "X",
   YOUTUBE: "YouTube",
+  QOO10: "Qoo10",
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
 };
 
 function escapeCsvCell(value: string): string {
@@ -34,7 +37,7 @@ function formatRow(row: ApprovedApplicantExportRow): string[] {
   return [
     row.name,
     row.nameKana ?? "",
-    SNS_LABEL[row.snsType],
+    SNS_LABEL[row.subType],
     row.snsHandle,
     row.profileUrl,
     row.phone,

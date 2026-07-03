@@ -6,7 +6,7 @@ import {
   Request,
   UseGuards,
 } from "@nestjs/common";
-import { SnsTypeSchema, type SnsType } from "@jsure/shared";
+import { CampaignSubTypeSchema, type CampaignSubType } from "@jsure/shared";
 import { InfluencerJwtAuthGuard } from "../influencer-auth/guards/influencer-jwt-auth.guard";
 import type { AuthenticatedInfluencer } from "../influencer-auth/strategies/influencer-jwt.strategy";
 import { InfluencerCampaignsService } from "./influencer-campaigns.service";
@@ -21,9 +21,9 @@ export class InfluencerCampaignsController {
     @Request() req: { user: AuthenticatedInfluencer },
     @Query("sns") sns?: string,
   ) {
-    let parsed: SnsType | undefined = undefined;
+    let parsed: CampaignSubType | undefined = undefined;
     if (sns) {
-      const result = SnsTypeSchema.safeParse(sns);
+      const result = CampaignSubTypeSchema.safeParse(sns);
       parsed = result.success ? result.data : undefined;
     }
     const campaigns = await this.svc.list({

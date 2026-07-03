@@ -1,12 +1,12 @@
 import type {
   ApplicationStatus,
+  CampaignSubType,
   InstagramPostType,
   PostReviewStatus,
-  SnsType,
   SubmittedPostAttachment,
 } from "@jsure/shared";
 
-export type Media = "ig" | "yt" | "tt" | "x";
+export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
 
 // reviewStatus + 인사이트 제출 여부 + 정산 상태를 통합한 단일 상태값.
 export type DraftStatus =
@@ -44,7 +44,7 @@ export type DraftReview = {
   campaignId: string;
   campaignTitle: string;
   campaignThumbnailUrl: string | null;
-  snsType: SnsType;
+  subType: CampaignSubType;
   media: Media;
   instagramPostType: InstagramPostType | null;
   url: string;
@@ -71,13 +71,19 @@ export const MEDIA_META: Record<
   yt: { label: "YouTube", icon: "fa-brands fa-youtube" },
   tt: { label: "TikTok", icon: "fa-brands fa-tiktok" },
   x: { label: "X", icon: "fa-brands fa-x-twitter" },
+  qoo10: { label: "Qoo10", icon: "fa-solid fa-bag-shopping" },
+  lips: { label: "LIPS", icon: "fa-solid fa-bag-shopping" },
+  atcosme: { label: "@cosme", icon: "fa-solid fa-bag-shopping" },
 };
 
-export const SNS_TO_MEDIA: Record<SnsType, Media> = {
+export const SNS_TO_MEDIA: Record<CampaignSubType, Media> = {
   INSTAGRAM: "ig",
   YOUTUBE: "yt",
   TIKTOK: "tt",
   X: "x",
+  QOO10: "qoo10",
+  LIPS: "lips",
+  ATCOSME: "atcosme",
 };
 
 export const DRAFT_STATUS_LABEL: Record<DraftStatus, string> = {

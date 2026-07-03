@@ -13,7 +13,7 @@ import {
 import {
   InfluencerBankAccountSchema,
   InfluencerSnsAccountInputSchema,
-  SnsTypeSchema,
+  SnsAccountSubTypeSchema,
   UpdateInfluencerAddressRequestSchema,
   UpdateInfluencerProfileRequestSchema,
   type InfluencerBankAccount,
@@ -67,7 +67,7 @@ export class InfluencerMeController {
     @Request() req: { user: AuthenticatedInfluencer },
     @Param("snsType") raw: string,
   ) {
-    const snsType = SnsTypeSchema.parse(raw);
+    const snsType = SnsAccountSubTypeSchema.parse(raw);
     await this.svc.deleteSnsAccount(req.user.id, snsType);
   }
 

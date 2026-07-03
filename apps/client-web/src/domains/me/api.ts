@@ -1,7 +1,7 @@
 import type {
   InfluencerBankAccount,
   InfluencerSnsAccountInput,
-  SnsType,
+  SnsAccountSubType,
   UpdateInfluencerAddressRequest,
   UpdateInfluencerProfileRequest,
 } from "@jsure/shared";
@@ -25,7 +25,7 @@ export async function upsertSnsAccount(
   await api.put("/influencer-me/sns", input);
 }
 
-export async function deleteSnsAccount(snsType: SnsType): Promise<void> {
+export async function deleteSnsAccount(snsType: SnsAccountSubType): Promise<void> {
   await api.delete(`/influencer-me/sns/${snsType}`);
 }
 

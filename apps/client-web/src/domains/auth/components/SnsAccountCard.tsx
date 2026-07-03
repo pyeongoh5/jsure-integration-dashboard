@@ -1,9 +1,9 @@
-import type { SnsType } from "@jsure/shared";
+import type { SnsAccountSubType } from "@jsure/shared";
 import { t } from "@i18n";
 import styles from "./SnsAccountCard.module.css";
 
 interface Props {
-  snsType: SnsType;
+  snsType: SnsAccountSubType;
   enabled: boolean;
   handle: string;
   followerCount: string;
@@ -11,14 +11,14 @@ interface Props {
   onChange: (field: "handle" | "followerCount", v: string) => void;
 }
 
-const ICON: Record<SnsType, string> = {
+const ICON: Record<SnsAccountSubType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",
   TIKTOK: "fa-brands fa-tiktok",
   YOUTUBE: "fa-brands fa-youtube",
   X: "fa-brands fa-x-twitter",
 };
 
-const LABEL: Record<SnsType, string> = {
+const LABEL: Record<SnsAccountSubType, string> = {
   INSTAGRAM: "Instagram",
   TIKTOK: "TikTok",
   YOUTUBE: "YouTube",

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import type { AdminInfluencer, SnsType } from "@jsure/shared";
+import type { AdminInfluencer, SnsAccountSubType } from "@jsure/shared";
 import { RichTextEditor } from "@/components/composites/RichTextEditor/RichTextEditor";
 import {
   RichTextImageUploadError,
@@ -13,13 +13,13 @@ import styles from "./BroadcastDialog.module.css";
 // SNS 칩 스타일은 인플루언서 페이지의 것을 그대로 재사용
 import influencersStyles from "@/pages/Influencers/Influencers.module.css";
 
-const SNS_ICON: Record<SnsType, string> = {
+const SNS_ICON: Record<SnsAccountSubType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",
   TIKTOK: "fa-brands fa-tiktok",
   X: "fa-brands fa-x-twitter",
   YOUTUBE: "fa-brands fa-youtube",
 };
-const SNS_CLASS: Record<SnsType, string | undefined> = {
+const SNS_CLASS: Record<SnsAccountSubType, string | undefined> = {
   INSTAGRAM: influencersStyles.snsIg,
   TIKTOK: influencersStyles.snsTt,
   X: influencersStyles.snsX,

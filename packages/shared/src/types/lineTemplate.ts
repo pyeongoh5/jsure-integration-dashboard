@@ -1,9 +1,16 @@
 import { z } from "zod";
+import { CampaignCategorySchema } from "./campaign.js";
 
-export const CampaignCategorySchema = z.enum(["SNS", "FAKE_PURCHASE"]);
-export type CampaignCategory = z.infer<typeof CampaignCategorySchema>;
+export { CampaignCategorySchema };
+export type { CampaignCategory } from "./campaign.js";
 
-export const LineTriggerSubTypeSchema = z.enum(["INSTAGRAM", "X"]);
+export const LineTriggerSubTypeSchema = z.enum([
+  "INSTAGRAM",
+  "X",
+  "QOO10",
+  "LIPS",
+  "ATCOSME",
+]);
 export type LineTriggerSubType = z.infer<typeof LineTriggerSubTypeSchema>;
 
 export const LineTriggerKeySchema = z.enum([
@@ -22,6 +29,16 @@ export const LineTriggerKeySchema = z.enum([
   "SNS_INSIGHT_REMINDER",
   "SNS_SETTLEMENT_COMPLETED",
   "SNS_CAMPAIGN_COMPLETED",
+  "FAKE_PURCHASE_APPLICATION_APPLIED",
+  "FAKE_PURCHASE_APPLICATION_APPROVED",
+  "FAKE_PURCHASE_APPLICATION_REJECTED",
+  "FAKE_PURCHASE_ORDER_SUBMITTED",
+  "FAKE_PURCHASE_REVIEW_SUBMITTED",
+  "FAKE_PURCHASE_REVIEW_APPROVED",
+  "FAKE_PURCHASE_REVIEW_REJECTED",
+  "FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER",
+  "FAKE_PURCHASE_SETTLEMENT_COMPLETED",
+  "FAKE_PURCHASE_CAMPAIGN_COMPLETED",
 ]);
 export type LineTriggerKey = z.infer<typeof LineTriggerKeySchema>;
 

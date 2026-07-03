@@ -5,9 +5,10 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type {
+  CampaignCategory,
+  CampaignSubType,
   InfluencerApplication,
   InstagramPostType,
-  SnsType,
   SubmittedPost,
   ApplicationStatus,
 } from "@jsure/shared";
@@ -27,7 +28,7 @@ const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
 
 type PostRow = {
   id: string;
-  snsType: SnsType;
+  subType: CampaignSubType;
   url: string;
   submittedAt: Date;
   insightLikes: number | null;
@@ -60,16 +61,20 @@ type ApplicationRow = {
   receivedAt: Date | null;
   completedAt: Date | null;
   rejectReason: string | null;
-  snsType: SnsType;
+  subType: CampaignSubType;
   instagramPostType: InstagramPostType | null;
+  orderNumber: string | null;
+  orderSubmittedAt: Date | null;
+  reviewSubmittedAt: Date | null;
   posts: PostRow[];
   campaign: {
     id: string;
+    category: CampaignCategory;
     title: string;
     thumbnailUrl: string | null;
     rewardJpy: number;
     postingPeriodDays: number;
-    snsRecruits: { snsType: SnsType; insightRequired: boolean }[];
+    recruits: { subType: CampaignSubType; insightRequired: boolean }[];
   };
 };
 
@@ -78,7 +83,7 @@ function toPost(row: PostRow): SubmittedPost {
     row.reviewStatus === "REJECTED" ? row.rejections[0] ?? null : null;
   return {
     id: row.id,
-    snsType: row.snsType,
+    subType: row.subType,
     url: row.url,
     submittedAt: row.submittedAt.toISOString(),
     insightLikes: row.insightLikes,
@@ -118,6 +123,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
   return {
     id: row.id,
     campaignId: row.campaignId,
+    campaignCategory: row.campaign.category,
     campaignTitle: row.campaign.title,
     campaignThumbnailUrl: row.campaign.thumbnailUrl,
     rewardJpy: row.campaign.rewardJpy,
@@ -131,7 +137,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
         reviewStatus: p.reviewStatus,
         settlementStatus: p.settlement?.status ?? null,
         insightRequired:
-          row.campaign.snsRecruits.find((recruit) => recruit.snsType === p.snsType)
+          row.campaign.recruits.find((recruit) => recruit.subType === p.subType)
             ?.insightRequired ?? true,
       })),
     }),
@@ -143,12 +149,15 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     rejectReason: row.rejectReason,
-    snsType: row.snsType,
+    subType: row.subType,
     instagramPostType: row.instagramPostType,
     posts: row.posts.map(toPost),
     postingPeriodDays: row.campaign.postingPeriodDays,
     postingDeadlineAt: deadline ? deadline.toISOString() : null,
     settlement,
+    orderNumber: row.orderNumber,
+    orderSubmittedAt: row.orderSubmittedAt ? row.orderSubmittedAt.toISOString() : null,
+    reviewSubmittedAt: row.reviewSubmittedAt ? row.reviewSubmittedAt.toISOString() : null,
   };
 }
 
@@ -168,12 +177,13 @@ const INCLUDE = {
   campaign: {
     select: {
       id: true,
+      category: true,
       title: true,
       thumbnailUrl: true,
       rewardJpy: true,
       postingPeriodDays: true,
-      snsRecruits: {
-        select: { snsType: true, insightRequired: true },
+      recruits: {
+        select: { subType: true, insightRequired: true },
       },
     },
   },
@@ -231,16 +241,16 @@ export class InfluencerApplicationsService {
   async create(
     influencerId: string,
     campaignId: string,
-    snsTypes: SnsType[],
+    subTypes: CampaignSubType[],
     instagramPostType: InstagramPostType | null,
   ): Promise<InfluencerApplication> {
     const now = new Date();
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
       include: {
-        snsRecruits: {
+        recruits: {
           select: {
-            snsType: true,
+            subType: true,
             minFollowers: true,
             recruitCount: true,
             instagramPostTypes: true,
@@ -272,7 +282,7 @@ export class InfluencerApplicationsService {
     const excludedCampaignIds = campaign.exclusionsAsExcluding.map(
       (exclusion) => exclusion.excludedCampaignId,
     );
-    const excludedSnsTypes = new Set<SnsType>();
+    const excludedCampaignSubTypes = new Set<CampaignSubType>();
     if (excludedCampaignIds.length > 0) {
       const priorOnExcluded = await this.prisma.campaignApplication.findMany({
         where: {
@@ -280,40 +290,40 @@ export class InfluencerApplicationsService {
           campaignId: { in: excludedCampaignIds },
           status: { not: "CANCELLED" },
         },
-        select: { snsType: true },
-        distinct: ["snsType"],
+        select: { subType: true },
+        distinct: ["subType"],
       });
       for (const application of priorOnExcluded) {
-        excludedSnsTypes.add(application.snsType);
+        excludedCampaignSubTypes.add(application.subType);
       }
     }
 
     const influencerSns = await this.prisma.influencerSnsAccount.findMany({
       where: { influencerId },
     });
-    const minFollowersBySns = new Map(
-      campaign.snsRecruits.map((r) => [r.snsType, r.minFollowers]),
+    const minFollowersBySubType = new Map(
+      campaign.recruits.map((r) => [r.subType, r.minFollowers]),
     );
-    const followerByMySns = new Map(
-      influencerSns.map((s) => [s.snsType, s.followerCount]),
+    const followerByMySubType = new Map(
+      influencerSns.map((s) => [s.snsType as CampaignSubType, s.followerCount]),
     );
 
-    const qualifyingSns = Array.from(minFollowersBySns.entries())
-      .filter(([sns, min]) => {
-        const f = followerByMySns.get(sns);
+    const qualifyingSubTypes = Array.from(minFollowersBySubType.entries())
+      .filter(([subType, min]) => {
+        const f = followerByMySubType.get(subType);
         return f !== undefined && f >= min;
       })
-      .map(([sns]) => sns);
+      .map(([subType]) => subType);
 
-    if (qualifyingSns.length === 0) {
+    if (qualifyingSubTypes.length === 0) {
       throw new BadRequestException({
         code: "SNS_MISMATCH",
         message: "対象SNSの応募条件を満たすアカウントがありません",
       });
     }
 
-    const qualifyingSet = new Set(qualifyingSns);
-    const invalid = snsTypes.filter((snsType) => !qualifyingSet.has(snsType));
+    const qualifyingSet = new Set(qualifyingSubTypes);
+    const invalid = subTypes.filter((subType) => !qualifyingSet.has(subType));
     if (invalid.length > 0) {
       throw new BadRequestException({
         code: "SNS_NOT_QUALIFIED",
@@ -322,10 +332,10 @@ export class InfluencerApplicationsService {
     }
 
     // INSTAGRAM 응모는 캠페인이 허용한 instagramPostTypes 중 정확히 1개를 선택해야 한다.
-    const instagramRecruit = campaign.snsRecruits.find(
-      (recruit) => recruit.snsType === "INSTAGRAM",
+    const instagramRecruit = campaign.recruits.find(
+      (recruit) => recruit.subType === "INSTAGRAM",
     );
-    const wantsInstagram = snsTypes.includes("INSTAGRAM");
+    const wantsInstagram = subTypes.includes("INSTAGRAM");
     if (wantsInstagram) {
       if (!instagramPostType) {
         throw new BadRequestException({
@@ -344,8 +354,8 @@ export class InfluencerApplicationsService {
       }
     }
 
-    const blockedByExclusion = snsTypes.filter((snsType) =>
-      excludedSnsTypes.has(snsType),
+    const blockedByExclusion = subTypes.filter((subType) =>
+      excludedCampaignSubTypes.has(subType),
     );
     if (blockedByExclusion.length > 0) {
       throw new BadRequestException({
@@ -355,16 +365,16 @@ export class InfluencerApplicationsService {
       });
     }
 
-    // 각 snsType 별로 신규 application row 를 생성한다.
+    // 각 subType 별로 신규 application row 를 생성한다.
     // 한 번이라도 응모했다가 취소된 경우 재응모 불가 — CANCELLED row 가 그대로 차단 역할.
     const results: InfluencerApplication[] = [];
-    for (const snsType of snsTypes) {
+    for (const subType of subTypes) {
       const existing = await this.prisma.campaignApplication.findUnique({
         where: {
-          campaignId_influencerId_snsType: {
+          campaignId_influencerId_subType: {
             campaignId,
             influencerId,
-            snsType,
+            subType,
           },
         },
       });
@@ -375,12 +385,12 @@ export class InfluencerApplicationsService {
       }
 
       const postTypeForRow =
-        snsType === "INSTAGRAM" ? instagramPostType : null;
+        subType === "INSTAGRAM" ? instagramPostType : null;
       const row = await this.prisma.campaignApplication.create({
         data: {
           campaignId,
           influencerId,
-          snsType,
+          subType,
           status: "APPLIED",
           instagramPostType: postTypeForRow,
         },
@@ -460,7 +470,7 @@ export class InfluencerApplicationsService {
   async upsertPost(
     influencerId: string,
     applicationId: string,
-    snsType: SnsType,
+    subType: CampaignSubType,
     url: string,
   ): Promise<InfluencerApplication> {
     const app = await this.assertOwned(influencerId, applicationId);
@@ -470,8 +480,8 @@ export class InfluencerApplicationsService {
         message: "受領確認後のみ投稿URLを提出できます",
       });
     }
-    // 이제 application 자체가 단일 snsType 을 가지므로 단순 비교.
-    if (app.snsType !== snsType) {
+    // 이제 application 자체가 단일 subType 을 가지므로 단순 비교.
+    if (app.subType !== subType) {
       throw new BadRequestException({
         code: "SNS_NOT_SELECTED",
         message: "応募のSNSと一致しません",
@@ -479,7 +489,7 @@ export class InfluencerApplicationsService {
     }
 
     const existing = await this.prisma.submittedPost.findUnique({
-      where: { applicationId_snsType: { applicationId, snsType } },
+      where: { applicationId_subType: { applicationId, subType } },
       select: { reviewStatus: true },
     });
     if (existing?.reviewStatus === "APPROVED") {
@@ -491,9 +501,9 @@ export class InfluencerApplicationsService {
 
     await this.prisma.submittedPost.upsert({
       where: {
-        applicationId_snsType: { applicationId, snsType },
+        applicationId_subType: { applicationId, subType },
       },
-      create: { applicationId, snsType, url },
+      create: { applicationId, subType, url },
       update: {
         url,
         submittedAt: new Date(),
@@ -509,7 +519,7 @@ export class InfluencerApplicationsService {
   async upsertInsight(
     influencerId: string,
     applicationId: string,
-    snsType: SnsType,
+    subType: CampaignSubType,
     input: {
       likes: number;
       comments: number;
@@ -527,7 +537,7 @@ export class InfluencerApplicationsService {
   ): Promise<InfluencerApplication> {
     await this.assertOwned(influencerId, applicationId);
     const post = await this.prisma.submittedPost.findUnique({
-      where: { applicationId_snsType: { applicationId, snsType } },
+      where: { applicationId_subType: { applicationId, subType } },
     });
     if (!post) {
       throw new BadRequestException({

@@ -19,12 +19,13 @@ import styles from "./CampaignForm.module.css";
 const CAMPAIGN_IMAGE_ENDPOINT = "/uploads/admin/campaign-image/presign";
 
 export const EMPTY_CAMPAIGN_FORM: Values = {
+  category: "SNS",
   title: "",
   rewardJpy: 0,
   recruitStartDate: "",
   recruitEndDate: "",
   postingPeriodDays: Number.NaN,
-  snsRecruits: [],
+  recruits: [],
   productSummary: "",
   productDetailUrl: "",
   guideline: "",
@@ -40,7 +41,7 @@ type SnsRecruitItemError = Partial<
 
 interface PerItemErrors {
   referenceMediaUrls?: Record<number, string>;
-  snsRecruits?: Record<number, SnsRecruitItemError>;
+  recruits?: Record<number, SnsRecruitItemError>;
 }
 
 type Props = {
@@ -198,7 +199,7 @@ export function CampaignForm({
               [index]: message,
             };
           }
-        } else if (pathHead === "snsRecruits" && Number.isInteger(index)) {
+        } else if (pathHead === "recruits" && Number.isInteger(index)) {
           const sub = value as Record<string, { message?: unknown }>;
           const target: SnsRecruitItemError = {};
           for (const subKey of [
@@ -212,8 +213,8 @@ export function CampaignForm({
             }
           }
           if (Object.keys(target).length > 0) {
-            items.snsRecruits = {
-              ...(items.snsRecruits ?? {}),
+            items.recruits = {
+              ...(items.recruits ?? {}),
               [index]: target,
             };
           }
@@ -221,7 +222,7 @@ export function CampaignForm({
       }
     };
     flatten(fieldErrors.referenceMediaUrls, "referenceMediaUrls");
-    flatten(fieldErrors.snsRecruits, "snsRecruits");
+    flatten(fieldErrors.recruits, "recruits");
     setPerItemErrors(items);
 
     // render 후 첫 에러 element 로 스크롤 + 포커스
@@ -410,18 +411,18 @@ export function CampaignForm({
           </p>
           <Controller
             control={methods.control}
-            name="snsRecruits"
+            name="recruits"
             render={({ field }) => (
               <SnsRecruitList
                 value={field.value}
                 onChange={field.onChange}
                 disabled={submitting}
-                errorByIndex={perItemErrors.snsRecruits}
+                errorByIndex={perItemErrors.recruits}
               />
             )}
           />
-          {rootError("snsRecruits") && (
-            <div className={styles.error}>{rootError("snsRecruits")}</div>
+          {rootError("recruits") && (
+            <div className={styles.error}>{rootError("recruits")}</div>
           )}
         </section>
 

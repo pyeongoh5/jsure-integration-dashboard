@@ -11,8 +11,8 @@ import {
   UsePipes,
 } from "@nestjs/common";
 import {
+  CampaignSubTypeSchema,
   CreateApplicationRequestSchema,
-  SnsTypeSchema,
   SubmitInsightRequestSchema,
   SubmitPostRequestSchema,
   type CreateApplicationRequest,
@@ -52,7 +52,7 @@ export class InfluencerApplicationsController {
     return this.svc.create(
       req.user.id,
       dto.campaignId,
-      dto.snsTypes,
+      dto.subTypes,
       dto.instagramPostType ?? null,
     );
   }
@@ -82,7 +82,7 @@ export class InfluencerApplicationsController {
     @Param("snsType") snsTypeRaw: string,
     @Body(new ZodValidationPipe(SubmitPostRequestSchema)) dto: SubmitPostRequest,
   ) {
-    const snsType = SnsTypeSchema.parse(snsTypeRaw);
+    const snsType = CampaignSubTypeSchema.parse(snsTypeRaw);
     return this.svc.upsertPost(req.user.id, id, snsType, dto.url);
   }
 
@@ -94,7 +94,7 @@ export class InfluencerApplicationsController {
     @Body(new ZodValidationPipe(SubmitInsightRequestSchema))
     dto: SubmitInsightRequest,
   ) {
-    const snsType = SnsTypeSchema.parse(snsTypeRaw);
+    const snsType = CampaignSubTypeSchema.parse(snsTypeRaw);
     return this.svc.upsertInsight(req.user.id, id, snsType, dto);
   }
 }

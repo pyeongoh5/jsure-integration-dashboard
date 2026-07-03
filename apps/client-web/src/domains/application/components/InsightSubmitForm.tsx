@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { SnsType } from "@jsure/shared";
+import type { CampaignSubType } from "@jsure/shared";
 import { Input } from "@/components/ui";
 import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
@@ -72,7 +72,7 @@ interface InsightInput extends Metrics {
 
 interface Props {
   applicationId: string;
-  snsType: SnsType;
+  subType: CampaignSubType;
   initial: Metrics | null;
   onSubmit: (value: InsightInput) => Promise<void>;
   submitting: boolean;
@@ -100,7 +100,7 @@ function fromInitial(initial: Metrics | null): Values {
 
 export function InsightSubmitForm({
   applicationId,
-  snsType,
+  subType,
   initial,
   onSubmit,
   submitting,
@@ -132,7 +132,7 @@ export function InsightSubmitForm({
     const contentType = file.type as ImgContentType;
     const presign = await presignInsightUpload({
       applicationId,
-      snsType,
+      subType,
       contentType,
       sizeBytes: file.size,
     });

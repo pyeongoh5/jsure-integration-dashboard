@@ -31,12 +31,19 @@ export function CampaignEdit() {
       .then((res) => {
         if (cancelled) return;
         const initial: Values = {
+          category: res.category,
           title: res.title,
           rewardJpy: res.rewardJpy,
           recruitStartDate: res.recruitStartDate,
           recruitEndDate: res.recruitEndDate,
           postingPeriodDays: res.postingPeriodDays,
-          snsRecruits: res.snsRecruits,
+          recruits: res.recruits.filter(
+            (recruit): recruit is Values["recruits"][number] =>
+              recruit.subType === "INSTAGRAM" ||
+              recruit.subType === "TIKTOK" ||
+              recruit.subType === "X" ||
+              recruit.subType === "YOUTUBE",
+          ),
           productSummary: res.productSummary,
           productDetailUrl: res.productDetailUrl,
           guideline: res.guideline,

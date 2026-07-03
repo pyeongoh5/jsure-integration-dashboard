@@ -1,4 +1,4 @@
-import type { SnsType } from "../types/influencer.js";
+import type { SnsAccountSubType } from "../types/influencer.js";
 
 /**
  * SNS 핸들 정책: 저장/전송은 항상 bare(앞에 `@` 없음). 표시 시점에만 `@`를 붙인다.
@@ -13,7 +13,10 @@ export function displaySnsHandle(handle: string): string {
 }
 
 /** SNS 타입별 표준 프로필 URL. 핸들은 bare 로 가정하지만 안전하게 normalize 한다. */
-export function buildSnsProfileUrl(snsType: SnsType, handle: string): string {
+export function buildSnsProfileUrl(
+  snsType: SnsAccountSubType,
+  handle: string,
+): string {
   const bare = normalizeSnsHandle(handle);
   switch (snsType) {
     case "INSTAGRAM":

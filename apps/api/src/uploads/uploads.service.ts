@@ -17,7 +17,6 @@ import {
   type NoticeImageUploadPresignRequest,
   type NoticeImageUploadPresignResponse,
   type SubmittedPostAttachment as SharedAttachment,
-  type SnsType,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { R2Service } from "../r2/r2.service";
@@ -54,18 +53,18 @@ export class UploadsService {
     }
     const application = await this.prisma.campaignApplication.findUnique({
       where: { id: body.applicationId },
-      select: { influencerId: true, snsType: true },
+      select: { influencerId: true, subType: true },
     });
     if (!application) throw new NotFoundException("Application not found");
     if (application.influencerId !== influencerId) {
       throw new ForbiddenException();
     }
-    if (application.snsType !== body.snsType) {
+    if (application.subType !== body.subType) {
       throw new BadRequestException("応募のSNSと一致しません");
     }
 
     const objectKey =
-      `insights/${body.applicationId}/${body.snsType}/` +
+      `insights/${body.applicationId}/${body.subType}/` +
       `${randomUUID()}.${extOf(body.contentType)}`;
 
     const uploadUrl = await this.r2.presignPut(
@@ -214,8 +213,15 @@ export class UploadsService {
       }
     }
 
-    await this.prisma.submittedPostAttachment.createMany({
+    const post = await this.prisma.submittedPost.findUnique({
+      where: { id: postId },
+      select: { applicationId: true },
+    });
+    if (!post) throw new NotFoundException("Post not found");
+    await this.prisma.attachment.createMany({
       data: attachments.map((attachment) => ({
+        kind: "INSIGHT_SCREENSHOT" as const,
+        applicationId: post.applicationId,
         postId,
         objectKey: attachment.objectKey,
         contentType: attachment.contentType,
@@ -229,7 +235,7 @@ export class UploadsService {
    * admin 조회용 — DB에 저장된 attachment를 presigned GET URL과 함께 반환.
    */
   async listAttachmentsForPost(postId: string): Promise<SharedAttachment[]> {
-    const rows = await this.prisma.submittedPostAttachment.findMany({
+    const rows = await this.prisma.attachment.findMany({
       where: { postId },
       orderBy: { uploadedAt: "asc" },
     });

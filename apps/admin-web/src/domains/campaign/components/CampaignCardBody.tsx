@@ -1,6 +1,6 @@
 import styles from "@/pages/Campaigns/Campaigns.module.css";
 import { CampaignCardSnsRecruits } from "./CampaignCardSnsRecruits";
-import type { CampaignCardSnsRecruit } from "../types";
+import type { CampaignCardRecruit } from "../types";
 
 type Props = {
   thumbIcon: string;
@@ -9,7 +9,7 @@ type Props = {
   description: string;
   period: string;
   reward: string;
-  snsRecruits: CampaignCardSnsRecruit[];
+  recruits: CampaignCardRecruit[];
 };
 
 export function CampaignCardBody({
@@ -19,7 +19,7 @@ export function CampaignCardBody({
   description,
   period,
   reward,
-  snsRecruits,
+  recruits,
 }: Props) {
   return (
     <>
@@ -39,7 +39,7 @@ export function CampaignCardBody({
       </div>
       <h3 className={styles.cardName}>{name}</h3>
       <p className={styles.cardDesc}>{description}</p>
-      <CampaignCardSnsRecruits recruits={snsRecruits} />
+      <CampaignCardSnsRecruits recruits={recruits} />
       <div className={styles.cardMeta}>
         <div className={styles.cardMetaRow}>
           <i className="fa-regular fa-calendar" />

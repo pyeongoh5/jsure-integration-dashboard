@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { SnsTypeSchema } from "./influencer.js";
+import { CampaignSubTypeSchema } from "./influencer.js";
 import { InstagramPostTypeSchema } from "./campaign.js";
 
 export const CampaignReportParticipantSchema = z.object({
   influencerId: z.string(),
   influencerName: z.string(),
   handle: z.string(),
-  snsType: SnsTypeSchema,
+  subType: CampaignSubTypeSchema,
   instagramPostType: InstagramPostTypeSchema.nullable(),
   insight: z.object({
     likes: z.number().int().nullable(),

@@ -1,28 +1,31 @@
 import type {
   AdminApplication,
   AdminInfluencerSnsAccount,
-  SnsType,
+  CampaignSubType,
 } from "@jsure/shared";
 import type { Applicant, ApplicantStatus, Media } from "./types";
 
-export const SNS_TO_MEDIA: Record<SnsType, Media> = {
+export const SNS_TO_MEDIA: Record<CampaignSubType, Media> = {
   INSTAGRAM: "ig",
   YOUTUBE: "yt",
   TIKTOK: "tt",
   X: "x",
+  QOO10: "qoo10",
+  LIPS: "lips",
+  ATCOSME: "atcosme",
 };
 
 const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
 
 function pickAccount(
   accounts: AdminInfluencerSnsAccount[],
-  snsType: SnsType,
+  subType: CampaignSubType,
 ): AdminInfluencerSnsAccount | undefined {
-  return accounts.find((account) => account.snsType === snsType);
+  return accounts.find((account) => account.snsType === subType);
 }
 
-function pickMedia(snsType: SnsType): Media[] {
-  return [SNS_TO_MEDIA[snsType]];
+function pickMedia(subType: CampaignSubType): Media[] {
+  return [SNS_TO_MEDIA[subType]];
 }
 
 export function formatRelative(iso: string, now: Date): string {
@@ -67,7 +70,7 @@ export function toApplicant(
   if (!status) return null;
   const appliedAccount = pickAccount(
     application.influencer.snsAccounts,
-    application.snsType,
+    application.subType,
   );
   return {
     id: application.id,
@@ -77,7 +80,7 @@ export function toApplicant(
     flagged: application.influencer.flagged,
     campaignId: application.campaign.id,
     campaign: application.campaign.title,
-    media: pickMedia(application.snsType),
+    media: pickMedia(application.subType),
     instagramPostType: application.instagramPostType,
     followers: appliedAccount?.followerCount ?? 0,
     engagementRate: 0,

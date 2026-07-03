@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { InstagramPostType, SnsType } from "@jsure/shared";
+import type { InstagramPostType, CampaignSubType } from "@jsure/shared";
 import { useCampaign } from "@/domains/campaign";
 import { createApplication } from "@/domains/application";
 import { fetchMe } from "@/domains/auth";
@@ -26,18 +26,24 @@ const CONFIRM_LABELS: Record<(typeof CONFIRM_KEYS)[number], string> = {
   GUIDELINE: t("pages.apply.confirmGuideline"),
 };
 
-const SNS_LABEL: Record<SnsType, string> = {
+const SNS_LABEL: Record<CampaignSubType, string> = {
   INSTAGRAM: "Instagram",
   TIKTOK: "TikTok",
   X: "X",
   YOUTUBE: "YouTube",
+  QOO10: "Qoo10",
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
 };
 
-const SNS_FOLLOWER_LABEL: Record<SnsType, string> = {
+const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   INSTAGRAM: t("pages.apply.snsFollower"),
   TIKTOK: t("pages.apply.snsFollower"),
   X: t("pages.apply.snsFollower"),
   YOUTUBE: t("pages.apply.snsSubscriber"),
+  QOO10: t("pages.apply.snsFollower"),
+  LIPS: t("pages.apply.snsFollower"),
+  ATCOSME: t("pages.apply.snsFollower"),
 };
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
@@ -49,7 +55,7 @@ export function Apply() {
   const { id = "" } = useParams();
   const nav = useNavigate();
   const [agreed, setAgreed] = useState<Set<string>>(new Set());
-  const [selectedSns, setSelectedSns] = useState<Set<SnsType>>(new Set());
+  const [selectedSns, setSelectedSns] = useState<Set<CampaignSubType>>(new Set());
   const [instagramPostType, setInstagramPostType] =
     useState<InstagramPostType | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,12 +69,14 @@ export function Apply() {
     const followerByMySns = new Map(
       me.data.snsAccounts.map((a) => [a.snsType, a.followerCount]),
     );
-    return campaign.data.snsRecruits
+    return campaign.data.recruits
       .filter((r) => {
-        const f = followerByMySns.get(r.snsType);
-        return f !== undefined && f >= r.minFollowers;
+        const follower = (followerByMySns as Map<CampaignSubType, number>).get(
+          r.subType,
+        );
+        return follower !== undefined && follower >= r.minFollowers;
       })
-      .map((r) => r.snsType);
+      .map((r) => r.subType);
   }, [campaign.data, me.data]);
 
   const allAgreed = CONFIRM_KEYS.every((k) => agreed.has(k));
@@ -83,8 +91,8 @@ export function Apply() {
   const wantsInstagram = selectedSns.has("INSTAGRAM");
   const allowedInstagramPostTypes = useMemo<InstagramPostType[]>(() => {
     if (!campaign.data) return [];
-    const instagramRecruit = campaign.data.snsRecruits.find(
-      (recruit) => recruit.snsType === "INSTAGRAM",
+    const instagramRecruit = campaign.data.recruits.find(
+      (recruit) => recruit.subType === "INSTAGRAM",
     );
     return instagramRecruit?.instagramPostTypes ?? [];
   }, [campaign.data]);
@@ -113,7 +121,7 @@ export function Apply() {
     });
   }
 
-  function toggleSns(s: SnsType) {
+  function toggleSns(s: CampaignSubType) {
     setSelectedSns((prev) => {
       const next = new Set(prev);
       if (next.has(s)) next.delete(s);
@@ -169,23 +177,25 @@ export function Apply() {
             </p>
           ) : (
             <ul className={styles.snsPick}>
-              {campaign.data.snsRecruits.map((r) => {
-                const isQualifying = qualifying.includes(r.snsType);
-                const isCancelled = campaign.data.cancelledSnsTypes.includes(
-                  r.snsType,
+              {campaign.data.recruits.map((r) => {
+                const isQualifying = qualifying.includes(r.subType);
+                const isCancelled = campaign.data.cancelledSubTypes.includes(
+                  r.subType,
                 );
                 const alreadyApplied =
                   !isCancelled &&
-                  campaign.data.appliedSnsTypes.includes(r.snsType);
-                const isExcluded = campaign.data.excludedSnsTypes.includes(
-                  r.snsType,
+                  campaign.data.appliedSubTypes.includes(r.subType);
+                const isExcluded = campaign.data.excludedSubTypes.includes(
+                  r.subType,
                 );
-                const myFollowers = followerByMySns.get(r.snsType);
-                const isSelected = selectedSns.has(r.snsType);
+                const myFollowers = (
+                  followerByMySns as Map<CampaignSubType, number>
+                ).get(r.subType);
+                const isSelected = selectedSns.has(r.subType);
                 const disabled =
                   !isQualifying || alreadyApplied || isCancelled || isExcluded;
                 return (
-                  <li key={r.snsType}>
+                  <li key={r.subType}>
                     <label
                       className={`${styles.snsItem} ${
                         disabled ? styles.snsItemDisabled : ""
@@ -195,11 +205,11 @@ export function Apply() {
                         type="checkbox"
                         checked={isSelected}
                         disabled={disabled}
-                        onChange={() => toggleSns(r.snsType)}
+                        onChange={() => toggleSns(r.subType)}
                       />
                       <div className={styles.snsInfo}>
                         <div className={styles.snsName}>
-                          {SNS_LABEL[r.snsType]}
+                          {SNS_LABEL[r.subType]}
                           {alreadyApplied && (
                             <span style={{ marginLeft: 8, color: "#10b981", fontSize: 11 }}>
                               {t("pages.apply.appliedTag")}
@@ -217,7 +227,7 @@ export function Apply() {
                           )}
                         </div>
                         <div className={styles.snsCond}>
-                          {t("pages.apply.condPrefix")}{SNS_FOLLOWER_LABEL[r.snsType]}{" "}
+                          {t("pages.apply.condPrefix")}{SNS_FOLLOWER_LABEL[r.subType]}{" "}
                           {r.minFollowers > 0
                             ? `${r.minFollowers.toLocaleString("ja-JP")}${t("pages.apply.followerMinSuffix")}`
                             : t("pages.apply.noLimit")}

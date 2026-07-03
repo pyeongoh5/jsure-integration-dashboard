@@ -49,7 +49,7 @@ export class AdminReportsService {
       for (const application of campaign.applications) {
         influencerSet.add(application.influencerId);
         const matchedAccount = application.influencer.snsAccounts.find(
-          (account) => account.snsType === application.snsType,
+          (account) => account.snsType === application.subType,
         );
         totalFollowers += matchedAccount?.followerCount ?? 0;
 
@@ -134,7 +134,7 @@ export class AdminReportsService {
       include: {
         application: {
           select: {
-            snsType: true,
+            subType: true,
             instagramPostType: true,
             influencer: {
               select: {
@@ -152,13 +152,13 @@ export class AdminReportsService {
 
     return posts.map((post) => {
       const matchedAccount = post.application.influencer.snsAccounts.find(
-        (account) => account.snsType === post.application.snsType,
+        (account) => account.snsType === post.application.subType,
       );
       return {
         influencerId: post.application.influencer.id,
         influencerName: post.application.influencer.name,
         handle: matchedAccount?.handle ?? "",
-        snsType: post.application.snsType,
+        subType: post.application.subType,
         instagramPostType: post.application.instagramPostType,
         insight: {
           likes: post.insightLikes,

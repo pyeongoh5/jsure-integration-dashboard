@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import type { AdminInfluencer, SnsType } from "@jsure/shared";
+import type { AdminInfluencer, SnsAccountSubType } from "@jsure/shared";
 import { InfluencerNotesDialog, listInfluencers } from "@/domains/influencer";
 import { BroadcastDialog } from "@/domains/broadcast";
 import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
 import styles from "./Influencers.module.css";
 
-const SNS_ICON: Record<SnsType, string> = {
+const SNS_ICON: Record<SnsAccountSubType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",
   TIKTOK: "fa-brands fa-tiktok",
   X: "fa-brands fa-x-twitter",
   YOUTUBE: "fa-brands fa-youtube",
 };
 
-const SNS_CLASS: Record<SnsType, string | undefined> = {
+const SNS_CLASS: Record<SnsAccountSubType, string | undefined> = {
   INSTAGRAM: styles.snsIg,
   TIKTOK: styles.snsTt,
   X: styles.snsX,

@@ -656,6 +656,132 @@ export class InfluencerApplicationsService {
     return this.getForInfluencer(influencerId, applicationId);
   }
 
+  async submitReview(
+    influencerId: string,
+    applicationId: string,
+    reviewUrl: string,
+    screenshots: {
+      objectKey: string;
+      contentType: "image/png" | "image/jpeg" | "image/webp";
+      sizeBytes: number;
+    }[],
+  ): Promise<InfluencerApplication> {
+    const application = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      include: {
+        campaign: { select: { category: true } },
+        posts: {
+          select: { id: true, reviewStatus: true },
+        },
+      },
+    });
+    if (!application) throw new NotFoundException("Application not found");
+    if (application.influencerId !== influencerId) {
+      throw new ForbiddenException();
+    }
+    if (application.campaign.category !== "FAKE_PURCHASE") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "買取レビューキャンペーンのみ対応しています",
+      });
+    }
+
+    const existingPost = application.posts[0] ?? null;
+    const isResubmission =
+      application.status === "REVIEW_SUBMITTED" &&
+      existingPost?.reviewStatus === "REJECTED";
+    const isFirstSubmission = application.status === "ORDER_SUBMITTED";
+
+    if (!isFirstSubmission && !isResubmission) {
+      throw new BadRequestException({
+        code: "INVALID_TRANSITION",
+        message: "この状態ではレビューを提出できません",
+      });
+    }
+
+    const trimmedUrl = reviewUrl.trim();
+    if (trimmedUrl.length === 0) {
+      throw new BadRequestException({
+        code: "REVIEW_URL_REQUIRED",
+        message: "レビューURLを入力してください",
+      });
+    }
+    if (screenshots.length < 2) {
+      throw new BadRequestException({
+        code: "REVIEW_SCREENSHOTS_REQUIRED",
+        message: "レビューのスクリーンショットを2枚以上ご提出ください",
+      });
+    }
+
+    await this.uploads.verifyAttachmentUploads(screenshots, "attachments/");
+
+    const now = new Date();
+    const subType = application.subType;
+
+    const postId = await this.prisma.$transaction(async (tx) => {
+      let currentPostId: string;
+      if (existingPost) {
+        await tx.submittedPost.update({
+          where: { id: existingPost.id },
+          data: {
+            url: trimmedUrl,
+            submittedAt: now,
+            reviewStatus: "PENDING",
+            reviewedAt: null,
+            reviewedById: null,
+          },
+        });
+        await tx.attachment.deleteMany({
+          where: { postId: existingPost.id, kind: "REVIEW_SCREENSHOT" },
+        });
+        currentPostId = existingPost.id;
+      } else {
+        const created = await tx.submittedPost.create({
+          data: {
+            applicationId,
+            subType,
+            url: trimmedUrl,
+            submittedAt: now,
+            reviewStatus: "PENDING",
+          },
+        });
+        currentPostId = created.id;
+      }
+      await tx.attachment.createMany({
+        data: screenshots.map((screenshot) => ({
+          kind: "REVIEW_SCREENSHOT" as const,
+          applicationId,
+          postId: currentPostId,
+          objectKey: screenshot.objectKey,
+          contentType: screenshot.contentType,
+          sizeBytes: screenshot.sizeBytes,
+        })),
+        skipDuplicates: true,
+      });
+      await tx.campaignApplication.update({
+        where: { id: applicationId },
+        data: {
+          reviewSubmittedAt: now,
+          status: "REVIEW_SUBMITTED",
+        },
+      });
+      return currentPostId;
+    });
+
+    const refreshed = await this.prisma.campaignApplication.findUniqueOrThrow({
+      where: { id: applicationId },
+      include: DISPATCH_APPLICATION_INCLUDE,
+    });
+    const post = await this.prisma.submittedPost.findUnique({
+      where: { id: postId },
+    });
+    void this.dispatcher.dispatch("FAKE_PURCHASE_REVIEW_SUBMITTED", {
+      application: refreshed,
+      post,
+    });
+    return this.getForInfluencer(influencerId, applicationId);
+  }
+
   private async assertOwned(influencerId: string, applicationId: string) {
     const app = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },

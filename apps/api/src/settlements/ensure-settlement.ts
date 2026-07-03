@@ -1,15 +1,14 @@
 import type { PrismaService } from "../prisma/prisma.service";
 
 /**
- * 투고(SubmittedPost)가 승인(APPROVED) 되고 정산 가능 상태가 되면 정산(Settlement,
- * PENDING)을 멱등하게 생성한다.
+ * SubmittedPost 가 승인(APPROVED) 되고 정산 가능 상태가 되면 Settlement(PENDING)
+ * 를 멱등하게 생성한다.
  *
- * 캠페인의 SNS 슬롯 설정(insightRequired)에 따라 정산 조건이 갈린다.
- * - insightRequired=true (기본): 승인 + 인사이트 제출 둘 다 필요
- * - insightRequired=false: 승인만 되면 충분
- *
- * 인사이트 제출 시점(upsertInsight)과 투고 승인 시점(approveSubmittedPost)
- * 어느 쪽에서 호출해도 안전하며, 이미 정산이 있으면 그대로 둔다.
+ * 카테고리별 조건:
+ * - SNS: insightRequired=true 이면 승인 + 인사이트 제출 둘 다 필요. false 면 승인만.
+ *        정산액 = campaign.rewardJpy (productRefundJpy=0)
+ * - FAKE_PURCHASE: 승인만 되면 즉시 생성.
+ *        정산액 = campaign.rewardJpy + recruit.productPriceJpy
  */
 export async function ensureSettlementForPost(
   prisma: PrismaService,
@@ -21,13 +20,20 @@ export async function ensureSettlementForPost(
       reviewStatus: true,
       insightSubmittedAt: true,
       subType: true,
+      applicationId: true,
       application: {
         select: {
+          campaignId: true,
           campaign: {
             select: {
+              category: true,
               rewardJpy: true,
               recruits: {
-                select: { subType: true, insightRequired: true },
+                select: {
+                  subType: true,
+                  insightRequired: true,
+                  productPriceJpy: true,
+                },
               },
             },
           },
@@ -37,17 +43,40 @@ export async function ensureSettlementForPost(
   });
   if (!post) return;
   if (post.reviewStatus !== "APPROVED") return;
-  const insightRequired =
-    post.application.campaign.recruits.find(
-      (recruit) => recruit.subType === post.subType,
-    )?.insightRequired ?? true;
+
+  const category = post.application.campaign.category;
+  const recruit = post.application.campaign.recruits.find(
+    (r) => r.subType === post.subType,
+  );
+
+  if (category === "FAKE_PURCHASE") {
+    const productRefundJpy = recruit?.productPriceJpy ?? 0;
+    const rewardAmountJpy = post.application.campaign.rewardJpy;
+    const amountJpy = rewardAmountJpy + productRefundJpy;
+    await prisma.settlement.upsert({
+      where: { postId },
+      create: {
+        postId,
+        amountJpy,
+        rewardAmountJpy,
+        productRefundJpy,
+        status: "PENDING",
+      },
+      update: {},
+    });
+    return;
+  }
+
+  // SNS
+  const insightRequired = recruit?.insightRequired ?? true;
   if (insightRequired && post.insightSubmittedAt === null) return;
+  const rewardAmountJpy = post.application.campaign.rewardJpy;
   await prisma.settlement.upsert({
     where: { postId },
     create: {
       postId,
-      amountJpy: post.application.campaign.rewardJpy,
-      rewardAmountJpy: post.application.campaign.rewardJpy,
+      amountJpy: rewardAmountJpy,
+      rewardAmountJpy,
       productRefundJpy: 0,
       status: "PENDING",
     },

@@ -11,6 +11,9 @@ export type { CampaignSubType };
 export const CampaignCategorySchema = z.enum(["SNS", "FAKE_PURCHASE"]);
 export type CampaignCategory = z.infer<typeof CampaignCategorySchema>;
 
+const SNS_SUB_TYPE_VALUES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
+const FAKE_PURCHASE_SUB_TYPE_VALUES = ["QOO10", "LIPS", "ATCOSME"] as const;
+
 const DateOnly = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "YYYY-MM-DD 형식이어야 합니다");
@@ -39,7 +42,7 @@ export type CampaignRecruit = z.infer<typeof CampaignRecruitSchema>;
 
 const CampaignRecruitInputSchema = z
   .object({
-    subType: EnabledSnsTypeSchema,
+    subType: CampaignSubTypeSchema,
     minFollowers: z.number().int().nonnegative("0 이상의 정수"),
     recruitCount: z.number().int().positive("1 이상"),
     instagramPostTypes: z.array(InstagramPostTypeSchema).default([]),
@@ -75,6 +78,83 @@ const CampaignRecruitInputArray = z
     "서브타입이 중복되었습니다",
   );
 
+const SNS_SUB_TYPE_SET = new Set<CampaignSubType>(SNS_SUB_TYPE_VALUES);
+const FAKE_PURCHASE_SUB_TYPE_SET = new Set<CampaignSubType>(
+  FAKE_PURCHASE_SUB_TYPE_VALUES,
+);
+const ENABLED_SNS_SUB_TYPE_SET = new Set<CampaignSubType>(
+  EnabledSnsTypeSchema.options,
+);
+
+function refineRecruitsByCategory(
+  category: CampaignCategory,
+  recruits: z.infer<typeof CampaignRecruitInputSchema>[],
+  ctx: z.RefinementCtx,
+): void {
+  recruits.forEach((recruit, index) => {
+    if (category === "SNS") {
+      if (!SNS_SUB_TYPE_SET.has(recruit.subType)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "subType"],
+          message: "SNS 캠페인에서 사용할 수 없는 서브타입입니다",
+        });
+        return;
+      }
+      if (!ENABLED_SNS_SUB_TYPE_SET.has(recruit.subType)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "subType"],
+          message: "현재 활성화되지 않은 SNS 서브타입입니다",
+        });
+      }
+      if (recruit.productPriceJpy !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "productPriceJpy"],
+          message: "SNS 캠페인에서는 상품 가격을 지정할 수 없습니다",
+        });
+      }
+      if (recruit.productUrl !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "productUrl"],
+          message: "SNS 캠페인에서는 상품 URL을 지정할 수 없습니다",
+        });
+      }
+    } else {
+      if (!FAKE_PURCHASE_SUB_TYPE_SET.has(recruit.subType)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "subType"],
+          message: "가구매 캠페인에서 사용할 수 없는 서브타입입니다",
+        });
+        return;
+      }
+      if (recruit.productPriceJpy === null || recruit.productPriceJpy <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "productPriceJpy"],
+          message: "상품 가격은 1 이상의 정수를 입력하세요",
+        });
+      }
+      if (recruit.productUrl === null || recruit.productUrl.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "productUrl"],
+          message: "상품 URL을 입력하세요",
+        });
+      } else if (!/^https:\/\//i.test(recruit.productUrl)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "productUrl"],
+          message: "https URL 을 입력하세요",
+        });
+      }
+    }
+  });
+}
+
 export const CampaignFormSchema = z
   .object({
     category: CampaignCategorySchema.default("SNS"),
@@ -101,6 +181,9 @@ export const CampaignFormSchema = z
   .refine((d) => d.recruitStartDate <= d.recruitEndDate, {
     path: ["recruitEndDate"],
     message: "종료일은 시작일 이후여야 합니다",
+  })
+  .superRefine((form, ctx) => {
+    refineRecruitsByCategory(form.category, form.recruits, ctx);
   });
 export type CampaignForm = z.infer<typeof CampaignFormSchema>;
 

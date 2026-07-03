@@ -9,9 +9,9 @@ export type {
   CampaignSubType,
 } from "@jsure/shared";
 
-/** CampaignForm.recruits 의 요소 타입 (SNS 4종 한정) */
+/** CampaignForm.recruits 의 요소 타입 (SNS/가구매 공용). */
 export type CampaignFormRecruit = CampaignForm["recruits"][number];
-/** CampaignFormRecruit.subType (INSTAGRAM/TIKTOK/X/YOUTUBE) */
+/** CampaignFormRecruit.subType (SNS 4종 또는 가구매 3종). */
 export type CampaignFormRecruitSubType = CampaignFormRecruit["subType"];
 
 export type CampaignStatus = "recruit" | "done";

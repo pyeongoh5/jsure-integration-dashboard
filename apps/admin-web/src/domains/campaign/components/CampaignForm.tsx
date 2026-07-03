@@ -6,7 +6,7 @@ import {
   type CampaignForm as Values,
   type CampaignResponse,
 } from "@jsure/shared";
-import { SnsRecruitList } from "./SnsRecruitList";
+import { RecruitList } from "./RecruitList";
 import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
 import { ExcludedCampaignsPicker } from "./ExcludedCampaignsPicker";
 import { uploadCampaignThumbnail, UploadError } from "@/lib/uploads";
@@ -35,13 +35,20 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   excludedCampaignIds: [],
 };
 
-type SnsRecruitItemError = Partial<
-  Record<"minFollowers" | "recruitCount" | "instagramPostTypes", string>
+type RecruitItemError = Partial<
+  Record<
+    | "minFollowers"
+    | "recruitCount"
+    | "instagramPostTypes"
+    | "productPriceJpy"
+    | "productUrl",
+    string
+  >
 >;
 
 interface PerItemErrors {
   referenceMediaUrls?: Record<number, string>;
-  recruits?: Record<number, SnsRecruitItemError>;
+  recruits?: Record<number, RecruitItemError>;
 }
 
 type Props = {
@@ -157,8 +164,24 @@ export function CampaignForm({
       return;
     }
     try {
+      const normalizedRecruits = values.recruits.map((recruit) => {
+        if (values.category === "SNS") {
+          return {
+            ...recruit,
+            productPriceJpy: null,
+            productUrl: null,
+          };
+        }
+        return {
+          ...recruit,
+          minFollowers: 0,
+          insightRequired: false,
+          instagramPostTypes: [],
+        };
+      });
       const finalValues: Values = {
         ...values,
+        recruits: normalizedRecruits,
         productSummary: serializeRichTextHtml(values.productSummary),
         guideline: serializeRichTextHtml(values.guideline),
         cautions: serializeRichTextHtml(values.cautions),
@@ -201,11 +224,13 @@ export function CampaignForm({
           }
         } else if (pathHead === "recruits" && Number.isInteger(index)) {
           const sub = value as Record<string, { message?: unknown }>;
-          const target: SnsRecruitItemError = {};
+          const target: RecruitItemError = {};
           for (const subKey of [
             "minFollowers",
             "recruitCount",
             "instagramPostTypes",
+            "productPriceJpy",
+            "productUrl",
           ] as const) {
             const message = sub[subKey]?.message;
             if (typeof message === "string") {
@@ -464,15 +489,22 @@ export function CampaignForm({
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>SNS별 모집</h2>
+          <h2 className={styles.sectionTitle}>
+            {methods.watch("category") === "FAKE_PURCHASE"
+              ? "가구매 채널별 모집"
+              : "SNS별 모집"}
+          </h2>
           <p className={styles.subLabel}>
-            사용할 SNS를 선택하고, 각 SNS에 적용할 조건과 모집 인원을 입력하세요.
+            {methods.watch("category") === "FAKE_PURCHASE"
+              ? "가구매를 진행할 채널을 선택하고, 채널별 모집 인원과 상품 정보를 입력하세요."
+              : "사용할 SNS를 선택하고, 각 SNS에 적용할 조건과 모집 인원을 입력하세요."}
           </p>
           <Controller
             control={methods.control}
             name="recruits"
             render={({ field }) => (
-              <SnsRecruitList
+              <RecruitList
+                category={methods.watch("category")}
                 value={field.value}
                 onChange={field.onChange}
                 disabled={submitting}

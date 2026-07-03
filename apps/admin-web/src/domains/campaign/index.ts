@@ -27,7 +27,7 @@ export { CampaignCardBody } from "./components/CampaignCardBody";
 export { CampaignCardFooter } from "./components/CampaignCardFooter";
 export { CampaignCardTitle } from "./components/CampaignCardTitle";
 export { CampaignCardSnsRecruits } from "./components/CampaignCardSnsRecruits";
-export { SnsRecruitList } from "./components/SnsRecruitList";
+export { RecruitList } from "./components/RecruitList";
 export { SnsTypeChips } from "./components/SnsTypeChips";
 export { ExcludedCampaignsPicker } from "./components/ExcludedCampaignsPicker";
 export { ReferenceMediaUrlList } from "./components/ReferenceMediaUrlList";

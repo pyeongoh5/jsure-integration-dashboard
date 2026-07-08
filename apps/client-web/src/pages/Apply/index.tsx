@@ -320,55 +320,57 @@ export function Apply() {
           </section>
         )}
 
-        <section className={styles.sec}>
-          <h3>{t("pages.apply.addressTitle")}</h3>
-          {me.data?.address ? (
-            <>
-              <div className={styles.address}>
-                〒{me.data.address.postalCode}
-                <br />
-                {me.data.address.prefecture}
-                {me.data.address.city}
-                {me.data.address.addressLine1}
-                {me.data.address.addressLine2
-                  ? ` ${me.data.address.addressLine2}`
-                  : ""}
+        {!isFakePurchaseCampaign && (
+          <section className={styles.sec}>
+            <h3>{t("pages.apply.addressTitle")}</h3>
+            {me.data?.address ? (
+              <>
+                <div className={styles.address}>
+                  〒{me.data.address.postalCode}
+                  <br />
+                  {me.data.address.prefecture}
+                  {me.data.address.city}
+                  {me.data.address.addressLine1}
+                  {me.data.address.addressLine2
+                    ? ` ${me.data.address.addressLine2}`
+                    : ""}
+                </div>
+                <label className={styles.chk}>
+                  <input
+                    type="checkbox"
+                    checked={addressConfirmed}
+                    onChange={() => setAddressConfirmed((prev) => !prev)}
+                  />
+                  <span>{t("pages.apply.confirmAddress")}</span>
+                </label>
+                <button
+                  type="button"
+                  className={styles.addressEdit}
+                  onClick={() => nav("/me/address")}
+                >
+                  {t("pages.apply.editAddress")}
+                </button>
+                <p className={styles.addressNotice}>
+                  {t("pages.apply.addressNotice")}
+                </p>
+                <p className={`${styles.addressNotice} ${styles.addressNoticeCaution}`}>
+                  {t("pages.apply.addressCaution")}
+                </p>
+              </>
+            ) : (
+              <div className={`${styles.address} ${styles.addressMissing}`}>
+                {t("pages.apply.addressMissing")}
+                <button
+                  type="button"
+                  className={styles.addressEdit}
+                  onClick={() => nav("/me/address")}
+                >
+                  {t("pages.apply.registerAddress")}
+                </button>
               </div>
-              <label className={styles.chk}>
-                <input
-                  type="checkbox"
-                  checked={addressConfirmed}
-                  onChange={() => setAddressConfirmed((prev) => !prev)}
-                />
-                <span>{t("pages.apply.confirmAddress")}</span>
-              </label>
-              <button
-                type="button"
-                className={styles.addressEdit}
-                onClick={() => nav("/me/address")}
-              >
-                {t("pages.apply.editAddress")}
-              </button>
-              <p className={styles.addressNotice}>
-                {t("pages.apply.addressNotice")}
-              </p>
-              <p className={`${styles.addressNotice} ${styles.addressNoticeCaution}`}>
-                {t("pages.apply.addressCaution")}
-              </p>
-            </>
-          ) : (
-            <div className={`${styles.address} ${styles.addressMissing}`}>
-              {t("pages.apply.addressMissing")}
-              <button
-                type="button"
-                className={styles.addressEdit}
-                onClick={() => nav("/me/address")}
-              >
-                {t("pages.apply.registerAddress")}
-              </button>
-            </div>
-          )}
-        </section>
+            )}
+          </section>
+        )}
 
         <section className={styles.sec}>
           <h3>{t("pages.apply.confirmSectionTitle")}</h3>
@@ -395,8 +397,7 @@ export function Apply() {
             !hasSelection ||
             instagramPostTypeMissing ||
             qualifying.length === 0 ||
-            !me.data?.address ||
-            !addressConfirmed ||
+            (!isFakePurchaseCampaign && (!me.data?.address || !addressConfirmed)) ||
             apply.isPending
           }
           onClick={() => apply.mutate()}

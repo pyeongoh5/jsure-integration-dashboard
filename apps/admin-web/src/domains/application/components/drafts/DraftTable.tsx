@@ -82,24 +82,11 @@ function renderCategoryCell(draft: DraftReview) {
   );
 }
 
-function renderStatusCell(
-  draft: DraftReview,
-  onViewInsight: (draft: DraftReview) => void,
-) {
+function renderStatusCell(draft: DraftReview) {
   const badge = (
     <span className={`${styles.statusBadge} ${STATUS_BADGE_CLASS[draft.status]}`}>
       {DRAFT_STATUS_LABEL[draft.status]}
     </span>
-  );
-  const hasContent = draft.category === "FAKE_PURCHASE" || draft.insightSubmitted;
-  const insightLink = hasContent && (
-    <button
-      type="button"
-      className={styles.insightLink}
-      onClick={() => onViewInsight(draft)}
-    >
-      보기
-    </button>
   );
   const amount =
     draft.settlement &&
@@ -112,7 +99,6 @@ function renderStatusCell(
     <div className={styles.statusCell}>
       {badge}
       {amount}
-      {insightLink}
     </div>
   );
 }
@@ -290,9 +276,18 @@ export function DraftTable({
                       >
                         {draft.url}
                       </a>
+                      {(draft.category === "FAKE_PURCHASE" || draft.insightSubmitted) && (
+                        <button
+                          type="button"
+                          className={styles.insightLink}
+                          onClick={() => onViewInsight(draft)}
+                        >
+                          {draft.category === "FAKE_PURCHASE" ? "스크린샷 보기" : "인사이트 보기"}
+                        </button>
+                      )}
                     </td>
                     <td className={styles.time}>{draft.submittedAt}</td>
-                    <td>{renderStatusCell(draft, onViewInsight)}</td>
+                    <td>{renderStatusCell(draft)}</td>
                     <td>
                       {renderActions(draft, {
                         onApprove,

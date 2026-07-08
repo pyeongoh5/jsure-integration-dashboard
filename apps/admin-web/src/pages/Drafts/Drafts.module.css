@@ -154,6 +154,10 @@
 
 .urlCell {
   max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
 }
 .url {
   color: var(--c-brand);

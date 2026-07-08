@@ -1,6 +1,5 @@
 :root {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", system-ui, sans-serif;
   line-height: 1.5;
   color-scheme: light;
 }
@@ -17,4 +16,9 @@ body {
 
 button {
   font-family: inherit;
+}
+
+select {
+  background-size: 0.8rem 0.8rem;
+  padding-right: 30px !important;
 }

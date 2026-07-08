@@ -103,7 +103,6 @@
   font-weight: var(--font-weight-medium);
   padding: var(--space-1) 10px;
   border-radius: var(--radius-full);
-  min-width: 110px;
   box-sizing: border-box;
 }
 

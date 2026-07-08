@@ -34,6 +34,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
     kind: "loading",
   });
   const isFakePurchase = draft.category === "FAKE_PURCHASE";
+  const contentSubmitted = isFakePurchase || draft.insightSubmitted;
   const dialogTitle = isFakePurchase
     ? `${draft.influencerName} 리뷰`
     : `${draft.influencerName} 인사이트`;
@@ -50,7 +51,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
   }, [attachmentsState, attachmentKind]);
 
   useEffect(() => {
-    if (!draft.insightSubmitted) return;
+    if (!contentSubmitted) return;
     let cancelled = false;
     setAttachmentsState({ kind: "loading" });
     fetchSubmittedPostAttachments(draft.id)
@@ -70,7 +71,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [draft.id, draft.insightSubmitted]);
+  }, [draft.id, contentSubmitted]);
 
   return (
     <>
@@ -98,7 +99,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
             </button>
           </header>
 
-          {!draft.insightSubmitted ? (
+          {!contentSubmitted ? (
             <div className={styles.empty}>{emptyLabel}</div>
           ) : (
             <>

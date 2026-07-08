@@ -70,14 +70,9 @@ function renderCategoryCell(draft: DraftReview) {
   const badgeClass =
     draft.category === "SNS" ? styles.categoryBadgeSns : styles.categoryBadgeFake;
   return (
-    <div className={styles.categoryCell}>
-      <span className={`${styles.categoryBadge} ${badgeClass}`}>
-        {CATEGORY_LABEL_KO[draft.category]}
-      </span>
-      <span className={styles.categorySubType}>
-        {SUB_TYPE_LABEL[draft.subType]}
-      </span>
-    </div>
+    <span className={`${styles.categoryBadge} ${badgeClass}`}>
+      {CATEGORY_LABEL_KO[draft.category]}
+    </span>
   );
 }
 
@@ -263,6 +258,11 @@ export function DraftTable({
                         {draft.media === "ig" && draft.instagramPostType !== null && (
                           <span className={styles.mediaLabel}>
                             {INSTAGRAM_POST_TYPE_LABEL[draft.instagramPostType]}
+                          </span>
+                        )}
+                        {draft.category === "FAKE_PURCHASE" && (
+                          <span className={styles.mediaLabel}>
+                            {SUB_TYPE_LABEL[draft.subType]}
                           </span>
                         )}
                       </span>

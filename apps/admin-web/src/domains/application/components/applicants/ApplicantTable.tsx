@@ -117,14 +117,9 @@ function renderCategory(applicant: Applicant) {
   const className =
     applicant.category === "SNS" ? styles.categoryBadgeSns : styles.categoryBadgeFake;
   return (
-    <div className={styles.categoryCell}>
-      <span className={`${styles.categoryBadge} ${className}`}>
-        {CATEGORY_LABEL_KO[applicant.category]}
-      </span>
-      <span className={styles.categorySubType}>
-        {SUB_TYPE_LABEL[applicant.subType]}
-      </span>
-    </div>
+    <span className={`${styles.categoryBadge} ${className}`}>
+      {CATEGORY_LABEL_KO[applicant.category]}
+    </span>
   );
 }
 
@@ -280,6 +275,7 @@ export function ApplicantTable({
                     {applicant.media.map((media) => {
                       const meta = MEDIA_META[media];
                       const showPostType = media === "ig" && applicant.instagramPostType !== null;
+                      const showSubType = applicant.category === "FAKE_PURCHASE";
                       return (
                         <span key={media} className={styles.mediaItem}>
                           <span
@@ -292,6 +288,11 @@ export function ApplicantTable({
                           {showPostType && (
                             <span className={styles.mediaLabel}>
                               {INSTAGRAM_POST_TYPE_LABEL[applicant.instagramPostType!]}
+                            </span>
+                          )}
+                          {showSubType && (
+                            <span className={styles.mediaLabel}>
+                              {SUB_TYPE_LABEL[applicant.subType]}
                             </span>
                           )}
                         </span>

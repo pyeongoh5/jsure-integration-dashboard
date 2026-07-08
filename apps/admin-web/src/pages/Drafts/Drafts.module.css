@@ -129,6 +129,29 @@
   background: #111;
 }
 
+.mediaPill {
+  display: inline-flex;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.mediaPillQoo10 {
+  background: #e60012;
+}
+.mediaPillLips {
+  background: #ff5a8f;
+}
+.mediaPillAtcosme {
+  background: #8b6a3c;
+}
+
 .urlCell {
   max-width: 360px;
 }

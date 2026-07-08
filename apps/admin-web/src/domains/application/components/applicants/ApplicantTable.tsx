@@ -11,6 +11,12 @@ import {
 } from "./types";
 import styles from "@/pages/Applicants/Applicants.module.css";
 
+const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
+  QOO10: styles.mediaPillQoo10 ?? "",
+  LIPS: styles.mediaPillLips ?? "",
+  ATCOSME: styles.mediaPillAtcosme ?? "",
+};
+
 type ActionHandlers = {
   onApprove: (applicant: Applicant) => void;
   onReject: (applicant: Applicant) => void;
@@ -272,32 +278,38 @@ export function ApplicantTable({
                 <td>{renderCategory(applicant)}</td>
                 <td>
                   <div className={styles.mediaList}>
-                    {applicant.media.map((media) => {
-                      const meta = MEDIA_META[media];
-                      const showPostType = media === "ig" && applicant.instagramPostType !== null;
-                      const showSubType = applicant.category === "FAKE_PURCHASE";
-                      return (
-                        <span key={media} className={styles.mediaItem}>
-                          <span
-                            className={`${styles.media} ${styles[meta.cls]}`}
-                            title={meta.label}
-                            aria-label={meta.label}
-                          >
-                            <i className={meta.icon} />
-                          </span>
-                          {showPostType && (
-                            <span className={styles.mediaLabel}>
-                              {INSTAGRAM_POST_TYPE_LABEL[applicant.instagramPostType!]}
-                            </span>
-                          )}
-                          {showSubType && (
-                            <span className={styles.mediaLabel}>
-                              {SUB_TYPE_LABEL[applicant.subType]}
-                            </span>
-                          )}
+                    {applicant.category === "FAKE_PURCHASE" ? (
+                      <span className={styles.mediaItem}>
+                        <span
+                          className={`${styles.mediaPill} ${FAKE_PURCHASE_PILL_CLASS[applicant.subType] ?? ""}`}
+                          title={SUB_TYPE_LABEL[applicant.subType]}
+                          aria-label={SUB_TYPE_LABEL[applicant.subType]}
+                        >
+                          {SUB_TYPE_LABEL[applicant.subType]}
                         </span>
-                      );
-                    })}
+                      </span>
+                    ) : (
+                      applicant.media.map((media) => {
+                        const meta = MEDIA_META[media];
+                        const showPostType = media === "ig" && applicant.instagramPostType !== null;
+                        return (
+                          <span key={media} className={styles.mediaItem}>
+                            <span
+                              className={`${styles.media} ${styles[meta.cls]}`}
+                              title={meta.label}
+                              aria-label={meta.label}
+                            >
+                              <i className={meta.icon} />
+                            </span>
+                            {showPostType && (
+                              <span className={styles.mediaLabel}>
+                                {INSTAGRAM_POST_TYPE_LABEL[applicant.instagramPostType!]}
+                              </span>
+                            )}
+                          </span>
+                        );
+                      })
+                    )}
                   </div>
                 </td>
                 <td className={styles.num}>{formatFollowers(applicant.followers)}</td>

@@ -23,6 +23,12 @@ const MEDIA_CLASS: Record<Media, string | undefined> = {
   atcosme: styles.mediaAtcosme,
 };
 
+const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
+  QOO10: styles.mediaPillQoo10 ?? "",
+  LIPS: styles.mediaPillLips ?? "",
+  ATCOSME: styles.mediaPillAtcosme ?? "",
+};
+
 // 상태별 배지 색 클래스. Drafts.module.css 에서 정의.
 const STATUS_BADGE_CLASS: Record<DraftStatus, string | undefined> = {
   REVIEW_PENDING: styles.statusReviewPending,
@@ -247,25 +253,32 @@ export function DraftTable({
                     <td>{draft.campaignTitle}</td>
                     <td>{renderCategoryCell(draft)}</td>
                     <td>
-                      <span className={styles.mediaItem}>
-                        <span
-                          className={`${styles.media} ${MEDIA_CLASS[draft.media]}`}
-                          title={media.label}
-                          aria-label={media.label}
-                        >
-                          <i className={media.icon} />
-                        </span>
-                        {draft.media === "ig" && draft.instagramPostType !== null && (
-                          <span className={styles.mediaLabel}>
-                            {INSTAGRAM_POST_TYPE_LABEL[draft.instagramPostType]}
-                          </span>
-                        )}
-                        {draft.category === "FAKE_PURCHASE" && (
-                          <span className={styles.mediaLabel}>
+                      {draft.category === "FAKE_PURCHASE" ? (
+                        <span className={styles.mediaItem}>
+                          <span
+                            className={`${styles.mediaPill} ${FAKE_PURCHASE_PILL_CLASS[draft.subType] ?? ""}`}
+                            title={SUB_TYPE_LABEL[draft.subType]}
+                            aria-label={SUB_TYPE_LABEL[draft.subType]}
+                          >
                             {SUB_TYPE_LABEL[draft.subType]}
                           </span>
-                        )}
-                      </span>
+                        </span>
+                      ) : (
+                        <span className={styles.mediaItem}>
+                          <span
+                            className={`${styles.media} ${MEDIA_CLASS[draft.media]}`}
+                            title={media.label}
+                            aria-label={media.label}
+                          >
+                            <i className={media.icon} />
+                          </span>
+                          {draft.media === "ig" && draft.instagramPostType !== null && (
+                            <span className={styles.mediaLabel}>
+                              {INSTAGRAM_POST_TYPE_LABEL[draft.instagramPostType]}
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </td>
                     <td className={styles.urlCell}>
                       <a

@@ -91,7 +91,8 @@ function renderStatusCell(
       {DRAFT_STATUS_LABEL[draft.status]}
     </span>
   );
-  const insightLink = draft.insightSubmitted && (
+  const hasContent = draft.category === "FAKE_PURCHASE" || draft.insightSubmitted;
+  const insightLink = hasContent && (
     <button
       type="button"
       className={styles.insightLink}

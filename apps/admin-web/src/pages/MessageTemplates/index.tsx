@@ -18,14 +18,12 @@ const CATEGORIES: { key: CampaignCategory; label: string }[] = [
 ];
 
 const SNS_SUB_TYPES = ["INSTAGRAM", "X"] as const satisfies readonly LineTriggerSubType[];
-const FAKE_PURCHASE_SUB_TYPES = ["QOO10", "LIPS", "ATCOSME"] as const satisfies readonly LineTriggerSubType[];
+const FAKE_PURCHASE_SUB_TYPES = ["QOO10"] as const satisfies readonly LineTriggerSubType[];
 
 const SUB_TYPE_LABEL: Record<LineTriggerSubType, string> = {
   INSTAGRAM: "Instagram",
   X: "X",
   QOO10: "Qoo10",
-  LIPS: "LIPS",
-  ATCOSME: "@cosme",
 };
 
 function subTypesFor(category: CampaignCategory): readonly LineTriggerSubType[] {

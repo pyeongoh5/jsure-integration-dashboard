@@ -5,7 +5,7 @@ import {
   SNS_ICON_CLASS,
   type CampaignCardRecruit,
 } from "../types";
-import type { CampaignSubType } from "@jsure/shared";
+import type { CampaignSubType, InstagramPostType } from "@jsure/shared";
 
 type Props = {
   recruits: CampaignCardRecruit[];
@@ -17,18 +17,24 @@ const CHIP_CLASS: Record<CampaignSubType, string | undefined> = {
   X: styles.cardSnsChipX,
   YOUTUBE: styles.cardSnsChipYoutube,
   QOO10: styles.cardSnsChipQoo10,
-  LIPS: styles.cardSnsChipLips,
-  ATCOSME: styles.cardSnsChipAtcosme,
 };
+
+const INSTAGRAM_POST_TYPES: readonly InstagramPostType[] = ["FEED", "REELS"];
 
 export function CampaignCardSnsRecruits({ recruits }: Props) {
   if (recruits.length === 0) return null;
   return (
     <div className={styles.cardSns}>
       {recruits.map((r) => {
+        const instagramPostTypes =
+          r.subType === "INSTAGRAM"
+            ? INSTAGRAM_POST_TYPES.filter((postType) =>
+                r.subTypeOptions.includes(postType),
+              )
+            : [];
         const instagramTypes =
-          r.subType === "INSTAGRAM" && r.instagramPostTypes.length > 0
-            ? r.instagramPostTypes
+          instagramPostTypes.length > 0
+            ? instagramPostTypes
                 .map((postType) => INSTAGRAM_POST_TYPE_LABEL[postType])
                 .join("·")
             : null;

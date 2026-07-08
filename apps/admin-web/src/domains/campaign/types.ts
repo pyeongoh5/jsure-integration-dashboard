@@ -11,7 +11,7 @@ export type {
 
 /** CampaignForm.recruits 의 요소 타입 (SNS/가구매 공용). */
 export type CampaignFormRecruit = CampaignForm["recruits"][number];
-/** CampaignFormRecruit.subType (SNS 4종 또는 가구매 3종). */
+/** CampaignFormRecruit.subType (SNS 4종 또는 QOO10). */
 export type CampaignFormRecruitSubType = CampaignFormRecruit["subType"];
 
 export type CampaignStatus = "recruit" | "done";
@@ -19,7 +19,7 @@ export type CampaignStatus = "recruit" | "done";
 export type CampaignCardRecruit = {
   subType: CampaignSubType;
   minFollowers: number;
-  instagramPostTypes: InstagramPostType[];
+  subTypeOptions: string[];
 };
 
 export const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
@@ -50,8 +50,6 @@ export const SNS_ICON_CLASS: Record<CampaignSubType, string> = {
   X: "fa-brands fa-x-twitter",
   YOUTUBE: "fa-brands fa-youtube",
   QOO10: "fa-solid fa-bag-shopping",
-  LIPS: "fa-solid fa-bag-shopping",
-  ATCOSME: "fa-solid fa-bag-shopping",
 };
 
 export const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
@@ -60,8 +58,6 @@ export const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   X: "팔로워",
   YOUTUBE: "구독자",
   QOO10: "팔로워",
-  LIPS: "팔로워",
-  ATCOSME: "팔로워",
 };
 
 export const STATUS_LABEL: Record<CampaignStatus, string> = {

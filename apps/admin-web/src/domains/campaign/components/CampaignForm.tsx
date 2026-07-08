@@ -39,7 +39,7 @@ type RecruitItemError = Partial<
   Record<
     | "minFollowers"
     | "recruitCount"
-    | "instagramPostTypes"
+    | "subTypeOptions"
     | "productPriceJpy"
     | "productUrl",
     string
@@ -176,7 +176,6 @@ export function CampaignForm({
           ...recruit,
           minFollowers: 0,
           insightRequired: false,
-          instagramPostTypes: [],
         };
       });
       const finalValues: Values = {
@@ -228,7 +227,7 @@ export function CampaignForm({
           for (const subKey of [
             "minFollowers",
             "recruitCount",
-            "instagramPostTypes",
+            "subTypeOptions",
             "productPriceJpy",
             "productUrl",
           ] as const) {

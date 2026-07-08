@@ -98,7 +98,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     recruits: c.recruits.map((r) => ({
       subType: r.subType,
       minFollowers: r.minFollowers,
-      instagramPostTypes: r.instagramPostTypes,
+      subTypeOptions: r.subTypeOptions,
     })),
   };
 }

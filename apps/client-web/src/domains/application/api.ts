@@ -100,12 +100,12 @@ export async function submitOrder(
 
 export async function submitReview(
   applicationId: string,
-  reviewUrl: string,
   screenshots: AttachmentUploadInput[],
+  reviewUrls: Partial<Record<"LIPS" | "ATCOSME", string>>,
 ): Promise<InfluencerApplication> {
   const res = await api.post(
     `/influencer/applications/${applicationId}/review`,
-    { reviewUrl, screenshots },
+    { screenshots, reviewUrls },
   );
   return InfluencerApplicationSchema.parse(res.data);
 }

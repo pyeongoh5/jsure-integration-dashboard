@@ -2,7 +2,6 @@ import { useLayoutEffect, useRef } from "react";
 import {
   SUB_TYPE_LABEL,
   type InfluencerCampaignCard,
-  type InstagramPostType,
   type CampaignSubType,
   type CampaignRecruit,
 } from "@jsure/shared";
@@ -36,8 +35,6 @@ const SNS_ICON: Record<CampaignSubType, string> = {
   YOUTUBE: "fa-brands fa-youtube",
   X: "fa-brands fa-x-twitter",
   QOO10: "fa-solid fa-bag-shopping",
-  LIPS: "fa-solid fa-bag-shopping",
-  ATCOSME: "fa-solid fa-bag-shopping",
 };
 
 const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
@@ -46,11 +43,9 @@ const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   X: t("campaign.card.followerLabel"),
   YOUTUBE: t("campaign.card.subscriberLabel"),
   QOO10: t("campaign.card.followerLabel"),
-  LIPS: t("campaign.card.followerLabel"),
-  ATCOSME: t("campaign.card.followerLabel"),
 };
 
-const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
+const INSTAGRAM_POST_TYPE_LABEL: Record<"FEED" | "REELS", string> = {
   FEED: t("campaign.card.instagramFeed"),
   REELS: t("campaign.card.instagramReels"),
 };
@@ -92,22 +87,22 @@ const MARQUEE_SPEED_PX_PER_SEC = 15;
 const MARQUEE_PAUSE_MS = 1500;
 
 function condText(r: CampaignRecruit): string {
-  if (
-    r.subType === "QOO10" ||
-    r.subType === "LIPS" ||
-    r.subType === "ATCOSME"
-  ) {
+  if (r.subType === "QOO10") {
     return SUB_TYPE_LABEL[r.subType];
   }
   const base =
     r.minFollowers > 0
       ? `${SNS_FOLLOWER_LABEL[r.subType]} ${r.minFollowers.toLocaleString("ja-JP")}${t("campaign.card.followerMinSuffix")}`
       : `${SNS_FOLLOWER_LABEL[r.subType]} ${t("campaign.card.noLimit")}`;
-  if (r.subType === "INSTAGRAM" && r.instagramPostTypes.length > 0) {
-    const types = r.instagramPostTypes
+  if (r.subType === "INSTAGRAM" && r.subTypeOptions.length > 0) {
+    const types = r.subTypeOptions
+      .filter(
+        (option): option is "FEED" | "REELS" =>
+          option === "FEED" || option === "REELS",
+      )
       .map((postType) => INSTAGRAM_POST_TYPE_LABEL[postType])
       .join("・");
-    return `${base} ・ ${types}`;
+    if (types.length > 0) return `${base} ・ ${types}`;
   }
   return base;
 }

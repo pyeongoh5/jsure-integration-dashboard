@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { InstagramPostType, CampaignSubType } from "@jsure/shared";
@@ -33,11 +33,7 @@ const CONFIRM_LABELS: Record<ConfirmKey, string> = {
   GUIDELINE: t("pages.apply.confirmGuideline"),
 };
 
-const FAKE_PURCHASE_SUB_TYPES: readonly CampaignSubType[] = [
-  "QOO10",
-  "LIPS",
-  "ATCOSME",
-];
+const FAKE_PURCHASE_SUB_TYPES: readonly CampaignSubType[] = ["QOO10"];
 
 function isFakePurchaseSubType(subType: CampaignSubType): boolean {
   return FAKE_PURCHASE_SUB_TYPES.includes(subType);
@@ -49,8 +45,6 @@ const SNS_LABEL: Record<CampaignSubType, string> = {
   X: "X",
   YOUTUBE: "YouTube",
   QOO10: "Qoo10",
-  LIPS: "LIPS",
-  ATCOSME: "@cosme",
 };
 
 const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
@@ -59,8 +53,6 @@ const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   X: t("pages.apply.snsFollower"),
   YOUTUBE: t("pages.apply.snsSubscriber"),
   QOO10: t("pages.apply.snsFollower"),
-  LIPS: t("pages.apply.snsFollower"),
-  ATCOSME: t("pages.apply.snsFollower"),
 };
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
@@ -85,6 +77,18 @@ export function Apply() {
   const activeConfirmKeys: readonly ConfirmKey[] = isFakePurchaseCampaign
     ? CONFIRM_KEYS_FAKE_PURCHASE
     : CONFIRM_KEYS_SNS;
+
+  // 가구매 캠페인은 서브타입이 QOO10 하나뿐이므로 자동 선택
+  useEffect(() => {
+    if (!campaign.data) return;
+    if (campaign.data.category !== "FAKE_PURCHASE") return;
+    setSelectedSns((prev) => {
+      if (prev.has("QOO10")) return prev;
+      const next = new Set(prev);
+      next.add("QOO10");
+      return next;
+    });
+  }, [campaign.data]);
 
   const qualifying = useMemo(() => {
     if (!campaign.data || !me.data) return [];
@@ -119,7 +123,12 @@ export function Apply() {
     const instagramRecruit = campaign.data.recruits.find(
       (recruit) => recruit.subType === "INSTAGRAM",
     );
-    return instagramRecruit?.instagramPostTypes ?? [];
+    const options = instagramRecruit?.subTypeOptions ?? [];
+    const allowed: InstagramPostType[] = [];
+    for (const option of options) {
+      if (option === "FEED" || option === "REELS") allowed.push(option);
+    }
+    return allowed;
   }, [campaign.data]);
   const instagramPostTypeMissing = wantsInstagram && !instagramPostType;
 
@@ -194,6 +203,17 @@ export function Apply() {
           </div>
         </div>
 
+        {isFakePurchaseCampaign ? (
+          <section className={styles.sec}>
+            <h3>{t("pages.apply.fakePurchaseSectionTitle")}</h3>
+            {campaign.data.recruits.map((r) => (
+              <div key={r.subType} className={styles.snsCond}>
+                {t("campaign.detail.productPrice")}: ¥
+                {(r.productPriceJpy ?? 0).toLocaleString("ja-JP")}
+              </div>
+            ))}
+          </section>
+        ) : (
         <section className={styles.sec}>
           <h3>{t("pages.apply.snsSectionTitle")}</h3>
           {qualifying.length === 0 ? (
@@ -282,6 +302,7 @@ export function Apply() {
             </ul>
           )}
         </section>
+        )}
 
         {wantsInstagram && allowedInstagramPostTypes.length > 0 && (
           <section className={styles.sec}>

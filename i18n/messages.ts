@@ -55,6 +55,7 @@ export const messages = {
       productUrl: { jp: "商品ページ", kr: "상품 페이지" },
       expectedSettlement: { jp: "予定精算金額", kr: "예상 정산액" },
       productPrice: { jp: "商品価格", kr: "상품 가격" },
+      reviewChannels: { jp: "レビューチャンネル", kr: "리뷰 채널" },
     },
   },
   me: {
@@ -211,6 +212,12 @@ export const messages = {
       },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       deadlinePassed: { jp: "投稿期限を過ぎています", kr: "게시 기한이 지났습니다" },
+      channelUrlLabelSuffix: { jp: "レビューURL", kr: "리뷰 URL" },
+      channelUrlPlaceholder: { jp: "https://…", kr: "https://…" },
+      channelUrlRequired: {
+        jp: "各チャンネルのレビューURLをご入力ください",
+        kr: "각 채널의 리뷰 URL을 입력해 주세요",
+      },
     },
     insightForm: {
       metricInvalid: { jp: "数字を入力", kr: "숫자를 입력해 주세요" },
@@ -320,6 +327,7 @@ export const messages = {
       notFound: { jp: "キャンペーンが見つかりません", kr: "캠페인을 찾을 수 없습니다" },
       title: { jp: "応募確認", kr: "응모 확인" },
       snsSectionTitle: { jp: "応募に使用するSNSを選択", kr: "응모에 사용할 SNS 선택" },
+      fakePurchaseSectionTitle: { jp: "応募内容", kr: "응모 내용" },
       noQualifying: {
         jp: "応募条件を満たすSNSアカウントがありません",
         kr: "응모 조건을 충족하는 SNS 계정이 없습니다",

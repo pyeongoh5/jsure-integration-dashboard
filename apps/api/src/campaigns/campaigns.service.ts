@@ -31,6 +31,9 @@ export function utcToJstDateStr(d: Date): string {
 const SNS_SUB_TYPES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
 const FAKE_PURCHASE_SUB_TYPES = ["QOO10"] as const;
 
+const INSTAGRAM_POST_TYPES = ["FEED", "REELS"] as const;
+const QOO10_REVIEW_CHANNELS = ["LIPS", "ATCOSME"] as const;
+
 export function validateRecruitsForCategory(
   category: CampaignCategory,
   recruits: {
@@ -42,7 +45,15 @@ export function validateRecruitsForCategory(
     subTypeOptions?: string[];
   }[],
 ): void {
+  if (category === "FAKE_PURCHASE") {
+    if (recruits.length !== 1) {
+      throw new BadRequestException(
+        "買取レビューキャンペーンでは QOO10 募集を 1 件のみ登録してください",
+      );
+    }
+  }
   for (const recruit of recruits) {
+    const rawOptions = recruit.subTypeOptions ?? [];
     if (category === "SNS") {
       if (
         !SNS_SUB_TYPES.includes(
@@ -56,6 +67,28 @@ export function validateRecruitsForCategory(
       if (recruit.productPriceJpy !== null || recruit.productUrl !== null) {
         throw new BadRequestException(
           "SNSキャンペーンでは productPriceJpy/productUrl を指定できません",
+        );
+      }
+      if (recruit.subType === "INSTAGRAM") {
+        if (rawOptions.length === 0) {
+          throw new BadRequestException(
+            "INSTAGRAM 募集では投稿タイプ(FEED/REELS) を 1 つ以上指定してください",
+          );
+        }
+        for (const option of rawOptions) {
+          if (
+            !INSTAGRAM_POST_TYPES.includes(
+              option as (typeof INSTAGRAM_POST_TYPES)[number],
+            )
+          ) {
+            throw new BadRequestException(
+              `INSTAGRAM の subTypeOptions に不正な値: ${option}`,
+            );
+          }
+        }
+      } else if (rawOptions.length !== 0) {
+        throw new BadRequestException(
+          `${recruit.subType} 募集では subTypeOptions を指定できません`,
         );
       }
     } else {
@@ -76,6 +109,9 @@ export function validateRecruitsForCategory(
       if (!recruit.productUrl || recruit.productUrl.trim().length === 0) {
         throw new BadRequestException("productUrl を入力してください");
       }
+      if (!/^https:\/\//i.test(recruit.productUrl)) {
+        throw new BadRequestException("productUrl は https:// で始まる必要があります");
+      }
       if ((recruit.minFollowers ?? 0) !== 0) {
         throw new BadRequestException(
           "買取レビューキャンペーンの minFollowers は 0 にしてください",
@@ -86,8 +122,17 @@ export function validateRecruitsForCategory(
           "買取レビューキャンペーンでは insightRequired=false のみサポートします",
         );
       }
-      // 가구매 (QOO10) 는 subTypeOptions 에 리뷰 채널(LIPS/ATCOSME) 을 지정할 수 있으므로 여기서 막지 않는다
-
+      for (const option of rawOptions) {
+        if (
+          !QOO10_REVIEW_CHANNELS.includes(
+            option as (typeof QOO10_REVIEW_CHANNELS)[number],
+          )
+        ) {
+          throw new BadRequestException(
+            `QOO10 の subTypeOptions に不正な値: ${option}`,
+          );
+        }
+      }
     }
   }
 }

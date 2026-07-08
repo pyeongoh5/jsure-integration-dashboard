@@ -91,4 +91,72 @@ describe("validateRecruitsForCategory", () => {
       ]),
     ).toThrow(BadRequestException);
   });
+
+  it("FAKE_PURCHASE 에서 recruits 가 2개면 BadRequest", () => {
+    expect(() =>
+      validateRecruitsForCategory("FAKE_PURCHASE", [
+        {
+          subType: "QOO10",
+          minFollowers: 0,
+          insightRequired: false,
+          productPriceJpy: 2000,
+          productUrl: "https://example.com/item",
+          subTypeOptions: [],
+        },
+        {
+          subType: "QOO10",
+          minFollowers: 0,
+          insightRequired: false,
+          productPriceJpy: 2000,
+          productUrl: "https://example.com/item2",
+          subTypeOptions: [],
+        },
+      ]),
+    ).toThrow(BadRequestException);
+  });
+
+  it("FAKE_PURCHASE 에서 subType 이 QOO10 이 아니면 BadRequest", () => {
+    expect(() =>
+      validateRecruitsForCategory("FAKE_PURCHASE", [
+        {
+          subType: "INSTAGRAM",
+          minFollowers: 0,
+          insightRequired: false,
+          productPriceJpy: 2000,
+          productUrl: "https://example.com/item",
+          subTypeOptions: [],
+        },
+      ]),
+    ).toThrow(BadRequestException);
+  });
+
+  it("FAKE_PURCHASE 에서 subTypeOptions=['INVALID'] 이면 BadRequest", () => {
+    expect(() =>
+      validateRecruitsForCategory("FAKE_PURCHASE", [
+        {
+          subType: "QOO10",
+          minFollowers: 0,
+          insightRequired: false,
+          productPriceJpy: 2000,
+          productUrl: "https://example.com/item",
+          subTypeOptions: ["INVALID"],
+        },
+      ]),
+    ).toThrow(BadRequestException);
+  });
+
+  it("FAKE_PURCHASE + subTypeOptions=['LIPS'] 정상", () => {
+    expect(() =>
+      validateRecruitsForCategory("FAKE_PURCHASE", [
+        {
+          subType: "QOO10",
+          minFollowers: 0,
+          insightRequired: false,
+          productPriceJpy: 2000,
+          productUrl: "https://example.com/item",
+          subTypeOptions: ["LIPS"],
+        },
+      ]),
+    ).not.toThrow();
+  });
 });

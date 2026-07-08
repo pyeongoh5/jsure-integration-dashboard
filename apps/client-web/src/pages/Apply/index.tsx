@@ -130,7 +130,7 @@ export function Apply() {
         Array.from(selectedSns),
         wantsInstagram ? instagramPostType : null,
       ),
-    onSuccess: (app) => nav(`/applications/${app.id}`, { replace: true }),
+    onSuccess: () => nav("/applications", { replace: true }),
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { message?: string } } };
       setError(e?.response?.data?.message ?? t("pages.apply.errorFallback"));

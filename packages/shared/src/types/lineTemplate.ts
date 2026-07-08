@@ -8,8 +8,6 @@ export const LineTriggerSubTypeSchema = z.enum([
   "INSTAGRAM",
   "X",
   "QOO10",
-  "LIPS",
-  "ATCOSME",
 ]);
 export type LineTriggerSubType = z.infer<typeof LineTriggerSubTypeSchema>;
 

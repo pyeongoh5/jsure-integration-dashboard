@@ -857,7 +857,8 @@ const SUBMITTED_POST_INCLUDE = {
 type SubmittedPostRow = {
   id: string;
   subType: CampaignSubType;
-  url: string;
+  url: string | null;
+  submissionData: unknown;
   submittedAt: Date;
   insightLikes: number | null;
   insightComments: number | null;
@@ -943,6 +944,12 @@ async function toSubmittedPostResponse(
     subType: row.subType,
     instagramPostType: row.application.instagramPostType,
     url: row.url,
+    submissionData:
+      row.submissionData &&
+      typeof row.submissionData === "object" &&
+      !Array.isArray(row.submissionData)
+        ? (row.submissionData as Record<string, unknown>)
+        : null,
     submittedAt: row.submittedAt.toISOString(),
     insightLikes: row.insightLikes,
     insightComments: row.insightComments,
@@ -1010,7 +1017,7 @@ type SettlementRow = {
   completedAt: Date | null;
   post: {
     id: string;
-    url: string;
+    url: string | null;
     subType: CampaignSubType;
     submittedAt: Date;
     insightSubmittedAt: Date | null;

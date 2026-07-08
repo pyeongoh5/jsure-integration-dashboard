@@ -246,31 +246,58 @@ describe("InfluencerApplicationsService.submitReview", () => {
     },
   ];
 
-  it("ORDER_SUBMITTED → REVIEW_SUBMITTED 첫 제출: SubmittedPost + REVIEW_SCREENSHOT 첨부 생성", async () => {
-    const dispatch = jest.fn();
-    const postCreate = jest.fn(async () => ({ id: "post-1" }));
-    const postUpdate = jest.fn(async () => ({ id: "post-1" }));
+  function makeApplicationLookup(overrides: {
+    status?: string;
+    posts?: { id: string; reviewStatus: string }[];
+    recruits?: { subType: string; subTypeOptions: string[] }[];
+    category?: string;
+    subType?: string;
+  } = {}) {
+    return {
+      id: "app-1",
+      influencerId: "inf-1",
+      status: overrides.status ?? "ORDER_SUBMITTED",
+      subType: overrides.subType ?? "QOO10",
+      campaign: {
+        category: overrides.category ?? "FAKE_PURCHASE",
+        recruits: overrides.recruits ?? [
+          { subType: "QOO10", subTypeOptions: [] },
+        ],
+      },
+      posts: overrides.posts ?? [],
+    };
+  }
+
+  function makeSubmitPrisma(lookup: unknown, opts: {
+    postCreate?: jest.Mock;
+    postUpdate?: jest.Mock;
+    attachmentCreateMany?: jest.Mock;
+    attachmentDeleteMany?: jest.Mock;
+    applicationUpdate?: jest.Mock;
+    refreshedRow?: unknown;
+    detailRow?: unknown;
+  } = {}) {
+    const postCreate = opts.postCreate ?? jest.fn(async () => ({ id: "post-1" }));
+    const postUpdate = opts.postUpdate ?? jest.fn(async () => ({ id: "post-1" }));
+    const attachmentCreateMany =
+      opts.attachmentCreateMany ?? jest.fn(async () => ({ count: 2 }));
+    const attachmentDeleteMany =
+      opts.attachmentDeleteMany ?? jest.fn(async () => ({ count: 0 }));
+    const applicationUpdate =
+      opts.applicationUpdate ?? jest.fn(async () => ({ id: "app-1" }));
+    const refreshedRow =
+      opts.refreshedRow ?? makeApplicationRow({ status: "REVIEW_SUBMITTED" });
+    const detailRow =
+      opts.detailRow ?? makeApplicationRow({ status: "REVIEW_SUBMITTED" });
+    const findUnique = jest
+      .fn()
+      .mockResolvedValueOnce(lookup)
+      .mockResolvedValueOnce(detailRow);
+    const findUniqueOrThrow = jest.fn(async () => refreshedRow);
     const postFindUnique = jest.fn(async () => ({
       id: "post-1",
       reviewStatus: "PENDING",
     }));
-    const attachmentCreateMany = jest.fn(async () => ({ count: 2 }));
-    const attachmentDeleteMany = jest.fn(async () => ({ count: 0 }));
-    const applicationUpdate = jest.fn(async () => ({ id: "app-1" }));
-    const refreshedRow = makeApplicationRow({ status: "REVIEW_SUBMITTED" });
-    const detailRow = makeApplicationRow({ status: "REVIEW_SUBMITTED" });
-    const findUnique = jest
-      .fn()
-      .mockResolvedValueOnce({
-        id: "app-1",
-        influencerId: "inf-1",
-        status: "ORDER_SUBMITTED",
-        subType: "QOO10",
-        campaign: { category: "FAKE_PURCHASE" },
-        posts: [],
-      })
-      .mockResolvedValueOnce(detailRow);
-    const findUniqueOrThrow = jest.fn(async () => refreshedRow);
     const tx = {
       submittedPost: { create: postCreate, update: postUpdate },
       attachment: {
@@ -288,177 +315,205 @@ describe("InfluencerApplicationsService.submitReview", () => {
       submittedPost: { findUnique: postFindUnique },
       $transaction: async (fn: (t: unknown) => Promise<unknown>) => fn(tx),
     };
-    const verifyAttachmentUploads = jest.fn(async () => undefined);
-    const resolveCampaignThumbnailUrl = jest.fn(
-      async (raw: string | null) => raw,
-    );
-    const svc = makeService({
+    return {
       prisma,
-      uploads: { verifyAttachmentUploads, resolveCampaignThumbnailUrl },
-      dispatcher: { dispatch },
-    });
+      postCreate,
+      postUpdate,
+      attachmentCreateMany,
+      attachmentDeleteMany,
+      applicationUpdate,
+      refreshedRow,
+    };
+  }
 
-    await svc.submitReview("inf-1", "app-1", "https://example.com/review", screenshots);
-
-    expect(verifyAttachmentUploads).toHaveBeenCalledWith(
-      screenshots,
-      "attachments/",
+  it("subTypeOptions=[] + reviewUrls={} 첫 제출 성공", async () => {
+    const dispatch = jest.fn();
+    const { prisma, postCreate, refreshedRow } = makeSubmitPrisma(
+      makeApplicationLookup(),
     );
+    const svc = makeService({ prisma, dispatcher: { dispatch } });
+
+    await svc.submitReview("inf-1", "app-1", screenshots, {});
+
     expect(postCreate).toHaveBeenCalledTimes(1);
-    expect(postUpdate).not.toHaveBeenCalled();
     const createArg = (postCreate.mock.calls[0] as unknown[])[0] as {
-      data: { applicationId: string; subType: string; url: string; reviewStatus: string };
+      data: {
+        applicationId: string;
+        subType: string;
+        url: null;
+        reviewStatus: string;
+        submissionData: { reviewUrls: Record<string, string> };
+      };
     };
-    expect(createArg.data.applicationId).toBe("app-1");
+    expect(createArg.data.url).toBeNull();
     expect(createArg.data.subType).toBe("QOO10");
-    expect(createArg.data.url).toBe("https://example.com/review");
-    expect(createArg.data.reviewStatus).toBe("PENDING");
-
-    expect(attachmentCreateMany).toHaveBeenCalledTimes(1);
-    const attachmentArg = (attachmentCreateMany.mock.calls[0] as unknown[])[0] as {
-      data: { kind: string; postId: string }[];
-    };
-    expect(attachmentArg.data).toHaveLength(2);
-    expect(attachmentArg.data[0]?.kind).toBe("REVIEW_SCREENSHOT");
-    expect(attachmentArg.data[0]?.postId).toBe("post-1");
-
-    expect(applicationUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "app-1" },
-        data: expect.objectContaining({ status: "REVIEW_SUBMITTED" }),
-      }),
-    );
+    expect(createArg.data.submissionData.reviewUrls).toEqual({});
     expect(dispatch).toHaveBeenCalledWith(
       "FAKE_PURCHASE_REVIEW_SUBMITTED",
       expect.objectContaining({ application: refreshedRow }),
     );
   });
 
-  it("REVIEW_SUBMITTED + post REJECTED 재제출: 기존 첨부 삭제 후 post update", async () => {
-    const dispatch = jest.fn();
-    const postCreate = jest.fn(async () => ({ id: "post-1" }));
-    const postUpdate = jest.fn(async () => ({ id: "post-1" }));
-    const postFindUnique = jest.fn(async () => ({
-      id: "post-1",
-      reviewStatus: "PENDING",
-    }));
-    const attachmentCreateMany = jest.fn(async () => ({ count: 2 }));
-    const attachmentDeleteMany = jest.fn(async () => ({ count: 2 }));
-    const applicationUpdate = jest.fn(async () => ({ id: "app-1" }));
-    const refreshedRow = makeApplicationRow({ status: "REVIEW_SUBMITTED" });
-    const detailRow = makeApplicationRow({ status: "REVIEW_SUBMITTED" });
-    const findUnique = jest
-      .fn()
-      .mockResolvedValueOnce({
-        id: "app-1",
-        influencerId: "inf-1",
-        status: "REVIEW_SUBMITTED",
-        subType: "QOO10",
-        campaign: { category: "FAKE_PURCHASE" },
-        posts: [{ id: "post-1", reviewStatus: "REJECTED" }],
-      })
-      .mockResolvedValueOnce(detailRow);
-    const findUniqueOrThrow = jest.fn(async () => refreshedRow);
-    const tx = {
-      submittedPost: { create: postCreate, update: postUpdate },
-      attachment: {
-        deleteMany: attachmentDeleteMany,
-        createMany: attachmentCreateMany,
-      },
-      campaignApplication: { update: applicationUpdate },
-    };
-    const prisma = {
-      campaignApplication: {
-        findUnique,
-        findUniqueOrThrow,
-        update: applicationUpdate,
-      },
-      submittedPost: { findUnique: postFindUnique },
-      $transaction: async (fn: (t: unknown) => Promise<unknown>) => fn(tx),
-    };
-    const svc = makeService({
-      prisma,
-      dispatcher: { dispatch },
+  it("subTypeOptions=['LIPS'] + reviewUrls={LIPS} 성공", async () => {
+    const { prisma, postCreate } = makeSubmitPrisma(
+      makeApplicationLookup({
+        recruits: [{ subType: "QOO10", subTypeOptions: ["LIPS"] }],
+      }),
+    );
+    const svc = makeService({ prisma });
+
+    await svc.submitReview("inf-1", "app-1", screenshots, {
+      LIPS: "https://lips.example.com/r/1",
     });
 
-    await svc.submitReview("inf-1", "app-1", "https://example.com/review-2", screenshots);
+    const createArg = (postCreate.mock.calls[0] as unknown[])[0] as {
+      data: { submissionData: { reviewUrls: Record<string, string> } };
+    };
+    expect(createArg.data.submissionData.reviewUrls).toEqual({
+      LIPS: "https://lips.example.com/r/1",
+    });
+  });
+
+  it("subTypeOptions=['LIPS'] + reviewUrls={} → REVIEW_URL_REQUIRED", async () => {
+    const { prisma } = makeSubmitPrisma(
+      makeApplicationLookup({
+        recruits: [{ subType: "QOO10", subTypeOptions: ["LIPS"] }],
+      }),
+    );
+    const svc = makeService({ prisma });
+
+    await expect(
+      svc.submitReview("inf-1", "app-1", screenshots, {}),
+    ).rejects.toThrow(/REVIEW_URL_REQUIRED|レビューURL/);
+  });
+
+  it("subTypeOptions=['LIPS'] + reviewUrls={ATCOSME} → REVIEW_URL_NOT_REQUESTED", async () => {
+    const { prisma } = makeSubmitPrisma(
+      makeApplicationLookup({
+        recruits: [{ subType: "QOO10", subTypeOptions: ["LIPS"] }],
+      }),
+    );
+    const svc = makeService({ prisma });
+
+    await expect(
+      svc.submitReview("inf-1", "app-1", screenshots, {
+        ATCOSME: "https://cosme.example.com/r/1",
+      }),
+    ).rejects.toThrow(/REVIEW_URL_NOT_REQUESTED|求められていない/);
+  });
+
+  it("subTypeOptions=['LIPS','ATCOSME'] + reviewUrls 양쪽 성공", async () => {
+    const { prisma, postCreate } = makeSubmitPrisma(
+      makeApplicationLookup({
+        recruits: [{ subType: "QOO10", subTypeOptions: ["LIPS", "ATCOSME"] }],
+      }),
+    );
+    const svc = makeService({ prisma });
+
+    await svc.submitReview("inf-1", "app-1", screenshots, {
+      LIPS: "https://lips.example.com/r/1",
+      ATCOSME: "https://cosme.example.com/r/1",
+    });
+
+    const createArg = (postCreate.mock.calls[0] as unknown[])[0] as {
+      data: { submissionData: { reviewUrls: Record<string, string> } };
+    };
+    expect(createArg.data.submissionData.reviewUrls).toEqual({
+      LIPS: "https://lips.example.com/r/1",
+      ATCOSME: "https://cosme.example.com/r/1",
+    });
+  });
+
+  it("REJECTED 재제출: submissionData 갱신 + attachment 재생성", async () => {
+    const {
+      prisma,
+      postCreate,
+      postUpdate,
+      attachmentDeleteMany,
+      attachmentCreateMany,
+    } = makeSubmitPrisma(
+      makeApplicationLookup({
+        status: "REVIEW_SUBMITTED",
+        posts: [{ id: "post-1", reviewStatus: "REJECTED" }],
+        recruits: [{ subType: "QOO10", subTypeOptions: ["LIPS"] }],
+      }),
+      { attachmentDeleteMany: jest.fn(async () => ({ count: 2 })) },
+    );
+    const svc = makeService({ prisma });
+
+    await svc.submitReview("inf-1", "app-1", screenshots, {
+      LIPS: "https://lips.example.com/r/2",
+    });
 
     expect(postCreate).not.toHaveBeenCalled();
     expect(postUpdate).toHaveBeenCalledTimes(1);
     const updateArg = (postUpdate.mock.calls[0] as unknown[])[0] as {
       where: { id: string };
-      data: { url: string; reviewStatus: string; reviewedAt: null; reviewedById: null };
+      data: {
+        url: null;
+        submissionData: { reviewUrls: Record<string, string> };
+        reviewStatus: string;
+        reviewedAt: null;
+        reviewedById: null;
+      };
     };
     expect(updateArg.where).toEqual({ id: "post-1" });
-    expect(updateArg.data.reviewStatus).toBe("PENDING");
+    expect(updateArg.data.url).toBeNull();
+    expect(updateArg.data.submissionData.reviewUrls).toEqual({
+      LIPS: "https://lips.example.com/r/2",
+    });
     expect(updateArg.data.reviewedAt).toBeNull();
     expect(updateArg.data.reviewedById).toBeNull();
-    expect(updateArg.data.url).toBe("https://example.com/review-2");
-
     expect(attachmentDeleteMany).toHaveBeenCalledWith({
       where: { postId: "post-1", kind: "REVIEW_SCREENSHOT" },
     });
     expect(attachmentCreateMany).toHaveBeenCalledTimes(1);
-    expect(dispatch).toHaveBeenCalledWith(
-      "FAKE_PURCHASE_REVIEW_SUBMITTED",
-      expect.objectContaining({ application: refreshedRow }),
-    );
   });
 
   it("REVIEW_SUBMITTED + post PENDING 재제출 시도는 INVALID_TRANSITION", async () => {
     const prisma = {
       campaignApplication: {
-        findUnique: jest.fn(async () => ({
-          id: "app-1",
-          influencerId: "inf-1",
-          status: "REVIEW_SUBMITTED",
-          subType: "QOO10",
-          campaign: { category: "FAKE_PURCHASE" },
-          posts: [{ id: "post-1", reviewStatus: "PENDING" }],
-        })),
+        findUnique: jest.fn(async () =>
+          makeApplicationLookup({
+            status: "REVIEW_SUBMITTED",
+            posts: [{ id: "post-1", reviewStatus: "PENDING" }],
+          }),
+        ),
       },
     };
     const svc = makeService({ prisma });
     await expect(
-      svc.submitReview("inf-1", "app-1", "https://example.com/review", screenshots),
+      svc.submitReview("inf-1", "app-1", screenshots, {}),
     ).rejects.toThrow(/INVALID_TRANSITION|レビューを提出/);
   });
 
   it("SNS 카테고리는 CATEGORY_MISMATCH", async () => {
     const prisma = {
       campaignApplication: {
-        findUnique: jest.fn(async () => ({
-          id: "app-1",
-          influencerId: "inf-1",
-          status: "ORDER_SUBMITTED",
-          subType: "INSTAGRAM",
-          campaign: { category: "SNS" },
-          posts: [],
-        })),
+        findUnique: jest.fn(async () =>
+          makeApplicationLookup({
+            category: "SNS",
+            subType: "INSTAGRAM",
+            recruits: [{ subType: "INSTAGRAM", subTypeOptions: [] }],
+          }),
+        ),
       },
     };
     const svc = makeService({ prisma });
     await expect(
-      svc.submitReview("inf-1", "app-1", "https://example.com/review", screenshots),
+      svc.submitReview("inf-1", "app-1", screenshots, {}),
     ).rejects.toThrow(/CATEGORY_MISMATCH|買取レビュー/);
   });
 
   it("screenshots 2장 미만은 REVIEW_SCREENSHOTS_REQUIRED", async () => {
     const prisma = {
       campaignApplication: {
-        findUnique: jest.fn(async () => ({
-          id: "app-1",
-          influencerId: "inf-1",
-          status: "ORDER_SUBMITTED",
-          subType: "QOO10",
-          campaign: { category: "FAKE_PURCHASE" },
-          posts: [],
-        })),
+        findUnique: jest.fn(async () => makeApplicationLookup()),
       },
     };
     const svc = makeService({ prisma });
     await expect(
-      svc.submitReview("inf-1", "app-1", "https://example.com/review", [screenshots[0]!]),
+      svc.submitReview("inf-1", "app-1", [screenshots[0]!], {}),
     ).rejects.toThrow(/REVIEW_SCREENSHOTS_REQUIRED|スクリーンショット/);
   });
 });

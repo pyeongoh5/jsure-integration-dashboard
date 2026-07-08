@@ -28,7 +28,6 @@ import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
 const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
 
 const SNS_SUB_TYPES: CampaignSubType[] = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"];
-const FAKE_PURCHASE_SUB_TYPES: CampaignSubType[] = ["QOO10"];
 
 type PostRow = {
   id: string;
@@ -257,9 +256,10 @@ export class InfluencerApplicationsService {
   async create(
     influencerId: string,
     campaignId: string,
-    subTypes: CampaignSubType[],
+    subTypesInput: CampaignSubType[],
     instagramPostType: InstagramPostType | null,
   ): Promise<InfluencerApplication> {
+    let subTypes = subTypesInput;
     const now = new Date();
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
@@ -294,16 +294,18 @@ export class InfluencerApplicationsService {
       });
     }
 
-    const allowedSubTypes =
-      campaign.category === "SNS" ? SNS_SUB_TYPES : FAKE_PURCHASE_SUB_TYPES;
-    const invalidSubTypes = subTypes.filter(
-      (subType) => !allowedSubTypes.includes(subType),
-    );
-    if (invalidSubTypes.length > 0) {
-      throw new BadRequestException({
-        code: "SUBTYPE_CATEGORY_MISMATCH",
-        message: "選択したSNSはこのキャンペーンで募集していません",
-      });
+    if (campaign.category === "FAKE_PURCHASE") {
+      subTypes = ["QOO10"];
+    } else {
+      const invalidSubTypes = subTypes.filter(
+        (subType) => !SNS_SUB_TYPES.includes(subType),
+      );
+      if (invalidSubTypes.length > 0) {
+        throw new BadRequestException({
+          code: "SUBTYPE_CATEGORY_MISMATCH",
+          message: "選択したSNSはこのキャンペーンで募集していません",
+        });
+      }
     }
 
     // 제외 캠페인에 "같은 SNS"로 응모한 이력이 있으면 그 SNS 응모만 차단 (CANCELLED 제외)

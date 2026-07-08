@@ -115,17 +115,20 @@ export function CampaignDetail() {
                   </span>
                   <span className={styles.snsCond}>
                     {t("campaign.detail.productPrice")}: {formatJpy(productPrice)}
+                    {r.productUrl && (
+                      <>
+                        {" · "}
+                        <a
+                          href={r.productUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.inlineLink}
+                        >
+                          {t("campaign.detail.productUrl")}
+                        </a>
+                      </>
+                    )}
                   </span>
-                  {r.productUrl && (
-                    <a
-                      href={r.productUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.link}
-                    >
-                      {t("campaign.detail.productUrl")}
-                    </a>
-                  )}
                   <span className={styles.snsCond}>
                     {t("campaign.detail.expectedSettlement")}:{" "}
                     {formatJpy(expectedSettlement)}

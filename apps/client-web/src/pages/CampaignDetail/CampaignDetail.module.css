@@ -200,6 +200,12 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.inlineLink {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+}
+
 .rlist {
   padding: 0;
   margin: 0;

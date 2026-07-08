@@ -9,8 +9,6 @@ function campaignSubTypeToTriggerSubType(subType: string): LineTriggerSubType | 
   if (subType === "INSTAGRAM") return "INSTAGRAM";
   if (subType === "X") return "X";
   if (subType === "QOO10") return "QOO10";
-  if (subType === "LIPS") return "LIPS";
-  if (subType === "ATCOSME") return "ATCOSME";
   return null;
 }
 

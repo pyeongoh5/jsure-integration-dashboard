@@ -4,7 +4,6 @@ import type {
   CampaignSubType,
   InfluencerCampaignCard,
   InfluencerCampaignDetail,
-  InstagramPostType,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
@@ -27,7 +26,7 @@ type CampaignRow = {
     subType: CampaignSubType;
     minFollowers: number;
     recruitCount: number;
-    instagramPostTypes: InstagramPostType[];
+    subTypeOptions: string[];
     insightRequired: boolean;
     productPriceJpy: number | null;
     productUrl: string | null;
@@ -100,7 +99,7 @@ export class InfluencerCampaignsService {
             subType: true,
             minFollowers: true,
             recruitCount: true,
-            instagramPostTypes: true,
+            subTypeOptions: true,
             insightRequired: true,
             productPriceJpy: true,
             productUrl: true,
@@ -144,7 +143,7 @@ export class InfluencerCampaignsService {
             subType: true,
             minFollowers: true,
             recruitCount: true,
-            instagramPostTypes: true,
+            subTypeOptions: true,
             insightRequired: true,
             productPriceJpy: true,
             productUrl: true,

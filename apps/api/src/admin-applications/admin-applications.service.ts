@@ -99,8 +99,6 @@ const SUB_TYPE_LABEL: Record<CampaignSubType, string> = {
   X: "X",
   YOUTUBE: "YouTube",
   QOO10: "Qoo10",
-  LIPS: "LIPS",
-  ATCOSME: "@cosme",
 };
 
 const APPLICATION_INCLUDE = {

@@ -41,7 +41,7 @@ describe("validateRecruitsForCategory", () => {
           insightRequired: true,
           productPriceJpy: null,
           productUrl: null,
-          instagramPostTypes: [],
+          subTypeOptions: [],
         },
       ]),
     ).toThrow(BadRequestException);
@@ -56,7 +56,7 @@ describe("validateRecruitsForCategory", () => {
           insightRequired: false,
           productPriceJpy: 0,
           productUrl: "https://example.com/item",
-          instagramPostTypes: [],
+          subTypeOptions: [],
         },
       ]),
     ).toThrow(BadRequestException);
@@ -66,12 +66,12 @@ describe("validateRecruitsForCategory", () => {
     expect(() =>
       validateRecruitsForCategory("FAKE_PURCHASE", [
         {
-          subType: "LIPS",
+          subType: "QOO10",
           minFollowers: 0,
           insightRequired: false,
           productPriceJpy: 1500,
           productUrl: null,
-          instagramPostTypes: [],
+          subTypeOptions: [],
         },
       ]),
     ).toThrow(BadRequestException);
@@ -81,12 +81,12 @@ describe("validateRecruitsForCategory", () => {
     expect(() =>
       validateRecruitsForCategory("FAKE_PURCHASE", [
         {
-          subType: "ATCOSME",
+          subType: "QOO10",
           minFollowers: 100,
           insightRequired: false,
           productPriceJpy: 2000,
           productUrl: "https://example.com/item",
-          instagramPostTypes: [],
+          subTypeOptions: [],
         },
       ]),
     ).toThrow(BadRequestException);

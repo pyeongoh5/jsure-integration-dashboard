@@ -233,10 +233,6 @@ function subTypeLabel(value: string): string {
       return "YouTube";
     case "QOO10":
       return "Qoo10";
-    case "LIPS":
-      return "LIPS";
-    case "ATCOSME":
-      return "@cosme";
     default:
       return value;
   }

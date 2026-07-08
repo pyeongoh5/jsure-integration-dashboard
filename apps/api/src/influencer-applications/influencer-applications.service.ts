@@ -27,7 +27,7 @@ import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
 const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
 
 const SNS_SUB_TYPES: CampaignSubType[] = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"];
-const FAKE_PURCHASE_SUB_TYPES: CampaignSubType[] = ["QOO10", "LIPS", "ATCOSME"];
+const FAKE_PURCHASE_SUB_TYPES: CampaignSubType[] = ["QOO10"];
 
 type PostRow = {
   id: string;
@@ -261,7 +261,7 @@ export class InfluencerApplicationsService {
             subType: true,
             minFollowers: true,
             recruitCount: true,
-            instagramPostTypes: true,
+            subTypeOptions: true,
           },
         },
         exclusionsAsExcluding: { select: { excludedCampaignId: true } },
@@ -356,7 +356,7 @@ export class InfluencerApplicationsService {
       }
     }
 
-    // INSTAGRAM 응모는 캠페인이 허용한 instagramPostTypes 중 정확히 1개를 선택해야 한다.
+    // INSTAGRAM 응모는 캠페인이 허용한 subTypeOptions(FEED/REELS) 중 정확히 1개를 선택해야 한다.
     const instagramRecruit = campaign.recruits.find(
       (recruit) => recruit.subType === "INSTAGRAM",
     );
@@ -370,7 +370,7 @@ export class InfluencerApplicationsService {
       }
       if (
         !instagramRecruit ||
-        !instagramRecruit.instagramPostTypes.includes(instagramPostType)
+        !instagramRecruit.subTypeOptions.includes(instagramPostType)
       ) {
         throw new BadRequestException({
           code: "INSTAGRAM_POST_TYPE_NOT_ALLOWED",

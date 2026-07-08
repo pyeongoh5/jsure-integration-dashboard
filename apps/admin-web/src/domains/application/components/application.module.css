@@ -1,0 +1,157 @@
+/* Influencer cell */
+.inf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.infAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #e5e7eb;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.infName {
+  font-weight: 600;
+  color: var(--c-text);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.infHandle {
+  font-size: 12px;
+  color: var(--c-muted);
+  margin-top: 2px;
+}
+
+.flaggedBadge {
+  display: inline-block;
+  margin-left: 6px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+/* Media icons */
+.media {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.mediaItem {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.mediaLabel {
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.mediaIg {
+  background: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
+}
+
+.mediaYt {
+  background: #ff0000;
+}
+
+.mediaTt {
+  background: #000;
+}
+
+.mediaTt i {
+  text-shadow:
+    -1.2px -1.2px 0 #ff0050,
+    1.2px 1.2px 0 #00f2ea;
+}
+
+.mediaX {
+  background: #000;
+}
+
+/* Media pills (fake purchase) */
+.mediaPill {
+  display: inline-flex;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.mediaPillQoo10 {
+  background: #e60012;
+}
+
+.mediaPillLips {
+  background: #ff5a8f;
+}
+
+.mediaPillAtcosme {
+  background: #8b6a3c;
+}
+
+/* Category badges */
+.categoryCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.categoryBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.categoryBadgeSns {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.categoryBadgeFake {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.categorySubType {
+  font-size: 11px;
+  color: var(--c-muted);
+}

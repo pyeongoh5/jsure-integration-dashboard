@@ -12,21 +12,22 @@ import {
 } from "./types";
 import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
 import styles from "@/pages/Drafts/Drafts.module.css";
+import shared from "../application.module.css";
 
 const MEDIA_CLASS: Record<Media, string | undefined> = {
-  ig: styles.mediaIg,
-  yt: styles.mediaYt,
-  tt: styles.mediaTt,
-  x: styles.mediaX,
-  qoo10: styles.mediaQoo10,
-  lips: styles.mediaLips,
-  atcosme: styles.mediaAtcosme,
+  ig: shared.mediaIg,
+  yt: shared.mediaYt,
+  tt: shared.mediaTt,
+  x: shared.mediaX,
+  qoo10: shared.mediaQoo10,
+  lips: shared.mediaLips,
+  atcosme: shared.mediaAtcosme,
 };
 
 const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
-  QOO10: styles.mediaPillQoo10 ?? "",
-  LIPS: styles.mediaPillLips ?? "",
-  ATCOSME: styles.mediaPillAtcosme ?? "",
+  QOO10: shared.mediaPillQoo10 ?? "",
+  LIPS: shared.mediaPillLips ?? "",
+  ATCOSME: shared.mediaPillAtcosme ?? "",
 };
 
 // 상태별 배지 색 클래스. Drafts.module.css 에서 정의.
@@ -74,9 +75,9 @@ function formatJpy(amount: number): string {
 
 function renderCategoryCell(draft: DraftReview) {
   const badgeClass =
-    draft.category === "SNS" ? styles.categoryBadgeSns : styles.categoryBadgeFake;
+    draft.category === "SNS" ? shared.categoryBadgeSns : shared.categoryBadgeFake;
   return (
-    <span className={`${styles.categoryBadge} ${badgeClass}`}>
+    <span className={`${shared.categoryBadge} ${badgeClass}`}>
       {CATEGORY_LABEL_KO[draft.category]}
     </span>
   );
@@ -217,22 +218,22 @@ export function DraftTable({
                 <Fragment key={draft.id}>
                   <tr>
                     <td>
-                      <div className={styles.inf}>
+                      <div className={shared.inf}>
                         <div
-                          className={styles.infAvatar}
+                          className={shared.infAvatar}
                           style={{ background: pickAvatarColor(draft.id) }}
                         >
                           {draft.influencerName[0]}
                         </div>
                         <div>
-                          <div className={styles.infName}>
+                          <div className={shared.infName}>
                             {draft.influencerName}
                             {draft.influencerFlagged && (
-                              <span className={styles.flaggedBadge}>대상외</span>
+                              <span className={shared.flaggedBadge}>대상외</span>
                             )}
                           </div>
                           {draft.influencerHandle && (
-                            <div className={styles.infHandle}>@{draft.influencerHandle}</div>
+                            <div className={shared.infHandle}>@{draft.influencerHandle}</div>
                           )}
                         </div>
                       </div>
@@ -241,9 +242,9 @@ export function DraftTable({
                     <td>{renderCategoryCell(draft)}</td>
                     <td>
                       {draft.category === "FAKE_PURCHASE" ? (
-                        <span className={styles.mediaItem}>
+                        <span className={shared.mediaItem}>
                           <span
-                            className={`${styles.mediaPill} ${FAKE_PURCHASE_PILL_CLASS[draft.subType] ?? ""}`}
+                            className={`${shared.mediaPill} ${FAKE_PURCHASE_PILL_CLASS[draft.subType] ?? ""}`}
                             title={SUB_TYPE_LABEL[draft.subType]}
                             aria-label={SUB_TYPE_LABEL[draft.subType]}
                           >
@@ -251,16 +252,16 @@ export function DraftTable({
                           </span>
                         </span>
                       ) : (
-                        <span className={styles.mediaItem}>
+                        <span className={shared.mediaItem}>
                           <span
-                            className={`${styles.media} ${MEDIA_CLASS[draft.media]}`}
+                            className={`${shared.media} ${MEDIA_CLASS[draft.media]}`}
                             title={media.label}
                             aria-label={media.label}
                           >
                             <i className={media.icon} />
                           </span>
                           {draft.media === "ig" && draft.instagramPostType !== null && (
-                            <span className={styles.mediaLabel}>
+                            <span className={shared.mediaLabel}>
                               {INSTAGRAM_POST_TYPE_LABEL[draft.instagramPostType]}
                             </span>
                           )}

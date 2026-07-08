@@ -10,11 +10,12 @@ import {
   type ApplicantStatus,
 } from "./types";
 import styles from "@/pages/Applicants/Applicants.module.css";
+import shared from "../application.module.css";
 
 const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
-  QOO10: styles.mediaPillQoo10 ?? "",
-  LIPS: styles.mediaPillLips ?? "",
-  ATCOSME: styles.mediaPillAtcosme ?? "",
+  QOO10: shared.mediaPillQoo10 ?? "",
+  LIPS: shared.mediaPillLips ?? "",
+  ATCOSME: shared.mediaPillAtcosme ?? "",
 };
 
 type ActionHandlers = {
@@ -121,9 +122,9 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
 
 function renderCategory(applicant: Applicant) {
   const className =
-    applicant.category === "SNS" ? styles.categoryBadgeSns : styles.categoryBadgeFake;
+    applicant.category === "SNS" ? shared.categoryBadgeSns : shared.categoryBadgeFake;
   return (
-    <span className={`${styles.categoryBadge} ${className}`}>
+    <span className={`${shared.categoryBadge} ${className}`}>
       {CATEGORY_LABEL_KO[applicant.category]}
     </span>
   );
@@ -256,20 +257,20 @@ export function ApplicantTable({
                   />
                 </td>
                 <td>
-                  <div className={styles.inf}>
+                  <div className={shared.inf}>
                     <div
-                      className={styles.infAvatar}
+                      className={shared.infAvatar}
                       style={{ background: pickAvatarColor(applicant.id) }}
                     >
                       {applicant.name[0]}
                     </div>
                     <div>
-                      <div className={styles.infName}>
+                      <div className={shared.infName}>
                         {applicant.name}
-                        {applicant.flagged && <span className={styles.flaggedBadge}>대상외</span>}
+                        {applicant.flagged && <span className={shared.flaggedBadge}>대상외</span>}
                       </div>
                       {applicant.handle && (
-                        <div className={styles.infHandle}>@{applicant.handle}</div>
+                        <div className={shared.infHandle}>@{applicant.handle}</div>
                       )}
                     </div>
                   </div>
@@ -279,9 +280,9 @@ export function ApplicantTable({
                 <td>
                   <div className={styles.mediaList}>
                     {applicant.category === "FAKE_PURCHASE" ? (
-                      <span className={styles.mediaItem}>
+                      <span className={shared.mediaItem}>
                         <span
-                          className={`${styles.mediaPill} ${FAKE_PURCHASE_PILL_CLASS[applicant.subType] ?? ""}`}
+                          className={`${shared.mediaPill} ${FAKE_PURCHASE_PILL_CLASS[applicant.subType] ?? ""}`}
                           title={SUB_TYPE_LABEL[applicant.subType]}
                           aria-label={SUB_TYPE_LABEL[applicant.subType]}
                         >
@@ -293,16 +294,16 @@ export function ApplicantTable({
                         const meta = MEDIA_META[media];
                         const showPostType = media === "ig" && applicant.instagramPostType !== null;
                         return (
-                          <span key={media} className={styles.mediaItem}>
+                          <span key={media} className={shared.mediaItem}>
                             <span
-                              className={`${styles.media} ${styles[meta.cls]}`}
+                              className={`${shared.media} ${shared[meta.cls]}`}
                               title={meta.label}
                               aria-label={meta.label}
                             >
                               <i className={meta.icon} />
                             </span>
                             {showPostType && (
-                              <span className={styles.mediaLabel}>
+                              <span className={shared.mediaLabel}>
                                 {INSTAGRAM_POST_TYPE_LABEL[applicant.instagramPostType!]}
                               </span>
                             )}

@@ -74,8 +74,7 @@ function formatJpy(amount: number): string {
 }
 
 function renderCategoryCell(draft: DraftReview) {
-  const badgeClass =
-    draft.category === "SNS" ? shared.categoryBadgeSns : shared.categoryBadgeFake;
+  const badgeClass = draft.category === "SNS" ? shared.categoryBadgeSns : shared.categoryBadgeFake;
   return (
     <span className={`${shared.categoryBadge} ${badgeClass}`}>
       {CATEGORY_LABEL_KO[draft.category]}
@@ -90,11 +89,8 @@ function renderStatusCell(draft: DraftReview) {
     </span>
   );
   const amount =
-    draft.settlement &&
-    (draft.status === "SETTLEMENT_PENDING" || draft.status === "SETTLED") ? (
-      <span className={styles.statusAmount}>
-        {formatJpy(draft.settlement.amountJpy)}
-      </span>
+    draft.settlement && (draft.status === "SETTLEMENT_PENDING" || draft.status === "SETTLED") ? (
+      <span className={styles.statusAmount}>{formatJpy(draft.settlement.amountJpy)}</span>
     ) : null;
   return (
     <div className={styles.statusCell}>
@@ -275,7 +271,7 @@ export function DraftTable({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {draft.url}
+                        {draft.category === "SNS" ? draft.url : null}
                       </a>
                       {(draft.category === "FAKE_PURCHASE" || draft.insightSubmitted) && (
                         <button
@@ -283,7 +279,7 @@ export function DraftTable({
                           className={styles.insightLink}
                           onClick={() => onViewInsight(draft)}
                         >
-                          {draft.category === "FAKE_PURCHASE" ? "스크린샷 보기" : "인사이트 보기"}
+                          {draft.category === "FAKE_PURCHASE" ? "제출 결과 보기" : "인사이트 보기"}
                         </button>
                       )}
                     </td>

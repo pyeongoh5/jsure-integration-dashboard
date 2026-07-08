@@ -66,6 +66,7 @@
   max-width: 360px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 4px;
   align-items: flex-start;
 }

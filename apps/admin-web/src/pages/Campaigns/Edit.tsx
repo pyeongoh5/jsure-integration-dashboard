@@ -37,13 +37,7 @@ export function CampaignEdit() {
           recruitStartDate: res.recruitStartDate,
           recruitEndDate: res.recruitEndDate,
           postingPeriodDays: res.postingPeriodDays,
-          recruits: res.recruits.filter(
-            (recruit): recruit is Values["recruits"][number] =>
-              recruit.subType === "INSTAGRAM" ||
-              recruit.subType === "TIKTOK" ||
-              recruit.subType === "X" ||
-              recruit.subType === "YOUTUBE",
-          ),
+          recruits: res.recruits,
           productSummary: res.productSummary,
           productDetailUrl: res.productDetailUrl,
           guideline: res.guideline,

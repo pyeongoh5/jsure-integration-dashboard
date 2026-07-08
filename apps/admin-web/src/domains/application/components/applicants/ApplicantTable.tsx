@@ -267,7 +267,9 @@ export function ApplicantTable({
                         {applicant.name}
                         {applicant.flagged && <span className={styles.flaggedBadge}>대상외</span>}
                       </div>
-                      <div className={styles.infHandle}>@{applicant.handle}</div>
+                      {applicant.handle && (
+                        <div className={styles.infHandle}>@{applicant.handle}</div>
+                      )}
                     </div>
                   </div>
                 </td>

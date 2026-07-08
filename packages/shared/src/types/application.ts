@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CampaignSubTypeSchema, EnabledSnsTypeSchema } from "./influencer.js";
+import { CampaignSubTypeSchema } from "./influencer.js";
 import { CampaignCategorySchema, InstagramPostTypeSchema } from "./campaign.js";
 
 export const ApplicationStatusSchema = z.enum([
@@ -119,11 +119,11 @@ export const CreateApplicationRequestSchema = z
   .object({
     campaignId: z.string().min(1),
     subTypes: z
-      .array(EnabledSnsTypeSchema)
-      .min(1, "1つ以上のSNSを選択してください")
+      .array(CampaignSubTypeSchema)
+      .min(1, "1つ以上の応募先を選択してください")
       .refine(
         (arr) => new Set(arr).size === arr.length,
-        "SNSが重複しています",
+        "応募先が重複しています",
       ),
     /** INSTAGRAM 응모 시 1개만 선택. 다른 SNS만 응모하는 경우 undefined. */
     instagramPostType: InstagramPostTypeSchema.optional(),

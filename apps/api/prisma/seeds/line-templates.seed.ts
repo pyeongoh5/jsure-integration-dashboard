@@ -323,7 +323,7 @@ async function main(): Promise<void> {
     }
   }
   for (const row of FP_SEED_ROWS) {
-    for (const subType of ["QOO10", "LIPS", "ATCOSME"] as const) {
+    for (const subType of ["QOO10"] as const) {
       await prisma.lineMessageTemplate.upsert({
         where: {
           category_subType_triggerKey: {

@@ -148,27 +148,6 @@ export function ReviewSubmitForm({
           </p>
         )}
 
-        {activeChannels.map((channel) => (
-          <FormField
-            key={channel}
-            name={channel}
-            label={`${QOO10_REVIEW_CHANNEL_LABEL[channel]} ${t("application.reviewForm.channelUrlLabelSuffix")}`}
-          >
-            {(field) => (
-              <Input
-                id={field.id}
-                type="url"
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                placeholder={t("application.reviewForm.channelUrlPlaceholder")}
-                error={field.error}
-                aria-invalid={field["aria-invalid"]}
-              />
-            )}
-          </FormField>
-        ))}
-
         <div className={styles.section}>
           <div className={styles.sectionTitle}>
             {t("application.stage.awaitingReview.screenshotsLabel")}
@@ -263,6 +242,27 @@ export function ReviewSubmitForm({
             </div>
           )}
         </div>
+
+        {activeChannels.map((channel) => (
+          <FormField
+            key={channel}
+            name={channel}
+            label={`${QOO10_REVIEW_CHANNEL_LABEL[channel]} ${t("application.reviewForm.channelUrlLabelSuffix")}`}
+          >
+            {(field) => (
+              <Input
+                id={field.id}
+                type="url"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder={t("application.reviewForm.channelUrlPlaceholder")}
+                error={field.error}
+                aria-invalid={field["aria-invalid"]}
+              />
+            )}
+          </FormField>
+        ))}
 
         {submitError && <div className={styles.error}>{submitError}</div>}
 

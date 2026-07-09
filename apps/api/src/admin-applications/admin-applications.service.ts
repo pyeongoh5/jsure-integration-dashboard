@@ -99,8 +99,6 @@ const SUB_TYPE_LABEL: Record<CampaignSubType, string> = {
   X: "X",
   YOUTUBE: "YouTube",
   QOO10: "Qoo10",
-  LIPS: "LIPS",
-  ATCOSME: "@cosme",
 };
 
 const APPLICATION_INCLUDE = {
@@ -741,10 +739,11 @@ export class AdminApplicationsService {
         campaignId,
         status: { in: ["APPROVED", "SHIPPED", "DELIVERED", "COMPLETED"] },
       },
-      orderBy: { appliedAt: "asc" },
+      orderBy: { appliedAt: "desc" },
       select: {
         id: true,
         subType: true,
+        appliedAt: true,
         influencer: {
           select: {
             id: true,
@@ -798,6 +797,7 @@ export class AdminApplicationsService {
           ]
             .filter((part) => part && part.length > 0)
             .join(" "),
+          appliedAt: row.appliedAt.toISOString(),
         };
       }),
     };
@@ -859,7 +859,8 @@ const SUBMITTED_POST_INCLUDE = {
 type SubmittedPostRow = {
   id: string;
   subType: CampaignSubType;
-  url: string;
+  url: string | null;
+  submissionData: unknown;
   submittedAt: Date;
   insightLikes: number | null;
   insightComments: number | null;
@@ -945,6 +946,12 @@ async function toSubmittedPostResponse(
     subType: row.subType,
     instagramPostType: row.application.instagramPostType,
     url: row.url,
+    submissionData:
+      row.submissionData &&
+      typeof row.submissionData === "object" &&
+      !Array.isArray(row.submissionData)
+        ? (row.submissionData as Record<string, unknown>)
+        : null,
     submittedAt: row.submittedAt.toISOString(),
     insightLikes: row.insightLikes,
     insightComments: row.insightComments,
@@ -1012,7 +1019,7 @@ type SettlementRow = {
   completedAt: Date | null;
   post: {
     id: string;
-    url: string;
+    url: string | null;
     subType: CampaignSubType;
     submittedAt: Date;
     insightSubmittedAt: Date | null;

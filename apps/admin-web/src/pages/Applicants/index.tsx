@@ -17,7 +17,7 @@ import {
 import { InfluencerNotesDialog } from "@/domains/influencer";
 import { Button } from "@/components/ui";
 import { ApplicantDetailDialog } from "./ApplicantDetailDialog";
-import { ApprovedApplicantsDownloadDialog } from "./ApprovedApplicantsDownloadDialog";
+import { ApprovedApplicantsDialog } from "./ApprovedApplicantsDialog";
 import styles from "./Applicants.module.css";
 
 export function Applicants() {
@@ -94,9 +94,9 @@ export function Applicants() {
           variant="success"
           size="md"
           onClick={() => setDownloadOpen(true)}
-          iconLeft={<i className="fa-solid fa-file-excel" aria-hidden="true" />}
+          iconLeft={<i className="fa-solid fa-list" aria-hidden="true" />}
         >
-          승인자 명단 다운로드
+          승인자 명단 보기
         </Button>
       </div>
 
@@ -185,7 +185,7 @@ export function Applicants() {
       )}
 
       {downloadOpen && (
-        <ApprovedApplicantsDownloadDialog onClose={() => setDownloadOpen(false)} />
+        <ApprovedApplicantsDialog onClose={() => setDownloadOpen(false)} />
       )}
 
       {detailTarget && (

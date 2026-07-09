@@ -302,46 +302,38 @@ const FP_SEED_ROWS: SeedRowFakePurchase[] = [
 
 async function main(): Promise<void> {
   for (const row of SEED_ROWS) {
-    for (const subType of ["INSTAGRAM", "X"] as const) {
-      await prisma.lineMessageTemplate.upsert({
-        where: {
-          category_subType_triggerKey: {
-            category: "SNS",
-            subType,
-            triggerKey: row.triggerKey,
-          },
-        },
-        create: {
+    await prisma.lineMessageTemplate.upsert({
+      where: {
+        category_triggerKey: {
           category: "SNS",
-          subType,
           triggerKey: row.triggerKey,
-          enabled: row.enabled,
-          body: row.body,
         },
-        update: {},
-      });
-    }
+      },
+      create: {
+        category: "SNS",
+        triggerKey: row.triggerKey,
+        enabled: row.enabled,
+        body: row.body,
+      },
+      update: {},
+    });
   }
   for (const row of FP_SEED_ROWS) {
-    for (const subType of ["QOO10", "LIPS", "ATCOSME"] as const) {
-      await prisma.lineMessageTemplate.upsert({
-        where: {
-          category_subType_triggerKey: {
-            category: "FAKE_PURCHASE",
-            subType,
-            triggerKey: row.triggerKey,
-          },
-        },
-        create: {
+    await prisma.lineMessageTemplate.upsert({
+      where: {
+        category_triggerKey: {
           category: "FAKE_PURCHASE",
-          subType,
           triggerKey: row.triggerKey,
-          enabled: row.enabled,
-          body: row.body,
         },
-        update: {},
-      });
-    }
+      },
+      create: {
+        category: "FAKE_PURCHASE",
+        triggerKey: row.triggerKey,
+        enabled: row.enabled,
+        body: row.body,
+      },
+      update: {},
+    });
   }
   const count = await prisma.lineMessageTemplate.count();
   console.log(`Seed complete. Total templates: ${count}`);

@@ -61,8 +61,6 @@ enum CampaignSubType {
   X
   YOUTUBE
   QOO10
-  LIPS
-  ATCOSME
 }
 
 enum InstagramPostType {
@@ -147,7 +145,7 @@ model CampaignRecruit {
   subType            CampaignSubType
   minFollowers       Int                 @default(0)
   recruitCount       Int
-  instagramPostTypes InstagramPostType[]
+  subTypeOptions     String[]            @default([])
   insightRequired    Boolean             @default(true)
   productPriceJpy    Int?
   productUrl         String?
@@ -316,7 +314,8 @@ model SubmittedPost {
   id                  String    @id @default(cuid())
   applicationId       String
   subType             CampaignSubType
-  url                 String
+  url                 String?
+  submissionData      Json?
   submittedAt         DateTime  @default(now())
   insightLikes        Int?
   insightComments     Int?
@@ -492,8 +491,6 @@ enum LineTriggerSubType {
   INSTAGRAM
   X
   QOO10
-  LIPS
-  ATCOSME
 }
 
 enum LineDispatchStatus {
@@ -504,19 +501,18 @@ enum LineDispatchStatus {
 }
 
 model LineMessageTemplate {
-  id          String              @id @default(cuid())
+  id          String           @id @default(cuid())
   category    CampaignCategory
-  subType     LineTriggerSubType?
   triggerKey  LineTriggerKey
-  enabled     Boolean             @default(false)
+  enabled     Boolean          @default(false)
   body        String
-  updatedAt   DateTime            @updatedAt
+  updatedAt   DateTime         @updatedAt
   updatedById String?
 
-  updatedBy    AdminUser?         @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedBy    AdminUser?        @relation(fields: [updatedById], references: [id], onDelete: SetNull)
   dispatchLogs LineDispatchLog[]
 
-  @@unique([category, subType, triggerKey])
+  @@unique([category, triggerKey])
   @@map("line_message_templates")
 }
 

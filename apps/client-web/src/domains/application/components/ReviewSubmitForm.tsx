@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
-import type { AttachmentUploadInput } from "@jsure/shared";
+import {
+  QOO10_REVIEW_CHANNEL_LABEL,
+  type AttachmentUploadInput,
+} from "@jsure/shared";
 import { Input } from "@/components/ui";
 import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
@@ -14,11 +17,20 @@ import styles from "./ReviewSubmitForm.module.css";
 const MIN_FILES = 2;
 const MAX_FILES = 10;
 
+type ReviewChannel = "LIPS" | "ATCOSME";
+const REVIEW_CHANNELS: readonly ReviewChannel[] = ["LIPS", "ATCOSME"];
+
+const urlSchema = z
+  .string()
+  .trim()
+  .url(t("application.reviewForm.urlInvalid"))
+  .refine((value) => /^https:\/\//i.test(value), {
+    message: t("application.reviewForm.urlInvalid"),
+  });
+
 const schema = z.object({
-  reviewUrl: z
-    .string()
-    .trim()
-    .url(t("application.reviewForm.urlInvalid")),
+  LIPS: urlSchema.optional().or(z.literal("")),
+  ATCOSME: urlSchema.optional().or(z.literal("")),
 });
 type Values = z.infer<typeof schema>;
 
@@ -26,9 +38,10 @@ interface Props {
   applicationId: string;
   orderSubmittedAt: string;
   postingPeriodDays: number;
+  subTypeOptions: readonly string[];
   onSubmit: (
-    reviewUrl: string,
     screenshots: AttachmentUploadInput[],
+    reviewUrls: Partial<Record<ReviewChannel, string>>,
   ) => Promise<void>;
   submitting: boolean;
 }
@@ -49,12 +62,21 @@ export function ReviewSubmitForm({
   applicationId,
   orderSubmittedAt,
   postingPeriodDays,
+  subTypeOptions,
   onSubmit,
   submitting,
 }: Props) {
+  const activeChannels = useMemo<ReviewChannel[]>(() => {
+    const result: ReviewChannel[] = [];
+    for (const channel of REVIEW_CHANNELS) {
+      if (subTypeOptions.includes(channel)) result.push(channel);
+    }
+    return result;
+  }, [subTypeOptions]);
+
   const methods = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { reviewUrl: "" },
+    defaultValues: { LIPS: "", ATCOSME: "" },
   });
   const upload = useAttachmentUpload({
     applicationId,
@@ -80,8 +102,17 @@ export function ReviewSubmitForm({
       setSubmitError(t("application.reviewForm.screenshotsRequired"));
       return;
     }
+    const reviewUrls: Partial<Record<ReviewChannel, string>> = {};
+    for (const channel of activeChannels) {
+      const value = values[channel]?.trim();
+      if (!value) {
+        setSubmitError(t("application.reviewForm.channelUrlRequired"));
+        return;
+      }
+      reviewUrls[channel] = value;
+    }
     try {
-      await onSubmit(values.reviewUrl.trim(), screenshots);
+      await onSubmit(screenshots, reviewUrls);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const message =
@@ -116,24 +147,6 @@ export function ReviewSubmitForm({
             {t("application.stage.awaitingReview.deadlineDaysSuffix")}
           </p>
         )}
-
-        <FormField
-          name="reviewUrl"
-          label={t("application.stage.awaitingReview.urlLabel")}
-        >
-          {(field) => (
-            <Input
-              id={field.id}
-              type="url"
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              placeholder={t("application.reviewForm.urlPlaceholder")}
-              error={field.error}
-              aria-invalid={field["aria-invalid"]}
-            />
-          )}
-        </FormField>
 
         <div className={styles.section}>
           <div className={styles.sectionTitle}>
@@ -229,6 +242,27 @@ export function ReviewSubmitForm({
             </div>
           )}
         </div>
+
+        {activeChannels.map((channel) => (
+          <FormField
+            key={channel}
+            name={channel}
+            label={`${QOO10_REVIEW_CHANNEL_LABEL[channel]} ${t("application.reviewForm.channelUrlLabelSuffix")}`}
+          >
+            {(field) => (
+              <Input
+                id={field.id}
+                type="url"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder={t("application.reviewForm.channelUrlPlaceholder")}
+                error={field.error}
+                aria-invalid={field["aria-invalid"]}
+              />
+            )}
+          </FormField>
+        ))}
 
         {submitError && <div className={styles.error}>{submitError}</div>}
 

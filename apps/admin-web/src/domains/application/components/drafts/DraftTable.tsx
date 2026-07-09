@@ -20,14 +20,10 @@ const MEDIA_CLASS: Record<Media, string | undefined> = {
   tt: shared.mediaTt,
   x: shared.mediaX,
   qoo10: shared.mediaQoo10,
-  lips: shared.mediaLips,
-  atcosme: shared.mediaAtcosme,
 };
 
 const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
   QOO10: shared.mediaPillQoo10 ?? "",
-  LIPS: shared.mediaPillLips ?? "",
-  ATCOSME: shared.mediaPillAtcosme ?? "",
 };
 
 // 상태별 배지 색 클래스. Drafts.module.css 에서 정의.
@@ -265,14 +261,16 @@ export function DraftTable({
                       )}
                     </td>
                     <td className={styles.urlCell}>
-                      <a
-                        className={styles.url}
-                        href={draft.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {draft.category === "SNS" ? draft.url : null}
-                      </a>
+                      {draft.category === "SNS" && draft.url !== null && (
+                        <a
+                          className={styles.url}
+                          href={draft.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {draft.url}
+                        </a>
+                      )}
                       {(draft.category === "FAKE_PURCHASE" || draft.insightSubmitted) && (
                         <button
                           type="button"

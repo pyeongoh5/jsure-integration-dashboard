@@ -18,7 +18,7 @@ export type ApplicantStatus =
   | "AWAITING_REVIEW"
   | "REJECTED";
 
-export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
+export type Media = "ig" | "yt" | "tt" | "x" | "qoo10";
 
 export type Applicant = {
   id: string;
@@ -58,8 +58,6 @@ export const MEDIA_META: Record<
   tt: { label: "TikTok", icon: "fa-brands fa-tiktok", cls: "mediaTt" },
   x: { label: "X", icon: "fa-brands fa-x-twitter", cls: "mediaX" },
   qoo10: { label: "Qoo10", icon: "fa-solid fa-bag-shopping", cls: "mediaQoo10" },
-  lips: { label: "LIPS", icon: "fa-solid fa-bag-shopping", cls: "mediaLips" },
-  atcosme: { label: "@cosme", icon: "fa-solid fa-bag-shopping", cls: "mediaAtcosme" },
 };
 
 export const APPLICANT_STATUS_LABEL: Record<ApplicantStatus, string> = {

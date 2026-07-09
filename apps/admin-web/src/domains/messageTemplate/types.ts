@@ -5,7 +5,6 @@ import type {
   LineMessageTemplateListResponse,
   LineMessageTemplateResponse,
   LineTriggerKey,
-  LineTriggerSubType,
   TriggerVariable,
 } from "@jsure/shared";
 
@@ -44,6 +43,5 @@ export type {
   LineMessageTemplateListResponse,
   LineMessageTemplateResponse,
   LineTriggerKey,
-  LineTriggerSubType,
   TriggerVariable,
 };

@@ -13,7 +13,6 @@ import {
 import {
   CampaignCategorySchema,
   LineTriggerKeySchema,
-  LineTriggerSubTypeSchema,
   PreviewLineMessageTemplateRequestSchema,
   TestSendLineMessageTemplateRequestSchema,
   ToggleLineMessageTemplateEnabledRequestSchema,
@@ -23,7 +22,6 @@ import {
   type LineMessageTemplateListResponse,
   type LineMessageTemplateResponse,
   type LineTriggerKey,
-  type LineTriggerSubType,
   type PreviewLineMessageTemplateRequest,
   type PreviewLineMessageTemplateResponse,
   type TestSendLineMessageTemplateRequest,
@@ -38,13 +36,12 @@ import { AdminLineTemplatesService } from "./admin-line-templates.service";
 
 function parseParams(
   category: string,
-  subType: string,
   triggerKey: string,
-): { category: CampaignCategory; subType: LineTriggerSubType | null; triggerKey: LineTriggerKey } {
-  const parsedCategory = CampaignCategorySchema.parse(category);
-  const parsedSubType = subType === "none" ? null : LineTriggerSubTypeSchema.parse(subType);
-  const parsedTriggerKey = LineTriggerKeySchema.parse(triggerKey);
-  return { category: parsedCategory, subType: parsedSubType, triggerKey: parsedTriggerKey };
+): { category: CampaignCategory; triggerKey: LineTriggerKey } {
+  return {
+    category: CampaignCategorySchema.parse(category),
+    triggerKey: LineTriggerKeySchema.parse(triggerKey),
+  };
 }
 
 @UseGuards(JwtAuthGuard)
@@ -53,53 +50,45 @@ export class AdminLineTemplatesController {
   constructor(private readonly svc: AdminLineTemplatesService) {}
 
   @Get()
-  async list(
-    @Query("category") category: string,
-    @Query("subType") subType?: string,
-  ): Promise<LineMessageTemplateListResponse> {
+  async list(@Query("category") category: string): Promise<LineMessageTemplateListResponse> {
     const parsedCategory = CampaignCategorySchema.parse(category);
-    const parsedSubType =
-      !subType || subType === "none" ? null : LineTriggerSubTypeSchema.parse(subType);
-    return this.svc.list(parsedCategory, parsedSubType);
+    return this.svc.list(parsedCategory);
   }
 
-  @Get(":category/:subType/:triggerKey")
+  @Get(":category/:triggerKey")
   async detail(
     @Param("category") category: string,
-    @Param("subType") subType: string,
     @Param("triggerKey") triggerKey: string,
   ): Promise<LineMessageTemplateDetailResponse> {
-    const p = parseParams(category, subType, triggerKey);
-    return this.svc.detail(p.category, p.subType, p.triggerKey);
+    const parsed = parseParams(category, triggerKey);
+    return this.svc.detail(parsed.category, parsed.triggerKey);
   }
 
-  @Put(":category/:subType/:triggerKey")
+  @Put(":category/:triggerKey")
   async update(
     @Param("category") category: string,
-    @Param("subType") subType: string,
     @Param("triggerKey") triggerKey: string,
     @Body(new ZodValidationPipe(UpdateLineMessageTemplateRequestSchema))
     input: UpdateLineMessageTemplateRequest,
     @Req() req: { user: AuthenticatedUser },
   ): Promise<LineMessageTemplateResponse> {
-    const p = parseParams(category, subType, triggerKey);
-    return this.svc.update(p.category, p.subType, p.triggerKey, req.user.id, input);
+    const parsed = parseParams(category, triggerKey);
+    return this.svc.update(parsed.category, parsed.triggerKey, req.user.id, input);
   }
 
-  @Patch(":category/:subType/:triggerKey/enabled")
+  @Patch(":category/:triggerKey/enabled")
   async setEnabled(
     @Param("category") category: string,
-    @Param("subType") subType: string,
     @Param("triggerKey") triggerKey: string,
     @Body(new ZodValidationPipe(ToggleLineMessageTemplateEnabledRequestSchema))
     input: ToggleLineMessageTemplateEnabledRequest,
     @Req() req: { user: AuthenticatedUser },
   ): Promise<LineMessageTemplateResponse> {
-    const p = parseParams(category, subType, triggerKey);
-    return this.svc.setEnabled(p.category, p.subType, p.triggerKey, req.user.id, input.enabled);
+    const parsed = parseParams(category, triggerKey);
+    return this.svc.setEnabled(parsed.category, parsed.triggerKey, req.user.id, input.enabled);
   }
 
-  @Post(":category/:subType/:triggerKey/preview")
+  @Post(":category/:triggerKey/preview")
   async preview(
     @Param("triggerKey") triggerKey: string,
     @Body(new ZodValidationPipe(PreviewLineMessageTemplateRequestSchema))
@@ -109,7 +98,7 @@ export class AdminLineTemplatesController {
     return this.svc.preview(parsedTriggerKey, input.body);
   }
 
-  @Post(":category/:subType/:triggerKey/test-send")
+  @Post(":category/:triggerKey/test-send")
   async testSend(
     @Param("triggerKey") triggerKey: string,
     @Body(new ZodValidationPipe(TestSendLineMessageTemplateRequestSchema))

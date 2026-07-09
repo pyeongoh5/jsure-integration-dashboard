@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Attachment, AttachmentKind } from "@jsure/shared";
+import {
+  QOO10_REVIEW_CHANNEL_LABEL,
+  type Attachment,
+  type AttachmentKind,
+} from "@jsure/shared";
 import { fetchSubmittedPostAttachments } from "@/domains/application/draftsApi";
 import type { DraftReview } from "./types";
 import styles from "./InsightDetailDialog.module.css";
@@ -151,17 +155,47 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                 )}
               </section>
 
-              <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>제출 URL</h3>
-                <a
-                  className={styles.url}
-                  href={draft.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {draft.url}
-                </a>
-              </section>
+              {draft.url !== null && (
+                <section className={styles.section}>
+                  <h3 className={styles.sectionTitle}>제출 URL</h3>
+                  <a
+                    className={styles.url}
+                    href={draft.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {draft.url}
+                  </a>
+                </section>
+              )}
+
+              {isFakePurchase &&
+                (Object.keys(draft.reviewUrls) as ("LIPS" | "ATCOSME")[])
+                  .length > 0 && (
+                  <section className={styles.section}>
+                    <h3 className={styles.sectionTitle}>추가 리뷰 URL</h3>
+                    {(Object.keys(draft.reviewUrls) as ("LIPS" | "ATCOSME")[])
+                      .map((channel) => {
+                        const reviewUrl = draft.reviewUrls[channel];
+                        if (!reviewUrl) return null;
+                        return (
+                          <div key={channel}>
+                            <span className={styles.reviewChannelLabel}>
+                              {QOO10_REVIEW_CHANNEL_LABEL[channel]}
+                            </span>
+                            <a
+                              className={styles.url}
+                              href={reviewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {reviewUrl}
+                            </a>
+                          </div>
+                        );
+                      })}
+                  </section>
+                )}
             </>
           )}
         </div>

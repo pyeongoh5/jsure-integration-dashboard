@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import {
   isEnabledSnsType,
+  QOO10_REVIEW_CHANNEL_LABEL,
   SUB_TYPE_LABEL,
   subTypesForCategory,
   type CampaignCategory,
@@ -17,6 +19,11 @@ const INSTAGRAM_POST_TYPE_LABELS: Record<InstagramPostType, string> = {
 const INSTAGRAM_POST_TYPE_OPTIONS: readonly InstagramPostType[] = [
   "FEED",
   "REELS",
+];
+
+const QOO10_REVIEW_CHANNEL_OPTIONS: readonly ("LIPS" | "ATCOSME")[] = [
+  "LIPS",
+  "ATCOSME",
 ];
 
 type SubTypeMeta = {
@@ -63,21 +70,13 @@ const SUB_TYPE_META: Record<CampaignSubType, SubTypeMeta> = {
     followerLabel: "팔로워",
     icon: "fa-solid fa-bag-shopping",
   },
-  LIPS: {
-    followerLabel: "팔로워",
-    icon: "fa-solid fa-bag-shopping",
-  },
-  ATCOSME: {
-    followerLabel: "팔로워",
-    icon: "fa-solid fa-bag-shopping",
-  },
 };
 
 type ItemError = Partial<
   Record<
     | "minFollowers"
     | "recruitCount"
-    | "instagramPostTypes"
+    | "subTypeOptions"
     | "productPriceJpy"
     | "productUrl",
     string
@@ -107,7 +106,7 @@ function createRecruit(
       subType,
       minFollowers: 0,
       recruitCount: 1,
-      instagramPostTypes: subType === "INSTAGRAM" ? ["FEED"] : [],
+      subTypeOptions: subType === "INSTAGRAM" ? ["FEED"] : [],
       insightRequired: true,
       productPriceJpy: null,
       productUrl: null,
@@ -117,7 +116,7 @@ function createRecruit(
     subType,
     minFollowers: 0,
     recruitCount: 1,
-    instagramPostTypes: [],
+    subTypeOptions: [],
     insightRequired: false,
     productPriceJpy: Number.NaN as unknown as number,
     productUrl: "",
@@ -141,6 +140,15 @@ export function RecruitList({
   const indexOf = (subType: CampaignFormRecruitSubType): number =>
     value.findIndex((recruit) => recruit.subType === subType);
 
+  // 가구매 카테고리는 QOO10 recruit 을 항상 유지한다.
+  const isFakePurchase = category === "FAKE_PURCHASE";
+  const hasQoo10Recruit = value.some((recruit) => recruit.subType === "QOO10");
+  useEffect(() => {
+    if (isFakePurchase && !hasQoo10Recruit) {
+      onChange([createRecruit(category, "QOO10")]);
+    }
+  }, [isFakePurchase, hasQoo10Recruit, category, onChange]);
+
   const toggle = (subType: CampaignFormRecruitSubType) => {
     const index = indexOf(subType);
     if (index >= 0) {
@@ -156,11 +164,27 @@ export function RecruitList({
   ) => {
     const current = value[index];
     if (!current) return;
-    const set = new Set<InstagramPostType>(current.instagramPostTypes);
+    const set = new Set<string>(current.subTypeOptions);
     if (set.has(postType)) set.delete(postType);
     else set.add(postType);
     updateAt(index, {
-      instagramPostTypes: INSTAGRAM_POST_TYPE_OPTIONS.filter((option) =>
+      subTypeOptions: INSTAGRAM_POST_TYPE_OPTIONS.filter((option) =>
+        set.has(option),
+      ),
+    });
+  };
+
+  const toggleQoo10Channel = (
+    index: number,
+    channel: "LIPS" | "ATCOSME",
+  ) => {
+    const current = value[index];
+    if (!current) return;
+    const set = new Set<string>(current.subTypeOptions);
+    if (set.has(channel)) set.delete(channel);
+    else set.add(channel);
+    updateAt(index, {
+      subTypeOptions: QOO10_REVIEW_CHANNEL_OPTIONS.filter((option) =>
         set.has(option),
       ),
     });
@@ -180,26 +204,39 @@ export function RecruitList({
         const row = selected ? value[index] : null;
         const errors = selected ? errorByIndex?.[index] : undefined;
         const meta = SUB_TYPE_META[subType];
+        const isQoo10 = isFakePurchase && subType === "QOO10";
         return (
           <div
             key={subType}
-            className={`${styles.snsRow}${selected ? ` ${styles.snsRowOn}` : ""}`}
+            className={`${styles.snsRow}${selected || isQoo10 ? ` ${styles.snsRowOn}` : ""}`}
           >
-            <label className={styles.snsToggle}>
-              <input
-                type="checkbox"
-                checked={selected}
-                disabled={disabled}
-                onChange={() => toggle(subType)}
-              />
-              <i
-                className={`${meta.icon} ${styles.snsIcon} ${meta.iconClass ?? ""}`}
-                aria-hidden="true"
-              />
-              <span className={styles.snsToggleLabel}>
-                {SUB_TYPE_LABEL[subType]}
-              </span>
-            </label>
+            {isQoo10 ? (
+              <div className={styles.snsToggle}>
+                <i
+                  className={`${meta.icon} ${styles.snsIcon} ${meta.iconClass ?? ""}`}
+                  aria-hidden="true"
+                />
+                <span className={styles.snsToggleLabel}>
+                  {SUB_TYPE_LABEL[subType]}
+                </span>
+              </div>
+            ) : (
+              <label className={styles.snsToggle}>
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  disabled={disabled}
+                  onChange={() => toggle(subType)}
+                />
+                <i
+                  className={`${meta.icon} ${styles.snsIcon} ${meta.iconClass ?? ""}`}
+                  aria-hidden="true"
+                />
+                <span className={styles.snsToggleLabel}>
+                  {SUB_TYPE_LABEL[subType]}
+                </span>
+              </label>
+            )}
             {selected && row ? (
               category === "SNS" ? (
                 <div className={styles.snsFields}>
@@ -270,7 +307,7 @@ export function RecruitList({
                           >
                             <input
                               type="checkbox"
-                              checked={row.instagramPostTypes.includes(postType)}
+                              checked={row.subTypeOptions.includes(postType)}
                               disabled={disabled}
                               onChange={() =>
                                 toggleInstagramPostType(index, postType)
@@ -282,9 +319,9 @@ export function RecruitList({
                           </label>
                         ))}
                       </div>
-                      {errors?.instagramPostTypes && (
+                      {errors?.subTypeOptions && (
                         <div className={styles.error}>
-                          {errors.instagramPostTypes}
+                          {errors.subTypeOptions}
                         </div>
                       )}
                     </div>
@@ -387,6 +424,40 @@ export function RecruitList({
                       <div className={styles.error}>{errors.productUrl}</div>
                     )}
                   </div>
+                  {subType === "QOO10" && (
+                    <div
+                      className={styles.snsField}
+                      style={{ gridColumn: "1 / -1" }}
+                    >
+                      <label className={styles.subLabel}>
+                        리뷰 채널 (선택)
+                      </label>
+                      <div className={styles.snsCountRow}>
+                        {QOO10_REVIEW_CHANNEL_OPTIONS.map((channel) => (
+                          <label
+                            key={channel}
+                            className={styles.snsToggle}
+                            style={{ marginRight: 12 }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={row.subTypeOptions.includes(channel)}
+                              disabled={disabled}
+                              onChange={() => toggleQoo10Channel(index, channel)}
+                            />
+                            <span className={styles.snsToggleLabel}>
+                              {QOO10_REVIEW_CHANNEL_LABEL[channel]}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      {errors?.subTypeOptions && (
+                        <div className={styles.error}>
+                          {errors.subTypeOptions}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             ) : null}

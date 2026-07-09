@@ -55,6 +55,7 @@ export const messages = {
       productUrl: { jp: "商品ページ", kr: "상품 페이지" },
       expectedSettlement: { jp: "予定精算金額", kr: "예상 정산액" },
       productPrice: { jp: "商品価格", kr: "상품 가격" },
+      reviewChannels: { jp: "レビューチャンネル", kr: "리뷰 채널" },
     },
   },
   me: {
@@ -63,9 +64,18 @@ export const messages = {
       postalCodeLabel: { jp: "郵便番号", kr: "우편번호" },
       postalCodeError: { jp: "郵便番号は7桁", kr: "우편번호는 7자리" },
       lookupLoading: { jp: "住所を検索中…", kr: "주소 검색 중…" },
-      lookupNotFound: { jp: "該当する住所が見つかりませんでした", kr: "해당하는 주소를 찾지 못했습니다" },
-      lookupError: { jp: "住所検索に失敗しました。手動で入力してください", kr: "주소 검색에 실패했습니다. 직접 입력해 주세요" },
-      postalHint: { jp: "例: 150-0001 (入力すると自動補完されます)", kr: "예: 150-0001 (입력하면 자동으로 채워집니다)" },
+      lookupNotFound: {
+        jp: "該当する住所が見つかりませんでした",
+        kr: "해당하는 주소를 찾지 못했습니다",
+      },
+      lookupError: {
+        jp: "住所検索に失敗しました。手動で入力してください",
+        kr: "주소 검색에 실패했습니다. 직접 입력해 주세요",
+      },
+      postalHint: {
+        jp: "例: 150-0001 (入力すると自動補完されます)",
+        kr: "예: 150-0001 (입력하면 자동으로 채워집니다)",
+      },
       prefectureLabel: { jp: "都道府県", kr: "도도부현" },
       prefectureError: { jp: "都道府県を選択してください", kr: "도도부현을 선택해 주세요" },
       prefecturePlaceholder: { jp: "選択してください", kr: "선택해 주세요" },
@@ -211,6 +221,12 @@ export const messages = {
       },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       deadlinePassed: { jp: "投稿期限を過ぎています", kr: "게시 기한이 지났습니다" },
+      channelUrlLabelSuffix: { jp: "レビューURL", kr: "리뷰 URL" },
+      channelUrlPlaceholder: { jp: "https://…", kr: "https://…" },
+      channelUrlRequired: {
+        jp: "各チャンネルのレビューURLをご入力ください",
+        kr: "각 채널의 리뷰 URL을 입력해 주세요",
+      },
     },
     insightForm: {
       metricInvalid: { jp: "数字を入力", kr: "숫자를 입력해 주세요" },
@@ -226,8 +242,14 @@ export const messages = {
       uploadFailedPrefix: { jp: "アップロード失敗: ", kr: "업로드 실패: " },
       maxFilesPrefix: { jp: "最大", kr: "최대 " },
       maxFilesSuffix: { jp: "枚まで添付できます", kr: "장까지 첨부할 수 있습니다" },
-      uploadGenericError: { jp: "アップロード中にエラーが発生しました", kr: "업로드 중 오류가 발생했습니다" },
-      guidance: { jp: "投稿のインサイトをご提出ください。", kr: "게시물의 인사이트를 제출해 주세요." },
+      uploadGenericError: {
+        jp: "アップロード中にエラーが発生しました",
+        kr: "업로드 중 오류가 발생했습니다",
+      },
+      guidance: {
+        jp: "投稿のインサイトをご提出ください。",
+        kr: "게시물의 인사이트를 제출해 주세요.",
+      },
       dueLabelPrefix: { jp: "インサイト提出日: ", kr: "인사이트 제출일: " },
       reachHint: {
         jp: "リーチ数が表示されない場合は、「0」とご入力いただくようお願いいたします。",
@@ -238,7 +260,10 @@ export const messages = {
       screenshotHintSuffix: { jp: "枚 · 5MB以下", kr: "장 · 5MB 이하" },
       uploading: { jp: "アップロード中…", kr: "업로드 중…" },
       limitReached: { jp: "添付枚数が上限に達しました", kr: "첨부 매수가 상한에 도달했습니다" },
-      dropzoneMain: { jp: "クリックまたはドラッグして画像を追加", kr: "클릭 또는 드래그하여 이미지 추가" },
+      dropzoneMain: {
+        jp: "クリックまたはドラッグして画像を追加",
+        kr: "클릭 또는 드래그하여 이미지 추가",
+      },
       unitSuffix: { jp: "枚", kr: "장" },
       removeAriaLabel: { jp: "削除", kr: "삭제" },
       submitting: { jp: "送信中…", kr: "전송 중…" },
@@ -250,7 +275,10 @@ export const messages = {
       submitting: { jp: "送信中…", kr: "전송 중…" },
       update: { jp: "投稿URLを更新", kr: "게시 URL 업데이트" },
       submit: { jp: "投稿URLを提出", kr: "게시 URL 제출" },
-      prHint: { jp: "⚠ 投稿冒頭に #PR を必ず記載", kr: "⚠ 게시물 처음에 #PR을 반드시 기재해 주세요" },
+      prHint: {
+        jp: "⚠ 投稿冒頭に #PR を必ず記載",
+        kr: "⚠ 게시물 처음에 #PR을 반드시 기재해 주세요",
+      },
       deadlineLabelPrefix: { jp: "投稿締切日: ", kr: "게시 마감일: " },
     },
     stage: {
@@ -268,7 +296,7 @@ export const messages = {
         submit: { jp: "提出する", kr: "제출" },
       },
       awaitingReview: {
-        heading: { jp: "レビューの投稿をお願いいたします", kr: "리뷰를 작성해 주세요" },
+        heading: { jp: "レビューの投稿をお願いいたします", kr: "리뷰를 제출해 주세요" },
         description: {
           jp: "各プラットフォームでレビューを投稿後、URLとスクリーンショットをご提出ください",
           kr: "각 플랫폼에 리뷰를 게시한 뒤 URL과 스크린샷을 제출해 주세요",
@@ -276,7 +304,7 @@ export const messages = {
         urlLabel: { jp: "レビューURL", kr: "리뷰 URL" },
         screenshotsLabel: {
           jp: "レビューのスクリーンショット (2枚以上)",
-          kr: "리뷰 스크린샷 (2장 이상)",
+          kr: "Qoo10 리뷰 스크린샷 제출 (2장 이상)",
         },
         deadlineDaysPrefix: { jp: "投稿期限まであと", kr: "리뷰 마감까지 " },
         deadlineDaysSuffix: { jp: "日", kr: "일" },
@@ -320,6 +348,7 @@ export const messages = {
       notFound: { jp: "キャンペーンが見つかりません", kr: "캠페인을 찾을 수 없습니다" },
       title: { jp: "応募確認", kr: "응모 확인" },
       snsSectionTitle: { jp: "応募に使用するSNSを選択", kr: "응모에 사용할 SNS 선택" },
+      fakePurchaseSectionTitle: { jp: "応募内容", kr: "응모 내용" },
       noQualifying: {
         jp: "応募条件を満たすSNSアカウントがありません",
         kr: "응모 조건을 충족하는 SNS 계정이 없습니다",
@@ -349,7 +378,10 @@ export const messages = {
         jp: "※住所の転送手続きを行う場合、転送費用をご負担いただくことがございますので、あらかじめご了承ください。",
         kr: "※주소 전송 절차를 진행하실 경우 전송 비용을 부담하실 수 있으니 미리 양해 부탁드립니다.",
       },
-      addressMissing: { jp: "お届け先住所が未登録です。", kr: "배송지 주소가 등록되어 있지 않습니다." },
+      addressMissing: {
+        jp: "お届け先住所が未登録です。",
+        kr: "배송지 주소가 등록되어 있지 않습니다.",
+      },
       registerAddress: { jp: "住所を登録する", kr: "주소 등록" },
       confirmSectionTitle: { jp: "応募にあたっての再確認", kr: "응모 전 재확인" },
       ctaClosed: { jp: "募集終了", kr: "모집 종료" },
@@ -564,7 +596,10 @@ export const messages = {
     },
     auth: {
       lineReturn: {
-        errorReceive: { jp: "ログイン情報を受信できませんでした", kr: "로그인 정보를 수신하지 못했습니다" },
+        errorReceive: {
+          jp: "ログイン情報を受信できませんでした",
+          kr: "로그인 정보를 수신하지 못했습니다",
+        },
         errorLogin: { jp: "ログインに失敗しました", kr: "로그인에 실패했습니다" },
         loggingIn: { jp: "LINEでログイン中…", kr: "LINE으로 로그인 중…" },
       },

@@ -18,8 +18,6 @@ const PLACEHOLDER_BY_SNS: Record<CampaignSubType, string> = {
   X: "https://x.com/user/status/...",
   YOUTUBE: "https://www.youtube.com/watch?v=...",
   QOO10: "https://...",
-  LIPS: "https://...",
-  ATCOSME: "https://...",
 };
 
 interface Props {

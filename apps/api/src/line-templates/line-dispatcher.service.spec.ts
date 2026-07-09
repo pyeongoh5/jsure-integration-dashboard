@@ -5,7 +5,7 @@ import type { LineMessagingService } from "../influencer-auth/line-messaging.ser
 function makePrismaMock(overrides: Record<string, unknown> = {}) {
   return {
     lineMessageTemplate: {
-      findFirst: jest.fn(),
+      findUnique: jest.fn(),
     },
     lineDispatchLog: {
       create: jest.fn().mockResolvedValue({ id: "log1" }),
@@ -48,7 +48,7 @@ const fakePurchaseApplication = {
 describe("LineDispatcherService", () => {
   it("템플릿이 없으면 SKIPPED_NO_TEMPLATE 로그 후 발송 안 함", async () => {
     const prisma = makePrismaMock();
-    (prisma.lineMessageTemplate.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue(null);
     const push = jest.fn();
     const line = makeLineMock(push);
 
@@ -65,7 +65,7 @@ describe("LineDispatcherService", () => {
 
   it("템플릿이 disabled 면 SKIPPED_DISABLED 로그 후 발송 안 함", async () => {
     const prisma = makePrismaMock();
-    (prisma.lineMessageTemplate.findFirst as jest.Mock).mockResolvedValue({
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue({
       id: "t1",
       enabled: false,
       body: "hi {{influencerName}}",
@@ -86,7 +86,7 @@ describe("LineDispatcherService", () => {
 
   it("enabled 면 렌더 후 pushText + SUCCESS 로그", async () => {
     const prisma = makePrismaMock();
-    (prisma.lineMessageTemplate.findFirst as jest.Mock).mockResolvedValue({
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue({
       id: "t1",
       enabled: true,
       body: "hi {{influencerName}} / {{campaignTitle}}",
@@ -111,7 +111,7 @@ describe("LineDispatcherService", () => {
 
   it("pushText 가 throw 하면 FAILED 로그 (예외 삼킴)", async () => {
     const prisma = makePrismaMock();
-    (prisma.lineMessageTemplate.findFirst as jest.Mock).mockResolvedValue({
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue({
       id: "t1",
       enabled: true,
       body: "hi",
@@ -134,7 +134,7 @@ describe("LineDispatcherService", () => {
 
   it("가구매 카테고리는 recruit 을 자동 조회하여 컨텍스트에 주입", async () => {
     const prisma = makePrismaMock();
-    (prisma.lineMessageTemplate.findFirst as jest.Mock).mockResolvedValue({
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue({
       id: "t1",
       enabled: true,
       body: "hi {{influencerName}} price={{productPriceJpy}} total={{totalSettlementJpy}}",
@@ -160,7 +160,7 @@ describe("LineDispatcherService", () => {
 
   it("SNS 카테고리는 recruit 조회를 스킵", async () => {
     const prisma = makePrismaMock();
-    (prisma.lineMessageTemplate.findFirst as jest.Mock).mockResolvedValue({
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue({
       id: "t1",
       enabled: true,
       body: "hi",
@@ -172,18 +172,17 @@ describe("LineDispatcherService", () => {
     expect(prisma.campaignRecruit.findUnique).not.toHaveBeenCalled();
   });
 
-  it("subType 은 application.snsType 에서 도출 (INSTAGRAM/X)", async () => {
+  it("템플릿 조회 키는 (category, triggerKey) 만 사용", async () => {
     const prisma = makePrismaMock();
-    (prisma.lineMessageTemplate.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue(null);
     const svc = new LineDispatcherService(prisma, makeLineMock());
-    await svc.dispatch("SNS_APPLICATION_APPLIED", {
-      application: { ...(application as object), subType: "X" } as never,
-    });
-    expect(prisma.lineMessageTemplate.findFirst).toHaveBeenCalledWith({
+    await svc.dispatch("SNS_APPLICATION_APPLIED", { application });
+    expect(prisma.lineMessageTemplate.findUnique).toHaveBeenCalledWith({
       where: {
-        category: "SNS",
-        subType: "X",
-        triggerKey: "SNS_APPLICATION_APPLIED",
+        category_triggerKey: {
+          category: "SNS",
+          triggerKey: "SNS_APPLICATION_APPLIED",
+        },
       },
     });
   });

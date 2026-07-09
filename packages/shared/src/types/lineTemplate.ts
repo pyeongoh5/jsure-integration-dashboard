@@ -8,8 +8,6 @@ export const LineTriggerSubTypeSchema = z.enum([
   "INSTAGRAM",
   "X",
   "QOO10",
-  "LIPS",
-  "ATCOSME",
 ]);
 export type LineTriggerSubType = z.infer<typeof LineTriggerSubTypeSchema>;
 
@@ -52,7 +50,6 @@ export type TriggerVariable = z.infer<typeof TriggerVariableSchema>;
 
 export const LineMessageTemplateResponseSchema = z.object({
   category: CampaignCategorySchema,
-  subType: LineTriggerSubTypeSchema.nullable(),
   triggerKey: LineTriggerKeySchema,
   enabled: z.boolean(),
   body: z.string(),
@@ -72,7 +69,6 @@ export type LineMessageTemplateListItem = z.infer<typeof LineMessageTemplateList
 
 export const LineMessageTemplateListResponseSchema = z.object({
   category: CampaignCategorySchema,
-  subType: LineTriggerSubTypeSchema.nullable(),
   items: z.array(LineMessageTemplateListItemSchema),
 });
 export type LineMessageTemplateListResponse = z.infer<typeof LineMessageTemplateListResponseSchema>;

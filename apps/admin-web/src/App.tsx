@@ -49,7 +49,7 @@ export function App() {
         <Route path="/notices/:id/edit" element={<NoticeEdit mode="edit" />} />
         <Route path="/message-templates" element={<MessageTemplates />} />
         <Route
-          path="/message-templates/:category/:subType/:triggerKey"
+          path="/message-templates/:category/:triggerKey"
           element={<MessageTemplateEdit />}
         />
       </Route>

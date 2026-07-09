@@ -19,6 +19,7 @@ import {
   submitReview,
   useApplication,
 } from "@/domains/application";
+import { useCampaign } from "@/domains/campaign";
 import type { AttachmentUploadInput } from "@jsure/shared";
 import { PageHeader } from "@/components/composites/PageHeader";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
@@ -31,6 +32,11 @@ export function ApplicationDetail() {
   const qc = useQueryClient();
 
   const { data, isLoading, isError } = useApplication(id);
+  const campaign = useCampaign(data?.campaignId ?? "");
+  const qoo10Recruit = campaign.data?.recruits.find(
+    (recruit) => recruit.subType === "QOO10",
+  );
+  const reviewSubTypeOptions = qoo10Recruit?.subTypeOptions ?? [];
 
   function invalidate() {
     qc.invalidateQueries({ queryKey: ["application", id] });
@@ -75,12 +81,12 @@ export function ApplicationDetail() {
   });
   const review = useMutation({
     mutationFn: ({
-      reviewUrl,
       screenshots,
+      reviewUrls,
     }: {
-      reviewUrl: string;
       screenshots: AttachmentUploadInput[];
-    }) => submitReview(id, reviewUrl, screenshots),
+      reviewUrls: Partial<Record<"LIPS" | "ATCOSME", string>>;
+    }) => submitReview(id, screenshots, reviewUrls),
     onSuccess: () => invalidate(),
   });
   const insight = useMutation({
@@ -222,12 +228,14 @@ export function ApplicationDetail() {
                   </span>
                   <span className={styles.rejectSns}>{p.subType}</span>
                 </div>
-                <div className={styles.rejectUrl}>
-                  {t("pages.applications.detail.rejectUrlPrefix")}
-                  <a href={p.url} target="_blank" rel="noreferrer">
-                    {p.url}
-                  </a>
-                </div>
+                {p.url && (
+                  <div className={styles.rejectUrl}>
+                    {t("pages.applications.detail.rejectUrlPrefix")}
+                    <a href={p.url} target="_blank" rel="noreferrer">
+                      {p.url}
+                    </a>
+                  </div>
+                )}
                 {p.lastRejectionComment && (
                   <div className={styles.rejectComment}>
                     <div className={styles.rejectCommentLabel}>
@@ -238,7 +246,7 @@ export function ApplicationDetail() {
                 )}
                 <PostSubmitForm
                   subType={p.subType}
-                  initial={p.url}
+                  initial={p.url ?? ""}
                   onSubmit={async (url) => {
                     await post.mutateAsync({ subType: p.subType, url });
                   }}
@@ -295,8 +303,9 @@ export function ApplicationDetail() {
             applicationId={data.id}
             orderSubmittedAt={data.orderSubmittedAt ?? data.appliedAt}
             postingPeriodDays={data.postingPeriodDays}
-            onSubmit={async (reviewUrl, screenshots) => {
-              await review.mutateAsync({ reviewUrl, screenshots });
+            subTypeOptions={reviewSubTypeOptions}
+            onSubmit={async (screenshots, reviewUrls) => {
+              await review.mutateAsync({ screenshots, reviewUrls });
             }}
             submitting={review.isPending}
           />
@@ -328,12 +337,14 @@ export function ApplicationDetail() {
                 {t("application.stage.reviewRejected.heading")}
               </span>
             </div>
-            <div className={styles.rejectUrl}>
-              {t("pages.applications.detail.rejectUrlPrefix")}
-              <a href={data.posts[0].url} target="_blank" rel="noreferrer">
-                {data.posts[0].url}
-              </a>
-            </div>
+            {data.posts[0].url && (
+              <div className={styles.rejectUrl}>
+                {t("pages.applications.detail.rejectUrlPrefix")}
+                <a href={data.posts[0].url} target="_blank" rel="noreferrer">
+                  {data.posts[0].url}
+                </a>
+              </div>
+            )}
             {data.posts[0].lastRejectionComment && (
               <div className={styles.rejectComment}>
                 <div className={styles.rejectCommentLabel}>
@@ -349,8 +360,9 @@ export function ApplicationDetail() {
               applicationId={data.id}
               orderSubmittedAt={data.orderSubmittedAt ?? data.appliedAt}
               postingPeriodDays={data.postingPeriodDays}
-              onSubmit={async (reviewUrl, screenshots) => {
-                await review.mutateAsync({ reviewUrl, screenshots });
+              subTypeOptions={reviewSubTypeOptions}
+              onSubmit={async (screenshots, reviewUrls) => {
+                await review.mutateAsync({ screenshots, reviewUrls });
               }}
               submitting={review.isPending}
             />

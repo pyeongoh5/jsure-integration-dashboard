@@ -12,6 +12,7 @@ export const ApprovedApplicantExportRowSchema = z.object({
   phone: z.string(),
   postalCode: z.string(),
   address: z.string(),
+  appliedAt: z.string(),
 });
 export type ApprovedApplicantExportRow = z.infer<
   typeof ApprovedApplicantExportRowSchema

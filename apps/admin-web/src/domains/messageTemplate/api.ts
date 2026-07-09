@@ -9,78 +9,64 @@ import {
   type LineMessageTemplateListResponse,
   type LineMessageTemplateResponse,
   type LineTriggerKey,
-  type LineTriggerSubType,
   type PreviewLineMessageTemplateResponse,
   type TestSendLineMessageTemplateResponse,
   type UpdateLineMessageTemplateRequest,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
-function pathOf(
-  category: CampaignCategory,
-  subType: LineTriggerSubType | null,
-  triggerKey: LineTriggerKey,
-): string {
-  const subSegment = subType ?? "none";
-  return `/admin/line-templates/${category}/${subSegment}/${triggerKey}`;
+function pathOf(category: CampaignCategory, triggerKey: LineTriggerKey): string {
+  return `/admin/line-templates/${category}/${triggerKey}`;
 }
 
 export async function listTemplates(
   category: CampaignCategory,
-  subType: LineTriggerSubType | null,
 ): Promise<LineMessageTemplateListResponse> {
-  const res = await api.get("/admin/line-templates", {
-    params: { category, subType: subType ?? "none" },
-  });
+  const res = await api.get("/admin/line-templates", { params: { category } });
   return LineMessageTemplateListResponseSchema.parse(res.data);
 }
 
 export async function getTemplate(
   category: CampaignCategory,
-  subType: LineTriggerSubType | null,
   triggerKey: LineTriggerKey,
 ): Promise<LineMessageTemplateDetailResponse> {
-  const res = await api.get(pathOf(category, subType, triggerKey));
+  const res = await api.get(pathOf(category, triggerKey));
   return LineMessageTemplateDetailResponseSchema.parse(res.data);
 }
 
 export async function updateTemplate(
   category: CampaignCategory,
-  subType: LineTriggerSubType | null,
   triggerKey: LineTriggerKey,
   input: UpdateLineMessageTemplateRequest,
 ): Promise<LineMessageTemplateResponse> {
-  const res = await api.put(pathOf(category, subType, triggerKey), input);
+  const res = await api.put(pathOf(category, triggerKey), input);
   return LineMessageTemplateResponseSchema.parse(res.data);
 }
 
 export async function previewTemplate(
   category: CampaignCategory,
-  subType: LineTriggerSubType | null,
   triggerKey: LineTriggerKey,
   body: string,
 ): Promise<PreviewLineMessageTemplateResponse> {
-  const res = await api.post(`${pathOf(category, subType, triggerKey)}/preview`, { body });
+  const res = await api.post(`${pathOf(category, triggerKey)}/preview`, { body });
   return PreviewLineMessageTemplateResponseSchema.parse(res.data);
 }
 
 export async function testSendTemplate(
   category: CampaignCategory,
-  subType: LineTriggerSubType | null,
   triggerKey: LineTriggerKey,
   body: string,
 ): Promise<TestSendLineMessageTemplateResponse> {
-  const res = await api.post(`${pathOf(category, subType, triggerKey)}/test-send`, { body });
+  const res = await api.post(`${pathOf(category, triggerKey)}/test-send`, { body });
   return TestSendLineMessageTemplateResponseSchema.parse(res.data);
 }
 
 export async function setTemplateEnabled(
   category: CampaignCategory,
-  subType: LineTriggerSubType | null,
   triggerKey: LineTriggerKey,
   enabled: boolean,
 ): Promise<LineMessageTemplateResponse> {
-  const res = await api.patch(`${pathOf(category, subType, triggerKey)}/enabled`, { enabled });
+  const res = await api.patch(`${pathOf(category, triggerKey)}/enabled`, { enabled });
   return LineMessageTemplateResponseSchema.parse(res.data);
 }
 

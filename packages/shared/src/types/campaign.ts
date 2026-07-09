@@ -12,7 +12,7 @@ export const CampaignCategorySchema = z.enum(["SNS", "FAKE_PURCHASE"]);
 export type CampaignCategory = z.infer<typeof CampaignCategorySchema>;
 
 const SNS_SUB_TYPE_VALUES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
-const FAKE_PURCHASE_SUB_TYPE_VALUES = ["QOO10", "LIPS", "ATCOSME"] as const;
+const FAKE_PURCHASE_SUB_TYPE_VALUES = ["QOO10"] as const;
 
 const DateOnly = z
   .string()
@@ -21,16 +21,27 @@ const DateOnly = z
 export const InstagramPostTypeSchema = z.enum(["FEED", "REELS"]);
 export type InstagramPostType = z.infer<typeof InstagramPostTypeSchema>;
 
+const INSTAGRAM_SUB_TYPE_OPTION_VALUES = ["FEED", "REELS"] as const;
+const QOO10_SUB_TYPE_OPTION_VALUES = ["LIPS", "ATCOSME"] as const;
+
+const INSTAGRAM_SUB_TYPE_OPTION_SET = new Set<string>(
+  INSTAGRAM_SUB_TYPE_OPTION_VALUES,
+);
+const QOO10_SUB_TYPE_OPTION_SET = new Set<string>(
+  QOO10_SUB_TYPE_OPTION_VALUES,
+);
+
 /**
  * INSTAGRAM 모집은 어떤 포스트 타입(FEED/REELS)을 받을지 1개 이상 지정해야 한다.
- * 비 INSTAGRAM 모집은 빈 배열로 응답·저장한다.
- * 가구매(QOO10/LIPS/ATCOSME) 모집은 `productPriceJpy`/`productUrl` 을 필수로 세팅한다.
+ * QOO10 모집은 리뷰 채널(LIPS/ATCOSME)을 0-2개 지정한다.
+ * 그 외 서브타입은 빈 배열로 응답·저장한다.
+ * 가구매(QOO10) 모집은 `productPriceJpy`/`productUrl` 을 필수로 세팅한다.
  */
 export const CampaignRecruitSchema = z.object({
   subType: CampaignSubTypeSchema,
   minFollowers: z.number().int().nonnegative("0 이상의 정수"),
   recruitCount: z.number().int().positive("1 이상"),
-  instagramPostTypes: z.array(InstagramPostTypeSchema).default([]),
+  subTypeOptions: z.array(z.string()).default([]),
   /** false 면 인플루언서가 인사이트를 제출하지 않아도 정산이 진행될 수 있다. */
   insightRequired: z.boolean().default(true),
   /** 가구매 캠페인용: 상품 가격(JPY). SNS 캠페인은 null. */
@@ -43,30 +54,32 @@ export type CampaignRecruit = z.infer<typeof CampaignRecruitSchema>;
 const CampaignRecruitInputSchema = z
   .object({
     subType: CampaignSubTypeSchema,
-    minFollowers: z.number().int().nonnegative("0 이상의 정수"),
-    recruitCount: z.number().int().positive("1 이상"),
-    instagramPostTypes: z.array(InstagramPostTypeSchema).default([]),
+    minFollowers: z
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
+      .int("정수만 입력")
+      .nonnegative("0 이상의 정수"),
+    recruitCount: z
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
+      .int("정수만 입력")
+      .positive("1 이상"),
+    subTypeOptions: z.array(z.string()).default([]),
     insightRequired: z.boolean().default(true),
-    productPriceJpy: z.number().int().positive().nullable().default(null),
-    productUrl: z.string().url().nullable().default(null),
+    productPriceJpy: z
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
+      .int("정수만 입력")
+      .positive("1 이상")
+      .nullable()
+      .default(null),
+    productUrl: z.string().url("URL 형식이어야 합니다").nullable().default(null),
   })
   .superRefine((recruit, ctx) => {
-    if (recruit.subType === "INSTAGRAM") {
-      const unique = new Set(recruit.instagramPostTypes);
-      if (unique.size === 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["instagramPostTypes"],
-          message: "FEED 또는 REELS 중 1개 이상을 선택하세요",
-        });
-      }
-      if (unique.size !== recruit.instagramPostTypes.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["instagramPostTypes"],
-          message: "포스트 타입이 중복되었습니다",
-        });
-      }
+    const unique = new Set(recruit.subTypeOptions);
+    if (unique.size !== recruit.subTypeOptions.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["subTypeOptions"],
+        message: "옵션이 중복되었습니다",
+      });
     }
   });
 
@@ -122,6 +135,33 @@ function refineRecruitsByCategory(
           message: "SNS 캠페인에서는 상품 URL을 지정할 수 없습니다",
         });
       }
+      if (recruit.subType === "INSTAGRAM") {
+        const invalid = recruit.subTypeOptions.filter(
+          (option) => !INSTAGRAM_SUB_TYPE_OPTION_SET.has(option),
+        );
+        if (invalid.length > 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["recruits", index, "subTypeOptions"],
+            message: "INSTAGRAM 옵션은 FEED/REELS 만 허용됩니다",
+          });
+        }
+        if (recruit.subTypeOptions.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["recruits", index, "subTypeOptions"],
+            message: "FEED 또는 REELS 중 1개 이상을 선택하세요",
+          });
+        }
+      } else {
+        if (recruit.subTypeOptions.length > 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["recruits", index, "subTypeOptions"],
+            message: "이 서브타입에서는 옵션을 지정할 수 없습니다",
+          });
+        }
+      }
     } else {
       if (!FAKE_PURCHASE_SUB_TYPE_SET.has(recruit.subType)) {
         ctx.addIssue({
@@ -130,6 +170,18 @@ function refineRecruitsByCategory(
           message: "가구매 캠페인에서 사용할 수 없는 서브타입입니다",
         });
         return;
+      }
+      if (recruit.subType === "QOO10") {
+        const invalid = recruit.subTypeOptions.filter(
+          (option) => !QOO10_SUB_TYPE_OPTION_SET.has(option),
+        );
+        if (invalid.length > 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["recruits", index, "subTypeOptions"],
+            message: "QOO10 리뷰 채널은 LIPS/ATCOSME 만 허용됩니다",
+          });
+        }
       }
       if (recruit.productPriceJpy === null || recruit.productPriceJpy <= 0) {
         ctx.addIssue({
@@ -159,14 +211,17 @@ export const CampaignFormSchema = z
   .object({
     category: CampaignCategorySchema.default("SNS"),
     title: z.string().min(1, "필수 입력").max(100),
-    rewardJpy: z.number().int("정수만 입력").nonnegative(),
+    rewardJpy: z
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
+      .int("정수만 입력")
+      .nonnegative("0 이상의 정수"),
     recruitStartDate: DateOnly,
     recruitEndDate: DateOnly,
     postingPeriodDays: z
-      .number()
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
       .int("정수만 입력")
       .min(1, "1 이상의 일수여야 합니다")
-      .max(365),
+      .max(365, "365 이하의 일수여야 합니다"),
     recruits: CampaignRecruitInputArray,
     // HTML 본문 (tiptap) 을 저장하므로 길이 제한을 크게 둠.
     productSummary: z.string().max(50000),

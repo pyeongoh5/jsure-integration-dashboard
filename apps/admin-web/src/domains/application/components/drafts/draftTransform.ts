@@ -15,6 +15,24 @@ function deriveStatus(
   return insightSubmitted ? "INSIGHT_SUBMITTED" : "AWAITING_INSIGHT";
 }
 
+const REVIEW_URL_CHANNELS = ["LIPS", "ATCOSME"] as const;
+
+function extractReviewUrls(
+  submissionData: Record<string, unknown> | null,
+): Partial<Record<"LIPS" | "ATCOSME", string>> {
+  const result: Partial<Record<"LIPS" | "ATCOSME", string>> = {};
+  if (!submissionData) return result;
+  const raw = submissionData.reviewUrls;
+  if (!raw || typeof raw !== "object") return result;
+  for (const channel of REVIEW_URL_CHANNELS) {
+    const value = (raw as Record<string, unknown>)[channel];
+    if (typeof value === "string" && value.length > 0) {
+      result[channel] = value;
+    }
+  }
+  return result;
+}
+
 const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
 
 function formatRelative(iso: string, now: Date): string {
@@ -57,6 +75,7 @@ export function toDraftReview(
     media: SNS_TO_MEDIA[post.subType],
     instagramPostType: post.instagramPostType,
     url: post.url,
+    reviewUrls: extractReviewUrls(post.submissionData),
     submittedAt: formatRelative(post.submittedAt, now),
     insightSubmitted,
     insight: {

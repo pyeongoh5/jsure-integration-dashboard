@@ -152,6 +152,15 @@
   text-decoration: underline;
 }
 
+.reviewChannelLabel {
+  display: inline-block;
+  min-width: 64px;
+  margin-right: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
 .lightbox {
   position: fixed;
   inset: 0;

@@ -14,8 +14,6 @@ import shared from "../application.module.css";
 
 const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
   QOO10: shared.mediaPillQoo10 ?? "",
-  LIPS: shared.mediaPillLips ?? "",
-  ATCOSME: shared.mediaPillAtcosme ?? "",
 };
 
 type ActionHandlers = {

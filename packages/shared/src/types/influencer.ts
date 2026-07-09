@@ -4,7 +4,7 @@ import { normalizeSnsHandle } from "../utils/snsHandle.js";
 /**
  * 캠페인 서브타입.
  * - SNS 캠페인: INSTAGRAM / TIKTOK / X / YOUTUBE
- * - 가구매 캠페인: QOO10 / LIPS / ATCOSME
+ * - 가구매 캠페인: QOO10
  * 인플루언서의 SNS 계정 프로필에는 SNS 계열만 사용된다(`SnsAccountSubType` 참고).
  */
 export const CampaignSubTypeSchema = z.enum([
@@ -13,8 +13,6 @@ export const CampaignSubTypeSchema = z.enum([
   "X",
   "YOUTUBE",
   "QOO10",
-  "LIPS",
-  "ATCOSME",
 ]);
 export type CampaignSubType = z.infer<typeof CampaignSubTypeSchema>;
 

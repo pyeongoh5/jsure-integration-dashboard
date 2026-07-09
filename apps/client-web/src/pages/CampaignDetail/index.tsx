@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import {
   SUB_TYPE_LABEL,
+  QOO10_REVIEW_CHANNEL_LABEL,
   type InstagramPostType,
   type CampaignSubType,
   type CampaignRecruit,
@@ -17,8 +18,6 @@ const SNS_ROW_CLASS: Record<CampaignSubType, string | undefined> = {
   X: styles.snsRowX,
   YOUTUBE: styles.snsRowYoutube,
   QOO10: undefined,
-  LIPS: undefined,
-  ATCOSME: undefined,
 };
 
 const SNS_ICON: Record<CampaignSubType, string> = {
@@ -27,20 +26,24 @@ const SNS_ICON: Record<CampaignSubType, string> = {
   YOUTUBE: "fa-brands fa-youtube",
   X: "fa-brands fa-x-twitter",
   QOO10: "fa-solid fa-bag-shopping",
-  LIPS: "fa-solid fa-bag-shopping",
-  ATCOSME: "fa-solid fa-bag-shopping",
 };
 
 const SNS_LABEL = SUB_TYPE_LABEL;
 
-const FAKE_PURCHASE_SUB_TYPES: readonly CampaignSubType[] = [
-  "QOO10",
-  "LIPS",
-  "ATCOSME",
-];
+const FAKE_PURCHASE_SUB_TYPES: readonly CampaignSubType[] = ["QOO10"];
 
 function isFakePurchaseSubType(subType: CampaignSubType): boolean {
   return FAKE_PURCHASE_SUB_TYPES.includes(subType);
+}
+
+function formatReviewChannels(options: readonly string[]): string {
+  const labels: string[] = [];
+  for (const option of options) {
+    if (option === "LIPS" || option === "ATCOSME") {
+      labels.push(QOO10_REVIEW_CHANNEL_LABEL[option]);
+    }
+  }
+  return labels.join(" · ");
 }
 
 function formatJpy(value: number): string {
@@ -102,6 +105,7 @@ export function CampaignDetail() {
             if (isFakePurchaseSubType(r.subType)) {
               const productPrice = r.productPriceJpy ?? 0;
               const expectedSettlement = data.rewardJpy + productPrice;
+              const reviewChannels = formatReviewChannels(r.subTypeOptions);
               return (
                 <li
                   key={r.subType}
@@ -133,13 +137,24 @@ export function CampaignDetail() {
                     {t("campaign.detail.expectedSettlement")}:{" "}
                     {formatJpy(expectedSettlement)}
                   </span>
+                  {reviewChannels && (
+                    <span className={styles.snsCond}>
+                      {t("campaign.detail.reviewChannels")}: Qoo10 · {reviewChannels}
+                    </span>
+                  )}
                 </li>
               );
             }
+            const instagramOptions = r.subType === "INSTAGRAM"
+              ? r.subTypeOptions.filter(
+                  (option): option is InstagramPostType =>
+                    option === "FEED" || option === "REELS",
+                )
+              : [];
             const instagramTypes =
-              r.subType === "INSTAGRAM" && r.instagramPostTypes.length > 0
-                ? r.instagramPostTypes
-                    .map((postType: InstagramPostType) => INSTAGRAM_POST_TYPE_LABEL[postType])
+              instagramOptions.length > 0
+                ? instagramOptions
+                    .map((postType) => INSTAGRAM_POST_TYPE_LABEL[postType])
                     .join("・")
                 : null;
             return (

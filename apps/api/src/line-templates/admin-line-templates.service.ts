@@ -5,7 +5,6 @@ import type {
   LineMessageTemplateListResponse,
   LineMessageTemplateResponse,
   LineTriggerKey,
-  LineTriggerSubType,
   UpdateLineMessageTemplateRequest,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
@@ -20,13 +19,10 @@ export class AdminLineTemplatesService {
     private readonly line: LineMessagingService,
   ) {}
 
-  async list(
-    category: CampaignCategory,
-    subType: LineTriggerSubType | null,
-  ): Promise<LineMessageTemplateListResponse> {
+  async list(category: CampaignCategory): Promise<LineMessageTemplateListResponse> {
     const triggerKeys = listTriggersForCategory(category);
     const rows = await this.prisma.lineMessageTemplate.findMany({
-      where: { category, subType },
+      where: { category },
       select: {
         triggerKey: true,
         enabled: true,
@@ -34,14 +30,13 @@ export class AdminLineTemplatesService {
         updatedBy: { select: { name: true } },
       },
     });
-    const byKey = new Map(rows.map((r) => [r.triggerKey, r]));
+    const byKey = new Map(rows.map((row) => [row.triggerKey, row]));
     return {
       category,
-      subType,
-      items: triggerKeys.map((k) => {
-        const row = byKey.get(k);
+      items: triggerKeys.map((triggerKey) => {
+        const row = byKey.get(triggerKey);
         return {
-          triggerKey: k,
+          triggerKey,
           enabled: row?.enabled ?? false,
           updatedAt: row?.updatedAt?.toISOString() ?? null,
           updatedByName: row?.updatedBy?.name ?? null,
@@ -52,21 +47,19 @@ export class AdminLineTemplatesService {
 
   async detail(
     category: CampaignCategory,
-    subType: LineTriggerSubType | null,
     triggerKey: LineTriggerKey,
   ): Promise<LineMessageTemplateDetailResponse> {
     const meta = getMeta(triggerKey);
     if (meta.category !== category) {
       throw new BadRequestException("Trigger does not belong to the given category");
     }
-    const row = await this.prisma.lineMessageTemplate.findFirst({
-      where: { category, subType, triggerKey },
+    const row = await this.prisma.lineMessageTemplate.findUnique({
+      where: { category_triggerKey: { category, triggerKey } },
       include: { updatedBy: { select: { name: true } } },
     });
     const template: LineMessageTemplateResponse = row
       ? {
           category: row.category,
-          subType: row.subType,
           triggerKey: row.triggerKey,
           enabled: row.enabled,
           body: row.body,
@@ -76,7 +69,6 @@ export class AdminLineTemplatesService {
         }
       : {
           category,
-          subType,
           triggerKey,
           enabled: false,
           body: "",
@@ -92,7 +84,6 @@ export class AdminLineTemplatesService {
 
   async update(
     category: CampaignCategory,
-    subType: LineTriggerSubType | null,
     triggerKey: LineTriggerKey,
     updatedById: string,
     input: UpdateLineMessageTemplateRequest,
@@ -107,33 +98,23 @@ export class AdminLineTemplatesService {
         `Unknown variables in body: ${validation.unknown.map((k) => `{{${k}}}`).join(", ")}`,
       );
     }
-    const existing = await this.prisma.lineMessageTemplate.findFirst({
-      where: { category, subType, triggerKey },
-      select: { id: true },
+    const row = await this.prisma.lineMessageTemplate.upsert({
+      where: { category_triggerKey: { category, triggerKey } },
+      create: {
+        category,
+        triggerKey,
+        enabled: false,
+        body: input.body,
+        updatedById,
+      },
+      update: {
+        body: input.body,
+        updatedById,
+      },
+      include: { updatedBy: { select: { name: true } } },
     });
-    const row = existing
-      ? await this.prisma.lineMessageTemplate.update({
-          where: { id: existing.id },
-          data: {
-            body: input.body,
-            updatedById,
-          },
-          include: { updatedBy: { select: { name: true } } },
-        })
-      : await this.prisma.lineMessageTemplate.create({
-          data: {
-            category,
-            subType,
-            triggerKey,
-            enabled: false,
-            body: input.body,
-            updatedById,
-          },
-          include: { updatedBy: { select: { name: true } } },
-        });
     return {
       category: row.category,
-      subType: row.subType,
       triggerKey: row.triggerKey,
       enabled: row.enabled,
       body: row.body,
@@ -145,7 +126,6 @@ export class AdminLineTemplatesService {
 
   async setEnabled(
     category: CampaignCategory,
-    subType: LineTriggerSubType | null,
     triggerKey: LineTriggerKey,
     updatedById: string,
     enabled: boolean,
@@ -154,9 +134,9 @@ export class AdminLineTemplatesService {
     if (meta.category !== category) {
       throw new BadRequestException("Trigger does not belong to the given category");
     }
-    const existing = await this.prisma.lineMessageTemplate.findFirst({
-      where: { category, subType, triggerKey },
-      select: { id: true, body: true },
+    const existing = await this.prisma.lineMessageTemplate.findUnique({
+      where: { category_triggerKey: { category, triggerKey } },
+      select: { id: true },
     });
     if (!existing) {
       throw new NotFoundException("Template not found");
@@ -168,7 +148,6 @@ export class AdminLineTemplatesService {
     });
     return {
       category: row.category,
-      subType: row.subType,
       triggerKey: row.triggerKey,
       enabled: row.enabled,
       body: row.body,

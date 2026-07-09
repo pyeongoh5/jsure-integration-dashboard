@@ -9,7 +9,6 @@ import type {
   CampaignCategory,
   CampaignResponse,
   CreateCampaignRequest,
-  InstagramPostType,
   CampaignRecruit,
   UpdateCampaignRequest,
 } from "@jsure/shared";
@@ -30,7 +29,10 @@ export function utcToJstDateStr(d: Date): string {
 }
 
 const SNS_SUB_TYPES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
-const FAKE_PURCHASE_SUB_TYPES = ["QOO10", "LIPS", "ATCOSME"] as const;
+const FAKE_PURCHASE_SUB_TYPES = ["QOO10"] as const;
+
+const INSTAGRAM_POST_TYPES = ["FEED", "REELS"] as const;
+const QOO10_REVIEW_CHANNELS = ["LIPS", "ATCOSME"] as const;
 
 export function validateRecruitsForCategory(
   category: CampaignCategory,
@@ -40,10 +42,18 @@ export function validateRecruitsForCategory(
     insightRequired?: boolean;
     productPriceJpy: number | null;
     productUrl: string | null;
-    instagramPostTypes?: string[];
+    subTypeOptions?: string[];
   }[],
 ): void {
+  if (category === "FAKE_PURCHASE") {
+    if (recruits.length !== 1) {
+      throw new BadRequestException(
+        "買取レビューキャンペーンでは QOO10 募集を 1 件のみ登録してください",
+      );
+    }
+  }
   for (const recruit of recruits) {
+    const rawOptions = recruit.subTypeOptions ?? [];
     if (category === "SNS") {
       if (
         !SNS_SUB_TYPES.includes(
@@ -57,6 +67,28 @@ export function validateRecruitsForCategory(
       if (recruit.productPriceJpy !== null || recruit.productUrl !== null) {
         throw new BadRequestException(
           "SNSキャンペーンでは productPriceJpy/productUrl を指定できません",
+        );
+      }
+      if (recruit.subType === "INSTAGRAM") {
+        if (rawOptions.length === 0) {
+          throw new BadRequestException(
+            "INSTAGRAM 募集では投稿タイプ(FEED/REELS) を 1 つ以上指定してください",
+          );
+        }
+        for (const option of rawOptions) {
+          if (
+            !INSTAGRAM_POST_TYPES.includes(
+              option as (typeof INSTAGRAM_POST_TYPES)[number],
+            )
+          ) {
+            throw new BadRequestException(
+              `INSTAGRAM の subTypeOptions に不正な値: ${option}`,
+            );
+          }
+        }
+      } else if (rawOptions.length !== 0) {
+        throw new BadRequestException(
+          `${recruit.subType} 募集では subTypeOptions を指定できません`,
         );
       }
     } else {
@@ -77,6 +109,9 @@ export function validateRecruitsForCategory(
       if (!recruit.productUrl || recruit.productUrl.trim().length === 0) {
         throw new BadRequestException("productUrl を入力してください");
       }
+      if (!/^https:\/\//i.test(recruit.productUrl)) {
+        throw new BadRequestException("productUrl は https:// で始まる必要があります");
+      }
       if ((recruit.minFollowers ?? 0) !== 0) {
         throw new BadRequestException(
           "買取レビューキャンペーンの minFollowers は 0 にしてください",
@@ -87,10 +122,16 @@ export function validateRecruitsForCategory(
           "買取レビューキャンペーンでは insightRequired=false のみサポートします",
         );
       }
-      if (recruit.instagramPostTypes && recruit.instagramPostTypes.length > 0) {
-        throw new BadRequestException(
-          "買取レビューキャンペーンでは instagramPostTypes を指定できません",
-        );
+      for (const option of rawOptions) {
+        if (
+          !QOO10_REVIEW_CHANNELS.includes(
+            option as (typeof QOO10_REVIEW_CHANNELS)[number],
+          )
+        ) {
+          throw new BadRequestException(
+            `QOO10 の subTypeOptions に不正な値: ${option}`,
+          );
+        }
       }
     }
   }
@@ -100,7 +141,7 @@ type CampaignRecruitRow = {
   subType: string;
   minFollowers: number;
   recruitCount: number;
-  instagramPostTypes: InstagramPostType[];
+  subTypeOptions: string[];
   insightRequired: boolean;
   productPriceJpy: number | null;
   productUrl: string | null;
@@ -151,8 +192,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
       subType: recruit.subType as CampaignRecruit["subType"],
       minFollowers: recruit.minFollowers,
       recruitCount: recruit.recruitCount,
-      instagramPostTypes:
-        recruit.subType === "INSTAGRAM" ? recruit.instagramPostTypes : [],
+      subTypeOptions: recruit.subTypeOptions,
       insightRequired: recruit.insightRequired,
       productPriceJpy: recruit.productPriceJpy,
       productUrl: recruit.productUrl,
@@ -183,7 +223,7 @@ const RECRUITS_INCLUDE = {
       subType: true,
       minFollowers: true,
       recruitCount: true,
-      instagramPostTypes: true,
+      subTypeOptions: true,
       insightRequired: true,
       productPriceJpy: true,
       productUrl: true,
@@ -304,9 +344,10 @@ export class CampaignsService {
   }
 
   /**
-   * 모집 SNS 입력을 DB 저장 형식으로 정규화한다.
-   * - INSTAGRAM 모집은 instagramPostTypes 가 1개 이상이어야 한다. 부족하면 BadRequest.
-   * - INSTAGRAM 이 아니면 instagramPostTypes 는 무조건 빈 배열로.
+   * 모집 입력을 DB 저장 형식으로 정규화한다.
+   * - INSTAGRAM 모집은 subTypeOptions(FEED/REELS) 가 1개 이상이어야 한다.
+   * - 그 외 SNS 서브타입은 subTypeOptions 를 빈 배열로 강제.
+   * - QOO10 은 리뷰 채널(LIPS/ATCOSME) 을 0-2개 허용.
    */
   private normalizeCampaignRecruitsInput(
     recruits: CreateCampaignRequest["recruits"],
@@ -314,7 +355,7 @@ export class CampaignsService {
     subType: CampaignRecruit["subType"];
     minFollowers: number;
     recruitCount: number;
-    instagramPostTypes: InstagramPostType[];
+    subTypeOptions: string[];
     insightRequired: boolean;
     productPriceJpy: number | null;
     productUrl: string | null;
@@ -323,8 +364,8 @@ export class CampaignsService {
       const insightRequired = recruit.insightRequired ?? true;
       const productPriceJpy = recruit.productPriceJpy ?? null;
       const productUrl = recruit.productUrl ?? null;
+      const unique = Array.from(new Set(recruit.subTypeOptions ?? []));
       if (recruit.subType === "INSTAGRAM") {
-        const unique = Array.from(new Set(recruit.instagramPostTypes ?? []));
         if (unique.length === 0) {
           throw new BadRequestException(
             "Instagram 모집은 FEED/REELS 중 1개 이상을 선택해야 합니다",
@@ -334,7 +375,18 @@ export class CampaignsService {
           subType: recruit.subType,
           minFollowers: recruit.minFollowers,
           recruitCount: recruit.recruitCount,
-          instagramPostTypes: unique,
+          subTypeOptions: unique,
+          insightRequired,
+          productPriceJpy,
+          productUrl,
+        };
+      }
+      if (recruit.subType === "QOO10") {
+        return {
+          subType: recruit.subType,
+          minFollowers: recruit.minFollowers,
+          recruitCount: recruit.recruitCount,
+          subTypeOptions: unique,
           insightRequired,
           productPriceJpy,
           productUrl,
@@ -344,7 +396,7 @@ export class CampaignsService {
         subType: recruit.subType,
         minFollowers: recruit.minFollowers,
         recruitCount: recruit.recruitCount,
-        instagramPostTypes: [] as InstagramPostType[],
+        subTypeOptions: [],
         insightRequired,
         productPriceJpy,
         productUrl,

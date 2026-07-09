@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type {
+  AttachmentUploadInput,
   CampaignCategory,
   CampaignSubType,
   InfluencerApplication,
@@ -27,12 +28,12 @@ import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
 const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
 
 const SNS_SUB_TYPES: CampaignSubType[] = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"];
-const FAKE_PURCHASE_SUB_TYPES: CampaignSubType[] = ["QOO10", "LIPS", "ATCOSME"];
 
 type PostRow = {
   id: string;
   subType: CampaignSubType;
-  url: string;
+  url: string | null;
+  submissionData: unknown;
   submittedAt: Date;
   insightLikes: number | null;
   insightComments: number | null;
@@ -88,6 +89,12 @@ function toPost(row: PostRow): SubmittedPost {
     id: row.id,
     subType: row.subType,
     url: row.url,
+    submissionData:
+      row.submissionData &&
+      typeof row.submissionData === "object" &&
+      !Array.isArray(row.submissionData)
+        ? (row.submissionData as Record<string, unknown>)
+        : null,
     submittedAt: row.submittedAt.toISOString(),
     insightLikes: row.insightLikes,
     insightComments: row.insightComments,
@@ -249,9 +256,10 @@ export class InfluencerApplicationsService {
   async create(
     influencerId: string,
     campaignId: string,
-    subTypes: CampaignSubType[],
+    subTypesInput: CampaignSubType[],
     instagramPostType: InstagramPostType | null,
   ): Promise<InfluencerApplication> {
+    let subTypes = subTypesInput;
     const now = new Date();
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
@@ -261,7 +269,7 @@ export class InfluencerApplicationsService {
             subType: true,
             minFollowers: true,
             recruitCount: true,
-            instagramPostTypes: true,
+            subTypeOptions: true,
           },
         },
         exclusionsAsExcluding: { select: { excludedCampaignId: true } },
@@ -286,16 +294,18 @@ export class InfluencerApplicationsService {
       });
     }
 
-    const allowedSubTypes =
-      campaign.category === "SNS" ? SNS_SUB_TYPES : FAKE_PURCHASE_SUB_TYPES;
-    const invalidSubTypes = subTypes.filter(
-      (subType) => !allowedSubTypes.includes(subType),
-    );
-    if (invalidSubTypes.length > 0) {
-      throw new BadRequestException({
-        code: "SUBTYPE_CATEGORY_MISMATCH",
-        message: "選択したSNSはこのキャンペーンで募集していません",
-      });
+    if (campaign.category === "FAKE_PURCHASE") {
+      subTypes = ["QOO10"];
+    } else {
+      const invalidSubTypes = subTypes.filter(
+        (subType) => !SNS_SUB_TYPES.includes(subType),
+      );
+      if (invalidSubTypes.length > 0) {
+        throw new BadRequestException({
+          code: "SUBTYPE_CATEGORY_MISMATCH",
+          message: "選択したSNSはこのキャンペーンで募集していません",
+        });
+      }
     }
 
     // 제외 캠페인에 "같은 SNS"로 응모한 이력이 있으면 그 SNS 응모만 차단 (CANCELLED 제외)
@@ -356,7 +366,7 @@ export class InfluencerApplicationsService {
       }
     }
 
-    // INSTAGRAM 응모는 캠페인이 허용한 instagramPostTypes 중 정확히 1개를 선택해야 한다.
+    // INSTAGRAM 응모는 캠페인이 허용한 subTypeOptions(FEED/REELS) 중 정확히 1개를 선택해야 한다.
     const instagramRecruit = campaign.recruits.find(
       (recruit) => recruit.subType === "INSTAGRAM",
     );
@@ -370,7 +380,7 @@ export class InfluencerApplicationsService {
       }
       if (
         !instagramRecruit ||
-        !instagramRecruit.instagramPostTypes.includes(instagramPostType)
+        !instagramRecruit.subTypeOptions.includes(instagramPostType)
       ) {
         throw new BadRequestException({
           code: "INSTAGRAM_POST_TYPE_NOT_ALLOWED",
@@ -701,17 +711,20 @@ export class InfluencerApplicationsService {
   async submitReview(
     influencerId: string,
     applicationId: string,
-    reviewUrl: string,
-    screenshots: {
-      objectKey: string;
-      contentType: "image/png" | "image/jpeg" | "image/webp";
-      sizeBytes: number;
-    }[],
+    screenshots: AttachmentUploadInput[],
+    reviewUrls: Partial<Record<"LIPS" | "ATCOSME", string>>,
   ): Promise<InfluencerApplication> {
     const application = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
       include: {
-        campaign: { select: { category: true } },
+        campaign: {
+          select: {
+            category: true,
+            recruits: {
+              select: { subType: true, subTypeOptions: true },
+            },
+          },
+        },
         posts: {
           select: { id: true, reviewStatus: true },
         },
@@ -741,13 +754,38 @@ export class InfluencerApplicationsService {
       });
     }
 
-    const trimmedUrl = reviewUrl.trim();
-    if (trimmedUrl.length === 0) {
-      throw new BadRequestException({
-        code: "REVIEW_URL_REQUIRED",
-        message: "レビューURLを入力してください",
-      });
+    const qooRecruit = application.campaign.recruits.find(
+      (recruit) => recruit.subType === "QOO10",
+    );
+    const requiredChannels = (qooRecruit?.subTypeOptions ?? []).filter(
+      (option): option is "LIPS" | "ATCOSME" =>
+        option === "LIPS" || option === "ATCOSME",
+    );
+    const requiredChannelSet = new Set<"LIPS" | "ATCOSME">(requiredChannels);
+
+    const normalizedReviewUrls: Partial<Record<"LIPS" | "ATCOSME", string>> = {};
+    for (const channel of ["LIPS", "ATCOSME"] as const) {
+      const rawValue = reviewUrls[channel];
+      if (rawValue === undefined) continue;
+      const trimmed = rawValue.trim();
+      if (trimmed.length === 0) continue;
+      if (!requiredChannelSet.has(channel)) {
+        throw new BadRequestException({
+          code: "REVIEW_URL_NOT_REQUESTED",
+          message: "このキャンペーンで求められていないレビューURLが含まれています",
+        });
+      }
+      normalizedReviewUrls[channel] = trimmed;
     }
+    for (const channel of requiredChannels) {
+      if (!normalizedReviewUrls[channel]) {
+        throw new BadRequestException({
+          code: "REVIEW_URL_REQUIRED",
+          message: "レビューURLを入力してください",
+        });
+      }
+    }
+
     if (screenshots.length < 2) {
       throw new BadRequestException({
         code: "REVIEW_SCREENSHOTS_REQUIRED",
@@ -759,6 +797,7 @@ export class InfluencerApplicationsService {
 
     const now = new Date();
     const subType = application.subType;
+    const submissionData = { reviewUrls: normalizedReviewUrls };
 
     const postId = await this.prisma.$transaction(async (tx) => {
       let currentPostId: string;
@@ -766,7 +805,8 @@ export class InfluencerApplicationsService {
         await tx.submittedPost.update({
           where: { id: existingPost.id },
           data: {
-            url: trimmedUrl,
+            url: null,
+            submissionData,
             submittedAt: now,
             reviewStatus: "PENDING",
             reviewedAt: null,
@@ -782,7 +822,8 @@ export class InfluencerApplicationsService {
           data: {
             applicationId,
             subType,
-            url: trimmedUrl,
+            url: null,
+            submissionData,
             submittedAt: now,
             reviewStatus: "PENDING",
           },

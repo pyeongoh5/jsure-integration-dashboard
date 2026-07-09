@@ -9,7 +9,6 @@ import {
   type CampaignCategory,
   type LineMessageTemplateDetailResponse,
   type LineTriggerKey,
-  type LineTriggerSubType,
 } from "@/domains/messageTemplate";
 import { Button, Dialog, Textarea } from "@/components/ui";
 import styles from "./MessageTemplates.module.css";
@@ -34,12 +33,10 @@ function findUnknownVariables(body: string, allowed: string[]): string[] {
 export function MessageTemplateEdit(): JSX.Element {
   const params = useParams<{
     category: CampaignCategory;
-    subType: LineTriggerSubType | "none";
     triggerKey: LineTriggerKey;
   }>();
   const navigate = useNavigate();
   const category = params.category!;
-  const subType = params.subType === "none" ? null : (params.subType as LineTriggerSubType);
   const triggerKey = params.triggerKey!;
 
   const [detail, setDetail] = useState<LineMessageTemplateDetailResponse | null>(null);
@@ -50,11 +47,11 @@ export function MessageTemplateEdit(): JSX.Element {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    getTemplate(category, subType, triggerKey).then((res) => {
+    getTemplate(category, triggerKey).then((res) => {
       setDetail(res);
       setBody(res.template.body);
     });
-  }, [category, subType, triggerKey]);
+  }, [category, triggerKey]);
 
   if (!detail) {
     return (
@@ -94,7 +91,7 @@ export function MessageTemplateEdit(): JSX.Element {
     setSaving(true);
     setError(null);
     try {
-      await updateTemplate(category, subType, triggerKey, { body });
+      await updateTemplate(category, triggerKey, { body });
       navigate("/message-templates");
     } catch (err) {
       setError(err instanceof Error ? err.message : "저장 실패");
@@ -106,7 +103,7 @@ export function MessageTemplateEdit(): JSX.Element {
   const doPreview = async (): Promise<void> => {
     if (validationError) return;
     try {
-      const res = await previewTemplate(category, subType, triggerKey, body);
+      const res = await previewTemplate(category, triggerKey, body);
       setPreview(res.renderedBody);
     } catch (err) {
       setError(err instanceof Error ? err.message : "미리보기 실패");
@@ -125,7 +122,6 @@ export function MessageTemplateEdit(): JSX.Element {
 
       <div className={styles.editHeader}>
         <div className={styles.editTitle}>{TRIGGER_LABELS[triggerKey]}</div>
-        {subType && <span className={styles.editSubBadge}>{subType}</span>}
       </div>
 
       <div className={styles.editBody}>

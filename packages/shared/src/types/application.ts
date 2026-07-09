@@ -48,7 +48,8 @@ export type PostReviewStatus = z.infer<typeof PostReviewStatusSchema>;
 export const SubmittedPostSchema = z.object({
   id: z.string(),
   subType: CampaignSubTypeSchema,
-  url: z.string().url(),
+  url: z.string().url().nullable(),
+  submissionData: z.record(z.unknown()).nullable().default(null),
   submittedAt: z.string().datetime(),
   insightLikes: z.number().int().nullable(),
   insightComments: z.number().int().nullable(),
@@ -107,11 +108,16 @@ export const SubmitOrderRequestSchema = z.object({
 export type SubmitOrderRequest = z.infer<typeof SubmitOrderRequestSchema>;
 
 export const SubmitReviewRequestSchema = z.object({
-  reviewUrl: z.string().url("有効なURLを入力してください"),
   screenshots: z
     .array(AttachmentUploadInputSchema)
     .min(2, "レビューのスクリーンショットを2枚以上ご提出ください")
     .max(10),
+  reviewUrls: z
+    .record(
+      z.enum(["LIPS", "ATCOSME"]),
+      z.string().url().startsWith("https://"),
+    )
+    .default({}),
 });
 export type SubmitReviewRequest = z.infer<typeof SubmitReviewRequestSchema>;
 

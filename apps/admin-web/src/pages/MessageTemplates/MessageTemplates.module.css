@@ -60,20 +60,6 @@
   opacity: 0.5;
 }
 
-.subTypeRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  font-size: var(--font-size-md);
-  color: var(--color-text-muted);
-}
-
-.subTypeGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
 .card {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
@@ -181,16 +167,6 @@
   font-size: var(--font-size-md);
   color: var(--color-text-muted);
   line-height: 1.6;
-}
-
-.editSubBadge {
-  display: inline-flex;
-  padding: 2px 10px;
-  border-radius: var(--radius-full);
-  background: var(--color-bg-muted);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
 }
 
 .editBody {

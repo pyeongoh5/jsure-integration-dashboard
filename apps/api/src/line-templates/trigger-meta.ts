@@ -36,7 +36,6 @@ export type TriggerVariableWithResolver = TriggerVariable & {
 
 export type TriggerMetaEntry = {
   category: CampaignCategory;
-  requiresSubType: boolean;
   variables: TriggerVariableWithResolver[];
 };
 
@@ -331,27 +330,22 @@ function withBase(...extra: TriggerVariableWithResolver[]): TriggerVariableWithR
 export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   SNS_APPLICATION_APPLIED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(),
   },
   SNS_APPLICATION_APPROVED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(),
   },
   SNS_APPLICATION_REJECTED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(),
   },
   SNS_APPLICATION_SHIPPED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(trackingCarrier, trackingNumber, applicationShippedDate),
   },
   SNS_APPLICATION_DELIVERED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(
       trackingCarrier,
       trackingNumber,
@@ -361,102 +355,82 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   },
   SNS_APPLICATION_RECEIPT_CONFIRMED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(applicationDeliveredDate, applicationReceivedDate, postingDeadline),
   },
   SNS_POST_SUBMITTED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(applicationReceivedDate, postingDeadline),
   },
   SNS_POST_DEADLINE_REMINDER: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(remainingDays, postingDeadline),
   },
   SNS_POST_APPROVED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(),
   },
   SNS_POST_REJECTED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(rejectReason, resubmitDeadline),
   },
   SNS_POST_REJECTION_REMINDER: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(rejectReason, finalDeadline),
   },
   SNS_INSIGHT_SUBMITTED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(),
   },
   SNS_INSIGHT_REMINDER: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(),
   },
   SNS_SETTLEMENT_COMPLETED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(rewardJpy),
   },
   SNS_CAMPAIGN_COMPLETED: {
     category: "SNS",
-    requiresSubType: true,
     variables: withBase(),
   },
   FAKE_PURCHASE_APPLICATION_APPLIED: {
     category: "FAKE_PURCHASE",
-    requiresSubType: true,
     variables: withBase(subType, productPriceJpy, productUrl, totalSettlementJpy),
   },
   FAKE_PURCHASE_APPLICATION_APPROVED: {
     category: "FAKE_PURCHASE",
-    requiresSubType: true,
     variables: withBase(subType, productPriceJpy, productUrl, totalSettlementJpy),
   },
   FAKE_PURCHASE_APPLICATION_REJECTED: {
     category: "FAKE_PURCHASE",
-    requiresSubType: true,
     variables: withBase(rejectReason),
   },
   FAKE_PURCHASE_ORDER_SUBMITTED: {
     category: "FAKE_PURCHASE",
-    requiresSubType: true,
     variables: withBase(subType, orderNumber, orderSubmittedDate, reviewDeadline),
   },
   FAKE_PURCHASE_REVIEW_SUBMITTED: {
     category: "FAKE_PURCHASE",
-    requiresSubType: true,
     variables: withBase(subType, reviewUrl),
   },
   FAKE_PURCHASE_REVIEW_APPROVED: {
     category: "FAKE_PURCHASE",
-    requiresSubType: true,
     variables: withBase(subType, reviewUrl, totalSettlementJpy),
   },
   FAKE_PURCHASE_REVIEW_REJECTED: {
     category: "FAKE_PURCHASE",
-    requiresSubType: true,
     variables: withBase(subType, reviewUrl, rejectReason),
   },
   FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER: {
     category: "FAKE_PURCHASE",
-    requiresSubType: true,
     variables: withBase(subType, reviewDeadline, remainingDays),
   },
   FAKE_PURCHASE_SETTLEMENT_COMPLETED: {
     category: "FAKE_PURCHASE",
-    requiresSubType: true,
     variables: withBase(subType, totalSettlementJpy),
   },
   FAKE_PURCHASE_CAMPAIGN_COMPLETED: {
     category: "FAKE_PURCHASE",
-    requiresSubType: true,
     variables: withBase(),
   },
 };

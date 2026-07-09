@@ -6,9 +6,8 @@ import {
   TRIGGER_LABELS,
   type CampaignCategory,
   type LineMessageTemplateListItem,
-  type LineTriggerSubType,
 } from "@/domains/messageTemplate";
-import { Radio, Switch } from "@/components/ui";
+import { Switch } from "@/components/ui";
 import { ScrollTable } from "@/components/composites";
 import styles from "./MessageTemplates.module.css";
 
@@ -17,38 +16,19 @@ const CATEGORIES: { key: CampaignCategory; label: string }[] = [
   { key: "FAKE_PURCHASE", label: "가구매 캠페인" },
 ];
 
-const SNS_SUB_TYPES = ["INSTAGRAM", "X"] as const satisfies readonly LineTriggerSubType[];
-const FAKE_PURCHASE_SUB_TYPES = ["QOO10"] as const satisfies readonly LineTriggerSubType[];
-
-const SUB_TYPE_LABEL: Record<LineTriggerSubType, string> = {
-  INSTAGRAM: "Instagram",
-  X: "X",
-  QOO10: "Qoo10",
-};
-
-function subTypesFor(category: CampaignCategory): readonly LineTriggerSubType[] {
-  return category === "FAKE_PURCHASE" ? FAKE_PURCHASE_SUB_TYPES : SNS_SUB_TYPES;
-}
-
 export function MessageTemplates(): JSX.Element {
   const navigate = useNavigate();
   const [category, setCategory] = useState<CampaignCategory>("SNS");
-  const [subType, setSubType] = useState<LineTriggerSubType>("INSTAGRAM");
-
-  const handleCategoryChange = (next: CampaignCategory): void => {
-    setCategory(next);
-    setSubType(next === "FAKE_PURCHASE" ? "QOO10" : "INSTAGRAM");
-  };
   const [items, setItems] = useState<LineMessageTemplateListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    listTemplates(category, subType)
+    listTemplates(category)
       .then((res) => setItems(res.items))
       .finally(() => setLoading(false));
-  }, [category, subType]);
+  }, [category]);
 
   const handleToggle = async (
     item: LineMessageTemplateListItem,
@@ -60,7 +40,7 @@ export function MessageTemplates(): JSX.Element {
       prev.map((entry) => (entry.triggerKey === key ? { ...entry, enabled: next } : entry)),
     );
     try {
-      const updated = await setTemplateEnabled(category, subType, item.triggerKey, next);
+      const updated = await setTemplateEnabled(category, item.triggerKey, next);
       setItems((prev) =>
         prev.map((entry) =>
           entry.triggerKey === key
@@ -99,26 +79,11 @@ export function MessageTemplates(): JSX.Element {
               key={entry.key}
               type="button"
               className={`${styles.tab} ${category === entry.key ? styles.tabActive : ""}`}
-              onClick={() => handleCategoryChange(entry.key)}
+              onClick={() => setCategory(entry.key)}
             >
               {entry.label}
             </button>
           ))}
-        </div>
-
-        <div className={styles.subTypeRow}>
-          <span>{category === "FAKE_PURCHASE" ? "플랫폼" : "SNS 유형"}</span>
-          <div className={styles.subTypeGroup}>
-            {subTypesFor(category).map((option) => (
-              <Radio
-                key={option}
-                name="subType"
-                checked={subType === option}
-                onChange={() => setSubType(option)}
-                label={SUB_TYPE_LABEL[option]}
-              />
-            ))}
-          </div>
         </div>
       </div>
 
@@ -137,28 +102,28 @@ export function MessageTemplates(): JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {items.map((it) => (
+                {items.map((item) => (
                   <tr
-                    key={it.triggerKey}
+                    key={item.triggerKey}
                     onClick={() =>
-                      navigate(`/message-templates/${category}/${subType}/${it.triggerKey}`)
+                      navigate(`/message-templates/${category}/${item.triggerKey}`)
                     }
                   >
                     <td>
-                      <span className={styles.triggerCell}>{TRIGGER_LABELS[it.triggerKey]}</span>
+                      <span className={styles.triggerCell}>{TRIGGER_LABELS[item.triggerKey]}</span>
                     </td>
-                    <td onClick={(e) => e.stopPropagation()}>
+                    <td onClick={(event) => event.stopPropagation()}>
                       <Switch
-                        checked={it.enabled}
-                        onChange={(next) => void handleToggle(it, next)}
-                        disabled={pendingKey === it.triggerKey}
-                        ariaLabel={`${TRIGGER_LABELS[it.triggerKey]} 활성화 토글`}
+                        checked={item.enabled}
+                        onChange={(next) => void handleToggle(item, next)}
+                        disabled={pendingKey === item.triggerKey}
+                        ariaLabel={`${TRIGGER_LABELS[item.triggerKey]} 활성화 토글`}
                       />
                     </td>
                     <td className={styles.mutedCell}>
-                      {it.updatedAt ? new Date(it.updatedAt).toLocaleString("ja-JP") : "-"}
+                      {item.updatedAt ? new Date(item.updatedAt).toLocaleString("ja-JP") : "-"}
                     </td>
-                    <td className={styles.mutedCell}>{it.updatedByName ?? "-"}</td>
+                    <td className={styles.mutedCell}>{item.updatedByName ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>

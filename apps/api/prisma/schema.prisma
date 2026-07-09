@@ -501,19 +501,18 @@ enum LineDispatchStatus {
 }
 
 model LineMessageTemplate {
-  id          String              @id @default(cuid())
+  id          String           @id @default(cuid())
   category    CampaignCategory
-  subType     LineTriggerSubType?
   triggerKey  LineTriggerKey
-  enabled     Boolean             @default(false)
+  enabled     Boolean          @default(false)
   body        String
-  updatedAt   DateTime            @updatedAt
+  updatedAt   DateTime         @updatedAt
   updatedById String?
 
-  updatedBy    AdminUser?         @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedBy    AdminUser?        @relation(fields: [updatedById], references: [id], onDelete: SetNull)
   dispatchLogs LineDispatchLog[]
 
-  @@unique([category, subType, triggerKey])
+  @@unique([category, triggerKey])
   @@map("line_message_templates")
 }
 

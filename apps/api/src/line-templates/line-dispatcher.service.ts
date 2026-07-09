@@ -1,16 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
-import type { LineTriggerKey, LineTriggerSubType } from "@jsure/shared";
+import type { LineTriggerKey } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 import { getMeta, type DispatchContext } from "./trigger-meta";
 import { renderTemplate } from "./template-renderer";
-
-function campaignSubTypeToTriggerSubType(subType: string): LineTriggerSubType | null {
-  if (subType === "INSTAGRAM") return "INSTAGRAM";
-  if (subType === "X") return "X";
-  if (subType === "QOO10") return "QOO10";
-  return null;
-}
 
 @Injectable()
 export class LineDispatcherService {
@@ -23,9 +16,6 @@ export class LineDispatcherService {
 
   async dispatch(triggerKey: LineTriggerKey, context: DispatchContext): Promise<void> {
     const meta = getMeta(triggerKey);
-    const subType = meta.requiresSubType
-      ? campaignSubTypeToTriggerSubType(context.application.subType)
-      : null;
     const category = meta.category;
 
     let recruit = context.recruit ?? null;
@@ -44,14 +34,13 @@ export class LineDispatcherService {
     const toLineUserId = context.application.influencer.lineUserId ?? "";
     const applicationId = context.application.id;
 
-    const template = await this.prisma.lineMessageTemplate.findFirst({
-      where: { category, subType, triggerKey },
+    const template = await this.prisma.lineMessageTemplate.findUnique({
+      where: { category_triggerKey: { category, triggerKey } },
     });
 
     if (!template) {
       await this.logDispatch({
         category,
-        subType,
         triggerKey,
         templateId: null,
         applicationId,
@@ -65,7 +54,6 @@ export class LineDispatcherService {
     if (!template.enabled) {
       await this.logDispatch({
         category,
-        subType,
         triggerKey,
         templateId: template.id,
         applicationId,
@@ -81,7 +69,6 @@ export class LineDispatcherService {
     if (renderedBody.trim().length === 0) {
       await this.logDispatch({
         category,
-        subType,
         triggerKey,
         templateId: template.id,
         applicationId,
@@ -96,7 +83,6 @@ export class LineDispatcherService {
       await this.line.pushText(context.application.influencerId, renderedBody);
       await this.logDispatch({
         category,
-        subType,
         triggerKey,
         templateId: template.id,
         applicationId,
@@ -109,7 +95,6 @@ export class LineDispatcherService {
       this.logger.error(`Dispatch failed: ${triggerKey}`, err as Error);
       await this.logDispatch({
         category,
-        subType,
         triggerKey,
         templateId: template.id,
         applicationId,
@@ -123,7 +108,6 @@ export class LineDispatcherService {
 
   private async logDispatch(data: {
     category: "SNS" | "FAKE_PURCHASE";
-    subType: LineTriggerSubType | null;
     triggerKey: LineTriggerKey;
     templateId: string | null;
     applicationId: string | null;

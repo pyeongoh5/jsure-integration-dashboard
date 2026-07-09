@@ -739,10 +739,11 @@ export class AdminApplicationsService {
         campaignId,
         status: { in: ["APPROVED", "SHIPPED", "DELIVERED", "COMPLETED"] },
       },
-      orderBy: { appliedAt: "asc" },
+      orderBy: { appliedAt: "desc" },
       select: {
         id: true,
         subType: true,
+        appliedAt: true,
         influencer: {
           select: {
             id: true,
@@ -796,6 +797,7 @@ export class AdminApplicationsService {
           ]
             .filter((part) => part && part.length > 0)
             .join(" "),
+          appliedAt: row.appliedAt.toISOString(),
         };
       }),
     };

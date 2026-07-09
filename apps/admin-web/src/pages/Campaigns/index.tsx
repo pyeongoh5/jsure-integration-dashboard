@@ -15,12 +15,7 @@ import {
   campaignFormStyles,
 } from "@/domains/campaign";
 import type { Campaign, CampaignStatus } from "@/domains/campaign";
-import {
-  approvedApplicantsCsvFilename,
-  buildApprovedApplicantsCsv,
-  exportApprovedApplicants,
-  triggerCsvDownload,
-} from "@/domains/application";
+import { ApprovedApplicantsDialog } from "../Applicants/ApprovedApplicantsDialog";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import styles from "./Campaigns.module.css";
 
@@ -112,6 +107,7 @@ export function Campaigns() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [openMenu, setOpenMenu] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [approvedListCampaignId, setApprovedListCampaignId] = useState<string | null>(null);
   const [closeTargetId, setCloseTargetId] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
   const [closeError, setCloseError] = useState<string | null>(null);
@@ -253,22 +249,9 @@ export function Campaigns() {
                     setOpenMenu(null);
                     navigate(`/campaigns/${encodeURIComponent(c.id)}/edit`);
                   }}
-                  onExportApproved={async () => {
+                  onViewApproved={() => {
                     setOpenMenu(null);
-                    try {
-                      const response = await exportApprovedApplicants(c.id);
-                      const csv = buildApprovedApplicantsCsv(response);
-                      triggerCsvDownload(
-                        approvedApplicantsCsvFilename(response.campaignTitle),
-                        csv,
-                      );
-                    } catch (cause) {
-                      window.alert(
-                        cause instanceof Error
-                          ? cause.message
-                          : "승인자 명단 다운로드에 실패했습니다.",
-                      );
-                    }
+                    setApprovedListCampaignId(c.id);
                   }}
                   onClose={() => {
                     setOpenMenu(null);
@@ -281,6 +264,13 @@ export function Campaigns() {
             </div>
           ))}
         </div>
+      )}
+
+      {approvedListCampaignId && (
+        <ApprovedApplicantsDialog
+          campaignId={approvedListCampaignId}
+          onClose={() => setApprovedListCampaignId(null)}
+        />
       )}
 
       <ConfirmDialog

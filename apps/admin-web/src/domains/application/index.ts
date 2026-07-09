@@ -6,6 +6,7 @@ export {
   buildApprovedApplicantsCsv,
   approvedApplicantsCsvFilename,
   triggerCsvDownload,
+  formatAppliedAtJst,
 } from "./buildApprovedApplicantsCsv";
 
 // shared types (from @jsure/shared)

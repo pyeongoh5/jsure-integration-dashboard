@@ -13,6 +13,7 @@ const HEADERS = [
   "전화번호",
   "우편번호",
   "주소",
+  "캠페인 신청날짜",
 ] as const;
 
 const SNS_LABEL: Record<CampaignSubType, string> = {
@@ -41,7 +42,19 @@ function formatRow(row: ApprovedApplicantExportRow): string[] {
     row.phone,
     row.postalCode,
     row.address,
+    formatAppliedAtJst(row.appliedAt),
   ];
+}
+
+const JST_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+export function formatAppliedAtJst(iso: string): string {
+  return JST_DATE_FORMATTER.format(new Date(iso));
 }
 
 export function buildApprovedApplicantsCsv(

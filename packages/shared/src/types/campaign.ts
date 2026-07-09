@@ -54,12 +54,23 @@ export type CampaignRecruit = z.infer<typeof CampaignRecruitSchema>;
 const CampaignRecruitInputSchema = z
   .object({
     subType: CampaignSubTypeSchema,
-    minFollowers: z.number().int().nonnegative("0 이상의 정수"),
-    recruitCount: z.number().int().positive("1 이상"),
+    minFollowers: z
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
+      .int("정수만 입력")
+      .nonnegative("0 이상의 정수"),
+    recruitCount: z
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
+      .int("정수만 입력")
+      .positive("1 이상"),
     subTypeOptions: z.array(z.string()).default([]),
     insightRequired: z.boolean().default(true),
-    productPriceJpy: z.number().int().positive().nullable().default(null),
-    productUrl: z.string().url().nullable().default(null),
+    productPriceJpy: z
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
+      .int("정수만 입력")
+      .positive("1 이상")
+      .nullable()
+      .default(null),
+    productUrl: z.string().url("URL 형식이어야 합니다").nullable().default(null),
   })
   .superRefine((recruit, ctx) => {
     const unique = new Set(recruit.subTypeOptions);
@@ -200,14 +211,17 @@ export const CampaignFormSchema = z
   .object({
     category: CampaignCategorySchema.default("SNS"),
     title: z.string().min(1, "필수 입력").max(100),
-    rewardJpy: z.number().int("정수만 입력").nonnegative(),
+    rewardJpy: z
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
+      .int("정수만 입력")
+      .nonnegative("0 이상의 정수"),
     recruitStartDate: DateOnly,
     recruitEndDate: DateOnly,
     postingPeriodDays: z
-      .number()
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
       .int("정수만 입력")
       .min(1, "1 이상의 일수여야 합니다")
-      .max(365),
+      .max(365, "365 이하의 일수여야 합니다"),
     recruits: CampaignRecruitInputArray,
     // HTML 본문 (tiptap) 을 저장하므로 길이 제한을 크게 둠.
     productSummary: z.string().max(50000),

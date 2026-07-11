@@ -9,8 +9,9 @@ const STEPS = [
   t("application.stepper.step3"),
   t("application.stepper.step4"),
   t("application.stepper.step5"),
-  t("application.stepper.step6"),
-  t("application.stepper.step7"),
+  t("application.stepper.step6"), // new — "検査/검수" (기존 step7=완료 자리를 이동)
+  t("application.stepper.step7"), // new — "精算待ち/정산 대기"
+  t("application.stepper.step8"), // new — "キャンペーン終了/캠페인 종료"
 ];
 
 export function ApplicationStepper({

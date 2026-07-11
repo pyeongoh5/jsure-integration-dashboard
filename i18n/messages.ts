@@ -108,8 +108,8 @@ export const messages = {
       POST_REJECTED: { jp: "投稿を伴う", kr: "게시 반려" },
       INSIGHT_DUE: { jp: "インサイト提出", kr: "인사이트 제출" },
       REVIEWING: { jp: "検査中", kr: "검수 중" },
-      COMPLETED: { jp: "完了", kr: "완료" },
-      SETTLED: { jp: "支払完了", kr: "지급 완료" },
+      COMPLETED: { jp: "精算待ち", kr: "정산 대기" }, // new
+      SETTLED: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
       REJECTED: { jp: "未選定", kr: "미선정" },
       CANCELLED: { jp: "キャンセル", kr: "취소" },
     },
@@ -130,7 +130,8 @@ export const messages = {
       step4: { jp: "受取", kr: "수령" },
       step5: { jp: "投稿", kr: "게시" },
       step6: { jp: "検査", kr: "검수" },
-      step7: { jp: "完了", kr: "완료" },
+      step7: { jp: "精算待ち", kr: "정산 대기" }, // new
+      step8: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
       terminalRejected: { jp: "未選定", kr: "미선정" },
       terminalCancelled: { jp: "キャンセル", kr: "취소" },
     },

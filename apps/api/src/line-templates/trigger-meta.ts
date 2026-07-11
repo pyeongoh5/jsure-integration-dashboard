@@ -381,6 +381,10 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     category: "SNS",
     variables: withBase(),
   },
+  SNS_INSIGHT_APPROVED: {
+    category: "SNS",
+    variables: withBase(),
+  },
   SNS_INSIGHT_REMINDER: {
     category: "SNS",
     variables: withBase(),

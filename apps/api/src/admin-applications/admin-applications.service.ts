@@ -462,7 +462,9 @@ export class AdminApplicationsService {
       const approveTriggerKey =
         refreshed.application.campaign.category === "FAKE_PURCHASE"
           ? "FAKE_PURCHASE_REVIEW_APPROVED"
-          : "SNS_POST_APPROVED";
+          : refreshed.insightSubmittedAt !== null
+            ? "SNS_INSIGHT_APPROVED"
+            : "SNS_POST_APPROVED";
       void this.dispatcher.dispatch(approveTriggerKey, {
         application: refreshed.application,
         post: refreshed,

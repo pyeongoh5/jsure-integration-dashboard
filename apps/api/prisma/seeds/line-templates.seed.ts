@@ -16,6 +16,7 @@ type SeedRow = {
     | "SNS_POST_REJECTED"
     | "SNS_POST_REJECTION_REMINDER"
     | "SNS_INSIGHT_SUBMITTED"
+    | "SNS_INSIGHT_APPROVED"
     | "SNS_INSIGHT_REMINDER"
     | "SNS_SETTLEMENT_COMPLETED"
     | "SNS_CAMPAIGN_COMPLETED";
@@ -282,6 +283,7 @@ const SEED_ROWS: SeedRow[] = [
   { triggerKey: "SNS_POST_REJECTED", enabled: true, body: POST_REJECTED },
   { triggerKey: "SNS_POST_REJECTION_REMINDER", enabled: true, body: POST_REJECTION_REMINDER },
   { triggerKey: "SNS_INSIGHT_SUBMITTED", enabled: false, body: "" },
+  { triggerKey: "SNS_INSIGHT_APPROVED", enabled: false, body: "" },
   { triggerKey: "SNS_INSIGHT_REMINDER", enabled: true, body: INSIGHT_REMINDER },
   { triggerKey: "SNS_SETTLEMENT_COMPLETED", enabled: true, body: SETTLEMENT_COMPLETED },
   { triggerKey: "SNS_CAMPAIGN_COMPLETED", enabled: false, body: "" },

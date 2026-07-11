@@ -153,6 +153,13 @@ return HealthResponseSchema.parse(res.data);
 - 가드/전략: `<domain>/guards/<name>.guard.ts`, `<domain>/strategies/<name>.strategy.ts`.
 - 공통 파이프/필터: `src/common/<kebab-case>.<role>.ts` (예: `zod-validation.pipe.ts`).
 
+### `apps/client-web` (인플루언서 웹) 전용
+
+- **DO** 화면에 노출되는 문자열은 항상 `i18n/messages.ts` 에 키를 추가하고 `t("...")` 로 참조. 인라인 리터럴 하드코딩 금지 (jp/kr 대응 필요).
+- **DO** 이 앱을 수정하거나 신규 기능을 추가할 때, 새로 추가된/수정된 property 라인 끝에 `// new` 주석을 부착 (i18n 키 신설·객체 필드 추가·매핑 값 변경 등이 대상). 사용자가 diff 를 빠르게 스캔할 수 있도록.
+  - 이 규칙은 §0 의 "변경 이력 주석 금지"에 대한 **client-web 한정 예외**. 다른 앱에는 적용하지 않는다.
+  - 이후 별개 작업으로 파일을 다시 편집할 때 앞선 `// new` 는 정리(제거)해도 되고 유지해도 된다 — 사용자가 리뷰 후 요청한 대로 처리.
+
 ### `apps/admin-web`, `apps/client-web` (Vite + React)
 
 - `src/pages/<PascalCase>.tsx` — 라우트 단위 페이지.

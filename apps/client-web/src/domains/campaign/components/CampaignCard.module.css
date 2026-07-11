@@ -219,20 +219,27 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.ended {
+.ended,
+.upcoming {
   background: var(--color-bg-subtle);
   border-color: var(--color-border);
   opacity: 0.6;
   filter: grayscale(0.4);
 }
 
-.ended:hover {
+.ended:hover,
+.upcoming:hover {
   border-color: var(--color-border-strong);
   box-shadow: var(--shadow-sm);
   transform: none;
 }
 
-.endedBadge {
+.card:disabled {
+  cursor: not-allowed;
+}
+
+.endedBadge,
+.upcomingBadge {
   position: absolute;
   inset: 0;
   display: flex;
@@ -244,4 +251,9 @@
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
   border-radius: var(--radius-md);
+}
+
+.ddayUpcoming {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-semibold);
 }

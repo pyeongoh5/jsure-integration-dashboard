@@ -317,6 +317,7 @@ export const InfluencerCampaignCardSchema = z.object({
   postingPeriodDays: z.number().int().min(1),
   isNew: z.boolean(),
   isEnded: z.boolean(),
+  isUpcoming: z.boolean(),
 });
 export type InfluencerCampaignCard = z.infer<
   typeof InfluencerCampaignCardSchema

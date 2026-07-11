@@ -48,6 +48,7 @@ function toCard(
   now: Date,
 ): InfluencerCampaignCard {
   const isEnded = closedAt !== null || row.recruitEndAt.getTime() < now.getTime();
+  const isUpcoming = !isEnded && row.recruitStartAt.getTime() > now.getTime();
   return {
     id: row.id,
     category: row.category,
@@ -61,8 +62,9 @@ function toCard(
     recruitStartAt: row.recruitStartAt.toISOString(),
     recruitEndAt: row.recruitEndAt.toISOString(),
     postingPeriodDays: row.postingPeriodDays,
-    isNew: !isEnded && isNew(row.createdAt, now),
+    isNew: !isEnded && !isUpcoming && isNew(row.createdAt, now),
     isEnded,
+    isUpcoming,
   };
 }
 
@@ -123,9 +125,11 @@ export class InfluencerCampaignsService {
     const cards = await Promise.all(
       rows.map((r, i) => this.resolveCard(toCard(r, counts[i] ?? 0, r.closedAt, now))),
     );
-    // DB orderBy 가 createdAt desc 이므로, isEnded 분리만 하면 그룹 내 순서가 유지된다 (stable sort).
+    // DB orderBy 가 createdAt desc → stable sort 로 그룹 순서만 분리.
+    // 우선순위: 진행중 → 개시전 → 종료
     return cards.sort((a, b) => {
       if (a.isEnded !== b.isEnded) return a.isEnded ? 1 : -1;
+      if (a.isUpcoming !== b.isUpcoming) return a.isUpcoming ? 1 : -1;
       return 0;
     });
   }

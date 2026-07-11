@@ -78,6 +78,11 @@ function formatDateRange(startIso: string, endIso: string): string {
   return `${fmt(startIso)} — ${fmt(endIso)}`;
 }
 
+function formatShortDate(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
 function daysUntil(endIso: string, now: Date): number {
   const end = new Date(endIso);
   return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / DAY_MS));
@@ -196,11 +201,16 @@ export function CampaignCard({ card, onSelect }: Props) {
     ? Math.min(100, Math.round((card.appliedCount / card.recruitCount) * 100))
     : 0;
   const dday = daysUntil(card.recruitEndAt, new Date());
+  const disabled = card.isEnded || card.isUpcoming;
   return (
     <button
       type="button"
-      className={`${styles.card}${card.isEnded ? ` ${styles.ended}` : ""}`}
+      className={`${styles.card}${card.isEnded ? ` ${styles.ended}` : ""}${
+        card.isUpcoming ? ` ${styles.upcoming}` : ""
+      }`}
       onClick={onSelect}
+      disabled={disabled}
+      aria-disabled={disabled}
     >
       <div
         className={styles.thumb}
@@ -208,6 +218,9 @@ export function CampaignCard({ card, onSelect }: Props) {
       >
         {card.isNew && <div className={styles.new}>NEW</div>}
         {card.isEnded && <div className={styles.endedBadge}>{t("campaign.card.ended")}</div>}
+        {!card.isEnded && card.isUpcoming && (
+          <div className={styles.upcomingBadge}>{t("campaign.card.upcoming")}</div>
+        )}
       </div>
 
       <div className={styles.body}>
@@ -245,6 +258,10 @@ export function CampaignCard({ card, onSelect }: Props) {
           </div>
           {card.isEnded ? (
             <span className={`${styles.dday} ${styles.ddayEnded}`}>{t("campaign.card.ended")}</span>
+          ) : card.isUpcoming ? (
+            <span className={`${styles.dday} ${styles.ddayUpcoming}`}>
+              {t("campaign.card.upcomingStart")} {formatShortDate(card.recruitStartAt)}
+            </span>
           ) : (
             <span className={`${styles.dday} ${dday <= 7 ? styles.ddayUrgent : ""}`}>
               D-{dday}

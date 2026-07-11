@@ -32,6 +32,8 @@ export const messages = {
   campaign: {
     card: {
       ended: { jp: "終了", kr: "종료" },
+      upcoming: { jp: "開始前", kr: "시작 전" },
+      upcomingStart: { jp: "開始予定", kr: "시작 예정" },
       followerLabel: { jp: "フォロワー", kr: "팔로워" },
       subscriberLabel: { jp: "登録者", kr: "구독자" },
       instagramFeed: { jp: "フィード", kr: "피드" },

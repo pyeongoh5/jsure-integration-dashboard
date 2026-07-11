@@ -509,6 +509,13 @@ export class InfluencerApplicationsService {
       data: { receivedAt: new Date() },
       include: INCLUDE,
     });
+    const refreshed = await this.prisma.campaignApplication.findUniqueOrThrow({
+      where: { id: applicationId },
+      include: DISPATCH_APPLICATION_INCLUDE,
+    });
+    void this.dispatcher.dispatch("SNS_APPLICATION_RECEIPT_CONFIRMED", {
+      application: refreshed,
+    });
     return this.resolveResponse(updated);
   }
 
@@ -550,7 +557,7 @@ export class InfluencerApplicationsService {
       });
     }
 
-    await this.prisma.submittedPost.upsert({
+    const post = await this.prisma.submittedPost.upsert({
       where: {
         applicationId_subType: { applicationId, subType },
       },
@@ -562,6 +569,15 @@ export class InfluencerApplicationsService {
         reviewedAt: null,
         reviewedById: null,
       },
+    });
+
+    const refreshed = await this.prisma.campaignApplication.findUniqueOrThrow({
+      where: { id: applicationId },
+      include: DISPATCH_APPLICATION_INCLUDE,
+    });
+    void this.dispatcher.dispatch("SNS_POST_SUBMITTED", {
+      application: refreshed,
+      post,
     });
 
     return this.getForInfluencer(influencerId, applicationId);
@@ -602,7 +618,7 @@ export class InfluencerApplicationsService {
         message: "先に投稿URLを提出してください",
       });
     }
-    await this.prisma.submittedPost.update({
+    const updatedPost = await this.prisma.submittedPost.update({
       where: { id: post.id },
       data: {
         insightLikes: input.likes,
@@ -620,6 +636,16 @@ export class InfluencerApplicationsService {
     }
     // 투고가 이미 승인된 상태라면 인사이트 제출 시점에 자동 정산.
     await ensureSettlementForPost(this.prisma, post.id);
+
+    const refreshed = await this.prisma.campaignApplication.findUniqueOrThrow({
+      where: { id: applicationId },
+      include: DISPATCH_APPLICATION_INCLUDE,
+    });
+    void this.dispatcher.dispatch("SNS_INSIGHT_SUBMITTED", {
+      application: refreshed,
+      post: updatedPost,
+    });
+
     return this.getForInfluencer(influencerId, applicationId);
   }
 

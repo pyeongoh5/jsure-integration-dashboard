@@ -116,7 +116,7 @@ describe("deriveDisplayStage", () => {
     ).toBe("REVIEWING");
   });
 
-  it("DELIVERED, insightRequired=false 면 인사이트 미제출이어도 REVIEWING", () => {
+  it("DELIVERED, insightRequired=false + review APPROVED → COMPLETED", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
@@ -132,7 +132,26 @@ describe("deriveDisplayStage", () => {
         ],
         now: NOW,
       }),
-    ).toBe("REVIEWING");
+    ).toBe("COMPLETED");
+  });
+
+  it("DELIVERED, all insights submitted + review APPROVED + settlement PENDING → COMPLETED", () => {
+    expect(
+      deriveDisplayStage({
+        status: "DELIVERED",
+        category: "SNS",
+        receivedAt: new Date(NOW.getTime() - 10 * 86400000),
+        posts: [
+          {
+            submittedAt: new Date(NOW.getTime() - 9 * 86400000),
+            insightSubmittedAt: new Date(NOW.getTime() - 1 * 86400000),
+            reviewStatus: "APPROVED",
+            settlementStatus: "PENDING",
+          },
+        ],
+        now: NOW,
+      }),
+    ).toBe("COMPLETED");
   });
 
   it("DELIVERED, 인사이트 미제출이어도 정산 COMPLETED 면 SETTLED", () => {
@@ -252,7 +271,7 @@ describe("deriveDisplayStage — 가구매 카테고리", () => {
     ).toBe("REVIEW_REJECTED");
   });
 
-  it("REVIEW_SUBMITTED + post APPROVED + settlement PENDING → REVIEWING", () => {
+  it("REVIEW_SUBMITTED + post APPROVED + settlement PENDING → COMPLETED", () => {
     expect(
       deriveDisplayStage({
         status: "REVIEW_SUBMITTED",
@@ -267,7 +286,7 @@ describe("deriveDisplayStage — 가구매 카테고리", () => {
           },
         ],
       }),
-    ).toBe("REVIEWING");
+    ).toBe("COMPLETED");
   });
 
   it("REVIEW_SUBMITTED + post APPROVED + settlement COMPLETED → SETTLED", () => {

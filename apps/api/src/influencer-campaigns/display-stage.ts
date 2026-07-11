@@ -55,7 +55,7 @@ function deriveFakePurchaseStage(
     if (post.reviewStatus === "REJECTED") return "REVIEW_REJECTED";
     if (post.reviewStatus === "PENDING") return "REVIEW_PENDING";
     if (post.settlementStatus === "COMPLETED") return "SETTLED";
-    return "REVIEWING";
+    return "COMPLETED"; // new — 리뷰 APPROVED + 정산 대기(PENDING) 는 정산 대기 스텝
   }
   if (status === "COMPLETED") {
     const anySettled = posts.some((p) => p.settlementStatus === "COMPLETED");
@@ -100,7 +100,11 @@ function deriveSnsStage(input: DisplayStageInput): ApplicationDisplayStage {
       const anySettled = posts.some(
         (p) => p.settlementStatus === "COMPLETED",
       );
-      return anySettled ? "SETTLED" : "REVIEWING";
+      if (anySettled) return "SETTLED";
+      const allReviewsApproved = posts.every( // new — 리뷰 승인 여부로 검수/정산 단계 분리
+        (p) => p.reviewStatus === "APPROVED",
+      );
+      return allReviewsApproved ? "COMPLETED" : "REVIEWING"; // new — 리뷰 APPROVED 면 정산 대기 스텝
     }
 
     const first = posts[0]!.submittedAt;

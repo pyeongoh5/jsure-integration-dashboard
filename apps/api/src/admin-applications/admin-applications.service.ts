@@ -708,11 +708,20 @@ export class AdminApplicationsService {
       },
     });
     for (const target of targets) {
-      const settlementTriggerKey =
-        target.post.application.campaign.category === "FAKE_PURCHASE"
-          ? "FAKE_PURCHASE_SETTLEMENT_COMPLETED"
-          : "SNS_SETTLEMENT_COMPLETED";
+      const isFakePurchase =
+        target.post.application.campaign.category === "FAKE_PURCHASE";
+      const settlementTriggerKey = isFakePurchase
+        ? "FAKE_PURCHASE_SETTLEMENT_COMPLETED"
+        : "SNS_SETTLEMENT_COMPLETED";
+      const campaignCompletedTriggerKey = isFakePurchase
+        ? "FAKE_PURCHASE_CAMPAIGN_COMPLETED"
+        : "SNS_CAMPAIGN_COMPLETED";
       void this.dispatcher.dispatch(settlementTriggerKey, {
+        application: target.post.application as never,
+        settlement: target,
+      });
+      // 정산 완료 = 개인의 캠페인 프로세스 종료. 정산 알림과 별개로 종료 메시지를 발송.
+      void this.dispatcher.dispatch(campaignCompletedTriggerKey, {
         application: target.post.application as never,
         settlement: target,
       });

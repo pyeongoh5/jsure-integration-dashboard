@@ -8,10 +8,15 @@ import {
 import { t } from "@i18n";
 import styles from "./CampaignCard.module.css";
 
-function categoryLabel(category: InfluencerCampaignCard["category"]): string {
-  return category === "FAKE_PURCHASE"
-    ? t("campaign.category.fakePurchase")
-    : t("campaign.category.sns");
+function categoryLabel(category: InfluencerCampaignCard["category"]): string { // new
+  switch (category) {
+    case "FAKE_PURCHASE":
+      return t("campaign.category.fakePurchase");
+    case "SIMPLE_REVIEW":
+      return t("campaign.category.simpleReview"); // new
+    default:
+      return t("campaign.category.sns");
+  }
 }
 
 function snsChipClass(subType: CampaignSubType) {
@@ -97,6 +102,9 @@ const MARQUEE_PAUSE_MS = 1500;
 
 function condText(r: CampaignRecruit): string {
   if (r.subType === "QOO10") {
+    return SUB_TYPE_LABEL[r.subType];
+  }
+  if (r.subType === "LIPS" || r.subType === "ATCOSME") { // new
     return SUB_TYPE_LABEL[r.subType];
   }
   const base =

@@ -28,6 +28,11 @@ const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
   QOO10: shared.mediaPillQoo10 ?? "",
 };
 
+const SUB_TYPE_PILL_CLASS: Record<string, string> = {
+  LIPS: shared.mediaPillQoo10 ?? "",
+  ATCOSME: shared.mediaPillQoo10 ?? "",
+};
+
 // 상태별 배지 색 클래스. Drafts.module.css 에서 정의.
 const STATUS_BADGE_CLASS: Record<DraftStatus, string | undefined> = {
   REVIEW_PENDING: styles.statusReviewPending,
@@ -197,7 +202,7 @@ export function DraftTable({
               <th>인플루언서</th>
               <th>캠페인</th>
               <th style={{ width: 120 }}>카테고리</th>
-              <th style={{ width: 70 }}>매체</th>
+              <th style={{ width: 90 }}>서브타입</th>
               <th>제출 URL</th>
               <th style={{ width: 90 }}>제출 시각</th>
               <th style={{ width: 160 }}>상태</th>
@@ -245,6 +250,16 @@ export function DraftTable({
                             {SUB_TYPE_LABEL[draft.subType]}
                           </span>
                         </span>
+                      ) : draft.category === "SIMPLE_REVIEW" ? (
+                        <span className={shared.mediaItem}>
+                          <span
+                            className={`${shared.mediaPill} ${SUB_TYPE_PILL_CLASS[draft.subType] ?? ""}`}
+                            title={SUB_TYPE_LABEL[draft.subType]}
+                            aria-label={SUB_TYPE_LABEL[draft.subType]}
+                          >
+                            {SUB_TYPE_LABEL[draft.subType]}
+                          </span>
+                        </span>
                       ) : (
                         <span className={shared.mediaItem}>
                           <span
@@ -263,17 +278,19 @@ export function DraftTable({
                       )}
                     </td>
                     <td className={styles.urlCell}>
-                      {draft.category === "SNS" && draft.url !== null && (
-                        <a
-                          className={styles.url}
-                          href={draft.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {draft.url}
-                        </a>
-                      )}
-                      {(draft.category === "FAKE_PURCHASE" || draft.insightSubmitted) && (
+                      {(draft.category === "SNS" || draft.category === "SIMPLE_REVIEW") &&
+                        draft.url !== null && (
+                          <a
+                            className={styles.url}
+                            href={draft.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {draft.url}
+                          </a>
+                        )}
+                      {(draft.category === "FAKE_PURCHASE" ||
+                        (draft.category === "SNS" && draft.insightSubmitted)) && (
                         <button
                           type="button"
                           className={styles.insightLink}

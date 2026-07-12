@@ -224,10 +224,10 @@ export function ApplicantFilters({
           onClick={() => openPopover("media")}
         >
           {mediaFilter.size > 0
-            ? `매체: ${Array.from(mediaFilter)
+            ? `서브타입: ${Array.from(mediaFilter)
                 .map((media) => MEDIA_META[media].label)
                 .join(", ")}`
-            : "+ 매체"}
+            : "+ 서브타입"}
           {mediaFilter.size > 0 && (
             <span
               className={styles.popoverBtn}
@@ -363,7 +363,7 @@ export function ApplicantFilters({
               </>
             ) : popover.kind === "media" ? (
               <>
-                <div className={styles.popoverTitle}>매체 선택 (복수 가능)</div>
+                <div className={styles.popoverTitle}>서브타입 선택 (복수 가능)</div>
                 <div className={styles.popoverItems}>
                   {(Object.keys(MEDIA_META) as Media[]).map((media) => {
                     const selected = mediaFilter.has(media);

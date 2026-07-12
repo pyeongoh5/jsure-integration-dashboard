@@ -237,7 +237,7 @@ export function ApplicantTable({
               <th>인플루언서</th>
               <th>캠페인</th>
               <th>카테고리</th>
-              <th>매체</th>
+              <th>서브타입</th>
               <th>팔로워</th>
               <th>응모 시각</th>
               <th style={{ textAlign: "center" }}>상태</th>

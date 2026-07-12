@@ -338,7 +338,7 @@ export function Payouts() {
                   <th>인플루언서</th>
                   <th>캠페인</th>
                   <th>카테고리</th>
-                  <th>매체</th>
+                  <th>서브타입</th>
                   <th>투고 게시일</th>
                   <th>인사이트 제출일</th>
                   <th>보수</th>

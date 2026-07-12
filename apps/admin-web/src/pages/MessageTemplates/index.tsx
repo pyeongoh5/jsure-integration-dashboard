@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   listTemplates,
   setTemplateEnabled,
@@ -17,12 +17,32 @@ const CATEGORIES: { key: CampaignCategory; label: string }[] = [
   { key: "SIMPLE_REVIEW", label: "단순 리뷰 캠페인" },
 ];
 
+const CATEGORY_KEYS = CATEGORIES.map((entry) => entry.key);
+
+function parseCategory(raw: string | null): CampaignCategory {
+  return CATEGORY_KEYS.includes(raw as CampaignCategory)
+    ? (raw as CampaignCategory)
+    : "SNS";
+}
+
 export function MessageTemplates(): JSX.Element {
   const navigate = useNavigate();
-  const [category, setCategory] = useState<CampaignCategory>("SNS");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const category = parseCategory(searchParams.get("category"));
   const [items, setItems] = useState<LineMessageTemplateListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+
+  const setCategory = (nextCategory: CampaignCategory): void => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("category", nextCategory);
+        return next;
+      },
+      { replace: false },
+    );
+  };
 
   useEffect(() => {
     setLoading(true);

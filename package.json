@@ -6,6 +6,7 @@
     "dev": "turbo dev --filter=@jsure/admin-web --filter=@jsure/api",
     "dev:admin": "turbo dev --filter=@jsure/admin-web --filter=@jsure/api",
     "dev:client": "turbo dev --filter=@jsure/client-web --filter=@jsure/api",
+    "dev:web": "turbo dev --filter=@jsure/client-web --filter=@jsure/admin-web",
     "dev:all": "turbo dev",
     "dev:api": "turbo dev --filter=@jsure/api",
     "dev:admin-web": "turbo dev --filter=@jsure/admin-web",

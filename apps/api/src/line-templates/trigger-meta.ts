@@ -171,8 +171,7 @@ const postingDeadline: TriggerVariableWithResolver = {
   resolver: (ctx) => {
     if (!ctx.application.receivedAt) return "";
     const deadline = new Date(
-      ctx.application.receivedAt.getTime() +
-        ctx.application.campaign.postingPeriodDays * DAY_MS,
+      ctx.application.receivedAt.getTime() + ctx.application.campaign.postingPeriodDays * DAY_MS,
     );
     return formatJstMonthDay(deadline);
   },
@@ -232,6 +231,10 @@ function subTypeLabel(value: string): string {
       return "YouTube";
     case "QOO10":
       return "Qoo10";
+    case "LIPS":
+      return "LIPS";
+    case "ATCOSME":
+      return "@cosme";
     default:
       return value;
   }
@@ -287,9 +290,7 @@ const orderSubmittedDate: TriggerVariableWithResolver = {
   description: "注文情報を提出した日 (JST 月日)",
   sample: "7月3日",
   resolver: (ctx) =>
-    ctx.application.orderSubmittedAt
-      ? formatJstMonthDay(ctx.application.orderSubmittedAt)
-      : "",
+    ctx.application.orderSubmittedAt ? formatJstMonthDay(ctx.application.orderSubmittedAt) : "",
 };
 
 const reviewDeadline: TriggerVariableWithResolver = {

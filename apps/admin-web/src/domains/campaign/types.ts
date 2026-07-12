@@ -50,6 +50,8 @@ export const SNS_ICON_CLASS: Record<CampaignSubType, string> = {
   X: "fa-brands fa-x-twitter",
   YOUTUBE: "fa-brands fa-youtube",
   QOO10: "fa-solid fa-bag-shopping",
+  LIPS: "fa-solid fa-heart",
+  ATCOSME: "fa-solid fa-star",
 };
 
 export const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
@@ -58,6 +60,8 @@ export const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   X: "팔로워",
   YOUTUBE: "구독자",
   QOO10: "팔로워",
+  LIPS: "팔로워",
+  ATCOSME: "팔로워",
 };
 
 export const STATUS_LABEL: Record<CampaignStatus, string> = {

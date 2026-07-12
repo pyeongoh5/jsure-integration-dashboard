@@ -3,13 +3,15 @@ import {
   InfluencerCampaignListResponseSchema,
   type InfluencerCampaignCard,
   type InfluencerCampaignDetail,
-  type CampaignSubType,
+  type CampaignCategory, // new
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
-export async function listCampaigns(sns?: CampaignSubType): Promise<InfluencerCampaignCard[]> {
+export async function listCampaigns(
+  category?: CampaignCategory, // new
+): Promise<InfluencerCampaignCard[]> {
   const res = await api.get("/influencer/campaigns", {
-    params: sns ? { sns } : undefined,
+    params: category ? { category } : undefined, // new
   });
   return InfluencerCampaignListResponseSchema.parse(res.data).campaigns;
 }

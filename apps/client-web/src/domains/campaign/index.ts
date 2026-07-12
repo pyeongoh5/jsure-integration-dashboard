@@ -8,4 +8,4 @@ export type {
   CampaignSubType,
 } from "./types";
 export { CampaignCard } from "./components/CampaignCard";
-export { SnsTabBar } from "./components/SnsTabBar";
+export { CategoryTabBar } from "./components/CategoryTabBar"; // new

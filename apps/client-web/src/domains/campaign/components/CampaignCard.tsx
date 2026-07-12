@@ -35,6 +35,8 @@ const SNS_ICON: Record<CampaignSubType, string> = {
   YOUTUBE: "fa-brands fa-youtube",
   X: "fa-brands fa-x-twitter",
   QOO10: "fa-solid fa-bag-shopping",
+  LIPS: "fa-solid fa-heart", // new
+  ATCOSME: "fa-solid fa-star", // new
 };
 
 const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
@@ -43,6 +45,8 @@ const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   X: t("campaign.card.followerLabel"),
   YOUTUBE: t("campaign.card.subscriberLabel"),
   QOO10: t("campaign.card.followerLabel"),
+  LIPS: t("campaign.card.followerLabel"), // new
+  ATCOSME: t("campaign.card.followerLabel"), // new
 };
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<"FEED" | "REELS", string> = {

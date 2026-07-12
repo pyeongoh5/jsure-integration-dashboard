@@ -2,16 +2,16 @@ import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import type {
   InfluencerCampaignCard,
   InfluencerCampaignDetail,
-  CampaignSubType,
+  CampaignCategory, // new
 } from "@jsure/shared";
 import { listCampaigns, getCampaign } from "./api";
 
 export function useCampaignList(
-  sns: CampaignSubType,
+  category: CampaignCategory, // new
 ): UseQueryResult<InfluencerCampaignCard[]> {
   return useQuery({
-    queryKey: ["influencer-campaigns", sns],
-    queryFn: () => listCampaigns(sns),
+    queryKey: ["influencer-campaigns", category], // new
+    queryFn: () => listCampaigns(category), // new
   });
 }
 

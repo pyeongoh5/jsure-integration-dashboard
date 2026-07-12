@@ -18,6 +18,8 @@ const SNS_ROW_CLASS: Record<CampaignSubType, string | undefined> = {
   X: styles.snsRowX,
   YOUTUBE: styles.snsRowYoutube,
   QOO10: undefined,
+  LIPS: undefined, // new
+  ATCOSME: undefined, // new
 };
 
 const SNS_ICON: Record<CampaignSubType, string> = {
@@ -26,6 +28,8 @@ const SNS_ICON: Record<CampaignSubType, string> = {
   YOUTUBE: "fa-brands fa-youtube",
   X: "fa-brands fa-x-twitter",
   QOO10: "fa-solid fa-bag-shopping",
+  LIPS: "fa-solid fa-heart", // new
+  ATCOSME: "fa-solid fa-star", // new
 };
 
 const SNS_LABEL = SUB_TYPE_LABEL;

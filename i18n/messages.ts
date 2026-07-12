@@ -47,6 +47,7 @@ export const messages = {
     category: {
       sns: { jp: "SNS", kr: "SNS" },
       fakePurchase: { jp: "買取レビュー", kr: "가구매" },
+      simpleReview: { jp: "単純レビュー", kr: "단순 리뷰" }, // new
     },
     subType: {
       qoo10: { jp: "Qoo10", kr: "Qoo10" },
@@ -134,6 +135,13 @@ export const messages = {
       step8: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
       terminalRejected: { jp: "未選定", kr: "미선정" },
       terminalCancelled: { jp: "キャンセル", kr: "취소" },
+      simpleReview: { // new
+        step1: { jp: "応募", kr: "응모" },
+        step2: { jp: "承認", kr: "승인" },
+        step3: { jp: "レビュー提出", kr: "리뷰 제출" },
+        step4: { jp: "検査", kr: "검수" },
+        step5: { jp: "精算·終了", kr: "정산·종료" },
+      },
     },
     filters: {
       statusApplied: { jp: "応募", kr: "응모" },
@@ -283,6 +291,14 @@ export const messages = {
         kr: "⚠ 게시물 처음에 #PR을 반드시 기재해 주세요",
       },
       deadlineLabelPrefix: { jp: "投稿締切日: ", kr: "게시 마감일: " },
+    },
+    simpleReviewForm: { // new
+      urlInvalid: { jp: "正しいURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
+      labelSuffix: { jp: "レビューURL", kr: "리뷰 URL" },
+      submitting: { jp: "送信中…", kr: "전송 중…" },
+      update: { jp: "レビューURLを更新", kr: "리뷰 URL 업데이트" },
+      submit: { jp: "レビューURLを提出", kr: "리뷰 URL 제출" },
+      deadlineLabelPrefix: { jp: "レビュー締切日: ", kr: "리뷰 마감일: " },
     },
     stage: {
       awaitingOrder: {

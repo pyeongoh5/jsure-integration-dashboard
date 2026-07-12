@@ -447,7 +447,9 @@ export class InfluencerApplicationsService {
     const triggerKey =
       campaign.category === "FAKE_PURCHASE"
         ? "FAKE_PURCHASE_APPLICATION_APPLIED"
-        : "SNS_APPLICATION_APPLIED";
+        : campaign.category === "SIMPLE_REVIEW"
+          ? "SIMPLE_REVIEW_APPLICATION_APPLIED"
+          : "SNS_APPLICATION_APPLIED";
     for (const application of createdApplications) {
       void this.dispatcher.dispatch(triggerKey, { application });
     }
@@ -885,6 +887,108 @@ export class InfluencerApplicationsService {
       where: { id: postId },
     });
     void this.dispatcher.dispatch("FAKE_PURCHASE_REVIEW_SUBMITTED", {
+      application: refreshed,
+      post,
+    });
+    return this.getForInfluencer(influencerId, applicationId);
+  }
+
+  /**
+   * 단순 리뷰(SIMPLE_REVIEW) 리뷰 URL 제출.
+   * 최초 제출 또는 반려 후 재제출을 지원. URL만 저장하고 스크린샷/서브옵션은 사용하지 않는다.
+   */
+  async submitSimpleReview(
+    influencerId: string,
+    applicationId: string,
+    url: string,
+  ): Promise<InfluencerApplication> {
+    const application = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      include: {
+        campaign: { select: { category: true } },
+        posts: { select: { id: true, reviewStatus: true } },
+      },
+    });
+    if (!application) throw new NotFoundException("Application not found");
+    if (application.influencerId !== influencerId) {
+      throw new ForbiddenException();
+    }
+    if (application.campaign.category !== "SIMPLE_REVIEW") {
+      throw new BadRequestException({
+        code: "CATEGORY_MISMATCH",
+        message: "単純レビューキャンペーンのみ対応しています",
+      });
+    }
+
+    const existingPost = application.posts[0] ?? null;
+    const isResubmission =
+      application.status === "REVIEW_SUBMITTED" &&
+      existingPost?.reviewStatus === "REJECTED";
+    const isFirstSubmission = application.status === "APPROVED";
+    if (!isFirstSubmission && !isResubmission) {
+      throw new BadRequestException({
+        code: "INVALID_TRANSITION",
+        message: "この状態ではレビューを提出できません",
+      });
+    }
+
+    const trimmed = url.trim();
+    if (trimmed.length === 0) {
+      throw new BadRequestException({
+        code: "REVIEW_URL_REQUIRED",
+        message: "レビューURLを入力してください",
+      });
+    }
+    if (!/^https:\/\//i.test(trimmed)) {
+      throw new BadRequestException({
+        code: "REVIEW_URL_INVALID",
+        message: "https URL を入力してください",
+      });
+    }
+
+    const now = new Date();
+    const subType = application.subType;
+    const postId = await this.prisma.$transaction(async (tx) => {
+      let currentPostId: string;
+      if (existingPost) {
+        await tx.submittedPost.update({
+          where: { id: existingPost.id },
+          data: {
+            url: trimmed,
+            submittedAt: now,
+            reviewStatus: "PENDING",
+            reviewedAt: null,
+            reviewedById: null,
+          },
+        });
+        currentPostId = existingPost.id;
+      } else {
+        const created = await tx.submittedPost.create({
+          data: {
+            applicationId,
+            subType,
+            url: trimmed,
+            submittedAt: now,
+            reviewStatus: "PENDING",
+          },
+        });
+        currentPostId = created.id;
+      }
+      await tx.campaignApplication.update({
+        where: { id: applicationId },
+        data: { status: "REVIEW_SUBMITTED" },
+      });
+      return currentPostId;
+    });
+
+    const refreshed = await this.prisma.campaignApplication.findUniqueOrThrow({
+      where: { id: applicationId },
+      include: DISPATCH_APPLICATION_INCLUDE,
+    });
+    const post = await this.prisma.submittedPost.findUnique({
+      where: { id: postId },
+    });
+    void this.dispatcher.dispatch("SIMPLE_REVIEW_SUBMITTED", {
       application: refreshed,
       post,
     });

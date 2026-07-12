@@ -19,6 +19,8 @@ const SNS_LABEL: Record<CampaignReportParticipant["subType"], string> = {
   TIKTOK: "TikTok",
   X: "X",
   QOO10: "Qoo10",
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
 };
 
 type ColumnDef = {

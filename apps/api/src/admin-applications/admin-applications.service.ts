@@ -99,6 +99,8 @@ const SUB_TYPE_LABEL: Record<CampaignSubType, string> = {
   X: "X",
   YOUTUBE: "YouTube",
   QOO10: "Qoo10",
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
 };
 
 const APPLICATION_INCLUDE = {
@@ -190,7 +192,9 @@ export class AdminApplicationsService {
     const approveTriggerKey =
       existing.campaign.category === "FAKE_PURCHASE"
         ? "FAKE_PURCHASE_APPLICATION_APPROVED"
-        : "SNS_APPLICATION_APPROVED";
+        : existing.campaign.category === "SIMPLE_REVIEW"
+          ? "SIMPLE_REVIEW_APPLICATION_APPROVED"
+          : "SNS_APPLICATION_APPROVED";
     void this.dispatcher.dispatch(approveTriggerKey, { application: existing });
     return this.fetch(id);
   }
@@ -224,7 +228,9 @@ export class AdminApplicationsService {
     const rejectTriggerKey =
       existing.campaign.category === "FAKE_PURCHASE"
         ? "FAKE_PURCHASE_APPLICATION_REJECTED"
-        : "SNS_APPLICATION_REJECTED";
+        : existing.campaign.category === "SIMPLE_REVIEW"
+          ? "SIMPLE_REVIEW_APPLICATION_REJECTED"
+          : "SNS_APPLICATION_REJECTED";
     void this.dispatcher.dispatch(rejectTriggerKey, { application: existing });
 
     return this.fetch(id);
@@ -459,12 +465,15 @@ export class AdminApplicationsService {
       },
     });
     if (refreshed) {
+      const category = refreshed.application.campaign.category;
       const approveTriggerKey =
-        refreshed.application.campaign.category === "FAKE_PURCHASE"
+        category === "FAKE_PURCHASE"
           ? "FAKE_PURCHASE_REVIEW_APPROVED"
-          : refreshed.insightSubmittedAt !== null
-            ? "SNS_INSIGHT_APPROVED"
-            : "SNS_POST_APPROVED";
+          : category === "SIMPLE_REVIEW"
+            ? "SIMPLE_REVIEW_APPROVED"
+            : refreshed.insightSubmittedAt !== null
+              ? "SNS_INSIGHT_APPROVED"
+              : "SNS_POST_APPROVED";
       void this.dispatcher.dispatch(approveTriggerKey, {
         application: refreshed.application,
         post: refreshed,
@@ -521,7 +530,9 @@ export class AdminApplicationsService {
     const rejectPostTriggerKey =
       existing.application.campaign.category === "FAKE_PURCHASE"
         ? "FAKE_PURCHASE_REVIEW_REJECTED"
-        : "SNS_POST_REJECTED";
+        : existing.application.campaign.category === "SIMPLE_REVIEW"
+          ? "SIMPLE_REVIEW_REJECTED"
+          : "SNS_POST_REJECTED";
     void this.dispatcher.dispatch(rejectPostTriggerKey, {
       application: existing.application,
       rejection: { comment } as never,
@@ -710,14 +721,19 @@ export class AdminApplicationsService {
       },
     });
     for (const target of targets) {
-      const isFakePurchase =
-        target.post.application.campaign.category === "FAKE_PURCHASE";
-      const settlementTriggerKey = isFakePurchase
-        ? "FAKE_PURCHASE_SETTLEMENT_COMPLETED"
-        : "SNS_SETTLEMENT_COMPLETED";
-      const campaignCompletedTriggerKey = isFakePurchase
-        ? "FAKE_PURCHASE_CAMPAIGN_COMPLETED"
-        : "SNS_CAMPAIGN_COMPLETED";
+      const category = target.post.application.campaign.category;
+      const settlementTriggerKey =
+        category === "FAKE_PURCHASE"
+          ? "FAKE_PURCHASE_SETTLEMENT_COMPLETED"
+          : category === "SIMPLE_REVIEW"
+            ? "SIMPLE_REVIEW_SETTLEMENT_COMPLETED"
+            : "SNS_SETTLEMENT_COMPLETED";
+      const campaignCompletedTriggerKey =
+        category === "FAKE_PURCHASE"
+          ? "FAKE_PURCHASE_CAMPAIGN_COMPLETED"
+          : category === "SIMPLE_REVIEW"
+            ? "SIMPLE_REVIEW_CAMPAIGN_COMPLETED"
+            : "SNS_CAMPAIGN_COMPLETED";
       void this.dispatcher.dispatch(settlementTriggerKey, {
         application: target.post.application as never,
         settlement: target,

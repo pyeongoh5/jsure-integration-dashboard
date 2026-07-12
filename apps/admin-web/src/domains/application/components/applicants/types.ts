@@ -18,7 +18,7 @@ export type ApplicantStatus =
   | "AWAITING_REVIEW"
   | "REJECTED";
 
-export type Media = "ig" | "yt" | "tt" | "x" | "qoo10";
+export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
 
 export type Applicant = {
   id: string;
@@ -58,6 +58,8 @@ export const MEDIA_META: Record<
   tt: { label: "TikTok", icon: "fa-brands fa-tiktok", cls: "mediaTt" },
   x: { label: "X", icon: "fa-brands fa-x-twitter", cls: "mediaX" },
   qoo10: { label: "Qoo10", icon: "fa-solid fa-bag-shopping", cls: "mediaQoo10" },
+  lips: { label: "LIPS", icon: "fa-solid fa-heart", cls: "mediaQoo10" },
+  atcosme: { label: "@cosme", icon: "fa-solid fa-star", cls: "mediaQoo10" },
 };
 
 export const APPLICANT_STATUS_LABEL: Record<ApplicantStatus, string> = {
@@ -74,11 +76,13 @@ export const APPLICANT_STATUS_LABEL: Record<ApplicantStatus, string> = {
 export const CATEGORY_LABEL_KO: Record<CampaignCategory, string> = {
   SNS: "SNS",
   FAKE_PURCHASE: "가구매",
+  SIMPLE_REVIEW: "단순 리뷰",
 };
 
 export const CATEGORY_FILTER_OPTIONS: { key: CampaignCategory; label: string }[] = [
   { key: "SNS", label: CATEGORY_LABEL_KO.SNS },
   { key: "FAKE_PURCHASE", label: CATEGORY_LABEL_KO.FAKE_PURCHASE },
+  { key: "SIMPLE_REVIEW", label: CATEGORY_LABEL_KO.SIMPLE_REVIEW },
 ];
 
 export const APPLICANT_STATUS_OPTIONS: { key: ApplicantStatus; label: string }[] = [

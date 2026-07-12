@@ -17,11 +17,13 @@ import {
   SubmitOrderRequestSchema,
   SubmitPostRequestSchema,
   SubmitReviewRequestSchema,
+  SubmitSimpleReviewRequestSchema,
   type CreateApplicationRequest,
   type SubmitInsightRequest,
   type SubmitOrderRequest,
   type SubmitPostRequest,
   type SubmitReviewRequest,
+  type SubmitSimpleReviewRequest,
 } from "@jsure/shared";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { InfluencerJwtAuthGuard } from "../influencer-auth/guards/influencer-jwt-auth.guard";
@@ -90,6 +92,17 @@ export class InfluencerApplicationsController {
     dto: SubmitReviewRequest,
   ) {
     return this.svc.submitReview(req.user.id, id, dto.screenshots, dto.reviewUrls);
+  }
+
+  @Post(":id/simple-review")
+  @HttpCode(200)
+  submitSimpleReview(
+    @Request() req: { user: AuthenticatedInfluencer },
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(SubmitSimpleReviewRequestSchema))
+    dto: SubmitSimpleReviewRequest,
+  ) {
+    return this.svc.submitSimpleReview(req.user.id, id, dto.url);
   }
 
   @Post(":id/confirm-receipt")

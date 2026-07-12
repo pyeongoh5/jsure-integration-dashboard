@@ -37,7 +37,33 @@ export function deriveDisplayStage(
   if (input.category === "FAKE_PURCHASE") {
     return deriveFakePurchaseStage(input);
   }
+  if (input.category === "SIMPLE_REVIEW") {
+    return deriveSimpleReviewStage(input);
+  }
   return deriveSnsStage(input);
+}
+
+function deriveSimpleReviewStage(
+  input: DisplayStageInput,
+): ApplicationDisplayStage {
+  const { status, posts } = input;
+  if (status === "APPLIED") return "APPLIED";
+  if (status === "REJECTED") return "REJECTED";
+  if (status === "CANCELLED") return "CANCELLED";
+  if (status === "APPROVED") return "AWAITING_REVIEW";
+  if (status === "REVIEW_SUBMITTED") {
+    const post = posts[0];
+    if (!post) return "AWAITING_REVIEW";
+    if (post.reviewStatus === "REJECTED") return "REVIEW_REJECTED";
+    if (post.reviewStatus === "PENDING") return "REVIEW_PENDING";
+    if (post.settlementStatus === "COMPLETED") return "SETTLED";
+    return "COMPLETED";
+  }
+  if (status === "COMPLETED") {
+    const anySettled = posts.some((p) => p.settlementStatus === "COMPLETED");
+    return anySettled ? "SETTLED" : "COMPLETED";
+  }
+  return "APPLIED";
 }
 
 function deriveFakePurchaseStage(

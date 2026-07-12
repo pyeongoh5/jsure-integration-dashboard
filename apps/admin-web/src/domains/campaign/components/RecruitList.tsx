@@ -70,6 +70,14 @@ const SUB_TYPE_META: Record<CampaignSubType, SubTypeMeta> = {
     followerLabel: "팔로워",
     icon: "fa-solid fa-bag-shopping",
   },
+  LIPS: {
+    followerLabel: "팔로워",
+    icon: "fa-solid fa-heart",
+  },
+  ATCOSME: {
+    followerLabel: "팔로워",
+    icon: "fa-solid fa-star",
+  },
 };
 
 type ItemError = Partial<
@@ -108,6 +116,17 @@ function createRecruit(
       recruitCount: 1,
       subTypeOptions: subType === "INSTAGRAM" ? ["FEED"] : [],
       insightRequired: true,
+      productPriceJpy: null,
+      productUrl: null,
+    };
+  }
+  if (category === "SIMPLE_REVIEW") {
+    return {
+      subType,
+      minFollowers: 0,
+      recruitCount: 1,
+      subTypeOptions: [],
+      insightRequired: false,
       productPriceJpy: null,
       productUrl: null,
     };

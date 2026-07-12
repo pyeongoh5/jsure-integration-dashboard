@@ -17,6 +17,8 @@ const CHIP_CLASS: Record<CampaignSubType, string | undefined> = {
   X: styles.cardSnsChipX,
   YOUTUBE: styles.cardSnsChipYoutube,
   QOO10: styles.cardSnsChipQoo10,
+  LIPS: styles.cardSnsChipQoo10,
+  ATCOSME: styles.cardSnsChipQoo10,
 };
 
 const INSTAGRAM_POST_TYPES: readonly InstagramPostType[] = ["FEED", "REELS"];

@@ -35,6 +35,8 @@ export class LineRemindersService {
       await this.runInsightReminders();
       await this.runPostRejectionReminders();
       await this.runFakePurchaseReviewReminders();
+      await this.runSimpleReviewDeadlineReminders();
+      await this.runSimpleReviewRejectionReminders();
     } catch (err) {
       this.logger.error("Reminder daily run failed", err as Error);
     }
@@ -168,6 +170,85 @@ export class LineRemindersService {
       await this.dispatcher.dispatch("FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER", {
         application,
         extra: { remainingDays },
+      });
+    }
+  }
+
+  /**
+   * 단순 리뷰: 승인 후 postingPeriodDays 임박 시 리뷰 제출 리마인더.
+   * status=APPROVED 이면서 아직 SubmittedPost 가 없는 응모가 대상.
+   */
+  private async runSimpleReviewDeadlineReminders(): Promise<void> {
+    const todayStart = startOfJstDay(new Date());
+    const applications = await this.prisma.campaignApplication.findMany({
+      where: {
+        status: "APPROVED",
+        reviewedAt: { not: null },
+        campaign: { category: "SIMPLE_REVIEW" },
+      },
+      include: {
+        ...DISPATCH_APPLICATION_INCLUDE,
+        posts: { select: { id: true } },
+      },
+    });
+
+    for (const application of applications) {
+      if (!application.reviewedAt) continue;
+      if (application.posts.length > 0) continue;
+
+      const deadlineMs =
+        application.reviewedAt.getTime() +
+        application.campaign.postingPeriodDays * DAY_MS;
+      const deadlineDayStart = startOfJstDay(new Date(deadlineMs));
+      const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);
+      if (!POSTING_REMINDER_DAYS.includes(remainingDays)) continue;
+
+      await this.dispatcher.dispatch("SIMPLE_REVIEW_DEADLINE_REMINDER", {
+        application,
+        extra: { remainingDays },
+      });
+    }
+  }
+
+  /**
+   * 단순 리뷰: 리뷰 반려 후 재제출 지연 리마인더.
+   * SubmittedPost.reviewStatus=REJECTED 인 SIMPLE_REVIEW 카테고리 응모가 대상.
+   * SNS 반려 리마인더와 동일하게 반려 후 1일 경과 시점(어제 반려된 건) 발송.
+   */
+  private async runSimpleReviewRejectionReminders(): Promise<void> {
+    const todayStart = startOfJstDay(new Date());
+    const yesterdayStart = todayStart - POST_REJECTION_RESUBMIT_DAYS * DAY_MS;
+
+    const posts = await this.prisma.submittedPost.findMany({
+      where: {
+        reviewStatus: "REJECTED",
+        reviewedAt: { not: null },
+        application: { campaign: { category: "SIMPLE_REVIEW" } },
+      },
+      include: {
+        application: {
+          include: DISPATCH_APPLICATION_INCLUDE,
+        },
+      },
+    });
+
+    for (const post of posts) {
+      if (!post.reviewedAt) continue;
+      if (startOfJstDay(post.reviewedAt) !== yesterdayStart) continue;
+
+      const latest = await this.prisma.submittedPostRejection.findFirst({
+        where: { postId: post.id },
+        orderBy: { rejectedAt: "desc" },
+      });
+      if (!latest) continue;
+
+      const finalDeadlineAt = new Date(
+        post.reviewedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS,
+      );
+      await this.dispatcher.dispatch("SIMPLE_REVIEW_REJECTION_REMINDER", {
+        application: post.application,
+        rejection: latest,
+        extra: { finalDeadlineAt },
       });
     }
   }

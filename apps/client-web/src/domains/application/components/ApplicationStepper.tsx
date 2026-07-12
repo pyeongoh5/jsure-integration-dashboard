@@ -1,30 +1,56 @@
-import type { ApplicationDisplayStage } from "@jsure/shared";
+import type {
+  ApplicationDisplayStage,
+  CampaignCategory, // new
+} from "@jsure/shared";
 import { t } from "@i18n";
-import { STAGE_PROGRESS, STAGE_TOTAL } from "../utils";
+import { stageProgressFor, stageTotalFor } from "../utils"; // new
 import styles from "./ApplicationStepper.module.css";
 
-const STEPS = [
-  t("application.stepper.step1"),
-  t("application.stepper.step2"),
-  t("application.stepper.step3"),
-  t("application.stepper.step4"),
-  t("application.stepper.step5"),
-  t("application.stepper.step6"), // new — "検査/검수" (기존 step7=완료 자리를 이동)
-  t("application.stepper.step7"), // new — "精算待ち/정산 대기"
-  t("application.stepper.step8"), // new — "キャンペーン終了/캠페인 종료"
-];
+// new — 카테고리별 스텝 라벨 배열.
+const STEPS_BY_CATEGORY: Record<CampaignCategory, readonly string[]> = {
+  SNS: [
+    t("application.stepper.step1"),
+    t("application.stepper.step2"),
+    t("application.stepper.step3"),
+    t("application.stepper.step4"),
+    t("application.stepper.step5"),
+    t("application.stepper.step6"),
+    t("application.stepper.step7"),
+    t("application.stepper.step8"),
+  ],
+  FAKE_PURCHASE: [
+    t("application.stepper.step1"),
+    t("application.stepper.step2"),
+    t("application.stepper.step3"),
+    t("application.stepper.step4"),
+    t("application.stepper.step5"),
+    t("application.stepper.step6"),
+    t("application.stepper.step7"),
+    t("application.stepper.step8"),
+  ],
+  SIMPLE_REVIEW: [ // new
+    t("application.stepper.simpleReview.step1"),
+    t("application.stepper.simpleReview.step2"),
+    t("application.stepper.simpleReview.step3"),
+    t("application.stepper.simpleReview.step4"),
+    t("application.stepper.simpleReview.step5"),
+  ],
+};
 
-export function ApplicationStepper({
-  stage,
-}: {
+interface Props { // new
   stage: ApplicationDisplayStage;
-}) {
-  const current = STAGE_PROGRESS[stage];
+  category: CampaignCategory;
+}
+
+export function ApplicationStepper({ stage, category }: Props) { // new
+  const current = stageProgressFor(category, stage);
+  const total = stageTotalFor(category);
   const terminal = stage === "REJECTED" || stage === "CANCELLED";
+  const steps = STEPS_BY_CATEGORY[category];
 
   return (
     <div className={styles.stepper}>
-      {STEPS.map((label, idx) => {
+      {steps.map((label, idx) => {
         const step = idx + 1;
         const done = !terminal && step < current;
         const active = !terminal && step === current;
@@ -45,7 +71,7 @@ export function ApplicationStepper({
             : t("application.stepper.terminalCancelled")}
         </div>
       )}
-      <input type="hidden" value={STAGE_TOTAL} />
+      <input type="hidden" value={total} />
     </div>
   );
 }

@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { EnabledSnsTypeSchema, type CampaignSubType } from "@jsure/shared";
-import { CampaignCard, SnsTabBar, useCampaignList } from "@/domains/campaign";
+import type { CampaignCategory } from "@jsure/shared"; // new
+import { CampaignCard, CategoryTabBar, useCampaignList } from "@/domains/campaign"; // new
 import { t } from "@i18n";
 import styles from "./Browse.module.css";
 
 export function Browse() {
   const nav = useNavigate();
-  const [subType, setSubType] = useState<CampaignSubType>(
-    EnabledSnsTypeSchema.options[0],
-  );
+  const [category, setCategory] = useState<CampaignCategory>("SNS"); // new
 
-  const { data, isLoading, isError } = useCampaignList(subType);
+  const { data, isLoading, isError } = useCampaignList(category); // new
 
   return (
     <div className={styles.browse}>
@@ -19,7 +17,7 @@ export function Browse() {
         <div className={styles.brandTitle}>J-SURE</div>
         <div className={styles.brandSubtitle}>influencer</div>
       </div>
-      <SnsTabBar value={subType} onChange={setSubType} />
+      <CategoryTabBar value={category} onChange={setCategory} /> {/* new */}
       <div className={styles.grid}>
         {isLoading && (
           <>

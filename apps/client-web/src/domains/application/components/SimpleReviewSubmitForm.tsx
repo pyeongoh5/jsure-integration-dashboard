@@ -7,27 +7,25 @@ import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import { t } from "@i18n";
 
+// new — SIMPLE_REVIEW 리뷰 URL 제출 폼. https URL 하나만 받는다.
 const schema = z.object({
-  url: z.string().regex(/^https?:\/\/.+/i, t("application.postForm.urlInvalid")),
+  url: z
+    .string()
+    .regex(/^https:\/\/.+/i, t("application.simpleReviewForm.urlInvalid")),
 });
 type Values = z.infer<typeof schema>;
 
-const PLACEHOLDER_BY_SNS: Record<CampaignSubType, string> = {
-  INSTAGRAM: "https://www.instagram.com/p/...",
-  TIKTOK: "https://www.tiktok.com/@user/video/...",
-  X: "https://x.com/user/status/...",
-  YOUTUBE: "https://www.youtube.com/watch?v=...",
-  QOO10: "https://...",
-  LIPS: "https://lipscosme.com/...", // new
-  ATCOSME: "https://www.cosme.net/...", // new
+const PLACEHOLDER_BY_SUB_TYPE: Partial<Record<CampaignSubType, string>> = { // new
+  LIPS: "https://lipscosme.com/...",
+  ATCOSME: "https://www.cosme.net/...",
 };
 
-interface Props {
+interface Props { // new
   subType: CampaignSubType;
   initial: string;
   onSubmit: (url: string) => Promise<void>;
   submitting: boolean;
-  postingDeadlineAt: string | null;
+  reviewDeadlineAt: string | null;
 }
 
 function formatDeadline(iso: string): string {
@@ -35,12 +33,12 @@ function formatDeadline(iso: string): string {
   return `${date.getMonth() + 1}${t("application.dateFormat.monthSuffix")}${date.getDate()}${t("application.dateFormat.daySuffix")}`;
 }
 
-export function PostSubmitForm({
+export function SimpleReviewSubmitForm({ // new
   subType,
   initial,
   onSubmit,
   submitting,
-  postingDeadlineAt,
+  reviewDeadlineAt,
 }: Props) {
   const methods = useForm<Values>({
     resolver: zodResolver(schema),
@@ -54,7 +52,10 @@ export function PostSubmitForm({
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(handle)}>
-        <FormField name="url" label={`${subType} ${t("application.postForm.labelSuffix")}`}>
+        <FormField
+          name="url"
+          label={`${subType} ${t("application.simpleReviewForm.labelSuffix")}`}
+        >
           {(field) => (
             <Input
               id={field.id}
@@ -63,29 +64,19 @@ export function PostSubmitForm({
               onChange={field.onChange}
               onBlur={field.onBlur}
               error={field.error}
-              placeholder={PLACEHOLDER_BY_SNS[subType]}
+              placeholder={PLACEHOLDER_BY_SUB_TYPE[subType] ?? "https://..."}
               aria-invalid={field["aria-invalid"]}
             />
           )}
         </FormField>
         <PrimaryButton type="submit" disabled={submitting}>
           {submitting
-            ? t("application.postForm.submitting")
+            ? t("application.simpleReviewForm.submitting")
             : initial
-              ? t("application.postForm.update")
-              : t("application.postForm.submit")}
+              ? t("application.simpleReviewForm.update")
+              : t("application.simpleReviewForm.submit")}
         </PrimaryButton>
-        <p
-          style={{
-            fontSize: 11,
-            color: "#6b7280",
-            marginTop: 10,
-            textAlign: "center",
-          }}
-        >
-          {t("application.postForm.prHint")}
-        </p>
-        {postingDeadlineAt && (
+        {reviewDeadlineAt && (
           <p
             style={{
               fontSize: 11,
@@ -95,9 +86,8 @@ export function PostSubmitForm({
               fontWeight: 600,
             }}
           >
-            {/* 게시 마감일 */}
-            {t("application.postForm.deadlineLabelPrefix")}
-            {formatDeadline(postingDeadlineAt)}
+            {t("application.simpleReviewForm.deadlineLabelPrefix")}
+            {formatDeadline(reviewDeadlineAt)}
           </p>
         )}
       </form>

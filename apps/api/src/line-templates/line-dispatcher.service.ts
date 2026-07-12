@@ -107,7 +107,7 @@ export class LineDispatcherService {
   }
 
   private async logDispatch(data: {
-    category: "SNS" | "FAKE_PURCHASE";
+    category: "SNS" | "FAKE_PURCHASE" | "SIMPLE_REVIEW";
     triggerKey: LineTriggerKey;
     templateId: string | null;
     applicationId: string | null;

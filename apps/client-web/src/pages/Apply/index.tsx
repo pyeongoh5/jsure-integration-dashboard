@@ -45,6 +45,8 @@ const SNS_LABEL: Record<CampaignSubType, string> = {
   X: "X",
   YOUTUBE: "YouTube",
   QOO10: "Qoo10",
+  LIPS: "LIPS", // new
+  ATCOSME: "@cosme", // new
 };
 
 const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
@@ -53,6 +55,8 @@ const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   X: t("pages.apply.snsFollower"),
   YOUTUBE: t("pages.apply.snsSubscriber"),
   QOO10: t("pages.apply.snsFollower"),
+  LIPS: t("pages.apply.snsFollower"), // new
+  ATCOSME: t("pages.apply.snsFollower"), // new
 };
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {

@@ -7,7 +7,7 @@ import type {
   Attachment,
 } from "@jsure/shared";
 
-export type Media = "ig" | "yt" | "tt" | "x" | "qoo10";
+export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
 
 // reviewStatus + 인사이트 제출 여부 + 정산 상태를 통합한 단일 상태값.
 export type DraftStatus =
@@ -75,6 +75,8 @@ export const MEDIA_META: Record<
   tt: { label: "TikTok", icon: "fa-brands fa-tiktok" },
   x: { label: "X", icon: "fa-brands fa-x-twitter" },
   qoo10: { label: "Qoo10", icon: "fa-solid fa-bag-shopping" },
+  lips: { label: "LIPS", icon: "fa-solid fa-heart" },
+  atcosme: { label: "@cosme", icon: "fa-solid fa-star" },
 };
 
 export const SNS_TO_MEDIA: Record<CampaignSubType, Media> = {
@@ -83,6 +85,8 @@ export const SNS_TO_MEDIA: Record<CampaignSubType, Media> = {
   TIKTOK: "tt",
   X: "x",
   QOO10: "qoo10",
+  LIPS: "lips",
+  ATCOSME: "atcosme",
 };
 
 export const DRAFT_STATUS_LABEL: Record<DraftStatus, string> = {

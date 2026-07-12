@@ -10,6 +10,7 @@ import {
   PostSubmitForm,
   ReceiptConfirmDialog,
   ReviewSubmitForm,
+  SimpleReviewSubmitForm, // new
   StageBadge,
   cancelApplication,
   confirmReceipt,
@@ -17,6 +18,7 @@ import {
   submitOrder,
   submitPost,
   submitReview,
+  submitSimpleReview, // new
   useApplication,
 } from "@/domains/application";
 import { useCampaign } from "@/domains/campaign";
@@ -89,6 +91,10 @@ export function ApplicationDetail() {
     }) => submitReview(id, screenshots, reviewUrls),
     onSuccess: () => invalidate(),
   });
+  const simpleReview = useMutation({ // new
+    mutationFn: ({ url }: { url: string }) => submitSimpleReview(id, url),
+    onSuccess: () => invalidate(),
+  });
   const insight = useMutation({
     mutationFn: ({
       subType,
@@ -147,7 +153,7 @@ export function ApplicationDetail() {
         </div>
         <div className={styles.reward}>¥{data.rewardJpy.toLocaleString("ja-JP")}</div>
         <div className={styles.stepper}>
-          <ApplicationStepper stage={stage} />
+          <ApplicationStepper stage={stage} category={data.campaignCategory} />
         </div>
       </div>
 
@@ -298,7 +304,18 @@ export function ApplicationDetail() {
           />
         )}
 
-        {stage === "AWAITING_REVIEW" && (
+        {stage === "AWAITING_REVIEW" && data.campaignCategory === "SIMPLE_REVIEW" && ( // new
+          <SimpleReviewSubmitForm
+            subType={data.subType}
+            initial=""
+            onSubmit={async (url) => {
+              await simpleReview.mutateAsync({ url });
+            }}
+            submitting={simpleReview.isPending}
+            reviewDeadlineAt={null}
+          />
+        )}
+        {stage === "AWAITING_REVIEW" && data.campaignCategory !== "SIMPLE_REVIEW" && ( // new
           <ReviewSubmitForm
             applicationId={data.id}
             orderSubmittedAt={data.orderSubmittedAt ?? data.appliedAt}
@@ -356,16 +373,28 @@ export function ApplicationDetail() {
             <p className={styles.msg}>
               {t("application.stage.reviewRejected.description")}
             </p>
-            <ReviewSubmitForm
-              applicationId={data.id}
-              orderSubmittedAt={data.orderSubmittedAt ?? data.appliedAt}
-              postingPeriodDays={data.postingPeriodDays}
-              subTypeOptions={reviewSubTypeOptions}
-              onSubmit={async (screenshots, reviewUrls) => {
-                await review.mutateAsync({ screenshots, reviewUrls });
-              }}
-              submitting={review.isPending}
-            />
+            {data.campaignCategory === "SIMPLE_REVIEW" ? ( // new
+              <SimpleReviewSubmitForm
+                subType={data.subType}
+                initial={data.posts[0]?.url ?? ""}
+                onSubmit={async (url) => {
+                  await simpleReview.mutateAsync({ url });
+                }}
+                submitting={simpleReview.isPending}
+                reviewDeadlineAt={null}
+              />
+            ) : (
+              <ReviewSubmitForm
+                applicationId={data.id}
+                orderSubmittedAt={data.orderSubmittedAt ?? data.appliedAt}
+                postingPeriodDays={data.postingPeriodDays}
+                subTypeOptions={reviewSubTypeOptions}
+                onSubmit={async (screenshots, reviewUrls) => {
+                  await review.mutateAsync({ screenshots, reviewUrls });
+                }}
+                submitting={review.isPending}
+              />
+            )}
           </div>
         )}
 

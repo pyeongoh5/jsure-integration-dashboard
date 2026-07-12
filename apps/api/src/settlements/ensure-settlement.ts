@@ -67,6 +67,23 @@ export async function ensureSettlementForPost(
     return;
   }
 
+  if (category === "SIMPLE_REVIEW") {
+    // 단순 리뷰: 리뷰 승인 시 즉시 정산 PENDING 생성. 상품가 환급 없음.
+    const rewardAmountJpy = post.application.campaign.rewardJpy;
+    await prisma.settlement.upsert({
+      where: { postId },
+      create: {
+        postId,
+        amountJpy: rewardAmountJpy,
+        rewardAmountJpy,
+        productRefundJpy: 0,
+        status: "PENDING",
+      },
+      update: {},
+    });
+    return;
+  }
+
   // SNS
   const insightRequired = recruit?.insightRequired ?? true;
   if (insightRequired && post.insightSubmittedAt === null) return;

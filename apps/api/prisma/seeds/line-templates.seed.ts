@@ -36,6 +36,24 @@ type FakePurchaseTriggerKey =
   | "FAKE_PURCHASE_SETTLEMENT_COMPLETED"
   | "FAKE_PURCHASE_CAMPAIGN_COMPLETED";
 
+type SimpleReviewTriggerKey =
+  | "SIMPLE_REVIEW_APPLICATION_APPLIED"
+  | "SIMPLE_REVIEW_APPLICATION_APPROVED"
+  | "SIMPLE_REVIEW_APPLICATION_REJECTED"
+  | "SIMPLE_REVIEW_SUBMITTED"
+  | "SIMPLE_REVIEW_APPROVED"
+  | "SIMPLE_REVIEW_REJECTED"
+  | "SIMPLE_REVIEW_DEADLINE_REMINDER"
+  | "SIMPLE_REVIEW_REJECTION_REMINDER"
+  | "SIMPLE_REVIEW_SETTLEMENT_COMPLETED"
+  | "SIMPLE_REVIEW_CAMPAIGN_COMPLETED";
+
+type SeedRowSimpleReview = {
+  triggerKey: SimpleReviewTriggerKey;
+  enabled: boolean;
+  body: string;
+};
+
 type SeedRowFakePurchase = {
   triggerKey: FakePurchaseTriggerKey;
   enabled: boolean;
@@ -302,6 +320,19 @@ const FP_SEED_ROWS: SeedRowFakePurchase[] = [
   { triggerKey: "FAKE_PURCHASE_CAMPAIGN_COMPLETED", enabled: false, body: "" },
 ];
 
+const SR_SEED_ROWS: SeedRowSimpleReview[] = [
+  { triggerKey: "SIMPLE_REVIEW_APPLICATION_APPLIED", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_APPLICATION_APPROVED", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_APPLICATION_REJECTED", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_SUBMITTED", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_APPROVED", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_REJECTED", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_DEADLINE_REMINDER", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_REJECTION_REMINDER", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_SETTLEMENT_COMPLETED", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_CAMPAIGN_COMPLETED", enabled: false, body: "" },
+];
+
 async function main(): Promise<void> {
   for (const row of SEED_ROWS) {
     await prisma.lineMessageTemplate.upsert({
@@ -330,6 +361,23 @@ async function main(): Promise<void> {
       },
       create: {
         category: "FAKE_PURCHASE",
+        triggerKey: row.triggerKey,
+        enabled: row.enabled,
+        body: row.body,
+      },
+      update: {},
+    });
+  }
+  for (const row of SR_SEED_ROWS) {
+    await prisma.lineMessageTemplate.upsert({
+      where: {
+        category_triggerKey: {
+          category: "SIMPLE_REVIEW",
+          triggerKey: row.triggerKey,
+        },
+      },
+      create: {
+        category: "SIMPLE_REVIEW",
         triggerKey: row.triggerKey,
         enabled: row.enabled,
         body: row.body,

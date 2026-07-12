@@ -172,6 +172,15 @@ export function CampaignForm({
             productUrl: null,
           };
         }
+        if (values.category === "SIMPLE_REVIEW") {
+          return {
+            ...recruit,
+            productPriceJpy: null,
+            productUrl: null,
+            insightRequired: false,
+            subTypeOptions: [],
+          };
+        }
         return {
           ...recruit,
           minFollowers: 0,
@@ -320,6 +329,23 @@ export function CampaignForm({
                           }}
                         />
                         가구매
+                      </label>
+                      <label className={styles.radioOption}>
+                        <input
+                          type="radio"
+                          name="cf-category"
+                          value="SIMPLE_REVIEW"
+                          checked={field.value === "SIMPLE_REVIEW"}
+                          disabled={isEditMode || submitting}
+                          onChange={() => {
+                            field.onChange("SIMPLE_REVIEW");
+                            methods.setValue("recruits", [], {
+                              shouldValidate: false,
+                              shouldDirty: true,
+                            });
+                          }}
+                        />
+                        단순 리뷰
                       </label>
                     </div>
                     {isEditMode && (
@@ -491,12 +517,16 @@ export function CampaignForm({
           <h2 className={styles.sectionTitle}>
             {methods.watch("category") === "FAKE_PURCHASE"
               ? "가구매 채널별 모집"
-              : "SNS별 모집"}
+              : methods.watch("category") === "SIMPLE_REVIEW"
+                ? "단순 리뷰 채널별 모집"
+                : "SNS별 모집"}
           </h2>
           <p className={styles.subLabel}>
             {methods.watch("category") === "FAKE_PURCHASE"
               ? "가구매를 진행할 채널을 선택하고, 채널별 모집 인원과 상품 정보를 입력하세요."
-              : "사용할 SNS를 선택하고, 각 SNS에 적용할 조건과 모집 인원을 입력하세요."}
+              : methods.watch("category") === "SIMPLE_REVIEW"
+                ? "리뷰를 받을 채널(LIPS/@cosme)을 선택하고, 채널별 모집 인원과 최소 팔로워 조건을 입력하세요."
+                : "사용할 SNS를 선택하고, 각 SNS에 적용할 조건과 모집 인원을 입력하세요."}
           </p>
           <Controller
             control={methods.control}

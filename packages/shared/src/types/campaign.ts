@@ -8,11 +8,12 @@ import {
 export { CampaignSubTypeSchema };
 export type { CampaignSubType };
 
-export const CampaignCategorySchema = z.enum(["SNS", "FAKE_PURCHASE"]);
+export const CampaignCategorySchema = z.enum(["SNS", "FAKE_PURCHASE", "SIMPLE_REVIEW"]);
 export type CampaignCategory = z.infer<typeof CampaignCategorySchema>;
 
 const SNS_SUB_TYPE_VALUES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
 const FAKE_PURCHASE_SUB_TYPE_VALUES = ["QOO10"] as const;
+const SIMPLE_REVIEW_SUB_TYPE_VALUES = ["LIPS", "ATCOSME"] as const;
 
 const DateOnly = z
   .string()
@@ -95,6 +96,9 @@ const SNS_SUB_TYPE_SET = new Set<CampaignSubType>(SNS_SUB_TYPE_VALUES);
 const FAKE_PURCHASE_SUB_TYPE_SET = new Set<CampaignSubType>(
   FAKE_PURCHASE_SUB_TYPE_VALUES,
 );
+const SIMPLE_REVIEW_SUB_TYPE_SET = new Set<CampaignSubType>(
+  SIMPLE_REVIEW_SUB_TYPE_VALUES,
+);
 const ENABLED_SNS_SUB_TYPE_SET = new Set<CampaignSubType>(
   EnabledSnsTypeSchema.options,
 );
@@ -162,7 +166,7 @@ function refineRecruitsByCategory(
           });
         }
       }
-    } else {
+    } else if (category === "FAKE_PURCHASE") {
       if (!FAKE_PURCHASE_SUB_TYPE_SET.has(recruit.subType)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -201,6 +205,37 @@ function refineRecruitsByCategory(
           code: z.ZodIssueCode.custom,
           path: ["recruits", index, "productUrl"],
           message: "https URL 을 입력하세요",
+        });
+      }
+    } else {
+      // SIMPLE_REVIEW
+      if (!SIMPLE_REVIEW_SUB_TYPE_SET.has(recruit.subType)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "subType"],
+          message: "단순 리뷰 캠페인에서 사용할 수 없는 서브타입입니다",
+        });
+        return;
+      }
+      if (recruit.subTypeOptions.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "subTypeOptions"],
+          message: "단순 리뷰에서는 옵션을 지정할 수 없습니다",
+        });
+      }
+      if (recruit.productPriceJpy !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "productPriceJpy"],
+          message: "단순 리뷰 캠페인에서는 상품 가격을 지정할 수 없습니다",
+        });
+      }
+      if (recruit.productUrl !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "productUrl"],
+          message: "단순 리뷰 캠페인에서는 상품 URL을 지정할 수 없습니다",
         });
       }
     }

@@ -20,6 +20,8 @@ const MEDIA_CLASS: Record<Media, string | undefined> = {
   tt: shared.mediaTt,
   x: shared.mediaX,
   qoo10: shared.mediaQoo10,
+  lips: shared.mediaQoo10,
+  atcosme: shared.mediaQoo10,
 };
 
 const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {

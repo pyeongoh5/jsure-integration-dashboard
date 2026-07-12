@@ -121,6 +121,13 @@ export const SubmitReviewRequestSchema = z.object({
 });
 export type SubmitReviewRequest = z.infer<typeof SubmitReviewRequestSchema>;
 
+export const SubmitSimpleReviewRequestSchema = z.object({
+  url: z.string().url().startsWith("https://"),
+});
+export type SubmitSimpleReviewRequest = z.infer<
+  typeof SubmitSimpleReviewRequestSchema
+>;
+
 export const CreateApplicationRequestSchema = z
   .object({
     campaignId: z.string().min(1),

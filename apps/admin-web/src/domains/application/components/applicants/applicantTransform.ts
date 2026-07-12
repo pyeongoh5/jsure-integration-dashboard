@@ -11,6 +11,8 @@ export const SNS_TO_MEDIA: Record<CampaignSubType, Media> = {
   TIKTOK: "tt",
   X: "x",
   QOO10: "qoo10",
+  LIPS: "lips",
+  ATCOSME: "atcosme",
 };
 
 const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });

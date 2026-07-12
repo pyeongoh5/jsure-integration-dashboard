@@ -437,6 +437,46 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     category: "FAKE_PURCHASE",
     variables: withBase(),
   },
+  SIMPLE_REVIEW_APPLICATION_APPLIED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType),
+  },
+  SIMPLE_REVIEW_APPLICATION_APPROVED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, postingDeadline),
+  },
+  SIMPLE_REVIEW_APPLICATION_REJECTED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, rejectReason),
+  },
+  SIMPLE_REVIEW_SUBMITTED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, reviewUrl),
+  },
+  SIMPLE_REVIEW_APPROVED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, reviewUrl),
+  },
+  SIMPLE_REVIEW_REJECTED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, reviewUrl, rejectReason, resubmitDeadline),
+  },
+  SIMPLE_REVIEW_DEADLINE_REMINDER: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, remainingDays, postingDeadline),
+  },
+  SIMPLE_REVIEW_REJECTION_REMINDER: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, rejectReason, finalDeadline),
+  },
+  SIMPLE_REVIEW_SETTLEMENT_COMPLETED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, rewardJpy),
+  },
+  SIMPLE_REVIEW_CAMPAIGN_COMPLETED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType),
+  },
 };
 
 export function getMeta(triggerKey: LineTriggerKey): TriggerMetaEntry {

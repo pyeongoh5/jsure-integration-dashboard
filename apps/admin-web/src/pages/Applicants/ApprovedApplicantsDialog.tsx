@@ -25,6 +25,8 @@ const SNS_LABEL: Record<CampaignSubType, string> = {
   X: "X",
   YOUTUBE: "YouTube",
   QOO10: "Qoo10",
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
 };
 
 export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose }: Props) {

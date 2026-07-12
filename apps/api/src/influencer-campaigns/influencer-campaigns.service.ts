@@ -87,13 +87,11 @@ export class InfluencerCampaignsService {
 
   async list(args: {
     influencerId: string;
-    sns?: CampaignSubType;
+    category?: CampaignCategory;
   }): Promise<InfluencerCampaignCard[]> {
     const now = new Date();
     const rows = await this.prisma.campaign.findMany({
-      where: args.sns
-        ? { recruits: { some: { subType: args.sns } } }
-        : {},
+      where: args.category ? { category: args.category } : {},
       orderBy: [{ createdAt: "desc" }],
       include: {
         recruits: {

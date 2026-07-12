@@ -14,6 +14,7 @@ import styles from "./MessageTemplates.module.css";
 const CATEGORIES: { key: CampaignCategory; label: string }[] = [
   { key: "SNS", label: "SNS 캠페인" },
   { key: "FAKE_PURCHASE", label: "가구매 캠페인" },
+  { key: "SIMPLE_REVIEW", label: "단순 리뷰 캠페인" },
 ];
 
 export function MessageTemplates(): JSX.Element {

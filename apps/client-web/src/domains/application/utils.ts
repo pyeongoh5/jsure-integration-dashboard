@@ -1,4 +1,7 @@
-import type { ApplicationDisplayStage } from "@jsure/shared";
+import type {
+  ApplicationDisplayStage,
+  CampaignCategory, // new
+} from "@jsure/shared";
 import { t } from "@i18n";
 
 export const STAGE_LABEL: Record<ApplicationDisplayStage, string> = {
@@ -11,8 +14,8 @@ export const STAGE_LABEL: Record<ApplicationDisplayStage, string> = {
   POST_REJECTED: t("application.stageLabel.POST_REJECTED"),
   INSIGHT_DUE: t("application.stageLabel.INSIGHT_DUE"),
   REVIEWING: t("application.stageLabel.REVIEWING"),
-  COMPLETED: t("application.stageLabel.COMPLETED"), // new — 문구가 "精算待ち/정산 대기" 로 변경됨
-  SETTLED: t("application.stageLabel.SETTLED"), // new — 문구가 "キャンペーン終了/캠페인 종료" 로 변경됨
+  COMPLETED: t("application.stageLabel.COMPLETED"),
+  SETTLED: t("application.stageLabel.SETTLED"),
   REJECTED: t("application.stageLabel.REJECTED"),
   CANCELLED: t("application.stageLabel.CANCELLED"),
   AWAITING_ORDER: t("application.stage.awaitingOrder.heading"),
@@ -41,7 +44,8 @@ export const STAGE_VARIANT: Record<ApplicationDisplayStage, string> = {
   REVIEW_REJECTED: "danger",
 };
 
-export const STAGE_PROGRESS: Record<ApplicationDisplayStage, number> = {
+// SNS / FAKE_PURCHASE 카테고리용 매핑 (기존 8스텝 스테퍼 대상).
+const STAGE_PROGRESS_DEFAULT: Record<ApplicationDisplayStage, number> = {
   APPLIED: 1,
   APPROVED: 2,
   SHIPPED: 3,
@@ -49,16 +53,57 @@ export const STAGE_PROGRESS: Record<ApplicationDisplayStage, number> = {
   POSTING: 5,
   POSTED: 5,
   POST_REJECTED: 5,
-  INSIGHT_DUE: 5, // new — 게시/인사이트 묶음으로 통일 (기존 6)
-  REVIEWING: 6, // new — 검수 스텝(step6)에 정렬 (기존 7)
-  COMPLETED: 7, // new — 신설 "정산 대기" 스텝 활성 (기존 8)
-  SETTLED: 8, // new — 신설 "캠페인 종료" 스텝 활성 (기존 9)
+  INSIGHT_DUE: 5,
+  REVIEWING: 6,
+  COMPLETED: 7,
+  SETTLED: 8,
   REJECTED: 0,
   CANCELLED: 0,
   AWAITING_ORDER: 3,
   AWAITING_REVIEW: 5,
-  REVIEW_PENDING: 6, // new — REVIEWING 과 동일 스텝 (기존 7)
+  REVIEW_PENDING: 6,
   REVIEW_REJECTED: 5,
 };
 
-export const STAGE_TOTAL = 8; // new — 스테퍼에 정산 대기/캠페인 종료 스텝을 추가 (기존 9)
+// SIMPLE_REVIEW 카테고리용 매핑 (5스텝: 응모/승인/리뷰제출/검수/정산). // new
+const STAGE_PROGRESS_SIMPLE_REVIEW: Record<ApplicationDisplayStage, number> = { // new
+  APPLIED: 1,
+  APPROVED: 2,
+  AWAITING_REVIEW: 3,
+  REVIEW_REJECTED: 3,
+  REVIEW_PENDING: 4,
+  REVIEWING: 4,
+  COMPLETED: 5,
+  SETTLED: 6, // 5스텝을 모두 done 처리
+  SHIPPED: 0,
+  AWAITING_RECEIPT: 0,
+  POSTING: 0,
+  POSTED: 0,
+  POST_REJECTED: 0,
+  INSIGHT_DUE: 0,
+  REJECTED: 0,
+  CANCELLED: 0,
+  AWAITING_ORDER: 0,
+};
+
+// new
+export function stageProgressFor(
+  category: CampaignCategory,
+  stage: ApplicationDisplayStage,
+): number {
+  const table =
+    category === "SIMPLE_REVIEW"
+      ? STAGE_PROGRESS_SIMPLE_REVIEW
+      : STAGE_PROGRESS_DEFAULT;
+  return table[stage];
+}
+
+// new — 카테고리별 스텝 총 개수. 스테퍼 렌더링용.
+export function stageTotalFor(category: CampaignCategory): number {
+  return category === "SIMPLE_REVIEW" ? 5 : 8;
+}
+
+/** @deprecated 카테고리 인지가 필요 없는 옛 호출용. stageProgressFor 사용 권장. */
+export const STAGE_PROGRESS = STAGE_PROGRESS_DEFAULT;
+/** @deprecated stageTotalFor 사용 권장. */
+export const STAGE_TOTAL = 8;

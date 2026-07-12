@@ -110,6 +110,18 @@ export async function submitReview(
   return InfluencerApplicationSchema.parse(res.data);
 }
 
+// new — SIMPLE_REVIEW 카테고리 리뷰 URL 제출
+export async function submitSimpleReview(
+  applicationId: string,
+  url: string,
+): Promise<InfluencerApplication> {
+  const res = await api.post(
+    `/influencer/applications/${applicationId}/simple-review`,
+    { url },
+  );
+  return InfluencerApplicationSchema.parse(res.data);
+}
+
 export async function presignInsightUpload(input: {
   applicationId: string;
   subType: CampaignSubType;

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import type {
   CampaignCategory,
   LineMessageTemplateDetailResponse,
@@ -134,16 +134,18 @@ export class AdminLineTemplatesService {
     if (meta.category !== category) {
       throw new BadRequestException("Trigger does not belong to the given category");
     }
-    const existing = await this.prisma.lineMessageTemplate.findUnique({
+    // 시드 누락 등으로 row 가 없어도 토글이 가능하도록 upsert. 본문이 비어있는 경우
+    // 실제 발송 시점(line-dispatcher.service.ts) 에서 렌더된 본문 길이 0 이면 스킵.
+    const row = await this.prisma.lineMessageTemplate.upsert({
       where: { category_triggerKey: { category, triggerKey } },
-      select: { id: true },
-    });
-    if (!existing) {
-      throw new NotFoundException("Template not found");
-    }
-    const row = await this.prisma.lineMessageTemplate.update({
-      where: { id: existing.id },
-      data: { enabled, updatedById },
+      create: {
+        category,
+        triggerKey,
+        enabled,
+        body: "",
+        updatedById,
+      },
+      update: { enabled, updatedById },
       include: { updatedBy: { select: { name: true } } },
     });
     return {

@@ -38,6 +38,7 @@ export function MessageTemplateEdit(): JSX.Element {
   const navigate = useNavigate();
   const category = params.category!;
   const triggerKey = params.triggerKey!;
+  const listPath = `/message-templates?category=${encodeURIComponent(category)}`;
 
   const [detail, setDetail] = useState<LineMessageTemplateDetailResponse | null>(null);
   const [body, setBody] = useState("");
@@ -92,7 +93,7 @@ export function MessageTemplateEdit(): JSX.Element {
     setError(null);
     try {
       await updateTemplate(category, triggerKey, { body });
-      navigate("/message-templates");
+      navigate(listPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : "저장 실패");
     } finally {
@@ -115,7 +116,7 @@ export function MessageTemplateEdit(): JSX.Element {
       <button
         type="button"
         className={styles.backLink}
-        onClick={() => navigate("/message-templates")}
+        onClick={() => navigate(listPath)}
       >
         ← 목록으로
       </button>
@@ -144,7 +145,7 @@ export function MessageTemplateEdit(): JSX.Element {
       </div>
 
       <div className={styles.actions}>
-        <Button variant="secondary" onClick={() => navigate("/message-templates")}>
+        <Button variant="secondary" onClick={() => navigate(listPath)}>
           취소
         </Button>
         <Button variant="secondary" onClick={doPreview} disabled={!!validationError}>

@@ -30,6 +30,7 @@ export function utcToJstDateStr(d: Date): string {
 
 const SNS_SUB_TYPES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
 const FAKE_PURCHASE_SUB_TYPES = ["QOO10"] as const;
+const SIMPLE_REVIEW_SUB_TYPES = ["LIPS", "ATCOSME"] as const;
 
 const INSTAGRAM_POST_TYPES = ["FEED", "REELS"] as const;
 const QOO10_REVIEW_CHANNELS = ["LIPS", "ATCOSME"] as const;
@@ -48,7 +49,7 @@ export function validateRecruitsForCategory(
   if (category === "FAKE_PURCHASE") {
     if (recruits.length !== 1) {
       throw new BadRequestException(
-        "買取レビューキャンペーンでは QOO10 募集を 1 件のみ登録してください",
+        "가구매 리뷰 캠페인에서는 QOO10 모집을 1건만 등록할 수 있습니다",
       );
     }
   }
@@ -61,18 +62,18 @@ export function validateRecruitsForCategory(
         )
       ) {
         throw new BadRequestException(
-          `SNSキャンペーンでは ${recruit.subType} を募集できません`,
+          `SNS 캠페인에서는 ${recruit.subType} 서브타입을 모집할 수 없습니다`,
         );
       }
       if (recruit.productPriceJpy !== null || recruit.productUrl !== null) {
         throw new BadRequestException(
-          "SNSキャンペーンでは productPriceJpy/productUrl を指定できません",
+          "SNS 캠페인에서는 상품 가격/상품 URL 을 지정할 수 없습니다",
         );
       }
       if (recruit.subType === "INSTAGRAM") {
         if (rawOptions.length === 0) {
           throw new BadRequestException(
-            "INSTAGRAM 募集では投稿タイプ(FEED/REELS) を 1 つ以上指定してください",
+            "INSTAGRAM 모집에서는 게시물 타입(FEED/REELS) 을 하나 이상 선택해야 합니다",
           );
         }
         for (const option of rawOptions) {
@@ -82,44 +83,44 @@ export function validateRecruitsForCategory(
             )
           ) {
             throw new BadRequestException(
-              `INSTAGRAM の subTypeOptions に不正な値: ${option}`,
+              `INSTAGRAM 의 게시물 타입 값이 올바르지 않습니다: ${option}`,
             );
           }
         }
       } else if (rawOptions.length !== 0) {
         throw new BadRequestException(
-          `${recruit.subType} 募集では subTypeOptions を指定できません`,
+          `${recruit.subType} 모집에서는 게시물 타입을 지정할 수 없습니다`,
         );
       }
-    } else {
+    } else if (category === "FAKE_PURCHASE") {
       if (
         !FAKE_PURCHASE_SUB_TYPES.includes(
           recruit.subType as (typeof FAKE_PURCHASE_SUB_TYPES)[number],
         )
       ) {
         throw new BadRequestException(
-          `買取レビューキャンペーンでは ${recruit.subType} を募集できません`,
+          `가구매 리뷰 캠페인에서는 ${recruit.subType} 서브타입을 모집할 수 없습니다`,
         );
       }
       if (recruit.productPriceJpy == null || recruit.productPriceJpy <= 0) {
         throw new BadRequestException(
-          "productPriceJpy は正の整数を指定してください",
+          "상품 가격은 0보다 큰 정수를 입력해야 합니다",
         );
       }
       if (!recruit.productUrl || recruit.productUrl.trim().length === 0) {
-        throw new BadRequestException("productUrl を入力してください");
+        throw new BadRequestException("상품 URL 을 입력해주세요");
       }
       if (!/^https:\/\//i.test(recruit.productUrl)) {
-        throw new BadRequestException("productUrl は https:// で始まる必要があります");
+        throw new BadRequestException("상품 URL 은 https:// 로 시작해야 합니다");
       }
       if ((recruit.minFollowers ?? 0) !== 0) {
         throw new BadRequestException(
-          "買取レビューキャンペーンの minFollowers は 0 にしてください",
+          "가구매 리뷰 캠페인의 최소 팔로워는 0 이어야 합니다",
         );
       }
       if (recruit.insightRequired === true) {
         throw new BadRequestException(
-          "買取レビューキャンペーンでは insightRequired=false のみサポートします",
+          "가구매 리뷰 캠페인에서는 인사이트 필수 여부를 활성화할 수 없습니다",
         );
       }
       for (const option of rawOptions) {
@@ -129,9 +130,39 @@ export function validateRecruitsForCategory(
           )
         ) {
           throw new BadRequestException(
-            `QOO10 の subTypeOptions に不正な値: ${option}`,
+            `QOO10 의 리뷰 채널 값이 올바르지 않습니다: ${option}`,
           );
         }
+      }
+    } else {
+      if (
+        !SIMPLE_REVIEW_SUB_TYPES.includes(
+          recruit.subType as (typeof SIMPLE_REVIEW_SUB_TYPES)[number],
+        )
+      ) {
+        throw new BadRequestException(
+          `단순 리뷰 캠페인에서는 ${recruit.subType} 서브타입을 모집할 수 없습니다`,
+        );
+      }
+      if (recruit.productPriceJpy !== null || recruit.productUrl !== null) {
+        throw new BadRequestException(
+          "단순 리뷰 캠페인에서는 상품 가격/상품 URL 을 지정할 수 없습니다",
+        );
+      }
+      if ((recruit.minFollowers ?? 0) !== 0) {
+        throw new BadRequestException(
+          "단순 리뷰 캠페인의 최소 팔로워는 0 이어야 합니다",
+        );
+      }
+      if (recruit.insightRequired === true) {
+        throw new BadRequestException(
+          "단순 리뷰 캠페인에서는 인사이트 필수 여부를 활성화할 수 없습니다",
+        );
+      }
+      if (rawOptions.length !== 0) {
+        throw new BadRequestException(
+          "단순 리뷰 캠페인에서는 서브 옵션을 지정할 수 없습니다",
+        );
       }
     }
   }

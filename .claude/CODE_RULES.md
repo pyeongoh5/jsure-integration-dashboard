@@ -152,6 +152,9 @@ return HealthResponseSchema.parse(res.data);
 - 파일명: `<domain>.controller.ts`, `<domain>.service.ts`, `<domain>.module.ts`.
 - 가드/전략: `<domain>/guards/<name>.guard.ts`, `<domain>/strategies/<name>.strategy.ts`.
 - 공통 파이프/필터: `src/common/<kebab-case>.<role>.ts` (예: `zod-validation.pipe.ts`).
+- **DO** 예외 `message` (`BadRequestException`, `NotFoundException`, `ConflictException` 등) 는 **한국어**로 작성. 개발자가 한국인이므로 응답 로그/스택을 즉시 읽을 수 있도록.
+  - 예외의 `code` 필드는 그대로 대문자 상수 유지 (`CATEGORY_MISMATCH` 등). 프론트 분기는 `code` 로만.
+  - LINE 템플릿 본문·샘플·설명(`line-templates/trigger-meta.ts` 등 최종 사용자에게 노출되는 텍스트) 은 예외 — 인플루언서용 일본어 유지.
 
 ### `apps/client-web` (인플루언서 웹) 전용
 

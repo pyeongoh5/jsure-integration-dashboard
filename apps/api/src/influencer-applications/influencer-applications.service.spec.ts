@@ -80,7 +80,7 @@ describe("InfluencerApplicationsService.submitOrder", () => {
     const svc = makeService({ prisma });
     await expect(
       svc.submitOrder("inf-1", "app-1", "ORDER-1", receipts),
-    ).rejects.toThrow(/CATEGORY_MISMATCH|買取レビュー/);
+    ).rejects.toThrow(/CATEGORY_MISMATCH|가구매 리뷰/);
   });
 
   it("APPROVED → ORDER_SUBMITTED 성공: attachments 생성, dispatch 호출", async () => {
@@ -210,7 +210,7 @@ describe("InfluencerApplicationsService.submitOrder", () => {
     const svc = makeService({ prisma });
     await expect(
       svc.submitOrder("inf-1", "app-1", "ORDER-1", receipts),
-    ).rejects.toThrow(/INVALID_TRANSITION|注文情報を提出/);
+    ).rejects.toThrow(/INVALID_TRANSITION|주문 정보를 제출/);
   });
 
   it("receipts 배열이 비어있으면 400", async () => {
@@ -228,7 +228,7 @@ describe("InfluencerApplicationsService.submitOrder", () => {
     const svc = makeService({ prisma });
     await expect(
       svc.submitOrder("inf-1", "app-1", "ORDER-1", []),
-    ).rejects.toThrow(/RECEIPT_REQUIRED|スクリーンショット/);
+    ).rejects.toThrow(/RECEIPT_REQUIRED|스크린샷/);
   });
 });
 
@@ -384,7 +384,7 @@ describe("InfluencerApplicationsService.submitReview", () => {
 
     await expect(
       svc.submitReview("inf-1", "app-1", screenshots, {}),
-    ).rejects.toThrow(/REVIEW_URL_REQUIRED|レビューURL/);
+    ).rejects.toThrow(/REVIEW_URL_REQUIRED|리뷰 URL/);
   });
 
   it("subTypeOptions=['LIPS'] + reviewUrls={ATCOSME} → REVIEW_URL_NOT_REQUESTED", async () => {
@@ -399,7 +399,7 @@ describe("InfluencerApplicationsService.submitReview", () => {
       svc.submitReview("inf-1", "app-1", screenshots, {
         ATCOSME: "https://cosme.example.com/r/1",
       }),
-    ).rejects.toThrow(/REVIEW_URL_NOT_REQUESTED|求められていない/);
+    ).rejects.toThrow(/REVIEW_URL_NOT_REQUESTED|요구하지 않는/);
   });
 
   it("subTypeOptions=['LIPS','ATCOSME'] + reviewUrls 양쪽 성공", async () => {
@@ -484,7 +484,7 @@ describe("InfluencerApplicationsService.submitReview", () => {
     const svc = makeService({ prisma });
     await expect(
       svc.submitReview("inf-1", "app-1", screenshots, {}),
-    ).rejects.toThrow(/INVALID_TRANSITION|レビューを提出/);
+    ).rejects.toThrow(/INVALID_TRANSITION|리뷰를 제출/);
   });
 
   it("SNS 카테고리는 CATEGORY_MISMATCH", async () => {
@@ -502,7 +502,7 @@ describe("InfluencerApplicationsService.submitReview", () => {
     const svc = makeService({ prisma });
     await expect(
       svc.submitReview("inf-1", "app-1", screenshots, {}),
-    ).rejects.toThrow(/CATEGORY_MISMATCH|買取レビュー/);
+    ).rejects.toThrow(/CATEGORY_MISMATCH|가구매 리뷰/);
   });
 
   it("screenshots 2장 미만은 REVIEW_SCREENSHOTS_REQUIRED", async () => {
@@ -514,6 +514,6 @@ describe("InfluencerApplicationsService.submitReview", () => {
     const svc = makeService({ prisma });
     await expect(
       svc.submitReview("inf-1", "app-1", [screenshots[0]!], {}),
-    ).rejects.toThrow(/REVIEW_SCREENSHOTS_REQUIRED|スクリーンショット/);
+    ).rejects.toThrow(/REVIEW_SCREENSHOTS_REQUIRED|스크린샷/);
   });
 });

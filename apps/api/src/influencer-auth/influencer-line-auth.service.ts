@@ -199,7 +199,7 @@ export class InfluencerLineAuthService {
     if (existsByLine) {
       throw new ConflictException({
         code: "LINE_ALREADY_LINKED",
-        message: "このLINEアカウントは既に登録されています",
+        message: "이 LINE 계정은 이미 등록되어 있습니다",
       });
     }
 
@@ -266,7 +266,7 @@ export class InfluencerLineAuthService {
       ) {
         throw new ConflictException({
           code: "EMAIL_TAKEN",
-          message: "メールアドレスは既に使用されています",
+          message: "이미 사용 중인 이메일입니다",
         });
       }
       throw err;

@@ -62,7 +62,7 @@ export class UploadsService {
       throw new ForbiddenException();
     }
     if (application.subType !== body.subType) {
-      throw new BadRequestException("応募のSNSと一致しません");
+      throw new BadRequestException("응모한 SNS 와 일치하지 않습니다");
     }
 
     const objectKey =
@@ -104,13 +104,13 @@ export class UploadsService {
     if (body.kind === "ORDER_RECEIPT" || body.kind === "REVIEW_SCREENSHOT") {
       if (category !== "FAKE_PURCHASE") {
         throw new BadRequestException(
-          "この添付タイプは買取レビューキャンペーンでのみ使用できます",
+          "이 첨부 타입은 가구매 리뷰 캠페인에서만 사용할 수 있습니다",
         );
       }
     }
     if (body.kind === "INSIGHT_SCREENSHOT" && category !== "SNS") {
       throw new BadRequestException(
-        "この添付タイプはSNSキャンペーンでのみ使用できます",
+        "이 첨부 타입은 SNS 캠페인에서만 사용할 수 있습니다",
       );
     }
 

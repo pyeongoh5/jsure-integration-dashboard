@@ -118,7 +118,7 @@ export class InfluencerAuthService {
       ) {
         throw new ConflictException({
           code: "EMAIL_TAKEN",
-          message: "メールアドレスは既に使用されています",
+          message: "이미 사용 중인 이메일입니다",
         });
       }
       throw err;

@@ -278,19 +278,19 @@ export class InfluencerApplicationsService {
     if (!campaign) {
       throw new BadRequestException({
         code: "CAMPAIGN_NOT_FOUND",
-        message: "キャンペーンが見つかりません",
+        message: "캠페인을 찾을 수 없습니다",
       });
     }
     if (campaign.closedAt || campaign.recruitEndAt < now) {
       throw new BadRequestException({
         code: "OUT_OF_RECRUIT_PERIOD",
-        message: "募集期間外です",
+        message: "모집 기간이 아닙니다",
       });
     }
     if (campaign.recruitStartAt > now) {
       throw new BadRequestException({
         code: "OUT_OF_RECRUIT_PERIOD",
-        message: "募集はまだ開始していません",
+        message: "모집이 아직 시작되지 않았습니다",
       });
     }
 
@@ -303,7 +303,7 @@ export class InfluencerApplicationsService {
       if (invalidSubTypes.length > 0) {
         throw new BadRequestException({
           code: "SUBTYPE_CATEGORY_MISMATCH",
-          message: "選択したSNSはこのキャンペーンで募集していません",
+          message: "선택한 SNS 는 이 캠페인에서 모집하지 않습니다",
         });
       }
     }
@@ -352,7 +352,7 @@ export class InfluencerApplicationsService {
       if (qualifyingSubTypes.length === 0) {
         throw new BadRequestException({
           code: "SNS_MISMATCH",
-          message: "対象SNSの応募条件を満たすアカウントがありません",
+          message: "대상 SNS 응모 조건을 만족하는 계정이 없습니다",
         });
       }
 
@@ -361,7 +361,7 @@ export class InfluencerApplicationsService {
       if (invalid.length > 0) {
         throw new BadRequestException({
           code: "SNS_NOT_QUALIFIED",
-          message: "応募条件を満たさないSNSが含まれています",
+          message: "응모 조건을 만족하지 않는 SNS 가 포함되어 있습니다",
         });
       }
     }
@@ -375,7 +375,7 @@ export class InfluencerApplicationsService {
       if (!instagramPostType) {
         throw new BadRequestException({
           code: "INSTAGRAM_POST_TYPE_REQUIRED",
-          message: "投稿タイプ（フィード/リール）を選択してください",
+          message: "게시물 타입(피드/릴스) 을 선택해주세요",
         });
       }
       if (
@@ -384,7 +384,7 @@ export class InfluencerApplicationsService {
       ) {
         throw new BadRequestException({
           code: "INSTAGRAM_POST_TYPE_NOT_ALLOWED",
-          message: "選択した投稿タイプはこのキャンペーンで募集していません",
+          message: "선택한 게시물 타입은 이 캠페인에서 모집하지 않습니다",
         });
       }
     }
@@ -396,7 +396,7 @@ export class InfluencerApplicationsService {
       throw new BadRequestException({
         code: "EXCLUDED_BY_PREVIOUS_APPLICATION",
         message:
-          "同種のキャンペーンに既に応募済みのため、このSNSでは応募できません",
+          "동일 유형의 캠페인에 이미 응모한 이력이 있어 이 SNS 로는 응모할 수 없습니다",
       });
     }
 
@@ -437,7 +437,7 @@ export class InfluencerApplicationsService {
     if (results.length === 0) {
       throw new BadRequestException({
         code: "ALREADY_APPLIED",
-        message: "選択したSNSはすでに応募済みです",
+        message: "선택한 SNS 는 이미 응모하셨습니다",
       });
     }
     const createdApplications = await this.prisma.campaignApplication.findMany({
@@ -464,7 +464,7 @@ export class InfluencerApplicationsService {
     if (app.status !== "APPLIED") {
       throw new BadRequestException({
         code: "CANCEL_NOT_ALLOWED",
-        message: "承認後はキャンセルできません",
+        message: "승인 이후에는 취소할 수 없습니다",
       });
     }
     // 응모 후 2일 이내에만 취소 가능. 이 시점이 지나면 취소 불가.
@@ -472,7 +472,7 @@ export class InfluencerApplicationsService {
     if (elapsedMs > CANCEL_WINDOW_MS) {
       throw new BadRequestException({
         code: "CANCEL_WINDOW_EXPIRED",
-        message: "応募から2日を過ぎたためキャンセルできません",
+        message: "응모 후 2일이 지나 취소할 수 없습니다",
       });
     }
     const updated = await this.prisma.campaignApplication.update({
@@ -491,19 +491,19 @@ export class InfluencerApplicationsService {
     if (app.campaign.category !== "SNS") {
       throw new BadRequestException({
         code: "CATEGORY_MISMATCH",
-        message: "SNSキャンペーンのみ対応しています",
+        message: "SNS 캠페인에서만 사용할 수 있습니다",
       });
     }
     if (app.status !== "SHIPPED" && app.status !== "DELIVERED") {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
-        message: "発送中または配送完了の応募のみ受領確認できます",
+        message: "발송 중 또는 배송 완료 상태에서만 수령 확인이 가능합니다",
       });
     }
     if (app.receivedAt) {
       throw new BadRequestException({
         code: "ALREADY_RECEIVED",
-        message: "すでに受領確認済みです",
+        message: "이미 수령 확인이 완료된 응모입니다",
       });
     }
     const updated = await this.prisma.campaignApplication.update({
@@ -531,20 +531,20 @@ export class InfluencerApplicationsService {
     if (app.campaign.category !== "SNS") {
       throw new BadRequestException({
         code: "CATEGORY_MISMATCH",
-        message: "SNSキャンペーンのみ対応しています",
+        message: "SNS 캠페인에서만 사용할 수 있습니다",
       });
     }
     if (!app.receivedAt) {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
-        message: "受領確認後のみ投稿URLを提出できます",
+        message: "수령 확인 후에만 게시물 URL 을 제출할 수 있습니다",
       });
     }
     // 이제 application 자체가 단일 subType 을 가지므로 단순 비교.
     if (app.subType !== subType) {
       throw new BadRequestException({
         code: "SNS_NOT_SELECTED",
-        message: "応募のSNSと一致しません",
+        message: "응모한 SNS 와 일치하지 않습니다",
       });
     }
 
@@ -555,7 +555,7 @@ export class InfluencerApplicationsService {
     if (existing?.reviewStatus === "APPROVED") {
       throw new BadRequestException({
         code: "POST_ALREADY_APPROVED",
-        message: "承認済みの投稿は変更できません",
+        message: "이미 승인된 게시물은 변경할 수 없습니다",
       });
     }
 
@@ -608,7 +608,7 @@ export class InfluencerApplicationsService {
     if (app.campaign.category !== "SNS") {
       throw new BadRequestException({
         code: "CATEGORY_MISMATCH",
-        message: "SNSキャンペーンのみ対応しています",
+        message: "SNS 캠페인에서만 사용할 수 있습니다",
       });
     }
     const post = await this.prisma.submittedPost.findUnique({
@@ -617,7 +617,7 @@ export class InfluencerApplicationsService {
     if (!post) {
       throw new BadRequestException({
         code: "POST_NOT_SUBMITTED",
-        message: "先に投稿URLを提出してください",
+        message: "먼저 게시물 URL 을 제출해주세요",
       });
     }
     const updatedPost = await this.prisma.submittedPost.update({
@@ -672,7 +672,7 @@ export class InfluencerApplicationsService {
     if (application.campaign.category !== "FAKE_PURCHASE") {
       throw new BadRequestException({
         code: "CATEGORY_MISMATCH",
-        message: "買取レビューキャンペーンのみ対応しています",
+        message: "가구매 리뷰 캠페인에서만 사용할 수 있습니다",
       });
     }
     if (
@@ -681,20 +681,20 @@ export class InfluencerApplicationsService {
     ) {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
-        message: "この状態では注文情報を提出できません",
+        message: "현재 상태에서는 주문 정보를 제출할 수 없습니다",
       });
     }
     const trimmedOrderNumber = orderNumber.trim();
     if (trimmedOrderNumber.length === 0) {
       throw new BadRequestException({
         code: "ORDER_NUMBER_REQUIRED",
-        message: "注文番号を入力してください",
+        message: "주문번호를 입력해주세요",
       });
     }
     if (receipts.length < 1) {
       throw new BadRequestException({
         code: "RECEIPT_REQUIRED",
-        message: "注文明細のスクリーンショットを1枚以上ご提出ください",
+        message: "주문 명세 스크린샷을 1장 이상 제출해주세요",
       });
     }
 
@@ -765,7 +765,7 @@ export class InfluencerApplicationsService {
     if (application.campaign.category !== "FAKE_PURCHASE") {
       throw new BadRequestException({
         code: "CATEGORY_MISMATCH",
-        message: "買取レビューキャンペーンのみ対応しています",
+        message: "가구매 리뷰 캠페인에서만 사용할 수 있습니다",
       });
     }
 
@@ -778,7 +778,7 @@ export class InfluencerApplicationsService {
     if (!isFirstSubmission && !isResubmission) {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
-        message: "この状態ではレビューを提出できません",
+        message: "현재 상태에서는 리뷰를 제출할 수 없습니다",
       });
     }
 
@@ -800,7 +800,7 @@ export class InfluencerApplicationsService {
       if (!requiredChannelSet.has(channel)) {
         throw new BadRequestException({
           code: "REVIEW_URL_NOT_REQUESTED",
-          message: "このキャンペーンで求められていないレビューURLが含まれています",
+          message: "이 캠페인에서 요구하지 않는 리뷰 URL 이 포함되어 있습니다",
         });
       }
       normalizedReviewUrls[channel] = trimmed;
@@ -809,7 +809,7 @@ export class InfluencerApplicationsService {
       if (!normalizedReviewUrls[channel]) {
         throw new BadRequestException({
           code: "REVIEW_URL_REQUIRED",
-          message: "レビューURLを入力してください",
+          message: "리뷰 URL 을 입력해주세요",
         });
       }
     }
@@ -817,7 +817,7 @@ export class InfluencerApplicationsService {
     if (screenshots.length < 2) {
       throw new BadRequestException({
         code: "REVIEW_SCREENSHOTS_REQUIRED",
-        message: "レビューのスクリーンショットを2枚以上ご提出ください",
+        message: "리뷰 스크린샷을 2장 이상 제출해주세요",
       });
     }
 
@@ -916,7 +916,7 @@ export class InfluencerApplicationsService {
     if (application.campaign.category !== "SIMPLE_REVIEW") {
       throw new BadRequestException({
         code: "CATEGORY_MISMATCH",
-        message: "単純レビューキャンペーンのみ対応しています",
+        message: "단순 리뷰 캠페인에서만 사용할 수 있습니다",
       });
     }
 
@@ -928,7 +928,7 @@ export class InfluencerApplicationsService {
     if (!isFirstSubmission && !isResubmission) {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",
-        message: "この状態ではレビューを提出できません",
+        message: "현재 상태에서는 리뷰를 제출할 수 없습니다",
       });
     }
 
@@ -936,13 +936,13 @@ export class InfluencerApplicationsService {
     if (trimmed.length === 0) {
       throw new BadRequestException({
         code: "REVIEW_URL_REQUIRED",
-        message: "レビューURLを入力してください",
+        message: "리뷰 URL 을 입력해주세요",
       });
     }
     if (!/^https:\/\//i.test(trimmed)) {
       throw new BadRequestException({
         code: "REVIEW_URL_INVALID",
-        message: "https URL を入力してください",
+        message: "https:// 로 시작하는 URL 을 입력해주세요",
       });
     }
 

@@ -65,7 +65,7 @@ const STAGE_PROGRESS_DEFAULT: Record<ApplicationDisplayStage, number> = {
   REVIEW_REJECTED: 5,
 };
 
-// SIMPLE_REVIEW 카테고리용 매핑 (5스텝: 응모/승인/리뷰제출/검수/정산). // new
+// SIMPLE_REVIEW 카테고리용 매핑 (6스텝: 응모/승인/리뷰제출/검수/정산대기/캠페인종료). // new
 const STAGE_PROGRESS_SIMPLE_REVIEW: Record<ApplicationDisplayStage, number> = { // new
   APPLIED: 1,
   APPROVED: 2,
@@ -73,8 +73,8 @@ const STAGE_PROGRESS_SIMPLE_REVIEW: Record<ApplicationDisplayStage, number> = { 
   REVIEW_REJECTED: 3,
   REVIEW_PENDING: 4,
   REVIEWING: 4,
-  COMPLETED: 5,
-  SETTLED: 6, // 5스텝을 모두 done 처리
+  COMPLETED: 5, // new — 검수 승인 후 정산 대기
+  SETTLED: 6, // new — 정산 완료(캠페인 종료)
   SHIPPED: 0,
   AWAITING_RECEIPT: 0,
   POSTING: 0,
@@ -100,7 +100,7 @@ export function stageProgressFor(
 
 // new — 카테고리별 스텝 총 개수. 스테퍼 렌더링용.
 export function stageTotalFor(category: CampaignCategory): number {
-  return category === "SIMPLE_REVIEW" ? 5 : 8;
+  return category === "SIMPLE_REVIEW" ? 6 : 8;
 }
 
 /** @deprecated 카테고리 인지가 필요 없는 옛 호출용. stageProgressFor 사용 권장. */

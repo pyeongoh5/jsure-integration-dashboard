@@ -140,7 +140,8 @@ export const messages = {
         step2: { jp: "承認", kr: "승인" },
         step3: { jp: "レビュー提出", kr: "리뷰 제출" },
         step4: { jp: "検査", kr: "검수" },
-        step5: { jp: "精算·終了", kr: "정산·종료" },
+        step5: { jp: "精算待ち", kr: "정산 대기" }, // new
+        step6: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
       },
     },
     filters: {

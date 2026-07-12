@@ -257,7 +257,35 @@ export function RecruitList({
               </label>
             )}
             {selected && row ? (
-              category === "SNS" ? (
+              category === "SIMPLE_REVIEW" ? (
+                <div className={styles.snsFields}>
+                  <div className={styles.snsField}>
+                    <label className={styles.subLabel}>모집 인원</label>
+                    <div className={styles.snsCountRow}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        className={styles.input}
+                        value={
+                          Number.isFinite(row.recruitCount)
+                            ? String(row.recruitCount)
+                            : ""
+                        }
+                        disabled={disabled}
+                        onChange={(event) =>
+                          updateAt(index, {
+                            recruitCount: parseIntegerInput(event.target.value),
+                          })
+                        }
+                      />
+                      <span className={styles.snsSuffix}>명</span>
+                    </div>
+                    {errors?.recruitCount && (
+                      <div className={styles.error}>{errors.recruitCount}</div>
+                    )}
+                  </div>
+                </div>
+              ) : category === "SNS" ? (
                 <div className={styles.snsFields}>
                   <div className={styles.snsField}>
                     <label className={styles.subLabel}>

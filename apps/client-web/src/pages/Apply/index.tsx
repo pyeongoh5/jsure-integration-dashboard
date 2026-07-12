@@ -78,9 +78,11 @@ export function Apply() {
   const me = useQuery({ queryKey: ["me"], queryFn: fetchMe });
 
   const isFakePurchaseCampaign = campaign.data?.category === "FAKE_PURCHASE";
-  const activeConfirmKeys: readonly ConfirmKey[] = isFakePurchaseCampaign
-    ? CONFIRM_KEYS_FAKE_PURCHASE
-    : CONFIRM_KEYS_SNS;
+  const isSimpleReviewCampaign = campaign.data?.category === "SIMPLE_REVIEW"; // new
+  const activeConfirmKeys: readonly ConfirmKey[] =
+    isFakePurchaseCampaign || isSimpleReviewCampaign // new
+      ? CONFIRM_KEYS_FAKE_PURCHASE
+      : CONFIRM_KEYS_SNS;
 
   // 가구매 캠페인은 서브타입이 QOO10 하나뿐이므로 자동 선택
   useEffect(() => {
@@ -94,9 +96,30 @@ export function Apply() {
     });
   }, [campaign.data]);
 
+  // 단순 리뷰 캠페인은 배송·팔로워 조건이 없으므로 캠페인이 모집하는 모든 서브타입을 자동 선택. // new
+  useEffect(() => {
+    if (!campaign.data) return;
+    if (campaign.data.category !== "SIMPLE_REVIEW") return;
+    const recruitSubTypes = campaign.data.recruits.map((r) => r.subType);
+    setSelectedSns((prev) => {
+      const next = new Set(prev);
+      let mutated = false;
+      for (const subType of recruitSubTypes) {
+        if (!next.has(subType)) {
+          next.add(subType);
+          mutated = true;
+        }
+      }
+      return mutated ? next : prev;
+    });
+  }, [campaign.data]);
+
   const qualifying = useMemo(() => {
     if (!campaign.data || !me.data) return [];
-    if (campaign.data.category === "FAKE_PURCHASE") {
+    if (
+      campaign.data.category === "FAKE_PURCHASE" ||
+      campaign.data.category === "SIMPLE_REVIEW" // new
+    ) {
       return campaign.data.recruits.map((r) => r.subType);
     }
     const followerByMySns = new Map(
@@ -217,7 +240,7 @@ export function Apply() {
               </div>
             ))}
           </section>
-        ) : (
+        ) : isSimpleReviewCampaign ? null : ( // new
         <section className={styles.sec}>
           <h3>{t("pages.apply.snsSectionTitle")}</h3>
           {qualifying.length === 0 ? (
@@ -345,7 +368,7 @@ export function Apply() {
           </section>
         )}
 
-        {!isFakePurchaseCampaign && (
+        {!isFakePurchaseCampaign && !isSimpleReviewCampaign && ( // new
           <section className={styles.sec}>
             <h3>{t("pages.apply.addressTitle")}</h3>
             {me.data?.address ? (
@@ -422,7 +445,7 @@ export function Apply() {
             !hasSelection ||
             instagramPostTypeMissing ||
             qualifying.length === 0 ||
-            (!isFakePurchaseCampaign && (!me.data?.address || !addressConfirmed)) ||
+            (!isFakePurchaseCampaign && !isSimpleReviewCampaign && (!me.data?.address || !addressConfirmed)) || // new
             apply.isPending
           }
           onClick={() => apply.mutate()}

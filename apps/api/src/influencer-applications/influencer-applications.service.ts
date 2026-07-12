@@ -296,6 +296,17 @@ export class InfluencerApplicationsService {
 
     if (campaign.category === "FAKE_PURCHASE") {
       subTypes = ["QOO10"];
+    } else if (campaign.category === "SIMPLE_REVIEW") {
+      const recruitSubTypes = campaign.recruits.map((recruit) => recruit.subType);
+      const invalidSubTypes = subTypes.filter(
+        (subType) => !recruitSubTypes.includes(subType),
+      );
+      if (invalidSubTypes.length > 0) {
+        throw new BadRequestException({
+          code: "SUBTYPE_CATEGORY_MISMATCH",
+          message: "이 캠페인에서 모집하지 않는 서브타입이 포함되어 있습니다",
+        });
+      }
     } else {
       const invalidSubTypes = subTypes.filter(
         (subType) => !SNS_SUB_TYPES.includes(subType),

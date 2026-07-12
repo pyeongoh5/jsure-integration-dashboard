@@ -16,15 +16,9 @@ const INSTAGRAM_POST_TYPE_LABELS: Record<InstagramPostType, string> = {
   FEED: "피드",
   REELS: "릴스",
 };
-const INSTAGRAM_POST_TYPE_OPTIONS: readonly InstagramPostType[] = [
-  "FEED",
-  "REELS",
-];
+const INSTAGRAM_POST_TYPE_OPTIONS: readonly InstagramPostType[] = ["FEED", "REELS"];
 
-const QOO10_REVIEW_CHANNEL_OPTIONS: readonly ("LIPS" | "ATCOSME")[] = [
-  "LIPS",
-  "ATCOSME",
-];
+const QOO10_REVIEW_CHANNEL_OPTIONS: readonly ("LIPS" | "ATCOSME")[] = ["LIPS", "ATCOSME"];
 
 type SubTypeMeta = {
   followerLabel: string;
@@ -32,16 +26,9 @@ type SubTypeMeta = {
   iconClass?: string;
 };
 
-const SNS_ACCOUNT_SUB_TYPES: readonly SnsAccountSubType[] = [
-  "INSTAGRAM",
-  "TIKTOK",
-  "X",
-  "YOUTUBE",
-];
+const SNS_ACCOUNT_SUB_TYPES: readonly SnsAccountSubType[] = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"];
 
-function isSnsAccountSubType(
-  subType: CampaignSubType,
-): subType is SnsAccountSubType {
+function isSnsAccountSubType(subType: CampaignSubType): subType is SnsAccountSubType {
   return (SNS_ACCOUNT_SUB_TYPES as readonly CampaignSubType[]).includes(subType);
 }
 
@@ -82,11 +69,7 @@ const SUB_TYPE_META: Record<CampaignSubType, SubTypeMeta> = {
 
 type ItemError = Partial<
   Record<
-    | "minFollowers"
-    | "recruitCount"
-    | "subTypeOptions"
-    | "productPriceJpy"
-    | "productUrl",
+    "minFollowers" | "recruitCount" | "subTypeOptions" | "productPriceJpy" | "productUrl",
     string
   >
 >;
@@ -142,13 +125,7 @@ function createRecruit(
   };
 }
 
-export function RecruitList({
-  category,
-  value,
-  onChange,
-  disabled,
-  errorByIndex,
-}: Props) {
+export function RecruitList({ category, value, onChange, disabled, errorByIndex }: Props) {
   const candidates = subTypesForCategory(category).filter((subType) => {
     if (category === "SNS" && isSnsAccountSubType(subType)) {
       return isEnabledSnsType(subType);
@@ -177,35 +154,25 @@ export function RecruitList({
     }
   };
 
-  const toggleInstagramPostType = (
-    index: number,
-    postType: InstagramPostType,
-  ) => {
+  const toggleInstagramPostType = (index: number, postType: InstagramPostType) => {
     const current = value[index];
     if (!current) return;
     const set = new Set<string>(current.subTypeOptions);
     if (set.has(postType)) set.delete(postType);
     else set.add(postType);
     updateAt(index, {
-      subTypeOptions: INSTAGRAM_POST_TYPE_OPTIONS.filter((option) =>
-        set.has(option),
-      ),
+      subTypeOptions: INSTAGRAM_POST_TYPE_OPTIONS.filter((option) => set.has(option)),
     });
   };
 
-  const toggleQoo10Channel = (
-    index: number,
-    channel: "LIPS" | "ATCOSME",
-  ) => {
+  const toggleQoo10Channel = (index: number, channel: "LIPS" | "ATCOSME") => {
     const current = value[index];
     if (!current) return;
     const set = new Set<string>(current.subTypeOptions);
     if (set.has(channel)) set.delete(channel);
     else set.add(channel);
     updateAt(index, {
-      subTypeOptions: QOO10_REVIEW_CHANNEL_OPTIONS.filter((option) =>
-        set.has(option),
-      ),
+      subTypeOptions: QOO10_REVIEW_CHANNEL_OPTIONS.filter((option) => set.has(option)),
     });
   };
 
@@ -235,9 +202,7 @@ export function RecruitList({
                   className={`${meta.icon} ${styles.snsIcon} ${meta.iconClass ?? ""}`}
                   aria-hidden="true"
                 />
-                <span className={styles.snsToggleLabel}>
-                  {SUB_TYPE_LABEL[subType]}
-                </span>
+                <span className={styles.snsToggleLabel}>{SUB_TYPE_LABEL[subType]}</span>
               </div>
             ) : (
               <label className={styles.snsToggle}>
@@ -251,9 +216,7 @@ export function RecruitList({
                   className={`${meta.icon} ${styles.snsIcon} ${meta.iconClass ?? ""}`}
                   aria-hidden="true"
                 />
-                <span className={styles.snsToggleLabel}>
-                  {SUB_TYPE_LABEL[subType]}
-                </span>
+                <span className={styles.snsToggleLabel}>{SUB_TYPE_LABEL[subType]}</span>
               </label>
             )}
             {selected && row ? (
@@ -266,11 +229,7 @@ export function RecruitList({
                         type="text"
                         inputMode="numeric"
                         className={styles.input}
-                        value={
-                          Number.isFinite(row.recruitCount)
-                            ? String(row.recruitCount)
-                            : ""
-                        }
+                        value={Number.isFinite(row.recruitCount) ? String(row.recruitCount) : ""}
                         disabled={disabled}
                         onChange={(event) =>
                           updateAt(index, {
@@ -288,20 +247,14 @@ export function RecruitList({
               ) : category === "SNS" ? (
                 <div className={styles.snsFields}>
                   <div className={styles.snsField}>
-                    <label className={styles.subLabel}>
-                      최소 {meta.followerLabel}
-                    </label>
+                    <label className={styles.subLabel}>최소 {meta.followerLabel}</label>
                     <div className={styles.snsCountRow}>
                       <input
                         type="text"
                         inputMode="numeric"
                         className={styles.input}
                         placeholder="0"
-                        value={
-                          Number.isFinite(row.minFollowers)
-                            ? String(row.minFollowers)
-                            : ""
-                        }
+                        value={Number.isFinite(row.minFollowers) ? String(row.minFollowers) : ""}
                         disabled={disabled}
                         onChange={(event) =>
                           updateAt(index, {
@@ -322,11 +275,7 @@ export function RecruitList({
                         type="text"
                         inputMode="numeric"
                         className={styles.input}
-                        value={
-                          Number.isFinite(row.recruitCount)
-                            ? String(row.recruitCount)
-                            : ""
-                        }
+                        value={Number.isFinite(row.recruitCount) ? String(row.recruitCount) : ""}
                         disabled={disabled}
                         onChange={(event) =>
                           updateAt(index, {
@@ -342,9 +291,7 @@ export function RecruitList({
                   </div>
                   {subType === "INSTAGRAM" && (
                     <div className={styles.snsField}>
-                      <label className={styles.subLabel}>
-                        모집 포스트 타입
-                      </label>
+                      <label className={styles.subLabel}>모집 포스트 타입</label>
                       <div className={styles.snsCountRow}>
                         {INSTAGRAM_POST_TYPE_OPTIONS.map((postType) => (
                           <label
@@ -356,9 +303,7 @@ export function RecruitList({
                               type="checkbox"
                               checked={row.subTypeOptions.includes(postType)}
                               disabled={disabled}
-                              onChange={() =>
-                                toggleInstagramPostType(index, postType)
-                              }
+                              onChange={() => toggleInstagramPostType(index, postType)}
                             />
                             <span className={styles.snsToggleLabel}>
                               {INSTAGRAM_POST_TYPE_LABELS[postType]}
@@ -367,9 +312,7 @@ export function RecruitList({
                         ))}
                       </div>
                       {errors?.subTypeOptions && (
-                        <div className={styles.error}>
-                          {errors.subTypeOptions}
-                        </div>
+                        <div className={styles.error}>{errors.subTypeOptions}</div>
                       )}
                     </div>
                   )}
@@ -385,9 +328,7 @@ export function RecruitList({
                           })
                         }
                       />
-                      <span className={styles.snsToggleLabel}>
-                        인사이트 제출 필수
-                      </span>
+                      <span className={styles.snsToggleLabel}>인사이트 제출 필수</span>
                     </label>
                   </div>
                 </div>
@@ -400,11 +341,7 @@ export function RecruitList({
                         type="text"
                         inputMode="numeric"
                         className={styles.input}
-                        value={
-                          Number.isFinite(row.recruitCount)
-                            ? String(row.recruitCount)
-                            : ""
-                        }
+                        value={Number.isFinite(row.recruitCount) ? String(row.recruitCount) : ""}
                         disabled={disabled}
                         onChange={(event) =>
                           updateAt(index, {
@@ -445,15 +382,10 @@ export function RecruitList({
                       <span className={styles.snsSuffix}>円</span>
                     </div>
                     {errors?.productPriceJpy && (
-                      <div className={styles.error}>
-                        {errors.productPriceJpy}
-                      </div>
+                      <div className={styles.error}>{errors.productPriceJpy}</div>
                     )}
                   </div>
-                  <div
-                    className={styles.snsField}
-                    style={{ gridColumn: "1 / -1" }}
-                  >
+                  <div className={styles.snsField} style={{ gridColumn: "1 / -1" }}>
                     <label className={styles.subLabel}>상품 URL</label>
                     <input
                       type="url"
@@ -467,18 +399,11 @@ export function RecruitList({
                         })
                       }
                     />
-                    {errors?.productUrl && (
-                      <div className={styles.error}>{errors.productUrl}</div>
-                    )}
+                    {errors?.productUrl && <div className={styles.error}>{errors.productUrl}</div>}
                   </div>
                   {subType === "QOO10" && (
-                    <div
-                      className={styles.snsField}
-                      style={{ gridColumn: "1 / -1" }}
-                    >
-                      <label className={styles.subLabel}>
-                        리뷰 채널 (선택)
-                      </label>
+                    <div className={styles.snsField} style={{ gridColumn: "1 / -1" }}>
+                      <label className={styles.subLabel}>리뷰 채널 (선택)</label>
                       <div className={styles.snsCountRow}>
                         {QOO10_REVIEW_CHANNEL_OPTIONS.map((channel) => (
                           <label
@@ -499,9 +424,7 @@ export function RecruitList({
                         ))}
                       </div>
                       {errors?.subTypeOptions && (
-                        <div className={styles.error}>
-                          {errors.subTypeOptions}
-                        </div>
+                        <div className={styles.error}>{errors.subTypeOptions}</div>
                       )}
                     </div>
                   )}

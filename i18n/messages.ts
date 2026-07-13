@@ -2,7 +2,7 @@ export const messages = {
   components: {
     bottomTab: {
       search: { jp: "探す", kr: "찾기1" },
-      applications: { jp: "応募内訳", kr: "지원 내역" },
+      applications: { jp: "応募履歴", kr: "지원 내역" },
       notices: { jp: "お知らせ", kr: "알림" },
       myPage: { jp: "マイページ", kr: "마이페이지" },
     },

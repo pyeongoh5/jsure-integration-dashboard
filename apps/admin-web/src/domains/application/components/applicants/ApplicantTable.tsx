@@ -13,8 +13,8 @@ import styles from "@/pages/Applicants/Applicants.module.css";
 import shared from "../application.module.css";
 
 const SUB_TYPE_PILL_CLASS: Record<string, string> = {
-  LIPS: shared.mediaPillQoo10 ?? "",
-  ATCOSME: shared.mediaPillQoo10 ?? "",
+  LIPS: shared.mediaPillLips ?? "",
+  ATCOSME: shared.mediaPillAtcosme ?? "",
 };
 
 const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
@@ -39,11 +39,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
   );
   const detailButton =
     applicant.category === "FAKE_PURCHASE" ? (
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => handlers.onDetail(applicant)}
-      >
+      <Button variant="secondary" size="sm" onClick={() => handlers.onDetail(applicant)}>
         상세
       </Button>
     ) : null;
@@ -279,7 +275,7 @@ export function ApplicantTable({
                   </div>
                 </td>
                 <td>{applicant.campaign}</td>
-                <td>{renderCategory(applicant)}</td>
+                <td width="100">{renderCategory(applicant)}</td>
                 <td>
                   <div className={styles.mediaList}>
                     {applicant.category === "FAKE_PURCHASE" ? (

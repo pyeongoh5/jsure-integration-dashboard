@@ -450,6 +450,24 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     category: "SIMPLE_REVIEW",
     variables: withBase(subType, rejectReason),
   },
+  SIMPLE_REVIEW_APPLICATION_SHIPPED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, trackingCarrier, trackingNumber, applicationShippedDate),
+  },
+  SIMPLE_REVIEW_APPLICATION_DELIVERED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(
+      subType,
+      trackingCarrier,
+      trackingNumber,
+      applicationShippedDate,
+      applicationDeliveredDate,
+    ),
+  },
+  SIMPLE_REVIEW_APPLICATION_RECEIPT_CONFIRMED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, applicationDeliveredDate, applicationReceivedDate, postingDeadline),
+  },
   SIMPLE_REVIEW_SUBMITTED: {
     category: "SIMPLE_REVIEW",
     variables: withBase(subType, reviewUrl),

@@ -40,6 +40,9 @@ type SimpleReviewTriggerKey =
   | "SIMPLE_REVIEW_APPLICATION_APPLIED"
   | "SIMPLE_REVIEW_APPLICATION_APPROVED"
   | "SIMPLE_REVIEW_APPLICATION_REJECTED"
+  | "SIMPLE_REVIEW_APPLICATION_SHIPPED"
+  | "SIMPLE_REVIEW_APPLICATION_DELIVERED"
+  | "SIMPLE_REVIEW_APPLICATION_RECEIPT_CONFIRMED"
   | "SIMPLE_REVIEW_SUBMITTED"
   | "SIMPLE_REVIEW_APPROVED"
   | "SIMPLE_REVIEW_REJECTED"
@@ -324,6 +327,9 @@ const SR_SEED_ROWS: SeedRowSimpleReview[] = [
   { triggerKey: "SIMPLE_REVIEW_APPLICATION_APPLIED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_APPLICATION_APPROVED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_APPLICATION_REJECTED", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_APPLICATION_SHIPPED", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_APPLICATION_DELIVERED", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_APPLICATION_RECEIPT_CONFIRMED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_SUBMITTED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_APPROVED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_REJECTED", enabled: false, body: "" },

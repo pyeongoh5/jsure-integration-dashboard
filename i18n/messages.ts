@@ -138,10 +138,12 @@ export const messages = {
       simpleReview: { // new
         step1: { jp: "応募", kr: "응모" },
         step2: { jp: "承認", kr: "승인" },
-        step3: { jp: "レビュー提出", kr: "리뷰 제출" },
-        step4: { jp: "確認", kr: "검수" },
-        step5: { jp: "精算待ち", kr: "정산 대기" }, // new
-        step6: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
+        step3: { jp: "発送", kr: "발송" }, // new
+        step4: { jp: "受領確認", kr: "수령확인" }, // new
+        step5: { jp: "レビュー提出", kr: "리뷰 제출" }, // new
+        step6: { jp: "確認", kr: "검수" }, // new
+        step7: { jp: "精算待ち", kr: "정산 대기" }, // new
+        step8: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
       },
     },
     filters: {

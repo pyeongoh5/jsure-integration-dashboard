@@ -34,7 +34,9 @@ const STEPS_BY_CATEGORY: Record<CampaignCategory, readonly string[]> = {
     t("application.stepper.simpleReview.step3"),
     t("application.stepper.simpleReview.step4"),
     t("application.stepper.simpleReview.step5"),
-    t("application.stepper.simpleReview.step6"), // new
+    t("application.stepper.simpleReview.step6"),
+    t("application.stepper.simpleReview.step7"), // new
+    t("application.stepper.simpleReview.step8"), // new
   ],
 };
 

@@ -377,7 +377,7 @@ export function Apply() {
           </section>
         )}
 
-        {!isFakePurchaseCampaign && !isSimpleReviewCampaign && ( // new
+        {!isFakePurchaseCampaign && ( // new — SNS/단순 리뷰: 배송이 있으므로 주소 확인 노출
           <section className={styles.sec}>
             <h3>{t("pages.apply.addressTitle")}</h3>
             {me.data?.address ? (
@@ -454,7 +454,7 @@ export function Apply() {
             !hasSelection ||
             instagramPostTypeMissing ||
             qualifying.length === 0 ||
-            (!isFakePurchaseCampaign && !isSimpleReviewCampaign && (!me.data?.address || !addressConfirmed)) || // new
+            (!isFakePurchaseCampaign && (!me.data?.address || !addressConfirmed)) || // new
             apply.isPending
           }
           onClick={() => apply.mutate()}

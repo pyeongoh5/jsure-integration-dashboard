@@ -108,7 +108,7 @@ export const messages = {
       POSTED: { jp: "投稿完了", kr: "게시 완료" },
       POST_REJECTED: { jp: "投稿差し戻し", kr: "게시 반려" },
       INSIGHT_DUE: { jp: "インサイト提出", kr: "인사이트 제출" },
-      REVIEWING: { jp: "検査中", kr: "검수 중" },
+      REVIEWING: { jp: "確認中", kr: "검수 중" },
       COMPLETED: { jp: "精算待ち", kr: "정산 대기" }, // new
       SETTLED: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
       REJECTED: { jp: "未選定", kr: "미선정" },
@@ -130,7 +130,7 @@ export const messages = {
       step3: { jp: "発送", kr: "발송" },
       step4: { jp: "受取", kr: "수령" },
       step5: { jp: "投稿", kr: "게시" },
-      step6: { jp: "検査", kr: "검수" },
+      step6: { jp: "確認", kr: "검수" },
       step7: { jp: "精算待ち", kr: "정산 대기" }, // new
       step8: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
       terminalRejected: { jp: "未選定", kr: "미선정" },
@@ -139,7 +139,7 @@ export const messages = {
         step1: { jp: "応募", kr: "응모" },
         step2: { jp: "承認", kr: "승인" },
         step3: { jp: "レビュー提出", kr: "리뷰 제출" },
-        step4: { jp: "検査", kr: "검수" },
+        step4: { jp: "確認", kr: "검수" },
         step5: { jp: "精算待ち", kr: "정산 대기" }, // new
         step6: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
       },
@@ -509,7 +509,7 @@ export const messages = {
           jp: "投稿を確認しました。投稿から7日後にインサイトを提出してください。",
           kr: "게시물을 확인했습니다. 게시 후 7일 뒤에 인사이트를 제출해 주세요.",
         },
-        msgReviewing: { jp: "ブランドが検査中です。", kr: "브랜드가 검수 중입니다." },
+        msgReviewing: { jp: "ブランドが確認中です。", kr: "브랜드가 검수 중입니다." },
         msgCompleted: {
           jp: "完了しました。振込予定をお待ちください。",
           kr: "완료되었습니다. 입금 예정을 기다려 주세요.",

@@ -35,7 +35,7 @@ export type SnsAccountSubType = z.infer<typeof SnsAccountSubTypeSchema>;
  */
 export const SNS_ENABLED: Record<SnsAccountSubType, boolean> = {
   INSTAGRAM: true,
-  TIKTOK: false,
+  TIKTOK: true,
   X: true,
   YOUTUBE: false,
 };

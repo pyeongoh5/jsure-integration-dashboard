@@ -12,6 +12,11 @@ import {
 import styles from "@/pages/Applicants/Applicants.module.css";
 import shared from "../application.module.css";
 
+const SUB_TYPE_PILL_CLASS: Record<string, string> = {
+  LIPS: "",
+  ATCOSME: "",
+};
+
 const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
   QOO10: shared.mediaPillQoo10 ?? "",
 };
@@ -281,6 +286,16 @@ export function ApplicantTable({
                       <span className={shared.mediaItem}>
                         <span
                           className={`${shared.mediaPill} ${FAKE_PURCHASE_PILL_CLASS[applicant.subType] ?? ""}`}
+                          title={SUB_TYPE_LABEL[applicant.subType]}
+                          aria-label={SUB_TYPE_LABEL[applicant.subType]}
+                        >
+                          {SUB_TYPE_LABEL[applicant.subType]}
+                        </span>
+                      </span>
+                    ) : applicant.category === "SIMPLE_REVIEW" ? (
+                      <span className={shared.mediaItem}>
+                        <span
+                          className={`${shared.mediaPill} ${SUB_TYPE_PILL_CLASS[applicant.subType] ?? ""}`}
                           title={SUB_TYPE_LABEL[applicant.subType]}
                           aria-label={SUB_TYPE_LABEL[applicant.subType]}
                         >

@@ -105,24 +105,6 @@ export function Apply() {
     });
   }, [campaign.data]);
 
-  // 단순 리뷰 캠페인은 배송·팔로워 조건이 없으므로 캠페인이 모집하는 모든 서브타입을 자동 선택. // new
-  useEffect(() => {
-    if (!campaign.data) return;
-    if (campaign.data.category !== "SIMPLE_REVIEW") return;
-    const recruitSubTypes = campaign.data.recruits.map((r) => r.subType);
-    setSelectedSns((prev) => {
-      const next = new Set(prev);
-      let mutated = false;
-      for (const subType of recruitSubTypes) {
-        if (!next.has(subType)) {
-          next.add(subType);
-          mutated = true;
-        }
-      }
-      return mutated ? next : prev;
-    });
-  }, [campaign.data]);
-
   // 필수(isRequired=true) 로 지정된 서브타입은 자동 선택. // new
   useEffect(() => {
     if (!campaign.data) return;
@@ -281,7 +263,7 @@ export function Apply() {
               </div>
             ))}
           </section>
-        ) : isSimpleReviewCampaign ? null : ( // new
+        ) : ( // new — SIMPLE_REVIEW 도 SNS 처럼 서브타입 선택 UI 노출
         <section className={styles.sec}>
           <h3>{t("pages.apply.snsSectionTitle")}</h3>
           {requiredNotQualified.length > 0 ? ( // new — 필수 서브타입 자격 미달이 우선
@@ -360,6 +342,8 @@ export function Apply() {
                             {t("campaign.detail.productPrice")}: ¥
                             {(r.productPriceJpy ?? 0).toLocaleString("ja-JP")}
                           </div>
+                        ) : isSimpleReviewCampaign ? ( // new — 단순 리뷰는 서브타입만 표기
+                          <div className={styles.snsCond}>{SNS_LABEL[r.subType]}</div>
                         ) : (
                           <div className={styles.snsCond}>
                             {t("pages.apply.condPrefix")}{SNS_FOLLOWER_LABEL[r.subType]}{" "}

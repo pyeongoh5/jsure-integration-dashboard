@@ -274,13 +274,11 @@ export class AdminApplicationsService {
       },
     });
     if (!existing) throw new NotFoundException("Application not found");
-    if (existing.campaign.category !== "SNS") {
-      throw new BadRequestException(
-        "買取レビューキャンペーンでは発送操作は使用できません",
-      );
+    if (existing.campaign.category !== "SNS" && existing.campaign.category !== "SIMPLE_REVIEW") {
+      throw new BadRequestException("이 카테고리 캠페인에서는 발송 조작을 사용할 수 없습니다");
     }
     if (existing.status !== "APPROVED") {
-      throw new BadRequestException(`Cannot ship from status ${existing.status}`);
+      throw new BadRequestException(`현재 상태(${existing.status})에서는 발송 처리를 할 수 없습니다`);
     }
     await this.prisma.campaignApplication.update({
       where: { id },
@@ -291,7 +289,11 @@ export class AdminApplicationsService {
         shippedAt: new Date(),
       },
     });
-    void this.dispatcher.dispatch("SNS_APPLICATION_SHIPPED", {
+    const shippedTriggerKey =
+      existing.campaign.category === "SIMPLE_REVIEW"
+        ? "SIMPLE_REVIEW_APPLICATION_SHIPPED"
+        : "SNS_APPLICATION_SHIPPED";
+    void this.dispatcher.dispatch(shippedTriggerKey, {
       application: { ...existing, trackingCarrier, trackingNumber },
     });
     return this.fetch(id);
@@ -311,13 +313,11 @@ export class AdminApplicationsService {
       },
     });
     if (!existing) throw new NotFoundException("Application not found");
-    if (existing.campaign.category !== "SNS") {
-      throw new BadRequestException(
-        "買取レビューキャンペーンでは配達操作は使用できません",
-      );
+    if (existing.campaign.category !== "SNS" && existing.campaign.category !== "SIMPLE_REVIEW") {
+      throw new BadRequestException("이 카테고리 캠페인에서는 배송 조작을 사용할 수 없습니다");
     }
     if (existing.status !== "SHIPPED") {
-      throw new BadRequestException(`Cannot deliver from status ${existing.status}`);
+      throw new BadRequestException(`현재 상태(${existing.status})에서는 배송 완료 처리를 할 수 없습니다`);
     }
     await this.prisma.campaignApplication.update({
       where: { id },
@@ -326,7 +326,11 @@ export class AdminApplicationsService {
         deliveredAt: new Date(),
       },
     });
-    void this.dispatcher.dispatch("SNS_APPLICATION_DELIVERED", { application: existing });
+    const deliveredTriggerKey =
+      existing.campaign.category === "SIMPLE_REVIEW"
+        ? "SIMPLE_REVIEW_APPLICATION_DELIVERED"
+        : "SNS_APPLICATION_DELIVERED";
+    void this.dispatcher.dispatch(deliveredTriggerKey, { application: existing });
     return this.fetch(id);
   }
 

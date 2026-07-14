@@ -46,11 +46,15 @@ export function deriveDisplayStage(
 function deriveSimpleReviewStage(
   input: DisplayStageInput,
 ): ApplicationDisplayStage {
-  const { status, posts } = input;
+  const { status, receivedAt, posts } = input;
   if (status === "APPLIED") return "APPLIED";
   if (status === "REJECTED") return "REJECTED";
   if (status === "CANCELLED") return "CANCELLED";
-  if (status === "APPROVED") return "AWAITING_REVIEW";
+  if (status === "APPROVED") return "APPROVED";
+  if (status === "SHIPPED" || status === "DELIVERED") {
+    // 수령 확인 이전엔 AWAITING_RECEIPT, 이후엔 리뷰 제출 대기(AWAITING_REVIEW).
+    return receivedAt ? "AWAITING_REVIEW" : "AWAITING_RECEIPT";
+  }
   if (status === "REVIEW_SUBMITTED") {
     const post = posts[0];
     if (!post) return "AWAITING_REVIEW";

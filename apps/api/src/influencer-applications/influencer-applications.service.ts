@@ -499,10 +499,10 @@ export class InfluencerApplicationsService {
     applicationId: string,
   ): Promise<InfluencerApplication> {
     const app = await this.assertOwnedWithCampaign(influencerId, applicationId);
-    if (app.campaign.category !== "SNS") {
+    if (app.campaign.category !== "SNS" && app.campaign.category !== "SIMPLE_REVIEW") {
       throw new BadRequestException({
         code: "CATEGORY_MISMATCH",
-        message: "SNS 캠페인에서만 사용할 수 있습니다",
+        message: "이 카테고리 캠페인에서는 사용할 수 없습니다",
       });
     }
     if (app.status !== "SHIPPED" && app.status !== "DELIVERED") {
@@ -526,7 +526,11 @@ export class InfluencerApplicationsService {
       where: { id: applicationId },
       include: DISPATCH_APPLICATION_INCLUDE,
     });
-    void this.dispatcher.dispatch("SNS_APPLICATION_RECEIPT_CONFIRMED", {
+    const receiptTriggerKey =
+      app.campaign.category === "SIMPLE_REVIEW"
+        ? "SIMPLE_REVIEW_APPLICATION_RECEIPT_CONFIRMED"
+        : "SNS_APPLICATION_RECEIPT_CONFIRMED";
+    void this.dispatcher.dispatch(receiptTriggerKey, {
       application: refreshed,
     });
     return this.resolveResponse(updated);
@@ -931,11 +935,18 @@ export class InfluencerApplicationsService {
       });
     }
 
+    if (!application.receivedAt) {
+      throw new BadRequestException({
+        code: "INVALID_TRANSITION",
+        message: "수령 확인 후에만 리뷰를 제출할 수 있습니다",
+      });
+    }
     const existingPost = application.posts[0] ?? null;
     const isResubmission =
       application.status === "REVIEW_SUBMITTED" &&
       existingPost?.reviewStatus === "REJECTED";
-    const isFirstSubmission = application.status === "APPROVED";
+    const isFirstSubmission =
+      application.status === "SHIPPED" || application.status === "DELIVERED";
     if (!isFirstSubmission && !isResubmission) {
       throw new BadRequestException({
         code: "INVALID_TRANSITION",

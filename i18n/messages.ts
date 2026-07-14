@@ -46,7 +46,7 @@ export const messages = {
     },
     category: {
       sns: { jp: "SNS", kr: "SNS" },
-      fakePurchase: { jp: "買取レビュー", kr: "가구매" },
+      fakePurchase: { jp: "仮購入", kr: "가구매" },
       simpleReview: { jp: "単純レビュー", kr: "단순 리뷰" }, // new
     },
     subType: {
@@ -56,7 +56,7 @@ export const messages = {
     },
     detail: {
       productUrl: { jp: "商品ページ", kr: "상품 페이지" },
-      expectedSettlement: { jp: "予定精算金額", kr: "예상 정산액" },
+      expectedSettlement: { jp: "精算予定金額", kr: "예상 정산액" },
       productPrice: { jp: "商品価格", kr: "상품 가격" },
       reviewChannels: { jp: "レビューチャンネル", kr: "리뷰 채널" },
     },
@@ -76,7 +76,7 @@ export const messages = {
         kr: "주소 검색에 실패했습니다. 직접 입력해 주세요",
       },
       postalHint: {
-        jp: "例: 150-0001 (入力すると自動補完されます)",
+        jp: "例: 150-0001 （郵便番号から住所が自動入力されます）",
         kr: "예: 150-0001 (입력하면 자동으로 채워집니다)",
       },
       prefectureLabel: { jp: "都道府県", kr: "도도부현" },
@@ -106,7 +106,7 @@ export const messages = {
       AWAITING_RECEIPT: { jp: "受領確認待ち", kr: "수령 확인 대기" },
       POSTING: { jp: "投稿期間", kr: "게시 기간" },
       POSTED: { jp: "投稿完了", kr: "게시 완료" },
-      POST_REJECTED: { jp: "投稿を伴う", kr: "게시 반려" },
+      POST_REJECTED: { jp: "投稿差し戻し", kr: "게시 반려" },
       INSIGHT_DUE: { jp: "インサイト提出", kr: "인사이트 제출" },
       REVIEWING: { jp: "検査中", kr: "검수 중" },
       COMPLETED: { jp: "精算待ち", kr: "정산 대기" }, // new
@@ -171,7 +171,7 @@ export const messages = {
     receiptConfirm: {
       title: { jp: "受領を確認しますか？", kr: "수령을 확인하시겠습니까?" },
       bodyPrefix: {
-        jp: "受領を確認すると、ここから投稿期間（",
+        jp: "受領を確認すると、今から投稿期間（",
         kr: "수령을 확인하시면 지금부터 게시 기간(",
       },
       bodySuffix: {
@@ -282,7 +282,7 @@ export const messages = {
       submit: { jp: "インサイトを提出", kr: "인사이트 제출" },
     },
     postForm: {
-      urlInvalid: { jp: "正しいURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
+      urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
       labelSuffix: { jp: "投稿URL", kr: "게시 URL" },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       update: { jp: "投稿URLを更新", kr: "게시 URL 업데이트" },
@@ -294,7 +294,7 @@ export const messages = {
       deadlineLabelPrefix: { jp: "投稿締切日: ", kr: "게시 마감일: " },
     },
     simpleReviewForm: { // new
-      urlInvalid: { jp: "正しいURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
+      urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
       labelSuffix: { jp: "レビューURL", kr: "리뷰 URL" },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       update: { jp: "レビューURLを更新", kr: "리뷰 URL 업데이트" },
@@ -417,7 +417,7 @@ export const messages = {
         bankRequired: { jp: "銀行を選択してください", kr: "은행을 선택해 주세요" },
         reviewInputs: { jp: "入力内容を再度ご確認ください", kr: "입력 내용을 다시 확인해 주세요" },
         signupFailed: {
-          jp: "登録に失敗しました。しばらくしてから再度お試しください。",
+          jp: "会員登録に失敗しました。しばらくしてから再度お試しください。",
           kr: "가입에 실패했습니다. 잠시 후 다시 시도해 주세요.",
         },
         heading: { jp: "振込先口座", kr: "입금 계좌" },
@@ -625,7 +625,7 @@ export const messages = {
       },
       login: {
         intro: {
-          jp: "LINEアカウントでログイン・新規登録できます。",
+          jp: "LINEアカウントでログイン・新規登録ができます。",
           kr: "LINE 계정으로 로그인·회원가입할 수 있습니다.",
         },
         continueWithLine: { jp: "LINEで続行", kr: "LINE으로 계속하기" },

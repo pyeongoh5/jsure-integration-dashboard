@@ -13,8 +13,8 @@ import styles from "@/pages/Applicants/Applicants.module.css";
 import shared from "../application.module.css";
 
 const SUB_TYPE_PILL_CLASS: Record<string, string> = {
-  LIPS: "",
-  ATCOSME: "",
+  LIPS: shared.mediaPillQoo10 ?? "",
+  ATCOSME: shared.mediaPillQoo10 ?? "",
 };
 
 const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {

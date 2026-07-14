@@ -8,7 +8,7 @@ import { fetchMe } from "@/domains/auth";
 import { t } from "@i18n";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
-import { ErrorBanner } from "../../components/composites/ErrorBanner";
+import { Toast } from "../../components/composites/Toast";
 import styles from "./Apply.module.css";
 
 const CONFIRM_KEYS_SNS = [
@@ -475,7 +475,7 @@ export function Apply() {
           ))}
         </section>
 
-        {error && <ErrorBanner message={error} />}
+        {error && <Toast message={error} onDismiss={() => setError(null)} />}
       </div>
 
       <div className={styles.cta}>

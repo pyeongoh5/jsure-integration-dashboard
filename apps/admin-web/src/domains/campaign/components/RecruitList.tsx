@@ -259,7 +259,7 @@ export function RecruitList({ category, value, onChange, disabled, errorByIndex 
                         }
                       />
                       <span className={styles.snsToggleLabel}>
-                        응모 필수 (인플루언서가 해제할 수 없음)
+                        응모 필수
                       </span>
                     </label>
                   </div>
@@ -362,7 +362,7 @@ export function RecruitList({ category, value, onChange, disabled, errorByIndex 
                         }
                       />
                       <span className={styles.snsToggleLabel}>
-                        응모 필수 (인플루언서가 해제할 수 없음)
+                        응모 필수
                       </span>
                     </label>
                   </div>

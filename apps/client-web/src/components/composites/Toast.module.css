@@ -1,6 +1,6 @@
 .root {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0) + 48px + var(--space-3));
+  top: calc(env(safe-area-inset-top, 0) + 24px + var(--space-3));
   left: var(--space-3);
   right: var(--space-3);
   z-index: 1000;

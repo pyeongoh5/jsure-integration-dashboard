@@ -42,7 +42,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
         상세
       </Button>
     ) : null;
-  const isSns = applicant.category === "SNS";
+  const hasShipping = applicant.category === "SNS" || applicant.category === "SIMPLE_REVIEW";
 
   switch (applicant.status) {
     case "APPLIED":
@@ -61,7 +61,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
     case "PRE_SHIP":
       return (
         <div className={styles.actions}>
-          {isSns && (
+          {hasShipping && (
             <Button variant="primary" size="sm" onClick={() => handlers.onShip(applicant)}>
               운송장 입력
             </Button>
@@ -76,7 +76,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
     case "SHIPPING":
       return (
         <div className={styles.actions}>
-          {isSns && (
+          {hasShipping && (
             <Button variant="primary" size="sm" onClick={() => handlers.onDeliver(applicant)}>
               배송 완료
             </Button>

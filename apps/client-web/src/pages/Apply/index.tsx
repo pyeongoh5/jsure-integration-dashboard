@@ -25,13 +25,22 @@ const CONFIRM_KEYS_FAKE_PURCHASE = [
   "GUIDELINE",
 ] as const;
 type ConfirmKey = (typeof CONFIRM_KEYS_SNS)[number];
-const CONFIRM_LABELS: Record<ConfirmKey, string> = {
-  PR_LABEL: t("pages.apply.confirmPr"),
-  DEADLINE: t("pages.apply.confirmDeadline"),
-  INSIGHTS: t("pages.apply.confirmInsights"),
-  YAKKIHO: t("pages.apply.confirmYakkiho"),
-  GUIDELINE: t("pages.apply.confirmGuideline"),
-};
+
+// DEADLINE 은 캠페인의 postingPeriodDays 를 삽입해서 동적으로 노출한다. // new
+function confirmLabel(key: ConfirmKey, postingPeriodDays: number): string { // new
+  switch (key) {
+    case "PR_LABEL":
+      return t("pages.apply.confirmPr");
+    case "DEADLINE":
+      return `${t("pages.apply.confirmDeadlinePrefix")}${postingPeriodDays}${t("pages.apply.confirmDeadlineSuffix")}`;
+    case "INSIGHTS":
+      return t("pages.apply.confirmInsights");
+    case "YAKKIHO":
+      return t("pages.apply.confirmYakkiho");
+    case "GUIDELINE":
+      return t("pages.apply.confirmGuideline");
+  }
+}
 
 const FAKE_PURCHASE_SUB_TYPES: readonly CampaignSubType[] = ["QOO10"];
 
@@ -429,7 +438,7 @@ export function Apply() {
                 checked={agreed.has(k)}
                 onChange={() => toggleAgree(k)}
               />
-              <span>{CONFIRM_LABELS[k]}</span>
+              <span>{confirmLabel(k, campaign.data.postingPeriodDays)}</span> {/* new */}
             </label>
           ))}
         </section>

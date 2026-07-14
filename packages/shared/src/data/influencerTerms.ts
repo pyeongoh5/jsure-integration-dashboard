@@ -1,6 +1,6 @@
 import type { ConsentItem } from "../types/influencer.js";
 
-export const INFLUENCER_TERMS_VERSION = "2026-05-23";
+export const INFLUENCER_TERMS_VERSION = "2026-07-14";
 
 export interface InfluencerTerm {
   key: ConsentItem;
@@ -21,8 +21,8 @@ export const INFLUENCER_TERMS: ReadonlyArray<InfluencerTerm> = [
   {
     key: "DEADLINE",
     title: "投稿期限について",
-    bodyJa: "商品受け取り後、2週間以内の投稿を遵守いただけますか？",
-    bodyKo: "상품 수령 후 2주 이내 게시 기한을 준수하실 수 있나요？",
+    bodyJa: "各キャンペーンで定められた投稿期限を遵守いただけますか？",
+    bodyKo: "각 캠페인에서 정한 게시 기한을 준수하실 수 있나요？",
   },
   {
     key: "INSIGHTS",

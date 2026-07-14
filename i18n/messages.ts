@@ -355,7 +355,8 @@ export const messages = {
         jp: "投稿冒頭に「#PR」または「ブランドから提供」表記",
         kr: "게시물 처음에 「#PR」 또는 「브랜드에서 제공」 표기",
       },
-      confirmDeadline: { jp: "受取後1週間以内に投稿", kr: "수령 후 1주 이내에 게시" },
+      confirmDeadlinePrefix: { jp: "受取後", kr: "수령 후 " }, // new
+      confirmDeadlineSuffix: { jp: "日以内に投稿", kr: "일 이내에 게시" }, // new
       confirmInsights: { jp: "投稿7日後にインサイト提出", kr: "게시 후 7일 뒤 인사이트 제출" },
       confirmYakkiho: { jp: "薬機法の遵守", kr: "약기법 준수" },
       confirmGuideline: { jp: "ガイドラインの確認・遵守", kr: "가이드라인 확인·준수" },

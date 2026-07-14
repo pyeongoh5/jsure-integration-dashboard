@@ -45,6 +45,8 @@ export const CampaignRecruitSchema = z.object({
   subTypeOptions: z.array(z.string()).default([]),
   /** false 면 인플루언서가 인사이트를 제출하지 않아도 정산이 진행될 수 있다. */
   insightRequired: z.boolean().default(true),
+  /** true 면 인플루언서 응모 시 이 서브타입이 자동 선택되며 해제 불가. */
+  isRequired: z.boolean().default(false),
   /** 가구매 캠페인용: 상품 가격(JPY). SNS 캠페인은 null. */
   productPriceJpy: z.number().int().positive().nullable().default(null),
   /** 가구매 캠페인용: 상품 URL. SNS 캠페인은 null. */
@@ -65,6 +67,7 @@ const CampaignRecruitInputSchema = z
       .positive("1 이상"),
     subTypeOptions: z.array(z.string()).default([]),
     insightRequired: z.boolean().default(true),
+    isRequired: z.boolean().default(false),
     productPriceJpy: z
       .number({ invalid_type_error: "숫자를 입력해주세요" })
       .int("정수만 입력")
@@ -174,6 +177,13 @@ function refineRecruitsByCategory(
           message: "가구매 캠페인에서 사용할 수 없는 서브타입입니다",
         });
         return;
+      }
+      if (recruit.isRequired) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "isRequired"],
+          message: "가구매 캠페인에서는 필수 여부를 지정할 수 없습니다",
+        });
       }
       if (recruit.subType === "QOO10") {
         const invalid = recruit.subTypeOptions.filter(

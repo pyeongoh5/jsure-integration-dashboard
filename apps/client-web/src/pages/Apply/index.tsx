@@ -123,6 +123,26 @@ export function Apply() {
     });
   }, [campaign.data]);
 
+  // 필수(isRequired=true) 로 지정된 서브타입은 자동 선택. // new
+  useEffect(() => {
+    if (!campaign.data) return;
+    const required = campaign.data.recruits
+      .filter((r) => r.isRequired)
+      .map((r) => r.subType);
+    if (required.length === 0) return;
+    setSelectedSns((prev) => {
+      const next = new Set(prev);
+      let mutated = false;
+      for (const subType of required) {
+        if (!next.has(subType)) {
+          next.add(subType);
+          mutated = true;
+        }
+      }
+      return mutated ? next : prev;
+    });
+  }, [campaign.data]);
+
   const qualifying = useMemo(() => {
     if (!campaign.data || !me.data) return [];
     if (
@@ -191,7 +211,19 @@ export function Apply() {
     });
   }
 
+  const requiredSubTypes = useMemo<CampaignSubType[]>(() => { // new
+    if (!campaign.data) return [];
+    return campaign.data.recruits
+      .filter((r) => r.isRequired)
+      .map((r) => r.subType);
+  }, [campaign.data]);
+
+  const requiredNotQualified = useMemo<CampaignSubType[]>(() => { // new
+    return requiredSubTypes.filter((subType) => !qualifying.includes(subType));
+  }, [requiredSubTypes, qualifying]);
+
   function toggleSns(s: CampaignSubType) {
+    if (requiredSubTypes.includes(s)) return; // new — 필수 서브타입은 해제 불가 방어
     setSelectedSns((prev) => {
       const next = new Set(prev);
       if (next.has(s)) next.delete(s);
@@ -252,7 +284,13 @@ export function Apply() {
         ) : isSimpleReviewCampaign ? null : ( // new
         <section className={styles.sec}>
           <h3>{t("pages.apply.snsSectionTitle")}</h3>
-          {qualifying.length === 0 ? (
+          {requiredNotQualified.length > 0 ? ( // new — 필수 서브타입 자격 미달이 우선
+            <p style={{ color: "#ef4444", fontSize: 13 }}>
+              {t("pages.apply.requiredNotQualifiedPrefix")}
+              {requiredNotQualified.map((subType) => SNS_LABEL[subType]).join(", ")}
+              {t("pages.apply.requiredNotQualifiedSuffix")}
+            </p>
+          ) : qualifying.length === 0 ? (
             <p style={{ color: "#ef4444", fontSize: 13 }}>
               {t("pages.apply.noQualifying")}
             </p>
@@ -273,8 +311,13 @@ export function Apply() {
                   followerByMySns as Map<CampaignSubType, number>
                 ).get(r.subType);
                 const isSelected = selectedSns.has(r.subType);
+                const isRequired = r.isRequired; // new
                 const disabled =
-                  !isQualifying || alreadyApplied || isCancelled || isExcluded;
+                  !isQualifying ||
+                  alreadyApplied ||
+                  isCancelled ||
+                  isExcluded ||
+                  isRequired; // new — 필수 서브타입은 해제 불가
                 return (
                   <li key={r.subType}>
                     <label
@@ -304,6 +347,11 @@ export function Apply() {
                           {!alreadyApplied && !isCancelled && isExcluded && (
                             <span style={{ marginLeft: 8, color: "#ef4444", fontSize: 11 }}>
                               {t("pages.apply.excludedTag")}
+                            </span>
+                          )}
+                          {isRequired && !alreadyApplied && !isCancelled && !isExcluded && ( // new
+                            <span style={{ marginLeft: 8, color: "#2563eb", fontSize: 11 }}>
+                              {t("pages.apply.requiredBadge")}
                             </span>
                           )}
                         </div>
@@ -454,6 +502,7 @@ export function Apply() {
             !hasSelection ||
             instagramPostTypeMissing ||
             qualifying.length === 0 ||
+            requiredNotQualified.length > 0 || // new — 필수 서브타입 자격 미달 시 응모 자체 불가
             (!isFakePurchaseCampaign && (!me.data?.address || !addressConfirmed)) || // new
             apply.isPending
           }

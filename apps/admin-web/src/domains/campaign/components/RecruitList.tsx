@@ -99,6 +99,7 @@ function createRecruit(
       recruitCount: 1,
       subTypeOptions: subType === "INSTAGRAM" ? ["FEED"] : [],
       insightRequired: true,
+      isRequired: false,
       productPriceJpy: null,
       productUrl: null,
     };
@@ -110,6 +111,7 @@ function createRecruit(
       recruitCount: 1,
       subTypeOptions: [],
       insightRequired: false,
+      isRequired: false,
       productPriceJpy: null,
       productUrl: null,
     };
@@ -120,6 +122,7 @@ function createRecruit(
     recruitCount: 1,
     subTypeOptions: [],
     insightRequired: false,
+    isRequired: false,
     productPriceJpy: Number.NaN as unknown as number,
     productUrl: "",
   };
@@ -243,6 +246,23 @@ export function RecruitList({ category, value, onChange, disabled, errorByIndex 
                       <div className={styles.error}>{errors.recruitCount}</div>
                     )}
                   </div>
+                  <div className={`${styles.snsField} ${styles.snsFieldRight}`}>
+                    <label className={styles.snsToggle}>
+                      <input
+                        type="checkbox"
+                        checked={row.isRequired}
+                        disabled={disabled}
+                        onChange={() =>
+                          updateAt(index, {
+                            isRequired: !row.isRequired,
+                          })
+                        }
+                      />
+                      <span className={styles.snsToggleLabel}>
+                        응모 필수 (인플루언서가 해제할 수 없음)
+                      </span>
+                    </label>
+                  </div>
                 </div>
               ) : category === "SNS" ? (
                 <div className={styles.snsFields}>
@@ -329,6 +349,21 @@ export function RecruitList({ category, value, onChange, disabled, errorByIndex 
                         }
                       />
                       <span className={styles.snsToggleLabel}>인사이트 제출 필수</span>
+                    </label>
+                    <label className={styles.snsToggle} style={{ marginTop: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={row.isRequired}
+                        disabled={disabled}
+                        onChange={() =>
+                          updateAt(index, {
+                            isRequired: !row.isRequired,
+                          })
+                        }
+                      />
+                      <span className={styles.snsToggleLabel}>
+                        응모 필수 (인플루언서가 해제할 수 없음)
+                      </span>
                     </label>
                   </div>
                 </div>

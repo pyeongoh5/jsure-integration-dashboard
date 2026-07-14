@@ -174,6 +174,7 @@ type CampaignRecruitRow = {
   recruitCount: number;
   subTypeOptions: string[];
   insightRequired: boolean;
+  isRequired: boolean;
   productPriceJpy: number | null;
   productUrl: string | null;
 };
@@ -225,6 +226,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
       recruitCount: recruit.recruitCount,
       subTypeOptions: recruit.subTypeOptions,
       insightRequired: recruit.insightRequired,
+      isRequired: recruit.isRequired,
       productPriceJpy: recruit.productPriceJpy,
       productUrl: recruit.productUrl,
     })),
@@ -256,6 +258,7 @@ const RECRUITS_INCLUDE = {
       recruitCount: true,
       subTypeOptions: true,
       insightRequired: true,
+      isRequired: true,
       productPriceJpy: true,
       productUrl: true,
     },
@@ -388,11 +391,13 @@ export class CampaignsService {
     recruitCount: number;
     subTypeOptions: string[];
     insightRequired: boolean;
+    isRequired: boolean;
     productPriceJpy: number | null;
     productUrl: string | null;
   }[] {
     return recruits.map((recruit) => {
       const insightRequired = recruit.insightRequired ?? true;
+      const isRequired = recruit.isRequired ?? false;
       const productPriceJpy = recruit.productPriceJpy ?? null;
       const productUrl = recruit.productUrl ?? null;
       const unique = Array.from(new Set(recruit.subTypeOptions ?? []));
@@ -408,6 +413,7 @@ export class CampaignsService {
           recruitCount: recruit.recruitCount,
           subTypeOptions: unique,
           insightRequired,
+          isRequired,
           productPriceJpy,
           productUrl,
         };
@@ -419,6 +425,7 @@ export class CampaignsService {
           recruitCount: recruit.recruitCount,
           subTypeOptions: unique,
           insightRequired,
+          isRequired,
           productPriceJpy,
           productUrl,
         };
@@ -429,6 +436,7 @@ export class CampaignsService {
         recruitCount: recruit.recruitCount,
         subTypeOptions: [],
         insightRequired,
+        isRequired,
         productPriceJpy,
         productUrl,
       };

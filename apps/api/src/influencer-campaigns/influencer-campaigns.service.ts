@@ -28,6 +28,7 @@ type CampaignRow = {
     recruitCount: number;
     subTypeOptions: string[];
     insightRequired: boolean;
+    isRequired: boolean;
     productPriceJpy: number | null;
     productUrl: string | null;
   }[];
@@ -101,6 +102,7 @@ export class InfluencerCampaignsService {
             recruitCount: true,
             subTypeOptions: true,
             insightRequired: true,
+            isRequired: true,
             productPriceJpy: true,
             productUrl: true,
           },
@@ -147,6 +149,7 @@ export class InfluencerCampaignsService {
             recruitCount: true,
             subTypeOptions: true,
             insightRequired: true,
+            isRequired: true,
             productPriceJpy: true,
             productUrl: true,
           },

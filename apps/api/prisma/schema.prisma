@@ -149,6 +149,7 @@ model CampaignRecruit {
   recruitCount       Int
   subTypeOptions     String[]            @default([])
   insightRequired    Boolean             @default(true)
+  isRequired         Boolean             @default(false)
   productPriceJpy    Int?
   productUrl         String?
   createdAt          DateTime            @default(now())

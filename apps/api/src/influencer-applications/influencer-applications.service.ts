@@ -270,6 +270,7 @@ export class InfluencerApplicationsService {
             minFollowers: true,
             recruitCount: true,
             subTypeOptions: true,
+            isRequired: true,
           },
         },
         exclusionsAsExcluding: { select: { excludedCampaignId: true } },
@@ -317,6 +318,22 @@ export class InfluencerApplicationsService {
           message: "선택한 SNS 는 이 캠페인에서 모집하지 않습니다",
         });
       }
+    }
+
+    // 필수 서브타입은 응모 요청에 반드시 포함되어야 한다. UI 는 자동 선택·잠금하지만
+    // API 직접 호출 우회를 방지하기 위한 서버 측 방어. FAKE_PURCHASE 는 refine 에서
+    // isRequired=true 를 이미 금지하므로 자동으로 빈 집합이 된다.
+    const requiredSubTypes = campaign.recruits
+      .filter((recruit) => recruit.isRequired)
+      .map((recruit) => recruit.subType as CampaignSubType);
+    const missingRequired = requiredSubTypes.filter(
+      (subType) => !subTypes.includes(subType),
+    );
+    if (missingRequired.length > 0) {
+      throw new BadRequestException({
+        code: "REQUIRED_SUBTYPE_MISSING",
+        message: "필수 참여 서브타입이 응모에 포함되지 않았습니다",
+      });
     }
 
     // 제외 캠페인에 "같은 SNS"로 응모한 이력이 있으면 그 SNS 응모만 차단 (CANCELLED 제외)
@@ -368,6 +385,17 @@ export class InfluencerApplicationsService {
       }
 
       const qualifyingSet = new Set(qualifyingSubTypes);
+      // 필수 서브타입이 자격 조건을 만족하지 않으면 응모 자체 불가 — 코드를 별도로
+      // 구분해 프론트에서 안내 문구를 달리 노출한다.
+      const requiredNotQualified = requiredSubTypes.filter(
+        (subType) => !qualifyingSet.has(subType),
+      );
+      if (requiredNotQualified.length > 0) {
+        throw new BadRequestException({
+          code: "REQUIRED_SUBTYPE_NOT_QUALIFIED",
+          message: "필수 참여 서브타입의 자격 조건을 만족하지 않습니다",
+        });
+      }
       const invalid = subTypes.filter((subType) => !qualifyingSet.has(subType));
       if (invalid.length > 0) {
         throw new BadRequestException({

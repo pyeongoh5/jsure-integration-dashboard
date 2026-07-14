@@ -376,6 +376,15 @@ export const messages = {
         jp: "応募条件を満たすSNSアカウントがありません",
         kr: "응모 조건을 충족하는 SNS 계정이 없습니다",
       },
+      requiredBadge: { jp: "必須", kr: "필수" }, // new
+      requiredNotQualifiedPrefix: { // new
+        jp: "このキャンペーンは ",
+        kr: "이 캠페인은 ",
+      },
+      requiredNotQualifiedSuffix: { // new
+        jp: " の応募が必須ですが、応募条件を満たすアカウントがありません",
+        kr: " 응모가 필수이지만 자격 조건을 만족하는 계정이 없습니다",
+      },
       appliedTag: { jp: "応募済み", kr: "응모 완료" },
       cancelledTag: { jp: "応募キャンセル済（再応募不可）", kr: "응모 취소됨 (재응모 불가)" },
       excludedTag: {

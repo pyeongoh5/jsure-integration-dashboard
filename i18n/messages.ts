@@ -493,7 +493,7 @@ export const messages = {
     },
     applications: {
       list: {
-        title: { jp: "応募内訳", kr: "응모 내역" },
+        title: { jp: "応募履歴", kr: "응모 내역" },
         loading: { jp: "読み込み中…", kr: "불러오는 중…" },
         loadError: { jp: "読み込みに失敗しました", kr: "불러오지 못했습니다" },
         empty: { jp: "まだ応募していません", kr: "아직 응모하지 않았습니다" },
@@ -557,7 +557,7 @@ export const messages = {
       productLinkText: { jp: "商品ページを見る →", kr: "상품 페이지 보기 →" },
       sectionGuideline: { jp: "ガイドライン", kr: "가이드라인" },
       sectionCautions: { jp: "注意事項", kr: "주의사항" },
-      viewApplications: { jp: "応募内訳を見る", kr: "응모 내역 보기" },
+      viewApplications: { jp: "応募履歴を見る", kr: "응모 내역 보기" },
       ctaClosed: { jp: "募集終了", kr: "모집 종료" },
       ctaAppliedOther: { jp: "別のSNSで応募する", kr: "다른 SNS로 응모하기" },
       ctaApply: { jp: "応募する", kr: "응모하기" },

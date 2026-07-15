@@ -31,9 +31,9 @@ export class LineRemindersService {
   @Cron("0 9 * * *", { timeZone: JST_TZ })
   async runDaily(): Promise<void> {
     try {
-      await this.runPostingReminders();
-      await this.runInsightReminders();
-      await this.runPostRejectionReminders();
+      await this.runSnsPostingReminders();
+      await this.runSnsInsightReminders();
+      await this.runSnsPostRejectionReminders();
       await this.runFakePurchaseReviewReminders();
       await this.runSimpleReviewDeadlineReminders();
       await this.runSimpleReviewRejectionReminders();
@@ -47,13 +47,14 @@ export class LineRemindersService {
     return this.runDaily();
   }
 
-  private async runPostingReminders(): Promise<void> {
+  private async runSnsPostingReminders(): Promise<void> {
     const todayStart = startOfJstDay(new Date());
 
     const apps = await this.prisma.campaignApplication.findMany({
       where: {
         receivedAt: { not: null },
         status: { in: ["SHIPPED", "DELIVERED"] },
+        campaign: { category: "SNS" },
       },
       include: {
         ...DISPATCH_APPLICATION_INCLUDE,
@@ -78,14 +79,18 @@ export class LineRemindersService {
     }
   }
 
-  private async runPostRejectionReminders(): Promise<void> {
+  private async runSnsPostRejectionReminders(): Promise<void> {
     const todayStart = startOfJstDay(new Date());
     const yesterdayStart = todayStart - DAY_MS;
 
     // post.reviewedAt 은 rejectSubmittedPost 시점에 가장 최근 반려와 동일하게 갱신되므로
     // "현재 활성 반려"의 시각을 그대로 나타낸다. 과거 반려 row 는 reviewedAt 과 무관.
     const posts = await this.prisma.submittedPost.findMany({
-      where: { reviewStatus: "REJECTED", reviewedAt: { not: null } },
+      where: {
+        reviewStatus: "REJECTED",
+        reviewedAt: { not: null },
+        application: { campaign: { category: "SNS" } },
+      },
       include: {
         application: {
           include: DISPATCH_APPLICATION_INCLUDE,
@@ -114,7 +119,7 @@ export class LineRemindersService {
     }
   }
 
-  private async runInsightReminders(): Promise<void> {
+  private async runSnsInsightReminders(): Promise<void> {
     const todayStart = startOfJstDay(new Date());
 
     // submittedAt 의 JST 기준 일자가 정확히 N일 전인 post만 대상.
@@ -123,6 +128,7 @@ export class LineRemindersService {
       where: {
         insightSubmittedAt: null,
         reviewStatus: { in: ["PENDING", "APPROVED"] },
+        application: { campaign: { category: "SNS" } },
       },
       include: {
         application: {

@@ -7,6 +7,7 @@ import { DISPATCH_APPLICATION_INCLUDE } from "./trigger-meta";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const POSTING_REMINDER_DAYS = [3, 1];
 const INSIGHT_REMINDER_DAY_AFTER_POST = 7;
+const INSIGHT_OVERDUE_REMINDER_DAY_AFTER_POST = 8;
 const POST_REJECTION_RESUBMIT_DAYS = 1;
 const JST_TZ = "Asia/Tokyo";
 
@@ -33,6 +34,7 @@ export class LineRemindersService {
     try {
       await this.runSnsPostingReminders();
       await this.runSnsInsightReminders();
+      await this.runSnsInsightOverdueReminders();
       await this.runSnsPostRejectionReminders();
       await this.runFakePurchaseReviewReminders();
       await this.runSimpleReviewDeadlineReminders();
@@ -143,6 +145,34 @@ export class LineRemindersService {
       if (elapsedDays !== INSIGHT_REMINDER_DAY_AFTER_POST) continue;
 
       await this.dispatcher.dispatch("SNS_INSIGHT_REMINDER", {
+        application: post.application,
+      });
+    }
+  }
+
+  /** SNS: 인사이트 제출 마감 다음날(day+1) 미제출 응모에 독촉 리마인더. */
+  private async runSnsInsightOverdueReminders(): Promise<void> {
+    const todayStart = startOfJstDay(new Date());
+
+    const posts = await this.prisma.submittedPost.findMany({
+      where: {
+        insightSubmittedAt: null,
+        reviewStatus: { in: ["PENDING", "APPROVED"] },
+        application: { campaign: { category: "SNS" } },
+      },
+      include: {
+        application: {
+          include: DISPATCH_APPLICATION_INCLUDE,
+        },
+      },
+    });
+
+    for (const post of posts) {
+      const submittedDayStart = startOfJstDay(post.submittedAt);
+      const elapsedDays = Math.round((todayStart - submittedDayStart) / DAY_MS);
+      if (elapsedDays !== INSIGHT_OVERDUE_REMINDER_DAY_AFTER_POST) continue;
+
+      await this.dispatcher.dispatch("SNS_INSIGHT_OVERDUE_REMINDER", {
         application: post.application,
       });
     }

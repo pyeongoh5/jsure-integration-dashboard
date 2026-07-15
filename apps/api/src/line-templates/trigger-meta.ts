@@ -378,15 +378,20 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     category: "SNS",
     variables: withBase(rejectReason, finalDeadline),
   },
+  SNS_INSIGHT_REMINDER: {
+    category: "SNS",
+    variables: withBase(),
+  },
   SNS_INSIGHT_SUBMITTED: {
     category: "SNS",
     variables: withBase(),
   },
-  SNS_INSIGHT_APPROVED: {
+  SNS_INSIGHT_OVERDUE_REMINDER: {
     category: "SNS",
     variables: withBase(),
   },
-  SNS_INSIGHT_REMINDER: {
+  // 사용 안 함 (dispatch 사이트 제거됨). enum/DB row 호환용으로만 유지.
+  SNS_INSIGHT_APPROVED: {
     category: "SNS",
     variables: withBase(),
   },

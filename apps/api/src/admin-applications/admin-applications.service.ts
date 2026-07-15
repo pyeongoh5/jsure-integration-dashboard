@@ -466,9 +466,7 @@ export class AdminApplicationsService {
           ? "FAKE_PURCHASE_REVIEW_APPROVED"
           : category === "SIMPLE_REVIEW"
             ? "SIMPLE_REVIEW_APPROVED"
-            : refreshed.insightSubmittedAt !== null
-              ? "SNS_INSIGHT_APPROVED"
-              : "SNS_POST_APPROVED";
+            : "SNS_POST_APPROVED";
       void this.dispatcher.dispatch(approveTriggerKey, {
         application: refreshed.application,
         post: refreshed,

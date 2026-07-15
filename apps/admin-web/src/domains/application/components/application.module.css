@@ -96,39 +96,6 @@
   background: #000;
 }
 
-/* Media pills (fake purchase) */
-.mediaPill {
-  display: inline-flex;
-  height: 26px;
-  padding: 0 10px;
-  border-radius: 8px;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
-}
-
-.mediaPillQoo10 {
-  background: linear-gradient(135deg, #ff2a2a 0%, #e60012 100%);
-}
-
-.mediaPillAtcosme {
-  background: linear-gradient(135deg, #ff3355 0%, #d40028 100%);
-  font-family: "Helvetica Neue", Arial, sans-serif;
-  font-style: italic;
-}
-
-.mediaPillLips {
-  background: linear-gradient(135deg, #ff6a9a 0%, #ff2e6a 55%, #d81b60 100%);
-  letter-spacing: 0.08em;
-}
-
 /* Category badges */
 .categoryCell {
   display: flex;

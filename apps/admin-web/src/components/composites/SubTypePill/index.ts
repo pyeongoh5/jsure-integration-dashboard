@@ -1,0 +1,1 @@
+export { SubTypePill } from "./SubTypePill";

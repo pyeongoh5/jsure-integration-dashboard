@@ -1,5 +1,4 @@
-import { SUB_TYPE_LABEL } from "@jsure/shared";
-import { ScrollTable } from "@/components/composites";
+import { ScrollTable, SubTypePill } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
 import {
@@ -11,15 +10,6 @@ import {
 } from "./types";
 import styles from "@/pages/Applicants/Applicants.module.css";
 import shared from "../application.module.css";
-
-const SUB_TYPE_PILL_CLASS: Record<string, string> = {
-  LIPS: shared.mediaPillLips ?? "",
-  ATCOSME: shared.mediaPillAtcosme ?? "",
-};
-
-const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
-  QOO10: shared.mediaPillQoo10 ?? "",
-};
 
 type ActionHandlers = {
   onApprove: (applicant: Applicant) => void;
@@ -278,25 +268,10 @@ export function ApplicantTable({
                 <td width="100">{renderCategory(applicant)}</td>
                 <td>
                   <div className={styles.mediaList}>
-                    {applicant.category === "FAKE_PURCHASE" ? (
+                    {applicant.category === "FAKE_PURCHASE" ||
+                    applicant.category === "SIMPLE_REVIEW" ? (
                       <span className={shared.mediaItem}>
-                        <span
-                          className={`${shared.mediaPill} ${FAKE_PURCHASE_PILL_CLASS[applicant.subType] ?? ""}`}
-                          title={SUB_TYPE_LABEL[applicant.subType]}
-                          aria-label={SUB_TYPE_LABEL[applicant.subType]}
-                        >
-                          {SUB_TYPE_LABEL[applicant.subType]}
-                        </span>
-                      </span>
-                    ) : applicant.category === "SIMPLE_REVIEW" ? (
-                      <span className={shared.mediaItem}>
-                        <span
-                          className={`${shared.mediaPill} ${SUB_TYPE_PILL_CLASS[applicant.subType] ?? ""}`}
-                          title={SUB_TYPE_LABEL[applicant.subType]}
-                          aria-label={SUB_TYPE_LABEL[applicant.subType]}
-                        >
-                          {SUB_TYPE_LABEL[applicant.subType]}
-                        </span>
+                        <SubTypePill subType={applicant.subType} />
                       </span>
                     ) : (
                       applicant.media.map((media) => {

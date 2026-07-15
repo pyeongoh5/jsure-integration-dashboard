@@ -1,6 +1,5 @@
 import { Fragment } from "react";
-import { SUB_TYPE_LABEL } from "@jsure/shared";
-import { ScrollTable } from "@/components/composites";
+import { ScrollTable, SubTypePill } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { CATEGORY_LABEL_KO } from "../applicants/types";
 import {
@@ -22,15 +21,6 @@ const MEDIA_CLASS: Record<Media, string | undefined> = {
   qoo10: shared.mediaQoo10,
   lips: shared.mediaQoo10,
   atcosme: shared.mediaQoo10,
-};
-
-const FAKE_PURCHASE_PILL_CLASS: Record<string, string> = {
-  QOO10: shared.mediaPillQoo10 ?? "",
-};
-
-const SUB_TYPE_PILL_CLASS: Record<string, string> = {
-  LIPS: shared.mediaPillQoo10 ?? "",
-  ATCOSME: shared.mediaPillQoo10 ?? "",
 };
 
 // 상태별 배지 색 클래스. Drafts.module.css 에서 정의.
@@ -240,25 +230,10 @@ export function DraftTable({
                     <td>{draft.campaignTitle}</td>
                     <td>{renderCategoryCell(draft)}</td>
                     <td>
-                      {draft.category === "FAKE_PURCHASE" ? (
+                      {draft.category === "FAKE_PURCHASE" ||
+                      draft.category === "SIMPLE_REVIEW" ? (
                         <span className={shared.mediaItem}>
-                          <span
-                            className={`${shared.mediaPill} ${FAKE_PURCHASE_PILL_CLASS[draft.subType] ?? ""}`}
-                            title={SUB_TYPE_LABEL[draft.subType]}
-                            aria-label={SUB_TYPE_LABEL[draft.subType]}
-                          >
-                            {SUB_TYPE_LABEL[draft.subType]}
-                          </span>
-                        </span>
-                      ) : draft.category === "SIMPLE_REVIEW" ? (
-                        <span className={shared.mediaItem}>
-                          <span
-                            className={`${shared.mediaPill} ${SUB_TYPE_PILL_CLASS[draft.subType] ?? ""}`}
-                            title={SUB_TYPE_LABEL[draft.subType]}
-                            aria-label={SUB_TYPE_LABEL[draft.subType]}
-                          >
-                            {SUB_TYPE_LABEL[draft.subType]}
-                          </span>
+                          <SubTypePill subType={draft.subType} />
                         </span>
                       ) : (
                         <span className={shared.mediaItem}>
@@ -278,25 +253,25 @@ export function DraftTable({
                       )}
                     </td>
                     <td className={styles.urlCell}>
-                      {(draft.category === "SNS" || draft.category === "SIMPLE_REVIEW") &&
-                        draft.url !== null && (
-                          <a
-                            className={styles.url}
-                            href={draft.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {draft.url}
-                          </a>
-                        )}
+                      {draft.category === "SNS" && draft.url !== null && (
+                        <a
+                          className={styles.url}
+                          href={draft.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {draft.url}
+                        </a>
+                      )}
                       {(draft.category === "FAKE_PURCHASE" ||
+                        draft.category === "SIMPLE_REVIEW" ||
                         (draft.category === "SNS" && draft.insightSubmitted)) && (
                         <button
                           type="button"
                           className={styles.insightLink}
                           onClick={() => onViewInsight(draft)}
                         >
-                          {draft.category === "FAKE_PURCHASE" ? "제출 결과 보기" : "인사이트 보기"}
+                          {draft.category === "SNS" ? "인사이트 보기" : "제출 결과 보기"}
                         </button>
                       )}
                     </td>

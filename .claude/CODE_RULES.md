@@ -279,3 +279,25 @@ src/pages/Applicants/index.tsx   // 위 부품을 조립만 한다
 5. **페이지**: 위 부품들을 import해서 JSX로 엮는 것 이상의 로직을 두지 않는다.
 
 레퍼런스 구현: `apps/admin-web/src/components/Applicants/` + `apps/admin-web/src/pages/Applicants/index.tsx`. 새 도메인 페이지를 만들기 전에 이 구조를 그대로 따라간다.
+
+---
+
+## 8. 도메인 개념의 시각 표현은 단일 컴포넌트
+
+같은 도메인 개념(서브타입 pill, 카테고리 배지, 상태 배지, SNS 미디어 아이콘, 인플루언서 아바타 등)이 두 화면 이상에서 노출되면 **표현 방식을 한 컴포넌트로 격리**한다. 색/라벨/폰트/여백을 화면마다 손으로 다시 조합하지 않는다.
+
+### 왜
+
+- `DraftTable` 이 LIPS/ATCOSME 를 `mediaPillQoo10` 클래스로 잘못 매핑하고 있는데도 `ApplicantTable` 은 각각 `mediaPillLips`/`mediaPillAtcosme` 로 올바르게 매핑돼 있어 화면마다 색이 달라졌던 사고가 있었음. 로컬 `Record<..., string>` 상수로 스타일을 흩뿌리면 이런 드리프트가 반드시 재발한다.
+- 라벨 하나 바꾸려고 여러 파일을 grep 하는 상황이 생기면 이 규칙을 이미 어긴 것.
+
+### 룰
+
+- **DO** 도메인 pill/badge/아이콘은 `src/components/composites/<Name>/` 에 컴포넌트로 두고, 사용처는 `<SubTypePill subType={...} />` 처럼 props 만 넘긴다. 클래스 계산은 컴포넌트 내부에서만.
+- **DO** 새 화면에서 기존 도메인 개념(`subType`, `category`, `status`, `media`)을 그리기 전에 먼저 `src/components/composites/` 에 이미 컴포넌트가 있는지 확인. 없으면 사용자 확인 후 신설.
+- **DON'T** 여러 파일에서 같은 개념을 `Record<..., string>` (예: `SUB_TYPE_PILL_CLASS`) + 인라인 JSX 조합으로 다시 만들지 않는다. 두 번째 사용처가 생기는 순간 컴포넌트로 승격.
+- **DON'T** 동일 개념에 대해 화면마다 다른 CSS 클래스(mediaPillQoo10 vs mediaPillLips)를 손으로 매핑하지 않는다.
+
+### 레퍼런스
+
+- `apps/admin-web/src/components/composites/SubTypePill/` — 서브타입(QOO10/LIPS/ATCOSME) pill. `ApplicantTable`, `DraftTable` 이 공유.

@@ -34,7 +34,7 @@ const schema = z
       .string()
       .refine((value) => value.trim().length > 0, t("pages.signup.bank.branchNameRequired")),
     branchCode: z.string().regex(/^\d{3}$/, t("pages.signup.bank.branchCodeInvalid")),
-    accountNumber: z.string().regex(/^\d{6,8}$/, t("pages.signup.bank.accountNumberInvalid")),
+    accountNumber: z.string().regex(/^\d{7}$/, t("pages.signup.bank.accountNumberInvalid")),
     accountHolderKana: z.string().regex(KANA_RE, t("pages.signup.bank.kanaInvalid")),
   })
   .superRefine((values, ctx) => {

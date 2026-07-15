@@ -152,12 +152,12 @@ export const messages = {
       statusInProgress: { jp: "進行中", kr: "진행 중" },
       statusEnded: { jp: "終了", kr: "종료" },
       statusCancelled: { jp: "キャンセル", kr: "취소" },
-      snsChipPrefix: { jp: "SNS", kr: "SNS" },
-      snsChipEmpty: { jp: "+ SNS", kr: "+ SNS" },
+      categoryChipPrefix: { jp: "カテゴリ", kr: "카테고리" }, // new
+      categoryChipEmpty: { jp: "+ カテゴリ", kr: "+ 카테고리" }, // new
       statusChipPrefix: { jp: "状態", kr: "상태" },
       statusChipEmpty: { jp: "+ 状態", kr: "+ 상태" },
       popoverStatusTitle: { jp: "状態を選択", kr: "상태 선택" },
-      popoverSnsTitle: { jp: "SNSを選択（複数可）", kr: "SNS 선택 (복수 가능)" },
+      popoverCategoryTitle: { jp: "カテゴリを選択（複数可）", kr: "카테고리 선택 (복수 가능)" }, // new
       popoverClose: { jp: "閉じる", kr: "닫기" },
     },
     cancelConfirm: {
@@ -298,6 +298,10 @@ export const messages = {
     simpleReviewForm: { // new
       urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
       labelSuffix: { jp: "レビューURL", kr: "리뷰 URL" },
+      screenshotsLabelSuffix: { // new
+        jp: "レビューのスクリーンショット提出",
+        kr: "리뷰 스크린샷 제출",
+      },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       update: { jp: "レビューURLを更新", kr: "리뷰 URL 업데이트" },
       submit: { jp: "レビューURLを提出", kr: "리뷰 URL 제출" },
@@ -424,7 +428,7 @@ export const messages = {
       bank: {
         branchNameRequired: { jp: "支店名は必須", kr: "지점명은 필수" },
         branchCodeInvalid: { jp: "支店コードは3桁", kr: "지점 코드는 3자리" },
-        accountNumberInvalid: { jp: "口座番号は6~8桁", kr: "계좌번호는 6~8자리" },
+        accountNumberInvalid: { jp: "口座番号は7桁", kr: "계좌번호는 7자리" }, // new
         kanaInvalid: { jp: "カナで入力してください", kr: "가타카나로 입력해 주세요" },
         bankRequired: { jp: "銀行を選択してください", kr: "은행을 선택해 주세요" },
         reviewInputs: { jp: "入力内容を再度ご確認ください", kr: "입력 내용을 다시 확인해 주세요" },
@@ -437,7 +441,7 @@ export const messages = {
         branchNameLabel: { jp: "支店名", kr: "지점명" },
         branchNamePlaceholder: { jp: "渋谷支店", kr: "시부야 지점" },
         branchCodeLabel: { jp: "支店コード (3桁)", kr: "지점 코드 (3자리)" },
-        accountNumberLabel: { jp: "口座番号 (6~8桁)", kr: "계좌번호 (6~8자리)" },
+        accountNumberLabel: { jp: "口座番号 (7桁)", kr: "계좌번호 (7자리)" }, // new
         accountHolderKanaLabel: { jp: "口座名義 (カナ)", kr: "예금주명 (가타카나)" },
         kanaHint: { jp: "例: ヤマダ ハナコ", kr: "예: ヤマダ ハナコ" },
         submit: { jp: "登録完了", kr: "가입 완료" },
@@ -590,7 +594,7 @@ export const messages = {
       bank: {
         required: { jp: "必須", kr: "필수" },
         branchCodeError: { jp: "3桁", kr: "3자리" },
-        accountNumberError: { jp: "6~8桁", kr: "6~8자리" },
+        accountNumberError: { jp: "7桁", kr: "7자리" }, // new
         kanaError: { jp: "カナで入力", kr: "가타카나로 입력" },
         bankRequired: { jp: "銀行を選択", kr: "은행을 선택해 주세요" },
         saveFailed: { jp: "保存に失敗しました", kr: "저장에 실패했습니다" },

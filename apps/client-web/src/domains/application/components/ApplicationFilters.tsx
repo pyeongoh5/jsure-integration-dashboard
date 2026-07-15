@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { isEnabledSnsType, type CampaignSubType, type SnsAccountSubType } from "@jsure/shared";
+import type { CampaignCategory } from "@jsure/shared";
 import { t } from "@i18n";
 import type { StatusFilter } from "../filter";
 import styles from "./ApplicationFilters.module.css";
@@ -23,39 +23,36 @@ const STATUS_LABEL: Record<StatusFilter, string> = {
   cancelled: t("application.filters.statusCancelled"),
 };
 
-const SNS_OPTIONS: { value: CampaignSubType; label: string }[] = [
-  { value: "INSTAGRAM", label: "Instagram" },
-  { value: "TIKTOK", label: "TikTok" },
-  { value: "X", label: "X" },
-  { value: "YOUTUBE", label: "YouTube" },
-];
-const VISIBLE_SNS_OPTIONS = SNS_OPTIONS.filter((opt) =>
-  isEnabledSnsType(opt.value as SnsAccountSubType),
-);
 
-type PopoverKind = "status" | "sns";
+const CATEGORY_OPTIONS: { value: CampaignCategory; label: string }[] = [
+  { value: "SNS", label: t("campaign.category.sns") },
+  { value: "FAKE_PURCHASE", label: t("campaign.category.fakePurchase") },
+  { value: "SIMPLE_REVIEW", label: t("campaign.category.simpleReview") },
+];
+
+type PopoverKind = "status" | "category";
 
 type Props = {
   statusFilter: StatusFilter;
   onStatusChange: (status: StatusFilter) => void;
-  selectedSubTypes: Set<CampaignSubType>;
-  onToggleSns: (snsType: CampaignSubType) => void;
-  onClearSns: () => void;
+  selectedCategories: Set<CampaignCategory>;
+  onToggleCategory: (category: CampaignCategory) => void;
+  onClearCategories: () => void;
 };
 
 export function ApplicationFilters({
   statusFilter,
   onStatusChange,
-  selectedSubTypes,
-  onToggleSns,
-  onClearSns,
+  selectedCategories,
+  onToggleCategory,
+  onClearCategories,
 }: Props) {
   const [popover, setPopover] = useState<{
     kind: PopoverKind;
     rect: DOMRect;
   } | null>(null);
   const statusButtonRef = useRef<HTMLButtonElement | null>(null);
-  const snsButtonRef = useRef<HTMLButtonElement | null>(null);
+  const categoryButtonRef = useRef<HTMLButtonElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -64,7 +61,7 @@ export function ApplicationFilters({
       const target = event.target as Node;
       if (popoverRef.current?.contains(target)) return;
       if (statusButtonRef.current?.contains(target)) return;
-      if (snsButtonRef.current?.contains(target)) return;
+      if (categoryButtonRef.current?.contains(target)) return;
       setPopover(null);
     };
     const onKeyDown = (event: KeyboardEvent) => {
@@ -90,8 +87,8 @@ export function ApplicationFilters({
     setPopover({ kind, rect: anchor.getBoundingClientRect() });
   };
 
-  const selectedSnsLabel = VISIBLE_SNS_OPTIONS.filter((option) =>
-    selectedSubTypes.has(option.value),
+  const selectedCategoryLabel = CATEGORY_OPTIONS.filter((option) =>
+    selectedCategories.has(option.value),
   )
     .map((option) => option.label)
     .join(", ");
@@ -100,22 +97,22 @@ export function ApplicationFilters({
     <>
       <div className={styles.bar}>
         <button
-          ref={snsButtonRef}
+          ref={categoryButtonRef}
           type="button"
           className={`${styles.chip} ${
-            selectedSubTypes.size > 0 ? styles.chipActive : ""
+            selectedCategories.size > 0 ? styles.chipActive : ""
           }`}
-          onClick={() => openPopover("sns", snsButtonRef.current)}
+          onClick={() => openPopover("category", categoryButtonRef.current)}
         >
-          {selectedSubTypes.size > 0
-            ? `${t("application.filters.snsChipPrefix")}: ${selectedSnsLabel}`
-            : t("application.filters.snsChipEmpty")}
-          {selectedSubTypes.size > 0 && (
+          {selectedCategories.size > 0
+            ? `${t("application.filters.categoryChipPrefix")}: ${selectedCategoryLabel}`
+            : t("application.filters.categoryChipEmpty")}
+          {selectedCategories.size > 0 && (
             <span
               className={styles.clear}
               onClick={(event) => {
                 event.stopPropagation();
-                onClearSns();
+                onClearCategories();
                 setPopover(null);
               }}
             >
@@ -188,10 +185,10 @@ export function ApplicationFilters({
               </>
             ) : (
               <>
-                <div className={styles.popoverTitle}>{t("application.filters.popoverSnsTitle")}</div>
+                <div className={styles.popoverTitle}>{t("application.filters.popoverCategoryTitle")}</div>
                 <div className={styles.popoverItems}>
-                  {VISIBLE_SNS_OPTIONS.map((option) => {
-                    const selected = selectedSubTypes.has(option.value);
+                  {CATEGORY_OPTIONS.map((option) => {
+                    const selected = selectedCategories.has(option.value);
                     return (
                       <button
                         key={option.value}
@@ -199,7 +196,7 @@ export function ApplicationFilters({
                         className={`${styles.popoverOption}${
                           selected ? ` ${styles.popoverOptionOn}` : ""
                         }`}
-                        onClick={() => onToggleSns(option.value)}
+                        onClick={() => onToggleCategory(option.value)}
                       >
                         <span>{option.label}</span>
                         {selected && (

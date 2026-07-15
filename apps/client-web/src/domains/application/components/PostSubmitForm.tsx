@@ -1,7 +1,7 @@
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { CampaignSubType } from "@jsure/shared";
+import { SUB_TYPE_LABEL, type CampaignSubType } from "@jsure/shared";
 import { Input } from "@/components/ui";
 import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
@@ -54,7 +54,7 @@ export function PostSubmitForm({
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(handle)}>
-        <FormField name="url" label={`${subType} ${t("application.postForm.labelSuffix")}`}>
+        <FormField name="url" label={`${SUB_TYPE_LABEL[subType]} ${t("application.postForm.labelSuffix")}`}>
           {(field) => (
             <Input
               id={field.id}

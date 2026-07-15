@@ -210,7 +210,7 @@ function SnsChipList({ recruits }: { recruits: CampaignRecruit[] }) {
 
 export function CampaignCard({ card, onSelect }: Props) {
   const ratio = card.recruitCount
-    ? Math.min(100, Math.round((card.appliedCount / card.recruitCount) * 100))
+    ? Math.min(100, Math.round((card.approvedCount / card.recruitCount) * 100))
     : 0;
   const dday = daysUntil(card.recruitEndAt, new Date());
   const disabled = card.isEnded || card.isUpcoming;
@@ -261,7 +261,7 @@ export function CampaignCard({ card, onSelect }: Props) {
         <div className={styles.affix}>
           <div className={styles.progress}>
             <div className={styles.progressText}>
-              {t("campaign.card.recruitPrefix")} {card.appliedCount}/{card.recruitCount}
+              {t("campaign.card.recruitPrefix")} {card.approvedCount}/{card.recruitCount}
               {t("campaign.card.peopleSuffix")} ({ratio}%)
             </div>
             <div className={styles.progressBar}>

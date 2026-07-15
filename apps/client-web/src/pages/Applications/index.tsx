@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { CampaignSubType } from "@jsure/shared";
+import type { CampaignCategory } from "@jsure/shared";
 import {
   ApplicationCard,
   ApplicationFilters,
@@ -16,19 +16,21 @@ export function Applications() {
   const { data, isLoading, isError } = useApplications();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [selectedSubTypes, setSelectedCampaignSubTypes] = useState<Set<CampaignSubType>>(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<
+    Set<CampaignCategory>
+  >(new Set());
 
-  const toggleSns = (snsType: CampaignSubType) => {
-    setSelectedCampaignSubTypes((prev) => {
+  const toggleCategory = (category: CampaignCategory) => {
+    setSelectedCategories((prev) => {
       const next = new Set(prev);
-      if (next.has(snsType)) next.delete(snsType);
-      else next.add(snsType);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
       return next;
     });
   };
 
   const applications = data ?? [];
-  const filtered = filterApplications(applications, statusFilter, selectedSubTypes);
+  const filtered = filterApplications(applications, statusFilter, selectedCategories);
 
   return (
     <div>
@@ -40,9 +42,9 @@ export function Applications() {
         <ApplicationFilters
           statusFilter={statusFilter}
           onStatusChange={setStatusFilter}
-          selectedSubTypes={selectedSubTypes}
-          onToggleSns={toggleSns}
-          onClearSns={() => setSelectedCampaignSubTypes(new Set())}
+          selectedCategories={selectedCategories}
+          onToggleCategory={toggleCategory}
+          onClearCategories={() => setSelectedCategories(new Set())}
         />
       )}
 

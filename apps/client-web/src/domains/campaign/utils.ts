@@ -13,12 +13,12 @@ export function formatDate(iso: string): string {
  * 서버에서 isEnded 를 내려주지만 모집인원 충족이나 만료일 도래 시도 종료로 본다.
  */
 export function isCampaignClosed(
-  card: Pick<InfluencerCampaignDetail, "isEnded" | "recruitEndAt" | "appliedCount" | "recruitCount">,
+  card: Pick<InfluencerCampaignDetail, "isEnded" | "recruitEndAt" | "approvedCount" | "recruitCount">,
   now: Date = new Date(),
 ): boolean {
   return (
     card.isEnded ||
     new Date(card.recruitEndAt) < now ||
-    card.appliedCount >= card.recruitCount
+    card.approvedCount >= card.recruitCount
   );
 }

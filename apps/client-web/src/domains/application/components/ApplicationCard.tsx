@@ -1,4 +1,4 @@
-import type { InfluencerApplication } from "@jsure/shared";
+import { SUB_TYPE_LABEL, type InfluencerApplication } from "@jsure/shared";
 import { t } from "@i18n";
 import { STAGE_PROGRESS, STAGE_TOTAL } from "../utils";
 import { StageBadge } from "./StageBadge";
@@ -39,7 +39,7 @@ export function ApplicationCard({ app, onSelect }: Props) {
       <div className={styles.head}>
         <div className={styles.title}>
           {app.campaignTitle}
-          <span className={styles.sns}>{app.subType}</span>
+          <span className={styles.sns}>{SUB_TYPE_LABEL[app.subType]}</span>{}
           {app.subType === "INSTAGRAM" && app.instagramPostType && (
             <span className={styles.sns}>{app.instagramPostType}</span>
           )}

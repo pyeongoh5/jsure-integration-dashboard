@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CampaignSubType } from "@jsure/shared";
+import { SUB_TYPE_LABEL, type CampaignSubType } from "@jsure/shared";
 import { useState } from "react";
 import {
   ApplicationStepper,
@@ -92,7 +92,13 @@ export function ApplicationDetail() {
     onSuccess: () => invalidate(),
   });
   const simpleReview = useMutation({ // new
-    mutationFn: ({ url }: { url: string }) => submitSimpleReview(id, url),
+    mutationFn: ({
+      url,
+      screenshots,
+    }: {
+      url: string;
+      screenshots: AttachmentUploadInput[];
+    }) => submitSimpleReview(id, url, screenshots),
     onSuccess: () => invalidate(),
   });
   const insight = useMutation({
@@ -232,7 +238,7 @@ export function ApplicationDetail() {
                   <span className={styles.rejectBadge}>
                     {t("pages.applications.detail.rejectBadge")}
                   </span>
-                  <span className={styles.rejectSns}>{p.subType}</span>
+                  <span className={styles.rejectSns}>{SUB_TYPE_LABEL[p.subType]}</span>
                 </div>
                 {p.url && (
                   <div className={styles.rejectUrl}>
@@ -306,10 +312,11 @@ export function ApplicationDetail() {
 
         {stage === "AWAITING_REVIEW" && data.campaignCategory === "SIMPLE_REVIEW" && ( // new
           <SimpleReviewSubmitForm
+            applicationId={data.id}
             subType={data.subType}
             initial=""
-            onSubmit={async (url) => {
-              await simpleReview.mutateAsync({ url });
+            onSubmit={async (url, screenshots) => {
+              await simpleReview.mutateAsync({ url, screenshots });
             }}
             submitting={simpleReview.isPending}
             reviewDeadlineAt={null}
@@ -375,10 +382,11 @@ export function ApplicationDetail() {
             </p>
             {data.campaignCategory === "SIMPLE_REVIEW" ? ( // new
               <SimpleReviewSubmitForm
+                applicationId={data.id}
                 subType={data.subType}
                 initial={data.posts[0]?.url ?? ""}
-                onSubmit={async (url) => {
-                  await simpleReview.mutateAsync({ url });
+                onSubmit={async (url, screenshots) => {
+                  await simpleReview.mutateAsync({ url, screenshots });
                 }}
                 submitting={simpleReview.isPending}
                 reviewDeadlineAt={null}

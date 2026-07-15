@@ -152,7 +152,7 @@ export function Apply() {
     campaign.data &&
       (campaign.data.isEnded ||
         new Date(campaign.data.recruitEndAt) < new Date() ||
-        campaign.data.appliedCount >= campaign.data.recruitCount),
+        campaign.data.approvedCount >= campaign.data.recruitCount),
   );
 
   const wantsInstagram = selectedSns.has("INSTAGRAM");

@@ -22,7 +22,7 @@ const schema = z
     bank: z.object({ code: z.string(), name: z.string() }).nullable(),
     branchName: z.string().refine((value) => value.trim().length > 0, t("pages.me.bank.required")),
     branchCode: z.string().regex(/^\d{3}$/, t("pages.me.bank.branchCodeError")),
-    accountNumber: z.string().regex(/^\d{6,8}$/, t("pages.me.bank.accountNumberError")),
+    accountNumber: z.string().regex(/^\d{7}$/, t("pages.me.bank.accountNumberError")),
     accountHolderKana: z.string().regex(KANA_RE, t("pages.me.bank.kanaError")),
   })
   .superRefine((values, ctx) => {

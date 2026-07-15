@@ -1,7 +1,7 @@
 import type {
   ApplicationStatus,
+  CampaignCategory,
   InfluencerApplication,
-  CampaignSubType,
 } from "@jsure/shared";
 
 export type StatusFilter =
@@ -28,15 +28,15 @@ export const STATUS_FILTER_GROUPS: Record<
 export function filterApplications(
   applications: InfluencerApplication[],
   statusFilter: StatusFilter,
-  selectedSubTypes: Set<CampaignSubType>,
+  selectedCategories: Set<CampaignCategory>,
 ): InfluencerApplication[] {
   const statuses = STATUS_FILTER_GROUPS[statusFilter];
   return applications.filter((application) => {
     const statusMatch =
       statuses === null || statuses.includes(application.status);
-    const snsMatch =
-      selectedSubTypes.size === 0 ||
-      selectedSubTypes.has(application.subType);
-    return statusMatch && snsMatch;
+    const categoryMatch =
+      selectedCategories.size === 0 ||
+      selectedCategories.has(application.campaignCategory);
+    return statusMatch && categoryMatch;
   });
 }

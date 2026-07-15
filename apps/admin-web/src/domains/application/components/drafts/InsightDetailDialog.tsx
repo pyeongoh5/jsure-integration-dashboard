@@ -39,15 +39,17 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
     kind: "loading",
   });
   const isFakePurchase = draft.category === "FAKE_PURCHASE";
-  const contentSubmitted = isFakePurchase || draft.insightSubmitted;
-  const dialogTitle = isFakePurchase
+  const isSimpleReview = draft.category === "SIMPLE_REVIEW";
+  const isReviewCategory = isFakePurchase || isSimpleReview;
+  const contentSubmitted = isReviewCategory || draft.insightSubmitted;
+  const dialogTitle = isReviewCategory
     ? `${draft.influencerName} 리뷰`
     : `${draft.influencerName} 인사이트`;
-  const emptyLabel = isFakePurchase
+  const emptyLabel = isReviewCategory
     ? "리뷰가 아직 제출되지 않았습니다."
     : "인사이트가 아직 제출되지 않았습니다.";
-  const screenshotTitle = isFakePurchase ? "리뷰 스크린샷" : "스크린샷";
-  const attachmentKind: AttachmentKind = isFakePurchase
+  const screenshotTitle = isReviewCategory ? "리뷰 스크린샷" : "스크린샷";
+  const attachmentKind: AttachmentKind = isReviewCategory
     ? "REVIEW_SCREENSHOT"
     : "INSIGHT_SCREENSHOT";
   const filteredAttachments = useMemo(() => {
@@ -108,7 +110,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
             <div className={styles.empty}>{emptyLabel}</div>
           ) : (
             <>
-              {!isFakePurchase && (
+              {!isReviewCategory && (
                 <section className={styles.section}>
                   <h3 className={styles.sectionTitle}>수치</h3>
                   <div className={styles.metrics}>

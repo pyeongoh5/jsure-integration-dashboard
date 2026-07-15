@@ -302,6 +302,10 @@ export const messages = {
         jp: "レビューのスクリーンショット提出",
         kr: "리뷰 스크린샷 제출",
       },
+      screenshotsRequired: { // new
+        jp: "レビューのスクリーンショットを1枚以上ご提出ください",
+        kr: "리뷰 스크린샷을 1장 이상 제출해 주세요",
+      },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       update: { jp: "レビューURLを更新", kr: "리뷰 URL 업데이트" },
       submit: { jp: "レビューURLを提出", kr: "리뷰 URL 제출" },

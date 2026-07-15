@@ -82,7 +82,7 @@ export function SimpleReviewSubmitForm({
     setSubmitError(null);
     const screenshots = upload.toInputs();
     if (screenshots.length < MIN_FILES) {
-      setSubmitError(t("application.reviewForm.screenshotsRequired"));
+      setSubmitError(t("application.simpleReviewForm.screenshotsRequired"));
       return;
     }
     try {

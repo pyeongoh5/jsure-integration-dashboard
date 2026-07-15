@@ -101,10 +101,17 @@ export class UploadsService {
     }
 
     const category = application.campaign.category;
-    if (body.kind === "ORDER_RECEIPT" || body.kind === "REVIEW_SCREENSHOT") {
+    if (body.kind === "ORDER_RECEIPT") {
       if (category !== "FAKE_PURCHASE") {
         throw new BadRequestException(
           "이 첨부 타입은 가구매 리뷰 캠페인에서만 사용할 수 있습니다",
+        );
+      }
+    }
+    if (body.kind === "REVIEW_SCREENSHOT") {
+      if (category !== "FAKE_PURCHASE" && category !== "SIMPLE_REVIEW") {
+        throw new BadRequestException(
+          "이 첨부 타입은 리뷰 캠페인에서만 사용할 수 있습니다",
         );
       }
     }

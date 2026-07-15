@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   QOO10_REVIEW_CHANNEL_LABEL,
+  SUB_TYPE_LABEL,
   type Attachment,
   type AttachmentKind,
 } from "@jsure/shared";
@@ -90,7 +91,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
             <div>
               <div className={styles.title}>{dialogTitle}</div>
               <div className={styles.sub}>
-                {draft.campaignTitle} · {draft.subType}
+                {draft.campaignTitle} · {SUB_TYPE_LABEL[draft.subType]}
               </div>
             </div>
             <button

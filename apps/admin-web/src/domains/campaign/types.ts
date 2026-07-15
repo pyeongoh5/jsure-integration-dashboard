@@ -1,6 +1,12 @@
-import type { CampaignForm, CampaignSubType, InstagramPostType } from "@jsure/shared";
+import type {
+  CampaignCategory,
+  CampaignForm,
+  CampaignSubType,
+  InstagramPostType,
+} from "@jsure/shared";
 
 export type {
+  CampaignCategory,
   CampaignResponse,
   CreateCampaignRequest,
   UpdateCampaignRequest,
@@ -32,6 +38,7 @@ export type Campaign = {
   brand: string;
   name: string;
   description: string;
+  category: CampaignCategory;
   status: CampaignStatus;
   thumbIcon: string;
   thumbnailUrl: string | null;

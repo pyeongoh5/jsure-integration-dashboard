@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { AdminSettlement, CampaignCategory } from "@jsure/shared";
+import { SUB_TYPE_LABEL, type AdminSettlement, type CampaignCategory } from "@jsure/shared";
 import {
   completeSettlements,
   listSettlements,
@@ -53,6 +53,12 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
     "투고 URL",
     "투고 게시일",
     "인사이트 제출일",
+    "은행명",
+    "은행코드",
+    "지점명",
+    "지점코드",
+    "계좌번호",
+    "계좌명의(카나)",
     "보수(JPY)",
     "상품환급(JPY)",
     "합계(JPY)",
@@ -62,16 +68,23 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
   ];
   const lines = [headers.join(",")];
   for (const row of rows) {
+    const bankAccount = row.influencer.bankAccount;
     lines.push(
       [
         row.id,
         row.influencer.name,
         row.campaign.title,
         CATEGORY_LABEL_KO[row.campaign.category],
-        row.post.subType,
+        SUB_TYPE_LABEL[row.post.subType],
         row.post.url,
         formatDateTime(row.post.submittedAt),
         formatDateTime(row.post.insightSubmittedAt),
+        bankAccount?.bankName ?? "",
+        bankAccount?.bankCode ?? "",
+        bankAccount?.branchName ?? "",
+        bankAccount?.branchCode ?? "",
+        bankAccount?.accountNumber ?? "",
+        bankAccount?.accountHolderKana ?? "",
         row.rewardAmountJpy,
         row.productRefundJpy,
         row.amountJpy,
@@ -319,7 +332,7 @@ export function Payouts() {
           <div className={styles.empty}>정산 대상이 없습니다.</div>
         )}
         {state.kind === "ready" && visibleRows.length > 0 && (
-          <ScrollTable minWidth={1400}>
+          <ScrollTable minWidth={2000}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -341,6 +354,12 @@ export function Payouts() {
                   <th>서브타입</th>
                   <th>투고 게시일</th>
                   <th>인사이트 제출일</th>
+                  <th>은행명</th>
+                  <th>은행코드</th>
+                  <th>지점명</th>
+                  <th>지점코드</th>
+                  <th>계좌번호</th>
+                  <th>계좌명의(카나)</th>
                   <th>보수</th>
                   <th>상품환급</th>
                   <th>합계</th>
@@ -375,9 +394,15 @@ export function Payouts() {
                           {CATEGORY_LABEL_KO[row.campaign.category]}
                         </span>
                       </td>
-                      <td>{row.post.subType}</td>
+                      <td>{SUB_TYPE_LABEL[row.post.subType]}</td>
                       <td>{formatDateTime(row.post.submittedAt)}</td>
                       <td>{formatDateTime(row.post.insightSubmittedAt)}</td>
+                      <td>{row.influencer.bankAccount?.bankName ?? "—"}</td>
+                      <td>{row.influencer.bankAccount?.bankCode ?? "—"}</td>
+                      <td>{row.influencer.bankAccount?.branchName ?? "—"}</td>
+                      <td>{row.influencer.bankAccount?.branchCode || "—"}</td>
+                      <td>{row.influencer.bankAccount?.accountNumber ?? "—"}</td>
+                      <td>{row.influencer.bankAccount?.accountHolderKana ?? "—"}</td>
                       <td className={styles.amount}>{formatJpy(row.rewardAmountJpy)}</td>
                       <td className={styles.amount}>{formatRefund(row.productRefundJpy)}</td>
                       <td className={styles.amount}>{formatJpy(row.amountJpy)}</td>

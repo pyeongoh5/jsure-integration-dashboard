@@ -3,7 +3,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import type { CampaignResponse } from "@jsure/shared";
 import { Card } from "@/components/composites/Card";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
-import { FilterChips } from "@/components/composites/FilterChips";
+import {
+  FilterChipBar,
+  SingleSelectFilterChip,
+} from "@/components/composites/FilterChip";
 import { Button } from "@/components/ui";
 import {
   CampaignCardTitle,
@@ -14,29 +17,28 @@ import {
   listCampaigns,
   campaignFormStyles,
 } from "@/domains/campaign";
-import type { Campaign, CampaignStatus } from "@/domains/campaign";
+import type { Campaign, CampaignCategory, CampaignStatus } from "@/domains/campaign";
+import { CATEGORY_FILTER_OPTIONS } from "@/domains/application";
 import { ApprovedApplicantsDialog } from "../Applicants/ApprovedApplicantsDialog";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import styles from "./Campaigns.module.css";
 
-type FilterKey = "all" | CampaignStatus;
+type StatusFilterKey = "all" | CampaignStatus;
 
-const FILTERS: readonly { key: FilterKey; label: string }[] = [
-  { key: "all", label: "전체" },
+const STATUS_FILTER_CHIP_OPTIONS: readonly { key: CampaignStatus; label: string }[] = [
   { key: "recruit", label: "모집중" },
   { key: "done", label: "완료" },
 ];
 
 const STATUS_PARAM = "status";
+const CATEGORY_PARAM = "category";
 
-function isFilterKey(value: string | null): value is FilterKey {
-  return (
-    value === "all" ||
-    value === "recruit" ||
-    value === "review" ||
-    value === "progress" ||
-    value === "done"
-  );
+function isStatusFilterKey(value: string | null): value is StatusFilterKey {
+  return value === "all" || value === "recruit" || value === "done";
+}
+
+function isCategory(value: string | null): value is CampaignCategory {
+  return value === "SNS" || value === "FAKE_PURCHASE" || value === "SIMPLE_REVIEW";
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -81,6 +83,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     brand: "",
     name: c.title,
     description: stripHtml(c.productSummary),
+    category: c.category,
     status,
     thumbIcon: "📋",
     thumbnailUrl: c.thumbnailUrl,
@@ -134,12 +137,21 @@ export function Campaigns() {
   }, [reloadKey]);
 
   const rawStatus = searchParams.get(STATUS_PARAM);
-  const filter: FilterKey = isFilterKey(rawStatus) ? rawStatus : "all";
+  const statusFilter: StatusFilterKey = isStatusFilterKey(rawStatus) ? rawStatus : "all";
+  const rawCategory = searchParams.get(CATEGORY_PARAM);
+  const categoryFilter: CampaignCategory | null = isCategory(rawCategory) ? rawCategory : null;
 
-  const setFilter = (key: FilterKey) => {
+  const setStatusFilter = (key: StatusFilterKey) => {
     const next = new URLSearchParams(searchParams);
     if (key === "all") next.delete(STATUS_PARAM);
     else next.set(STATUS_PARAM, key);
+    setSearchParams(next);
+  };
+
+  const setCategoryFilter = (value: CampaignCategory | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === null) next.delete(CATEGORY_PARAM);
+    else next.set(CATEGORY_PARAM, value);
     setSearchParams(next);
   };
 
@@ -155,11 +167,12 @@ export function Campaigns() {
   const filtered = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
     return cards.filter((c) => {
-      if (filter !== "all" && c.status !== filter) return false;
+      if (statusFilter !== "all" && c.status !== statusFilter) return false;
+      if (categoryFilter !== null && c.category !== categoryFilter) return false;
       if (q && !`${c.brand} ${c.name}`.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [cards, filter, debouncedQuery]);
+  }, [cards, statusFilter, categoryFilter, debouncedQuery]);
 
   return (
     <div className={styles.root}>
@@ -169,7 +182,24 @@ export function Campaigns() {
       </div>
 
       <div className={styles.toolbar}>
-        <FilterChips options={FILTERS} value={filter} onChange={setFilter} />
+        <FilterChipBar>
+          <SingleSelectFilterChip
+            emptyLabel="+ 카테고리"
+            labelPrefix="카테고리"
+            popoverTitle="카테고리 선택"
+            options={CATEGORY_FILTER_OPTIONS}
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+          />
+          <SingleSelectFilterChip
+            emptyLabel="+ 상태"
+            labelPrefix="상태"
+            popoverTitle="상태 선택"
+            options={STATUS_FILTER_CHIP_OPTIONS}
+            value={statusFilter === "all" ? null : statusFilter}
+            onChange={(value) => setStatusFilter(value ?? "all")}
+          />
+        </FilterChipBar>
         <div className={styles.search}>
           <i className="fa-solid fa-magnifying-glass" />
           <input
@@ -218,7 +248,7 @@ export function Campaigns() {
               }}
             >
               <Card
-                title={<CampaignCardTitle dday={c.dday} status={c.status} />}
+                title={<CampaignCardTitle dday={c.dday} status={c.status} category={c.category} />}
                 content={
                   <CampaignCardBody
                     thumbIcon={c.thumbIcon}

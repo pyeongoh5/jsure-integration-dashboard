@@ -142,6 +142,35 @@
   color: var(--c-muted);
 }
 
+.cardLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardCategory {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.cardCategorySns {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.cardCategoryFake {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.cardCategorySimpleReview {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
 /* Card content slot */
 .cardThumb {
   display: flex;

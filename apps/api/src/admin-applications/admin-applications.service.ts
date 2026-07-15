@@ -1,15 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import type {
-  AdminApplication,
-  AdminSettlement,
-  AdminSubmittedPost,
-  ApplicationStatus,
-  ApprovedApplicantExportResponse,
-  CampaignCategory,
-  CampaignSubType,
-  InstagramPostType,
+import {
+  SLOT_CONSUMING_STATUSES,
+  buildSnsProfileUrl,
+  type AdminApplication,
+  type AdminSettlement,
+  type AdminSubmittedPost,
+  type ApplicationStatus,
+  type ApprovedApplicantExportResponse,
+  type CampaignCategory,
+  type CampaignSubType,
+  type InstagramPostType,
 } from "@jsure/shared";
-import { buildSnsProfileUrl } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
@@ -82,16 +83,6 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
     },
   };
 }
-
-// 모집 인원(슬롯)을 소비하는 상태. APPLIED/REJECTED/CANCELLED 는 인원에 포함하지 않는다.
-const SLOT_CONSUMING_STATUSES: ApplicationStatus[] = [
-  "APPROVED",
-  "SHIPPED",
-  "DELIVERED",
-  "COMPLETED",
-  "ORDER_SUBMITTED",
-  "REVIEW_SUBMITTED",
-];
 
 const SUB_TYPE_LABEL: Record<CampaignSubType, string> = {
   INSTAGRAM: "Instagram",
@@ -639,6 +630,16 @@ export class AdminApplicationsService {
                     snsAccounts: {
                       select: { snsType: true, handle: true },
                     },
+                    bankAccount: {
+                      select: {
+                        bankName: true,
+                        bankCode: true,
+                        branchName: true,
+                        branchCode: true,
+                        accountNumber: true,
+                        accountHolderKana: true,
+                      },
+                    },
                   },
                 },
               },
@@ -768,7 +769,7 @@ export class AdminApplicationsService {
     const rows = await this.prisma.campaignApplication.findMany({
       where: {
         campaignId,
-        status: { in: ["APPROVED", "SHIPPED", "DELIVERED", "COMPLETED"] },
+        status: { in: SLOT_CONSUMING_STATUSES },
       },
       orderBy: { appliedAt: "desc" },
       select: {
@@ -1060,6 +1061,14 @@ type SettlementRow = {
         id: string;
         name: string;
         snsAccounts: { snsType: string; handle: string }[];
+        bankAccount: {
+          bankName: string;
+          bankCode: string;
+          branchName: string;
+          branchCode: string;
+          accountNumber: string;
+          accountHolderKana: string;
+        } | null;
       };
     };
   };
@@ -1082,6 +1091,17 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
       id: row.post.application.influencer.id,
       name: row.post.application.influencer.name,
       handle: matchingAccount?.handle ?? "",
+      bankAccount: row.post.application.influencer.bankAccount
+        ? {
+            bankName: row.post.application.influencer.bankAccount.bankName,
+            bankCode: row.post.application.influencer.bankAccount.bankCode,
+            branchName: row.post.application.influencer.bankAccount.branchName,
+            branchCode: row.post.application.influencer.bankAccount.branchCode,
+            accountNumber: row.post.application.influencer.bankAccount.accountNumber,
+            accountHolderKana:
+              row.post.application.influencer.bankAccount.accountHolderKana,
+          }
+        : null,
     },
     campaign: {
       id: row.post.application.campaign.id,

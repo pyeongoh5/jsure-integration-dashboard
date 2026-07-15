@@ -69,7 +69,7 @@ export const InfluencerBankAccountSchema = z.object({
   bankName: z.string().min(1).max(40),
   branchName: z.string().min(1).max(50),
   branchCode: z.string().max(10),
-  accountNumber: z.string().regex(/^\d{6,8}$/, "口座番号は6~8桁の数字"),
+  accountNumber: z.string().regex(/^\d{7}$/, "口座番号は7桁の数字"),
   accountHolderKana: z.string().regex(KANA_RE, "カナで入力してください"),
 });
 

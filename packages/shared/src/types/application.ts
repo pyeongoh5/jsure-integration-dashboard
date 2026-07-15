@@ -123,6 +123,10 @@ export type SubmitReviewRequest = z.infer<typeof SubmitReviewRequestSchema>;
 
 export const SubmitSimpleReviewRequestSchema = z.object({
   url: z.string().url().startsWith("https://"),
+  screenshots: z
+    .array(AttachmentUploadInputSchema)
+    .min(1, "レビューのスクリーンショットを1枚以上ご提出ください")
+    .max(10),
 });
 export type SubmitSimpleReviewRequest = z.infer<
   typeof SubmitSimpleReviewRequestSchema

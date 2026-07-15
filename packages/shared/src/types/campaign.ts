@@ -356,7 +356,7 @@ export const InfluencerCampaignCardSchema = z.object({
   rewardJpy: z.number().int().nonnegative(),
   recruits: z.array(CampaignRecruitSchema),
   recruitCount: z.number().int().nonnegative(),
-  appliedCount: z.number().int().nonnegative(),
+  approvedCount: z.number().int().nonnegative(),
   recruitStartAt: z.string().datetime(),
   recruitEndAt: z.string().datetime(),
   postingPeriodDays: z.number().int().min(1),

@@ -203,6 +203,16 @@ export const AdminSettlementSchema = z.object({
     id: z.string(),
     name: z.string(),
     handle: z.string(),
+    bankAccount: z
+      .object({
+        bankName: z.string(),
+        bankCode: z.string(),
+        branchName: z.string(),
+        branchCode: z.string(),
+        accountNumber: z.string(),
+        accountHolderKana: z.string(),
+      })
+      .nullable(),
   }),
   campaign: z.object({
     id: z.string(),

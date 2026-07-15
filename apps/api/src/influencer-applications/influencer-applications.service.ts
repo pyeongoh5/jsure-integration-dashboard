@@ -944,6 +944,7 @@ export class InfluencerApplicationsService {
     influencerId: string,
     applicationId: string,
     url: string,
+    screenshots: AttachmentUploadInput[],
   ): Promise<InfluencerApplication> {
     const application = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
@@ -995,6 +996,14 @@ export class InfluencerApplicationsService {
         message: "https:// 로 시작하는 URL 을 입력해주세요",
       });
     }
+    if (screenshots.length < 1) {
+      throw new BadRequestException({
+        code: "REVIEW_SCREENSHOTS_REQUIRED",
+        message: "리뷰 스크린샷을 1장 이상 제출해주세요",
+      });
+    }
+
+    await this.uploads.verifyAttachmentUploads(screenshots, "attachments/");
 
     const now = new Date();
     const subType = application.subType;
@@ -1011,6 +1020,9 @@ export class InfluencerApplicationsService {
             reviewedById: null,
           },
         });
+        await tx.attachment.deleteMany({
+          where: { postId: existingPost.id, kind: "REVIEW_SCREENSHOT" },
+        });
         currentPostId = existingPost.id;
       } else {
         const created = await tx.submittedPost.create({
@@ -1024,6 +1036,17 @@ export class InfluencerApplicationsService {
         });
         currentPostId = created.id;
       }
+      await tx.attachment.createMany({
+        data: screenshots.map((screenshot) => ({
+          kind: "REVIEW_SCREENSHOT" as const,
+          applicationId,
+          postId: currentPostId,
+          objectKey: screenshot.objectKey,
+          contentType: screenshot.contentType,
+          sizeBytes: screenshot.sizeBytes,
+        })),
+        skipDuplicates: true,
+      });
       await tx.campaignApplication.update({
         where: { id: applicationId },
         data: { status: "REVIEW_SUBMITTED" },

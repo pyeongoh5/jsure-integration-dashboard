@@ -472,6 +472,10 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     category: "SIMPLE_REVIEW",
     variables: withBase(subType, reviewUrl),
   },
+  SIMPLE_REVIEW_DEADLINE_REMINDER: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, remainingDays, postingDeadline),
+  },
   SIMPLE_REVIEW_APPROVED: {
     category: "SIMPLE_REVIEW",
     variables: withBase(subType, reviewUrl),
@@ -479,10 +483,6 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   SIMPLE_REVIEW_REJECTED: {
     category: "SIMPLE_REVIEW",
     variables: withBase(subType, reviewUrl, rejectReason, resubmitDeadline),
-  },
-  SIMPLE_REVIEW_DEADLINE_REMINDER: {
-    category: "SIMPLE_REVIEW",
-    variables: withBase(subType, remainingDays, postingDeadline),
   },
   SIMPLE_REVIEW_REJECTION_REMINDER: {
     category: "SIMPLE_REVIEW",

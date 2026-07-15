@@ -14,6 +14,7 @@ export * from "./types/adminOverview.js";
 export * from "./types/adminReport.js";
 export * from "./types/adminBroadcast.js";
 export * from "./types/lineTemplate.js";
+export * from "./data/applicationStatuses.js";
 export * from "./data/influencerTerms.js";
 export { JP_BANKS } from "./data/jpBanks.js";
 export * from "./utils/snsHandle.js";

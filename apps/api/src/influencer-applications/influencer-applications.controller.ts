@@ -102,7 +102,7 @@ export class InfluencerApplicationsController {
     @Body(new ZodValidationPipe(SubmitSimpleReviewRequestSchema))
     dto: SubmitSimpleReviewRequest,
   ) {
-    return this.svc.submitSimpleReview(req.user.id, id, dto.url);
+    return this.svc.submitSimpleReview(req.user.id, id, dto.url, dto.screenshots);
   }
 
   @Post(":id/confirm-receipt")

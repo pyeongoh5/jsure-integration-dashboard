@@ -4,13 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import type {
-  ApplicationStatus,
-  CampaignCategory,
-  CampaignResponse,
-  CreateCampaignRequest,
-  CampaignRecruit,
-  UpdateCampaignRequest,
+import {
+  SLOT_CONSUMING_STATUSES,
+  type ApplicationStatus,
+  type CampaignCategory,
+  type CampaignResponse,
+  type CreateCampaignRequest,
+  type CampaignRecruit,
+  type UpdateCampaignRequest,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
@@ -204,15 +205,9 @@ type CampaignCounts = { approvedCount: number; appliedCount: number };
 
 const EMPTY_COUNTS: CampaignCounts = { approvedCount: 0, appliedCount: 0 };
 
-// "모집된 인원"은 응모 후 승인된 시점부터 카운트. 발송/배송/완료 상태도
-// 이미 승인을 거친 인원이므로 포함. REJECTED/CANCELLED는 제외.
 // "응모한 인원"은 아직 검토 전(APPLIED)만 카운트.
-const APPROVED_LIKE_STATUSES: ApplicationStatus[] = [
-  "APPROVED",
-  "SHIPPED",
-  "DELIVERED",
-  "COMPLETED",
-];
+// "모집된 인원" 계산은 shared 의 SLOT_CONSUMING_STATUSES 를 사용
+// (승인 이후 흐름 전체: 승인/배송/주문제출/리뷰제출/완료).
 
 function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse {
   return {
@@ -329,7 +324,7 @@ export class CampaignsService {
       const entry = map.get(g.campaignId);
       if (!entry) continue;
       const status = g.status as ApplicationStatus;
-      if (APPROVED_LIKE_STATUSES.includes(status)) {
+      if (SLOT_CONSUMING_STATUSES.includes(status)) {
         entry.approvedCount += g._count._all;
       } else if (status === "APPLIED") {
         entry.appliedCount += g._count._all;

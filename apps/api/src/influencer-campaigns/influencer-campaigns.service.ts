@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import type {
-  CampaignCategory,
-  CampaignSubType,
-  InfluencerCampaignCard,
-  InfluencerCampaignDetail,
+import {
+  SLOT_CONSUMING_STATUSES,
+  type CampaignCategory,
+  type CampaignSubType,
+  type InfluencerCampaignCard,
+  type InfluencerCampaignDetail,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
@@ -44,7 +45,7 @@ function isNew(createdAt: Date, now: Date): boolean {
 
 function toCard(
   row: CampaignRow,
-  appliedCount: number,
+  approvedCount: number,
   closedAt: Date | null,
   now: Date,
 ): InfluencerCampaignCard {
@@ -59,7 +60,7 @@ function toCard(
     rewardJpy: row.rewardJpy,
     recruits: row.recruits,
     recruitCount: totalRecruitCount(row.recruits),
-    appliedCount,
+    approvedCount,
     recruitStartAt: row.recruitStartAt.toISOString(),
     recruitEndAt: row.recruitEndAt.toISOString(),
     postingPeriodDays: row.postingPeriodDays,
@@ -116,7 +117,7 @@ export class InfluencerCampaignsService {
         this.prisma.campaignApplication.count({
           where: {
             campaignId: r.id,
-            status: { in: ["APPROVED", "SHIPPED", "DELIVERED", "COMPLETED"] },
+            status: { in: SLOT_CONSUMING_STATUSES },
           },
         }),
       ),
@@ -160,10 +161,10 @@ export class InfluencerCampaignsService {
     });
     if (!row) throw new NotFoundException("Campaign not found");
 
-    const appliedCount = await this.prisma.campaignApplication.count({
+    const approvedCount = await this.prisma.campaignApplication.count({
       where: {
         campaignId: row.id,
-        status: { in: ["APPROVED", "SHIPPED", "DELIVERED", "COMPLETED"] },
+        status: { in: SLOT_CONSUMING_STATUSES },
       },
     });
 
@@ -199,7 +200,7 @@ export class InfluencerCampaignsService {
       .map((application) => application.subType)
       .filter((subType) => recruitedCampaignSubTypes.has(subType));
 
-    const card = await this.resolveCard(toCard(row, appliedCount, row.closedAt, now));
+    const card = await this.resolveCard(toCard(row, approvedCount, row.closedAt, now));
     const [guideline, cautions] = await Promise.all([
       this.uploads.resolveR2ImagesInHtml(row.guideline),
       this.uploads.resolveR2ImagesInHtml(row.cautions),

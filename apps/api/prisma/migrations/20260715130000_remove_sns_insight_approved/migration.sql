@@ -2,8 +2,8 @@
 -- Postgres 는 enum 값을 직접 DROP 할 수 없으므로 새 enum 을 만들어 교체.
 
 -- 1) 해당 enum 값을 사용하는 row 삭제 (템플릿 시드 row + 발송 로그).
-DELETE FROM "LineDispatchLog" WHERE "triggerKey" = 'SNS_INSIGHT_APPROVED';
-DELETE FROM "LineMessageTemplate" WHERE "triggerKey" = 'SNS_INSIGHT_APPROVED';
+DELETE FROM "line_dispatch_logs" WHERE "triggerKey" = 'SNS_INSIGHT_APPROVED';
+DELETE FROM "line_message_templates" WHERE "triggerKey" = 'SNS_INSIGHT_APPROVED';
 
 -- 2) SNS_INSIGHT_APPROVED 를 뺀 새 enum 생성.
 CREATE TYPE "LineTriggerKey_new" AS ENUM (
@@ -49,10 +49,10 @@ CREATE TYPE "LineTriggerKey_new" AS ENUM (
 );
 
 -- 3) 컬럼 타입 교체.
-ALTER TABLE "LineMessageTemplate"
+ALTER TABLE "line_message_templates"
   ALTER COLUMN "triggerKey" TYPE "LineTriggerKey_new"
   USING "triggerKey"::text::"LineTriggerKey_new";
-ALTER TABLE "LineDispatchLog"
+ALTER TABLE "line_dispatch_logs"
   ALTER COLUMN "triggerKey" TYPE "LineTriggerKey_new"
   USING "triggerKey"::text::"LineTriggerKey_new";
 

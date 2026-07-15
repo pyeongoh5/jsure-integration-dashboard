@@ -23,7 +23,6 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, string> = {
   SNS_INSIGHT_REMINDER: "8. 인사이트 제출 당일 리마인더",
   SNS_INSIGHT_SUBMITTED: "8-a. 인사이트 제출 완료",
   SNS_INSIGHT_OVERDUE_REMINDER: "8-r. 인사이트 제출 다음날 독촉",
-  SNS_INSIGHT_APPROVED: "(사용 안 함) 인사이트 검수 완료",
   SNS_SETTLEMENT_COMPLETED: "9. 정산 완료",
   SNS_CAMPAIGN_COMPLETED: "10. 캠페인 종료",
   FAKE_PURCHASE_APPLICATION_APPLIED: "1. 신청 접수",

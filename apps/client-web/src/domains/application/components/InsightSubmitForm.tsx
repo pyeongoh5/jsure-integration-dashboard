@@ -1,80 +1,38 @@
-import { useRef, useState } from "react";
-import { useForm, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import type { CampaignSubType } from "@jsure/shared";
-import { Input } from "@/components/ui";
-import { FormField } from "@/components/composites";
-import { PrimaryButton } from "@/components/composites/PrimaryButton";
+import { useState } from "react";
+import { SUB_TYPE_LABEL, type CampaignSubType } from "@jsure/shared";
 import { t } from "@i18n";
-import { presignInsightUpload } from "../api";
+import {
+  EMPTY_METRIC_VALUES,
+  InsightStepForm,
+  type InsightMetricValues,
+} from "./InsightStepForm";
+import type {
+  InsightAttachment,
+  InsightImageContentType,
+} from "./InsightAttachmentSection";
 import styles from "./InsightSubmitForm.module.css";
 
-type ImgContentType = "image/png" | "image/jpeg" | "image/webp";
+type Metrics = Record<keyof InsightMetricValues, number>;
 
-const ALLOWED: ImgContentType[] = ["image/png", "image/jpeg", "image/webp"];
-const MAX_BYTES = 5 * 1024 * 1024;
-const MAX_FILES = 10;
-
-const METRIC_FIELDS = [
-  { key: "likes", label: t("application.insightForm.metricLikes") },
-  { key: "comments", label: t("application.insightForm.metricComments") },
-  { key: "shares", label: t("application.insightForm.metricShares") },
-  { key: "reposts", label: t("application.insightForm.metricReposts") },
-  { key: "saves", label: t("application.insightForm.metricSaves") },
-  { key: "views", label: t("application.insightForm.metricViews") },
-  { key: "reach", label: t("application.insightForm.metricReach") },
-] as const;
-
-type MetricKey = (typeof METRIC_FIELDS)[number]["key"];
-type Metrics = Record<MetricKey, number>;
-
-const metricSchema = z
-  .string()
-  .regex(/^\d+$/, t("application.insightForm.metricInvalid"));
-
-const schema = z.object({
-  likes: metricSchema,
-  comments: metricSchema,
-  shares: metricSchema,
-  reposts: metricSchema,
-  saves: metricSchema,
-  views: metricSchema,
-  reach: metricSchema,
-});
-type Values = z.infer<typeof schema>;
-
-const EMPTY_VALUES: Values = {
-  likes: "",
-  comments: "",
-  shares: "",
-  reposts: "",
-  saves: "",
-  views: "",
-  reach: "",
-};
-
-interface Attachment {
-  objectKey: string;
-  contentType: ImgContentType;
-  sizeBytes: number;
-  previewUrl: string;
-  name: string;
-}
-
-interface InsightInput extends Metrics {
+export interface InsightEntry extends Metrics {
+  subType: CampaignSubType; // new
   attachments?: {
     objectKey: string;
-    contentType: ImgContentType;
+    contentType: InsightImageContentType;
     sizeBytes: number;
   }[];
 }
 
+/** 인사이트 입력 대상 — 참여한 서브타입별 게시물. */
+export interface InsightTarget {
+  subType: CampaignSubType; // new
+  initial: Metrics | null; // new
+}
+
 interface Props {
   applicationId: string;
-  subType: CampaignSubType;
-  initial: Metrics | null;
-  onSubmit: (value: InsightInput) => Promise<void>;
+  targets: InsightTarget[]; // new — 참여한 모든 서브타입의 인사이트를 한 폼에서 일괄 제출
+  onSubmit: (insights: InsightEntry[]) => Promise<void>; // new
   submitting: boolean;
   postSubmittedAt: string;
 }
@@ -85,8 +43,8 @@ function formatInsightDueDate(iso: string): string {
   return `${date.getMonth() + 1}${t("application.dateFormat.monthSuffix")}${date.getDate()}${t("application.dateFormat.daySuffix")}`;
 }
 
-function fromInitial(initial: Metrics | null): Values {
-  if (!initial) return EMPTY_VALUES;
+function fromInitial(initial: Metrics | null): InsightMetricValues {
+  if (!initial) return EMPTY_METRIC_VALUES;
   return {
     likes: String(initial.likes),
     comments: String(initial.comments),
@@ -98,277 +56,119 @@ function fromInitial(initial: Metrics | null): Values {
   };
 }
 
+/**
+ * 서브타입별 퍼널(단계) 셸 — 한 단계에 서브타입 1개씩 입력한다.
+ * 각 단계는 독립된 폼(InsightStepForm)이라 검증 상태가 단계 간에 공유되지 않는다.
+ */
 export function InsightSubmitForm({
   applicationId,
-  subType,
-  initial,
+  targets,
   onSubmit,
   submitting,
   postSubmittedAt,
 }: Props) {
-  const methods = useForm<Values>({
-    resolver: zodResolver(schema),
-    defaultValues: fromInitial(initial),
-  });
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [stepIndex, setStepIndex] = useState(0);
+  // 단계를 오갈 때 입력값을 보존하기 위한 서브타입별 스냅샷.
+  const [valuesBySubType, setValuesBySubType] = useState<
+    Partial<Record<CampaignSubType, InsightMetricValues>>
+  >({});
+  const [attachmentsBySubType, setAttachmentsBySubType] = useState<
+    Partial<Record<CampaignSubType, InsightAttachment[]>>
+  >({});
 
-  const uploading = pendingCount > 0;
-  const busy = submitting || uploading;
-  const remaining = MAX_FILES - attachments.length;
+  const currentTarget = targets[stepIndex] ?? targets[0]!;
+  const isLastStep = stepIndex >= targets.length - 1;
 
-  async function uploadOne(file: File): Promise<Attachment | null> {
-    if (!ALLOWED.includes(file.type as ImgContentType)) {
-      setUploadError(`${t("application.insightForm.unsupportedFilePrefix")}${file.name}`);
-      return null;
-    }
-    if (file.size > MAX_BYTES) {
-      setUploadError(`${t("application.insightForm.oversizedFilePrefix")}${file.name}`);
-      return null;
-    }
-    const contentType = file.type as ImgContentType;
-    const presign = await presignInsightUpload({
-      applicationId,
-      subType,
-      contentType,
-      sizeBytes: file.size,
-    });
-    const put = await fetch(presign.uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": contentType },
-      body: file,
-    });
-    if (!put.ok) {
-      setUploadError(`${t("application.insightForm.uploadFailedPrefix")}${file.name}`);
-      return null;
-    }
-    return {
-      objectKey: presign.objectKey,
-      contentType,
-      sizeBytes: file.size,
-      previewUrl: URL.createObjectURL(file),
-      name: file.name,
-    };
+  function saveValues(subType: CampaignSubType, values: InsightMetricValues) {
+    setValuesBySubType((prev) => ({ ...prev, [subType]: values }));
   }
 
-  async function handleFiles(files: FileList | File[] | null) {
-    if (!files || files.length === 0) return;
-    setUploadError(null);
-    if (remaining <= 0) {
-      setUploadError(
-        `${t("application.insightForm.maxFilesPrefix")}${MAX_FILES}${t("application.insightForm.maxFilesSuffix")}`,
-      );
+  async function handleNext(values: InsightMetricValues) {
+    saveValues(currentTarget.subType, values);
+    if (!isLastStep) {
+      setStepIndex(stepIndex + 1);
       return;
     }
-    const list = Array.from(files).slice(0, remaining);
-    setPendingCount((count) => count + list.length);
-    try {
-      for (const file of list) {
-        try {
-          const attachment = await uploadOne(file);
-          if (attachment) {
-            setAttachments((prev) => [...prev, attachment]);
-          }
-        } finally {
-          setPendingCount((count) => count - 1);
-        }
-      }
-    } catch (err) {
-      setUploadError(
-        err instanceof Error
-          ? err.message
-          : t("application.insightForm.uploadGenericError"),
-      );
-    }
+    const merged = { ...valuesBySubType, [currentTarget.subType]: values };
+    await onSubmit(
+      targets.map((target) => {
+        const group = merged[target.subType] ?? EMPTY_METRIC_VALUES;
+        return {
+          subType: target.subType,
+          likes: Number(group.likes),
+          comments: Number(group.comments),
+          shares: Number(group.shares),
+          reposts: Number(group.reposts),
+          saves: Number(group.saves),
+          views: Number(group.views),
+          reach: Number(group.reach),
+          attachments: (attachmentsBySubType[target.subType] ?? []).map((attachment) => ({
+            objectKey: attachment.objectKey,
+            contentType: attachment.contentType,
+            sizeBytes: attachment.sizeBytes,
+          })),
+        };
+      }),
+    );
   }
 
-  function removeAttachment(index: number) {
-    setAttachments((prev) => {
-      const target = prev[index];
-      if (target) URL.revokeObjectURL(target.previewUrl);
-      return prev.filter((_, i) => i !== index);
-    });
-  }
-
-  function openPicker() {
-    if (busy || remaining <= 0) return;
-    fileInputRef.current?.click();
-  }
-
-  async function handle(values: Values) {
-    await onSubmit({
-      likes: Number(values.likes),
-      comments: Number(values.comments),
-      shares: Number(values.shares),
-      reposts: Number(values.reposts),
-      saves: Number(values.saves),
-      views: Number(values.views),
-      reach: Number(values.reach),
-      attachments: attachments.map((attachment) => ({
-        objectKey: attachment.objectKey,
-        contentType: attachment.contentType,
-        sizeBytes: attachment.sizeBytes,
-      })),
-    });
+  function handleBack(values: InsightMetricValues) {
+    saveValues(currentTarget.subType, values);
+    setStepIndex(stepIndex - 1);
   }
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(handle)}>
-        <div
-          style={{
-            background: "#fef3c7",
-            padding: 10,
-            borderRadius: 8,
-            fontSize: 12,
-            color: "#92400e",
-            marginBottom: 14,
-          }}
-        >
-          {t("application.insightForm.guidance")}
-          <div
-            style={{
-              marginTop: 6,
-              color: "#dc2626",
-              fontWeight: 600,
-            }}
-          >
-            {t("application.insightForm.dueLabelPrefix")}
-            {formatInsightDueDate(postSubmittedAt)}
-          </div>
+    <div>
+      <div className={styles.guidance}>
+        {t("application.insightForm.guidance")}
+        <div className={styles.guidanceDue}>
+          {t("application.insightForm.dueLabelPrefix")}
+          {formatInsightDueDate(postSubmittedAt)}
         </div>
+      </div>
 
-        {METRIC_FIELDS.map((metric) => (
-          <div key={metric.key}>
-            <FormField name={metric.key} label={metric.label}>
-              {(field) => (
-                <Input
-                  id={field.id}
-                  type="text"
-                  inputMode="numeric"
-                  value={field.value}
-                  onChange={(value) => field.onChange(value.replace(/[^\d]/g, ""))}
-                  onBlur={field.onBlur}
-                  error={field.error}
-                  aria-invalid={field["aria-invalid"]}
-                />
-              )}
-            </FormField>
-            {metric.key === "reach" && (
-              <p
-                style={{
-                  marginTop: -6,
-                  marginBottom: 12,
-                  fontSize: 11,
-                  color: "#6b7280",
-                  lineHeight: 1.5,
-                }}
-              >
-                {t("application.insightForm.reachHint")}
-              </p>
-            )}
-          </div>
-        ))}
-
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>{t("application.insightForm.screenshotTitle")}</div>
-          <div className={styles.sectionHint}>
-            {t("application.insightForm.screenshotHintPrefix")}
-            {MAX_FILES}
-            {t("application.insightForm.screenshotHintSuffix")}
-          </div>
-
-          <div
-            className={`${styles.dropzone} ${dragOver ? styles.dropzoneDrag : ""} ${
-              busy || remaining <= 0 ? styles.dropzoneDisabled : ""
-            }`}
-            onClick={openPicker}
-            onDragOver={(event) => {
-              event.preventDefault();
-              if (!busy && remaining > 0) setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setDragOver(false);
-              if (!busy && remaining > 0) handleFiles(event.dataTransfer.files);
-            }}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                openPicker();
-              }
-            }}
-          >
-            <i className={`${styles.dropzoneIcon} fa-regular fa-image`} />
-            <div className={styles.dropzoneMain}>
-              {uploading
-                ? t("application.insightForm.uploading")
-                : remaining <= 0
-                  ? t("application.insightForm.limitReached")
-                  : t("application.insightForm.dropzoneMain")}
-            </div>
-            <div className={styles.dropzoneSub}>
-              {attachments.length}/{MAX_FILES} {t("application.insightForm.unitSuffix")}
-            </div>
-            <input
-              ref={fileInputRef}
-              className={styles.dropzoneHiddenInput}
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              multiple
-              disabled={busy || remaining <= 0}
-              onChange={(event) => {
-                handleFiles(event.target.files);
-                event.target.value = "";
-              }}
+      {targets.length > 1 && (
+        <div className={styles.progress}>
+          {targets.map((target, index) => (
+            <div
+              key={target.subType}
+              className={`${styles.progressSegment} ${
+                index <= stepIndex ? styles.progressSegmentDone : ""
+              }`}
             />
-          </div>
-
-          {uploadError && <div className={styles.error}>{uploadError}</div>}
-
-          {(attachments.length > 0 || pendingCount > 0) && (
-            <div className={styles.grid}>
-              {attachments.map((attachment, index) => (
-                <div key={attachment.objectKey} className={styles.tile}>
-                  <img
-                    src={attachment.previewUrl}
-                    alt={attachment.name}
-                    className={styles.tileImg}
-                  />
-                  <button
-                    type="button"
-                    className={styles.tileRemove}
-                    onClick={() => removeAttachment(index)}
-                    disabled={busy}
-                    aria-label={t("application.insightForm.removeAriaLabel")}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              {Array.from({ length: pendingCount }).map((_, index) => (
-                <div key={`pending-${index}`} className={styles.tile}>
-                  <div className={styles.tileLoading}>{t("application.insightForm.uploading")}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          ))}
         </div>
+      )}
 
-        <PrimaryButton type="submit" disabled={busy}>
-          {submitting
-            ? t("application.insightForm.submitting")
-            : uploading
-              ? t("application.insightForm.uploading")
-              : t("application.insightForm.submit")}
-        </PrimaryButton>
-      </form>
-    </FormProvider>
+      <div className={styles.sectionTitle}>
+        {SUB_TYPE_LABEL[currentTarget.subType]}
+        {targets.length > 1 && (
+          <span className={styles.stepCount}>
+            {stepIndex + 1}/{targets.length}
+          </span>
+        )}
+      </div>
+
+      <InsightStepForm
+        key={currentTarget.subType}
+        applicationId={applicationId}
+        subType={currentTarget.subType}
+        defaultValues={
+          valuesBySubType[currentTarget.subType] ?? fromInitial(currentTarget.initial)
+        }
+        attachments={attachmentsBySubType[currentTarget.subType] ?? []}
+        onAttachmentsChange={(next) =>
+          setAttachmentsBySubType((prev) => ({
+            ...prev,
+            [currentTarget.subType]: next,
+          }))
+        }
+        isFirstStep={stepIndex === 0}
+        isLastStep={isLastStep}
+        submitting={submitting}
+        onBack={handleBack}
+        onNext={handleNext}
+      />
+    </div>
   );
 }

@@ -1,7 +1,54 @@
-import type { InfluencerCampaignDetail } from "@jsure/shared";
+import type {
+  InfluencerCampaignCard,
+  InfluencerCampaignDetail,
+} from "@jsure/shared";
 
 export function formatYen(value: number): string {
   return `¥${value.toLocaleString("ja-JP")}`;
+}
+
+/**
+ * 인플루언서에게 표시할 보수 범위.
+ * - UNIFIED: min = max = 캠페인 고정 보수.
+ * - PER_SUBTYPE: 최대 = 전 서브타입 보수 합.
+ *   최소 = 필수 응모 서브타입이 있으면 그 보수 합, 없으면 가장 저렴한 서브타입 보수.
+ */
+export function rewardRangeJpy(
+  campaign: Pick<
+    InfluencerCampaignCard,
+    "rewardType" | "rewardJpy" | "recruits"
+  >,
+): { min: number; max: number } {
+  if (
+    campaign.rewardType !== "PER_SUBTYPE" ||
+    campaign.recruits.length === 0
+  ) {
+    return { min: campaign.rewardJpy, max: campaign.rewardJpy };
+  }
+  const rewards = campaign.recruits.map((recruit) => recruit.rewardJpy ?? 0);
+  const max = rewards.reduce((sum, reward) => sum + reward, 0);
+  const requiredRecruits = campaign.recruits.filter(
+    (recruit) => recruit.isRequired,
+  );
+  const min =
+    requiredRecruits.length > 0
+      ? requiredRecruits.reduce(
+          (sum, recruit) => sum + (recruit.rewardJpy ?? 0),
+          0,
+        )
+      : Math.min(...rewards);
+  return { min, max };
+}
+
+/** 보수 표시 문자열 — 개별보수 범위면 "¥1,000〜¥4,000" 형태. */
+export function formatRewardRange(
+  campaign: Pick<
+    InfluencerCampaignCard,
+    "rewardType" | "rewardJpy" | "recruits"
+  >,
+): string {
+  const { min, max } = rewardRangeJpy(campaign);
+  return min === max ? formatYen(min) : `${formatYen(min)}〜${formatYen(max)}`;
 }
 
 export function formatDate(iso: string): string {

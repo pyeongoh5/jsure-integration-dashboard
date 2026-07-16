@@ -6,7 +6,11 @@ import {
   type CampaignSubType,
   type CampaignRecruit,
 } from "@jsure/shared";
-import { useCampaign, formatYen, formatDate } from "@/domains/campaign";
+import {
+  useCampaign,
+  formatDate,
+  formatRewardRange,
+} from "@/domains/campaign";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { t } from "@i18n";
@@ -97,7 +101,7 @@ export function CampaignDetail() {
       <div className={styles.body}>
         <div className={styles.head}>
           <h1 className={styles.title}>{data.title}</h1>
-          <div className={styles.reward}>{formatYen(data.rewardJpy)}</div>
+          <div className={styles.reward}>{formatRewardRange(data)}</div>
         </div>
         <div className={styles.period}>
           {t("pages.campaignDetail.recruitLabel")} {formatDate(data.recruitStartAt)} 〜{" "}
@@ -108,7 +112,12 @@ export function CampaignDetail() {
           {data.recruits.map((r: CampaignRecruit) => {
             if (isFakePurchaseSubType(r.subType)) {
               const productPrice = r.productPriceJpy ?? 0;
-              const expectedSettlement = data.rewardJpy + productPrice;
+              // 개별보수 캠페인은 캠페인 고정 보수(0) 대신 서브타입 보수로 정산 예상액 계산.
+              const rewardForRecruit =
+                data.rewardType === "PER_SUBTYPE"
+                  ? (r.rewardJpy ?? 0)
+                  : data.rewardJpy;
+              const expectedSettlement = rewardForRecruit + productPrice;
               const reviewChannels = formatReviewChannels(r.subTypeOptions);
               return (
                 <li
@@ -214,19 +223,22 @@ export function CampaignDetail() {
       </div>
 
       <div className={styles.cta}>
-        {data.appliedSubTypes.length > 0 && (
+        {data.hasApplied && !data.hasCancelled && ( // new — 응모 이력은 캠페인 단위 1건
           <PrimaryButton onClick={() => nav("/applications")}>
             {t("pages.campaignDetail.viewApplications")}
           </PrimaryButton>
         )}
-        {data.appliedSubTypes.length < data.recruits.length && (
+        {!data.hasApplied && ( // new — 취소 이력 포함 재응모 불가
           <PrimaryButton disabled={closed} onClick={() => nav(`/campaigns/${data.id}/apply`)}>
             {closed
               ? t("pages.campaignDetail.ctaClosed")
-              : data.appliedSubTypes.length > 0
-                ? t("pages.campaignDetail.ctaAppliedOther")
-                : t("pages.campaignDetail.ctaApply")}
+              : t("pages.campaignDetail.ctaApply")}
           </PrimaryButton>
+        )}
+        {data.hasCancelled && ( // new
+          <p className={styles.cancelledNotice}>
+            {t("pages.campaignDetail.cancelledNotice")}
+          </p>
         )}
       </div>
     </div>

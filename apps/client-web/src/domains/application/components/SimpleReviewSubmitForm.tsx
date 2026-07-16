@@ -19,10 +19,9 @@ import styles from "./ReviewSubmitForm.module.css";
 const MIN_FILES = 1;
 const MAX_FILES = 10;
 
-const schema = z.object({
-  url: z.string().regex(/^https:\/\/.+/i, t("application.simpleReviewForm.urlInvalid")),
-});
-type Values = z.infer<typeof schema>;
+const urlSchema = z
+  .string()
+  .regex(/^https:\/\/.+/i, t("application.simpleReviewForm.urlInvalid"));
 
 const PLACEHOLDER_BY_SUB_TYPE: Partial<Record<CampaignSubType, string>> = {
 
@@ -33,10 +32,10 @@ const PLACEHOLDER_BY_SUB_TYPE: Partial<Record<CampaignSubType, string>> = {
 interface Props {
 
   applicationId: string;
-  subType: CampaignSubType;
-  initial: string;
+  subTypes: CampaignSubType[]; // new — 참여한 모든 리뷰 채널의 URL 을 한 폼에서 일괄 제출
+  initial: Partial<Record<CampaignSubType, string>>; // new
   onSubmit: (
-    url: string,
+    reviews: { subType: CampaignSubType; url: string }[], // new
     screenshots: AttachmentUploadInput[],
   ) => Promise<void>;
   submitting: boolean;
@@ -51,15 +50,21 @@ function formatDeadline(iso: string): string {
 export function SimpleReviewSubmitForm({
 
   applicationId,
-  subType,
+  subTypes,
   initial,
   onSubmit,
   submitting,
   reviewDeadlineAt,
 }: Props) {
-  const methods = useForm<Values>({
+  const schema = z.object(
+    Object.fromEntries(subTypes.map((subType) => [subType, urlSchema])),
+  );
+  const hasInitial = subTypes.some((subType) => Boolean(initial[subType]));
+  const methods = useForm<Record<string, string>>({
     resolver: zodResolver(schema),
-    defaultValues: { url: initial },
+    defaultValues: Object.fromEntries(
+      subTypes.map((subType) => [subType, initial[subType] ?? ""]),
+    ),
   });
   const upload = useAttachmentUpload({
 
@@ -78,7 +83,7 @@ export function SimpleReviewSubmitForm({
     upload.fileInputRef.current?.click();
   }
 
-  async function handle(values: Values) {
+  async function handle(values: Record<string, string>) {
     setSubmitError(null);
     const screenshots = upload.toInputs();
     if (screenshots.length < MIN_FILES) {
@@ -86,7 +91,10 @@ export function SimpleReviewSubmitForm({
       return;
     }
     try {
-      await onSubmit(values.url, screenshots);
+      await onSubmit(
+        subTypes.map((subType) => ({ subType, url: values[subType] ?? "" })),
+        screenshots,
+      );
     } catch (err) {
 
       if (axios.isAxiosError(err)) {
@@ -104,27 +112,33 @@ export function SimpleReviewSubmitForm({
   return (
     <FormProvider {...methods}>
       <form className={styles.form} onSubmit={methods.handleSubmit(handle)}>
-        <FormField
-          name="url"
-          label={`${SUB_TYPE_LABEL[subType]} ${t("application.simpleReviewForm.labelSuffix")}`}
-        >
-          {(field) => (
-            <Input
-              id={field.id}
-              type="text"
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              error={field.error}
-              placeholder={PLACEHOLDER_BY_SUB_TYPE[subType] ?? "https://..."}
-              aria-invalid={field["aria-invalid"]}
-            />
-          )}
-        </FormField>
+        {subTypes.map((subType) => (
+          <FormField
+            key={subType}
+            name={subType}
+            label={`${SUB_TYPE_LABEL[subType]} ${t("application.simpleReviewForm.labelSuffix")}`}
+          >
+            {(field) => (
+              <Input
+                id={field.id}
+                type="text"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={field.error}
+                placeholder={PLACEHOLDER_BY_SUB_TYPE[subType] ?? "https://..."}
+                aria-invalid={field["aria-invalid"]}
+              />
+            )}
+          </FormField>
+        ))}
 
         <div className={styles.section}>
           <div className={styles.sectionTitle}>
-            {`${SUB_TYPE_LABEL[subType]} ${t("application.simpleReviewForm.screenshotsLabelSuffix")}`}
+            {subTypes
+              .map((subType) => SUB_TYPE_LABEL[subType])
+              .join(" · ")}{" "}
+            {t("application.simpleReviewForm.screenshotsLabelSuffix")}
           </div>
           <div className={styles.sectionHint}>
             {t("application.attachmentUpload.hintPrefix")}
@@ -224,7 +238,7 @@ export function SimpleReviewSubmitForm({
             ? t("application.simpleReviewForm.submitting")
             : upload.uploading
               ? t("application.attachmentUpload.uploading")
-              : initial
+              : hasInitial
                 ? t("application.simpleReviewForm.update")
                 : t("application.simpleReviewForm.submit")}
         </PrimaryButton>

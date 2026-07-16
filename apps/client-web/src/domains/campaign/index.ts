@@ -1,6 +1,12 @@
 export { listCampaigns, getCampaign } from "./api";
 export { useCampaignList, useCampaign } from "./hooks";
-export { formatYen, formatDate, isCampaignClosed } from "./utils";
+export {
+  formatYen,
+  formatDate,
+  formatRewardRange,
+  rewardRangeJpy,
+  isCampaignClosed,
+} from "./utils";
 export type {
   InfluencerCampaignCard,
   InfluencerCampaignDetail,

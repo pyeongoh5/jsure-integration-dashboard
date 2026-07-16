@@ -87,6 +87,8 @@ export function ReviewSubmitForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const busy = submitting || upload.uploading;
+  // Qoo10 기본 2장 + 요구 채널(LIPS/@cosme)당 1장
+  const requiredFiles = MIN_FILES + activeChannels.length;
   const remainingDays = computeRemainingDays(orderSubmittedAt, postingPeriodDays);
   const deadlinePassed = remainingDays < 0;
 
@@ -98,8 +100,10 @@ export function ReviewSubmitForm({
   async function handle(values: Values) {
     setSubmitError(null);
     const screenshots = upload.toInputs();
-    if (screenshots.length < MIN_FILES) {
-      setSubmitError(t("application.reviewForm.screenshotsRequired"));
+    if (screenshots.length < requiredFiles) {
+      setSubmitError(
+        `${t("application.reviewForm.screenshotsRequiredPrefix")}${requiredFiles}${t("application.reviewForm.screenshotsRequiredSuffix")}`,
+      );
       return;
     }
     const reviewUrls: Partial<Record<ReviewChannel, string>> = {};
@@ -150,7 +154,9 @@ export function ReviewSubmitForm({
 
         <div className={styles.section}>
           <div className={styles.sectionTitle}>
-            {t("application.stage.awaitingReview.screenshotsLabel")}
+            {t("application.stage.awaitingReview.screenshotsLabelPrefix")}
+            {requiredFiles}
+            {t("application.stage.awaitingReview.screenshotsLabelSuffix")}
           </div>
           <div className={styles.sectionHint}>
             {t("application.attachmentUpload.hintPrefix")}

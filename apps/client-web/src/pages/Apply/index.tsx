@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { InstagramPostType, CampaignSubType } from "@jsure/shared";
-import { useCampaign } from "@/domains/campaign";
+import { useCampaign, formatRewardRange } from "@/domains/campaign";
 import { createApplication } from "@/domains/application";
 import { fetchMe } from "@/domains/auth";
 import { t } from "@i18n";
@@ -237,6 +237,19 @@ export function Apply() {
       </div>
     );
   }
+  // 응모는 캠페인 단위 1건 — 취소 이력 포함 재응모 불가. // new
+  if (campaign.data.hasApplied) {
+    return (
+      <div>
+        <PageHeader showBack />
+        <div style={{ padding: 60, textAlign: "center", color: "#6b7280" }}>
+          {campaign.data.hasCancelled
+            ? t("pages.campaignDetail.cancelledNotice")
+            : t("pages.apply.alreadyAppliedNotice")}
+        </div>
+      </div>
+    );
+  }
 
   const followerByMySns = new Map(
     me.data?.snsAccounts.map((a) => [a.snsType, a.followerCount]) ?? [],
@@ -249,7 +262,7 @@ export function Apply() {
         <div className={styles.cam}>
           <div className={styles.camTitle}>{campaign.data.title}</div>
           <div className={styles.camReward}>
-            ¥{campaign.data.rewardJpy.toLocaleString("ja-JP")}
+            {formatRewardRange(campaign.data)}
           </div>
         </div>
 
@@ -280,12 +293,6 @@ export function Apply() {
             <ul className={styles.snsPick}>
               {campaign.data.recruits.map((r) => {
                 const isQualifying = qualifying.includes(r.subType);
-                const isCancelled = campaign.data.cancelledSubTypes.includes(
-                  r.subType,
-                );
-                const alreadyApplied =
-                  !isCancelled &&
-                  campaign.data.appliedSubTypes.includes(r.subType);
                 const isExcluded = campaign.data.excludedSubTypes.includes(
                   r.subType,
                 );
@@ -293,13 +300,11 @@ export function Apply() {
                   followerByMySns as Map<CampaignSubType, number>
                 ).get(r.subType);
                 const isSelected = selectedSns.has(r.subType);
-                const isRequired = r.isRequired; // new
+                const isRequired = r.isRequired;
                 const disabled =
                   !isQualifying ||
-                  alreadyApplied ||
-                  isCancelled ||
                   isExcluded ||
-                  isRequired; // new — 필수 서브타입은 해제 불가
+                  isRequired; // 필수 서브타입은 해제 불가
                 return (
                   <li key={r.subType}>
                     <label
@@ -316,22 +321,12 @@ export function Apply() {
                       <div className={styles.snsInfo}>
                         <div className={styles.snsName}>
                           {SNS_LABEL[r.subType]}
-                          {alreadyApplied && (
-                            <span style={{ marginLeft: 8, color: "#10b981", fontSize: 11 }}>
-                              {t("pages.apply.appliedTag")}
-                            </span>
-                          )}
-                          {isCancelled && (
-                            <span style={{ marginLeft: 8, color: "#ef4444", fontSize: 11 }}>
-                              {t("pages.apply.cancelledTag")}
-                            </span>
-                          )}
-                          {!alreadyApplied && !isCancelled && isExcluded && (
+                          {isExcluded && (
                             <span style={{ marginLeft: 8, color: "#ef4444", fontSize: 11 }}>
                               {t("pages.apply.excludedTag")}
                             </span>
                           )}
-                          {isRequired && !alreadyApplied && !isCancelled && !isExcluded && ( // new
+                          {isRequired && !isExcluded && (
                             <span style={{ marginLeft: 8, color: "#2563eb", fontSize: 11 }}>
                               {t("pages.apply.requiredBadge")}
                             </span>

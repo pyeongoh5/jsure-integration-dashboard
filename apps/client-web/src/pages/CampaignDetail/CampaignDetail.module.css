@@ -264,3 +264,11 @@
   flex: 1;
   min-width: 0;
 }
+
+.cancelledNotice {
+  align-self: center;
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-danger, #ef4444);
+}

@@ -6,6 +6,7 @@ import {
   type CampaignRecruit,
 } from "@jsure/shared";
 import { t } from "@i18n";
+import { rewardRangeJpy } from "../utils";
 import styles from "./CampaignCard.module.css";
 
 function categoryLabel(category: InfluencerCampaignCard["category"]): string { // new
@@ -68,6 +69,12 @@ interface Props {
 
 function formatYen(v: number): string {
   return `¥${v.toLocaleString("ja-JP")}${t("campaign.card.yenSuffix")}`;
+}
+
+// 개별보수(PER_SUBTYPE)면 최소〜최대 범위로 표기.
+function formatReward(card: InfluencerCampaignCard): string {
+  const { min, max } = rewardRangeJpy(card);
+  return min === max ? formatYen(min) : `${formatYen(min)}〜${formatYen(max)}`;
 }
 
 function stripHtml(html: string): string {
@@ -254,7 +261,7 @@ export function CampaignCard({ card, onSelect }: Props) {
           </div>
           <div className={styles.metaRow}>
             <i className="fa-solid fa-coins" />
-            <span>{formatYen(card.rewardJpy)}</span>
+            <span>{formatReward(card)}</span>
           </div>
         </div>
 

@@ -39,10 +39,13 @@ export function ApplicationCard({ app, onSelect }: Props) {
       <div className={styles.head}>
         <div className={styles.title}>
           {app.campaignTitle}
-          <span className={styles.sns}>{SUB_TYPE_LABEL[app.subType]}</span>{}
-          {app.subType === "INSTAGRAM" && app.instagramPostType && (
-            <span className={styles.sns}>{app.instagramPostType}</span>
-          )}
+          {app.subTypes.map((subType) => ( // new — Instagram 은 포스트 타입까지 한 태그로 합쳐 표기
+            <span key={subType} className={styles.sns}>
+              {subType === "INSTAGRAM" && app.instagramPostType
+                ? `${SUB_TYPE_LABEL.INSTAGRAM} - ${app.instagramPostType}`
+                : SUB_TYPE_LABEL[subType]}
+            </span>
+          ))}
         </div>
         <StageBadge stage={app.displayStage} />
       </div>

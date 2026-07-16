@@ -10,15 +10,15 @@ import {
   PostSubmitForm,
   ReceiptConfirmDialog,
   ReviewSubmitForm,
-  SimpleReviewSubmitForm, // new
+  SimpleReviewSubmitForm,
   StageBadge,
   cancelApplication,
   confirmReceipt,
-  submitInsight,
+  submitInsights, // new
   submitOrder,
-  submitPost,
+  submitSubmission, // new
   submitReview,
-  submitSimpleReview, // new
+  submitSimpleReview,
   useApplication,
 } from "@/domains/application";
 import { useCampaign } from "@/domains/campaign";
@@ -67,8 +67,8 @@ export function ApplicationDetail() {
     },
   });
   const post = useMutation({
-    mutationFn: ({ subType, url }: { subType: CampaignSubType; url: string }) =>
-      submitPost(id, subType, url),
+    mutationFn: (posts: { subType: CampaignSubType; url: string }[]) => // new
+      submitSubmission(id, posts),
     onSuccess: () => invalidate(),
   });
   const order = useMutation({
@@ -91,23 +91,20 @@ export function ApplicationDetail() {
     }) => submitReview(id, screenshots, reviewUrls),
     onSuccess: () => invalidate(),
   });
-  const simpleReview = useMutation({ // new
+  const simpleReview = useMutation({
     mutationFn: ({
-      url,
+      reviews, // new
       screenshots,
     }: {
-      url: string;
+      reviews: { subType: CampaignSubType; url: string }[]; // new
       screenshots: AttachmentUploadInput[];
-    }) => submitSimpleReview(id, url, screenshots),
+    }) => submitSimpleReview(id, reviews, screenshots),
     onSuccess: () => invalidate(),
   });
   const insight = useMutation({
-    mutationFn: ({
-      subType,
-      input,
-    }: {
-      subType: CampaignSubType;
-      input: {
+    mutationFn: (
+      insights: { // new
+        subType: CampaignSubType;
         likes: number;
         comments: number;
         shares: number;
@@ -120,8 +117,8 @@ export function ApplicationDetail() {
           contentType: "image/png" | "image/jpeg" | "image/webp";
           sizeBytes: number;
         }[];
-      };
-    }) => submitInsight(id, subType, input),
+      }[],
+    ) => submitInsights(id, insights),
     onSuccess: () => invalidate(),
   });
 
@@ -219,84 +216,92 @@ export function ApplicationDetail() {
 
         {stage === "POSTING" && (
           <PostSubmitForm
-            subType={data.subType}
-            initial=""
-            onSubmit={async (url) => {
-              await post.mutateAsync({ subType: data.subType, url });
+            subTypes={data.subTypes} // new
+            initial={Object.fromEntries(
+              data.posts
+                .filter((p) => p.url !== null)
+                .map((p) => [p.subType, p.url ?? ""]),
+            )}
+            onSubmit={async (posts) => {
+              await post.mutateAsync(posts);
             }}
             submitting={post.isPending}
             postingDeadlineAt={data.postingDeadlineAt}
           />
         )}
 
-        {stage === "POST_REJECTED" &&
-          data.posts
-            .filter((p) => p.reviewStatus === "REJECTED")
-            .map((p) => (
-              <div key={p.id} className={styles.reject}>
-                <div className={styles.rejectHead}>
-                  <span className={styles.rejectBadge}>
-                    {t("pages.applications.detail.rejectBadge")}
-                  </span>
-                  <span className={styles.rejectSns}>{SUB_TYPE_LABEL[p.subType]}</span>
+        {stage === "POST_REJECTED" && (
+          <div className={styles.reject}>
+            <div className={styles.rejectHead}>
+              <span className={styles.rejectBadge}>
+                {t("pages.applications.detail.rejectBadge")}
+              </span>
+              <span className={styles.rejectSns}>
+                {data.subTypes
+                  .map((subType) => SUB_TYPE_LABEL[subType])
+                  .join(" · ")}
+              </span>
+            </div>
+            {data.posts
+              .filter((p) => p.url !== null)
+              .map((p) => (
+                <div key={p.id} className={styles.rejectUrl}>
+                  {t("pages.applications.detail.rejectUrlPrefix")}
+                  <a href={p.url ?? undefined} target="_blank" rel="noreferrer">
+                    {p.url}
+                  </a>
                 </div>
-                {p.url && (
-                  <div className={styles.rejectUrl}>
-                    {t("pages.applications.detail.rejectUrlPrefix")}
-                    <a href={p.url} target="_blank" rel="noreferrer">
-                      {p.url}
-                    </a>
-                  </div>
-                )}
-                {p.lastRejectionComment && (
-                  <div className={styles.rejectComment}>
-                    <div className={styles.rejectCommentLabel}>
-                      {t("pages.applications.detail.adminComment")}
-                    </div>
-                    <p>{p.lastRejectionComment}</p>
-                  </div>
-                )}
-                <PostSubmitForm
-                  subType={p.subType}
-                  initial={p.url ?? ""}
-                  onSubmit={async (url) => {
-                    await post.mutateAsync({ subType: p.subType, url });
-                  }}
-                  submitting={post.isPending}
-                  postingDeadlineAt={data.postingDeadlineAt}
-                />
+              ))}
+            {data.lastRejectionComment && (
+              <div className={styles.rejectComment}>
+                <div className={styles.rejectCommentLabel}>
+                  {t("pages.applications.detail.adminComment")}
+                </div>
+                <p>{data.lastRejectionComment}</p>
               </div>
-            ))}
+            )}
+            <PostSubmitForm
+              subTypes={data.subTypes} // new
+              initial={Object.fromEntries(
+                data.posts
+                  .filter((p) => p.url !== null)
+                  .map((p) => [p.subType, p.url ?? ""]),
+              )}
+              onSubmit={async (posts) => {
+                await post.mutateAsync(posts);
+              }}
+              submitting={post.isPending}
+              postingDeadlineAt={data.postingDeadlineAt}
+            />
+          </div>
+        )}
 
         {stage === "POSTED" && (
           <p className={styles.msg}>{t("pages.applications.detail.msgPosted")}</p>
         )}
 
-        {stage === "INSIGHT_DUE" && data.posts[0] && (
+        {stage === "INSIGHT_DUE" && data.posts.length > 0 && (
           <InsightSubmitForm
             applicationId={data.id}
-            subType={data.posts[0].subType}
-            initial={
-              data.posts[0].insightSubmittedAt
+            targets={data.posts.map((p) => ({ // new
+              subType: p.subType,
+              initial: p.insightSubmittedAt
                 ? {
-                    likes: data.posts[0].insightLikes ?? 0,
-                    comments: data.posts[0].insightComments ?? 0,
-                    shares: data.posts[0].insightShares ?? 0,
-                    reposts: data.posts[0].insightReposts ?? 0,
-                    saves: data.posts[0].insightSaves ?? 0,
-                    views: data.posts[0].insightViews ?? 0,
-                    reach: data.posts[0].insightReach ?? 0,
+                    likes: p.insightLikes ?? 0,
+                    comments: p.insightComments ?? 0,
+                    shares: p.insightShares ?? 0,
+                    reposts: p.insightReposts ?? 0,
+                    saves: p.insightSaves ?? 0,
+                    views: p.insightViews ?? 0,
+                    reach: p.insightReach ?? 0,
                   }
-                : null
-            }
-            onSubmit={async (input) => {
-              await insight.mutateAsync({
-                subType: data.posts[0]!.subType,
-                input,
-              });
+                : null,
+            }))}
+            onSubmit={async (insights) => {
+              await insight.mutateAsync(insights);
             }}
             submitting={insight.isPending}
-            postSubmittedAt={data.posts[0].submittedAt}
+            postSubmittedAt={data.reviewSubmittedAt ?? data.posts[0]!.submittedAt}
           />
         )}
 
@@ -310,19 +315,19 @@ export function ApplicationDetail() {
           />
         )}
 
-        {stage === "AWAITING_REVIEW" && data.campaignCategory === "SIMPLE_REVIEW" && ( // new
+        {stage === "AWAITING_REVIEW" && data.campaignCategory === "SIMPLE_REVIEW" && (
           <SimpleReviewSubmitForm
             applicationId={data.id}
-            subType={data.subType}
-            initial=""
-            onSubmit={async (url, screenshots) => {
-              await simpleReview.mutateAsync({ url, screenshots });
+            subTypes={data.subTypes} // new
+            initial={{}}
+            onSubmit={async (reviews, screenshots) => {
+              await simpleReview.mutateAsync({ reviews, screenshots });
             }}
             submitting={simpleReview.isPending}
             reviewDeadlineAt={null}
           />
         )}
-        {stage === "AWAITING_REVIEW" && data.campaignCategory !== "SIMPLE_REVIEW" && ( // new
+        {stage === "AWAITING_REVIEW" && data.campaignCategory !== "SIMPLE_REVIEW" && (
           <ReviewSubmitForm
             applicationId={data.id}
             orderSubmittedAt={data.orderSubmittedAt ?? data.appliedAt}
@@ -337,21 +342,23 @@ export function ApplicationDetail() {
 
         {stage === "REVIEW_PENDING" && (
           <div>
-            {data.posts[0]?.url && (
-              <div className={styles.rejectUrl}>
-                {t("pages.applications.detail.rejectUrlPrefix")}
-                <a href={data.posts[0].url} target="_blank" rel="noreferrer">
-                  {data.posts[0].url}
-                </a>
-              </div>
-            )}
+            {data.posts
+              .filter((p) => p.url !== null)
+              .map((p) => (
+                <div key={p.id} className={styles.rejectUrl}>
+                  {t("pages.applications.detail.rejectUrlPrefix")}
+                  <a href={p.url ?? undefined} target="_blank" rel="noreferrer">
+                    {p.url}
+                  </a>
+                </div>
+              ))}
             <p className={styles.msg}>
               {t("application.stage.reviewPending.description")}
             </p>
           </div>
         )}
 
-        {stage === "REVIEW_REJECTED" && data.posts[0] && (
+        {stage === "REVIEW_REJECTED" && (
           <div className={styles.reject}>
             <div className={styles.rejectHead}>
               <span className={styles.rejectBadge}>
@@ -361,32 +368,38 @@ export function ApplicationDetail() {
                 {t("application.stage.reviewRejected.heading")}
               </span>
             </div>
-            {data.posts[0].url && (
-              <div className={styles.rejectUrl}>
-                {t("pages.applications.detail.rejectUrlPrefix")}
-                <a href={data.posts[0].url} target="_blank" rel="noreferrer">
-                  {data.posts[0].url}
-                </a>
-              </div>
-            )}
-            {data.posts[0].lastRejectionComment && (
+            {data.posts
+              .filter((p) => p.url !== null)
+              .map((p) => (
+                <div key={p.id} className={styles.rejectUrl}>
+                  {t("pages.applications.detail.rejectUrlPrefix")}
+                  <a href={p.url ?? undefined} target="_blank" rel="noreferrer">
+                    {p.url}
+                  </a>
+                </div>
+              ))}
+            {data.lastRejectionComment && (
               <div className={styles.rejectComment}>
                 <div className={styles.rejectCommentLabel}>
                   {t("application.stage.reviewRejected.reasonLabel")}
                 </div>
-                <p>{data.posts[0].lastRejectionComment}</p>
+                <p>{data.lastRejectionComment}</p>
               </div>
             )}
             <p className={styles.msg}>
               {t("application.stage.reviewRejected.description")}
             </p>
-            {data.campaignCategory === "SIMPLE_REVIEW" ? ( // new
+            {data.campaignCategory === "SIMPLE_REVIEW" ? (
               <SimpleReviewSubmitForm
                 applicationId={data.id}
-                subType={data.subType}
-                initial={data.posts[0]?.url ?? ""}
-                onSubmit={async (url, screenshots) => {
-                  await simpleReview.mutateAsync({ url, screenshots });
+                subTypes={data.subTypes} // new
+                initial={Object.fromEntries(
+                  data.posts
+                    .filter((p) => p.url !== null)
+                    .map((p) => [p.subType, p.url ?? ""]),
+                )}
+                onSubmit={async (reviews, screenshots) => {
+                  await simpleReview.mutateAsync({ reviews, screenshots });
                 }}
                 submitting={simpleReview.isPending}
                 reviewDeadlineAt={null}

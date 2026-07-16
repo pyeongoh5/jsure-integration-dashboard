@@ -229,9 +229,13 @@ export const messages = {
         jp: "有効なURLを入力してください",
         kr: "올바른 URL을 입력해 주세요",
       },
-      screenshotsRequired: {
-        jp: "レビューのスクリーンショットを2枚以上ご提出ください",
-        kr: "리뷰 스크린샷을 2장 이상 제출해 주세요",
+      screenshotsRequiredPrefix: { // new — 필수 매수가 채널 수에 따라 2~4장 가변
+        jp: "レビューのスクリーンショットを",
+        kr: "리뷰 스크린샷을 ",
+      },
+      screenshotsRequiredSuffix: { // new
+        jp: "枚以上ご提出ください",
+        kr: "장 이상 제출해 주세요",
       },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       deadlinePassed: { jp: "投稿期限を過ぎています", kr: "게시 기한이 지났습니다" },
@@ -282,6 +286,8 @@ export const messages = {
       removeAriaLabel: { jp: "削除", kr: "삭제" },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       submit: { jp: "インサイトを提出", kr: "인사이트 제출" },
+      nextStep: { jp: "次へ", kr: "다음" }, // new — 서브타입 퍼널 이동
+      prevStep: { jp: "戻る", kr: "이전" }, // new
     },
     postForm: {
       urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
@@ -332,9 +338,13 @@ export const messages = {
           kr: "각 플랫폼에 리뷰를 게시한 뒤 URL과 스크린샷을 제출해 주세요",
         },
         urlLabel: { jp: "レビューURL", kr: "리뷰 URL" },
-        screenshotsLabel: {
-          jp: "レビューのスクリーンショット (2枚以上)",
-          kr: "Qoo10 리뷰 스크린샷 제출 (2장 이상)",
+        screenshotsLabelPrefix: { // new — 필수 매수 가변 표기 (Qoo10 2장 + 채널당 1장)
+          jp: "レビューのスクリーンショット (",
+          kr: "리뷰 스크린샷 제출 (",
+        },
+        screenshotsLabelSuffix: { // new
+          jp: "枚以上)",
+          kr: "장 이상)",
         },
         deadlineDaysPrefix: { jp: "投稿期限まであと", kr: "리뷰 마감까지 " },
         deadlineDaysSuffix: { jp: "日", kr: "일" },
@@ -393,8 +403,10 @@ export const messages = {
         jp: " の応募が必須ですが、応募条件を満たすアカウントがありません",
         kr: " 응모가 필수이지만 자격 조건을 만족하는 계정이 없습니다",
       },
-      appliedTag: { jp: "応募済み", kr: "응모 완료" },
-      cancelledTag: { jp: "応募キャンセル済（再応募不可）", kr: "응모 취소됨 (재응모 불가)" },
+      alreadyAppliedNotice: { // new — 캠페인 단위 응모 이력이 있으면 재응모 불가
+        jp: "この案件はすでに応募済みのため、再応募できません",
+        kr: "이미 응모한 캠페인입니다. 다시 응모할 수 없습니다",
+      },
       excludedTag: {
         jp: "参加不可（類似キャンペーンに応募済み）",
         kr: "참여 불가 (유사 캠페인에 응모 완료)",
@@ -567,8 +579,11 @@ export const messages = {
       sectionCautions: { jp: "注意事項", kr: "주의사항" },
       viewApplications: { jp: "応募履歴を見る", kr: "응모 내역 보기" },
       ctaClosed: { jp: "募集終了", kr: "모집 종료" },
-      ctaAppliedOther: { jp: "別のSNSで応募する", kr: "다른 SNS로 응모하기" },
       ctaApply: { jp: "応募する", kr: "응모하기" },
+      cancelledNotice: { // new — 취소한 캠페인은 재응모 불가
+        jp: "この案件はキャンセル済みのため、再応募できません",
+        kr: "취소한 캠페인은 다시 응모할 수 없습니다",
+      },
     },
     me: {
       index: {

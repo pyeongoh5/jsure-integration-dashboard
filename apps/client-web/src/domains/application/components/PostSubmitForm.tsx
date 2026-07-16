@@ -7,10 +7,9 @@ import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import { t } from "@i18n";
 
-const schema = z.object({
-  url: z.string().regex(/^https?:\/\/.+/i, t("application.postForm.urlInvalid")),
-});
-type Values = z.infer<typeof schema>;
+const urlSchema = z
+  .string()
+  .regex(/^https?:\/\/.+/i, t("application.postForm.urlInvalid"));
 
 const PLACEHOLDER_BY_SNS: Record<CampaignSubType, string> = {
   INSTAGRAM: "https://www.instagram.com/p/...",
@@ -18,14 +17,16 @@ const PLACEHOLDER_BY_SNS: Record<CampaignSubType, string> = {
   X: "https://x.com/user/status/...",
   YOUTUBE: "https://www.youtube.com/watch?v=...",
   QOO10: "https://...",
-  LIPS: "https://lipscosme.com/...", // new
-  ATCOSME: "https://www.cosme.net/...", // new
+  LIPS: "https://lipscosme.com/...",
+  ATCOSME: "https://www.cosme.net/...",
 };
 
 interface Props {
-  subType: CampaignSubType;
-  initial: string;
-  onSubmit: (url: string) => Promise<void>;
+  subTypes: CampaignSubType[]; // new — 참여한 모든 서브타입의 URL 을 한 폼에서 일괄 제출
+  initial: Partial<Record<CampaignSubType, string>>; // new
+  onSubmit: (
+    posts: { subType: CampaignSubType; url: string }[], // new
+  ) => Promise<void>;
   submitting: boolean;
   postingDeadlineAt: string | null;
 }
@@ -36,42 +37,56 @@ function formatDeadline(iso: string): string {
 }
 
 export function PostSubmitForm({
-  subType,
+  subTypes,
   initial,
   onSubmit,
   submitting,
   postingDeadlineAt,
 }: Props) {
-  const methods = useForm<Values>({
+  const schema = z.object(
+    Object.fromEntries(subTypes.map((subType) => [subType, urlSchema])),
+  );
+  const hasInitial = subTypes.some((subType) => Boolean(initial[subType]));
+  const methods = useForm<Record<string, string>>({
     resolver: zodResolver(schema),
-    defaultValues: { url: initial },
+    defaultValues: Object.fromEntries(
+      subTypes.map((subType) => [subType, initial[subType] ?? ""]),
+    ),
   });
 
-  async function handle(values: Values) {
-    await onSubmit(values.url);
+  async function handle(values: Record<string, string>) {
+    await onSubmit(
+      subTypes.map((subType) => ({ subType, url: values[subType] ?? "" })),
+    );
   }
 
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(handle)}>
-        <FormField name="url" label={`${SUB_TYPE_LABEL[subType]} ${t("application.postForm.labelSuffix")}`}>
-          {(field) => (
-            <Input
-              id={field.id}
-              type="text"
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              error={field.error}
-              placeholder={PLACEHOLDER_BY_SNS[subType]}
-              aria-invalid={field["aria-invalid"]}
-            />
-          )}
-        </FormField>
+        {subTypes.map((subType) => (
+          <FormField
+            key={subType}
+            name={subType}
+            label={`${SUB_TYPE_LABEL[subType]} ${t("application.postForm.labelSuffix")}`}
+          >
+            {(field) => (
+              <Input
+                id={field.id}
+                type="text"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={field.error}
+                placeholder={PLACEHOLDER_BY_SNS[subType]}
+                aria-invalid={field["aria-invalid"]}
+              />
+            )}
+          </FormField>
+        ))}
         <PrimaryButton type="submit" disabled={submitting}>
           {submitting
             ? t("application.postForm.submitting")
-            : initial
+            : hasInitial
               ? t("application.postForm.update")
               : t("application.postForm.submit")}
         </PrimaryButton>

@@ -49,22 +49,22 @@ export async function confirmReceipt(
   return InfluencerApplicationSchema.parse(res.data);
 }
 
-export async function submitPost(
+/** SNS 게시물 URL 일괄 제출 — 참여한 모든 서브타입을 한 번에. */
+export async function submitSubmission( // new
   id: string,
-  subType: CampaignSubType,
-  url: string,
+  posts: { subType: CampaignSubType; url: string }[], // new
 ): Promise<InfluencerApplication> {
-  const res = await api.put(
-    `/influencer/applications/${id}/posts/${subType}`,
-    { url },
-  );
+  const res = await api.put(`/influencer/applications/${id}/submission`, {
+    posts, // new
+  });
   return InfluencerApplicationSchema.parse(res.data);
 }
 
-export async function submitInsight(
+/** SNS 인사이트 일괄 제출 — 참여한 모든 서브타입을 한 번에. */
+export async function submitInsights( // new
   id: string,
-  subType: CampaignSubType,
-  input: {
+  insights: { // new
+    subType: CampaignSubType;
     likes: number;
     comments: number;
     shares: number;
@@ -77,12 +77,11 @@ export async function submitInsight(
       contentType: "image/png" | "image/jpeg" | "image/webp";
       sizeBytes: number;
     }[];
-  },
+  }[],
 ): Promise<InfluencerApplication> {
-  const res = await api.put(
-    `/influencer/applications/${id}/posts/${subType}/insight`,
-    input,
-  );
+  const res = await api.put(`/influencer/applications/${id}/insights`, {
+    insights, // new
+  });
   return InfluencerApplicationSchema.parse(res.data);
 }
 
@@ -112,12 +111,12 @@ export async function submitReview(
 
 export async function submitSimpleReview(
   applicationId: string,
-  url: string,
+  reviews: { subType: CampaignSubType; url: string }[], // new
   screenshots: AttachmentUploadInput[],
 ): Promise<InfluencerApplication> {
   const res = await api.post(
     `/influencer/applications/${applicationId}/simple-review`,
-    { url, screenshots },
+    { reviews, screenshots }, // new
   );
   return InfluencerApplicationSchema.parse(res.data);
 }

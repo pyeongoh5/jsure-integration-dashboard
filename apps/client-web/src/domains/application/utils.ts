@@ -99,7 +99,7 @@ export function stageProgressFor(
 }
 
 // new — 카테고리별 스텝 총 개수. 스테퍼 렌더링용.
-export function stageTotalFor(category: CampaignCategory): number {
+export function stageTotalFor(_category: CampaignCategory): number {
   return 8;
 }
 

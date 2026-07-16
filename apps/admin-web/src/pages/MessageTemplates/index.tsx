@@ -8,7 +8,7 @@ import {
   type LineMessageTemplateListItem,
 } from "@/domains/messageTemplate";
 import { Switch } from "@/components/ui";
-import { ScrollTable } from "@/components/composites";
+import { ScrollTable, SegmentedTabs } from "@/components/composites";
 import styles from "./MessageTemplates.module.css";
 
 const CATEGORIES: { key: CampaignCategory; label: string }[] = [
@@ -94,18 +94,7 @@ export function MessageTemplates(): JSX.Element {
       </div>
 
       <div className={styles.filters}>
-        <div className={styles.tabs}>
-          {CATEGORIES.map((entry) => (
-            <button
-              key={entry.key}
-              type="button"
-              className={`${styles.tab} ${category === entry.key ? styles.tabActive : ""}`}
-              onClick={() => setCategory(entry.key)}
-            >
-              {entry.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedTabs items={CATEGORIES} value={category} onChange={setCategory} />
       </div>
 
       <div className={styles.card}>

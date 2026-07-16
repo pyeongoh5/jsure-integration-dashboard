@@ -61,6 +61,11 @@
   margin-top: 18px;
 }
 
+/* SNS 서브타입 탭 여백 */
+.subTypeTabs {
+  margin-top: 18px;
+}
+
 .sectionTitle {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);

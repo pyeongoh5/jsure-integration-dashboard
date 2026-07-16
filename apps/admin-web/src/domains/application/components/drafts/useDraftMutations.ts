@@ -1,9 +1,9 @@
 import { useState } from "react";
 import {
-  approveSubmittedPost,
-  rejectSubmittedPost,
-  settleSubmittedPost,
-  undoSubmittedPostReview,
+  approveSubmission,
+  rejectSubmission,
+  settleSubmission,
+  undoSubmissionReview,
 } from "../draftsApi";
 import type { DraftReview } from "./types";
 
@@ -48,10 +48,10 @@ export function useDraftMutations(
     setMutating(true);
     setError(null);
     try {
-      const postId = pending.draft.id;
+      const applicationId = pending.draft.id;
       switch (pending.type) {
         case "approve":
-          await approveSubmittedPost(postId);
+          await approveSubmission(applicationId);
           break;
         case "reject": {
           const comment = (input ?? "").trim();
@@ -59,11 +59,11 @@ export function useDraftMutations(
             setError("반려 사유를 입력하세요.");
             return false;
           }
-          await rejectSubmittedPost(postId, comment);
+          await rejectSubmission(applicationId, comment);
           break;
         }
         case "undo":
-          await undoSubmittedPostReview(postId);
+          await undoSubmissionReview(applicationId);
           break;
       }
       setPending(null);
@@ -90,7 +90,7 @@ export function useDraftMutations(
     openUndo: open("undo"),
     settle: async (draft: DraftReview) => {
       try {
-        await settleSubmittedPost(draft.id);
+        await settleSubmission(draft.id);
         onMutated();
         return true;
       } catch (err) {

@@ -21,6 +21,7 @@ const CAMPAIGN_IMAGE_ENDPOINT = "/uploads/admin/campaign-image/presign";
 export const EMPTY_CAMPAIGN_FORM: Values = {
   category: "SNS",
   title: "",
+  rewardType: "UNIFIED",
   rewardJpy: 0,
   recruitStartDate: "",
   recruitEndDate: "",
@@ -39,6 +40,7 @@ type RecruitItemError = Partial<
   Record<
     | "minFollowers"
     | "recruitCount"
+    | "rewardJpy"
     | "subTypeOptions"
     | "productPriceJpy"
     | "productUrl",
@@ -82,9 +84,7 @@ export function CampaignForm({
     defaultValues: initialValue,
   });
   const formRef = useRef<HTMLFormElement>(null);
-  const [allCampaigns, setAllCampaigns] = useState<CampaignResponse[] | null>(
-    null,
-  );
+  const [allCampaigns, setAllCampaigns] = useState<CampaignResponse[] | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [thumbnailError, setThumbnailError] = useState<string | null>(null);
@@ -92,6 +92,7 @@ export function CampaignForm({
     kind: "unchanged",
   });
   const [perItemErrors, setPerItemErrors] = useState<PerItemErrors>({});
+  const [bulkRewardJpy, setBulkRewardJpy] = useState<number>(Number.NaN);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,9 +124,7 @@ export function CampaignForm({
       setThumbnailDraft({ kind: "new", objectKey, viewUrl });
     } catch (uploadError) {
       setThumbnailError(
-        uploadError instanceof UploadError
-          ? uploadError.message
-          : "업로드에 실패했습니다",
+        uploadError instanceof UploadError ? uploadError.message : "업로드에 실패했습니다",
       );
     } finally {
       setUploadingThumbnail(false);
@@ -153,21 +152,17 @@ export function CampaignForm({
 
     // 업로드가 끝나지 않은 이미지 (data-r2-key 없는 img) 차단
     const pending = [values.productSummary, values.guideline, values.cautions];
-    if (
-      pending.some((html) =>
-        /<img\b(?![^>]*\bdata-r2-key=)[^>]*>/.test(html),
-      )
-    ) {
-      setBanner(
-        "이미지 업로드가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.",
-      );
+    if (pending.some((html) => /<img\b(?![^>]*\bdata-r2-key=)[^>]*>/.test(html))) {
+      setBanner("이미지 업로드가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.");
       return;
     }
     try {
       const normalizedRecruits = values.recruits.map((recruit) => {
+        const rewardJpy = values.rewardType === "PER_SUBTYPE" ? recruit.rewardJpy : null;
         if (values.category === "SNS") {
           return {
             ...recruit,
+            rewardJpy,
             productPriceJpy: null,
             productUrl: null,
           };
@@ -175,6 +170,7 @@ export function CampaignForm({
         if (values.category === "SIMPLE_REVIEW") {
           return {
             ...recruit,
+            rewardJpy,
             productPriceJpy: null,
             productUrl: null,
             insightRequired: false,
@@ -183,12 +179,15 @@ export function CampaignForm({
         }
         return {
           ...recruit,
+          rewardJpy,
           minFollowers: 0,
           insightRequired: false,
         };
       });
       const finalValues: Values = {
         ...values,
+        // 개별 보수 캠페인에서는 통합 보수 금액을 사용하지 않는다.
+        rewardJpy: values.rewardType === "PER_SUBTYPE" ? 0 : values.rewardJpy,
         recruits: normalizedRecruits,
         productSummary: serializeRichTextHtml(values.productSummary),
         guideline: serializeRichTextHtml(values.guideline),
@@ -203,27 +202,21 @@ export function CampaignForm({
       }
       await onSubmit(finalValues);
     } catch (err) {
-      setBanner(
-        err instanceof Error ? err.message : "저장 중 오류가 발생했습니다.",
-      );
+      setBanner(err instanceof Error ? err.message : "저장 중 오류가 발생했습니다.");
     }
   }
 
   function onInvalid() {
     // zod 의 array index 에러를 RHF formState 가 아닌 별도 state 에 풀어서 보존
     const items: PerItemErrors = {};
-    const flatten = (
-      node: unknown,
-      pathHead: string,
-    ): void => {
+    const flatten = (node: unknown, pathHead: string): void => {
       if (!node || typeof node !== "object") return;
       const record = node as Record<string, unknown>;
       for (const [key, value] of Object.entries(record)) {
         if (!value || typeof value !== "object") continue;
         const index = Number(key);
         if (pathHead === "referenceMediaUrls" && Number.isInteger(index)) {
-          const message =
-            (value as { message?: unknown }).message;
+          const message = (value as { message?: unknown }).message;
           if (typeof message === "string") {
             items.referenceMediaUrls = {
               ...(items.referenceMediaUrls ?? {}),
@@ -236,6 +229,7 @@ export function CampaignForm({
           for (const subKey of [
             "minFollowers",
             "recruitCount",
+            "rewardJpy",
             "subTypeOptions",
             "productPriceJpy",
             "productUrl",
@@ -349,17 +343,13 @@ export function CampaignForm({
                       </label>
                     </div>
                     {isEditMode && (
-                      <p className={styles.hint}>
-                        카테고리는 생성 후 변경할 수 없습니다.
-                      </p>
+                      <p className={styles.hint}>카테고리는 생성 후 변경할 수 없습니다.</p>
                     )}
                   </>
                 );
               }}
             />
-            {rootError("category") && (
-              <div className={styles.error}>{rootError("category")}</div>
-            )}
+            {rootError("category") && <div className={styles.error}>{rootError("category")}</div>}
           </div>
 
           <div className={styles.field}>
@@ -372,40 +362,92 @@ export function CampaignForm({
               {...methods.register("title")}
               disabled={submitting}
             />
-            {rootError("title") && (
-              <div className={styles.error}>{rootError("title")}</div>
-            )}
+            {rootError("title") && <div className={styles.error}>{rootError("title")}</div>}
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="cf-reward">
-              보수 금액
-            </label>
+            <label className={styles.label}>보수 체계</label>
             <Controller
               control={methods.control}
-              name="rewardJpy"
+              name="rewardType"
               render={({ field }) => (
-                <div className={styles.currency}>
-                  <span className={styles.currencyPrefix}>¥</span>
-                  <input
-                    id="cf-reward"
-                    className={styles.input}
-                    inputMode="numeric"
-                    value={Number.isFinite(field.value) ? String(field.value) : ""}
-                    onChange={(event) =>
-                      field.onChange(parseIntegerInput(event.target.value))
-                    }
-                    onBlur={field.onBlur}
-                    disabled={submitting}
-                  />
-                  <span className={styles.currencySuffix}>円</span>
+                <div className={styles.radioGroup}>
+                  <label className={styles.radioOption}>
+                    <input
+                      type="radio"
+                      name="cf-reward-type"
+                      value="UNIFIED"
+                      checked={field.value === "UNIFIED"}
+                      disabled={submitting}
+                      onChange={() => {
+                        field.onChange("UNIFIED");
+                        // 통합 보수에서는 서브타입별 보수를 사용하지 않는다.
+                        methods.setValue(
+                          "recruits",
+                          methods
+                            .getValues("recruits")
+                            .map((recruit) => ({ ...recruit, rewardJpy: null })),
+                          { shouldValidate: false, shouldDirty: true },
+                        );
+                      }}
+                    />
+                    통합 보수 (참여 SNS 수와 무관하게 고정)
+                  </label>
+                  <label className={styles.radioOption}>
+                    <input
+                      type="radio"
+                      name="cf-reward-type"
+                      value="PER_SUBTYPE"
+                      checked={field.value === "PER_SUBTYPE"}
+                      disabled={submitting}
+                      onChange={() => {
+                        field.onChange("PER_SUBTYPE");
+                        // 통합 보수 금액 필드가 숨겨지므로 검증 통과값으로 정리.
+                        methods.setValue("rewardJpy", 0, {
+                          shouldValidate: false,
+                          shouldDirty: true,
+                        });
+                      }}
+                    />
+                    개별 보수 (참여 서브타입별 금액 합산)
+                  </label>
                 </div>
               )}
             />
-            {rootError("rewardJpy") && (
-              <div className={styles.error}>{rootError("rewardJpy")}</div>
+            {rootError("rewardType") && (
+              <div className={styles.error}>{rootError("rewardType")}</div>
             )}
           </div>
+
+          {methods.watch("rewardType") === "UNIFIED" && (
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="cf-reward">
+                보수 금액
+              </label>
+              <Controller
+                control={methods.control}
+                name="rewardJpy"
+                render={({ field }) => (
+                  <div className={styles.currency}>
+                    <span className={styles.currencyPrefix}>¥</span>
+                    <input
+                      id="cf-reward"
+                      className={styles.input}
+                      inputMode="numeric"
+                      value={Number.isFinite(field.value) ? String(field.value) : ""}
+                      onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
+                      onBlur={field.onBlur}
+                      disabled={submitting}
+                    />
+                    <span className={styles.currencySuffix}>円</span>
+                  </div>
+                )}
+              />
+              {rootError("rewardJpy") && (
+                <div className={styles.error}>{rootError("rewardJpy")}</div>
+              )}
+            </div>
+          )}
 
           <div className={styles.row2}>
             <div className={styles.field}>
@@ -453,12 +495,8 @@ export function CampaignForm({
                   className={styles.input}
                   inputMode="numeric"
                   placeholder="예시: 14"
-                  value={
-                    Number.isFinite(field.value) ? String(field.value) : ""
-                  }
-                  onChange={(event) =>
-                    field.onChange(parseIntegerInput(event.target.value))
-                  }
+                  value={Number.isFinite(field.value) ? String(field.value) : ""}
+                  onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
                   onBlur={field.onBlur}
                   disabled={submitting}
                 />
@@ -500,12 +538,8 @@ export function CampaignForm({
                 }}
               />
               <p className={styles.hint}>PNG · JPEG · WebP, 5MB 이하</p>
-              {uploadingThumbnail && (
-                <div className={styles.hint}>업로드 중...</div>
-              )}
-              {thumbnailError && (
-                <div className={styles.error}>{thumbnailError}</div>
-              )}
+              {uploadingThumbnail && <div className={styles.hint}>업로드 중...</div>}
+              {thumbnailError && <div className={styles.error}>{thumbnailError}</div>}
             </div>
             {rootError("thumbnailUrl") && (
               <div className={styles.error}>{rootError("thumbnailUrl")}</div>
@@ -528,12 +562,55 @@ export function CampaignForm({
                 ? "리뷰를 받을 채널(LIPS/@cosme)을 선택하고, 채널별 모집 인원과 최소 팔로워 조건을 입력하세요."
                 : "사용할 SNS를 선택하고, 각 SNS에 적용할 조건과 모집 인원을 입력하세요."}
           </p>
+          {methods.watch("rewardType") === "PER_SUBTYPE" && (
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="cf-bulk-reward">
+                보수 일괄 입력
+              </label>
+              <div className={styles.currency}>
+                <div style={{ position: "relative", flex: 1 }}>
+                  <span className={styles.currencyPrefix}>¥</span>
+                  <input
+                    id="cf-bulk-reward"
+                    className={styles.input}
+                    inputMode="numeric"
+                    placeholder="모든 서브타입에 적용할 금액"
+                    value={Number.isFinite(bulkRewardJpy) ? String(bulkRewardJpy) : ""}
+                    onChange={(event) => setBulkRewardJpy(parseIntegerInput(event.target.value))}
+                    disabled={submitting}
+                  />
+                  <span className={styles.currencySuffix}>円</span>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  disabled={submitting || !Number.isFinite(bulkRewardJpy)}
+                  onClick={() => {
+                    methods.setValue(
+                      "recruits",
+                      methods.getValues("recruits").map((recruit) => ({
+                        ...recruit,
+                        rewardJpy: bulkRewardJpy,
+                      })),
+                      { shouldValidate: false, shouldDirty: true },
+                    );
+                  }}
+                >
+                  일괄 적용
+                </Button>
+              </div>
+              <p className={styles.hint}>
+                선택된 모든 서브타입의 보수 금액을 같은 값으로 채웁니다.
+              </p>
+            </div>
+          )}
           <Controller
             control={methods.control}
             name="recruits"
             render={({ field }) => (
               <RecruitList
                 category={methods.watch("category")}
+                rewardType={methods.watch("rewardType")}
                 value={field.value}
                 onChange={field.onChange}
                 disabled={submitting}
@@ -541,9 +618,7 @@ export function CampaignForm({
               />
             )}
           />
-          {rootError("recruits") && (
-            <div className={styles.error}>{rootError("recruits")}</div>
-          )}
+          {rootError("recruits") && <div className={styles.error}>{rootError("recruits")}</div>}
         </section>
 
         <section className={styles.section}>
@@ -605,9 +680,7 @@ export function CampaignForm({
                 />
               )}
             />
-            {rootError("guideline") && (
-              <div className={styles.error}>{rootError("guideline")}</div>
-            )}
+            {rootError("guideline") && <div className={styles.error}>{rootError("guideline")}</div>}
           </div>
 
           <div className={styles.field}>
@@ -630,7 +703,7 @@ export function CampaignForm({
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>NG 및 주의 사항</label>
+            <label className={styles.label}>주의 사항</label>
             <Controller
               control={methods.control}
               name="cautions"
@@ -644,17 +717,15 @@ export function CampaignForm({
                 />
               )}
             />
-            {rootError("cautions") && (
-              <div className={styles.error}>{rootError("cautions")}</div>
-            )}
+            {rootError("cautions") && <div className={styles.error}>{rootError("cautions")}</div>}
           </div>
         </section>
 
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>참여 제외 캠페인</h2>
           <p className={styles.subLabel}>
-            여기서 선택한 캠페인에 이미 응모한 인플루언서는 이 캠페인에 응모할 수
-            없습니다. (CANCELLED 상태인 응모는 제외)
+            여기서 선택한 캠페인에 이미 응모한 인플루언서는 이 캠페인에 응모할 수 없습니다.
+            (CANCELLED 상태인 응모는 제외)
           </p>
           <Controller
             control={methods.control}
@@ -675,7 +746,13 @@ export function CampaignForm({
           <Button variant="ghost" size="md" onClick={onCancel} disabled={submitting}>
             취소
           </Button>
-          <Button type="submit" variant="primary" size="md" disabled={submitting} loading={submitting}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            disabled={submitting}
+            loading={submitting}
+          >
             {submitting ? "저장 중…" : submitLabel}
           </Button>
         </div>

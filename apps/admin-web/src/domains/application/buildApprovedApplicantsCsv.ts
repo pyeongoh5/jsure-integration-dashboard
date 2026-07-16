@@ -38,9 +38,12 @@ function formatRow(row: ApprovedApplicantExportRow): string[] {
   return [
     row.name,
     row.nameKana ?? "",
-    SNS_LABEL[row.subType],
-    row.snsHandle,
-    row.profileUrl,
+    row.channels.map((channel) => SNS_LABEL[channel.subType]).join(" / "),
+    row.channels.map((channel) => channel.snsHandle).join(" / "),
+    row.channels
+      .map((channel) => channel.profileUrl)
+      .filter((profileUrl) => profileUrl !== "")
+      .join(" / "),
     row.phone,
     row.postalCode,
     row.address,

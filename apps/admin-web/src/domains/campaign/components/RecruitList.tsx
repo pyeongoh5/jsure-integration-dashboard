@@ -7,6 +7,7 @@ import {
   type CampaignCategory,
   type CampaignSubType,
   type InstagramPostType,
+  type RewardType,
   type SnsAccountSubType,
 } from "@jsure/shared";
 import type { CampaignFormRecruit, CampaignFormRecruitSubType } from "../types";
@@ -69,13 +70,19 @@ const SUB_TYPE_META: Record<CampaignSubType, SubTypeMeta> = {
 
 type ItemError = Partial<
   Record<
-    "minFollowers" | "recruitCount" | "subTypeOptions" | "productPriceJpy" | "productUrl",
+    | "minFollowers"
+    | "recruitCount"
+    | "rewardJpy"
+    | "subTypeOptions"
+    | "productPriceJpy"
+    | "productUrl",
     string
   >
 >;
 
 type Props = {
   category: CampaignCategory;
+  rewardType: RewardType;
   value: CampaignFormRecruit[];
   onChange: (next: CampaignFormRecruit[]) => void;
   disabled?: boolean;
@@ -97,6 +104,7 @@ function createRecruit(
       subType,
       minFollowers: 0,
       recruitCount: 1,
+      rewardJpy: null,
       subTypeOptions: subType === "INSTAGRAM" ? ["FEED"] : [],
       insightRequired: true,
       isRequired: false,
@@ -109,6 +117,7 @@ function createRecruit(
       subType,
       minFollowers: 0,
       recruitCount: 1,
+      rewardJpy: null,
       subTypeOptions: [],
       insightRequired: false,
       isRequired: false,
@@ -120,6 +129,7 @@ function createRecruit(
     subType,
     minFollowers: 0,
     recruitCount: 1,
+    rewardJpy: null,
     subTypeOptions: [],
     insightRequired: false,
     isRequired: false,
@@ -128,7 +138,14 @@ function createRecruit(
   };
 }
 
-export function RecruitList({ category, value, onChange, disabled, errorByIndex }: Props) {
+export function RecruitList({
+  category,
+  rewardType,
+  value,
+  onChange,
+  disabled,
+  errorByIndex,
+}: Props) {
   const candidates = subTypesForCategory(category).filter((subType) => {
     if (category === "SNS" && isSnsAccountSubType(subType)) {
       return isEnabledSnsType(subType);
@@ -183,6 +200,42 @@ export function RecruitList({ category, value, onChange, disabled, errorByIndex 
     const next = value.slice();
     next[index] = { ...next[index], ...patch } as CampaignFormRecruit;
     onChange(next);
+  };
+
+  // 개별 보수(PER_SUBTYPE) 캠페인에서만 노출되는 서브타입별 보수 입력.
+  const renderRewardField = (
+    index: number,
+    row: CampaignFormRecruit,
+    errors: ItemError | undefined,
+  ) => {
+    if (rewardType !== "PER_SUBTYPE") return null;
+    return (
+      <div className={styles.snsField}>
+        <label className={styles.subLabel}>보수 금액 (JPY)</label>
+        <div className={styles.snsCountRow}>
+          <input
+            type="text"
+            inputMode="numeric"
+            className={styles.input}
+            placeholder="예시: 5000"
+            value={
+              typeof row.rewardJpy === "number" && Number.isFinite(row.rewardJpy)
+                ? String(row.rewardJpy)
+                : ""
+            }
+            disabled={disabled}
+            onChange={(event) => {
+              const parsed = parseIntegerInput(event.target.value);
+              updateAt(index, {
+                rewardJpy: Number.isFinite(parsed) ? parsed : null,
+              });
+            }}
+          />
+          <span className={styles.snsSuffix}>円</span>
+        </div>
+        {errors?.rewardJpy && <div className={styles.error}>{errors.rewardJpy}</div>}
+      </div>
+    );
   };
 
   return (
@@ -246,6 +299,7 @@ export function RecruitList({ category, value, onChange, disabled, errorByIndex 
                       <div className={styles.error}>{errors.recruitCount}</div>
                     )}
                   </div>
+                  {renderRewardField(index, row, errors)}
                   <div className={`${styles.snsField} ${styles.snsFieldRight}`}>
                     <label className={styles.snsToggle}>
                       <input
@@ -309,6 +363,7 @@ export function RecruitList({ category, value, onChange, disabled, errorByIndex 
                       <div className={styles.error}>{errors.recruitCount}</div>
                     )}
                   </div>
+                  {renderRewardField(index, row, errors)}
                   {subType === "INSTAGRAM" && (
                     <div className={styles.snsField}>
                       <label className={styles.subLabel}>모집 포스트 타입</label>
@@ -390,6 +445,7 @@ export function RecruitList({ category, value, onChange, disabled, errorByIndex 
                       <div className={styles.error}>{errors.recruitCount}</div>
                     )}
                   </div>
+                  {renderRewardField(index, row, errors)}
                   <div className={styles.snsField}>
                     <label className={styles.subLabel}>상품 가격 (JPY)</label>
                     <div className={styles.snsCountRow}>

@@ -57,7 +57,11 @@ export function Drafts() {
           return false;
         }
         if (campaignId && draft.campaignId !== campaignId) return false;
-        if (mediaFilter.size > 0 && !mediaFilter.has(draft.media)) return false;
+        if (
+          mediaFilter.size > 0 &&
+          !draft.media.some((mediaKey) => mediaFilter.has(mediaKey))
+        )
+          return false;
         if (statusFilter.size > 0 && !statusFilter.has(draft.status)) return false;
         if (categoryFilter !== null && draft.category !== categoryFilter) return false;
         return true;

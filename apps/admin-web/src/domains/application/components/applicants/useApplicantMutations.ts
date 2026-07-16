@@ -79,11 +79,8 @@ export function useApplicantMutations(
           await approveApplication(id);
           break;
         case "reject": {
+          // 응모 반려 사유는 선택 입력.
           const trimmed = typeof input === "string" ? input.trim() : "";
-          if (trimmed === "") {
-            setError("반려 사유를 입력하세요.");
-            return false;
-          }
           await rejectApplication(id, trimmed);
           break;
         }

@@ -33,7 +33,7 @@ export function ApplicantRejectDialog({
           </div>
           <textarea
             className={styles.rejectReason}
-            placeholder="반려 사유를 입력하세요"
+            placeholder="반려 사유를 입력하세요 (선택)"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             disabled={mutating}

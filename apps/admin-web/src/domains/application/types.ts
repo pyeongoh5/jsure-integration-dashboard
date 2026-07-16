@@ -1,6 +1,6 @@
 export type {
   AdminApplication,
   ApplicationStatus,
-  AdminSubmittedPost,
+  AdminSubmission,
   AdminSettlement,
 } from "@jsure/shared";

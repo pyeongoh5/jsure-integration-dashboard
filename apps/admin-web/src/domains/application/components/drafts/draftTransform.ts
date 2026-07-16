@@ -1,8 +1,8 @@
-import type { AdminSubmittedPost } from "@jsure/shared";
+import type { AdminSubmission } from "@jsure/shared";
 import { SNS_TO_MEDIA, type DraftReview, type DraftStatus } from "./types";
 
 function deriveStatus(
-  reviewStatus: AdminSubmittedPost["reviewStatus"],
+  reviewStatus: AdminSubmission["submissionReviewStatus"],
   insightSubmitted: boolean,
   settlementStatus: "PENDING" | "COMPLETED" | null,
 ): DraftStatus {
@@ -53,55 +53,72 @@ function formatRelative(iso: string, now: Date): string {
 }
 
 export function toDraftReview(
-  post: AdminSubmittedPost,
+  submission: AdminSubmission,
   now: Date,
 ): DraftReview {
-  const matchingAccount = post.influencer.snsAccounts.find(
-    (account) => account.snsType === post.subType,
+  const matchingAccount = submission.influencer.snsAccounts.find((account) =>
+    submission.subTypes.includes(account.snsType),
   );
-  const insightSubmitted = post.insightSubmittedAt !== null;
-  const settlementStatus = post.settlement?.status ?? null;
+  // 모든 게시물의 인사이트가 제출돼야 "인사이트 제출" 상태로 본다.
+  const insightSubmitted =
+    submission.posts.length > 0 &&
+    submission.posts.every((post) => post.insightSubmittedAt !== null);
+  const settlementStatus = submission.settlement?.status ?? null;
+  const qooPost = submission.posts.find((post) => post.subType === "QOO10");
+  const latestSubmittedAt = submission.reviewSubmittedAt
+    ?? submission.posts.map((post) => post.submittedAt).sort().at(-1)
+    ?? new Date(0).toISOString();
   return {
-    id: post.id,
-    influencerId: post.influencer.id,
-    influencerName: post.influencer.name,
+    id: submission.id,
+    influencerId: submission.influencer.id,
+    influencerName: submission.influencer.name,
     influencerHandle: matchingAccount?.handle ?? "",
-    influencerFlagged: post.influencer.flagged,
-    campaignId: post.campaign.id,
-    campaignTitle: post.campaign.title,
-    campaignThumbnailUrl: post.campaign.thumbnailUrl,
-    category: post.campaign.category,
-    subType: post.subType,
-    media: SNS_TO_MEDIA[post.subType],
-    instagramPostType: post.instagramPostType,
-    url: post.url,
-    reviewUrls: extractReviewUrls(post.submissionData),
-    submittedAt: formatRelative(post.submittedAt, now),
+    influencerFlagged: submission.influencer.flagged,
+    campaignId: submission.campaign.id,
+    campaignTitle: submission.campaign.title,
+    campaignThumbnailUrl: submission.campaign.thumbnailUrl,
+    category: submission.campaign.category,
+    subTypes: submission.subTypes,
+    media: submission.subTypes.map((subType) => SNS_TO_MEDIA[subType]),
+    instagramPostType: submission.instagramPostType,
+    posts: submission.posts.map((post) => ({
+      id: post.id,
+      subType: post.subType,
+      media: SNS_TO_MEDIA[post.subType],
+      url: post.url,
+      insightSubmitted: post.insightSubmittedAt !== null,
+      insight: {
+        likes: post.insightLikes,
+        comments: post.insightComments,
+        shares: post.insightShares,
+        reposts: post.insightReposts,
+        saves: post.insightSaves,
+        views: post.insightViews,
+        reach: post.insightReach,
+        submittedAt: post.insightSubmittedAt,
+      },
+      attachments: post.attachments,
+    })),
+    reviewUrls: extractReviewUrls(qooPost?.submissionData ?? null),
+    submittedAt: formatRelative(latestSubmittedAt, now),
     insightSubmitted,
-    insight: {
-      likes: post.insightLikes,
-      comments: post.insightComments,
-      shares: post.insightShares,
-      reposts: post.insightReposts,
-      saves: post.insightSaves,
-      views: post.insightViews,
-      reach: post.insightReach,
-      submittedAt: post.insightSubmittedAt,
-    },
-    attachments: post.attachments,
-    reviewStatus: post.reviewStatus,
-    applicationStatus: post.application.status,
-    status: deriveStatus(post.reviewStatus, insightSubmitted, settlementStatus),
-    rejectionHistory: post.rejectionHistory.map((rejection) => ({
+    reviewStatus: submission.submissionReviewStatus,
+    applicationStatus: submission.status,
+    status: deriveStatus(
+      submission.submissionReviewStatus,
+      insightSubmitted,
+      settlementStatus,
+    ),
+    rejectionHistory: submission.rejectionHistory.map((rejection) => ({
       id: rejection.id,
       comment: rejection.comment,
       rejectedAt: formatRelative(rejection.rejectedAt, now),
     })),
-    settlement: post.settlement
+    settlement: submission.settlement
       ? {
-          status: post.settlement.status,
-          amountJpy: post.settlement.amountJpy,
-          completedAt: post.settlement.completedAt,
+          status: submission.settlement.status,
+          amountJpy: submission.settlement.amountJpy,
+          completedAt: submission.settlement.completedAt,
         }
       : null,
   };

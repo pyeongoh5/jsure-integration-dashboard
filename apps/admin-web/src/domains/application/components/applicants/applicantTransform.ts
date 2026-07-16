@@ -17,15 +17,13 @@ export const SNS_TO_MEDIA: Record<CampaignSubType, Media> = {
 
 const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
 
-function pickAccount(
+function pickAccounts(
   accounts: AdminInfluencerSnsAccount[],
-  subType: CampaignSubType,
-): AdminInfluencerSnsAccount | undefined {
-  return accounts.find((account) => account.snsType === subType);
-}
-
-function pickMedia(subType: CampaignSubType): Media[] {
-  return [SNS_TO_MEDIA[subType]];
+  subTypes: CampaignSubType[],
+): AdminInfluencerSnsAccount[] {
+  return accounts.filter((account) =>
+    subTypes.includes(account.snsType as CampaignSubType),
+  );
 }
 
 export function formatRelative(iso: string, now: Date): string {
@@ -47,12 +45,12 @@ export function formatRelative(iso: string, now: Date): string {
 
 /**
  * 응모 관리 페이지에 노출되는 단일 status 로 변환.
- * - 검토 단계(SubmittedPost 존재) 진입 후 또는 정산 완료(COMPLETED) 또는 CANCELLED 인 경우 null 반환 → 페이지에서 숨김.
+ * - 검토 단계(제출 완료=REVIEW_SUBMITTED) 진입 후 또는 정산 완료(COMPLETED) 또는 CANCELLED 인 경우 null 반환 → 페이지에서 숨김.
  */
 function deriveStatus(application: AdminApplication): ApplicantStatus | null {
   if (application.status === "CANCELLED") return null;
   if (application.status === "COMPLETED") return null;
-  if (application.hasSubmittedPost) return null;
+  if (application.status === "REVIEW_SUBMITTED") return null;
   if (application.status === "APPLIED") return "APPLIED";
   if (application.status === "REJECTED") return "REJECTED";
 
@@ -76,24 +74,35 @@ export function toApplicant(
 ): Applicant | null {
   const status = deriveStatus(application);
   if (!status) return null;
-  const appliedAccount = pickAccount(
+  const appliedAccounts = pickAccounts(
     application.influencer.snsAccounts,
-    application.subType,
+    application.subTypes,
   );
   return {
     id: application.id,
     influencerId: application.influencer.id,
     name: application.influencer.name,
-    handle: appliedAccount?.handle ?? "",
+    handle: appliedAccounts[0]?.handle ?? "",
     flagged: application.influencer.flagged,
     campaignId: application.campaign.id,
     campaign: application.campaign.title,
     category: application.campaign.category,
-    subType: application.subType,
+    subTypes: application.subTypes,
     orderNumber: application.orderNumber,
-    media: pickMedia(application.subType),
+    media: application.subTypes.map((subType) => SNS_TO_MEDIA[subType]),
     instagramPostType: application.instagramPostType,
-    followers: appliedAccount?.followerCount ?? 0,
+    followers: appliedAccounts.reduce(
+      (sum, account) => sum + account.followerCount,
+      0,
+    ),
+    followersBySubType: application.subTypes.flatMap((subType) => {
+      const account = application.influencer.snsAccounts.find(
+        (candidate) => candidate.snsType === subType,
+      );
+      return account
+        ? [{ subType, followerCount: account.followerCount }]
+        : [];
+    }),
     engagementRate: 0,
     appliedAt: formatRelative(application.appliedAt, now),
     status,

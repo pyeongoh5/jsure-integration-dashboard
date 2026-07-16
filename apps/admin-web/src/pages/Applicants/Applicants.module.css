@@ -434,6 +434,17 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 다중 서브타입 참여 시 서브타입별 팔로워 세로 나열 */
+.followerList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--c-muted);
+  white-space: nowrap;
+}
+
 .table td.rate,
 .table td.time {
   color: var(--c-muted);

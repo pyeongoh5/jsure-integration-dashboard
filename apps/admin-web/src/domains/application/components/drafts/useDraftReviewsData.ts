@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import type { AdminSubmittedPost } from "@jsure/shared";
-import { listSubmittedPosts } from "../draftsApi";
+import type { AdminSubmission } from "@jsure/shared";
+import { listSubmissions } from "../draftsApi";
 import { toDraftReview } from "./draftTransform";
 import type { DraftReview } from "./types";
 
 export type DraftReviewsLoadState =
   | { kind: "loading" }
-  | { kind: "ready"; rows: AdminSubmittedPost[] }
+  | { kind: "ready"; rows: AdminSubmission[] }
   | { kind: "error"; message: string };
 
 export type UseDraftReviewsDataResult = {
@@ -22,7 +22,7 @@ export function useDraftReviewsData(): UseDraftReviewsDataResult {
   useEffect(() => {
     let cancelled = false;
     setState({ kind: "loading" });
-    listSubmittedPosts()
+    listSubmissions()
       .then((rows) => {
         if (!cancelled) setState({ kind: "ready", rows });
       })
@@ -45,7 +45,7 @@ export function useDraftReviewsData(): UseDraftReviewsDataResult {
 
   const drafts = useMemo<DraftReview[]>(() => {
     if (state.kind !== "ready") return [];
-    return state.rows.map((post) => toDraftReview(post, now));
+    return state.rows.map((submission) => toDraftReview(submission, now));
   }, [state, now]);
 
   return {

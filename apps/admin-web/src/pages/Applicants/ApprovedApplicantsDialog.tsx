@@ -152,9 +152,22 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
                   <tr key={row.applicationId}>
                     <td>{row.name}</td>
                     <td>{row.nameKana ?? ""}</td>
-                    <td>{SNS_LABEL[row.subType]}</td>
-                    <td>{row.snsHandle}</td>
-                    <td>{row.profileUrl}</td>
+                    <td>
+                      {row.channels
+                        .map((channel) => SNS_LABEL[channel.subType])
+                        .join(" / ")}
+                    </td>
+                    <td>
+                      {row.channels
+                        .map((channel) => channel.snsHandle)
+                        .join(" / ")}
+                    </td>
+                    <td>
+                      {row.channels
+                        .map((channel) => channel.profileUrl)
+                        .filter((profileUrl) => profileUrl !== "")
+                        .join(" / ")}
+                    </td>
                     <td>{row.phone}</td>
                     <td>{row.postalCode}</td>
                     <td>{row.address}</td>

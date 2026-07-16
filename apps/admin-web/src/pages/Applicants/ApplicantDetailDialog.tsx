@@ -72,7 +72,9 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
               <div className={styles.title}>{applicant.name} 상세</div>
               <div className={styles.sub}>
                 {applicant.campaign} · {CATEGORY_LABEL_KO[applicant.category]} ·{" "}
-                {SUB_TYPE_LABEL[applicant.subType]}
+                {applicant.subTypes
+                  .map((subType) => SUB_TYPE_LABEL[subType])
+                  .join(" · ")}
               </div>
             </div>
             <button

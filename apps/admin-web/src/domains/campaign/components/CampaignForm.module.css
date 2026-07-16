@@ -152,6 +152,8 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: 10px;
+  width: 300px;
 }
 
 .currency .input {
@@ -165,6 +167,8 @@
   color: #6b7280;
   font-size: 14px;
   pointer-events: none;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .currencyPrefix {
@@ -323,4 +327,3 @@
   gap: 8px;
   justify-content: flex-end;
 }
-

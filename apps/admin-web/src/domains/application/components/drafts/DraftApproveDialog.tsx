@@ -28,7 +28,13 @@ export function DraftApproveDialog({
             {draft.influencerHandle ? `(@${draft.influencerHandle})` : ""} —{" "}
             {draft.campaignTitle}
           </div>
-          <div className={styles.dialogHint}>{draft.url}</div>
+          {draft.posts
+            .filter((post) => post.url !== null)
+            .map((post) => (
+              <div key={post.id} className={styles.dialogHint}>
+                {post.url}
+              </div>
+            ))}
           {error && <div className={styles.mutationError}>{error}</div>}
         </>
       }

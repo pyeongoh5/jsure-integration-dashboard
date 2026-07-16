@@ -33,6 +33,7 @@ export function CampaignEdit() {
         const initial: Values = {
           category: res.category,
           title: res.title,
+          rewardType: res.rewardType,
           rewardJpy: res.rewardJpy,
           recruitStartDate: res.recruitStartDate,
           recruitEndDate: res.recruitEndDate,

@@ -36,6 +36,18 @@ export type InsightMetrics = {
   submittedAt: string | null; // ISO
 };
 
+/** 응모에 속한 서브타입별 제출 데이터. */
+export type DraftPost = {
+  id: string;
+  subType: CampaignSubType;
+  media: Media;
+  url: string | null;
+  insightSubmitted: boolean;
+  insight: InsightMetrics;
+  attachments: Attachment[];
+};
+
+/** 검토 행 — 응모(Application) 단위. id = applicationId. */
 export type DraftReview = {
   id: string;
   influencerId: string;
@@ -46,15 +58,14 @@ export type DraftReview = {
   campaignTitle: string;
   campaignThumbnailUrl: string | null;
   category: CampaignCategory;
-  subType: CampaignSubType;
-  media: Media;
+  subTypes: CampaignSubType[];
+  media: Media[];
   instagramPostType: InstagramPostType | null;
-  url: string | null;
+  posts: DraftPost[];
   reviewUrls: Partial<Record<"LIPS" | "ATCOSME", string>>;
   submittedAt: string; // relative
+  /** 모든 게시물의 인사이트가 제출되었는지. */
   insightSubmitted: boolean;
-  insight: InsightMetrics;
-  attachments: Attachment[];
   reviewStatus: PostReviewStatus;
   applicationStatus: ApplicationStatus;
   status: DraftStatus;

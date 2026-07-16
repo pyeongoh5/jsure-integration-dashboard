@@ -29,11 +29,13 @@ export type Applicant = {
   campaignId: string;
   campaign: string;
   category: CampaignCategory;
-  subType: CampaignSubType;
+  subTypes: CampaignSubType[];
   orderNumber: string | null;
   media: Media[];
   instagramPostType: InstagramPostType | null;
   followers: number;
+  /** 참여 서브타입별 팔로워 수 — 다중 참여 시 세로 나열 표시용. */
+  followersBySubType: { subType: CampaignSubType; followerCount: number }[];
   engagementRate: number;
   appliedAt: string;
   status: ApplicantStatus;

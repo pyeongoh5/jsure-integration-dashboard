@@ -5,8 +5,9 @@ import {
   type Attachment,
   type AttachmentKind,
 } from "@jsure/shared";
-import { fetchSubmittedPostAttachments } from "@/domains/application/draftsApi";
-import type { DraftReview } from "./types";
+import { SegmentedTabs } from "@/components/composites";
+import { fetchApplicationAttachments } from "@/domains/application/draftsApi";
+import type { DraftReview, InsightMetrics } from "./types";
 import styles from "./InsightDetailDialog.module.css";
 
 type AttachmentsState =
@@ -14,7 +15,7 @@ type AttachmentsState =
   | { kind: "ready"; items: Attachment[] }
   | { kind: "error"; message: string };
 
-const METRICS: { key: keyof DraftReview["insight"]; label: string }[] = [
+const METRICS: { key: keyof InsightMetrics; label: string }[] = [
   { key: "likes", label: "いいね数" },
   { key: "comments", label: "コメント数" },
   { key: "shares", label: "シェア数" },
@@ -38,10 +39,23 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
   const [attachmentsState, setAttachmentsState] = useState<AttachmentsState>({
     kind: "loading",
   });
+  // SNS 다중 서브타입은 탭으로 분리해 한 번에 한 서브타입 결과만 표시.
+  const [activePostId, setActivePostId] = useState<string | null>(null);
   const isFakePurchase = draft.category === "FAKE_PURCHASE";
   const isSimpleReview = draft.category === "SIMPLE_REVIEW";
   const isReviewCategory = isFakePurchase || isSimpleReview;
-  const contentSubmitted = isReviewCategory || draft.insightSubmitted;
+  // SNS 는 리뷰(URL) 제출 시점부터 모달로 확인 가능 — 인사이트 미제출 서브타입은 표식으로 표시.
+  const contentSubmitted = isReviewCategory || draft.posts.length > 0;
+  const activePost = isReviewCategory
+    ? null
+    : (draft.posts.find((post) => post.id === activePostId) ??
+      draft.posts[0] ??
+      null);
+  const visiblePosts = isReviewCategory
+    ? draft.posts
+    : activePost
+      ? [activePost]
+      : [];
   const dialogTitle = isReviewCategory
     ? `${draft.influencerName} 리뷰`
     : `${draft.influencerName} 인사이트`;
@@ -54,14 +68,23 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
     : "INSIGHT_SCREENSHOT";
   const filteredAttachments = useMemo(() => {
     if (attachmentsState.kind !== "ready") return [];
-    return attachmentsState.items.filter((item) => item.kind === attachmentKind);
-  }, [attachmentsState, attachmentKind]);
+    const kindFiltered = attachmentsState.items.filter(
+      (item) => item.kind === attachmentKind,
+    );
+    if (isReviewCategory || !activePost) return kindFiltered;
+    // SNS 탭: 활성 서브타입 게시물의 첨부만 표시.
+    const activeAttachmentIds = new Set(
+      activePost.attachments.map((attachment) => attachment.id),
+    );
+    return kindFiltered.filter((item) => activeAttachmentIds.has(item.id));
+  }, [attachmentsState, attachmentKind, isReviewCategory, activePost]);
+  const submittedUrls = visiblePosts.filter((post) => post.url !== null);
 
   useEffect(() => {
     if (!contentSubmitted) return;
     let cancelled = false;
     setAttachmentsState({ kind: "loading" });
-    fetchSubmittedPostAttachments(draft.id)
+    fetchApplicationAttachments(draft.id)
       .then((items) => {
         if (!cancelled) setAttachmentsState({ kind: "ready", items });
       })
@@ -93,7 +116,10 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
             <div>
               <div className={styles.title}>{dialogTitle}</div>
               <div className={styles.sub}>
-                {draft.campaignTitle} · {SUB_TYPE_LABEL[draft.subType]}
+                {draft.campaignTitle} ·{" "}
+                {draft.subTypes
+                  .map((subType) => SUB_TYPE_LABEL[subType])
+                  .join(" · ")}
               </div>
             </div>
             <button
@@ -110,21 +136,40 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
             <div className={styles.empty}>{emptyLabel}</div>
           ) : (
             <>
-              {!isReviewCategory && (
-                <section className={styles.section}>
-                  <h3 className={styles.sectionTitle}>수치</h3>
-                  <div className={styles.metrics}>
-                    {METRICS.map((m) => (
-                      <div key={m.key} className={styles.metric}>
-                        <div className={styles.metricLabel}>{m.label}</div>
-                        <div className={styles.metricValue}>
-                          {fmtNumber(draft.insight[m.key] as number | null)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+              {!isReviewCategory && draft.posts.length > 1 && (
+                <SegmentedTabs
+                  className={styles.subTypeTabs}
+                  items={draft.posts.map((post) => ({
+                    key: post.id,
+                    label: SUB_TYPE_LABEL[post.subType],
+                  }))}
+                  value={activePost?.id ?? ""}
+                  onChange={setActivePostId}
+                />
               )}
+
+              {!isReviewCategory &&
+                visiblePosts.map((post) => (
+                  <section key={post.id} className={styles.section}>
+                    <h3 className={styles.sectionTitle}>
+                      {SUB_TYPE_LABEL[post.subType]} 수치
+                    </h3>
+                    {post.insightSubmitted ? (
+                      <div className={styles.metrics}>
+                        {METRICS.map((m) => (
+                          <div key={m.key} className={styles.metric}>
+                            <div className={styles.metricLabel}>{m.label}</div>
+                            <div className={styles.metricValue}>
+                              {fmtNumber(post.insight[m.key] as number | null)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className={styles.empty}>인사이트 미제출</div>
+                    )}
+                  </section>
+                ))}
 
               <section className={styles.section}>
                 <h3 className={styles.sectionTitle}>
@@ -158,17 +203,24 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                 )}
               </section>
 
-              {draft.url !== null && (
+              {submittedUrls.length > 0 && (
                 <section className={styles.section}>
                   <h3 className={styles.sectionTitle}>제출 URL</h3>
-                  <a
-                    className={styles.url}
-                    href={draft.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {draft.url}
-                  </a>
+                  {submittedUrls.map((post) => (
+                    <div key={post.id}>
+                      <span className={styles.reviewChannelLabel}>
+                        {SUB_TYPE_LABEL[post.subType]}
+                      </span>
+                      <a
+                        className={styles.url}
+                        href={post.url ?? undefined}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {post.url}
+                      </a>
+                    </div>
+                  ))}
                 </section>
               )}
 

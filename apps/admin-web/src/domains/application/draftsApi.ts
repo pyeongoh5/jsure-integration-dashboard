@@ -1,17 +1,17 @@
 import {
   AdminSettlementListResponseSchema,
-  AdminSubmittedPostListResponseSchema,
-  AdminSubmittedPostSchema,
+  AdminSubmissionListResponseSchema,
+  AdminSubmissionSchema,
   AttachmentListResponseSchema,
   type AdminSettlement,
-  type AdminSubmittedPost,
+  type AdminSubmission,
   type Attachment,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
-export async function listSubmittedPosts(): Promise<AdminSubmittedPost[]> {
-  const res = await api.get("/campaign-applications/submitted-posts");
-  return AdminSubmittedPostListResponseSchema.parse(res.data).posts;
+export async function listSubmissions(): Promise<AdminSubmission[]> {
+  const res = await api.get("/campaign-applications/submissions");
+  return AdminSubmissionListResponseSchema.parse(res.data).submissions;
 }
 
 export async function fetchSubmittedPostAttachments(
@@ -32,42 +32,42 @@ export async function fetchApplicationAttachments(
   return AttachmentListResponseSchema.parse(res.data).attachments;
 }
 
-export async function approveSubmittedPost(
-  postId: string,
-): Promise<AdminSubmittedPost> {
+export async function approveSubmission(
+  applicationId: string,
+): Promise<AdminSubmission> {
   const res = await api.post(
-    `/campaign-applications/submitted-posts/${encodeURIComponent(postId)}/approve`,
+    `/campaign-applications/${encodeURIComponent(applicationId)}/submission/approve`,
   );
-  return AdminSubmittedPostSchema.parse(res.data);
+  return AdminSubmissionSchema.parse(res.data);
 }
 
-export async function rejectSubmittedPost(
-  postId: string,
+export async function rejectSubmission(
+  applicationId: string,
   comment: string,
-): Promise<AdminSubmittedPost> {
+): Promise<AdminSubmission> {
   const res = await api.post(
-    `/campaign-applications/submitted-posts/${encodeURIComponent(postId)}/reject`,
+    `/campaign-applications/${encodeURIComponent(applicationId)}/submission/reject`,
     { comment },
   );
-  return AdminSubmittedPostSchema.parse(res.data);
+  return AdminSubmissionSchema.parse(res.data);
 }
 
-export async function undoSubmittedPostReview(
-  postId: string,
-): Promise<AdminSubmittedPost> {
+export async function undoSubmissionReview(
+  applicationId: string,
+): Promise<AdminSubmission> {
   const res = await api.post(
-    `/campaign-applications/submitted-posts/${encodeURIComponent(postId)}/undo`,
+    `/campaign-applications/${encodeURIComponent(applicationId)}/submission/undo`,
   );
-  return AdminSubmittedPostSchema.parse(res.data);
+  return AdminSubmissionSchema.parse(res.data);
 }
 
-export async function settleSubmittedPost(
-  postId: string,
-): Promise<AdminSubmittedPost> {
+export async function settleSubmission(
+  applicationId: string,
+): Promise<AdminSubmission> {
   const res = await api.post(
-    `/campaign-applications/submitted-posts/${encodeURIComponent(postId)}/settle`,
+    `/campaign-applications/${encodeURIComponent(applicationId)}/submission/settle`,
   );
-  return AdminSubmittedPostSchema.parse(res.data);
+  return AdminSubmissionSchema.parse(res.data);
 }
 
 export async function listSettlements(
@@ -99,6 +99,6 @@ export async function fetchAppliedCount(): Promise<number> {
 }
 
 export async function fetchPendingReviewCount(): Promise<number> {
-  const res = await api.get("/campaign-applications/submitted-posts/pending-count");
+  const res = await api.get("/campaign-applications/submissions/pending-count");
   return (res.data as { count: number }).count;
 }

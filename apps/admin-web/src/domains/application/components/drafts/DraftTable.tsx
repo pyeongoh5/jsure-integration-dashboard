@@ -193,7 +193,7 @@ export function DraftTable({
               <th>캠페인</th>
               <th style={{ width: 120 }}>카테고리</th>
               <th style={{ width: 90 }}>서브타입</th>
-              <th>제출 URL</th>
+              <th>제출물</th>
               <th style={{ width: 90 }}>제출 시각</th>
               <th style={{ width: 160 }}>상태</th>
               <th style={{ width: 200 }}>액션</th>
@@ -201,7 +201,6 @@ export function DraftTable({
           </thead>
           <tbody>
             {items.map((draft) => {
-              const media = MEDIA_META[draft.media];
               const hasHistory = draft.rejectionHistory.length > 0;
               return (
                 <Fragment key={draft.id}>
@@ -233,47 +232,47 @@ export function DraftTable({
                       {draft.category === "FAKE_PURCHASE" ||
                       draft.category === "SIMPLE_REVIEW" ? (
                         <span className={shared.mediaItem}>
-                          <SubTypePill subType={draft.subType} />
+                          {draft.subTypes.map((subType) => (
+                            <SubTypePill key={subType} subType={subType} />
+                          ))}
                         </span>
                       ) : (
                         <span className={shared.mediaItem}>
-                          <span
-                            className={`${shared.media} ${MEDIA_CLASS[draft.media]}`}
-                            title={media.label}
-                            aria-label={media.label}
-                          >
-                            <i className={media.icon} />
-                          </span>
-                          {draft.media === "ig" && draft.instagramPostType !== null && (
-                            <span className={shared.mediaLabel}>
-                              {INSTAGRAM_POST_TYPE_LABEL[draft.instagramPostType]}
-                            </span>
-                          )}
+                          {draft.media.map((mediaKey) => {
+                            const media = MEDIA_META[mediaKey];
+                            return (
+                              <span
+                                key={mediaKey}
+                                className={`${shared.media} ${MEDIA_CLASS[mediaKey]}`}
+                                title={media.label}
+                                aria-label={media.label}
+                              >
+                                <i className={media.icon} />
+                              </span>
+                            );
+                          })}
+                          {draft.media.includes("ig") &&
+                            draft.instagramPostType !== null && (
+                              <span className={shared.mediaLabel}>
+                                {INSTAGRAM_POST_TYPE_LABEL[draft.instagramPostType]}
+                              </span>
+                            )}
                         </span>
                       )}
                     </td>
                     <td className={styles.urlCell}>
-                      {draft.category === "SNS" && draft.url !== null && (
-                        <a
-                          className={styles.url}
-                          href={draft.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {draft.url}
-                        </a>
-                      )}
-                      {(draft.category === "FAKE_PURCHASE" ||
-                        draft.category === "SIMPLE_REVIEW" ||
-                        (draft.category === "SNS" && draft.insightSubmitted)) && (
-                        <button
-                          type="button"
-                          className={styles.insightLink}
-                          onClick={() => onViewInsight(draft)}
-                        >
-                          {draft.category === "SNS" ? "인사이트 보기" : "제출 결과 보기"}
-                        </button>
-                      )}
+                      {/* URL 나열 대신 전 카테고리 공통 버튼 → 모달 UX. */}
+                      <button
+                        type="button"
+                        className={styles.insightLink}
+                        onClick={() => onViewInsight(draft)}
+                      >
+                        {draft.category === "SNS"
+                          ? draft.insightSubmitted
+                            ? "인사이트 보기"
+                            : "제출 보기"
+                          : "제출 결과 보기"}
+                      </button>
                     </td>
                     <td className={styles.time}>{draft.submittedAt}</td>
                     <td>{renderStatusCell(draft)}</td>

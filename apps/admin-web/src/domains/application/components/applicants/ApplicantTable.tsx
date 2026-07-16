@@ -1,3 +1,4 @@
+import { SUB_TYPE_LABEL } from "@jsure/shared";
 import { ScrollTable, SubTypePill } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
@@ -271,7 +272,9 @@ export function ApplicantTable({
                     {applicant.category === "FAKE_PURCHASE" ||
                     applicant.category === "SIMPLE_REVIEW" ? (
                       <span className={shared.mediaItem}>
-                        <SubTypePill subType={applicant.subType} />
+                        {applicant.subTypes.map((subType) => (
+                          <SubTypePill key={subType} subType={subType} />
+                        ))}
                       </span>
                     ) : (
                       applicant.media.map((media) => {
@@ -297,7 +300,20 @@ export function ApplicantTable({
                     )}
                   </div>
                 </td>
-                <td className={styles.num}>{formatFollowers(applicant.followers)}</td>
+                <td className={styles.num}>
+                  {applicant.followersBySubType.length > 1 ? (
+                    <div className={styles.followerList}>
+                      {applicant.followersBySubType.map((entry) => (
+                        <div key={entry.subType}>
+                          {SUB_TYPE_LABEL[entry.subType]}:{" "}
+                          {formatFollowers(entry.followerCount)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    formatFollowers(applicant.followers)
+                  )}
+                </td>
                 <td className={styles.time}>{applicant.appliedAt}</td>
                 <td className={styles.stageCell} style={{ textAlign: "center" }}>
                   {renderStatus(applicant)}

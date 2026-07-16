@@ -36,6 +36,12 @@ function formatRefund(amount: number): string {
   return amount === 0 ? "—" : `¥${amount.toLocaleString("ja-JP")}`;
 }
 
+// 투고/인사이트는 응모 단위 일괄 제출이라 서브타입별로 다르지 않음 — 가장 늦은 시각 하나로 대표.
+function latestDate(values: (string | null)[]): string | null {
+  const submitted = values.filter((value): value is string => value !== null);
+  return submitted.length === 0 ? null : submitted.sort()[submitted.length - 1]!;
+}
+
 function csvEscape(value: string | number | null): string {
   if (value === null || value === undefined) return "";
   const s = String(value);
@@ -75,10 +81,15 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
         row.influencer.name,
         row.campaign.title,
         CATEGORY_LABEL_KO[row.campaign.category],
-        SUB_TYPE_LABEL[row.post.subType],
-        row.post.url,
-        formatDateTime(row.post.submittedAt),
-        formatDateTime(row.post.insightSubmittedAt),
+        row.posts.map((post) => SUB_TYPE_LABEL[post.subType]).join(" / "),
+        row.posts
+          .map((post) => post.url)
+          .filter((url) => url !== null)
+          .join(" / "),
+        formatDateTime(latestDate(row.posts.map((post) => post.submittedAt))),
+        formatDateTime(
+          latestDate(row.posts.map((post) => post.insightSubmittedAt)),
+        ),
         bankAccount?.bankName ?? "",
         bankAccount?.bankCode ?? "",
         bankAccount?.branchName ?? "",
@@ -394,9 +405,23 @@ export function Payouts() {
                           {CATEGORY_LABEL_KO[row.campaign.category]}
                         </span>
                       </td>
-                      <td>{SUB_TYPE_LABEL[row.post.subType]}</td>
-                      <td>{formatDateTime(row.post.submittedAt)}</td>
-                      <td>{formatDateTime(row.post.insightSubmittedAt)}</td>
+                      <td>
+                        {row.posts
+                          .map((post) => SUB_TYPE_LABEL[post.subType])
+                          .join(" / ")}
+                      </td>
+                      <td>
+                        {formatDateTime(
+                          latestDate(row.posts.map((post) => post.submittedAt)),
+                        )}
+                      </td>
+                      <td>
+                        {formatDateTime(
+                          latestDate(
+                            row.posts.map((post) => post.insightSubmittedAt),
+                          ),
+                        )}
+                      </td>
                       <td>{row.influencer.bankAccount?.bankName ?? "—"}</td>
                       <td>{row.influencer.bankAccount?.bankCode ?? "—"}</td>
                       <td>{row.influencer.bankAccount?.branchName ?? "—"}</td>

@@ -93,10 +93,20 @@ enum PostReviewStatus {
   REJECTED
 }
 
+// 보수 체계.
+// - UNIFIED: 참여 서브타입 수와 무관하게 Campaign.rewardJpy 고정 지급.
+// - PER_SUBTYPE: 참여한 서브타입별 CampaignRecruit.rewardJpy 합산 지급.
+enum RewardType {
+  UNIFIED
+  PER_SUBTYPE
+}
+
 model Campaign {
   id                 String           @id @default(cuid())
   category           CampaignCategory @default(SNS)
   title              String
+  rewardType         RewardType       @default(UNIFIED)
+  /// UNIFIED 캠페인의 보수 금액. PER_SUBTYPE 캠페인에서는 사용하지 않는다.
   rewardJpy          Int
   recruitStartAt     DateTime
   recruitEndAt       DateTime
@@ -147,6 +157,8 @@ model CampaignRecruit {
   subType            CampaignSubType
   minFollowers       Int                 @default(0)
   recruitCount       Int
+  /// PER_SUBTYPE 캠페인용: 이 서브타입 참여 보수(JPY). UNIFIED 캠페인은 null.
+  rewardJpy          Int?
   subTypeOptions     String[]            @default([])
   insightRequired    Boolean             @default(true)
   isRequired         Boolean             @default(false)
@@ -277,8 +289,9 @@ model CampaignApplication {
   id           String            @id @default(cuid())
   campaignId   String
   influencerId String
-  subType      CampaignSubType
-  /// INSTAGRAM 응모일 때만 의미가 있다. 비-INSTAGRAM 응모는 항상 null.
+  /// 이 응모가 참여하는 서브타입 목록.
+  subTypes     CampaignSubType[]
+  /// INSTAGRAM 참여일 때만 의미가 있다. 비-INSTAGRAM 응모는 항상 null.
   instagramPostType InstagramPostType?
   status       ApplicationStatus @default(APPLIED)
 
@@ -296,7 +309,13 @@ model CampaignApplication {
 
   orderNumber        String?
   orderSubmittedAt   DateTime?
+  /// 제출물(게시물/리뷰) 최종 제출 시각 — 전 카테고리 공통.
   reviewSubmittedAt  DateTime?
+
+  /// 제출물(전체) 검토 상태 — 응모 단위 전체 승인/반려.
+  submissionReviewStatus PostReviewStatus @default(PENDING)
+  submissionReviewedAt   DateTime?
+  submissionReviewedById String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -306,13 +325,16 @@ model CampaignApplication {
   posts      SubmittedPost[]
   attachments Attachment[]
   lineDispatchLogs LineDispatchLog[]
+  submissionRejections SubmissionRejection[]
+  settlement Settlement?
 
-  @@unique([campaignId, influencerId, subType])
+  @@unique([campaignId, influencerId])
   @@index([campaignId, status])
   @@index([influencerId, status])
   @@map("campaign_applications")
 }
 
+// 서브타입별 제출 데이터(게시물 URL, 인사이트 지표). 검토/정산은 응모 단위로 진행된다.
 model SubmittedPost {
   id                  String    @id @default(cuid())
   applicationId       String
@@ -331,25 +353,11 @@ model SubmittedPost {
   insightSubmittedAt  DateTime?
   updatedAt           DateTime  @updatedAt
 
-  reviewStatus PostReviewStatus @default(PENDING)
-  reviewedAt   DateTime?
-  reviewedById String?
-
-  settledAt        DateTime?
-  settledAmountJpy Int?
-  settledById      String?
-
-  settlementCompletedAt   DateTime?
-  settlementCompletedById String?
-
-  application CampaignApplication      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  rejections  SubmittedPostRejection[]
+  application CampaignApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   attachments Attachment[]
-  settlement  Settlement?
 
   @@unique([applicationId, subType])
   @@index([applicationId])
-  @@index([reviewStatus])
   @@map("submitted_posts")
 }
 
@@ -360,7 +368,7 @@ enum SettlementStatus {
 
 model Settlement {
   id            String           @id @default(cuid())
-  postId        String           @unique
+  applicationId String           @unique
   amountJpy     Int
   rewardAmountJpy   Int              @default(0)
   productRefundJpy  Int              @default(0)
@@ -369,7 +377,7 @@ model Settlement {
   completedAt   DateTime?
   completedById String?
 
-  post SubmittedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  application CampaignApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@map("settlements")
@@ -393,16 +401,17 @@ model Attachment {
   @@map("attachments")
 }
 
-model SubmittedPostRejection {
-  id           String   @id @default(cuid())
-  postId       String
-  comment      String
-  rejectedAt   DateTime @default(now())
-  rejectedById String?
+// 응모 단위 제출물 반려 이력.
+model SubmissionRejection {
+  id            String   @id @default(cuid())
+  applicationId String
+  comment       String
+  rejectedAt    DateTime @default(now())
+  rejectedById  String?
 
-  post SubmittedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  application CampaignApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
-  @@index([postId])
+  @@index([applicationId])
   @@map("submitted_post_rejections")
 }
 

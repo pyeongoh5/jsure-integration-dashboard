@@ -20,11 +20,13 @@ interface DisplayStageInput {
   status: ApplicationStatus;
   category: CampaignCategory;
   receivedAt: Date | null;
+  /** 제출물(전체) 검토 상태 — 응모 단위. */
+  submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
+  /** 응모 단위 정산 상태. 정산 미생성이면 null. */
+  settlementStatus: "PENDING" | "COMPLETED" | null;
   posts: {
     submittedAt: Date;
     insightSubmittedAt: Date | null;
-    reviewStatus: "PENDING" | "APPROVED" | "REJECTED";
-    settlementStatus?: "PENDING" | "COMPLETED" | null;
     /** 이 SNS 슬롯이 인사이트 제출을 요구하는지. 기본 true(기존 동작 유지). */
     insightRequired?: boolean;
   }[];
@@ -46,7 +48,8 @@ export function deriveDisplayStage(
 function deriveSimpleReviewStage(
   input: DisplayStageInput,
 ): ApplicationDisplayStage {
-  const { status, receivedAt, posts } = input;
+  const { status, receivedAt, submissionReviewStatus, settlementStatus } =
+    input;
   if (status === "APPLIED") return "APPLIED";
   if (status === "REJECTED") return "REJECTED";
   if (status === "CANCELLED") return "CANCELLED";
@@ -56,16 +59,13 @@ function deriveSimpleReviewStage(
     return receivedAt ? "AWAITING_REVIEW" : "AWAITING_RECEIPT";
   }
   if (status === "REVIEW_SUBMITTED") {
-    const post = posts[0];
-    if (!post) return "AWAITING_REVIEW";
-    if (post.reviewStatus === "REJECTED") return "REVIEW_REJECTED";
-    if (post.reviewStatus === "PENDING") return "REVIEW_PENDING";
-    if (post.settlementStatus === "COMPLETED") return "SETTLED";
+    if (submissionReviewStatus === "REJECTED") return "REVIEW_REJECTED";
+    if (submissionReviewStatus === "PENDING") return "REVIEW_PENDING";
+    if (settlementStatus === "COMPLETED") return "SETTLED";
     return "COMPLETED";
   }
   if (status === "COMPLETED") {
-    const anySettled = posts.some((p) => p.settlementStatus === "COMPLETED");
-    return anySettled ? "SETTLED" : "COMPLETED";
+    return settlementStatus === "COMPLETED" ? "SETTLED" : "COMPLETED";
   }
   return "APPLIED";
 }
@@ -73,29 +73,32 @@ function deriveSimpleReviewStage(
 function deriveFakePurchaseStage(
   input: DisplayStageInput,
 ): ApplicationDisplayStage {
-  const { status, posts } = input;
+  const { status, submissionReviewStatus, settlementStatus } = input;
   if (status === "APPLIED") return "APPLIED";
   if (status === "REJECTED") return "REJECTED";
   if (status === "CANCELLED") return "CANCELLED";
   if (status === "APPROVED") return "AWAITING_ORDER";
   if (status === "ORDER_SUBMITTED") return "AWAITING_REVIEW";
   if (status === "REVIEW_SUBMITTED") {
-    const post = posts[0];
-    if (!post) return "AWAITING_REVIEW";
-    if (post.reviewStatus === "REJECTED") return "REVIEW_REJECTED";
-    if (post.reviewStatus === "PENDING") return "REVIEW_PENDING";
-    if (post.settlementStatus === "COMPLETED") return "SETTLED";
-    return "COMPLETED"; // new — 리뷰 APPROVED + 정산 대기(PENDING) 는 정산 대기 스텝
+    if (submissionReviewStatus === "REJECTED") return "REVIEW_REJECTED";
+    if (submissionReviewStatus === "PENDING") return "REVIEW_PENDING";
+    if (settlementStatus === "COMPLETED") return "SETTLED";
+    return "COMPLETED"; // 리뷰 APPROVED + 정산 대기(PENDING) 는 정산 대기 스텝
   }
   if (status === "COMPLETED") {
-    const anySettled = posts.some((p) => p.settlementStatus === "COMPLETED");
-    return anySettled ? "SETTLED" : "COMPLETED";
+    return settlementStatus === "COMPLETED" ? "SETTLED" : "COMPLETED";
   }
   return "APPLIED";
 }
 
 function deriveSnsStage(input: DisplayStageInput): ApplicationDisplayStage {
-  const { status, receivedAt, posts } = input;
+  const {
+    status,
+    receivedAt,
+    posts,
+    submissionReviewStatus,
+    settlementStatus,
+  } = input;
   const now = input.now ?? new Date();
 
   if (status === "APPLIED") return "APPLIED";
@@ -103,43 +106,31 @@ function deriveSnsStage(input: DisplayStageInput): ApplicationDisplayStage {
   if (status === "REJECTED") return "REJECTED";
   if (status === "CANCELLED") return "CANCELLED";
   if (status === "COMPLETED") {
-    // 검토 완료된 게시물의 정산이 COMPLETED 면 "支払完了" 단계로 진입
-    const anySettled = posts.some(
-      (p) => p.settlementStatus === "COMPLETED",
-    );
-    return anySettled ? "SETTLED" : "COMPLETED";
+    return settlementStatus === "COMPLETED" ? "SETTLED" : "COMPLETED";
   }
 
   if (status === "SHIPPED" || status === "DELIVERED") {
-    // 인사이트 미제출 상태에서도 관리자가 정산을 완료시킨 경우 캠페인 참여는 종료된 것으로 간주.
-    if (posts.some((p) => p.settlementStatus === "COMPLETED")) {
-      return "SETTLED";
-    }
+    // 제출 전에 관리자가 정산을 완료시킨 경우 캠페인 참여는 종료된 것으로 간주.
+    if (settlementStatus === "COMPLETED") return "SETTLED";
     if (!receivedAt) return "AWAITING_RECEIPT";
-    if (posts.length === 0) return "POSTING";
+    return "POSTING";
+  }
 
-    if (posts.some((p) => p.reviewStatus === "REJECTED")) {
-      return "POST_REJECTED";
-    }
+  if (status === "REVIEW_SUBMITTED") {
+    if (settlementStatus === "COMPLETED") return "SETTLED";
+    if (submissionReviewStatus === "REJECTED") return "POST_REJECTED";
 
     // insightRequired=false 인 슬롯은 인사이트 미제출이어도 충족된 것으로 본다.
     const allInsightsSatisfied = posts.every(
-      (p) => p.insightRequired === false || p.insightSubmittedAt !== null,
+      (post) => post.insightRequired === false || post.insightSubmittedAt !== null,
     );
     if (allInsightsSatisfied) {
-      const anySettled = posts.some(
-        (p) => p.settlementStatus === "COMPLETED",
-      );
-      if (anySettled) return "SETTLED";
-      const allReviewsApproved = posts.every( // new — 리뷰 승인 여부로 검수/정산 단계 분리
-        (p) => p.reviewStatus === "APPROVED",
-      );
-      return allReviewsApproved ? "COMPLETED" : "REVIEWING"; // new — 리뷰 APPROVED 면 정산 대기 스텝
+      return submissionReviewStatus === "APPROVED" ? "COMPLETED" : "REVIEWING";
     }
 
     const first = posts[0]!.submittedAt;
     const earliest = posts.reduce(
-      (acc, p) => (p.submittedAt < acc ? p.submittedAt : acc),
+      (acc, post) => (post.submittedAt < acc ? post.submittedAt : acc),
       first,
     );
     // JST 일자 기준으로 N일째 되는 날(자정 이후)에 INSIGHT_DUE 로 전환.

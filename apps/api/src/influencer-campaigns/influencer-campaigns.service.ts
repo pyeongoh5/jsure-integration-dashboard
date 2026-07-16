@@ -5,6 +5,7 @@ import {
   type CampaignSubType,
   type InfluencerCampaignCard,
   type InfluencerCampaignDetail,
+  type RewardType,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
@@ -16,6 +17,7 @@ type CampaignRow = {
   category: CampaignCategory;
   title: string;
   productSummary: string;
+  rewardType: RewardType;
   rewardJpy: number;
   thumbnailUrl: string | null;
   recruitStartAt: Date;
@@ -27,6 +29,7 @@ type CampaignRow = {
     subType: CampaignSubType;
     minFollowers: number;
     recruitCount: number;
+    rewardJpy: number | null;
     subTypeOptions: string[];
     insightRequired: boolean;
     isRequired: boolean;
@@ -57,6 +60,7 @@ function toCard(
     title: row.title,
     productSummary: row.productSummary,
     thumbnailUrl: row.thumbnailUrl,
+    rewardType: row.rewardType,
     rewardJpy: row.rewardJpy,
     recruits: row.recruits,
     recruitCount: totalRecruitCount(row.recruits),
@@ -101,6 +105,7 @@ export class InfluencerCampaignsService {
             subType: true,
             minFollowers: true,
             recruitCount: true,
+            rewardJpy: true,
             subTypeOptions: true,
             insightRequired: true,
             isRequired: true,
@@ -148,6 +153,7 @@ export class InfluencerCampaignsService {
             subType: true,
             minFollowers: true,
             recruitCount: true,
+            rewardJpy: true,
             subTypeOptions: true,
             insightRequired: true,
             isRequired: true,
@@ -172,14 +178,16 @@ export class InfluencerCampaignsService {
       (exclusion) => exclusion.excludedCampaignId,
     );
     const [existing, applicationsOnExcludedCampaigns] = await Promise.all([
-      // 취소된 응모도 재응모 불가 대상이므로 appliedCampaignSubTypes 에 포함시키고,
-      // 취소 여부도 별도로 구분해 UI 에서 안내 문구를 달리 표시할 수 있게 한다.
-      this.prisma.campaignApplication.findMany({
+      // 취소된 응모도 재응모 불가 대상. 취소 여부는 별도로 구분해 UI 에서
+      // 안내 문구를 달리 표시할 수 있게 한다.
+      this.prisma.campaignApplication.findUnique({
         where: {
-          campaignId: row.id,
-          influencerId: args.influencerId,
+          campaignId_influencerId: {
+            campaignId: row.id,
+            influencerId: args.influencerId,
+          },
         },
-        select: { subType: true, status: true },
+        select: { status: true },
       }),
       excludedCampaignIds.length > 0
         ? this.prisma.campaignApplication.findMany({
@@ -188,17 +196,20 @@ export class InfluencerCampaignsService {
               campaignId: { in: excludedCampaignIds },
               status: { not: "CANCELLED" },
             },
-            select: { subType: true },
-            distinct: ["subType"],
+            select: { subTypes: true },
           })
-        : Promise.resolve([] as { subType: CampaignSubType }[]),
+        : Promise.resolve([] as { subTypes: CampaignSubType[] }[]),
     ]);
     const recruitedCampaignSubTypes = new Set(
       row.recruits.map((recruit) => recruit.subType),
     );
-    const excludedCampaignSubTypes = applicationsOnExcludedCampaigns
-      .map((application) => application.subType)
-      .filter((subType) => recruitedCampaignSubTypes.has(subType));
+    const excludedCampaignSubTypes = Array.from(
+      new Set(
+        applicationsOnExcludedCampaigns.flatMap(
+          (application) => application.subTypes,
+        ),
+      ),
+    ).filter((subType) => recruitedCampaignSubTypes.has(subType));
 
     const card = await this.resolveCard(toCard(row, approvedCount, row.closedAt, now));
     const [guideline, cautions] = await Promise.all([
@@ -211,10 +222,8 @@ export class InfluencerCampaignsService {
       guideline,
       referenceMediaUrls: row.referenceMediaUrls,
       cautions,
-      appliedSubTypes: existing.map((r) => r.subType),
-      cancelledSubTypes: existing
-        .filter((r) => r.status === "CANCELLED")
-        .map((r) => r.subType),
+      hasApplied: existing !== null,
+      hasCancelled: existing?.status === "CANCELLED",
       excludedSubTypes: excludedCampaignSubTypes,
     };
   }

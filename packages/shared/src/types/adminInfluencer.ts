@@ -55,9 +55,8 @@ export const AdminApplicationSchema = z.object({
   deliveredAt: z.string().datetime().nullable(),
   receivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
-  subType: CampaignSubTypeSchema,
+  subTypes: z.array(CampaignSubTypeSchema),
   instagramPostType: InstagramPostTypeSchema.nullable(),
-  hasSubmittedPost: z.boolean(),
   orderNumber: z.string().nullable(),
   orderSubmittedAt: z.string().datetime().nullable(),
   reviewSubmittedAt: z.string().datetime().nullable(),
@@ -93,7 +92,8 @@ export type AdminApplicationCountsResponse = z.infer<
 >;
 
 export const RejectApplicationRequestSchema = z.object({
-  reason: z.string().min(1, "사유를 입력하세요").max(500),
+  /** 응모 반려 사유 — 선택 입력. (제출물 검토 반려 RejectSubmissionRequest 는 필수 유지) */
+  reason: z.string().max(500).default(""),
 });
 export type RejectApplicationRequest = z.infer<
   typeof RejectApplicationRequestSchema
@@ -116,10 +116,9 @@ export type SubmittedPostRejection = z.infer<
   typeof SubmittedPostRejectionSchema
 >;
 
-export const AdminSubmittedPostSchema = z.object({
+export const AdminSubmissionPostSchema = z.object({
   id: z.string(),
   subType: CampaignSubTypeSchema,
-  instagramPostType: InstagramPostTypeSchema.nullable(),
   url: z.string().url().nullable(),
   submissionData: z.record(z.unknown()).nullable().default(null),
   submittedAt: z.string().datetime(),
@@ -131,15 +130,25 @@ export const AdminSubmittedPostSchema = z.object({
   insightViews: z.number().int().nullable(),
   insightReach: z.number().int().nullable(),
   insightSubmittedAt: z.string().datetime().nullable(),
-
-  reviewStatus: PostReviewStatusSchema,
-  reviewedAt: z.string().datetime().nullable(),
-  rejectionHistory: z.array(SubmittedPostRejectionSchema),
   attachments: z.array(AttachmentSchema),
+});
+export type AdminSubmissionPost = z.infer<typeof AdminSubmissionPostSchema>;
 
-  settledAt: z.string().datetime().nullable(),
-  settledAmountJpy: z.number().int().nonnegative().nullable(),
-  settlementCompletedAt: z.string().datetime().nullable(),
+/** 어드민 제출물 검토 행 — 응모(Application) 단위. */
+export const AdminSubmissionSchema = z.object({
+  /** 응모(CampaignApplication) id. */
+  id: z.string(),
+  status: ApplicationStatusSchema,
+  subTypes: z.array(CampaignSubTypeSchema),
+  instagramPostType: InstagramPostTypeSchema.nullable(),
+  reviewSubmittedAt: z.string().datetime().nullable(),
+
+  submissionReviewStatus: PostReviewStatusSchema,
+  submissionReviewedAt: z.string().datetime().nullable(),
+  rejectionHistory: z.array(SubmittedPostRejectionSchema),
+
+  posts: z.array(AdminSubmissionPostSchema),
+
   settlement: z
     .object({
       id: z.string(),
@@ -149,11 +158,6 @@ export const AdminSubmittedPostSchema = z.object({
       completedAt: z.string().datetime().nullable(),
     })
     .nullable(),
-
-  application: z.object({
-    id: z.string(),
-    status: ApplicationStatusSchema,
-  }),
 
   campaign: z.object({
     id: z.string(),
@@ -170,20 +174,20 @@ export const AdminSubmittedPostSchema = z.object({
     snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   }),
 });
-export type AdminSubmittedPost = z.infer<typeof AdminSubmittedPostSchema>;
+export type AdminSubmission = z.infer<typeof AdminSubmissionSchema>;
 
-export const AdminSubmittedPostListResponseSchema = z.object({
-  posts: z.array(AdminSubmittedPostSchema),
+export const AdminSubmissionListResponseSchema = z.object({
+  submissions: z.array(AdminSubmissionSchema),
 });
-export type AdminSubmittedPostListResponse = z.infer<
-  typeof AdminSubmittedPostListResponseSchema
+export type AdminSubmissionListResponse = z.infer<
+  typeof AdminSubmissionListResponseSchema
 >;
 
-export const RejectSubmittedPostRequestSchema = z.object({
+export const RejectSubmissionRequestSchema = z.object({
   comment: z.string().min(1, "반려 사유를 입력하세요").max(1000),
 });
-export type RejectSubmittedPostRequest = z.infer<
-  typeof RejectSubmittedPostRequestSchema
+export type RejectSubmissionRequest = z.infer<
+  typeof RejectSubmissionRequestSchema
 >;
 
 export const SettlementStatusSchema = z.enum(["PENDING", "COMPLETED"]);
@@ -191,7 +195,7 @@ export type SettlementStatus = z.infer<typeof SettlementStatusSchema>;
 
 export const AdminSettlementSchema = z.object({
   id: z.string(),
-  postId: z.string(),
+  applicationId: z.string(),
   amountJpy: z.number().int().nonnegative(),
   rewardAmountJpy: z.number().int().nonnegative(),
   productRefundJpy: z.number().int().nonnegative(),
@@ -219,13 +223,15 @@ export const AdminSettlementSchema = z.object({
     category: CampaignCategorySchema,
     title: z.string(),
   }),
-  post: z.object({
-    id: z.string(),
-    url: z.string().url().nullable(),
-    subType: CampaignSubTypeSchema,
-    submittedAt: z.string().datetime(),
-    insightSubmittedAt: z.string().datetime().nullable(),
-  }),
+  posts: z.array(
+    z.object({
+      id: z.string(),
+      url: z.string().url().nullable(),
+      subType: CampaignSubTypeSchema,
+      submittedAt: z.string().datetime(),
+      insightSubmittedAt: z.string().datetime().nullable(),
+    }),
+  ),
 });
 export type AdminSettlement = z.infer<typeof AdminSettlementSchema>;
 

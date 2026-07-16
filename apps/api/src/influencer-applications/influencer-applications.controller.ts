@@ -11,17 +11,16 @@ import {
   UsePipes,
 } from "@nestjs/common";
 import {
-  CampaignSubTypeSchema,
   CreateApplicationRequestSchema,
-  SubmitInsightRequestSchema,
+  SubmitInsightsRequestSchema,
   SubmitOrderRequestSchema,
-  SubmitPostRequestSchema,
+  SubmitSubmissionRequestSchema,
   SubmitReviewRequestSchema,
   SubmitSimpleReviewRequestSchema,
   type CreateApplicationRequest,
-  type SubmitInsightRequest,
+  type SubmitInsightsRequest,
   type SubmitOrderRequest,
-  type SubmitPostRequest,
+  type SubmitSubmissionRequest,
   type SubmitReviewRequest,
   type SubmitSimpleReviewRequest,
 } from "@jsure/shared";
@@ -102,7 +101,12 @@ export class InfluencerApplicationsController {
     @Body(new ZodValidationPipe(SubmitSimpleReviewRequestSchema))
     dto: SubmitSimpleReviewRequest,
   ) {
-    return this.svc.submitSimpleReview(req.user.id, id, dto.url, dto.screenshots);
+    return this.svc.submitSimpleReview(
+      req.user.id,
+      id,
+      dto.reviews,
+      dto.screenshots,
+    );
   }
 
   @Post(":id/confirm-receipt")
@@ -114,26 +118,25 @@ export class InfluencerApplicationsController {
     return this.svc.confirmReceipt(req.user.id, id);
   }
 
-  @Put(":id/posts/:snsType")
-  upsertPost(
+  /** SNS 게시물 URL 일괄 제출 — 참여한 모든 서브타입을 한 번에. */
+  @Put(":id/submission")
+  submitSubmission(
     @Request() req: { user: AuthenticatedInfluencer },
     @Param("id") id: string,
-    @Param("snsType") snsTypeRaw: string,
-    @Body(new ZodValidationPipe(SubmitPostRequestSchema)) dto: SubmitPostRequest,
+    @Body(new ZodValidationPipe(SubmitSubmissionRequestSchema))
+    dto: SubmitSubmissionRequest,
   ) {
-    const snsType = CampaignSubTypeSchema.parse(snsTypeRaw);
-    return this.svc.upsertPost(req.user.id, id, snsType, dto.url);
+    return this.svc.submitSubmission(req.user.id, id, dto.posts);
   }
 
-  @Put(":id/posts/:snsType/insight")
-  upsertInsight(
+  /** SNS 인사이트 일괄 제출 — 참여한 모든 서브타입을 한 번에. */
+  @Put(":id/insights")
+  submitInsights(
     @Request() req: { user: AuthenticatedInfluencer },
     @Param("id") id: string,
-    @Param("snsType") snsTypeRaw: string,
-    @Body(new ZodValidationPipe(SubmitInsightRequestSchema))
-    dto: SubmitInsightRequest,
+    @Body(new ZodValidationPipe(SubmitInsightsRequestSchema))
+    dto: SubmitInsightsRequest,
   ) {
-    const snsType = CampaignSubTypeSchema.parse(snsTypeRaw);
-    return this.svc.upsertInsight(req.user.id, id, snsType, dto);
+    return this.svc.submitInsights(req.user.id, id, dto.insights);
   }
 }

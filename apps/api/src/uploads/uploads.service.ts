@@ -55,13 +55,13 @@ export class UploadsService {
     }
     const application = await this.prisma.campaignApplication.findUnique({
       where: { id: body.applicationId },
-      select: { influencerId: true, subType: true },
+      select: { influencerId: true, subTypes: true },
     });
     if (!application) throw new NotFoundException("Application not found");
     if (application.influencerId !== influencerId) {
       throw new ForbiddenException();
     }
-    if (application.subType !== body.subType) {
+    if (!application.subTypes.includes(body.subType)) {
       throw new BadRequestException("응모한 SNS 와 일치하지 않습니다");
     }
 

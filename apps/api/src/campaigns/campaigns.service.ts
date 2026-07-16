@@ -11,6 +11,7 @@ import {
   type CampaignResponse,
   type CreateCampaignRequest,
   type CampaignRecruit,
+  type RewardType,
   type UpdateCampaignRequest,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
@@ -169,10 +170,31 @@ export function validateRecruitsForCategory(
   }
 }
 
+/** 서브타입별 보수 금액이 보수 체계와 일치하는지 서버 측 검증. */
+export function validateRecruitsForRewardType(
+  rewardType: RewardType,
+  recruits: { subType: string; rewardJpy: number | null }[],
+): void {
+  for (const recruit of recruits) {
+    if (rewardType === "PER_SUBTYPE") {
+      if (recruit.rewardJpy === null) {
+        throw new BadRequestException(
+          `개별 보수 캠페인에서는 ${recruit.subType} 모집의 보수 금액을 입력해야 합니다`,
+        );
+      }
+    } else if (recruit.rewardJpy !== null) {
+      throw new BadRequestException(
+        "통합 보수 캠페인에서는 서브타입별 보수를 지정할 수 없습니다",
+      );
+    }
+  }
+}
+
 type CampaignRecruitRow = {
   subType: string;
   minFollowers: number;
   recruitCount: number;
+  rewardJpy: number | null;
   subTypeOptions: string[];
   insightRequired: boolean;
   isRequired: boolean;
@@ -184,6 +206,7 @@ type CampaignRow = {
   id: string;
   category: CampaignCategory;
   title: string;
+  rewardType: RewardType;
   rewardJpy: number;
   recruitStartAt: Date;
   recruitEndAt: Date;
@@ -214,11 +237,13 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     id: row.id,
     category: row.category,
     title: row.title,
+    rewardType: row.rewardType,
     rewardJpy: row.rewardJpy,
     recruits: row.recruits.map((recruit) => ({
       subType: recruit.subType as CampaignRecruit["subType"],
       minFollowers: recruit.minFollowers,
       recruitCount: recruit.recruitCount,
+      rewardJpy: recruit.rewardJpy,
       subTypeOptions: recruit.subTypeOptions,
       insightRequired: recruit.insightRequired,
       isRequired: recruit.isRequired,
@@ -251,6 +276,7 @@ const RECRUITS_INCLUDE = {
       subType: true,
       minFollowers: true,
       recruitCount: true,
+      rewardJpy: true,
       subTypeOptions: true,
       insightRequired: true,
       isRequired: true,
@@ -344,10 +370,12 @@ export class CampaignsService {
     );
     const recruits = this.normalizeCampaignRecruitsInput(input.recruits);
     validateRecruitsForCategory(input.category, recruits);
+    validateRecruitsForRewardType(input.rewardType, recruits);
     const row = await this.prisma.campaign.create({
       data: {
         category: input.category,
         title: input.title,
+        rewardType: input.rewardType,
         rewardJpy: input.rewardJpy,
         recruitStartAt: jstDayStartUtc(input.recruitStartDate),
         recruitEndAt: jstDayEndUtc(input.recruitEndDate),
@@ -384,6 +412,7 @@ export class CampaignsService {
     subType: CampaignRecruit["subType"];
     minFollowers: number;
     recruitCount: number;
+    rewardJpy: number | null;
     subTypeOptions: string[];
     insightRequired: boolean;
     isRequired: boolean;
@@ -391,10 +420,16 @@ export class CampaignsService {
     productUrl: string | null;
   }[] {
     return recruits.map((recruit) => {
-      const insightRequired = recruit.insightRequired ?? true;
-      const isRequired = recruit.isRequired ?? false;
-      const productPriceJpy = recruit.productPriceJpy ?? null;
-      const productUrl = recruit.productUrl ?? null;
+      const base = {
+        subType: recruit.subType,
+        minFollowers: recruit.minFollowers,
+        recruitCount: recruit.recruitCount,
+        rewardJpy: recruit.rewardJpy ?? null,
+        insightRequired: recruit.insightRequired ?? true,
+        isRequired: recruit.isRequired ?? false,
+        productPriceJpy: recruit.productPriceJpy ?? null,
+        productUrl: recruit.productUrl ?? null,
+      };
       const unique = Array.from(new Set(recruit.subTypeOptions ?? []));
       if (recruit.subType === "INSTAGRAM") {
         if (unique.length === 0) {
@@ -402,39 +437,12 @@ export class CampaignsService {
             "Instagram 모집은 FEED/REELS 중 1개 이상을 선택해야 합니다",
           );
         }
-        return {
-          subType: recruit.subType,
-          minFollowers: recruit.minFollowers,
-          recruitCount: recruit.recruitCount,
-          subTypeOptions: unique,
-          insightRequired,
-          isRequired,
-          productPriceJpy,
-          productUrl,
-        };
+        return { ...base, subTypeOptions: unique };
       }
       if (recruit.subType === "QOO10") {
-        return {
-          subType: recruit.subType,
-          minFollowers: recruit.minFollowers,
-          recruitCount: recruit.recruitCount,
-          subTypeOptions: unique,
-          insightRequired,
-          isRequired,
-          productPriceJpy,
-          productUrl,
-        };
+        return { ...base, subTypeOptions: unique };
       }
-      return {
-        subType: recruit.subType,
-        minFollowers: recruit.minFollowers,
-        recruitCount: recruit.recruitCount,
-        subTypeOptions: [],
-        insightRequired,
-        isRequired,
-        productPriceJpy,
-        productUrl,
-      };
+      return { ...base, subTypeOptions: [] };
     });
   }
 
@@ -500,6 +508,7 @@ export class CampaignsService {
     const data: Record<string, unknown> = {};
     if (input.category !== undefined) data.category = input.category;
     if (input.title !== undefined) data.title = input.title;
+    if (input.rewardType !== undefined) data.rewardType = input.rewardType;
     if (input.rewardJpy !== undefined) data.rewardJpy = input.rewardJpy;
     if (input.recruitStartDate !== undefined) {
       data.recruitStartAt = jstDayStartUtc(input.recruitStartDate);
@@ -527,6 +536,10 @@ export class CampaignsService {
       if (input.recruits !== undefined) {
         const normalized = this.normalizeCampaignRecruitsInput(input.recruits);
         validateRecruitsForCategory(existing.category, normalized);
+        validateRecruitsForRewardType(
+          input.rewardType ?? existing.rewardType,
+          normalized,
+        );
         await tx.campaignRecruit.deleteMany({ where: { campaignId: id } });
         await tx.campaignRecruit.createMany({
           data: normalized.map((recruit) => ({

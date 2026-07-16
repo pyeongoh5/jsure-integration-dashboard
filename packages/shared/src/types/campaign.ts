@@ -11,6 +11,14 @@ export type { CampaignSubType };
 export const CampaignCategorySchema = z.enum(["SNS", "FAKE_PURCHASE", "SIMPLE_REVIEW"]);
 export type CampaignCategory = z.infer<typeof CampaignCategorySchema>;
 
+/**
+ * 보수 체계.
+ * - UNIFIED: 참여 서브타입 수와 무관하게 Campaign.rewardJpy 고정 지급.
+ * - PER_SUBTYPE: 참여한 서브타입별 CampaignRecruit.rewardJpy 합산 지급.
+ */
+export const RewardTypeSchema = z.enum(["UNIFIED", "PER_SUBTYPE"]);
+export type RewardType = z.infer<typeof RewardTypeSchema>;
+
 const SNS_SUB_TYPE_VALUES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
 const FAKE_PURCHASE_SUB_TYPE_VALUES = ["QOO10"] as const;
 const SIMPLE_REVIEW_SUB_TYPE_VALUES = ["LIPS", "ATCOSME"] as const;
@@ -42,6 +50,8 @@ export const CampaignRecruitSchema = z.object({
   subType: CampaignSubTypeSchema,
   minFollowers: z.number().int().nonnegative("0 이상의 정수"),
   recruitCount: z.number().int().positive("1 이상"),
+  /** 개별 보수(PER_SUBTYPE) 캠페인용: 이 서브타입 참여 보수(JPY). UNIFIED 캠페인은 null. */
+  rewardJpy: z.number().int().nonnegative().nullable().default(null),
   subTypeOptions: z.array(z.string()).default([]),
   /** false 면 인플루언서가 인사이트를 제출하지 않아도 정산이 진행될 수 있다. */
   insightRequired: z.boolean().default(true),
@@ -65,6 +75,12 @@ const CampaignRecruitInputSchema = z
       .number({ invalid_type_error: "숫자를 입력해주세요" })
       .int("정수만 입력")
       .positive("1 이상"),
+    rewardJpy: z
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
+      .int("정수만 입력")
+      .nonnegative("0 이상의 정수")
+      .nullable()
+      .default(null),
     subTypeOptions: z.array(z.string()).default([]),
     insightRequired: z.boolean().default(true),
     isRequired: z.boolean().default(false),
@@ -105,6 +121,30 @@ const SIMPLE_REVIEW_SUB_TYPE_SET = new Set<CampaignSubType>(
 const ENABLED_SNS_SUB_TYPE_SET = new Set<CampaignSubType>(
   EnabledSnsTypeSchema.options,
 );
+
+function refineRecruitsByRewardType(
+  rewardType: z.infer<typeof RewardTypeSchema>,
+  recruits: z.infer<typeof CampaignRecruitInputSchema>[],
+  ctx: z.RefinementCtx,
+): void {
+  recruits.forEach((recruit, index) => {
+    if (rewardType === "PER_SUBTYPE") {
+      if (recruit.rewardJpy === null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "rewardJpy"],
+          message: "서브타입별 보수 금액을 입력하세요",
+        });
+      }
+    } else if (recruit.rewardJpy !== null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["recruits", index, "rewardJpy"],
+        message: "통합 보수 캠페인에서는 서브타입별 보수를 지정할 수 없습니다",
+      });
+    }
+  });
+}
 
 function refineRecruitsByCategory(
   category: CampaignCategory,
@@ -256,6 +296,7 @@ export const CampaignFormSchema = z
   .object({
     category: CampaignCategorySchema.default("SNS"),
     title: z.string().min(1, "필수 입력").max(100),
+    rewardType: RewardTypeSchema.default("UNIFIED"),
     rewardJpy: z
       .number({ invalid_type_error: "숫자를 입력해주세요" })
       .int("정수만 입력")
@@ -284,6 +325,7 @@ export const CampaignFormSchema = z
   })
   .superRefine((form, ctx) => {
     refineRecruitsByCategory(form.category, form.recruits, ctx);
+    refineRecruitsByRewardType(form.rewardType, form.recruits, ctx);
   });
 export type CampaignForm = z.infer<typeof CampaignFormSchema>;
 
@@ -294,6 +336,7 @@ export const UpdateCampaignRequestSchema = z
   .object({
     category: CampaignCategorySchema.optional(),
     title: z.string().min(1).max(100).optional(),
+    rewardType: RewardTypeSchema.optional(),
     rewardJpy: z.number().int().nonnegative().optional(),
     recruitStartDate: DateOnly.optional(),
     recruitEndDate: DateOnly.optional(),
@@ -320,6 +363,7 @@ export const CampaignResponseSchema = z.object({
   id: z.string(),
   category: CampaignCategorySchema,
   title: z.string(),
+  rewardType: RewardTypeSchema,
   rewardJpy: z.number().int().nonnegative(),
   recruits: z.array(CampaignRecruitSchema),
   recruitStartDate: DateOnly,
@@ -353,6 +397,7 @@ export const InfluencerCampaignCardSchema = z.object({
   title: z.string(),
   productSummary: z.string(),
   thumbnailUrl: z.string().url().nullable(),
+  rewardType: RewardTypeSchema,
   rewardJpy: z.number().int().nonnegative(),
   recruits: z.array(CampaignRecruitSchema),
   recruitCount: z.number().int().nonnegative(),
@@ -374,10 +419,10 @@ export const InfluencerCampaignDetailSchema =
     guideline: z.string(),
     referenceMediaUrls: z.array(z.string().url()),
     cautions: z.string(),
-    /** 인플루언서가 이 캠페인에 이미 신청한(취소 포함) 서브타입 목록 — 신규 응모 차단용 */
-    appliedSubTypes: z.array(CampaignSubTypeSchema),
-    /** 이 캠페인에서 인플루언서가 직접 취소한 서브타입 목록 — 재응모 불가 안내용 */
-    cancelledSubTypes: z.array(CampaignSubTypeSchema),
+    /** 인플루언서가 이 캠페인에 이미 응모(취소 포함)했는지 — 신규 응모 차단용 */
+    hasApplied: z.boolean(),
+    /** 이 캠페인 응모를 인플루언서가 직접 취소했는지 — 재응모 불가 안내용 */
+    hasCancelled: z.boolean(),
     /** 과거 응모 이력(제외 캠페인) 때문에 이 캠페인에서 응모할 수 없는 서브타입 목록 */
     excludedSubTypes: z.array(CampaignSubTypeSchema),
   });

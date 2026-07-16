@@ -24,7 +24,7 @@ export type InfluencerApplicationRejectionEntry = z.infer<
 
 export const InfluencerPostRejectionEntrySchema = z.object({
   id: z.string(),
-  postId: z.string(),
+  applicationId: z.string(),
   comment: z.string(),
   rejectedAt: z.string().datetime(),
   campaignTitle: z.string(),

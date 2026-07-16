@@ -2,6 +2,11 @@ import { deriveDisplayStage, postingDeadline } from "./display-stage";
 
 const NOW = new Date("2026-06-01T00:00:00Z");
 
+const NO_REVIEW = {
+  submissionReviewStatus: "PENDING" as const,
+  settlementStatus: null,
+};
+
 describe("deriveDisplayStage", () => {
   it("APPLIED → APPLIED", () => {
     expect(
@@ -10,6 +15,7 @@ describe("deriveDisplayStage", () => {
         category: "SNS",
         receivedAt: null,
         posts: [],
+        ...NO_REVIEW,
         now: NOW,
       }),
     ).toBe("APPLIED");
@@ -22,6 +28,7 @@ describe("deriveDisplayStage", () => {
         category: "SNS",
         receivedAt: null,
         posts: [],
+        ...NO_REVIEW,
         now: NOW,
       }),
     ).toBe("AWAITING_RECEIPT");
@@ -34,158 +41,167 @@ describe("deriveDisplayStage", () => {
         category: "SNS",
         receivedAt: null,
         posts: [],
+        ...NO_REVIEW,
         now: NOW,
       }),
     ).toBe("AWAITING_RECEIPT");
   });
 
-  it("SHIPPED, receivedAt set, no posts → POSTING", () => {
+  it("SHIPPED, receivedAt set, 미제출 → POSTING", () => {
     expect(
       deriveDisplayStage({
         status: "SHIPPED",
         category: "SNS",
         receivedAt: new Date(NOW.getTime() - 86400000),
         posts: [],
+        ...NO_REVIEW,
         now: NOW,
       }),
     ).toBe("POSTING");
   });
 
-  it("DELIVERED, receivedAt set, no posts → POSTING", () => {
+  it("DELIVERED, receivedAt set, 미제출 → POSTING", () => {
     expect(
       deriveDisplayStage({
         status: "DELIVERED",
         category: "SNS",
         receivedAt: new Date(NOW.getTime() - 86400000),
         posts: [],
+        ...NO_REVIEW,
         now: NOW,
       }),
     ).toBe("POSTING");
   });
 
-  it("DELIVERED, post submitted same JST day → POSTED", () => {
+  it("REVIEW_SUBMITTED, post submitted same JST day → POSTED", () => {
     expect(
       deriveDisplayStage({
-        status: "DELIVERED",
+        status: "REVIEW_SUBMITTED",
         category: "SNS",
         receivedAt: new Date(NOW.getTime() - 3 * 86400000),
         posts: [
           {
             // 같은 JST 일자 안에서 제출된 경우 daysPassed=0 → POSTED
+            // (INSIGHT_DUE_DAYS=0 테스트 설정에서는 INSIGHT_DUE 로 즉시 전환)
             submittedAt: new Date(NOW.getTime() - 60 * 60 * 1000),
             insightSubmittedAt: null,
-            reviewStatus: "PENDING",
           },
         ],
-        now: NOW,
-      }),
-    ).toBe("POSTED");
-  });
-
-  it("DELIVERED, post submitted ≥7d, no insight → INSIGHT_DUE", () => {
-    expect(
-      deriveDisplayStage({
-        status: "DELIVERED",
-        category: "SNS",
-        receivedAt: new Date(NOW.getTime() - 10 * 86400000),
-        posts: [
-          {
-            submittedAt: new Date(NOW.getTime() - 8 * 86400000),
-            insightSubmittedAt: null, reviewStatus: "PENDING",
-          },
-        ],
+        ...NO_REVIEW,
         now: NOW,
       }),
     ).toBe("INSIGHT_DUE");
   });
 
-  it("DELIVERED, all insights submitted → REVIEWING", () => {
+  it("REVIEW_SUBMITTED, post submitted ≥7d, no insight → INSIGHT_DUE", () => {
     expect(
       deriveDisplayStage({
-        status: "DELIVERED",
-        category: "SNS",
-        receivedAt: new Date(NOW.getTime() - 10 * 86400000),
-        posts: [
-          {
-            submittedAt: new Date(NOW.getTime() - 9 * 86400000),
-            insightSubmittedAt: new Date(NOW.getTime() - 1 * 86400000), reviewStatus: "PENDING",
-          },
-        ],
-        now: NOW,
-      }),
-    ).toBe("REVIEWING");
-  });
-
-  it("DELIVERED, insightRequired=false + review APPROVED → COMPLETED", () => {
-    expect(
-      deriveDisplayStage({
-        status: "DELIVERED",
+        status: "REVIEW_SUBMITTED",
         category: "SNS",
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
             submittedAt: new Date(NOW.getTime() - 8 * 86400000),
             insightSubmittedAt: null,
-            reviewStatus: "APPROVED",
-            insightRequired: false,
           },
         ],
+        ...NO_REVIEW,
         now: NOW,
       }),
-    ).toBe("COMPLETED");
+    ).toBe("INSIGHT_DUE");
   });
 
-  it("DELIVERED, all insights submitted + review APPROVED + settlement PENDING → COMPLETED", () => {
+  it("REVIEW_SUBMITTED, all insights submitted → REVIEWING", () => {
     expect(
       deriveDisplayStage({
-        status: "DELIVERED",
+        status: "REVIEW_SUBMITTED",
         category: "SNS",
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
             submittedAt: new Date(NOW.getTime() - 9 * 86400000),
             insightSubmittedAt: new Date(NOW.getTime() - 1 * 86400000),
-            reviewStatus: "APPROVED",
-            settlementStatus: "PENDING",
           },
         ],
+        submissionReviewStatus: "PENDING",
+        settlementStatus: null,
         now: NOW,
       }),
-    ).toBe("COMPLETED");
+    ).toBe("REVIEWING");
   });
 
-  it("DELIVERED, 인사이트 미제출이어도 정산 COMPLETED 면 SETTLED", () => {
+  it("REVIEW_SUBMITTED, insightRequired=false + review APPROVED → COMPLETED", () => {
     expect(
       deriveDisplayStage({
-        status: "DELIVERED",
+        status: "REVIEW_SUBMITTED",
         category: "SNS",
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
             submittedAt: new Date(NOW.getTime() - 8 * 86400000),
             insightSubmittedAt: null,
-            reviewStatus: "APPROVED",
-            settlementStatus: "COMPLETED",
+            insightRequired: false,
           },
         ],
+        submissionReviewStatus: "APPROVED",
+        settlementStatus: null,
+        now: NOW,
+      }),
+    ).toBe("COMPLETED");
+  });
+
+  it("REVIEW_SUBMITTED, insights submitted + APPROVED + settlement PENDING → COMPLETED", () => {
+    expect(
+      deriveDisplayStage({
+        status: "REVIEW_SUBMITTED",
+        category: "SNS",
+        receivedAt: new Date(NOW.getTime() - 10 * 86400000),
+        posts: [
+          {
+            submittedAt: new Date(NOW.getTime() - 9 * 86400000),
+            insightSubmittedAt: new Date(NOW.getTime() - 1 * 86400000),
+          },
+        ],
+        submissionReviewStatus: "APPROVED",
+        settlementStatus: "PENDING",
+        now: NOW,
+      }),
+    ).toBe("COMPLETED");
+  });
+
+  it("REVIEW_SUBMITTED, 인사이트 미제출이어도 정산 COMPLETED 면 SETTLED", () => {
+    expect(
+      deriveDisplayStage({
+        status: "REVIEW_SUBMITTED",
+        category: "SNS",
+        receivedAt: new Date(NOW.getTime() - 10 * 86400000),
+        posts: [
+          {
+            submittedAt: new Date(NOW.getTime() - 8 * 86400000),
+            insightSubmittedAt: null,
+          },
+        ],
+        submissionReviewStatus: "APPROVED",
+        settlementStatus: "COMPLETED",
         now: NOW,
       }),
     ).toBe("SETTLED");
   });
 
-  it("DELIVERED, any post REJECTED → POST_REJECTED", () => {
+  it("REVIEW_SUBMITTED, 검토 REJECTED → POST_REJECTED", () => {
     expect(
       deriveDisplayStage({
-        status: "DELIVERED",
+        status: "REVIEW_SUBMITTED",
         category: "SNS",
         receivedAt: new Date(NOW.getTime() - 3 * 86400000),
         posts: [
           {
             submittedAt: new Date(NOW.getTime() - 2 * 86400000),
             insightSubmittedAt: null,
-            reviewStatus: "REJECTED",
           },
         ],
+        submissionReviewStatus: "REJECTED",
+        settlementStatus: null,
         now: NOW,
       }),
     ).toBe("POST_REJECTED");
@@ -198,6 +214,7 @@ describe("deriveDisplayStage", () => {
         category: "SNS",
         receivedAt: null,
         posts: [],
+        ...NO_REVIEW,
         now: NOW,
       }),
     ).toBe("REJECTED");
@@ -207,6 +224,7 @@ describe("deriveDisplayStage", () => {
         category: "SNS",
         receivedAt: null,
         posts: [],
+        ...NO_REVIEW,
         now: NOW,
       }),
     ).toBe("CANCELLED");
@@ -216,6 +234,7 @@ describe("deriveDisplayStage", () => {
         category: "SNS",
         receivedAt: null,
         posts: [],
+        ...NO_REVIEW,
         now: NOW,
       }),
     ).toBe("COMPLETED");
@@ -223,7 +242,7 @@ describe("deriveDisplayStage", () => {
 });
 
 describe("deriveDisplayStage — 가구매 카테고리", () => {
-  const base = { receivedAt: null, posts: [] as never[] };
+  const base = { receivedAt: null, posts: [] as never[], ...NO_REVIEW };
 
   it("APPROVED → AWAITING_ORDER", () => {
     expect(
@@ -245,64 +264,48 @@ describe("deriveDisplayStage — 가구매 카테고리", () => {
     ).toBe("AWAITING_REVIEW");
   });
 
-  it("REVIEW_SUBMITTED + post PENDING → REVIEW_PENDING", () => {
+  it("REVIEW_SUBMITTED + 검토 PENDING → REVIEW_PENDING", () => {
     expect(
       deriveDisplayStage({
+        ...base,
         status: "REVIEW_SUBMITTED",
         category: "FAKE_PURCHASE",
-        receivedAt: null,
-        posts: [
-          { submittedAt: new Date(), insightSubmittedAt: null, reviewStatus: "PENDING" },
-        ],
+        submissionReviewStatus: "PENDING",
       }),
     ).toBe("REVIEW_PENDING");
   });
 
-  it("REVIEW_SUBMITTED + post REJECTED → REVIEW_REJECTED", () => {
+  it("REVIEW_SUBMITTED + 검토 REJECTED → REVIEW_REJECTED", () => {
     expect(
       deriveDisplayStage({
+        ...base,
         status: "REVIEW_SUBMITTED",
         category: "FAKE_PURCHASE",
-        receivedAt: null,
-        posts: [
-          { submittedAt: new Date(), insightSubmittedAt: null, reviewStatus: "REJECTED" },
-        ],
+        submissionReviewStatus: "REJECTED",
       }),
     ).toBe("REVIEW_REJECTED");
   });
 
-  it("REVIEW_SUBMITTED + post APPROVED + settlement PENDING → COMPLETED", () => {
+  it("REVIEW_SUBMITTED + APPROVED + settlement PENDING → COMPLETED", () => {
     expect(
       deriveDisplayStage({
+        ...base,
         status: "REVIEW_SUBMITTED",
         category: "FAKE_PURCHASE",
-        receivedAt: null,
-        posts: [
-          {
-            submittedAt: new Date(),
-            insightSubmittedAt: null,
-            reviewStatus: "APPROVED",
-            settlementStatus: "PENDING",
-          },
-        ],
+        submissionReviewStatus: "APPROVED",
+        settlementStatus: "PENDING",
       }),
     ).toBe("COMPLETED");
   });
 
-  it("REVIEW_SUBMITTED + post APPROVED + settlement COMPLETED → SETTLED", () => {
+  it("REVIEW_SUBMITTED + APPROVED + settlement COMPLETED → SETTLED", () => {
     expect(
       deriveDisplayStage({
+        ...base,
         status: "REVIEW_SUBMITTED",
         category: "FAKE_PURCHASE",
-        receivedAt: null,
-        posts: [
-          {
-            submittedAt: new Date(),
-            insightSubmittedAt: null,
-            reviewStatus: "APPROVED",
-            settlementStatus: "COMPLETED",
-          },
-        ],
+        submissionReviewStatus: "APPROVED",
+        settlementStatus: "COMPLETED",
       }),
     ).toBe("SETTLED");
   });
@@ -310,17 +313,11 @@ describe("deriveDisplayStage — 가구매 카테고리", () => {
   it("COMPLETED (settlement COMPLETED) → SETTLED", () => {
     expect(
       deriveDisplayStage({
+        ...base,
         status: "COMPLETED",
         category: "FAKE_PURCHASE",
-        receivedAt: null,
-        posts: [
-          {
-            submittedAt: new Date(),
-            insightSubmittedAt: null,
-            reviewStatus: "APPROVED",
-            settlementStatus: "COMPLETED",
-          },
-        ],
+        submissionReviewStatus: "APPROVED",
+        settlementStatus: "COMPLETED",
       }),
     ).toBe("SETTLED");
   });

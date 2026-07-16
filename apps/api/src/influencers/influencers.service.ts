@@ -99,20 +99,16 @@ export class InfluencersService {
           campaign: { select: { title: true } },
         },
       }),
-      this.prisma.submittedPostRejection.findMany({
-        where: { post: { application: { influencerId } } },
+      this.prisma.submissionRejection.findMany({
+        where: { application: { influencerId } },
         orderBy: { rejectedAt: "desc" },
         select: {
           id: true,
-          postId: true,
+          applicationId: true,
           comment: true,
           rejectedAt: true,
-          post: {
-            select: {
-              application: {
-                select: { campaign: { select: { title: true } } },
-              },
-            },
+          application: {
+            select: { campaign: { select: { title: true } } },
           },
         },
       }),
@@ -157,10 +153,10 @@ export class InfluencersService {
       })),
       postRejections: postRejectionRows.map((rejection) => ({
         id: rejection.id,
-        postId: rejection.postId,
+        applicationId: rejection.applicationId,
         comment: rejection.comment,
         rejectedAt: rejection.rejectedAt.toISOString(),
-        campaignTitle: rejection.post.application.campaign.title,
+        campaignTitle: rejection.application.campaign.title,
       })),
       flaggedAt: influencer.flaggedAt ? influencer.flaggedAt.toISOString() : null,
     };

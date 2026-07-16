@@ -24,9 +24,8 @@ export class AdminReportsService {
             influencer: {
               include: { snsAccounts: true },
             },
-            posts: {
-              include: { settlement: true },
-            },
+            posts: true,
+            settlement: true,
           },
         },
       },
@@ -48,14 +47,26 @@ export class AdminReportsService {
 
       for (const application of campaign.applications) {
         influencerSet.add(application.influencerId);
-        const matchedAccount = application.influencer.snsAccounts.find(
-          (account) => account.snsType === application.subType,
-        );
-        totalFollowers += matchedAccount?.followerCount ?? 0;
+        // 참여한 모든 서브타입 계정의 팔로워를 합산.
+        for (const account of application.influencer.snsAccounts) {
+          if (
+            application.subTypes.includes(
+              account.snsType as (typeof application.subTypes)[number],
+            )
+          ) {
+            totalFollowers += account.followerCount;
+          }
+        }
+
+        if (application.settlement) {
+          totalRewardJpy += application.settlement.amountJpy;
+        }
+        if (application.settlement?.status === "COMPLETED") {
+          participantCount += application.posts.length;
+        }
 
         for (const post of application.posts) {
           postCount += 1;
-          if (post.settlement) totalRewardJpy += post.settlement.amountJpy;
           totalLikes += post.insightLikes ?? 0;
           totalComments += post.insightComments ?? 0;
           totalShares += post.insightShares ?? 0;
@@ -63,10 +74,6 @@ export class AdminReportsService {
           totalSaves += post.insightSaves ?? 0;
           totalViews += post.insightViews ?? 0;
           totalReach += post.insightReach ?? 0;
-
-          if (post.settlement?.status === "COMPLETED") {
-            participantCount += 1;
-          }
         }
       }
 
@@ -127,14 +134,12 @@ export class AdminReportsService {
   private async collectParticipants(campaignId: string): Promise<CampaignReportParticipant[]> {
     const posts = await this.prisma.submittedPost.findMany({
       where: {
-        application: { campaignId },
-        settlement: { status: "COMPLETED" },
+        application: { campaignId, settlement: { status: "COMPLETED" } },
       },
       orderBy: { submittedAt: "asc" },
       include: {
         application: {
           select: {
-            subType: true,
             instagramPostType: true,
             influencer: {
               select: {
@@ -152,14 +157,17 @@ export class AdminReportsService {
 
     return posts.map((post) => {
       const matchedAccount = post.application.influencer.snsAccounts.find(
-        (account) => account.snsType === post.application.subType,
+        (account) => account.snsType === post.subType,
       );
       return {
         influencerId: post.application.influencer.id,
         influencerName: post.application.influencer.name,
         handle: matchedAccount?.handle ?? "",
-        subType: post.application.subType,
-        instagramPostType: post.application.instagramPostType,
+        subType: post.subType,
+        instagramPostType:
+          post.subType === "INSTAGRAM"
+            ? post.application.instagramPostType
+            : null,
         insight: {
           likes: post.insightLikes,
           comments: post.insightComments,

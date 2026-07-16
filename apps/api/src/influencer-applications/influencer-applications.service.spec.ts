@@ -233,31 +233,27 @@ describe("InfluencerApplicationsService.submitOrder", () => {
 });
 
 describe("InfluencerApplicationsService.submitReview", () => {
-  const screenshots = [
-    {
-      objectKey: "attachments/app-1/REVIEW_SCREENSHOT/a.png",
-      contentType: "image/png" as const,
-      sizeBytes: 100,
-    },
-    {
-      objectKey: "attachments/app-1/REVIEW_SCREENSHOT/b.png",
-      contentType: "image/png" as const,
-      sizeBytes: 120,
-    },
-  ];
+  // 필수 매수 = Qoo10 2장 + 요구 채널당 1장 (최대 4장) — 성공 케이스는 넉넉히 4장 제출
+  const screenshots = ["a", "b", "c", "d"].map((name) => ({
+    objectKey: `attachments/app-1/REVIEW_SCREENSHOT/${name}.png`,
+    contentType: "image/png" as const,
+    sizeBytes: 100,
+  }));
 
   function makeApplicationLookup(overrides: {
     status?: string;
-    posts?: { id: string; reviewStatus: string }[];
+    submissionReviewStatus?: string;
+    posts?: { id: string }[];
     recruits?: { subType: string; subTypeOptions: string[] }[];
     category?: string;
-    subType?: string;
+    subTypes?: string[];
   } = {}) {
     return {
       id: "app-1",
       influencerId: "inf-1",
       status: overrides.status ?? "ORDER_SUBMITTED",
-      subType: overrides.subType ?? "QOO10",
+      submissionReviewStatus: overrides.submissionReviewStatus ?? "PENDING",
+      subTypes: overrides.subTypes ?? ["QOO10"],
       campaign: {
         category: overrides.category ?? "FAKE_PURCHASE",
         recruits: overrides.recruits ?? [
@@ -434,7 +430,8 @@ describe("InfluencerApplicationsService.submitReview", () => {
     } = makeSubmitPrisma(
       makeApplicationLookup({
         status: "REVIEW_SUBMITTED",
-        posts: [{ id: "post-1", reviewStatus: "REJECTED" }],
+        submissionReviewStatus: "REJECTED",
+        posts: [{ id: "post-1" }],
         recruits: [{ subType: "QOO10", subTypeOptions: ["LIPS"] }],
       }),
       { attachmentDeleteMany: jest.fn(async () => ({ count: 2 })) },
@@ -452,9 +449,6 @@ describe("InfluencerApplicationsService.submitReview", () => {
       data: {
         url: null;
         submissionData: { reviewUrls: Record<string, string> };
-        reviewStatus: string;
-        reviewedAt: null;
-        reviewedById: null;
       };
     };
     expect(updateArg.where).toEqual({ id: "post-1" });
@@ -462,21 +456,20 @@ describe("InfluencerApplicationsService.submitReview", () => {
     expect(updateArg.data.submissionData.reviewUrls).toEqual({
       LIPS: "https://lips.example.com/r/2",
     });
-    expect(updateArg.data.reviewedAt).toBeNull();
-    expect(updateArg.data.reviewedById).toBeNull();
     expect(attachmentDeleteMany).toHaveBeenCalledWith({
       where: { postId: "post-1", kind: "REVIEW_SCREENSHOT" },
     });
     expect(attachmentCreateMany).toHaveBeenCalledTimes(1);
   });
 
-  it("REVIEW_SUBMITTED + post PENDING 재제출 시도는 INVALID_TRANSITION", async () => {
+  it("REVIEW_SUBMITTED + 검토 PENDING 재제출 시도는 INVALID_TRANSITION", async () => {
     const prisma = {
       campaignApplication: {
         findUnique: jest.fn(async () =>
           makeApplicationLookup({
             status: "REVIEW_SUBMITTED",
-            posts: [{ id: "post-1", reviewStatus: "PENDING" }],
+            submissionReviewStatus: "PENDING",
+            posts: [{ id: "post-1" }],
           }),
         ),
       },
@@ -493,7 +486,7 @@ describe("InfluencerApplicationsService.submitReview", () => {
         findUnique: jest.fn(async () =>
           makeApplicationLookup({
             category: "SNS",
-            subType: "INSTAGRAM",
+            subTypes: ["INSTAGRAM"],
             recruits: [{ subType: "INSTAGRAM", subTypeOptions: [] }],
           }),
         ),
@@ -515,5 +508,23 @@ describe("InfluencerApplicationsService.submitReview", () => {
     await expect(
       svc.submitReview("inf-1", "app-1", [screenshots[0]!], {}),
     ).rejects.toThrow(/REVIEW_SCREENSHOTS_REQUIRED|스크린샷/);
+  });
+
+  it("LIPS 채널 포함 캠페인은 스크린샷 3장 미만이면 REVIEW_SCREENSHOTS_REQUIRED", async () => {
+    const prisma = {
+      campaignApplication: {
+        findUnique: jest.fn(async () =>
+          makeApplicationLookup({
+            recruits: [{ subType: "QOO10", subTypeOptions: ["LIPS"] }],
+          }),
+        ),
+      },
+    };
+    const svc = makeService({ prisma });
+    await expect(
+      svc.submitReview("inf-1", "app-1", screenshots.slice(0, 2), {
+        LIPS: "https://lips.example.com/review/1",
+      }),
+    ).rejects.toThrow(/3장 이상/);
   });
 });

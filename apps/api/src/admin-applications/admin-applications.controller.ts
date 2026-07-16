@@ -13,19 +13,19 @@ import {
 import {
   ApplicationStatusSchema,
   RejectApplicationRequestSchema,
-  RejectSubmittedPostRequestSchema,
+  RejectSubmissionRequestSchema,
   ShipApplicationRequestSchema,
   type AdminApplication,
   type AdminApplicationCountsResponse,
   type AdminApplicationListResponse,
-  type AdminSubmittedPost,
+  type AdminSubmission,
   type AdminSettlementListResponse,
-  type AdminSubmittedPostListResponse,
+  type AdminSubmissionListResponse,
   type ApprovedApplicantExportResponse,
   type AttachmentListResponse,
   type ApplicationStatus,
   type RejectApplicationRequest,
-  type RejectSubmittedPostRequest,
+  type RejectSubmissionRequest,
   type ShipApplicationRequest,
 } from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -59,10 +59,15 @@ export class AdminApplicationsController {
     return { counts };
   }
 
-  @Get("submitted-posts")
-  async submittedPosts(): Promise<AdminSubmittedPostListResponse> {
-    const posts = await this.svc.listSubmittedPosts();
-    return { posts };
+  @Get("submissions")
+  async submissions(): Promise<AdminSubmissionListResponse> {
+    const submissions = await this.svc.listSubmissions();
+    return { submissions };
+  }
+
+  @Get("submissions/pending-count")
+  pendingReviewCount(): Promise<{ count: number }> {
+    return this.svc.pendingReviewCount();
   }
 
   @Get("export/approved")
@@ -92,45 +97,36 @@ export class AdminApplicationsController {
     return { attachments };
   }
 
-  @Post("submitted-posts/:postId/approve")
+  @Post(":id/submission/approve")
   @HttpCode(200)
-  approveSubmittedPost(
+  approveSubmission(
     @Req() req: { user: AuthenticatedUser },
-    @Param("postId") postId: string,
-  ): Promise<AdminSubmittedPost> {
-    return this.svc.approveSubmittedPost(postId, req.user.id);
+    @Param("id") id: string,
+  ): Promise<AdminSubmission> {
+    return this.svc.approveSubmission(id, req.user.id);
   }
 
-  @Post("submitted-posts/:postId/reject")
+  @Post(":id/submission/reject")
   @HttpCode(200)
-  rejectSubmittedPost(
+  rejectSubmission(
     @Req() req: { user: AuthenticatedUser },
-    @Param("postId") postId: string,
-    @Body(new ZodValidationPipe(RejectSubmittedPostRequestSchema))
-    body: RejectSubmittedPostRequest,
-  ): Promise<AdminSubmittedPost> {
-    return this.svc.rejectSubmittedPost(
-      postId,
-      req.user.id,
-      body.comment.trim(),
-    );
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(RejectSubmissionRequestSchema))
+    body: RejectSubmissionRequest,
+  ): Promise<AdminSubmission> {
+    return this.svc.rejectSubmission(id, req.user.id, body.comment.trim());
   }
 
-  @Post("submitted-posts/:postId/undo")
+  @Post(":id/submission/undo")
   @HttpCode(200)
-  undoSubmittedPostReview(
-    @Param("postId") postId: string,
-  ): Promise<AdminSubmittedPost> {
-    return this.svc.undoSubmittedPostReview(postId);
+  undoSubmissionReview(@Param("id") id: string): Promise<AdminSubmission> {
+    return this.svc.undoSubmissionReview(id);
   }
 
-  @Post("submitted-posts/:postId/settle")
+  @Post(":id/submission/settle")
   @HttpCode(200)
-  settleSubmittedPost(
-    @Req() req: { user: AuthenticatedUser },
-    @Param("postId") postId: string,
-  ): Promise<AdminSubmittedPost> {
-    return this.svc.settleSubmittedPost(postId, req.user.id);
+  settleSubmission(@Param("id") id: string): Promise<AdminSubmission> {
+    return this.svc.settleSubmission(id);
   }
 
   @Get("settlements")
@@ -149,11 +145,6 @@ export class AdminApplicationsController {
   @Get("applied-count")
   appliedCount(): Promise<{ count: number }> {
     return this.svc.appliedCount();
-  }
-
-  @Get("submitted-posts/pending-count")
-  pendingReviewCount(): Promise<{ count: number }> {
-    return this.svc.pendingReviewCount();
   }
 
   @Post("settlements/complete")

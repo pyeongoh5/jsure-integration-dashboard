@@ -4,7 +4,7 @@ import {
   buildSnsProfileUrl,
   type AdminApplication,
   type AdminSettlement,
-  type AdminSubmittedPost,
+  type AdminSubmission,
   type ApplicationStatus,
   type ApprovedApplicantExportResponse,
   type CampaignCategory,
@@ -16,7 +16,10 @@ import { LineMessagingService } from "../influencer-auth/line-messaging.service"
 import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
 import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
 import { R2Service } from "../r2/r2.service";
-import { ensureSettlementForPost } from "../settlements/ensure-settlement";
+import {
+  ensureSettlementForApplication,
+  settlementAmounts,
+} from "../settlements/ensure-settlement";
 
 const POST_REJECTION_RESUBMIT_DAYS = 1;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -33,7 +36,7 @@ type AdminApplicationRow = {
   deliveredAt: Date | null;
   receivedAt: Date | null;
   completedAt: Date | null;
-  subType: CampaignSubType;
+  subTypes: CampaignSubType[];
   instagramPostType: InstagramPostType | null;
   orderNumber: string | null;
   orderSubmittedAt: Date | null;
@@ -46,7 +49,6 @@ type AdminApplicationRow = {
     flaggedAt: Date | null;
     snsAccounts: { snsType: string; handle: string; followerCount: number }[];
   };
-  _count: { posts: number };
 };
 
 function toResponse(row: AdminApplicationRow): AdminApplication {
@@ -62,9 +64,8 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
     deliveredAt: row.deliveredAt ? row.deliveredAt.toISOString() : null,
     receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
-    subType: row.subType,
+    subTypes: row.subTypes,
     instagramPostType: row.instagramPostType,
-    hasSubmittedPost: row._count.posts > 0,
     orderNumber: row.orderNumber,
     orderSubmittedAt: row.orderSubmittedAt ? row.orderSubmittedAt.toISOString() : null,
     reviewSubmittedAt: row.reviewSubmittedAt ? row.reviewSubmittedAt.toISOString() : null,
@@ -108,7 +109,6 @@ const APPLICATION_INCLUDE = {
       },
     },
   },
-  _count: { select: { posts: true } },
 } as const;
 
 @Injectable()
@@ -138,6 +138,15 @@ export class AdminApplicationsService {
           select: {
             ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
             category: true,
+            recruits: {
+              select: {
+                subType: true,
+                recruitCount: true,
+                rewardJpy: true,
+                productPriceJpy: true,
+                productUrl: true,
+              },
+            },
           },
         },
       },
@@ -147,28 +156,24 @@ export class AdminApplicationsService {
       throw new BadRequestException(`Cannot approve from status ${existing.status}`);
     }
 
-    // 해당 캠페인 + 서브타입 의 모집 인원을 넘겨 승인할 수 없도록 막는다.
-    const recruit = await this.prisma.campaignRecruit.findUnique({
-      where: {
-        campaignId_subType: {
-          campaignId: existing.campaignId,
-          subType: existing.subType,
-        },
-      },
-      select: { recruitCount: true },
-    });
-    const recruitCount = recruit?.recruitCount ?? 0;
-    const approvedCount = await this.prisma.campaignApplication.count({
-      where: {
-        campaignId: existing.campaignId,
-        subType: existing.subType,
-        status: { in: SLOT_CONSUMING_STATUSES },
-      },
-    });
-    if (approvedCount >= recruitCount) {
-      throw new BadRequestException(
-        `${SUB_TYPE_LABEL[existing.subType]} 모집 인원(${recruitCount}명)이 모두 충족되어 더 이상 승인할 수 없습니다`,
+    // 참여 서브타입 중 하나라도 모집 인원이 초과되면 승인 불가 (부분 승인 없음).
+    for (const subType of existing.subTypes) {
+      const recruit = existing.campaign.recruits.find(
+        (candidate) => candidate.subType === subType,
       );
+      const recruitCount = recruit?.recruitCount ?? 0;
+      const approvedCount = await this.prisma.campaignApplication.count({
+        where: {
+          campaignId: existing.campaignId,
+          subTypes: { has: subType },
+          status: { in: SLOT_CONSUMING_STATUSES },
+        },
+      });
+      if (approvedCount >= recruitCount) {
+        throw new BadRequestException(
+          `${SUB_TYPE_LABEL[subType]} 모집 인원(${recruitCount}명)이 모두 충족되어 승인할 수 없습니다`,
+        );
+      }
     }
 
     await this.prisma.campaignApplication.update({
@@ -213,7 +218,7 @@ export class AdminApplicationsService {
         status: "REJECTED",
         reviewedAt: new Date(),
         reviewedById: reviewerId,
-        rejectReason: reason,
+        rejectReason: reason.trim() || null,
       },
     });
     const rejectTriggerKey =
@@ -365,12 +370,14 @@ export class AdminApplicationsService {
     return rows.map(toResponse);
   }
 
-  async listSubmittedPosts(): Promise<AdminSubmittedPost[]> {
-    const rows = await this.prisma.submittedPost.findMany({
-      orderBy: { submittedAt: "desc" },
-      include: SUBMITTED_POST_INCLUDE,
+  /** 제출물 검토 목록 — 제출 데이터가 있는 응모(Application) 단위. */
+  async listSubmissions(): Promise<AdminSubmission[]> {
+    const rows = await this.prisma.campaignApplication.findMany({
+      where: { posts: { some: {} } },
+      orderBy: { reviewSubmittedAt: { sort: "desc", nulls: "last" } },
+      include: SUBMISSION_INCLUDE,
     });
-    return Promise.all(rows.map((row) => toSubmittedPostResponse(row, this.r2)));
+    return Promise.all(rows.map((row) => toSubmissionResponse(row, this.r2)));
   }
 
   /**
@@ -402,7 +409,7 @@ export class AdminApplicationsService {
 
   /**
    * 특정 CampaignApplication 의 첨부 이미지에 대해 presigned GET URL 을 발급.
-   * 가구매 응모 상세에서 주문 명세서/리뷰 스크린샷을 통합 조회할 때 사용.
+   * 주문 명세서/리뷰 스크린샷을 통합 조회할 때 사용.
    */
   async listApplicationAttachments(applicationId: string) {
     const application = await this.prisma.campaignApplication.findUnique({
@@ -427,40 +434,41 @@ export class AdminApplicationsService {
     );
   }
 
-  async approveSubmittedPost(postId: string, reviewerId: string): Promise<AdminSubmittedPost> {
-    const existing = await this.prisma.submittedPost.findUnique({
-      where: { id: postId },
+  /** 제출물 전체 승인 — 응모 단위. */
+  async approveSubmission(
+    applicationId: string,
+    reviewerId: string,
+  ): Promise<AdminSubmission> {
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      select: { id: true },
     });
-    if (!existing) throw new NotFoundException("Post not found");
-    await this.prisma.submittedPost.update({
-      where: { id: postId },
+    if (!existing) throw new NotFoundException("Application not found");
+    await this.prisma.campaignApplication.update({
+      where: { id: applicationId },
       data: {
-        reviewStatus: "APPROVED",
-        reviewedAt: new Date(),
-        reviewedById: reviewerId,
+        submissionReviewStatus: "APPROVED",
+        submissionReviewedAt: new Date(),
+        submissionReviewedById: reviewerId,
       },
     });
     // 인사이트가 이미 제출돼 있던 경우, 승인 시점에 자동 정산.
-    await ensureSettlementForPost(this.prisma, postId);
-    const refreshed = await this.prisma.submittedPost.findUnique({
-      where: { id: postId },
+    await ensureSettlementForApplication(this.prisma, applicationId);
+    const refreshed = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
       include: {
-        application: {
-          include: {
-            ...DISPATCH_APPLICATION_INCLUDE,
-            campaign: {
-              select: {
-                ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
-                category: true,
-              },
-            },
+        ...DISPATCH_APPLICATION_INCLUDE,
+        campaign: {
+          select: {
+            ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
+            category: true,
           },
         },
         settlement: true,
       },
     });
     if (refreshed) {
-      const category = refreshed.application.campaign.category;
+      const category = refreshed.campaign.category;
       const approveTriggerKey =
         category === "FAKE_PURCHASE"
           ? "FAKE_PURCHASE_REVIEW_APPROVED"
@@ -468,49 +476,45 @@ export class AdminApplicationsService {
             ? "SIMPLE_REVIEW_APPROVED"
             : "SNS_POST_APPROVED";
       void this.dispatcher.dispatch(approveTriggerKey, {
-        application: refreshed.application,
-        post: refreshed,
+        application: refreshed,
         settlement: refreshed.settlement,
       });
     }
-    return this.fetchSubmittedPost(postId);
+    return this.fetchSubmission(applicationId);
   }
 
-  async rejectSubmittedPost(
-    postId: string,
+  /** 제출물 전체 반려 — 응모 단위. 인플루언서는 수정 후 전체 재제출한다. */
+  async rejectSubmission(
+    applicationId: string,
     reviewerId: string,
     comment: string,
-  ): Promise<AdminSubmittedPost> {
-    const existing = await this.prisma.submittedPost.findUnique({
-      where: { id: postId },
+  ): Promise<AdminSubmission> {
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
       include: {
-        application: {
-          include: {
-            ...DISPATCH_APPLICATION_INCLUDE,
-            campaign: {
-              select: {
-                ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
-                category: true,
-              },
-            },
+        ...DISPATCH_APPLICATION_INCLUDE,
+        campaign: {
+          select: {
+            ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
+            category: true,
           },
         },
       },
     });
-    if (!existing) throw new NotFoundException("Post not found");
+    if (!existing) throw new NotFoundException("Application not found");
     const rejectedAt = new Date();
     await this.prisma.$transaction([
-      this.prisma.submittedPost.update({
-        where: { id: postId },
+      this.prisma.campaignApplication.update({
+        where: { id: applicationId },
         data: {
-          reviewStatus: "REJECTED",
-          reviewedAt: rejectedAt,
-          reviewedById: reviewerId,
+          submissionReviewStatus: "REJECTED",
+          submissionReviewedAt: rejectedAt,
+          submissionReviewedById: reviewerId,
         },
       }),
-      this.prisma.submittedPostRejection.create({
+      this.prisma.submissionRejection.create({
         data: {
-          postId,
+          applicationId,
           comment,
           rejectedById: reviewerId,
           rejectedAt,
@@ -521,83 +525,89 @@ export class AdminApplicationsService {
       rejectedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS,
     );
     const rejectPostTriggerKey =
-      existing.application.campaign.category === "FAKE_PURCHASE"
+      existing.campaign.category === "FAKE_PURCHASE"
         ? "FAKE_PURCHASE_REVIEW_REJECTED"
-        : existing.application.campaign.category === "SIMPLE_REVIEW"
+        : existing.campaign.category === "SIMPLE_REVIEW"
           ? "SIMPLE_REVIEW_REJECTED"
           : "SNS_POST_REJECTED";
     void this.dispatcher.dispatch(rejectPostTriggerKey, {
-      application: existing.application,
+      application: existing,
       rejection: { comment } as never,
       extra: { resubmitDeadlineAt },
     });
-    return this.fetchSubmittedPost(postId);
+    return this.fetchSubmission(applicationId);
   }
 
-  async undoSubmittedPostReview(postId: string): Promise<AdminSubmittedPost> {
-    const existing = await this.prisma.submittedPost.findUnique({
-      where: { id: postId },
+  async undoSubmissionReview(applicationId: string): Promise<AdminSubmission> {
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      include: { posts: { select: { insightSubmittedAt: true } } },
     });
-    if (!existing) throw new NotFoundException("Post not found");
-    if (existing.reviewStatus === "PENDING") {
-      throw new BadRequestException("Already pending");
+    if (!existing) throw new NotFoundException("Application not found");
+    if (existing.submissionReviewStatus === "PENDING") {
+      throw new BadRequestException("이미 검토 대기 상태입니다");
     }
-    if (existing.insightSubmittedAt) {
+    if (existing.posts.some((post) => post.insightSubmittedAt !== null)) {
       throw new BadRequestException("인사이트가 제출된 검토는 되돌릴 수 없습니다");
     }
-    await this.prisma.submittedPost.update({
-      where: { id: postId },
+    await this.prisma.campaignApplication.update({
+      where: { id: applicationId },
       data: {
-        reviewStatus: "PENDING",
-        reviewedAt: null,
-        reviewedById: null,
-        settledAt: null,
-        settledAmountJpy: null,
-        settledById: null,
+        submissionReviewStatus: "PENDING",
+        submissionReviewedAt: null,
+        submissionReviewedById: null,
       },
     });
-    return this.fetchSubmittedPost(postId);
+    return this.fetchSubmission(applicationId);
   }
 
-  async settleSubmittedPost(postId: string, settlerId: string): Promise<AdminSubmittedPost> {
-    const existing = await this.prisma.submittedPost.findUnique({
-      where: { id: postId },
+  /** 승인된 제출물을 인사이트 제출 여부와 무관하게 수동 정산 등록. */
+  async settleSubmission(applicationId: string): Promise<AdminSubmission> {
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
       include: {
-        application: {
+        campaign: {
           select: {
-            id: true,
-            influencerId: true,
-            campaign: { select: { rewardJpy: true, title: true } },
+            category: true,
+            rewardType: true,
+            rewardJpy: true,
+            recruits: {
+              select: { subType: true, rewardJpy: true, productPriceJpy: true },
+            },
           },
         },
       },
     });
-    if (!existing) throw new NotFoundException("Post not found");
-    if (existing.reviewStatus !== "APPROVED") {
+    if (!existing) throw new NotFoundException("Application not found");
+    if (existing.submissionReviewStatus !== "APPROVED") {
       throw new BadRequestException("승인된 초안만 정산할 수 있습니다");
     }
+    const { rewardAmountJpy, productRefundJpy } = settlementAmounts(
+      existing.campaign,
+      existing.subTypes,
+    );
     // Settlement row 생성 (idempotent: 이미 있으면 그대로 유지)
     await this.prisma.settlement.upsert({
-      where: { postId },
+      where: { applicationId },
       create: {
-        postId,
-        amountJpy: existing.application.campaign.rewardJpy,
-        rewardAmountJpy: existing.application.campaign.rewardJpy,
-        productRefundJpy: 0,
+        applicationId,
+        amountJpy: rewardAmountJpy + productRefundJpy,
+        rewardAmountJpy,
+        productRefundJpy,
         status: "PENDING",
       },
       update: {},
     });
-    return this.fetchSubmittedPost(postId);
+    return this.fetchSubmission(applicationId);
   }
 
-  private async fetchSubmittedPost(postId: string): Promise<AdminSubmittedPost> {
-    const row = await this.prisma.submittedPost.findUnique({
-      where: { id: postId },
-      include: SUBMITTED_POST_INCLUDE,
+  private async fetchSubmission(applicationId: string): Promise<AdminSubmission> {
+    const row = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      include: SUBMISSION_INCLUDE,
     });
-    if (!row) throw new NotFoundException("Post not found");
-    return toSubmittedPostResponse(row, this.r2);
+    if (!row) throw new NotFoundException("Application not found");
+    return toSubmissionResponse(row, this.r2);
   }
 
   /**
@@ -610,34 +620,36 @@ export class AdminApplicationsService {
       where,
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
       include: {
-        post: {
+        application: {
           select: {
             id: true,
-            url: true,
-            subType: true,
-            submittedAt: true,
-            insightSubmittedAt: true,
-            application: {
+            subTypes: true,
+            posts: {
               select: {
-                influencerId: true,
-                campaign: { select: { id: true, title: true, category: true } },
-                influencer: {
+                id: true,
+                url: true,
+                subType: true,
+                submittedAt: true,
+                insightSubmittedAt: true,
+              },
+              orderBy: { subType: "asc" as const },
+            },
+            campaign: { select: { id: true, title: true, category: true } },
+            influencer: {
+              select: {
+                id: true,
+                name: true,
+                snsAccounts: {
+                  select: { snsType: true, handle: true },
+                },
+                bankAccount: {
                   select: {
-                    id: true,
-                    name: true,
-                    snsAccounts: {
-                      select: { snsType: true, handle: true },
-                    },
-                    bankAccount: {
-                      select: {
-                        bankName: true,
-                        bankCode: true,
-                        branchName: true,
-                        branchCode: true,
-                        accountNumber: true,
-                        accountHolderKana: true,
-                      },
-                    },
+                    bankName: true,
+                    bankCode: true,
+                    branchName: true,
+                    branchCode: true,
+                    accountNumber: true,
+                    accountHolderKana: true,
                   },
                 },
               },
@@ -672,10 +684,10 @@ export class AdminApplicationsService {
     return { count };
   }
 
-  /** 검토 페이지의 테이블 로우 수와 동일. 정산 흐름(SETTLEMENT_PENDING/SETTLED)에 들어간 투고는 제외. */
+  /** 검토 페이지의 테이블 로우 수와 동일. 정산 흐름에 들어간 응모는 제외. */
   async pendingReviewCount(): Promise<{ count: number }> {
-    const count = await this.prisma.submittedPost.count({
-      where: { settlement: null },
+    const count = await this.prisma.campaignApplication.count({
+      where: { posts: { some: {} }, settlement: null },
     });
     return { count };
   }
@@ -692,22 +704,13 @@ export class AdminApplicationsService {
     const targets = await this.prisma.settlement.findMany({
       where,
       include: {
-        post: {
-          select: {
-            application: {
+        application: {
+          include: {
+            ...DISPATCH_APPLICATION_INCLUDE,
+            campaign: {
               select: {
-                id: true,
-                influencerId: true,
-                subType: true,
-                trackingCarrier: true,
-                trackingNumber: true,
-                ...DISPATCH_APPLICATION_INCLUDE,
-                campaign: {
-                  select: {
-                    ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
-                    category: true,
-                  },
-                },
+                ...DISPATCH_APPLICATION_INCLUDE.campaign.select,
+                category: true,
               },
             },
           },
@@ -724,7 +727,7 @@ export class AdminApplicationsService {
       },
     });
     for (const target of targets) {
-      const category = target.post.application.campaign.category;
+      const category = target.application.campaign.category;
       const settlementTriggerKey =
         category === "FAKE_PURCHASE"
           ? "FAKE_PURCHASE_SETTLEMENT_COMPLETED"
@@ -738,12 +741,12 @@ export class AdminApplicationsService {
             ? "SIMPLE_REVIEW_CAMPAIGN_COMPLETED"
             : "SNS_CAMPAIGN_COMPLETED";
       void this.dispatcher.dispatch(settlementTriggerKey, {
-        application: target.post.application as never,
+        application: target.application as never,
         settlement: target,
       });
       // 정산 완료 = 개인의 캠페인 프로세스 종료. 정산 알림과 별개로 종료 메시지를 발송.
       void this.dispatcher.dispatch(campaignCompletedTriggerKey, {
-        application: target.post.application as never,
+        application: target.application as never,
         settlement: target,
       });
     }
@@ -772,7 +775,7 @@ export class AdminApplicationsService {
       orderBy: { appliedAt: "desc" },
       select: {
         id: true,
-        subType: true,
+        subTypes: true,
         appliedAt: true,
         influencer: {
           select: {
@@ -795,46 +798,60 @@ export class AdminApplicationsService {
 
     return {
       campaignTitle: campaign.title,
-      rows: rows.map((row) => {
-        const snsAccount = row.influencer.snsAccounts.find(
-          (account) => account.snsType === row.subType,
-        );
-        const handle = snsAccount?.handle ?? "";
-        // SNS 계열 (INSTAGRAM/TIKTOK/X/YOUTUBE) 만 프로필 URL 을 만든다.
-        const profileUrl =
-          handle &&
-          (row.subType === "INSTAGRAM" ||
-            row.subType === "TIKTOK" ||
-            row.subType === "X" ||
-            row.subType === "YOUTUBE")
-            ? buildSnsProfileUrl(row.subType, handle)
-            : "";
-        return {
-          applicationId: row.id,
-          influencerId: row.influencer.id,
-          name: row.influencer.name,
-          nameKana: row.influencer.nameKana,
-          subType: row.subType,
-          snsHandle: handle,
-          profileUrl,
-          phone: row.influencer.phone,
-          postalCode: row.influencer.postalCode,
-          address: [
-            row.influencer.prefecture,
-            row.influencer.city,
-            row.influencer.addressLine1,
-            row.influencer.addressLine2,
-          ]
-            .filter((part) => part && part.length > 0)
-            .join(" "),
-          appliedAt: row.appliedAt.toISOString(),
-        };
-      }),
+      rows: rows.map((row) => ({
+        applicationId: row.id,
+        influencerId: row.influencer.id,
+        name: row.influencer.name,
+        nameKana: row.influencer.nameKana,
+        channels: row.subTypes.map((subType) => {
+          const snsAccount = row.influencer.snsAccounts.find(
+            (account) => account.snsType === subType,
+          );
+          const handle = snsAccount?.handle ?? "";
+          // SNS 계열 (INSTAGRAM/TIKTOK/X/YOUTUBE) 만 프로필 URL 을 만든다.
+          const profileUrl =
+            handle &&
+            (subType === "INSTAGRAM" ||
+              subType === "TIKTOK" ||
+              subType === "X" ||
+              subType === "YOUTUBE")
+              ? buildSnsProfileUrl(subType, handle)
+              : "";
+          return { subType, snsHandle: handle, profileUrl };
+        }),
+        phone: row.influencer.phone,
+        postalCode: row.influencer.postalCode,
+        address: [
+          row.influencer.prefecture,
+          row.influencer.city,
+          row.influencer.addressLine1,
+          row.influencer.addressLine2,
+        ]
+          .filter((part) => part && part.length > 0)
+          .join(" "),
+        appliedAt: row.appliedAt.toISOString(),
+      })),
     };
   }
 }
 
-const SUBMITTED_POST_INCLUDE = {
+const SUBMISSION_INCLUDE = {
+  posts: {
+    orderBy: { subType: "asc" as const },
+    include: {
+      attachments: {
+        orderBy: { uploadedAt: "asc" as const },
+        select: {
+          id: true,
+          kind: true,
+          objectKey: true,
+          contentType: true,
+          sizeBytes: true,
+          uploadedAt: true,
+        },
+      },
+    },
+  },
   settlement: {
     select: {
       id: true,
@@ -844,67 +861,61 @@ const SUBMITTED_POST_INCLUDE = {
       completedAt: true,
     },
   },
-  rejections: {
+  submissionRejections: {
     orderBy: { rejectedAt: "desc" as const },
     select: { id: true, comment: true, rejectedAt: true },
   },
-  attachments: {
-    orderBy: { uploadedAt: "asc" as const },
-    select: {
-      id: true,
-      kind: true,
-      objectKey: true,
-      contentType: true,
-      sizeBytes: true,
-      uploadedAt: true,
-    },
+  campaign: {
+    select: { id: true, title: true, category: true, thumbnailUrl: true, rewardJpy: true },
   },
-  application: {
+  influencer: {
     select: {
       id: true,
-      status: true,
-      instagramPostType: true,
-      campaign: {
-        select: { id: true, title: true, category: true, thumbnailUrl: true, rewardJpy: true },
-      },
-      influencer: {
+      name: true,
+      flaggedAt: true,
+      snsAccounts: {
         select: {
-          id: true,
-          name: true,
-          flaggedAt: true,
-          snsAccounts: {
-            select: {
-              snsType: true,
-              handle: true,
-              followerCount: true,
-            },
-            orderBy: { snsType: "asc" as const },
-          },
+          snsType: true,
+          handle: true,
+          followerCount: true,
         },
+        orderBy: { snsType: "asc" as const },
       },
     },
   },
 } as const;
 
-type SubmittedPostRow = {
+type SubmissionRow = {
   id: string;
-  subType: CampaignSubType;
-  url: string | null;
-  submissionData: unknown;
-  submittedAt: Date;
-  insightLikes: number | null;
-  insightComments: number | null;
-  insightShares: number | null;
-  insightReposts: number | null;
-  insightSaves: number | null;
-  insightViews: number | null;
-  insightReach: number | null;
-  insightSubmittedAt: Date | null;
-  reviewStatus: "PENDING" | "APPROVED" | "REJECTED";
-  reviewedAt: Date | null;
-  settledAt: Date | null;
-  settledAmountJpy: number | null;
-  settlementCompletedAt: Date | null;
+  status: ApplicationStatus;
+  subTypes: CampaignSubType[];
+  instagramPostType: InstagramPostType | null;
+  reviewSubmittedAt: Date | null;
+  submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
+  submissionReviewedAt: Date | null;
+  posts: {
+    id: string;
+    subType: CampaignSubType;
+    url: string | null;
+    submissionData: unknown;
+    submittedAt: Date;
+    insightLikes: number | null;
+    insightComments: number | null;
+    insightShares: number | null;
+    insightReposts: number | null;
+    insightSaves: number | null;
+    insightViews: number | null;
+    insightReach: number | null;
+    insightSubmittedAt: Date | null;
+    attachments: {
+      id: string;
+      kind: "INSIGHT_SCREENSHOT" | "ORDER_RECEIPT" | "REVIEW_SCREENSHOT";
+      objectKey: string;
+      contentType: string;
+      sizeBytes: number;
+      uploadedAt: Date;
+    }[];
+  }[];
   settlement: {
     id: string;
     status: "PENDING" | "COMPLETED";
@@ -912,36 +923,23 @@ type SubmittedPostRow = {
     createdAt: Date;
     completedAt: Date | null;
   } | null;
-  rejections: { id: string; comment: string; rejectedAt: Date }[];
-  attachments: {
+  submissionRejections: { id: string; comment: string; rejectedAt: Date }[];
+  campaign: {
     id: string;
-    kind: "INSIGHT_SCREENSHOT" | "ORDER_RECEIPT" | "REVIEW_SCREENSHOT";
-    objectKey: string;
-    contentType: string;
-    sizeBytes: number;
-    uploadedAt: Date;
-  }[];
-  application: {
+    title: string;
+    category: CampaignCategory;
+    thumbnailUrl: string | null;
+    rewardJpy: number;
+  };
+  influencer: {
     id: string;
-    status: ApplicationStatus;
-    instagramPostType: InstagramPostType | null;
-    campaign: {
-      id: string;
-      title: string;
-      category: CampaignCategory;
-      thumbnailUrl: string | null;
-      rewardJpy: number;
-    };
-    influencer: {
-      id: string;
-      name: string;
-      flaggedAt: Date | null;
-      snsAccounts: {
-        snsType: string;
-        handle: string;
-        followerCount: number;
-      }[];
-    };
+    name: string;
+    flaggedAt: Date | null;
+    snsAccounts: {
+      snsType: string;
+      handle: string;
+      followerCount: number;
+    }[];
   };
 };
 
@@ -951,86 +949,90 @@ async function resolveThumbnail(raw: string | null, r2: R2Service): Promise<stri
   return r2.presignGet(raw, 300);
 }
 
-async function toSubmittedPostResponse(
-  row: SubmittedPostRow,
+async function toSubmissionResponse(
+  row: SubmissionRow,
   r2: R2Service,
-): Promise<AdminSubmittedPost> {
-  // viewUrl 은 presigned URL 의 만료 시간이 짧아 목록 시점에서 발급하면
-  // 인사이트 모달을 여는 시점에 이미 만료되어 있을 수 있다. 실제 보기 시점에
-  // 별도 엔드포인트(`GET submitted-posts/:postId/attachments`)로 발급한다.
-  const attachments = row.attachments.map((attachment) => ({
-    id: attachment.id,
-    kind: attachment.kind,
-    objectKey: attachment.objectKey,
-    contentType: attachment.contentType,
-    sizeBytes: attachment.sizeBytes,
-    uploadedAt: attachment.uploadedAt.toISOString(),
-    viewUrl: null,
-  }));
+): Promise<AdminSubmission> {
   const campaignThumbnailUrl = await resolveThumbnail(
-    row.application.campaign.thumbnailUrl,
+    row.campaign.thumbnailUrl,
     r2,
   );
   return {
     id: row.id,
-    subType: row.subType,
-    instagramPostType: row.application.instagramPostType,
-    url: row.url,
-    submissionData:
-      row.submissionData &&
-      typeof row.submissionData === "object" &&
-      !Array.isArray(row.submissionData)
-        ? (row.submissionData as Record<string, unknown>)
-        : null,
-    submittedAt: row.submittedAt.toISOString(),
-    insightLikes: row.insightLikes,
-    insightComments: row.insightComments,
-    insightShares: row.insightShares,
-    insightReposts: row.insightReposts,
-    insightSaves: row.insightSaves,
-    insightViews: row.insightViews,
-    insightReach: row.insightReach,
-    insightSubmittedAt: row.insightSubmittedAt ? row.insightSubmittedAt.toISOString() : null,
-    reviewStatus: row.reviewStatus,
-    reviewedAt: row.reviewedAt ? row.reviewedAt.toISOString() : null,
-    settledAt: row.settledAt ? row.settledAt.toISOString() : null,
-    settledAmountJpy: row.settledAmountJpy,
-    settlementCompletedAt: row.settlementCompletedAt
-      ? row.settlementCompletedAt.toISOString()
+    status: row.status,
+    subTypes: row.subTypes,
+    instagramPostType: row.instagramPostType,
+    reviewSubmittedAt: row.reviewSubmittedAt
+      ? row.reviewSubmittedAt.toISOString()
       : null,
+    submissionReviewStatus: row.submissionReviewStatus,
+    submissionReviewedAt: row.submissionReviewedAt
+      ? row.submissionReviewedAt.toISOString()
+      : null,
+    rejectionHistory: row.submissionRejections.map((rejection) => ({
+      id: rejection.id,
+      comment: rejection.comment,
+      rejectedAt: rejection.rejectedAt.toISOString(),
+    })),
+    posts: row.posts.map((post) => ({
+      id: post.id,
+      subType: post.subType,
+      url: post.url,
+      submissionData:
+        post.submissionData &&
+        typeof post.submissionData === "object" &&
+        !Array.isArray(post.submissionData)
+          ? (post.submissionData as Record<string, unknown>)
+          : null,
+      submittedAt: post.submittedAt.toISOString(),
+      insightLikes: post.insightLikes,
+      insightComments: post.insightComments,
+      insightShares: post.insightShares,
+      insightReposts: post.insightReposts,
+      insightSaves: post.insightSaves,
+      insightViews: post.insightViews,
+      insightReach: post.insightReach,
+      insightSubmittedAt: post.insightSubmittedAt
+        ? post.insightSubmittedAt.toISOString()
+        : null,
+      // viewUrl 은 presigned URL 의 만료 시간이 짧아 목록 시점에서 발급하면
+      // 모달을 여는 시점에 이미 만료되어 있을 수 있다. 실제 보기 시점에
+      // 별도 엔드포인트로 발급한다.
+      attachments: post.attachments.map((attachment) => ({
+        id: attachment.id,
+        kind: attachment.kind,
+        objectKey: attachment.objectKey,
+        contentType: attachment.contentType,
+        sizeBytes: attachment.sizeBytes,
+        uploadedAt: attachment.uploadedAt.toISOString(),
+        viewUrl: null,
+      })),
+    })),
     settlement: row.settlement
       ? {
           id: row.settlement.id,
           status: row.settlement.status,
           amountJpy: row.settlement.amountJpy,
           createdAt: row.settlement.createdAt.toISOString(),
-          completedAt: row.settlement.completedAt ? row.settlement.completedAt.toISOString() : null,
+          completedAt: row.settlement.completedAt
+            ? row.settlement.completedAt.toISOString()
+            : null,
         }
       : null,
-    rejectionHistory: row.rejections.map((rejection) => ({
-      id: rejection.id,
-      comment: rejection.comment,
-      rejectedAt: rejection.rejectedAt.toISOString(),
-    })),
-    attachments,
-    application: {
-      id: row.application.id,
-      status: row.application.status,
-    },
     campaign: {
-      id: row.application.campaign.id,
-      category: row.application.campaign.category,
-      title: row.application.campaign.title,
+      id: row.campaign.id,
+      category: row.campaign.category,
+      title: row.campaign.title,
       thumbnailUrl: campaignThumbnailUrl,
-      rewardJpy: row.application.campaign.rewardJpy,
+      rewardJpy: row.campaign.rewardJpy,
     },
     influencer: {
-      id: row.application.influencer.id,
-      name: row.application.influencer.name,
-      flagged: row.application.influencer.flaggedAt !== null,
-      snsAccounts: row.application.influencer.snsAccounts.map((account) => ({
+      id: row.influencer.id,
+      name: row.influencer.name,
+      flagged: row.influencer.flaggedAt !== null,
+      snsAccounts: row.influencer.snsAccounts.map((account) => ({
         snsType:
-          account.snsType as AdminSubmittedPost["influencer"]["snsAccounts"][number]["snsType"],
+          account.snsType as AdminSubmission["influencer"]["snsAccounts"][number]["snsType"],
         handle: account.handle,
         followerCount: account.followerCount,
       })),
@@ -1040,45 +1042,47 @@ async function toSubmittedPostResponse(
 
 type SettlementRow = {
   id: string;
-  postId: string;
+  applicationId: string;
   amountJpy: number;
   rewardAmountJpy: number;
   productRefundJpy: number;
   status: "PENDING" | "COMPLETED";
   createdAt: Date;
   completedAt: Date | null;
-  post: {
+  application: {
     id: string;
-    url: string | null;
-    subType: CampaignSubType;
-    submittedAt: Date;
-    insightSubmittedAt: Date | null;
-    application: {
-      campaign: { id: string; title: string; category: CampaignCategory };
-      influencer: {
-        id: string;
-        name: string;
-        snsAccounts: { snsType: string; handle: string }[];
-        bankAccount: {
-          bankName: string;
-          bankCode: string;
-          branchName: string;
-          branchCode: string;
-          accountNumber: string;
-          accountHolderKana: string;
-        } | null;
-      };
+    subTypes: CampaignSubType[];
+    posts: {
+      id: string;
+      url: string | null;
+      subType: CampaignSubType;
+      submittedAt: Date;
+      insightSubmittedAt: Date | null;
+    }[];
+    campaign: { id: string; title: string; category: CampaignCategory };
+    influencer: {
+      id: string;
+      name: string;
+      snsAccounts: { snsType: string; handle: string }[];
+      bankAccount: {
+        bankName: string;
+        bankCode: string;
+        branchName: string;
+        branchCode: string;
+        accountNumber: string;
+        accountHolderKana: string;
+      } | null;
     };
   };
 };
 
 function toSettlementResponse(row: SettlementRow): AdminSettlement {
-  const matchingAccount = row.post.application.influencer.snsAccounts.find(
-    (a) => a.snsType === row.post.subType,
+  const matchingAccount = row.application.influencer.snsAccounts.find(
+    (account) => row.application.subTypes.includes(account.snsType as CampaignSubType),
   );
   return {
     id: row.id,
-    postId: row.postId,
+    applicationId: row.applicationId,
     amountJpy: row.amountJpy,
     rewardAmountJpy: row.rewardAmountJpy,
     productRefundJpy: row.productRefundJpy,
@@ -1086,35 +1090,35 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
     createdAt: row.createdAt.toISOString(),
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     influencer: {
-      id: row.post.application.influencer.id,
-      name: row.post.application.influencer.name,
+      id: row.application.influencer.id,
+      name: row.application.influencer.name,
       handle: matchingAccount?.handle ?? "",
-      bankAccount: row.post.application.influencer.bankAccount
+      bankAccount: row.application.influencer.bankAccount
         ? {
-            bankName: row.post.application.influencer.bankAccount.bankName,
-            bankCode: row.post.application.influencer.bankAccount.bankCode,
-            branchName: row.post.application.influencer.bankAccount.branchName,
-            branchCode: row.post.application.influencer.bankAccount.branchCode,
-            accountNumber: row.post.application.influencer.bankAccount.accountNumber,
+            bankName: row.application.influencer.bankAccount.bankName,
+            bankCode: row.application.influencer.bankAccount.bankCode,
+            branchName: row.application.influencer.bankAccount.branchName,
+            branchCode: row.application.influencer.bankAccount.branchCode,
+            accountNumber: row.application.influencer.bankAccount.accountNumber,
             accountHolderKana:
-              row.post.application.influencer.bankAccount.accountHolderKana,
+              row.application.influencer.bankAccount.accountHolderKana,
           }
         : null,
     },
     campaign: {
-      id: row.post.application.campaign.id,
-      category: row.post.application.campaign.category,
-      title: row.post.application.campaign.title,
+      id: row.application.campaign.id,
+      category: row.application.campaign.category,
+      title: row.application.campaign.title,
     },
-    post: {
-      id: row.post.id,
-      url: row.post.url,
-      subType: row.post.subType,
-      submittedAt: row.post.submittedAt.toISOString(),
-      insightSubmittedAt: row.post.insightSubmittedAt
-        ? row.post.insightSubmittedAt.toISOString()
+    posts: row.application.posts.map((post) => ({
+      id: post.id,
+      url: post.url,
+      subType: post.subType,
+      submittedAt: post.submittedAt.toISOString(),
+      insightSubmittedAt: post.insightSubmittedAt
+        ? post.insightSubmittedAt.toISOString()
         : null,
-    },
+    })),
   };
 }
 

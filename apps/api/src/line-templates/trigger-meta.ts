@@ -6,23 +6,37 @@ import type {
   Influencer,
   Settlement,
   SubmittedPost,
-  SubmittedPostRejection,
+  SubmissionRejection,
 } from "@prisma/client";
+import {
+  applicationRewardJpy,
+  settlementAmounts,
+} from "../settlements/ensure-settlement";
 
 export type ApplicationWithRels = CampaignApplication & {
   campaign: Pick<
     Campaign,
-    "id" | "title" | "postingPeriodDays" | "rewardJpy" | "productSummary" | "category"
-  >;
+    | "id"
+    | "title"
+    | "postingPeriodDays"
+    | "rewardType"
+    | "rewardJpy"
+    | "productSummary"
+    | "category"
+  > & {
+    recruits: Pick<
+      CampaignRecruit,
+      "subType" | "rewardJpy" | "productPriceJpy" | "productUrl"
+    >[];
+  };
   influencer: Pick<Influencer, "id" | "name" | "lineUserId">;
 };
 
 export type DispatchContext = {
   application: ApplicationWithRels;
   post?: SubmittedPost | null;
-  rejection?: SubmittedPostRejection | null;
+  rejection?: SubmissionRejection | null;
   settlement?: Settlement | null;
-  recruit?: CampaignRecruit | null;
   extra?: {
     resubmitDeadlineAt?: Date;
     finalDeadlineAt?: Date;
@@ -49,9 +63,18 @@ export const DISPATCH_APPLICATION_INCLUDE = {
       id: true,
       title: true,
       postingPeriodDays: true,
+      rewardType: true,
       rewardJpy: true,
       productSummary: true,
       category: true,
+      recruits: {
+        select: {
+          subType: true,
+          rewardJpy: true,
+          productPriceJpy: true,
+          productUrl: true,
+        },
+      },
     },
   },
   influencer: {
@@ -99,9 +122,12 @@ const campaignTitle: TriggerVariableWithResolver = {
 const campaignRewardJpy: TriggerVariableWithResolver = {
   key: "campaignRewardJpy",
   label: "보수액(엔)",
-  description: "캠페인 보수 금액 (엔, 쉼표 포함)",
+  description: "캠페인 보수 금액 (엔, 쉼표 포함) — 개별 보수 캠페인은 참여 서브타입 합산",
   sample: "15,000",
-  resolver: (ctx) => formatJpy(ctx.application.campaign.rewardJpy),
+  resolver: (ctx) =>
+    formatJpy(
+      applicationRewardJpy(ctx.application.campaign, ctx.application.subTypes),
+    ),
 };
 
 const campaignPostingPeriodDays: TriggerVariableWithResolver = {
@@ -245,16 +271,25 @@ const subType: TriggerVariableWithResolver = {
   label: "서브타입",
   description: "応募したプラットフォームの表示ラベル",
   sample: "Qoo10",
-  resolver: (ctx) => subTypeLabel(ctx.application.subType),
+  resolver: (ctx) => ctx.application.subTypes.map(subTypeLabel).join("・"),
 };
+
+/** 참여 서브타입에 해당하는 recruit 중 가구매(QOO10) 모집 정보. */
+function qooRecruit(ctx: DispatchContext) {
+  return ctx.application.campaign.recruits.find(
+    (recruit) => recruit.subType === "QOO10",
+  );
+}
 
 const productPriceJpy: TriggerVariableWithResolver = {
   key: "productPriceJpy",
   label: "상품가격(엔)",
   description: "サブタイプごとの商品価格 (エン、カンマ入り)",
   sample: "3,000",
-  resolver: (ctx) =>
-    ctx.recruit?.productPriceJpy != null ? formatJpy(ctx.recruit.productPriceJpy) : "",
+  resolver: (ctx) => {
+    const price = qooRecruit(ctx)?.productPriceJpy;
+    return price != null ? formatJpy(price) : "";
+  },
 };
 
 const productUrl: TriggerVariableWithResolver = {
@@ -262,7 +297,7 @@ const productUrl: TriggerVariableWithResolver = {
   label: "상품 URL",
   description: "商品ページのリンク",
   sample: "https://qoo10.jp/g/...",
-  resolver: (ctx) => ctx.recruit?.productUrl ?? "",
+  resolver: (ctx) => qooRecruit(ctx)?.productUrl ?? "",
 };
 
 const totalSettlementJpy: TriggerVariableWithResolver = {
@@ -271,8 +306,11 @@ const totalSettlementJpy: TriggerVariableWithResolver = {
   description: "報酬 + 商品価格 の合計 (エン、カンマ入り)",
   sample: "8,000",
   resolver: (ctx) => {
-    const price = ctx.recruit?.productPriceJpy ?? 0;
-    return formatJpy(ctx.application.campaign.rewardJpy + price);
+    const { rewardAmountJpy, productRefundJpy } = settlementAmounts(
+      ctx.application.campaign,
+      ctx.application.subTypes,
+    );
+    return formatJpy(rewardAmountJpy + productRefundJpy);
   },
 };
 

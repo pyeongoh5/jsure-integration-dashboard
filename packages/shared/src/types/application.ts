@@ -59,37 +59,8 @@ export const SubmittedPostSchema = z.object({
   insightViews: z.number().int().nullable(),
   insightReach: z.number().int().nullable(),
   insightSubmittedAt: z.string().datetime().nullable(),
-  reviewStatus: PostReviewStatusSchema,
-  reviewedAt: z.string().datetime().nullable(),
-  lastRejectionComment: z.string().nullable(),
 });
 export type SubmittedPost = z.infer<typeof SubmittedPostSchema>;
-
-export const SubmitPostRequestSchema = z.object({
-  url: z.string().url(),
-});
-export type SubmitPostRequest = z.infer<typeof SubmitPostRequestSchema>;
-
-export const SubmitInsightRequestSchema = z.object({
-  likes: z.number().int().nonnegative(),
-  comments: z.number().int().nonnegative(),
-  shares: z.number().int().nonnegative(),
-  reposts: z.number().int().nonnegative(),
-  saves: z.number().int().nonnegative(),
-  views: z.number().int().nonnegative(),
-  reach: z.number().int().nonnegative(),
-  attachments: z
-    .array(
-      z.object({
-        objectKey: z.string().min(1),
-        contentType: z.enum(["image/png", "image/jpeg", "image/webp"]),
-        sizeBytes: z.number().int().positive(),
-      }),
-    )
-    .max(10)
-    .optional(),
-});
-export type SubmitInsightRequest = z.infer<typeof SubmitInsightRequestSchema>;
 
 export const AttachmentUploadInputSchema = z.object({
   objectKey: z.string().min(1),
@@ -97,6 +68,49 @@ export const AttachmentUploadInputSchema = z.object({
   sizeBytes: z.number().int().positive(),
 });
 export type AttachmentUploadInput = z.infer<typeof AttachmentUploadInputSchema>;
+
+/** SNS 게시물 URL 일괄 제출 — 참여한 모든 SNS 서브타입의 URL 을 한 번에 제출한다. */
+export const SubmitSubmissionRequestSchema = z.object({
+  posts: z
+    .array(
+      z.object({
+        subType: CampaignSubTypeSchema,
+        url: z.string().url(),
+      }),
+    )
+    .min(1, "投稿URLを入力してください")
+    .refine(
+      (arr) => new Set(arr.map((p) => p.subType)).size === arr.length,
+      "投稿先が重複しています",
+    ),
+});
+export type SubmitSubmissionRequest = z.infer<
+  typeof SubmitSubmissionRequestSchema
+>;
+
+/** SNS 인사이트 일괄 제출 — 참여한 모든 SNS 서브타입의 지표를 한 번에 제출한다. */
+export const SubmitInsightsRequestSchema = z.object({
+  insights: z
+    .array(
+      z.object({
+        subType: CampaignSubTypeSchema,
+        likes: z.number().int().nonnegative(),
+        comments: z.number().int().nonnegative(),
+        shares: z.number().int().nonnegative(),
+        reposts: z.number().int().nonnegative(),
+        saves: z.number().int().nonnegative(),
+        views: z.number().int().nonnegative(),
+        reach: z.number().int().nonnegative(),
+        attachments: z.array(AttachmentUploadInputSchema).max(10).optional(),
+      }),
+    )
+    .min(1)
+    .refine(
+      (arr) => new Set(arr.map((i) => i.subType)).size === arr.length,
+      "投稿先が重複しています",
+    ),
+});
+export type SubmitInsightsRequest = z.infer<typeof SubmitInsightsRequestSchema>;
 
 export const SubmitOrderRequestSchema = z.object({
   orderNumber: z.string().min(1, "注文番号を入力してください").max(200),
@@ -122,7 +136,19 @@ export const SubmitReviewRequestSchema = z.object({
 export type SubmitReviewRequest = z.infer<typeof SubmitReviewRequestSchema>;
 
 export const SubmitSimpleReviewRequestSchema = z.object({
-  url: z.string().url().startsWith("https://"),
+  /** 참여한 모든 단순 리뷰 서브타입(LIPS/ATCOSME)의 리뷰 URL 을 한 번에 제출한다. */
+  reviews: z
+    .array(
+      z.object({
+        subType: CampaignSubTypeSchema,
+        url: z.string().url().startsWith("https://"),
+      }),
+    )
+    .min(1, "レビューURLを入力してください")
+    .refine(
+      (arr) => new Set(arr.map((r) => r.subType)).size === arr.length,
+      "レビュー先が重複しています",
+    ),
   screenshots: z
     .array(AttachmentUploadInputSchema)
     .min(1, "レビューのスクリーンショットを1枚以上ご提出ください")
@@ -184,9 +210,14 @@ export const InfluencerApplicationSchema = z.object({
   receivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   rejectReason: z.string().nullable(),
-  subType: CampaignSubTypeSchema,
-  /** INSTAGRAM 응모인 경우 FEED/REELS, 그 외는 null. */
+  /** 이 응모가 참여하는 서브타입 목록. */
+  subTypes: z.array(CampaignSubTypeSchema),
+  /** INSTAGRAM 참여인 경우 FEED/REELS, 그 외는 null. */
   instagramPostType: InstagramPostTypeSchema.nullable(),
+  /** 제출물(전체) 검토 상태 — 응모 단위 전체 승인/반려. */
+  submissionReviewStatus: PostReviewStatusSchema,
+  /** 제출물 반려 시 최신 반려 코멘트. */
+  lastRejectionComment: z.string().nullable(),
   posts: z.array(SubmittedPostSchema),
   postingPeriodDays: z.number().int().min(1),
   postingDeadlineAt: z.string().datetime().nullable(),

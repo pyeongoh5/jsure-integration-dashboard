@@ -25,10 +25,17 @@ const application = {
   id: "app1",
   campaignId: "c1",
   influencerId: "inf1",
-  subType: "INSTAGRAM",
+  subTypes: ["INSTAGRAM"],
   trackingCarrier: null,
   trackingNumber: null,
-  campaign: { id: "c1", title: "Test Campaign", postingPeriodDays: 14 },
+  campaign: {
+    id: "c1",
+    title: "Test Campaign",
+    postingPeriodDays: 14,
+    rewardType: "UNIFIED",
+    rewardJpy: 10000,
+    recruits: [],
+  },
   influencer: { id: "inf1", name: "Alice", lineUserId: "U123" },
 } as never;
 
@@ -36,12 +43,27 @@ const fakePurchaseApplication = {
   id: "app2",
   campaignId: "c2",
   influencerId: "inf2",
-  subType: "QOO10",
+  subTypes: ["QOO10"],
   trackingCarrier: null,
   trackingNumber: null,
   orderNumber: null,
   orderSubmittedAt: null,
-  campaign: { id: "c2", title: "FP Campaign", postingPeriodDays: 14, rewardJpy: 5000 },
+  campaign: {
+    id: "c2",
+    title: "FP Campaign",
+    postingPeriodDays: 14,
+    category: "FAKE_PURCHASE",
+    rewardType: "UNIFIED",
+    rewardJpy: 5000,
+    recruits: [
+      {
+        subType: "QOO10",
+        rewardJpy: null,
+        productPriceJpy: 3000,
+        productUrl: "https://qoo10.jp/g/xyz",
+      },
+    ],
+  },
   influencer: { id: "inf2", name: "Bob", lineUserId: "U234" },
 } as never;
 
@@ -132,18 +154,12 @@ describe("LineDispatcherService", () => {
     );
   });
 
-  it("가구매 카테고리는 recruit 을 자동 조회하여 컨텍스트에 주입", async () => {
+  it("가구매 카테고리는 캠페인 recruits 에서 상품가/정산 예상액을 렌더", async () => {
     const prisma = makePrismaMock();
     (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue({
       id: "t1",
       enabled: true,
       body: "hi {{influencerName}} price={{productPriceJpy}} total={{totalSettlementJpy}}",
-    });
-    (prisma.campaignRecruit.findUnique as jest.Mock).mockResolvedValue({
-      campaignId: "c2",
-      subType: "QOO10",
-      productPriceJpy: 3000,
-      productUrl: "https://qoo10.jp/g/xyz",
     });
     const push = jest.fn().mockResolvedValue(undefined);
     const svc = new LineDispatcherService(prisma, makeLineMock(push));
@@ -152,24 +168,7 @@ describe("LineDispatcherService", () => {
       application: fakePurchaseApplication,
     });
 
-    expect(prisma.campaignRecruit.findUnique).toHaveBeenCalledWith({
-      where: { campaignId_subType: { campaignId: "c2", subType: "QOO10" } },
-    });
     expect(push).toHaveBeenCalledWith("inf2", "hi Bob price=3,000 total=8,000");
-  });
-
-  it("SNS 카테고리는 recruit 조회를 스킵", async () => {
-    const prisma = makePrismaMock();
-    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue({
-      id: "t1",
-      enabled: true,
-      body: "hi",
-    });
-    const svc = new LineDispatcherService(prisma, makeLineMock(jest.fn().mockResolvedValue(undefined)));
-
-    await svc.dispatch("SNS_APPLICATION_APPLIED", { application });
-
-    expect(prisma.campaignRecruit.findUnique).not.toHaveBeenCalled();
   });
 
   it("템플릿 조회 키는 (category, triggerKey) 만 사용", async () => {

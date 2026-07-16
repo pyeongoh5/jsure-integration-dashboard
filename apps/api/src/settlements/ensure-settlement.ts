@@ -1,100 +1,114 @@
 import type { PrismaService } from "../prisma/prisma.service";
 
+/** 응모 기준 보수 금액: UNIFIED 는 고정, PER_SUBTYPE 은 참여 서브타입 합산. */
+export function applicationRewardJpy(
+  campaign: {
+    rewardType: "UNIFIED" | "PER_SUBTYPE";
+    rewardJpy: number;
+    recruits: { subType: string; rewardJpy: number | null }[];
+  },
+  subTypes: string[],
+): number {
+  if (campaign.rewardType !== "PER_SUBTYPE") return campaign.rewardJpy;
+  return campaign.recruits
+    .filter((recruit) => subTypes.includes(recruit.subType))
+    .reduce((sum, recruit) => sum + (recruit.rewardJpy ?? 0), 0);
+}
+
+/** 응모 기준 정산 금액(보수 + 가구매 상품 환급). */
+export function settlementAmounts(
+  campaign: {
+    category: "SNS" | "FAKE_PURCHASE" | "SIMPLE_REVIEW";
+    rewardType: "UNIFIED" | "PER_SUBTYPE";
+    rewardJpy: number;
+    recruits: {
+      subType: string;
+      rewardJpy: number | null;
+      productPriceJpy: number | null;
+    }[];
+  },
+  subTypes: string[],
+): { rewardAmountJpy: number; productRefundJpy: number } {
+  const rewardAmountJpy = applicationRewardJpy(campaign, subTypes);
+  const productRefundJpy =
+    campaign.category === "FAKE_PURCHASE"
+      ? campaign.recruits
+          .filter((recruit) => subTypes.includes(recruit.subType))
+          .reduce((sum, recruit) => sum + (recruit.productPriceJpy ?? 0), 0)
+      : 0;
+  return { rewardAmountJpy, productRefundJpy };
+}
+
 /**
- * SubmittedPost 가 승인(APPROVED) 되고 정산 가능 상태가 되면 Settlement(PENDING)
- * 를 멱등하게 생성한다.
+ * 응모(Application)의 제출물이 승인(APPROVED)되고 정산 가능 상태가 되면
+ * Settlement(PENDING) 를 멱등하게 생성한다. 정산은 응모 단위 1건이다.
  *
  * 카테고리별 조건:
- * - SNS: insightRequired=true 이면 승인 + 인사이트 제출 둘 다 필요. false 면 승인만.
- *        정산액 = campaign.rewardJpy (productRefundJpy=0)
- * - FAKE_PURCHASE: 승인만 되면 즉시 생성.
- *        정산액 = campaign.rewardJpy + recruit.productPriceJpy
+ * - SNS: insightRequired=true 인 참여 서브타입의 인사이트가 모두 제출돼야 한다.
+ * - FAKE_PURCHASE / SIMPLE_REVIEW: 제출물 승인만 되면 즉시 생성.
+ *
+ * 정산액:
+ * - rewardAmountJpy = UNIFIED 면 campaign.rewardJpy, PER_SUBTYPE 면 참여 서브타입별 recruit.rewardJpy 합산
+ * - productRefundJpy = 가구매(FAKE_PURCHASE)만 recruit.productPriceJpy 합산
  */
-export async function ensureSettlementForPost(
+export async function ensureSettlementForApplication(
   prisma: PrismaService,
-  postId: string,
+  applicationId: string,
 ): Promise<void> {
-  const post = await prisma.submittedPost.findUnique({
-    where: { id: postId },
+  const application = await prisma.campaignApplication.findUnique({
+    where: { id: applicationId },
     select: {
-      reviewStatus: true,
-      insightSubmittedAt: true,
-      subType: true,
-      applicationId: true,
-      application: {
+      submissionReviewStatus: true,
+      subTypes: true,
+      posts: { select: { subType: true, insightSubmittedAt: true } },
+      campaign: {
         select: {
-          campaignId: true,
-          campaign: {
+          category: true,
+          rewardType: true,
+          rewardJpy: true,
+          recruits: {
             select: {
-              category: true,
+              subType: true,
+              insightRequired: true,
+              productPriceJpy: true,
               rewardJpy: true,
-              recruits: {
-                select: {
-                  subType: true,
-                  insightRequired: true,
-                  productPriceJpy: true,
-                },
-              },
             },
           },
         },
       },
     },
   });
-  if (!post) return;
-  if (post.reviewStatus !== "APPROVED") return;
+  if (!application) return;
+  if (application.submissionReviewStatus !== "APPROVED") return;
 
-  const category = post.application.campaign.category;
-  const recruit = post.application.campaign.recruits.find(
-    (r) => r.subType === post.subType,
+  const { campaign } = application;
+  const participatingRecruits = campaign.recruits.filter((recruit) =>
+    application.subTypes.includes(recruit.subType),
   );
 
-  if (category === "FAKE_PURCHASE") {
-    const productRefundJpy = recruit?.productPriceJpy ?? 0;
-    const rewardAmountJpy = post.application.campaign.rewardJpy;
-    const amountJpy = rewardAmountJpy + productRefundJpy;
-    await prisma.settlement.upsert({
-      where: { postId },
-      create: {
-        postId,
-        amountJpy,
-        rewardAmountJpy,
-        productRefundJpy,
-        status: "PENDING",
-      },
-      update: {},
+  if (campaign.category === "SNS") {
+    const insightMissing = participatingRecruits.some((recruit) => {
+      if (!recruit.insightRequired) return false;
+      const post = application.posts.find(
+        (candidate) => candidate.subType === recruit.subType,
+      );
+      return !post || post.insightSubmittedAt === null;
     });
-    return;
+    if (insightMissing) return;
   }
 
-  if (category === "SIMPLE_REVIEW") {
-    // 단순 리뷰: 리뷰 승인 시 즉시 정산 PENDING 생성. 상품가 환급 없음.
-    const rewardAmountJpy = post.application.campaign.rewardJpy;
-    await prisma.settlement.upsert({
-      where: { postId },
-      create: {
-        postId,
-        amountJpy: rewardAmountJpy,
-        rewardAmountJpy,
-        productRefundJpy: 0,
-        status: "PENDING",
-      },
-      update: {},
-    });
-    return;
-  }
+  const { rewardAmountJpy, productRefundJpy } = settlementAmounts(
+    campaign,
+    application.subTypes,
+  );
 
-  // SNS
-  const insightRequired = recruit?.insightRequired ?? true;
-  if (insightRequired && post.insightSubmittedAt === null) return;
-  const rewardAmountJpy = post.application.campaign.rewardJpy;
   await prisma.settlement.upsert({
-    where: { postId },
+    where: { applicationId },
     create: {
-      postId,
-      amountJpy: rewardAmountJpy,
+      applicationId,
+      amountJpy: rewardAmountJpy + productRefundJpy,
       rewardAmountJpy,
-      productRefundJpy: 0,
+      productRefundJpy,
       status: "PENDING",
     },
     update: {},

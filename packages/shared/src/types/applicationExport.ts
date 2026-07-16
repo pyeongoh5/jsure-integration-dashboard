@@ -6,9 +6,14 @@ export const ApprovedApplicantExportRowSchema = z.object({
   influencerId: z.string(),
   name: z.string(),
   nameKana: z.string().nullable(),
-  subType: CampaignSubTypeSchema,
-  snsHandle: z.string(),
-  profileUrl: z.string(),
+  /** 참여 서브타입별 SNS 정보. */
+  channels: z.array(
+    z.object({
+      subType: CampaignSubTypeSchema,
+      snsHandle: z.string(),
+      profileUrl: z.string(),
+    }),
+  ),
   phone: z.string(),
   postalCode: z.string(),
   address: z.string(),

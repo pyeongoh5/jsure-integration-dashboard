@@ -35,8 +35,8 @@ export class AdminOverviewService {
       }),
       // 검토 관리 페이지에 노출되는 행 수와 일치시킨다.
       // - 정산 단계로 넘어간(Settlement 존재) 항목 제외.
-      this.prisma.submittedPost.count({
-        where: { settlement: null },
+      this.prisma.campaignApplication.count({
+        where: { posts: { some: {} }, settlement: null },
       }),
       // 지급 대기 금액 합계 + 건수
       this.prisma.settlement.aggregate({

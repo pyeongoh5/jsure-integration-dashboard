@@ -352,7 +352,7 @@ export const messages = {
       },
       reviewPending: {
         description: {
-          jp: "提出いただいたレビューを確認中です",
+          jp: "ただいまご提出いただいたレビューを確認しております。",
           kr: "제출한 리뷰를 검토 중입니다",
         },
       },

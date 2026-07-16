@@ -240,23 +240,26 @@ export function DraftTable({
                         <span className={shared.mediaItem}>
                           {draft.media.map((mediaKey) => {
                             const media = MEDIA_META[mediaKey];
+                            // 포스트 타입 라벨은 Instagram 아이콘 바로 옆에 붙인다.
+                            const showPostType =
+                              mediaKey === "ig" && draft.instagramPostType !== null;
                             return (
-                              <span
-                                key={mediaKey}
-                                className={`${shared.media} ${MEDIA_CLASS[mediaKey]}`}
-                                title={media.label}
-                                aria-label={media.label}
-                              >
-                                <i className={media.icon} />
-                              </span>
+                              <Fragment key={mediaKey}>
+                                <span
+                                  className={`${shared.media} ${MEDIA_CLASS[mediaKey]}`}
+                                  title={media.label}
+                                  aria-label={media.label}
+                                >
+                                  <i className={media.icon} />
+                                </span>
+                                {showPostType && (
+                                  <span className={shared.mediaLabel}>
+                                    {INSTAGRAM_POST_TYPE_LABEL[draft.instagramPostType!]}
+                                  </span>
+                                )}
+                              </Fragment>
                             );
                           })}
-                          {draft.media.includes("ig") &&
-                            draft.instagramPostType !== null && (
-                              <span className={shared.mediaLabel}>
-                                {INSTAGRAM_POST_TYPE_LABEL[draft.instagramPostType]}
-                              </span>
-                            )}
                         </span>
                       )}
                     </td>

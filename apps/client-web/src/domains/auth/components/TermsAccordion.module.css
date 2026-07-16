@@ -92,4 +92,5 @@
   font-size: var(--font-size-md);
   color: #374151;
   line-height: 1.6;
+  white-space: pre-line; /* 약관 본문의 \n 줄바꿈 유지 */
 }

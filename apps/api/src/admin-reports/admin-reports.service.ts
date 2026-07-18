@@ -58,10 +58,9 @@ export class AdminReportsService {
           }
         }
 
+        // 정산 대기(PENDING) 포함 — 정산 흐름에 들어간 참여자는 리포트 대상.
         if (application.settlement) {
           totalRewardJpy += application.settlement.amountJpy;
-        }
-        if (application.settlement?.status === "COMPLETED") {
           participantCount += application.posts.length;
         }
 
@@ -108,7 +107,7 @@ export class AdminReportsService {
   }
 
   /**
-   * 캠페인 단위 정산 완료 참여자 목록. page 는 0-base, pageSize 는 1 이상.
+   * 캠페인 단위 참여자 목록(정산 대기 포함). page 는 0-base, pageSize 는 1 이상.
    * pageSize 를 매우 크게 주면 전체를 한 번에 받을 수 있어 다운로드 시점에도 그대로 사용한다.
    */
   async campaignParticipants(
@@ -134,7 +133,8 @@ export class AdminReportsService {
   private async collectParticipants(campaignId: string): Promise<CampaignReportParticipant[]> {
     const posts = await this.prisma.submittedPost.findMany({
       where: {
-        application: { campaignId, settlement: { status: "COMPLETED" } },
+        // 정산 레코드가 생겼으면(대기 포함) 인사이트 열람 대상.
+        application: { campaignId, settlement: { isNot: null } },
       },
       orderBy: { submittedAt: "asc" },
       include: {

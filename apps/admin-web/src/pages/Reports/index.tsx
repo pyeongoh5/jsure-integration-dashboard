@@ -397,7 +397,7 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
           엑셀 다운로드
         </h2>
         <p className={styles.dialogSubtitle}>
-          다운로드할 캠페인을 선택하세요. 각 캠페인의 정산 완료 참여자가 시트별로 저장됩니다.
+          다운로드할 캠페인을 선택하세요. 각 캠페인의 참여자(정산 대기 포함)가 시트별로 저장됩니다.
         </p>
         <div className={styles.bulkRow}>
           <span>{selectedCampaignIds.size}개 선택됨</span>
@@ -611,13 +611,13 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
   }, [campaignId, safePage, totalCount]);
 
   if (totalCount === 0) {
-    return <div className={styles.participantsEmpty}>정산 완료된 참여자가 없습니다.</div>;
+    return <div className={styles.participantsEmpty}>참여자가 없습니다.</div>;
   }
 
   return (
     <div className={styles.participantsPanel}>
       <div className={styles.participantsHeader}>
-        <span className={styles.participantsTitle}>정산 완료 참여자 ({totalCount}명)</span>
+        <span className={styles.participantsTitle}>참여자 ({totalCount}명)</span>
       </div>
       <div className={styles.participantsTableWrap}>
         <table className={styles.participantsTable}>

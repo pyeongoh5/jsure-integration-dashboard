@@ -203,11 +203,13 @@ export class InfluencerCampaignsService {
         select: { status: true },
       }),
       excludedCampaignIds.length > 0
-        ? this.prisma.campaignApplication.findMany({
+        ? // 참여 완료(제출물 승인)한 경우에만 제외 대상 — 응모/미완료 이력은 차단하지 않는다.
+          this.prisma.campaignApplication.findMany({
             where: {
               influencerId: args.influencerId,
               campaignId: { in: excludedCampaignIds },
               status: { not: "CANCELLED" },
+              submissionReviewStatus: "APPROVED",
             },
             select: { subTypes: true },
           })

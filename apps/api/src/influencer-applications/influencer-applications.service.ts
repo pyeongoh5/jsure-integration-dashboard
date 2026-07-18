@@ -366,7 +366,8 @@ export class InfluencerApplicationsService {
       });
     }
 
-    // 제외 캠페인에 "같은 SNS"로 응모한 이력이 있으면 그 SNS 응모만 차단 (CANCELLED 제외)
+    // 제외 캠페인에 "같은 SNS"로 참여 완료(제출물 승인)한 이력이 있으면 그 SNS 응모만 차단.
+    // 응모만 하고 완료하지 못한(반려·미승인) 경우는 재응모 허용.
     const excludedCampaignIds = campaign.exclusionsAsExcluding.map(
       (exclusion) => exclusion.excludedCampaignId,
     );
@@ -377,6 +378,7 @@ export class InfluencerApplicationsService {
           influencerId,
           campaignId: { in: excludedCampaignIds },
           status: { not: "CANCELLED" },
+          submissionReviewStatus: "APPROVED",
         },
         select: { subTypes: true },
       });

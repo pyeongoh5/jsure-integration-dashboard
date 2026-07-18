@@ -770,8 +770,8 @@ export function CampaignForm({
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>참여 제외 캠페인</h2>
           <p className={styles.subLabel}>
-            여기서 선택한 캠페인에 이미 응모한 인플루언서는 이 캠페인에 응모할 수 없습니다.
-            (CANCELLED 상태인 응모는 제외)
+            여기서 선택한 캠페인에 참여 완료(제출물 승인)한 인플루언서는 이 캠페인에
+            응모할 수 없습니다. 응모만 하고 완료하지 않은 경우는 응모할 수 있습니다.
           </p>
           <Controller
             control={methods.control}

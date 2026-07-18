@@ -135,7 +135,8 @@ export const messages = {
       step8: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
       terminalRejected: { jp: "未選定", kr: "미선정" },
       terminalCancelled: { jp: "キャンセル", kr: "취소" },
-      simpleReview: { // new
+      simpleReview: {
+        // new
         step1: { jp: "応募", kr: "응모" },
         step2: { jp: "承認", kr: "승인" },
         step3: { jp: "発送", kr: "발송" }, // new
@@ -229,11 +230,13 @@ export const messages = {
         jp: "有効なURLを入力してください",
         kr: "올바른 URL을 입력해 주세요",
       },
-      screenshotsRequiredPrefix: { // new — 필수 매수가 채널 수에 따라 2~4장 가변
+      screenshotsRequiredPrefix: {
+        // new — 필수 매수가 채널 수에 따라 2~4장 가변
         jp: "レビューのスクリーンショットを",
         kr: "리뷰 스크린샷을 ",
       },
-      screenshotsRequiredSuffix: { // new
+      screenshotsRequiredSuffix: {
+        // new
         jp: "枚以上ご提出ください",
         kr: "장 이상 제출해 주세요",
       },
@@ -301,14 +304,16 @@ export const messages = {
       },
       deadlineLabelPrefix: { jp: "投稿締切日: ", kr: "게시 마감일: " },
     },
-    simpleReviewForm: { // new
+    simpleReviewForm: {
+      // new
       urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
       labelSuffix: { jp: "レビューURL", kr: "리뷰 URL" },
-      screenshotsLabelSuffix: { // new
+      screenshotsLabelSuffix: {
         jp: "レビューのスクリーンショット提出",
         kr: "리뷰 스크린샷 제출",
       },
-      screenshotsRequired: { // new
+      screenshotsRequired: {
+        // new
         jp: "レビューのスクリーンショットを1枚以上ご提出ください",
         kr: "리뷰 스크린샷을 1장 이상 제출해 주세요",
       },
@@ -338,11 +343,13 @@ export const messages = {
           kr: "각 플랫폼에 리뷰를 게시한 뒤 URL과 스크린샷을 제출해 주세요",
         },
         urlLabel: { jp: "レビューURL", kr: "리뷰 URL" },
-        screenshotsLabelPrefix: { // new — 필수 매수 가변 표기 (Qoo10 2장 + 채널당 1장)
+        screenshotsLabelPrefix: {
+          // new — 필수 매수 가변 표기 (Qoo10 2장 + 채널당 1장)
           jp: "レビューのスクリーンショット (",
           kr: "리뷰 스크린샷 제출 (",
         },
-        screenshotsLabelSuffix: { // new
+        screenshotsLabelSuffix: {
+          // new
           jp: "枚以上)",
           kr: "장 이상)",
         },
@@ -375,9 +382,17 @@ export const messages = {
         jp: "投稿の冒頭に「#PR」または「ブランドから提供」と表記します",
         kr: "게시물 처음에 「#PR」 또는 「브랜드에서 제공」 표기",
       },
+      confirmNaturalReview: {
+        // new — 가구매 전용: PR 표기 없이 자연스러운 리뷰
+        jp: "ハッシュタグやブランドアンバサダー等の表記はせず、自然なレビューとして投稿いたします。",
+        kr: "해시태그나 브랜드 앰배서더 등의 표기 없이 자연스러운 리뷰로 게시합니다",
+      },
       confirmDeadlinePrefix: { jp: "受取後", kr: "수령 후 " }, // new
       confirmDeadlineSuffix: { jp: "日以内に投稿します", kr: "일 이내에 게시" }, // new
-      confirmInsights: { jp: "投稿7日後にインサイトを提出します", kr: "게시 후 7일 뒤 인사이트 제출" },
+      confirmInsights: {
+        jp: "投稿7日後にインサイトを提出します",
+        kr: "게시 후 7일 뒤 인사이트 제출",
+      },
       confirmYakkiho: { jp: "薬機法の遵守します", kr: "약기법 준수" },
       confirmGuideline: { jp: "ガイドラインを確認し、遵守します", kr: "가이드라인 확인·준수" },
       snsFollower: { jp: "フォロワー", kr: "팔로워" },
@@ -395,15 +410,18 @@ export const messages = {
         kr: "응모 조건을 충족하는 SNS 계정이 없습니다",
       },
       requiredBadge: { jp: "必須", kr: "필수" }, // new
-      requiredNotQualifiedPrefix: { // new
+      requiredNotQualifiedPrefix: {
+        // new
         jp: "このキャンペーンは ",
         kr: "이 캠페인은 ",
       },
-      requiredNotQualifiedSuffix: { // new
+      requiredNotQualifiedSuffix: {
+        // new
         jp: " の応募が必須ですが、応募条件を満たすアカウントがありません",
         kr: " 응모가 필수이지만 자격 조건을 만족하는 계정이 없습니다",
       },
-      alreadyAppliedNotice: { // new — 캠페인 단위 응모 이력이 있으면 재응모 불가
+      alreadyAppliedNotice: {
+        // new — 캠페인 단위 응모 이력이 있으면 재응모 불가
         jp: "この案件はすでに応募済みのため、再応募できません",
         kr: "이미 응모한 캠페인입니다. 다시 응모할 수 없습니다",
       },
@@ -580,7 +598,8 @@ export const messages = {
       viewApplications: { jp: "応募履歴を見る", kr: "응모 내역 보기" },
       ctaClosed: { jp: "募集終了", kr: "모집 종료" },
       ctaApply: { jp: "応募する", kr: "응모하기" },
-      cancelledNotice: { // new — 취소한 캠페인은 재응모 불가
+      cancelledNotice: {
+        // new — 취소한 캠페인은 재응모 불가
         jp: "この案件はキャンセル済みのため、再応募できません",
         kr: "취소한 캠페인은 다시 응모할 수 없습니다",
       },

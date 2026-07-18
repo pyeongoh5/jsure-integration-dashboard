@@ -19,18 +19,22 @@ const CONFIRM_KEYS_SNS = [
   "GUIDELINE",
 ] as const;
 const CONFIRM_KEYS_FAKE_PURCHASE = [
-  "PR_LABEL",
+  "NATURAL_REVIEW", // new — 가구매는 PR 표기 대신 자연스러운 리뷰 항목
   "DEADLINE",
   "YAKKIHO",
   "GUIDELINE",
 ] as const;
-type ConfirmKey = (typeof CONFIRM_KEYS_SNS)[number];
+type ConfirmKey =
+  | (typeof CONFIRM_KEYS_SNS)[number]
+  | (typeof CONFIRM_KEYS_FAKE_PURCHASE)[number];
 
 // DEADLINE 은 캠페인의 postingPeriodDays 를 삽입해서 동적으로 노출한다. // new
 function confirmLabel(key: ConfirmKey, postingPeriodDays: number): string { // new
   switch (key) {
     case "PR_LABEL":
       return t("pages.apply.confirmPr");
+    case "NATURAL_REVIEW": // new
+      return t("pages.apply.confirmNaturalReview");
     case "DEADLINE":
       return `${t("pages.apply.confirmDeadlinePrefix")}${postingPeriodDays}${t("pages.apply.confirmDeadlineSuffix")}`;
     case "INSIGHTS":

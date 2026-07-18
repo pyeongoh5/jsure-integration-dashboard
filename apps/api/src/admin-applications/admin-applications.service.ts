@@ -784,10 +784,13 @@ export class AdminApplicationsService {
           : category === "SIMPLE_REVIEW"
             ? "SIMPLE_REVIEW_CAMPAIGN_COMPLETED"
             : "SNS_CAMPAIGN_COMPLETED";
-      void this.dispatcher.dispatch(settlementTriggerKey, {
-        application: target.application as never,
-        settlement: target,
-      });
+      // 보수 0엔이면 정산 안내는 생략하고 종료 메시지만 발송.
+      if (target.amountJpy > 0) {
+        void this.dispatcher.dispatch(settlementTriggerKey, {
+          application: target.application as never,
+          settlement: target,
+        });
+      }
       // 정산 완료 = 개인의 캠페인 프로세스 종료. 정산 알림과 별개로 종료 메시지를 발송.
       void this.dispatcher.dispatch(campaignCompletedTriggerKey, {
         application: target.application as never,

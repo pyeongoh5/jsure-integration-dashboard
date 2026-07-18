@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { CampaignSubTypeSchema } from "./influencer.js";
-import { CampaignCategorySchema, InstagramPostTypeSchema } from "./campaign.js";
+import {
+  CampaignCategorySchema,
+  OPTION_SELECTABLE_SUB_TYPES,
+} from "./campaign.js";
 
 export const ApplicationStatusSchema = z.enum([
   "APPLIED",
@@ -158,6 +161,13 @@ export type SubmitSimpleReviewRequest = z.infer<
   typeof SubmitSimpleReviewRequestSchema
 >;
 
+/** 응모가 선택한 서브타입 옵션 (구 instagramPostType 의 일반화). */
+export const ApplicationOptionSchema = z.object({
+  subType: CampaignSubTypeSchema,
+  option: z.string().min(1),
+});
+export type ApplicationOption = z.infer<typeof ApplicationOptionSchema>;
+
 export const CreateApplicationRequestSchema = z
   .object({
     campaignId: z.string().min(1),
@@ -168,16 +178,39 @@ export const CreateApplicationRequestSchema = z
         (arr) => new Set(arr).size === arr.length,
         "応募先が重複しています",
       ),
-    /** INSTAGRAM 응모 시 1개만 선택. 다른 SNS만 응모하는 경우 undefined. */
-    instagramPostType: InstagramPostTypeSchema.optional(),
+    /** 옵션 선택형 서브타입(INSTAGRAM)의 선택 옵션. 서브타입당 1개. */
+    options: z.array(ApplicationOptionSchema).default([]),
   })
   .superRefine((dto, ctx) => {
-    if (dto.subTypes.includes("INSTAGRAM") && !dto.instagramPostType) {
+    const optionSubTypes = dto.options.map((entry) => entry.subType);
+    if (new Set(optionSubTypes).size !== optionSubTypes.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["instagramPostType"],
-        message: "投稿タイプ（フィード/リール）を選択してください",
+        path: ["options"],
+        message: "応募先ごとに選択できるオプションは1つです",
       });
+    }
+    for (const entry of dto.options) {
+      if (!dto.subTypes.includes(entry.subType)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["options"],
+          message: "応募していない応募先のオプションが含まれています",
+        });
+        break;
+      }
+    }
+    for (const subType of OPTION_SELECTABLE_SUB_TYPES) {
+      if (
+        dto.subTypes.includes(subType) &&
+        !dto.options.some((entry) => entry.subType === subType)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["options"],
+          message: "投稿タイプ（フィード/リール）を選択してください",
+        });
+      }
     }
   });
 export type CreateApplicationRequest = z.infer<
@@ -212,8 +245,8 @@ export const InfluencerApplicationSchema = z.object({
   rejectReason: z.string().nullable(),
   /** 이 응모가 참여하는 서브타입 목록. */
   subTypes: z.array(CampaignSubTypeSchema),
-  /** INSTAGRAM 참여인 경우 FEED/REELS, 그 외는 null. */
-  instagramPostType: InstagramPostTypeSchema.nullable(),
+  /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS 1개). */
+  selectedOptions: z.array(ApplicationOptionSchema),
   /** 제출물(전체) 검토 상태 — 응모 단위 전체 승인/반려. */
   submissionReviewStatus: PostReviewStatusSchema,
   /** 제출물 반려 시 최신 반려 코멘트. */

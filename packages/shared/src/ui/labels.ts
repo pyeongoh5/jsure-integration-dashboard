@@ -22,6 +22,14 @@ export const QOO10_REVIEW_CHANNEL_LABEL: Record<"LIPS" | "ATCOSME", string> = {
   ATCOSME: "@cosme",
 };
 
+/** 서브타입 옵션 값의 라벨 — 어드민 표기·서버 메시지용. */
+export const SUB_TYPE_OPTION_LABEL: Record<string, string> = {
+  FEED: "피드",
+  REELS: "릴스",
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
+};
+
 export const SNS_SUB_TYPES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
 export const FAKE_PURCHASE_SUB_TYPES = ["QOO10"] as const satisfies readonly CampaignSubType[];
 export const SIMPLE_REVIEW_SUB_TYPES = ["LIPS", "ATCOSME"] as const satisfies readonly CampaignSubType[];

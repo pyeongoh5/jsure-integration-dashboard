@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import {
   SLOT_CONSUMING_STATUSES,
+  SUB_TYPE_OPTION_LABEL,
   buildSnsProfileUrl,
   type AdminApplication,
   type AdminSettlement,
@@ -9,7 +10,6 @@ import {
   type ApprovedApplicantExportResponse,
   type CampaignCategory,
   type CampaignSubType,
-  type InstagramPostType,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
@@ -37,7 +37,7 @@ type AdminApplicationRow = {
   receivedAt: Date | null;
   completedAt: Date | null;
   subTypes: CampaignSubType[];
-  instagramPostType: InstagramPostType | null;
+  options: { subType: CampaignSubType; option: string }[];
   orderNumber: string | null;
   orderSubmittedAt: Date | null;
   reviewSubmittedAt: Date | null;
@@ -65,7 +65,10 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
     receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     subTypes: row.subTypes,
-    instagramPostType: row.instagramPostType,
+    selectedOptions: row.options.map((entry) => ({
+      subType: entry.subType,
+      option: entry.option,
+    })),
     orderNumber: row.orderNumber,
     orderSubmittedAt: row.orderSubmittedAt ? row.orderSubmittedAt.toISOString() : null,
     reviewSubmittedAt: row.reviewSubmittedAt ? row.reviewSubmittedAt.toISOString() : null,
@@ -96,6 +99,7 @@ const SUB_TYPE_LABEL: Record<CampaignSubType, string> = {
 };
 
 const APPLICATION_INCLUDE = {
+  options: { select: { subType: true, option: true } },
   campaign: { select: { id: true, title: true, category: true } },
   influencer: {
     select: {
@@ -145,6 +149,13 @@ export class AdminApplicationsService {
                 rewardJpy: true,
                 productPriceJpy: true,
                 productUrl: true,
+                options: {
+                  select: {
+                    option: true,
+                    recruitCount: true,
+                    rewardJpy: true,
+                  },
+                },
               },
             },
           },
@@ -172,6 +183,32 @@ export class AdminApplicationsService {
       if (approvedCount >= recruitCount) {
         throw new BadRequestException(
           `${SUB_TYPE_LABEL[subType]} 모집 인원(${recruitCount}명)이 모두 충족되어 승인할 수 없습니다`,
+        );
+      }
+
+      // 옵션별 정원 분리 recruit 이면 응모가 선택한 옵션의 정원도 체크.
+      const optionQuotas = (recruit?.options ?? []).filter(
+        (option) => option.recruitCount !== null,
+      );
+      if (optionQuotas.length === 0) continue;
+      const selected = existing.options.find(
+        (entry) => entry.subType === subType,
+      );
+      if (!selected) continue; // 옵션 미선택 레거시 응모 — 서브타입 정원만 적용
+      const quota = optionQuotas.find(
+        (option) => option.option === selected.option,
+      );
+      if (!quota) continue;
+      const optionApprovedCount = await this.prisma.campaignApplication.count({
+        where: {
+          campaignId: existing.campaignId,
+          status: { in: SLOT_CONSUMING_STATUSES },
+          options: { some: { subType, option: selected.option } },
+        },
+      });
+      if (optionApprovedCount >= (quota.recruitCount ?? 0)) {
+        throw new BadRequestException(
+          `${SUB_TYPE_LABEL[subType]} ${SUB_TYPE_OPTION_LABEL[selected.option] ?? selected.option} 모집 인원(${quota.recruitCount}명)이 모두 충족되어 승인할 수 없습니다`,
         );
       }
     }
@@ -566,13 +603,19 @@ export class AdminApplicationsService {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
       include: {
+        options: { select: { subType: true, option: true } },
         campaign: {
           select: {
             category: true,
             rewardType: true,
             rewardJpy: true,
             recruits: {
-              select: { subType: true, rewardJpy: true, productPriceJpy: true },
+              select: {
+                subType: true,
+                rewardJpy: true,
+                productPriceJpy: true,
+                options: { select: { option: true, rewardJpy: true } },
+              },
             },
           },
         },
@@ -585,6 +628,7 @@ export class AdminApplicationsService {
     const { rewardAmountJpy, productRefundJpy } = settlementAmounts(
       existing.campaign,
       existing.subTypes,
+      existing.options,
     );
     // Settlement row 생성 (idempotent: 이미 있으면 그대로 유지)
     await this.prisma.settlement.upsert({
@@ -836,6 +880,7 @@ export class AdminApplicationsService {
 }
 
 const SUBMISSION_INCLUDE = {
+  options: { select: { subType: true, option: true } },
   posts: {
     orderBy: { subType: "asc" as const },
     include: {
@@ -889,7 +934,7 @@ type SubmissionRow = {
   id: string;
   status: ApplicationStatus;
   subTypes: CampaignSubType[];
-  instagramPostType: InstagramPostType | null;
+  options: { subType: CampaignSubType; option: string }[];
   reviewSubmittedAt: Date | null;
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
   submissionReviewedAt: Date | null;
@@ -961,7 +1006,10 @@ async function toSubmissionResponse(
     id: row.id,
     status: row.status,
     subTypes: row.subTypes,
-    instagramPostType: row.instagramPostType,
+    selectedOptions: row.options.map((entry) => ({
+      subType: entry.subType,
+      option: entry.option,
+    })),
     reviewSubmittedAt: row.reviewSubmittedAt
       ? row.reviewSubmittedAt.toISOString()
       : null,

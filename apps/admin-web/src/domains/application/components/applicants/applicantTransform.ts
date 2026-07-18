@@ -90,7 +90,7 @@ export function toApplicant(
     subTypes: application.subTypes,
     orderNumber: application.orderNumber,
     media: application.subTypes.map((subType) => SNS_TO_MEDIA[subType]),
-    instagramPostType: application.instagramPostType,
+    selectedOptions: application.selectedOptions,
     followers: appliedAccounts.reduce(
       (sum, account) => sum + account.followerCount,
       0,

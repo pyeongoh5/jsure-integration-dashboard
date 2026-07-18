@@ -140,7 +140,7 @@ export class AdminReportsService {
       include: {
         application: {
           select: {
-            instagramPostType: true,
+            options: { select: { subType: true, option: true } },
             influencer: {
               select: {
                 id: true,
@@ -164,10 +164,11 @@ export class AdminReportsService {
         influencerName: post.application.influencer.name,
         handle: matchedAccount?.handle ?? "",
         subType: post.subType,
-        instagramPostType:
-          post.subType === "INSTAGRAM"
-            ? post.application.instagramPostType
-            : null,
+        option:
+          post.application.options.find(
+            (entry: { subType: string; option: string }) =>
+              entry.subType === post.subType,
+          )?.option ?? null,
         insight: {
           likes: post.insightLikes,
           comments: post.insightComments,

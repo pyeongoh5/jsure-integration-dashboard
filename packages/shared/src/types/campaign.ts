@@ -30,6 +30,29 @@ const DateOnly = z
 export const InstagramPostTypeSchema = z.enum(["FEED", "REELS"]);
 export type InstagramPostType = z.infer<typeof InstagramPostTypeSchema>;
 
+/**
+ * 옵션 선택형 서브타입 — 응모 시 인플루언서가 옵션(FEED/REELS 등) 1개를 골라야
+ * 하는 서브타입. QOO10 의 subTypeOptions(LIPS/ATCOSME)는 캠페인이 강제하는 요구
+ * 채널이라 선택 대상이 아니므로 포함하지 않는다.
+ */
+export const OPTION_SELECTABLE_SUB_TYPES: readonly CampaignSubType[] = [
+  "INSTAGRAM",
+];
+
+/**
+ * recruit 옵션 세부 설정 — 옵션 행 집합은 subTypeOptions 전체와 1:1 이어야 하고,
+ * recruitCount(정원 분리)·rewardJpy(보수 분리)는 속성별 all-or-nothing.
+ * 보수 분리 시 부모 recruit.rewardJpy 는 null 강제.
+ */
+export const CampaignRecruitOptionConfigSchema = z.object({
+  option: z.string().min(1),
+  recruitCount: z.number().int().positive().nullable().default(null),
+  rewardJpy: z.number().int().nonnegative().nullable().default(null),
+});
+export type CampaignRecruitOptionConfig = z.infer<
+  typeof CampaignRecruitOptionConfigSchema
+>;
+
 const INSTAGRAM_SUB_TYPE_OPTION_VALUES = ["FEED", "REELS"] as const;
 const QOO10_SUB_TYPE_OPTION_VALUES = ["LIPS", "ATCOSME"] as const;
 
@@ -61,6 +84,8 @@ export const CampaignRecruitSchema = z.object({
   productPriceJpy: z.number().int().positive().nullable().default(null),
   /** 가구매 캠페인용: 상품 URL. SNS 캠페인은 null. */
   productUrl: z.string().url().nullable().default(null),
+  /** 옵션별 정원·보수 세부 설정. 빈 배열이면 완전 통합 모드. */
+  options: z.array(CampaignRecruitOptionConfigSchema).default([]),
 });
 export type CampaignRecruit = z.infer<typeof CampaignRecruitSchema>;
 
@@ -91,6 +116,25 @@ const CampaignRecruitInputSchema = z
       .nullable()
       .default(null),
     productUrl: z.string().url("URL 형식이어야 합니다").nullable().default(null),
+    options: z
+      .array(
+        z.object({
+          option: z.string().min(1),
+          recruitCount: z
+            .number({ invalid_type_error: "숫자를 입력해주세요" })
+            .int("정수만 입력")
+            .positive("1 이상")
+            .nullable()
+            .default(null),
+          rewardJpy: z
+            .number({ invalid_type_error: "숫자를 입력해주세요" })
+            .int("정수만 입력")
+            .nonnegative("0 이상의 정수")
+            .nullable()
+            .default(null),
+        }),
+      )
+      .default([]),
   })
   .superRefine((recruit, ctx) => {
     const unique = new Set(recruit.subTypeOptions);
@@ -122,18 +166,38 @@ const ENABLED_SNS_SUB_TYPE_SET = new Set<CampaignSubType>(
   EnabledSnsTypeSchema.options,
 );
 
+/** recruit 가 옵션별 보수 분리를 사용하는지 (모든 옵션 행에 rewardJpy 존재). */
+function usesOptionRewardSplit(recruit: {
+  options: { rewardJpy: number | null }[];
+}): boolean {
+  return (
+    recruit.options.length > 0 &&
+    recruit.options.every((option) => option.rewardJpy !== null)
+  );
+}
+
 function refineRecruitsByRewardType(
   rewardType: z.infer<typeof RewardTypeSchema>,
   recruits: z.infer<typeof CampaignRecruitInputSchema>[],
   ctx: z.RefinementCtx,
 ): void {
   recruits.forEach((recruit, index) => {
+    const optionRewardSplit = usesOptionRewardSplit(recruit);
     if (rewardType === "PER_SUBTYPE") {
-      if (recruit.rewardJpy === null) {
+      if (recruit.rewardJpy === null && !optionRewardSplit) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["recruits", index, "rewardJpy"],
           message: "서브타입별 보수 금액을 입력하세요",
+        });
+      }
+      // 보수 분리 시 부모 보수는 비워야 한다 — 응모는 옵션 1개만 고르므로
+      // 서브타입 보수에 어떤 대표값을 남겨도 거짓이 된다.
+      if (recruit.rewardJpy !== null && optionRewardSplit) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "rewardJpy"],
+          message: "옵션별 보수 사용 시 서브타입 보수는 비워야 합니다",
         });
       }
     } else if (recruit.rewardJpy !== null) {
@@ -141,6 +205,78 @@ function refineRecruitsByRewardType(
         code: z.ZodIssueCode.custom,
         path: ["recruits", index, "rewardJpy"],
         message: "통합 보수 캠페인에서는 서브타입별 보수를 지정할 수 없습니다",
+      });
+    }
+  });
+}
+
+/** 옵션별 정원·보수 설정 검증 — 속성별 all-or-nothing, subTypeOptions 와 1:1. */
+function refineRecruitOptionConfigs(
+  rewardType: z.infer<typeof RewardTypeSchema>,
+  recruits: z.infer<typeof CampaignRecruitInputSchema>[],
+  ctx: z.RefinementCtx,
+): void {
+  recruits.forEach((recruit, index) => {
+    if (recruit.options.length === 0) return;
+    const path = ["recruits", index, "options"];
+    if (!OPTION_SELECTABLE_SUB_TYPES.includes(recruit.subType)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path,
+        message: "이 서브타입에서는 옵션별 설정을 사용할 수 없습니다",
+      });
+      return;
+    }
+    const names = recruit.options.map((option) => option.option);
+    const nameSet = new Set(names);
+    const allowedSet = new Set(recruit.subTypeOptions);
+    const sameAsAllowed =
+      nameSet.size === names.length &&
+      nameSet.size === allowedSet.size &&
+      names.every((name) => allowedSet.has(name));
+    if (!sameAsAllowed) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path,
+        message: "옵션별 설정은 모집하는 모든 옵션과 정확히 일치해야 합니다",
+      });
+      return;
+    }
+    const withCount = recruit.options.filter(
+      (option) => option.recruitCount !== null,
+    );
+    if (withCount.length !== 0 && withCount.length !== recruit.options.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path,
+        message: "옵션별 정원은 전부 입력하거나 전부 비워야 합니다",
+      });
+    }
+    const withReward = recruit.options.filter(
+      (option) => option.rewardJpy !== null,
+    );
+    if (
+      withReward.length !== 0 &&
+      withReward.length !== recruit.options.length
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path,
+        message: "옵션별 보수는 전부 입력하거나 전부 비워야 합니다",
+      });
+    }
+    if (withReward.length > 0 && rewardType !== "PER_SUBTYPE") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path,
+        message: "통합 보수 캠페인에서는 옵션별 보수를 지정할 수 없습니다",
+      });
+    }
+    if (withCount.length === 0 && withReward.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path,
+        message: "옵션별 정원 또는 보수를 입력하세요",
       });
     }
   });
@@ -326,6 +462,7 @@ export const CampaignFormSchema = z
   .superRefine((form, ctx) => {
     refineRecruitsByCategory(form.category, form.recruits, ctx);
     refineRecruitsByRewardType(form.rewardType, form.recruits, ctx);
+    refineRecruitOptionConfigs(form.rewardType, form.recruits, ctx);
   });
 export type CampaignForm = z.infer<typeof CampaignFormSchema>;
 

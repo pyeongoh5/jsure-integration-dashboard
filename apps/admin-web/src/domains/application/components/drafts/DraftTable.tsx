@@ -2,14 +2,15 @@ import { Fragment } from "react";
 import { ScrollTable, SubTypePill } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { CATEGORY_LABEL_KO } from "../applicants/types";
+import { SUB_TYPE_OPTION_LABEL } from "@jsure/shared";
 import {
   DRAFT_STATUS_LABEL,
   MEDIA_META,
+  SNS_TO_MEDIA,
   type DraftReview,
   type DraftStatus,
   type Media,
 } from "./types";
-import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
 import styles from "@/pages/Drafts/Drafts.module.css";
 import shared from "../application.module.css";
 
@@ -238,23 +239,25 @@ export function DraftTable({
                         </span>
                       ) : (
                         <span className={shared.mediaItem}>
-                          {draft.media.map((mediaKey) => {
-                            const media = MEDIA_META[mediaKey];
-                            // 포스트 타입 라벨은 Instagram 아이콘 바로 옆에 붙인다.
-                            const showPostType =
-                              mediaKey === "ig" && draft.instagramPostType !== null;
+                          {draft.subTypes.map((subType) => {
+                            const media = MEDIA_META[SNS_TO_MEDIA[subType]];
+                            // 선택 옵션(피드/릴스 등) 라벨은 해당 아이콘 바로 옆에 붙인다.
+                            const selected = draft.selectedOptions.find(
+                              (entry) => entry.subType === subType,
+                            );
                             return (
-                              <Fragment key={mediaKey}>
+                              <Fragment key={subType}>
                                 <span
-                                  className={`${shared.media} ${MEDIA_CLASS[mediaKey]}`}
+                                  className={`${shared.media} ${MEDIA_CLASS[SNS_TO_MEDIA[subType]]}`}
                                   title={media.label}
                                   aria-label={media.label}
                                 >
                                   <i className={media.icon} />
                                 </span>
-                                {showPostType && (
+                                {selected && (
                                   <span className={shared.mediaLabel}>
-                                    {INSTAGRAM_POST_TYPE_LABEL[draft.instagramPostType!]}
+                                    {SUB_TYPE_OPTION_LABEL[selected.option] ??
+                                      selected.option}
                                   </span>
                                 )}
                               </Fragment>

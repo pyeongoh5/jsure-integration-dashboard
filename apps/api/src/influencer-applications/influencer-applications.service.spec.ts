@@ -38,7 +38,7 @@ function makeApplicationRow(overrides: Record<string, unknown> = {}) {
     completedAt: null,
     rejectReason: null,
     subType: "QOO10",
-    instagramPostType: null,
+    options: [],
     orderNumber: "ORDER-1",
     orderSubmittedAt: new Date("2026-07-01T00:00:00Z"),
     reviewSubmittedAt: null,

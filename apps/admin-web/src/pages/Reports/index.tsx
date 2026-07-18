@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import ExcelJS from "exceljs";
-import type { CampaignReportParticipant } from "@jsure/shared";
+import { SUB_TYPE_OPTION_LABEL, type CampaignReportParticipant } from "@jsure/shared";
 import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
 import {
@@ -10,7 +10,6 @@ import {
   type CampaignReportSortKey,
   type CampaignReportSortOrder,
 } from "@/domains/report";
-import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
 import styles from "./Reports.module.css";
 
 const SNS_LABEL: Record<CampaignReportParticipant["subType"], string> = {
@@ -566,8 +565,8 @@ const PARTICIPANT_COLUMNS: Array<{
 
 function formatSns(participant: CampaignReportParticipant): string {
   const snsLabel = SNS_LABEL[participant.subType];
-  return participant.subType === "INSTAGRAM" && participant.instagramPostType
-    ? `${snsLabel}(${INSTAGRAM_POST_TYPE_LABEL[participant.instagramPostType]})`
+  return participant.option
+    ? `${snsLabel}(${SUB_TYPE_OPTION_LABEL[participant.option] ?? participant.option})`
     : snsLabel;
 }
 

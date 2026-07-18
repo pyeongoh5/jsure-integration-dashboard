@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { CampaignSubTypeSchema } from "./influencer.js";
-import { InstagramPostTypeSchema } from "./campaign.js";
 
 export const CampaignReportParticipantSchema = z.object({
   influencerId: z.string(),
   influencerName: z.string(),
   handle: z.string(),
   subType: CampaignSubTypeSchema,
-  instagramPostType: InstagramPostTypeSchema.nullable(),
+  /** 이 서브타입 참여에서 선택한 옵션 (INSTAGRAM 이면 FEED/REELS). */
+  option: z.string().nullable(),
   insight: z.object({
     likes: z.number().int().nullable(),
     comments: z.number().int().nullable(),

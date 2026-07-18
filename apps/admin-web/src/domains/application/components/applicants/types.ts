@@ -1,8 +1,8 @@
 import type {
+  ApplicationOption,
   ApplicationStatus,
   CampaignCategory,
   CampaignSubType,
-  InstagramPostType,
 } from "@jsure/shared";
 
 // 검토/정산 단계로 넘어가지 않은 응모만 응모 관리에 노출한다.
@@ -32,7 +32,8 @@ export type Applicant = {
   subTypes: CampaignSubType[];
   orderNumber: string | null;
   media: Media[];
-  instagramPostType: InstagramPostType | null;
+  /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS). */
+  selectedOptions: ApplicationOption[];
   followers: number;
   /** 참여 서브타입별 팔로워 수 — 다중 참여 시 세로 나열 표시용. */
   followersBySubType: { subType: CampaignSubType; followerCount: number }[];

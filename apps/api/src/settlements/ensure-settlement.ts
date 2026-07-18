@@ -1,18 +1,55 @@
 import type { PrismaService } from "../prisma/prisma.service";
 
-/** 응모 기준 보수 금액: UNIFIED 는 고정, PER_SUBTYPE 은 참여 서브타입 합산. */
+type RewardRecruit = {
+  subType: string;
+  rewardJpy: number | null;
+  options?: { option: string; rewardJpy: number | null }[];
+};
+
+type SelectedOption = { subType: string; option: string };
+
+/**
+ * 서브타입 1개의 보수 기여.
+ * 옵션별 보수 분리 recruit(모든 옵션 행에 rewardJpy 존재)이면 응모가 선택한
+ * 옵션의 보수, 아니면 recruit.rewardJpy. 보수 분리 활성화 시 기존 응모 전체에
+ * 옵션 선택이 있음을 캠페인 저장 검증이 보장하므로 별도 fallback 은 두지 않는다.
+ */
+function recruitRewardContribution(
+  recruit: RewardRecruit,
+  selectedOption: string | null,
+): number {
+  const options = recruit.options ?? [];
+  const rewardSplit =
+    options.length > 0 && options.every((option) => option.rewardJpy !== null);
+  if (!rewardSplit) return recruit.rewardJpy ?? 0;
+  const matched = selectedOption
+    ? options.find((option) => option.option === selectedOption)
+    : undefined;
+  return matched?.rewardJpy ?? 0;
+}
+
+/**
+ * 응모 기준 보수 금액: UNIFIED 는 고정, PER_SUBTYPE 은 참여 서브타입 기여 합산
+ * (옵션별 보수 분리 recruit 은 선택 옵션의 보수).
+ */
 export function applicationRewardJpy(
   campaign: {
     rewardType: "UNIFIED" | "PER_SUBTYPE";
     rewardJpy: number;
-    recruits: { subType: string; rewardJpy: number | null }[];
+    recruits: RewardRecruit[];
   },
   subTypes: string[],
+  selectedOptions: SelectedOption[],
 ): number {
   if (campaign.rewardType !== "PER_SUBTYPE") return campaign.rewardJpy;
   return campaign.recruits
     .filter((recruit) => subTypes.includes(recruit.subType))
-    .reduce((sum, recruit) => sum + (recruit.rewardJpy ?? 0), 0);
+    .reduce((sum, recruit) => {
+      const selected =
+        selectedOptions.find((entry) => entry.subType === recruit.subType)
+          ?.option ?? null;
+      return sum + recruitRewardContribution(recruit, selected);
+    }, 0);
 }
 
 /** 응모 기준 정산 금액(보수 + 가구매 상품 환급). */
@@ -21,15 +58,16 @@ export function settlementAmounts(
     category: "SNS" | "FAKE_PURCHASE" | "SIMPLE_REVIEW";
     rewardType: "UNIFIED" | "PER_SUBTYPE";
     rewardJpy: number;
-    recruits: {
-      subType: string;
-      rewardJpy: number | null;
-      productPriceJpy: number | null;
-    }[];
+    recruits: (RewardRecruit & { productPriceJpy: number | null })[];
   },
   subTypes: string[],
+  selectedOptions: SelectedOption[],
 ): { rewardAmountJpy: number; productRefundJpy: number } {
-  const rewardAmountJpy = applicationRewardJpy(campaign, subTypes);
+  const rewardAmountJpy = applicationRewardJpy(
+    campaign,
+    subTypes,
+    selectedOptions,
+  );
   const productRefundJpy =
     campaign.category === "FAKE_PURCHASE"
       ? campaign.recruits
@@ -48,7 +86,8 @@ export function settlementAmounts(
  * - FAKE_PURCHASE / SIMPLE_REVIEW: 제출물 승인만 되면 즉시 생성.
  *
  * 정산액:
- * - rewardAmountJpy = UNIFIED 면 campaign.rewardJpy, PER_SUBTYPE 면 참여 서브타입별 recruit.rewardJpy 합산
+ * - rewardAmountJpy = UNIFIED 면 campaign.rewardJpy, PER_SUBTYPE 면 참여
+ *   서브타입 기여 합산(옵션별 보수 분리 recruit 은 선택 옵션의 보수)
  * - productRefundJpy = 가구매(FAKE_PURCHASE)만 recruit.productPriceJpy 합산
  */
 export async function ensureSettlementForApplication(
@@ -60,6 +99,7 @@ export async function ensureSettlementForApplication(
     select: {
       submissionReviewStatus: true,
       subTypes: true,
+      options: { select: { subType: true, option: true } },
       posts: { select: { subType: true, insightSubmittedAt: true } },
       campaign: {
         select: {
@@ -72,6 +112,7 @@ export async function ensureSettlementForApplication(
               insightRequired: true,
               productPriceJpy: true,
               rewardJpy: true,
+              options: { select: { option: true, rewardJpy: true } },
             },
           },
         },
@@ -100,6 +141,7 @@ export async function ensureSettlementForApplication(
   const { rewardAmountJpy, productRefundJpy } = settlementAmounts(
     campaign,
     application.subTypes,
+    application.options,
   );
 
   await prisma.settlement.upsert({

@@ -80,7 +80,7 @@ export function toDraftReview(
     category: submission.campaign.category,
     subTypes: submission.subTypes,
     media: submission.subTypes.map((subType) => SNS_TO_MEDIA[subType]),
-    instagramPostType: submission.instagramPostType,
+    selectedOptions: submission.selectedOptions,
     posts: submission.posts.map((post) => ({
       id: post.id,
       subType: post.subType,

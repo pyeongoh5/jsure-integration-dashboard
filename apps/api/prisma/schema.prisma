@@ -65,11 +65,6 @@ enum CampaignSubType {
   ATCOSME
 }
 
-enum InstagramPostType {
-  FEED
-  REELS
-}
-
 enum InfluencerStatus {
   ACTIVE
   SUSPENDED
@@ -168,9 +163,27 @@ model CampaignRecruit {
   updatedAt          DateTime            @updatedAt
 
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  options  CampaignRecruitOption[]
 
   @@unique([campaignId, subType])
   @@map("campaign_recruits")
+}
+
+/// recruit가 모집하는 옵션(FEED/REELS 등)의 세부 설정. 속성별 all-or-nothing:
+/// 모든 행에 recruitCount 존재 = 정원 분리(부모 recruitCount = 합계),
+/// 모든 행에 rewardJpy 존재 = 보수 분리(부모 rewardJpy = null 강제).
+model CampaignRecruitOption {
+  id           String @id @default(cuid())
+  recruitId    String
+  /// subTypeOptions 값 축: "FEED" | "REELS" | (미래: "LIPS" | "ATCOSME")
+  option       String
+  recruitCount Int?
+  rewardJpy    Int?
+
+  recruit CampaignRecruit @relation(fields: [recruitId], references: [id], onDelete: Cascade)
+
+  @@unique([recruitId, option])
+  @@map("campaign_recruit_options")
 }
 
 model Influencer {
@@ -291,8 +304,6 @@ model CampaignApplication {
   influencerId String
   /// 이 응모가 참여하는 서브타입 목록.
   subTypes     CampaignSubType[]
-  /// INSTAGRAM 참여일 때만 의미가 있다. 비-INSTAGRAM 응모는 항상 null.
-  instagramPostType InstagramPostType?
   status       ApplicationStatus @default(APPLIED)
 
   appliedAt    DateTime  @default(now())
@@ -327,11 +338,27 @@ model CampaignApplication {
   lineDispatchLogs LineDispatchLog[]
   submissionRejections SubmissionRejection[]
   settlement Settlement?
+  options    CampaignApplicationOption[]
 
   @@unique([campaignId, influencerId])
   @@index([campaignId, status])
   @@index([influencerId, status])
   @@map("campaign_applications")
+}
+
+/// 응모가 선택한 서브타입 옵션 (구 instagramPostType 의 일반화).
+/// 현재는 INSTAGRAM 의 FEED/REELS 단일 선택만 사용하지만, 서브타입·복수 선택으로
+/// 확장 가능한 구조.
+model CampaignApplicationOption {
+  id            String          @id @default(cuid())
+  applicationId String
+  subType       CampaignSubType
+  option        String
+
+  application CampaignApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, subType, option])
+  @@map("campaign_application_options")
 }
 
 // 서브타입별 제출 데이터(게시물 URL, 인사이트 지표). 검토/정산은 응모 단위로 진행된다.

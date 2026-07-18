@@ -3,8 +3,9 @@ import {
   CampaignSubTypeSchema,
   SnsAccountSubTypeSchema,
 } from "./influencer.js";
-import { CampaignCategorySchema, InstagramPostTypeSchema } from "./campaign.js";
+import { CampaignCategorySchema } from "./campaign.js";
 import {
+  ApplicationOptionSchema,
   ApplicationStatusSchema,
   PostReviewStatusSchema,
 } from "./application.js";
@@ -56,7 +57,8 @@ export const AdminApplicationSchema = z.object({
   receivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   subTypes: z.array(CampaignSubTypeSchema),
-  instagramPostType: InstagramPostTypeSchema.nullable(),
+  /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS 1개). */
+  selectedOptions: z.array(ApplicationOptionSchema),
   orderNumber: z.string().nullable(),
   orderSubmittedAt: z.string().datetime().nullable(),
   reviewSubmittedAt: z.string().datetime().nullable(),
@@ -140,7 +142,8 @@ export const AdminSubmissionSchema = z.object({
   id: z.string(),
   status: ApplicationStatusSchema,
   subTypes: z.array(CampaignSubTypeSchema),
-  instagramPostType: InstagramPostTypeSchema.nullable(),
+  /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS 1개). */
+  selectedOptions: z.array(ApplicationOptionSchema),
   reviewSubmittedAt: z.string().datetime().nullable(),
 
   submissionReviewStatus: PostReviewStatusSchema,

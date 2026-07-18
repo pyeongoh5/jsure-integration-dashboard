@@ -58,7 +58,7 @@ export class InfluencerApplicationsController {
       req.user.id,
       dto.campaignId,
       dto.subTypes,
-      dto.instagramPostType ?? null,
+      dto.options,
     );
   }
 

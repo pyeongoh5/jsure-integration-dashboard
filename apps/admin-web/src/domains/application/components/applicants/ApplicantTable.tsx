@@ -1,7 +1,6 @@
-import { SUB_TYPE_LABEL } from "@jsure/shared";
+import { SUB_TYPE_LABEL, SUB_TYPE_OPTION_LABEL } from "@jsure/shared";
 import { ScrollTable, SubTypePill } from "@/components/composites";
 import { Button } from "@/components/ui";
-import { INSTAGRAM_POST_TYPE_LABEL } from "@/domains/campaign";
 import {
   APPLICANT_STATUS_LABEL,
   CATEGORY_LABEL_KO,
@@ -9,6 +8,7 @@ import {
   type Applicant,
   type ApplicantStatus,
 } from "./types";
+import { SNS_TO_MEDIA } from "./applicantTransform";
 import styles from "@/pages/Applicants/Applicants.module.css";
 import shared from "../application.module.css";
 
@@ -277,11 +277,14 @@ export function ApplicantTable({
                         ))}
                       </span>
                     ) : (
-                      applicant.media.map((media) => {
-                        const meta = MEDIA_META[media];
-                        const showPostType = media === "ig" && applicant.instagramPostType !== null;
+                      applicant.subTypes.map((subType) => {
+                        const meta = MEDIA_META[SNS_TO_MEDIA[subType]];
+                        // 선택 옵션(피드/릴스 등) 라벨은 해당 아이콘 옆에 표시.
+                        const selected = applicant.selectedOptions.find(
+                          (entry) => entry.subType === subType,
+                        );
                         return (
-                          <span key={media} className={shared.mediaItem}>
+                          <span key={subType} className={shared.mediaItem}>
                             <span
                               className={`${shared.media} ${shared[meta.cls]}`}
                               title={meta.label}
@@ -289,9 +292,10 @@ export function ApplicantTable({
                             >
                               <i className={meta.icon} />
                             </span>
-                            {showPostType && (
+                            {selected && (
                               <span className={shared.mediaLabel}>
-                                {INSTAGRAM_POST_TYPE_LABEL[applicant.instagramPostType!]}
+                                {SUB_TYPE_OPTION_LABEL[selected.option] ??
+                                  selected.option}
                               </span>
                             )}
                           </span>

@@ -35,6 +35,11 @@ type CampaignRow = {
     isRequired: boolean;
     productPriceJpy: number | null;
     productUrl: string | null;
+    options: {
+      option: string;
+      recruitCount: number | null;
+      rewardJpy: number | null;
+    }[];
   }[];
 };
 
@@ -111,6 +116,10 @@ export class InfluencerCampaignsService {
             isRequired: true,
             productPriceJpy: true,
             productUrl: true,
+            options: {
+              select: { option: true, recruitCount: true, rewardJpy: true },
+              orderBy: { option: "asc" },
+            },
           },
           orderBy: { subType: "asc" },
         },
@@ -159,6 +168,10 @@ export class InfluencerCampaignsService {
             isRequired: true,
             productPriceJpy: true,
             productUrl: true,
+            options: {
+              select: { option: true, recruitCount: true, rewardJpy: true },
+              orderBy: { option: "asc" },
+            },
           },
           orderBy: { subType: "asc" },
         },

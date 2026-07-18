@@ -74,11 +74,33 @@ type ItemError = Partial<
     | "recruitCount"
     | "rewardJpy"
     | "subTypeOptions"
+    | "options"
     | "productPriceJpy"
     | "productUrl",
     string
   >
 >;
+
+type RecruitOptionRow = CampaignFormRecruit["options"][number];
+
+/** 옵션 행 전부에 해당 속성이 입력 시도(non-null)되어 있으면 분리 모드로 본다. */
+function optionAttributeOn(
+  row: CampaignFormRecruit,
+  attribute: "recruitCount" | "rewardJpy",
+): boolean {
+  return (
+    row.options.length > 0 &&
+    row.options.every((option) => option[attribute] !== null)
+  );
+}
+
+/** 정원 분리 시 부모 모집 인원 = 옵션 정원 합계 (미입력 있으면 NaN). */
+function optionCountSum(options: RecruitOptionRow[]): number {
+  return options.reduce(
+    (sum, option) => sum + (option.recruitCount ?? Number.NaN),
+    0,
+  );
+}
 
 type Props = {
   category: CampaignCategory;
@@ -106,6 +128,7 @@ function createRecruit(
       recruitCount: 1,
       rewardJpy: null,
       subTypeOptions: subType === "INSTAGRAM" ? ["FEED"] : [],
+      options: [],
       insightRequired: true,
       isRequired: false,
       productPriceJpy: null,
@@ -119,6 +142,7 @@ function createRecruit(
       recruitCount: 1,
       rewardJpy: null,
       subTypeOptions: [],
+      options: [],
       insightRequired: false,
       isRequired: false,
       productPriceJpy: null,
@@ -131,6 +155,7 @@ function createRecruit(
     recruitCount: 1,
     rewardJpy: null,
     subTypeOptions: [],
+    options: [],
     insightRequired: false,
     isRequired: false,
     productPriceJpy: Number.NaN as unknown as number,
@@ -180,8 +205,92 @@ export function RecruitList({
     const set = new Set<string>(current.subTypeOptions);
     if (set.has(postType)) set.delete(postType);
     else set.add(postType);
+    const subTypeOptions = INSTAGRAM_POST_TYPE_OPTIONS.filter((option) =>
+      set.has(option),
+    );
+    // 옵션별 설정 사용 중이면 행 집합을 허용 옵션과 1:1 로 재동기화.
+    const countSplit = optionAttributeOn(current, "recruitCount");
+    const rewardSplit = optionAttributeOn(current, "rewardJpy");
+    const options =
+      current.options.length === 0
+        ? current.options
+        : subTypeOptions.map(
+            (name) =>
+              current.options.find((option) => option.option === name) ?? {
+                option: name,
+                recruitCount: countSplit ? Number.NaN : null,
+                rewardJpy: rewardSplit ? Number.NaN : null,
+              },
+          );
     updateAt(index, {
-      subTypeOptions: INSTAGRAM_POST_TYPE_OPTIONS.filter((option) => set.has(option)),
+      subTypeOptions,
+      options,
+      ...(countSplit ? { recruitCount: optionCountSum(options) } : {}),
+    });
+  };
+
+  /** 옵션별 정원/보수 분리 토글. 켜면 허용 옵션 전부에 입력 행 생성, 끄면 속성 제거. */
+  const toggleOptionAttribute = (
+    index: number,
+    attribute: "recruitCount" | "rewardJpy",
+  ) => {
+    const current = value[index];
+    if (!current) return;
+    const on = optionAttributeOn(current, attribute);
+    let options: RecruitOptionRow[];
+    if (on) {
+      options = current.options.map((option) => ({
+        ...option,
+        [attribute]: null,
+      }));
+      if (
+        options.every(
+          (option) => option.recruitCount === null && option.rewardJpy === null,
+        )
+      ) {
+        options = [];
+      }
+    } else {
+      options = current.subTypeOptions.map((name) => {
+        const existing = current.options.find(
+          (option) => option.option === name,
+        );
+        return {
+          option: name,
+          recruitCount: existing?.recruitCount ?? null,
+          rewardJpy: existing?.rewardJpy ?? null,
+          [attribute]: existing?.[attribute] ?? Number.NaN,
+        };
+      });
+    }
+    const countSplit =
+      options.length > 0 &&
+      options.every((option) => option.recruitCount !== null);
+    updateAt(index, {
+      options,
+      // 정원 분리 시 부모 인원은 합계, 해제 시 기존 값 유지.
+      ...(countSplit ? { recruitCount: optionCountSum(options) } : {}),
+      // 보수 분리 시 부모 보수는 비운다 (응모는 옵션 1개만 고르므로 대표값이 없다).
+      ...(attribute === "rewardJpy" && !on ? { rewardJpy: null } : {}),
+    });
+  };
+
+  const updateOptionAt = (
+    index: number,
+    optionIndex: number,
+    patch: Partial<RecruitOptionRow>,
+  ) => {
+    const current = value[index];
+    if (!current) return;
+    const options = current.options.map((option, i) =>
+      i === optionIndex ? { ...option, ...patch } : option,
+    );
+    const countSplit =
+      options.length > 0 &&
+      options.every((option) => option.recruitCount !== null);
+    updateAt(index, {
+      options,
+      ...(countSplit ? { recruitCount: optionCountSum(options) } : {}),
     });
   };
 
@@ -209,6 +318,8 @@ export function RecruitList({
     errors: ItemError | undefined,
   ) => {
     if (rewardType !== "PER_SUBTYPE") return null;
+    // 옵션별 보수 분리 시 서브타입 보수 입력은 숨긴다 (옵션 행에서 입력).
+    if (optionAttributeOn(row, "rewardJpy")) return null;
     return (
       <div className={styles.snsField}>
         <label className={styles.subLabel}>보수 금액 (JPY)</label>
@@ -343,7 +454,10 @@ export function RecruitList({
                     )}
                   </div>
                   <div className={styles.snsField}>
-                    <label className={styles.subLabel}>모집 인원</label>
+                    <label className={styles.subLabel}>
+                      모집 인원
+                      {optionAttributeOn(row, "recruitCount") && " (타입별 합계)"}
+                    </label>
                     <div className={styles.snsCountRow}>
                       <input
                         type="text"
@@ -351,6 +465,7 @@ export function RecruitList({
                         className={styles.input}
                         value={Number.isFinite(row.recruitCount) ? String(row.recruitCount) : ""}
                         disabled={disabled}
+                        readOnly={optionAttributeOn(row, "recruitCount")}
                         onChange={(event) =>
                           updateAt(index, {
                             recruitCount: parseIntegerInput(event.target.value),
@@ -388,6 +503,97 @@ export function RecruitList({
                       </div>
                       {errors?.subTypeOptions && (
                         <div className={styles.error}>{errors.subTypeOptions}</div>
+                      )}
+                    </div>
+                  )}
+                  {subType === "INSTAGRAM" && row.subTypeOptions.length > 0 && (
+                    <div className={styles.snsField} style={{ gridColumn: "1 / -1" }}>
+                      <label className={styles.subLabel}>포스트 타입별 세부 설정</label>
+                      <div className={styles.snsCountRow}>
+                        <label className={styles.snsToggle} style={{ marginRight: 12 }}>
+                          <input
+                            type="checkbox"
+                            checked={optionAttributeOn(row, "recruitCount")}
+                            disabled={disabled}
+                            onChange={() => toggleOptionAttribute(index, "recruitCount")}
+                          />
+                          <span className={styles.snsToggleLabel}>타입별 인원</span>
+                        </label>
+                        {rewardType === "PER_SUBTYPE" && (
+                          <label className={styles.snsToggle}>
+                            <input
+                              type="checkbox"
+                              checked={optionAttributeOn(row, "rewardJpy")}
+                              disabled={disabled}
+                              onChange={() => toggleOptionAttribute(index, "rewardJpy")}
+                            />
+                            <span className={styles.snsToggleLabel}>타입별 보수</span>
+                          </label>
+                        )}
+                      </div>
+                      {row.options.map((optionRow, optionIndex) => (
+                        <div
+                          key={optionRow.option}
+                          className={styles.snsCountRow}
+                          style={{ marginTop: 6 }}
+                        >
+                          <span className={styles.snsToggleLabel} style={{ minWidth: 36 }}>
+                            {INSTAGRAM_POST_TYPE_LABELS[
+                              optionRow.option as InstagramPostType
+                            ] ?? optionRow.option}
+                          </span>
+                          {optionAttributeOn(row, "recruitCount") && (
+                            <>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                className={styles.input}
+                                style={{ maxWidth: 90 }}
+                                placeholder="인원"
+                                value={
+                                  typeof optionRow.recruitCount === "number" &&
+                                  Number.isFinite(optionRow.recruitCount)
+                                    ? String(optionRow.recruitCount)
+                                    : ""
+                                }
+                                disabled={disabled}
+                                onChange={(event) =>
+                                  updateOptionAt(index, optionIndex, {
+                                    recruitCount: parseIntegerInput(event.target.value),
+                                  })
+                                }
+                              />
+                              <span className={styles.snsSuffix}>명</span>
+                            </>
+                          )}
+                          {optionAttributeOn(row, "rewardJpy") && (
+                            <>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                className={styles.input}
+                                style={{ maxWidth: 110 }}
+                                placeholder="보수"
+                                value={
+                                  typeof optionRow.rewardJpy === "number" &&
+                                  Number.isFinite(optionRow.rewardJpy)
+                                    ? String(optionRow.rewardJpy)
+                                    : ""
+                                }
+                                disabled={disabled}
+                                onChange={(event) =>
+                                  updateOptionAt(index, optionIndex, {
+                                    rewardJpy: parseIntegerInput(event.target.value),
+                                  })
+                                }
+                              />
+                              <span className={styles.snsSuffix}>円</span>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                      {errors?.options && (
+                        <div className={styles.error}>{errors.options}</div>
                       )}
                     </div>
                   )}

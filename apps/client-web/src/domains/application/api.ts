@@ -1,9 +1,9 @@
 import {
   InfluencerApplicationListResponseSchema,
   InfluencerApplicationSchema,
+  type ApplicationOption, // new
   type AttachmentUploadInput,
   type InfluencerApplication,
-  type InstagramPostType,
   type CampaignSubType,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
@@ -23,12 +23,12 @@ export async function getApplication(
 export async function createApplication(
   campaignId: string,
   subTypes: CampaignSubType[],
-  instagramPostType: InstagramPostType | null,
+  options: ApplicationOption[], // new — 서브타입 옵션 선택 (구 instagramPostType 일반화)
 ): Promise<InfluencerApplication> {
   const res = await api.post("/influencer/applications", {
     campaignId,
     subTypes,
-    instagramPostType: instagramPostType ?? undefined,
+    options,
   });
   return InfluencerApplicationSchema.parse(res.data);
 }

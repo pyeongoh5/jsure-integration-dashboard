@@ -175,7 +175,10 @@ export function Apply() {
       createApplication(
         id,
         Array.from(selectedSns),
-        wantsInstagram ? instagramPostType : null,
+        // new — 옵션 선택은 (subType, option) 배열로 전송
+        wantsInstagram && instagramPostType
+          ? [{ subType: "INSTAGRAM", option: instagramPostType }]
+          : [],
       ),
     onSuccess: () => nav("/applications", { replace: true }),
     onError: (err: unknown) => {

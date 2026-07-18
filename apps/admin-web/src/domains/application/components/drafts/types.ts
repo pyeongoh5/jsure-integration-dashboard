@@ -1,8 +1,8 @@
 import type {
+  ApplicationOption,
   ApplicationStatus,
   CampaignCategory,
   CampaignSubType,
-  InstagramPostType,
   PostReviewStatus,
   Attachment,
 } from "@jsure/shared";
@@ -60,7 +60,8 @@ export type DraftReview = {
   category: CampaignCategory;
   subTypes: CampaignSubType[];
   media: Media[];
-  instagramPostType: InstagramPostType | null;
+  /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS). */
+  selectedOptions: ApplicationOption[];
   posts: DraftPost[];
   reviewUrls: Partial<Record<"LIPS" | "ATCOSME", string>>;
   submittedAt: string; // relative

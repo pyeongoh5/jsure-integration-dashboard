@@ -3,6 +3,7 @@ import { ensureSettlementForApplication } from "./ensure-settlement";
 type ApplicationSelect = {
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
   subTypes: string[];
+  options: { subType: string; option: string }[];
   posts: { subType: string; insightSubmittedAt: Date | null }[];
   campaign: {
     category: "SNS" | "FAKE_PURCHASE" | "SIMPLE_REVIEW";
@@ -13,6 +14,7 @@ type ApplicationSelect = {
       insightRequired: boolean;
       productPriceJpy: number | null;
       rewardJpy: number | null;
+      options?: { option: string; rewardJpy: number | null }[];
     }[];
   };
 };
@@ -44,6 +46,7 @@ describe("ensureSettlementForApplication — FAKE_PURCHASE", () => {
     const { prisma, upserts } = makeStubPrisma({
       submissionReviewStatus: "APPROVED",
       subTypes: ["QOO10"],
+      options: [],
       posts: [{ subType: "QOO10", insightSubmittedAt: null }],
       campaign: {
         category: "FAKE_PURCHASE",
@@ -71,6 +74,7 @@ describe("ensureSettlementForApplication — FAKE_PURCHASE", () => {
     const { prisma, upserts } = makeStubPrisma({
       submissionReviewStatus: "PENDING",
       subTypes: ["QOO10"],
+      options: [],
       posts: [{ subType: "QOO10", insightSubmittedAt: null }],
       campaign: {
         category: "FAKE_PURCHASE",
@@ -111,6 +115,7 @@ describe("ensureSettlementForApplication — SNS", () => {
     const { prisma, upserts } = makeStubPrisma({
       submissionReviewStatus: "APPROVED",
       subTypes: ["INSTAGRAM", "X"],
+      options: [],
       posts: [
         { subType: "INSTAGRAM", insightSubmittedAt: new Date() },
         { subType: "X", insightSubmittedAt: null },
@@ -130,6 +135,7 @@ describe("ensureSettlementForApplication — SNS", () => {
     const { prisma, upserts } = makeStubPrisma({
       submissionReviewStatus: "APPROVED",
       subTypes: ["INSTAGRAM", "X"],
+      options: [],
       posts: [
         { subType: "INSTAGRAM", insightSubmittedAt: new Date() },
         { subType: "X", insightSubmittedAt: new Date() },
@@ -149,10 +155,53 @@ describe("ensureSettlementForApplication — SNS", () => {
     expect(args.create.productRefundJpy).toBe(0);
   });
 
+  it("옵션별 보수 분리: 선택 옵션(REELS)의 보수로 합산", async () => {
+    const { prisma, upserts } = makeStubPrisma({
+      submissionReviewStatus: "APPROVED",
+      subTypes: ["INSTAGRAM", "X"],
+      options: [{ subType: "INSTAGRAM", option: "REELS" }],
+      posts: [
+        { subType: "INSTAGRAM", insightSubmittedAt: new Date() },
+        { subType: "X", insightSubmittedAt: new Date() },
+      ],
+      campaign: {
+        category: "SNS",
+        rewardType: "PER_SUBTYPE",
+        rewardJpy: 0,
+        recruits: [
+          {
+            subType: "INSTAGRAM",
+            insightRequired: true,
+            productPriceJpy: null,
+            // 보수 분리 시 부모 보수는 null
+            rewardJpy: null,
+            options: [
+              { option: "FEED", rewardJpy: 5000 },
+              { option: "REELS", rewardJpy: 8000 },
+            ],
+          },
+          {
+            subType: "X",
+            insightRequired: true,
+            productPriceJpy: null,
+            rewardJpy: 3000,
+          },
+        ],
+      },
+    });
+    await ensureSettlementForApplication(prisma, "app-1");
+    expect(upserts).toHaveLength(1);
+    const args = upserts[0] as UpsertArgs;
+    // REELS 8000 + X 3000
+    expect(args.create.rewardAmountJpy).toBe(11000);
+    expect(args.create.amountJpy).toBe(11000);
+  });
+
   it("UNIFIED: 참여 서브타입 수와 무관하게 campaign.rewardJpy 로 생성", async () => {
     const { prisma, upserts } = makeStubPrisma({
       submissionReviewStatus: "APPROVED",
       subTypes: ["INSTAGRAM", "X"],
+      options: [],
       posts: [
         { subType: "INSTAGRAM", insightSubmittedAt: new Date() },
         { subType: "X", insightSubmittedAt: new Date() },

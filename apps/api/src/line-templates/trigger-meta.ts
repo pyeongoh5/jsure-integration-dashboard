@@ -24,12 +24,16 @@ export type ApplicationWithRels = CampaignApplication & {
     | "productSummary"
     | "category"
   > & {
-    recruits: Pick<
+    recruits: (Pick<
       CampaignRecruit,
       "subType" | "rewardJpy" | "productPriceJpy" | "productUrl"
-    >[];
+    > & {
+      options: { option: string; rewardJpy: number | null }[];
+    })[];
   };
   influencer: Pick<Influencer, "id" | "name" | "lineUserId">;
+  /** 응모가 선택한 서브타입 옵션 — 옵션별 보수 해석에 사용. */
+  options: { subType: string; option: string }[];
 };
 
 export type DispatchContext = {
@@ -58,6 +62,7 @@ export type TriggerMetaEntry = {
  * 5개 이상의 호출부에서 동일하게 사용하도록 하나의 상수로 통일한다.
  */
 export const DISPATCH_APPLICATION_INCLUDE = {
+  options: { select: { subType: true, option: true } },
   campaign: {
     select: {
       id: true,
@@ -73,6 +78,7 @@ export const DISPATCH_APPLICATION_INCLUDE = {
           rewardJpy: true,
           productPriceJpy: true,
           productUrl: true,
+          options: { select: { option: true, rewardJpy: true } },
         },
       },
     },
@@ -126,7 +132,11 @@ const campaignRewardJpy: TriggerVariableWithResolver = {
   sample: "15,000",
   resolver: (ctx) =>
     formatJpy(
-      applicationRewardJpy(ctx.application.campaign, ctx.application.subTypes),
+      applicationRewardJpy(
+        ctx.application.campaign,
+        ctx.application.subTypes,
+        ctx.application.options,
+      ),
     ),
 };
 
@@ -309,6 +319,7 @@ const totalSettlementJpy: TriggerVariableWithResolver = {
     const { rewardAmountJpy, productRefundJpy } = settlementAmounts(
       ctx.application.campaign,
       ctx.application.subTypes,
+      ctx.application.options,
     );
     return formatJpy(rewardAmountJpy + productRefundJpy);
   },

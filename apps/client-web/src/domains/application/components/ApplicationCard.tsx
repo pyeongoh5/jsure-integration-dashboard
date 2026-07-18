@@ -39,13 +39,18 @@ export function ApplicationCard({ app, onSelect }: Props) {
       <div className={styles.head}>
         <div className={styles.title}>
           {app.campaignTitle}
-          {app.subTypes.map((subType) => ( // new — Instagram 은 포스트 타입까지 한 태그로 합쳐 표기
-            <span key={subType} className={styles.sns}>
-              {subType === "INSTAGRAM" && app.instagramPostType
-                ? `${SUB_TYPE_LABEL.INSTAGRAM} - ${app.instagramPostType}`
-                : SUB_TYPE_LABEL[subType]}
-            </span>
-          ))}
+          {app.subTypes.map((subType) => { // new — 선택 옵션(FEED/REELS)은 한 태그로 합쳐 표기
+            const selected = app.selectedOptions.find(
+              (entry) => entry.subType === subType,
+            );
+            return (
+              <span key={subType} className={styles.sns}>
+                {selected
+                  ? `${SUB_TYPE_LABEL[subType]} - ${selected.option}`
+                  : SUB_TYPE_LABEL[subType]}
+              </span>
+            );
+          })}
         </div>
         <StageBadge stage={app.displayStage} />
       </div>

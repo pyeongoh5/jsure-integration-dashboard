@@ -4,15 +4,16 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import type {
-  AttachmentUploadInput,
-  CampaignCategory,
-  CampaignSubType,
-  InfluencerApplication,
-  InstagramPostType,
-  RewardType,
-  SubmittedPost,
-  ApplicationStatus,
+import {
+  OPTION_SELECTABLE_SUB_TYPES,
+  type ApplicationOption,
+  type ApplicationStatus,
+  type AttachmentUploadInput,
+  type CampaignCategory,
+  type CampaignSubType,
+  type InfluencerApplication,
+  type RewardType,
+  type SubmittedPost,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
@@ -62,7 +63,7 @@ type ApplicationRow = {
   completedAt: Date | null;
   rejectReason: string | null;
   subTypes: CampaignSubType[];
-  instagramPostType: InstagramPostType | null;
+  options: { subType: CampaignSubType; option: string }[];
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
   submissionRejections: { comment: string; rejectedAt: Date }[];
   orderNumber: string | null;
@@ -143,7 +144,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     campaignCategory: row.campaign.category,
     campaignTitle: row.campaign.title,
     campaignThumbnailUrl: row.campaign.thumbnailUrl,
-    rewardJpy: applicationRewardJpy(row.campaign, row.subTypes),
+    rewardJpy: applicationRewardJpy(row.campaign, row.subTypes, row.options),
     status: row.status,
     displayStage: deriveDisplayStage({
       status: row.status,
@@ -169,7 +170,10 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
     rejectReason: row.rejectReason,
     subTypes: row.subTypes,
-    instagramPostType: row.instagramPostType,
+    selectedOptions: row.options.map((entry) => ({
+      subType: entry.subType,
+      option: entry.option,
+    })),
     submissionReviewStatus: row.submissionReviewStatus,
     lastRejectionComment: latestRejection ? latestRejection.comment : null,
     posts: row.posts.map(toPost),
@@ -184,6 +188,9 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
 
 const INCLUDE = {
   posts: true,
+  options: {
+    select: { subType: true, option: true },
+  },
   submissionRejections: {
     orderBy: { rejectedAt: "desc" as const },
     take: 1,
@@ -202,7 +209,14 @@ const INCLUDE = {
       rewardJpy: true,
       postingPeriodDays: true,
       recruits: {
-        select: { subType: true, insightRequired: true, rewardJpy: true },
+        select: {
+          subType: true,
+          insightRequired: true,
+          rewardJpy: true,
+          options: {
+            select: { option: true, recruitCount: true, rewardJpy: true },
+          },
+        },
       },
     },
   },
@@ -261,7 +275,7 @@ export class InfluencerApplicationsService {
     influencerId: string,
     campaignId: string,
     subTypesInput: CampaignSubType[],
-    instagramPostType: InstagramPostType | null,
+    optionsInput: ApplicationOption[],
   ): Promise<InfluencerApplication> {
     let subTypes = subTypesInput;
     const now = new Date();
@@ -422,27 +436,42 @@ export class InfluencerApplicationsService {
       }
     }
 
-    // INSTAGRAM 응모는 캠페인이 허용한 subTypeOptions(FEED/REELS) 중 정확히 1개를 선택해야 한다.
-    const instagramRecruit = campaign.recruits.find(
-      (recruit) => recruit.subType === "INSTAGRAM",
+    // 옵션 선택형 서브타입(INSTAGRAM)은 캠페인이 허용한 subTypeOptions(FEED/REELS)
+    // 중 정확히 1개를 선택해야 한다. 참여하지 않는 서브타입의 옵션은 버린다.
+    const normalizedOptions = optionsInput.filter((entry) =>
+      subTypes.includes(entry.subType),
     );
-    const wantsInstagram = subTypes.includes("INSTAGRAM");
-    if (wantsInstagram) {
-      if (!instagramPostType) {
+    for (const subType of OPTION_SELECTABLE_SUB_TYPES) {
+      if (!subTypes.includes(subType)) continue;
+      const selected = normalizedOptions.filter(
+        (entry) => entry.subType === subType,
+      );
+      if (selected.length !== 1) {
         throw new BadRequestException({
-          code: "INSTAGRAM_POST_TYPE_REQUIRED",
+          code: "SUBTYPE_OPTION_REQUIRED",
           message: "게시물 타입(피드/릴스) 을 선택해주세요",
         });
       }
-      if (
-        !instagramRecruit ||
-        !instagramRecruit.subTypeOptions.includes(instagramPostType)
-      ) {
+      const recruit = campaign.recruits.find(
+        (candidate) => candidate.subType === subType,
+      );
+      if (!recruit || !recruit.subTypeOptions.includes(selected[0]!.option)) {
         throw new BadRequestException({
-          code: "INSTAGRAM_POST_TYPE_NOT_ALLOWED",
+          code: "SUBTYPE_OPTION_NOT_ALLOWED",
           message: "선택한 게시물 타입은 이 캠페인에서 모집하지 않습니다",
         });
       }
+    }
+    // 선택형이 아닌 서브타입의 옵션 입력은 허용하지 않는다.
+    const unexpected = normalizedOptions.filter(
+      (entry) =>
+        !OPTION_SELECTABLE_SUB_TYPES.includes(entry.subType),
+    );
+    if (unexpected.length > 0) {
+      throw new BadRequestException({
+        code: "SUBTYPE_OPTION_NOT_ALLOWED",
+        message: "옵션을 선택할 수 없는 서브타입이 포함되어 있습니다",
+      });
     }
 
     const blockedByExclusion = subTypes.filter((subType) =>
@@ -462,7 +491,15 @@ export class InfluencerApplicationsService {
         influencerId,
         subTypes,
         status: "APPLIED",
-        instagramPostType: wantsInstagram ? instagramPostType : null,
+        options:
+          normalizedOptions.length > 0
+            ? {
+                create: normalizedOptions.map((entry) => ({
+                  subType: entry.subType,
+                  option: entry.option,
+                })),
+              }
+            : undefined,
       },
       include: INCLUDE,
     });

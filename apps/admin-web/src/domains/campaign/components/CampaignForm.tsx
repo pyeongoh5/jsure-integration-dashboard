@@ -42,6 +42,7 @@ type RecruitItemError = Partial<
     | "recruitCount"
     | "rewardJpy"
     | "subTypeOptions"
+    | "options"
     | "productPriceJpy"
     | "productUrl",
     string
@@ -157,12 +158,35 @@ export function CampaignForm({
       return;
     }
     try {
+      // 옵션별 세부 설정은 옵션 선택형(INSTAGRAM)에서만, UNIFIED 면 옵션 보수 제거.
+      const normalizeRecruitOptions = (
+        recruit: Values["recruits"][number],
+      ): Values["recruits"][number]["options"] => {
+        if (recruit.subType !== "INSTAGRAM") return [];
+        const options =
+          values.rewardType === "PER_SUBTYPE"
+            ? recruit.options
+            : recruit.options.map((option) => ({ ...option, rewardJpy: null }));
+        const meaningless = options.every(
+          (option) => option.recruitCount === null && option.rewardJpy === null,
+        );
+        return meaningless ? [] : options;
+      };
       const normalizedRecruits = values.recruits.map((recruit) => {
-        const rewardJpy = values.rewardType === "PER_SUBTYPE" ? recruit.rewardJpy : null;
+        const options = normalizeRecruitOptions(recruit);
+        // 옵션별 보수 분리 시 서브타입 보수는 null 강제.
+        const rewardSplit =
+          options.length > 0 &&
+          options.every((option) => option.rewardJpy !== null);
+        const rewardJpy =
+          values.rewardType === "PER_SUBTYPE" && !rewardSplit
+            ? recruit.rewardJpy
+            : null;
         if (values.category === "SNS") {
           return {
             ...recruit,
             rewardJpy,
+            options,
             productPriceJpy: null,
             productUrl: null,
           };
@@ -171,6 +195,7 @@ export function CampaignForm({
           return {
             ...recruit,
             rewardJpy,
+            options: [],
             productPriceJpy: null,
             productUrl: null,
             insightRequired: false,
@@ -180,6 +205,7 @@ export function CampaignForm({
         return {
           ...recruit,
           rewardJpy,
+          options: [],
           minFollowers: 0,
           insightRequired: false,
         };
@@ -231,6 +257,7 @@ export function CampaignForm({
             "recruitCount",
             "rewardJpy",
             "subTypeOptions",
+            "options",
             "productPriceJpy",
             "productUrl",
           ] as const) {
@@ -381,12 +408,24 @@ export function CampaignForm({
                       disabled={submitting}
                       onChange={() => {
                         field.onChange("UNIFIED");
-                        // 통합 보수에서는 서브타입별 보수를 사용하지 않는다.
+                        // 통합 보수에서는 서브타입별/옵션별 보수를 사용하지 않는다.
                         methods.setValue(
                           "recruits",
-                          methods
-                            .getValues("recruits")
-                            .map((recruit) => ({ ...recruit, rewardJpy: null })),
+                          methods.getValues("recruits").map((recruit) => {
+                            const options = recruit.options.map((option) => ({
+                              ...option,
+                              rewardJpy: null,
+                            }));
+                            return {
+                              ...recruit,
+                              rewardJpy: null,
+                              options: options.some(
+                                (option) => option.recruitCount !== null,
+                              )
+                                ? options
+                                : [],
+                            };
+                          }),
                           { shouldValidate: false, shouldDirty: true },
                         );
                       }}
@@ -588,10 +627,17 @@ export function CampaignForm({
                   onClick={() => {
                     methods.setValue(
                       "recruits",
-                      methods.getValues("recruits").map((recruit) => ({
-                        ...recruit,
-                        rewardJpy: bulkRewardJpy,
-                      })),
+                      methods.getValues("recruits").map((recruit) => {
+                        // 옵션별 보수 분리 중인 recruit 는 일괄 적용 대상에서 제외.
+                        const rewardSplit =
+                          recruit.options.length > 0 &&
+                          recruit.options.every(
+                            (option) => option.rewardJpy !== null,
+                          );
+                        return rewardSplit
+                          ? recruit
+                          : { ...recruit, rewardJpy: bulkRewardJpy };
+                      }),
                       { shouldValidate: false, shouldDirty: true },
                     );
                   }}

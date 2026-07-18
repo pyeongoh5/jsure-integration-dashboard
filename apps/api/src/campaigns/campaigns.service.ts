@@ -5,7 +5,9 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import {
+  OPTION_SELECTABLE_SUB_TYPES,
   SLOT_CONSUMING_STATUSES,
+  SUB_TYPE_LABEL,
   type ApplicationStatus,
   type CampaignCategory,
   type CampaignResponse,
@@ -170,21 +172,138 @@ export function validateRecruitsForCategory(
   }
 }
 
+type RecruitOptionConfigInput = {
+  option: string;
+  recruitCount: number | null;
+  rewardJpy: number | null;
+};
+
+type NormalizedRecruitInput = {
+  subType: CampaignRecruit["subType"];
+  minFollowers: number;
+  recruitCount: number;
+  rewardJpy: number | null;
+  subTypeOptions: string[];
+  insightRequired: boolean;
+  isRequired: boolean;
+  productPriceJpy: number | null;
+  productUrl: string | null;
+  options: RecruitOptionConfigInput[];
+};
+
+/** normalize 결과를 prisma nested create 형태로 변환. */
+function toRecruitCreateData(recruit: NormalizedRecruitInput) {
+  const { options, ...scalar } = recruit;
+  return {
+    ...scalar,
+    options: options.length > 0 ? { create: options } : undefined,
+  };
+}
+
+/** recruit 가 옵션별 보수 분리를 사용하는지 (모든 옵션 행에 rewardJpy 존재). */
+export function usesOptionRewardSplit(recruit: {
+  options: { rewardJpy: number | null }[];
+}): boolean {
+  return (
+    recruit.options.length > 0 &&
+    recruit.options.every((option) => option.rewardJpy !== null)
+  );
+}
+
 /** 서브타입별 보수 금액이 보수 체계와 일치하는지 서버 측 검증. */
 export function validateRecruitsForRewardType(
   rewardType: RewardType,
-  recruits: { subType: string; rewardJpy: number | null }[],
+  recruits: {
+    subType: string;
+    rewardJpy: number | null;
+    options: RecruitOptionConfigInput[];
+  }[],
 ): void {
   for (const recruit of recruits) {
+    const optionRewardSplit = usesOptionRewardSplit(recruit);
     if (rewardType === "PER_SUBTYPE") {
-      if (recruit.rewardJpy === null) {
+      if (recruit.rewardJpy === null && !optionRewardSplit) {
         throw new BadRequestException(
           `개별 보수 캠페인에서는 ${recruit.subType} 모집의 보수 금액을 입력해야 합니다`,
         );
       }
-    } else if (recruit.rewardJpy !== null) {
+      // 보수 분리 시 부모 보수는 null 강제 — 응모는 옵션 1개만 고르므로
+      // 서브타입 보수에 어떤 대표값을 남겨도 거짓이 된다.
+      if (recruit.rewardJpy !== null && optionRewardSplit) {
+        throw new BadRequestException(
+          "옵션별 보수 사용 시 서브타입 보수는 비워야 합니다",
+        );
+      }
+    } else {
+      if (recruit.rewardJpy !== null) {
+        throw new BadRequestException(
+          "통합 보수 캠페인에서는 서브타입별 보수를 지정할 수 없습니다",
+        );
+      }
+      if (recruit.options.some((option) => option.rewardJpy !== null)) {
+        throw new BadRequestException(
+          "통합 보수 캠페인에서는 옵션별 보수를 지정할 수 없습니다",
+        );
+      }
+    }
+  }
+}
+
+/**
+ * 옵션별 정원·보수 설정 검증 — 옵션 행 집합은 subTypeOptions 전체와 1:1,
+ * recruitCount/rewardJpy 는 속성별 all-or-nothing.
+ */
+export function validateRecruitOptionConfigs(
+  recruits: {
+    subType: string;
+    subTypeOptions: string[];
+    options: RecruitOptionConfigInput[];
+  }[],
+): void {
+  for (const recruit of recruits) {
+    if (recruit.options.length === 0) continue;
+    if (!OPTION_SELECTABLE_SUB_TYPES.includes(recruit.subType as never)) {
       throw new BadRequestException(
-        "통합 보수 캠페인에서는 서브타입별 보수를 지정할 수 없습니다",
+        `${recruit.subType} 모집에서는 옵션별 설정을 사용할 수 없습니다`,
+      );
+    }
+    const names = recruit.options.map((option) => option.option);
+    const nameSet = new Set(names);
+    const allowedSet = new Set(recruit.subTypeOptions);
+    const sameAsAllowed =
+      nameSet.size === names.length &&
+      nameSet.size === allowedSet.size &&
+      names.every((name) => allowedSet.has(name));
+    if (!sameAsAllowed) {
+      throw new BadRequestException(
+        "옵션별 설정은 모집하는 모든 옵션과 정확히 일치해야 합니다",
+      );
+    }
+    const withCount = recruit.options.filter(
+      (option) => option.recruitCount !== null,
+    );
+    if (withCount.length !== 0 && withCount.length !== recruit.options.length) {
+      throw new BadRequestException(
+        "옵션별 정원은 전부 입력하거나 전부 비워야 합니다",
+      );
+    }
+    if (withCount.some((option) => (option.recruitCount ?? 0) < 1)) {
+      throw new BadRequestException("옵션별 정원은 1 이상이어야 합니다");
+    }
+    const withReward = recruit.options.filter(
+      (option) => option.rewardJpy !== null,
+    );
+    if (
+      withReward.length !== 0 &&
+      withReward.length !== recruit.options.length
+    ) {
+      throw new BadRequestException(
+        "옵션별 보수는 전부 입력하거나 전부 비워야 합니다",
+      );
+    }
+    if (withCount.length === 0 && withReward.length === 0) {
+      throw new BadRequestException(
+        "옵션별 설정에는 정원 또는 보수를 입력해야 합니다",
       );
     }
   }
@@ -200,6 +319,7 @@ type CampaignRecruitRow = {
   isRequired: boolean;
   productPriceJpy: number | null;
   productUrl: string | null;
+  options: RecruitOptionConfigInput[];
 };
 
 type CampaignRow = {
@@ -249,6 +369,11 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
       isRequired: recruit.isRequired,
       productPriceJpy: recruit.productPriceJpy,
       productUrl: recruit.productUrl,
+      options: recruit.options.map((option) => ({
+        option: option.option,
+        recruitCount: option.recruitCount,
+        rewardJpy: option.rewardJpy,
+      })),
     })),
     recruitStartDate: utcToJstDateStr(row.recruitStartAt),
     recruitEndDate: utcToJstDateStr(row.recruitEndAt),
@@ -282,6 +407,10 @@ const RECRUITS_INCLUDE = {
       isRequired: true,
       productPriceJpy: true,
       productUrl: true,
+      options: {
+        select: { option: true, recruitCount: true, rewardJpy: true },
+        orderBy: { option: "asc" as const },
+      },
     },
     orderBy: { subType: "asc" as const },
   },
@@ -371,6 +500,7 @@ export class CampaignsService {
     const recruits = this.normalizeCampaignRecruitsInput(input.recruits);
     validateRecruitsForCategory(input.category, recruits);
     validateRecruitsForRewardType(input.rewardType, recruits);
+    validateRecruitOptionConfigs(recruits);
     const row = await this.prisma.campaign.create({
       data: {
         category: input.category,
@@ -387,7 +517,7 @@ export class CampaignsService {
         cautions: input.cautions,
         thumbnailUrl: input.thumbnailUrl ?? null,
         recruits: {
-          create: recruits,
+          create: recruits.map((recruit) => toRecruitCreateData(recruit)),
         },
         exclusionsAsExcluding: {
           create: excludedCampaignIds.map((excludedCampaignId) => ({
@@ -408,27 +538,33 @@ export class CampaignsService {
    */
   private normalizeCampaignRecruitsInput(
     recruits: CreateCampaignRequest["recruits"],
-  ): {
-    subType: CampaignRecruit["subType"];
-    minFollowers: number;
-    recruitCount: number;
-    rewardJpy: number | null;
-    subTypeOptions: string[];
-    insightRequired: boolean;
-    isRequired: boolean;
-    productPriceJpy: number | null;
-    productUrl: string | null;
-  }[] {
+  ): NormalizedRecruitInput[] {
     return recruits.map((recruit) => {
+      const options: RecruitOptionConfigInput[] = (recruit.options ?? []).map(
+        (option) => ({
+          option: option.option,
+          recruitCount: option.recruitCount ?? null,
+          rewardJpy: option.rewardJpy ?? null,
+        }),
+      );
+      // 정원 분리 시 부모 recruitCount 는 옵션 정원 합계로 저장 —
+      // 카드 합산·전체 마감 판정 등 기존 참조가 그대로 동작한다.
+      const countSplit =
+        options.length > 0 &&
+        options.every((option) => option.recruitCount !== null);
+      const recruitCount = countSplit
+        ? options.reduce((sum, option) => sum + (option.recruitCount ?? 0), 0)
+        : recruit.recruitCount;
       const base = {
         subType: recruit.subType,
         minFollowers: recruit.minFollowers,
-        recruitCount: recruit.recruitCount,
+        recruitCount,
         rewardJpy: recruit.rewardJpy ?? null,
         insightRequired: recruit.insightRequired ?? true,
         isRequired: recruit.isRequired ?? false,
         productPriceJpy: recruit.productPriceJpy ?? null,
         productUrl: recruit.productUrl ?? null,
+        options,
       };
       const unique = Array.from(new Set(recruit.subTypeOptions ?? []));
       if (recruit.subType === "INSTAGRAM") {
@@ -444,6 +580,40 @@ export class CampaignsService {
       }
       return { ...base, subTypeOptions: [] };
     });
+  }
+
+  /**
+   * 옵션별 보수 분리 활성화 불변식: 해당 서브타입으로 참여한 기존 유효 응모
+   * 전부에 옵션 선택이 있어야 한다. 없으면 정산 시 금액 미정 응모가 생기므로
+   * 캠페인 저장 시점에 차단한다.
+   */
+  private async assertOptionRewardSplitAllowed(
+    tx: {
+      campaignApplication: {
+        count: (args: {
+          where: Record<string, unknown>;
+        }) => Promise<number>;
+      };
+    },
+    campaignId: string,
+    recruits: NormalizedRecruitInput[],
+  ): Promise<void> {
+    for (const recruit of recruits) {
+      if (!usesOptionRewardSplit(recruit)) continue;
+      const missingOption = await tx.campaignApplication.count({
+        where: {
+          campaignId,
+          subTypes: { has: recruit.subType },
+          status: { not: "CANCELLED" },
+          options: { none: { subType: recruit.subType } },
+        },
+      });
+      if (missingOption > 0) {
+        throw new BadRequestException(
+          `${SUB_TYPE_LABEL[recruit.subType]} 옵션별 보수를 사용하려면 기존 응모 전체에 옵션 선택이 있어야 합니다 (미선택 응모 ${missingOption}건)`,
+        );
+      }
+    }
   }
 
   /**
@@ -540,13 +710,14 @@ export class CampaignsService {
           input.rewardType ?? existing.rewardType,
           normalized,
         );
+        validateRecruitOptionConfigs(normalized);
+        await this.assertOptionRewardSplitAllowed(tx, id, normalized);
         await tx.campaignRecruit.deleteMany({ where: { campaignId: id } });
-        await tx.campaignRecruit.createMany({
-          data: normalized.map((recruit) => ({
-            campaignId: id,
-            ...recruit,
-          })),
-        });
+        for (const recruit of normalized) {
+          await tx.campaignRecruit.create({
+            data: { campaignId: id, ...toRecruitCreateData(recruit) },
+          });
+        }
       }
       if (validatedExcluded !== null) {
         await tx.campaignExclusion.deleteMany({ where: { campaignId: id } });

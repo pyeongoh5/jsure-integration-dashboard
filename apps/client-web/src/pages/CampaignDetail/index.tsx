@@ -63,6 +63,21 @@ const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
   REELS: t("pages.campaignDetail.instagramReels"),
 };
 
+/** 옵션별 정원 분리 recruit 은 "フィード1名・リール2名" 형태로 표기. */ // new
+function formatRecruitCounts(recruit: CampaignRecruit): string {
+  const suffix = t("pages.campaignDetail.recruitCountSuffix");
+  const hasSplitCounts =
+    recruit.options.length > 0 &&
+    recruit.options.every((option) => option.recruitCount !== null);
+  if (!hasSplitCounts) return `${recruit.recruitCount}${suffix}`;
+  return recruit.options
+    .map(
+      (option) =>
+        `${INSTAGRAM_POST_TYPE_LABEL[option.option as InstagramPostType] ?? option.option}${option.recruitCount}${suffix}`,
+    )
+    .join("・");
+}
+
 export function CampaignDetail() {
   const { id = "" } = useParams();
   const nav = useNavigate();
@@ -178,8 +193,7 @@ export function CampaignDetail() {
                   {instagramTypes ? ` (${instagramTypes})` : ""}
                 </span>
                 <span className={styles.snsCount}>
-                  {t("pages.campaignDetail.recruitLabel")} {r.recruitCount}
-                  {t("pages.campaignDetail.recruitCountSuffix")}
+                  {t("pages.campaignDetail.recruitLabel")} {formatRecruitCounts(r)}
                 </span>
                 <span className={styles.snsCond}>
                   {t("pages.campaignDetail.condLabel")}

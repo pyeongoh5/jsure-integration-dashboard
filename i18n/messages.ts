@@ -309,8 +309,9 @@ export const messages = {
       urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
       labelSuffix: { jp: "レビューURL", kr: "리뷰 URL" },
       screenshotsLabelSuffix: {
-        jp: "レビューのスクリーンショット提出",
-        kr: "리뷰 스크린샷 제출",
+        // new — 단순리뷰는 리뷰 대신 즐겨찾기(お気に入り) 등록 스크린샷 제출
+        jp: "お気に入り登録のスクリーンショット提出",
+        kr: "즐겨찾기 등록 스크린샷 제출",
       },
       screenshotsRequired: {
         // new

@@ -201,11 +201,11 @@ export function MeBank() {
                 inputMode="numeric"
                 value={field.value}
                 onChange={(value) =>
-                  field.onChange(value.replace(/[^\d]/g, ""))
+                  field.onChange(value.replace(/[^\d]/g, "").slice(0, 7))
                 }
                 onBlur={field.onBlur}
                 error={field.error}
-                maxLength={8}
+                maxLength={7}
                 aria-invalid={field["aria-invalid"]}
               />
             )}

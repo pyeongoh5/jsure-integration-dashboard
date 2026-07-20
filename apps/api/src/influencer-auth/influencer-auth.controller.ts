@@ -4,11 +4,11 @@ import {
   Controller,
   Get,
   HttpCode,
-  NotFoundException,
   Post,
   Query,
   Redirect,
   Request,
+  UnauthorizedException,
   UseGuards,
   UsePipes,
 } from "@nestjs/common";
@@ -142,8 +142,9 @@ export class InfluencerAuthController {
   async me(
     @Request() req: { user: AuthenticatedInfluencer },
   ): Promise<InfluencerMeResponse> {
+    // 토큰은 유효하지만 계정이 삭제된 경우(DB 초기화 등) — 401 로 재로그인 유도.
     const inf = await this.influencers.findFull(req.user.id);
-    if (!inf) throw new NotFoundException("Influencer not found");
+    if (!inf) throw new UnauthorizedException("Influencer not found");
     const hasAddress =
       Boolean(inf.postalCode) || Boolean(inf.prefecture) || Boolean(inf.city) ||
       Boolean(inf.addressLine1);

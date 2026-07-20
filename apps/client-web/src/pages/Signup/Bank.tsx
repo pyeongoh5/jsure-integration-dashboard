@@ -133,7 +133,7 @@ export function SignupBank() {
             parsed.data as Parameters<typeof lineCompleteSignup>[0],
           )
         : await signupApi(parsed.data as Parameters<typeof signupApi>[0]);
-      auth.setSession(res.accessToken, res.influencer);
+      auth.setSession(res.accessToken, res.influencer, res.refreshToken); // new
       setLineSignupTokenStorage(null);
       reset();
       nav("/", { replace: true });

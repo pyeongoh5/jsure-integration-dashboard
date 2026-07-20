@@ -124,9 +124,12 @@ export class InfluencerAuthService {
       throw err;
     }
 
-    const { sessionId } = await this.sessions.create(influencer.id, ctx);
+    const { sessionId, refreshToken } = await this.sessions.create(
+      influencer.id,
+      ctx,
+    );
     const accessToken = await this.signAccessToken(influencer, sessionId);
-    return { accessToken, influencer: toPublic(influencer) };
+    return { accessToken, refreshToken, influencer: toPublic(influencer) };
   }
 
   async login(
@@ -143,9 +146,25 @@ export class InfluencerAuthService {
     if (inf.status !== "ACTIVE") {
       throw new UnauthorizedException("Account inactive");
     }
-    const { sessionId } = await this.sessions.create(inf.id, ctx);
+    const { sessionId, refreshToken } = await this.sessions.create(inf.id, ctx);
     const accessToken = await this.signAccessToken(inf, sessionId);
-    return { accessToken, influencer: toPublic(inf) };
+    return { accessToken, refreshToken, influencer: toPublic(inf) };
+  }
+
+  /** 리프레시 토큰을 회전시키고 새 액세스 토큰을 발급한다. */
+  async refresh(
+    refreshToken: string,
+    ctx: SessionContext,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const rotated = await this.sessions.rotate(refreshToken, ctx);
+    const inf = await this.prisma.influencer.findUnique({
+      where: { id: rotated.influencerId },
+    });
+    if (!inf || inf.status !== "ACTIVE") {
+      throw new UnauthorizedException("Account inactive");
+    }
+    const accessToken = await this.signAccessToken(inf, rotated.sessionId);
+    return { accessToken, refreshToken: rotated.refreshToken };
   }
 
   async logout(refreshToken: string): Promise<void> {

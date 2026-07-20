@@ -8,12 +8,20 @@ import {
   type ReactNode,
 } from "react";
 import { PublicInfluencerSchema, type PublicInfluencer } from "@jsure/shared";
-import { ME_STORAGE_KEY, TOKEN_STORAGE_KEY } from "../lib/api";
+import {
+  ME_STORAGE_KEY,
+  REFRESH_STORAGE_KEY,
+  TOKEN_STORAGE_KEY,
+} from "../lib/api";
 
 interface AuthState {
   influencer: PublicInfluencer | null;
   isReady: boolean;
-  setSession: (token: string, influencer: PublicInfluencer) => void;
+  setSession: ( // new — refreshToken 저장 추가
+    token: string,
+    influencer: PublicInfluencer,
+    refreshToken?: string,
+  ) => void;
   clear: () => void;
 }
 
@@ -40,8 +48,11 @@ export function InfluencerAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setSession = useCallback(
-    (token: string, inf: PublicInfluencer) => {
+    (token: string, inf: PublicInfluencer, refreshToken?: string) => {
       localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      if (refreshToken) {
+        localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken); // new
+      }
       localStorage.setItem(ME_STORAGE_KEY, JSON.stringify(inf));
       setInfluencer(inf);
     },
@@ -50,6 +61,7 @@ export function InfluencerAuthProvider({ children }: { children: ReactNode }) {
 
   const clear = useCallback(() => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(REFRESH_STORAGE_KEY); // new
     localStorage.removeItem(ME_STORAGE_KEY);
     setInfluencer(null);
   }, []);

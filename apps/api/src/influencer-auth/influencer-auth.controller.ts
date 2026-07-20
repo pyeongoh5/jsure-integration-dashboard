@@ -15,10 +15,14 @@ import {
 import type { Request as ExpressRequest } from "express";
 import {
   InfluencerLoginRequestSchema,
+  InfluencerLogoutRequestSchema,
+  InfluencerRefreshRequestSchema,
   InfluencerSignupRequestSchema,
   LineCompleteSignupRequestSchema,
   type InfluencerLoginRequest,
+  type InfluencerLogoutRequest,
   type InfluencerMeResponse,
+  type InfluencerRefreshRequest,
   type InfluencerSignupRequest,
   type JpPrefecture,
   type LineCompleteSignupRequest,
@@ -80,6 +84,7 @@ export class InfluencerAuthController {
     if (result.kind === "login") {
       const url = new URL(result.redirectTo);
       url.searchParams.set("line_access_token", result.auth.accessToken);
+      url.searchParams.set("line_refresh_token", result.auth.refreshToken);
       return { url: url.toString(), statusCode: 302 };
     }
     const url = new URL(result.redirectTo);
@@ -114,11 +119,22 @@ export class InfluencerAuthController {
     return this.auth.login(dto.email, dto.password, ctxFrom(req));
   }
 
-  @UseGuards(InfluencerJwtAuthGuard)
+  /** 액세스 토큰 만료 시 리프레시 토큰을 회전시켜 재발급. */
+  @HttpCode(200)
+  @Post("refresh")
+  @UsePipes(new ZodValidationPipe(InfluencerRefreshRequestSchema))
+  refresh(@Body() dto: InfluencerRefreshRequest, @Request() req: ExpressRequest) {
+    return this.auth.refresh(dto.refreshToken, ctxFrom(req));
+  }
+
+  // 액세스 토큰이 만료돼도 세션을 폐기할 수 있도록 가드 없이 리프레시 토큰으로 처리.
   @HttpCode(204)
   @Post("logout")
-  async logout(@Request() _req: { user: AuthenticatedInfluencer }) {
-    // Influencers don't use refresh tokens in MVP — access token expiry alone.
+  @UsePipes(new ZodValidationPipe(InfluencerLogoutRequestSchema))
+  async logout(@Body() dto: InfluencerLogoutRequest) {
+    if (dto.refreshToken) {
+      await this.auth.logout(dto.refreshToken);
+    }
   }
 
   @UseGuards(InfluencerJwtAuthGuard)

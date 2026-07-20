@@ -152,7 +152,10 @@ export class InfluencerLineAuthService {
       if (existing.status !== "ACTIVE") {
         throw new UnauthorizedException("Account inactive");
       }
-      const { sessionId } = await this.sessions.create(existing.id, args.ctx);
+      const { sessionId, refreshToken } = await this.sessions.create(
+        existing.id,
+        args.ctx,
+      );
       const accessToken = await this.jwt.signAsync({
         sub: existing.id,
         email: existing.email,
@@ -161,7 +164,7 @@ export class InfluencerLineAuthService {
       });
       return {
         kind: "login",
-        auth: { accessToken, influencer: toPublic(existing) },
+        auth: { accessToken, refreshToken, influencer: toPublic(existing) },
         redirectTo: this.postLoginRedirect(),
       };
     }
@@ -275,14 +278,14 @@ export class InfluencerLineAuthService {
     const inf = await this.prisma.influencer.findUniqueOrThrow({
       where: { id: influencerId },
     });
-    const { sessionId } = await this.sessions.create(inf.id, ctx);
+    const { sessionId, refreshToken } = await this.sessions.create(inf.id, ctx);
     const accessToken = await this.jwt.signAsync({
       sub: inf.id,
       email: inf.email,
       kind: "influencer",
       sid: sessionId,
     });
-    return { accessToken, influencer: toPublic(inf) };
+    return { accessToken, refreshToken, influencer: toPublic(inf) };
   }
 
   private async exchangeCode(code: string): Promise<LineTokenResponse> {

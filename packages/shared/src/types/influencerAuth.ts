@@ -61,10 +61,34 @@ export type PublicInfluencer = z.infer<typeof PublicInfluencerSchema>;
 
 export const InfluencerAuthResponseSchema = z.object({
   accessToken: z.string(),
+  /** 회전형 리프레시 토큰 — /influencer-auth/refresh 로 액세스 토큰 갱신에 사용 */
+  refreshToken: z.string(),
   influencer: PublicInfluencerSchema,
 });
 export type InfluencerAuthResponse = z.infer<
   typeof InfluencerAuthResponseSchema
+>;
+
+export const InfluencerRefreshRequestSchema = z.object({
+  refreshToken: z.string().min(1),
+});
+export type InfluencerRefreshRequest = z.infer<
+  typeof InfluencerRefreshRequestSchema
+>;
+
+export const InfluencerRefreshResponseSchema = z.object({
+  accessToken: z.string(),
+  refreshToken: z.string(),
+});
+export type InfluencerRefreshResponse = z.infer<
+  typeof InfluencerRefreshResponseSchema
+>;
+
+export const InfluencerLogoutRequestSchema = z.object({
+  refreshToken: z.string().min(1).optional(),
+});
+export type InfluencerLogoutRequest = z.infer<
+  typeof InfluencerLogoutRequestSchema
 >;
 
 export const InfluencerMeResponseSchema = z.object({

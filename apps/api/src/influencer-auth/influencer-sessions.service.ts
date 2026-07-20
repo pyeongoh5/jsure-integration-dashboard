@@ -16,7 +16,10 @@ export class InfluencerSessionsService {
     private readonly prisma: PrismaService,
     config: ConfigService,
   ) {
-    const days = Number(config.get<string>("REFRESH_EXPIRES_DAYS") ?? "30");
+    // 어드민(REFRESH_EXPIRES_DAYS)과 분리 — 인플루언서 세션 기간은 독립적으로 조절.
+    const days = Number(
+      config.get<string>("INFLUENCER_REFRESH_EXPIRES_DAYS") ?? "30",
+    );
     this.refreshTtlMs = days * 24 * 60 * 60 * 1000;
   }
 
@@ -43,6 +46,34 @@ export class InfluencerSessionsService {
       },
     });
     return { refreshToken, sessionId: session.id };
+  }
+
+  /**
+   * 리프레시 토큰 회전: 제시된 토큰의 세션을 폐기하고 새 세션을 발급한다.
+   * 폐기·만료된 토큰이면 UnauthorizedException.
+   */
+  async rotate(
+    presented: string,
+    ctx: SessionContext,
+  ): Promise<{ influencerId: string; refreshToken: string; sessionId: string }> {
+    const session = await this.prisma.influencerSession.findUnique({
+      where: { refreshTokenHash: this.hash(presented) },
+    });
+    if (!session) {
+      throw new UnauthorizedException("Session not found");
+    }
+    if (session.revokedAt || session.expiresAt < new Date()) {
+      throw new UnauthorizedException("Session expired");
+    }
+    await this.prisma.influencerSession.update({
+      where: { id: session.id },
+      data: { revokedAt: new Date() },
+    });
+    const { refreshToken, sessionId } = await this.create(
+      session.influencerId,
+      ctx,
+    );
+    return { influencerId: session.influencerId, refreshToken, sessionId };
   }
 
   async revokeByToken(presented: string): Promise<void> {

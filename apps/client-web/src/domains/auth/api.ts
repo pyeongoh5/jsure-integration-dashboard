@@ -7,7 +7,7 @@ import {
   type InfluencerSignupRequest,
   type LineCompleteSignupRequest,
 } from "@jsure/shared";
-import { api } from "@/lib/api";
+import { api, REFRESH_STORAGE_KEY } from "@/lib/api";
 
 export async function signup(
   input: InfluencerSignupRequest,
@@ -33,6 +33,17 @@ export async function lineCompleteSignup(
 ): Promise<InfluencerAuthResponse> {
   const res = await api.post("/influencer-auth/line/complete-signup", input);
   return InfluencerAuthResponseSchema.parse(res.data);
+}
+
+// new — 서버 세션(리프레시 토큰) 폐기. 실패해도 로컬 로그아웃은 진행되므로 무시.
+export async function logout(): Promise<void> {
+  const refreshToken = localStorage.getItem(REFRESH_STORAGE_KEY);
+  if (!refreshToken) return;
+  try {
+    await api.post("/influencer-auth/logout", { refreshToken });
+  } catch {
+    // 서버 폐기 실패는 무시 — 만료로 어차피 무효화된다
+  }
 }
 
 export function lineAuthorizeUrl(): string {

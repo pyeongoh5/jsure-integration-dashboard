@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchMe } from "@/domains/auth";
 import { t } from "@i18n";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
-import { TOKEN_STORAGE_KEY } from "../../lib/api";
+import { REFRESH_STORAGE_KEY, TOKEN_STORAGE_KEY } from "../../lib/api";
 
 export function LineReturn() {
   const [params] = useSearchParams();
@@ -27,18 +27,26 @@ export function LineReturn() {
     }
 
     const token = params.get("line_access_token");
+    const refreshToken = params.get("line_refresh_token"); // new
     if (!token) {
       setError(t("pages.auth.lineReturn.errorReceive"));
       return;
     }
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    if (refreshToken) {
+      localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken); // new
+    }
     fetchMe()
       .then((me) => {
-        auth.setSession(token, {
-          id: me.id,
-          email: me.email,
-          name: me.name,
-        });
+        auth.setSession(
+          token,
+          {
+            id: me.id,
+            email: me.email,
+            name: me.name,
+          },
+          refreshToken ?? undefined,
+        );
         nav("/", { replace: true });
       })
       .catch(() => {

@@ -512,19 +512,21 @@ export class AdminApplicationsService {
     });
     if (refreshed) {
       const category = refreshed.campaign.category;
-      const approveTriggerKey =
-        category === "FAKE_PURCHASE"
-          ? "FAKE_PURCHASE_REVIEW_APPROVED"
-          : category === "SIMPLE_REVIEW"
-            ? "SIMPLE_REVIEW_APPROVED"
-            : "SNS_POST_APPROVED";
-      void this.dispatcher.dispatch(approveTriggerKey, {
-        application: refreshed,
-        settlement: refreshed.settlement,
-      });
-      // 총액 0원 정산은 생성 즉시 완료되므로 종료 메시지를 이 시점에 발송.
+      // 총액 0원 정산은 생성 즉시 완료 — 입금 안내가 포함된 승인 메시지는
+      // 생략하고 캠페인 종료 메시지만 발송한다.
       if (autoCompleted) {
         void this.dispatcher.dispatch(campaignCompletedTriggerKeyFor(category), {
+          application: refreshed,
+          settlement: refreshed.settlement,
+        });
+      } else {
+        const approveTriggerKey =
+          category === "FAKE_PURCHASE"
+            ? "FAKE_PURCHASE_REVIEW_APPROVED"
+            : category === "SIMPLE_REVIEW"
+              ? "SIMPLE_REVIEW_APPROVED"
+              : "SNS_POST_APPROVED";
+        void this.dispatcher.dispatch(approveTriggerKey, {
           application: refreshed,
           settlement: refreshed.settlement,
         });

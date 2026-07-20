@@ -124,10 +124,7 @@ export function SignupProfile() {
             <input
               id={field.id}
               type="date"
-              className={[
-                labeledInputStyles.input,
-                field.error && labeledInputStyles.error,
-              ]
+              className={[labeledInputStyles.input, field.error && labeledInputStyles.error]
                 .filter(Boolean)
                 .join(" ")}
               value={field.value}
@@ -141,10 +138,7 @@ export function SignupProfile() {
 
         <AddressFormFields prefix="address" />
 
-        <WizardFooter
-          onBack={() => nav(-1)}
-          onNext={methods.handleSubmit(next)}
-        />
+        <WizardFooter onBack={() => nav(-1)} onNext={methods.handleSubmit(next)} />
       </form>
     </FormProvider>
   );

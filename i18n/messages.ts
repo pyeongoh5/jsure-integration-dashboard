@@ -571,7 +571,7 @@ export const messages = {
         },
         labelReward: { jp: "報酬", kr: "보상" },
         yenSuffix: { jp: "円", kr: "엔" },
-        labelPayer: { jp: "振込人", kr: "입금인" },
+        labelPayer: { jp: "振込名", kr: "입금인" },
         companyName: { jp: "株式会社J-SURE", kr: "주식회사 J-SURE" },
         rejectPrefix: { jp: "未選定となりました: ", kr: "미선정되었습니다: " },
         cancelledNotice: {

@@ -11,6 +11,7 @@ import {
   type InsightUploadPresignResponse,
   type UploadContentType,
 } from "@jsure/shared";
+import { t } from "@i18n";
 import { api } from "../api";
 
 export class UploadError extends Error {
@@ -22,11 +23,11 @@ export class UploadError extends Error {
 
 function assertAllowed(file: File): UploadContentType {
   if (!UPLOAD_ALLOWED_CONTENT_TYPES.includes(file.type as UploadContentType)) {
-    throw new UploadError("PNG, JPEG, WebP 형식만 업로드할 수 있습니다");
+    throw new UploadError(t("upload.invalidType"));
   }
   if (file.size > UPLOAD_MAX_BYTES) {
     throw new UploadError(
-      `파일 크기가 너무 큽니다 (${(UPLOAD_MAX_BYTES / 1024 / 1024).toFixed(0)}MB 이하)`,
+      `${t("upload.oversizedPrefix")}${(UPLOAD_MAX_BYTES / 1024 / 1024).toFixed(0)}${t("upload.oversizedSuffix")}`,
     );
   }
   return file.type as UploadContentType;
@@ -67,7 +68,7 @@ export async function uploadInsightImage(
     body: file,
   });
   if (!putRes.ok) {
-    throw new UploadError(`업로드에 실패했습니다 (HTTP ${putRes.status})`);
+    throw new UploadError(`${t("upload.failed")} (HTTP ${putRes.status})`);
   }
 
   return {
@@ -107,7 +108,7 @@ export async function uploadInfluencerAttachment(
     body: file,
   });
   if (!putRes.ok) {
-    throw new UploadError(`업로드에 실패했습니다 (HTTP ${putRes.status})`);
+    throw new UploadError(`${t("upload.failed")} (HTTP ${putRes.status})`);
   }
 
   return {

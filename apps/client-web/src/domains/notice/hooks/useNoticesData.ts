@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import type { InfluencerNoticeListItem } from "@jsure/shared";
+import { t } from "@i18n";
 import { listNotices } from "../api";
 
 type Snapshot = {
@@ -38,7 +39,7 @@ async function refresh(): Promise<void> {
         error:
           error instanceof Error
             ? error.message
-            : "공지사항을 불러올 수 없습니다",
+            : t("pages.notices.loadError"),
       });
     } finally {
       inflight = null;

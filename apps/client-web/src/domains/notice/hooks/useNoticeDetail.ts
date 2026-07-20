@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { InfluencerNoticeDetail } from "@jsure/shared";
+import { t } from "@i18n";
 import { getNotice } from "../api";
 
 type State = {
@@ -17,7 +18,11 @@ export function useNoticeDetail(id: string | undefined) {
 
   useEffect(() => {
     if (!id) {
-      setState({ notice: null, loading: false, error: "잘못된 접근입니다" });
+      setState({
+        notice: null,
+        loading: false,
+        error: t("pages.notices.invalidAccess"),
+      });
       return;
     }
     let cancelled = false;
@@ -35,7 +40,7 @@ export function useNoticeDetail(id: string | undefined) {
           error:
             caught instanceof Error
               ? caught.message
-              : "공지를 불러올 수 없습니다",
+              : t("pages.notices.detailLoadError"),
         });
       }
     })();

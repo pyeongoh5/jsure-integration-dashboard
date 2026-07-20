@@ -22,11 +22,11 @@ export function Notices() {
       <div className={styles.pageTitle}>{t("pages.notices.title")}</div>
 
       {loading ? (
-        <div className={styles.pageState}>불러오는 중…</div>
+        <div className={styles.pageState}>{t("pages.notices.loading")}</div>
       ) : error ? (
         <div className={styles.pageState}>{error}</div>
       ) : notices.length === 0 ? (
-        <div className={styles.pageState}>공지사항이 없습니다</div>
+        <div className={styles.pageState}>{t("pages.notices.empty")}</div>
       ) : (
         notices.map((notice) => (
           <Link
@@ -39,7 +39,10 @@ export function Notices() {
               {formatDate(notice.startAt)}
             </div>
             {!readSet.has(notice.id) ? (
-              <span className={styles.listItemDot} aria-label="신규" />
+              <span
+                className={styles.listItemDot}
+                aria-label={t("pages.notices.newBadge")}
+              />
             ) : null}
           </Link>
         ))

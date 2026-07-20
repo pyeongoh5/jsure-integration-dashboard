@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { t } from "@i18n";
 import styles from "./Toast.module.css";
 
 interface Props {
@@ -32,7 +33,7 @@ export function Toast({
         type="button"
         className={styles.close}
         onClick={onDismiss}
-        aria-label="닫기"
+        aria-label={t("components.toast.closeAriaLabel")}
       >
         ×
       </button>

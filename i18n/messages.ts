@@ -17,6 +17,18 @@ export const messages = {
     pageHeader: {
       backAriaLabel: { jp: "戻る", kr: "뒤로" },
     },
+    toast: {
+      closeAriaLabel: { jp: "閉じる", kr: "닫기" }, // new
+    },
+  },
+  upload: {
+    invalidType: {
+      jp: "PNG, JPEG, WebP 形式のみアップロードできます",
+      kr: "PNG, JPEG, WebP 형식만 업로드할 수 있습니다",
+    }, // new
+    oversizedPrefix: { jp: "ファイルサイズが大きすぎます (", kr: "파일 크기가 너무 큽니다 (" }, // new
+    oversizedSuffix: { jp: "MB以下)", kr: "MB 이하)" }, // new
+    failed: { jp: "アップロードに失敗しました", kr: "업로드에 실패했습니다" }, // new
   },
   auth: {
     terms: {
@@ -692,6 +704,13 @@ export const messages = {
     },
     notices: {
       title: { jp: "お知らせ", kr: "알림" },
+      loading: { jp: "読み込み中…", kr: "불러오는 중…" }, // new
+      empty: { jp: "現在、お知らせはありません。", kr: "공지사항이 없습니다" }, // new
+      newBadge: { jp: "新着", kr: "신규" }, // new
+      loadError: { jp: "お知らせを取得できませんでした", kr: "공지사항을 불러올 수 없습니다" }, // new
+      detailNotFound: { jp: "お知らせが見つかりませんでした", kr: "공지를 찾을 수 없습니다" }, // new
+      detailLoadError: { jp: "お知らせを取得できませんでした", kr: "공지를 불러올 수 없습니다" }, // new
+      invalidAccess: { jp: "不正なアクセスです", kr: "잘못된 접근입니다" }, // new
     },
     notFound: {
       heading: { jp: "ページが見つかりません", kr: "페이지를 찾을 수 없습니다" },

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useNoticeDetail } from "@/domains/notice";
 import { useMarkNoticeRead } from "@/domains/notice";
+import { t } from "@i18n";
 import styles from "./Notices.module.css";
 
 function formatDate(iso: string): string {
@@ -22,10 +23,14 @@ export function NoticeDetail() {
   }, [notice, markRead]);
 
   if (loading) {
-    return <div className={styles.pageState}>불러오는 중…</div>;
+    return <div className={styles.pageState}>{t("pages.notices.loading")}</div>;
   }
   if (error || !notice) {
-    return <div className={styles.pageState}>{error ?? "공지를 찾을 수 없습니다"}</div>;
+    return (
+      <div className={styles.pageState}>
+        {error ?? t("pages.notices.detailNotFound")}
+      </div>
+    );
   }
 
   return (

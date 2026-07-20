@@ -11,25 +11,29 @@ import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { Toast } from "../../components/composites/Toast";
 import styles from "./Apply.module.css";
 
-const CONFIRM_KEYS_SNS = [
-  "PR_LABEL",
-  "DEADLINE",
-  "INSIGHTS",
-  "YAKKIHO",
-  "GUIDELINE",
-] as const;
+const CONFIRM_KEYS_SNS = ["PR_LABEL", "DEADLINE", "INSIGHTS", "YAKKIHO", "GUIDELINE"] as const;
 const CONFIRM_KEYS_FAKE_PURCHASE = [
   "NATURAL_REVIEW", // new — 가구매는 PR 표기 대신 자연스러운 리뷰 항목
   "DEADLINE",
   "YAKKIHO",
   "GUIDELINE",
 ] as const;
+
+const CONFIRM_KEYS_SIMPLE_REVIEW = [
+  "PR_LABEL", // new — 가구매는 PR 표기 대신 자연스러운 리뷰 항목
+  "DEADLINE",
+  "YAKKIHO",
+  "GUIDELINE",
+] as const;
+
 type ConfirmKey =
   | (typeof CONFIRM_KEYS_SNS)[number]
-  | (typeof CONFIRM_KEYS_FAKE_PURCHASE)[number];
+  | (typeof CONFIRM_KEYS_FAKE_PURCHASE)[number]
+  | (typeof CONFIRM_KEYS_SIMPLE_REVIEW)[number];
 
 // DEADLINE 은 캠페인의 postingPeriodDays 를 삽입해서 동적으로 노출한다. // new
-function confirmLabel(key: ConfirmKey, postingPeriodDays: number): string { // new
+function confirmLabel(key: ConfirmKey, postingPeriodDays: number): string {
+  // new
   switch (key) {
     case "PR_LABEL":
       return t("pages.apply.confirmPr");
@@ -82,8 +86,7 @@ export function Apply() {
   const nav = useNavigate();
   const [agreed, setAgreed] = useState<Set<string>>(new Set());
   const [selectedSns, setSelectedSns] = useState<Set<CampaignSubType>>(new Set());
-  const [instagramPostType, setInstagramPostType] =
-    useState<InstagramPostType | null>(null);
+  const [instagramPostType, setInstagramPostType] = useState<InstagramPostType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [addressConfirmed, setAddressConfirmed] = useState(false);
 
@@ -92,10 +95,15 @@ export function Apply() {
 
   const isFakePurchaseCampaign = campaign.data?.category === "FAKE_PURCHASE";
   const isSimpleReviewCampaign = campaign.data?.category === "SIMPLE_REVIEW"; // new
-  const activeConfirmKeys: readonly ConfirmKey[] =
-    isFakePurchaseCampaign || isSimpleReviewCampaign // new
-      ? CONFIRM_KEYS_FAKE_PURCHASE
-      : CONFIRM_KEYS_SNS;
+  let activeConfirmKeys: readonly ConfirmKey[];
+
+  if (isFakePurchaseCampaign) {
+    activeConfirmKeys = CONFIRM_KEYS_FAKE_PURCHASE;
+  } else if (isSimpleReviewCampaign) {
+    activeConfirmKeys = CONFIRM_KEYS_SIMPLE_REVIEW;
+  } else {
+    activeConfirmKeys = CONFIRM_KEYS_SNS;
+  }
 
   // 가구매 캠페인은 서브타입이 QOO10 하나뿐이므로 자동 선택
   useEffect(() => {
@@ -112,9 +120,7 @@ export function Apply() {
   // 필수(isRequired=true) 로 지정된 서브타입은 자동 선택. // new
   useEffect(() => {
     if (!campaign.data) return;
-    const required = campaign.data.recruits
-      .filter((r) => r.isRequired)
-      .map((r) => r.subType);
+    const required = campaign.data.recruits.filter((r) => r.isRequired).map((r) => r.subType);
     if (required.length === 0) return;
     setSelectedSns((prev) => {
       const next = new Set(prev);
@@ -130,21 +136,16 @@ export function Apply() {
   }, [campaign.data]);
 
   const qualifying = useMemo(() => {
-    if (!campaign.data || !me.data) return [];
-    if (
-      campaign.data.category === "FAKE_PURCHASE" ||
-      campaign.data.category === "SIMPLE_REVIEW" // new
-    ) {
+    if (!campaign.data) return [];
+    // 가구매/단순리뷰는 팔로워 자격 조건이 없어 me 응답과 무관하게 전원 자격. // new
+    if (campaign.data.category === "FAKE_PURCHASE" || campaign.data.category === "SIMPLE_REVIEW") {
       return campaign.data.recruits.map((r) => r.subType);
     }
-    const followerByMySns = new Map(
-      me.data.snsAccounts.map((a) => [a.snsType, a.followerCount]),
-    );
+    if (!me.data) return [];
+    const followerByMySns = new Map(me.data.snsAccounts.map((a) => [a.snsType, a.followerCount]));
     return campaign.data.recruits
       .filter((r) => {
-        const follower = (followerByMySns as Map<CampaignSubType, number>).get(
-          r.subType,
-        );
+        const follower = (followerByMySns as Map<CampaignSubType, number>).get(r.subType);
         return follower !== undefined && follower >= r.minFollowers;
       })
       .map((r) => r.subType);
@@ -154,9 +155,9 @@ export function Apply() {
   const hasSelection = selectedSns.size > 0;
   const isClosed = Boolean(
     campaign.data &&
-      (campaign.data.isEnded ||
-        new Date(campaign.data.recruitEndAt) < new Date() ||
-        campaign.data.approvedCount >= campaign.data.recruitCount),
+    (campaign.data.isEnded ||
+      new Date(campaign.data.recruitEndAt) < new Date() ||
+      campaign.data.approvedCount >= campaign.data.recruitCount),
   );
 
   const wantsInstagram = selectedSns.has("INSTAGRAM");
@@ -200,14 +201,14 @@ export function Apply() {
     });
   }
 
-  const requiredSubTypes = useMemo<CampaignSubType[]>(() => { // new
+  const requiredSubTypes = useMemo<CampaignSubType[]>(() => {
+    // new
     if (!campaign.data) return [];
-    return campaign.data.recruits
-      .filter((r) => r.isRequired)
-      .map((r) => r.subType);
+    return campaign.data.recruits.filter((r) => r.isRequired).map((r) => r.subType);
   }, [campaign.data]);
 
-  const requiredNotQualified = useMemo<CampaignSubType[]>(() => { // new
+  const requiredNotQualified = useMemo<CampaignSubType[]>(() => {
+    // new
     return requiredSubTypes.filter((subType) => !qualifying.includes(subType));
   }, [requiredSubTypes, qualifying]);
 
@@ -268,9 +269,7 @@ export function Apply() {
       <div className={styles.body}>
         <div className={styles.cam}>
           <div className={styles.camTitle}>{campaign.data.title}</div>
-          <div className={styles.camReward}>
-            {formatRewardRange(campaign.data)}
-          </div>
+          <div className={styles.camReward}>{formatRewardRange(campaign.data)}</div>
         </div>
 
         {isFakePurchaseCampaign ? (
@@ -283,95 +282,88 @@ export function Apply() {
               </div>
             ))}
           </section>
-        ) : ( // new — SIMPLE_REVIEW 도 SNS 처럼 서브타입 선택 UI 노출
-        <section className={styles.sec}>
-          <h3>{t("pages.apply.snsSectionTitle")}</h3>
-          {requiredNotQualified.length > 0 ? ( // new — 필수 서브타입 자격 미달이 우선
-            <p style={{ color: "#ef4444", fontSize: 13 }}>
-              {t("pages.apply.requiredNotQualifiedPrefix")}
-              {requiredNotQualified.map((subType) => SNS_LABEL[subType]).join(", ")}
-              {t("pages.apply.requiredNotQualifiedSuffix")}
-            </p>
-          ) : qualifying.length === 0 ? (
-            <p style={{ color: "#ef4444", fontSize: 13 }}>
-              {t("pages.apply.noQualifying")}
-            </p>
-          ) : (
-            <ul className={styles.snsPick}>
-              {campaign.data.recruits.map((r) => {
-                const isQualifying = qualifying.includes(r.subType);
-                const isExcluded = campaign.data.excludedSubTypes.includes(
-                  r.subType,
-                );
-                const myFollowers = (
-                  followerByMySns as Map<CampaignSubType, number>
-                ).get(r.subType);
-                const isSelected = selectedSns.has(r.subType);
-                const isRequired = r.isRequired;
-                const disabled =
-                  !isQualifying ||
-                  isExcluded ||
-                  isRequired; // 필수 서브타입은 해제 불가
-                return (
-                  <li key={r.subType}>
-                    <label
-                      className={`${styles.snsItem} ${
-                        disabled ? styles.snsItemDisabled : ""
-                      } ${isSelected ? styles.snsItemSelected : ""}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        disabled={disabled}
-                        onChange={() => toggleSns(r.subType)}
-                      />
-                      <div className={styles.snsInfo}>
-                        <div className={styles.snsName}>
-                          {SNS_LABEL[r.subType]}
-                          {isExcluded && (
-                            <span style={{ marginLeft: 8, color: "#ef4444", fontSize: 11 }}>
-                              {t("pages.apply.excludedTag")}
-                            </span>
-                          )}
-                          {isRequired && !isExcluded && (
-                            <span style={{ marginLeft: 8, color: "#2563eb", fontSize: 11 }}>
-                              {t("pages.apply.requiredBadge")}
-                            </span>
+        ) : (
+          // new — SIMPLE_REVIEW 도 SNS 처럼 서브타입 선택 UI 노출
+          <section className={styles.sec}>
+            <h3>{t("pages.apply.snsSectionTitle")}</h3>
+            {requiredNotQualified.length > 0 ? ( // new — 필수 서브타입 자격 미달이 우선
+              <p style={{ color: "#ef4444", fontSize: 13 }}>
+                {t("pages.apply.requiredNotQualifiedPrefix")}
+                {requiredNotQualified.map((subType) => SNS_LABEL[subType]).join(", ")}
+                {t("pages.apply.requiredNotQualifiedSuffix")}
+              </p>
+            ) : qualifying.length === 0 ? (
+              <p style={{ color: "#ef4444", fontSize: 13 }}>{t("pages.apply.noQualifying")}</p>
+            ) : (
+              <ul className={styles.snsPick}>
+                {campaign.data.recruits.map((r) => {
+                  const isQualifying = qualifying.includes(r.subType);
+                  const isExcluded = campaign.data.excludedSubTypes.includes(r.subType);
+                  const myFollowers = (followerByMySns as Map<CampaignSubType, number>).get(
+                    r.subType,
+                  );
+                  const isSelected = selectedSns.has(r.subType);
+                  const isRequired = r.isRequired;
+                  const disabled = !isQualifying || isExcluded || isRequired; // 필수 서브타입은 해제 불가
+                  return (
+                    <li key={r.subType}>
+                      <label
+                        className={`${styles.snsItem} ${
+                          disabled ? styles.snsItemDisabled : ""
+                        } ${isSelected ? styles.snsItemSelected : ""}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          disabled={disabled}
+                          onChange={() => toggleSns(r.subType)}
+                        />
+                        <div className={styles.snsInfo}>
+                          <div className={styles.snsName}>
+                            {SNS_LABEL[r.subType]}
+                            {isExcluded && (
+                              <span style={{ marginLeft: 8, color: "#ef4444", fontSize: 11 }}>
+                                {t("pages.apply.excludedTag")}
+                              </span>
+                            )}
+                            {isRequired && !isExcluded && (
+                              <span style={{ marginLeft: 8, color: "#2563eb", fontSize: 11 }}>
+                                {t("pages.apply.requiredBadge")}
+                              </span>
+                            )}
+                          </div>
+                          {isFakePurchaseSubType(r.subType) ? (
+                            <div className={styles.snsCond}>
+                              {t("campaign.detail.productPrice")}: ¥
+                              {(r.productPriceJpy ?? 0).toLocaleString("ja-JP")}
+                            </div>
+                          ) : isSimpleReviewCampaign ? ( // new — 단순 리뷰는 서브타입만 표기
+                            <div className={styles.snsCond}>{SNS_LABEL[r.subType]}</div>
+                          ) : (
+                            <div className={styles.snsCond}>
+                              {t("pages.apply.condPrefix")}
+                              {SNS_FOLLOWER_LABEL[r.subType]}{" "}
+                              {r.minFollowers > 0
+                                ? `${r.minFollowers.toLocaleString("ja-JP")}${t("pages.apply.followerMinSuffix")}`
+                                : t("pages.apply.noLimit")}
+                              {myFollowers !== undefined && (
+                                <>
+                                  {t("pages.apply.currentPrefix")}
+                                  {myFollowers.toLocaleString("ja-JP")}
+                                  {t("pages.apply.currentSuffix")}
+                                </>
+                              )}
+                              {myFollowers === undefined && <>{t("pages.apply.notRegistered")}</>}
+                            </div>
                           )}
                         </div>
-                        {isFakePurchaseSubType(r.subType) ? (
-                          <div className={styles.snsCond}>
-                            {t("campaign.detail.productPrice")}: ¥
-                            {(r.productPriceJpy ?? 0).toLocaleString("ja-JP")}
-                          </div>
-                        ) : isSimpleReviewCampaign ? ( // new — 단순 리뷰는 서브타입만 표기
-                          <div className={styles.snsCond}>{SNS_LABEL[r.subType]}</div>
-                        ) : (
-                          <div className={styles.snsCond}>
-                            {t("pages.apply.condPrefix")}{SNS_FOLLOWER_LABEL[r.subType]}{" "}
-                            {r.minFollowers > 0
-                              ? `${r.minFollowers.toLocaleString("ja-JP")}${t("pages.apply.followerMinSuffix")}`
-                              : t("pages.apply.noLimit")}
-                            {myFollowers !== undefined && (
-                              <>
-                                {t("pages.apply.currentPrefix")}
-                                {myFollowers.toLocaleString("ja-JP")}
-                                {t("pages.apply.currentSuffix")}
-                              </>
-                            )}
-                            {myFollowers === undefined && (
-                              <>{t("pages.apply.notRegistered")}</>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </label>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
         )}
 
         {wantsInstagram && allowedInstagramPostTypes.length > 0 && (
@@ -383,9 +375,7 @@ export function Apply() {
                 return (
                   <li key={postType}>
                     <label
-                      className={`${styles.snsItem} ${
-                        isSelected ? styles.snsItemSelected : ""
-                      }`}
+                      className={`${styles.snsItem} ${isSelected ? styles.snsItemSelected : ""}`}
                     >
                       <input
                         type="radio"
@@ -394,9 +384,7 @@ export function Apply() {
                         onChange={() => setInstagramPostType(postType)}
                       />
                       <div className={styles.snsInfo}>
-                        <div className={styles.snsName}>
-                          {INSTAGRAM_POST_TYPE_LABEL[postType]}
-                        </div>
+                        <div className={styles.snsName}>{INSTAGRAM_POST_TYPE_LABEL[postType]}</div>
                       </div>
                     </label>
                   </li>
@@ -404,9 +392,7 @@ export function Apply() {
               })}
             </ul>
             {instagramPostTypeMissing && (
-              <p style={{ color: "#ef4444", fontSize: 13 }}>
-                {t("pages.apply.selectPostType")}
-              </p>
+              <p style={{ color: "#ef4444", fontSize: 13 }}>{t("pages.apply.selectPostType")}</p>
             )}
           </section>
         )}
@@ -422,9 +408,7 @@ export function Apply() {
                   {me.data.address.prefecture}
                   {me.data.address.city}
                   {me.data.address.addressLine1}
-                  {me.data.address.addressLine2
-                    ? ` ${me.data.address.addressLine2}`
-                    : ""}
+                  {me.data.address.addressLine2 ? ` ${me.data.address.addressLine2}` : ""}
                 </div>
                 <label className={styles.chk}>
                   <input
@@ -441,9 +425,7 @@ export function Apply() {
                 >
                   {t("pages.apply.editAddress")}
                 </button>
-                <p className={styles.addressNotice}>
-                  {t("pages.apply.addressNotice")}
-                </p>
+                <p className={styles.addressNotice}>{t("pages.apply.addressNotice")}</p>
                 <p className={`${styles.addressNotice} ${styles.addressNoticeCaution}`}>
                   {t("pages.apply.addressCaution")}
                 </p>
@@ -467,11 +449,7 @@ export function Apply() {
           <h3>{t("pages.apply.confirmSectionTitle")}</h3>
           {activeConfirmKeys.map((k) => (
             <label key={k} className={styles.chk}>
-              <input
-                type="checkbox"
-                checked={agreed.has(k)}
-                onChange={() => toggleAgree(k)}
-              />
+              <input type="checkbox" checked={agreed.has(k)} onChange={() => toggleAgree(k)} />
               <span>{confirmLabel(k, campaign.data.postingPeriodDays)}</span> {/* new */}
             </label>
           ))}

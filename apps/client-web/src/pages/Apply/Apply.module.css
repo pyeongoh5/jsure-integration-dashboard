@@ -109,17 +109,22 @@
 
 .chk {
   display: flex;
-  align-items: center;
+  /* 두 줄 라벨에서도 체크박스가 첫 줄에 붙도록 상단 정렬 */
+  align-items: flex-start;
   gap: 10px;
   padding: 10px 0;
   border-bottom: 1px solid var(--color-bg-muted);
   color: #111;
   font-size: var(--font-size-md);
+  line-height: 1.45;
 }
 
 .chk input {
   width: 18px;
   height: 18px;
+  /* flex 아이템 축소·확대로 크기가 흔들리지 않게 고정 */
+  flex: 0 0 18px;
+  margin-top: 2px; /* 첫 줄 텍스트와 수직 중앙 맞춤 */
 }
 
 .address {

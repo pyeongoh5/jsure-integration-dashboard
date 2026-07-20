@@ -355,6 +355,22 @@ export const messages = {
           jp: "各プラットフォームでレビューを投稿後、URLとスクリーンショットをご提出ください",
           kr: "각 플랫폼에 리뷰를 게시한 뒤 URL과 스크린샷을 제출해 주세요",
         },
+        submitItemsTitle: { jp: "提出項目", kr: "제출 항목" }, // new — 가구매 전용 제출 항목 안내
+        submitItemsQoo10: {
+          // new
+          jp: "：いいね・レビューのスクリーンショット",
+          kr: " : 좋아요, 리뷰 스크린샷",
+        },
+        submitItemsLips: {
+          // new
+          jp: "：いいねのスクリーンショット・レビューURL",
+          kr: " : 좋아요 스크린샷, 리뷰 URL",
+        },
+        submitItemsCosme: {
+          // new
+          jp: "：いいねのスクリーンショット・レビューURL",
+          kr: " : 좋아요 스크린샷, 리뷰 URL",
+        },
         urlLabel: { jp: "レビューURL", kr: "리뷰 URL" },
         screenshotsLabelPrefix: {
           // new — 필수 매수 가변 표기 (Qoo10 2장 + 채널당 1장)

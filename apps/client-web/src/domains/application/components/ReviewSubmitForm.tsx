@@ -5,6 +5,7 @@ import { z } from "zod";
 import axios from "axios";
 import {
   QOO10_REVIEW_CHANNEL_LABEL,
+  SUB_TYPE_LABEL,
   type AttachmentUploadInput,
 } from "@jsure/shared";
 import { Input } from "@/components/ui";
@@ -139,6 +140,26 @@ export function ReviewSubmitForm({
         <p className={styles.description}>
           {t("application.stage.awaitingReview.description")}
         </p>
+
+        <div className={styles.submitItems}>
+          <div className={styles.submitItemsTitle}>
+            {t("application.stage.awaitingReview.submitItemsTitle")}
+          </div>
+          <ul className={styles.submitItemsList}>
+            <li>
+              <strong>{SUB_TYPE_LABEL.QOO10}</strong>
+              {t("application.stage.awaitingReview.submitItemsQoo10")}
+            </li>
+            <li>
+              <strong>{SUB_TYPE_LABEL.LIPS}</strong>
+              {t("application.stage.awaitingReview.submitItemsLips")}
+            </li>
+            <li>
+              <strong>{SUB_TYPE_LABEL.ATCOSME}</strong>
+              {t("application.stage.awaitingReview.submitItemsCosme")}
+            </li>
+          </ul>
+        </div>
 
         {deadlinePassed ? (
           <p className={styles.deadline}>

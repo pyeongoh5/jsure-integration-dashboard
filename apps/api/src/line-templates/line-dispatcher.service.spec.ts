@@ -171,6 +171,67 @@ describe("LineDispatcherService", () => {
     expect(push).toHaveBeenCalledWith("inf2", "hi Bob price=3,000 total=8,000");
   });
 
+  it("같은 인플루언서 연속 발송은 첫 push 가 느려도 호출 순서대로 도착", async () => {
+    const prisma = makePrismaMock();
+    // 트리거 키를 본문으로 사용해 어느 메시지가 언제 push 됐는지 관찰한다.
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockImplementation(
+      (args: { where: { category_triggerKey: { triggerKey: string } } }) =>
+        Promise.resolve({
+          id: "t1",
+          enabled: true,
+          body: args.where.category_triggerKey.triggerKey,
+        }),
+    );
+    const pushed: string[] = [];
+    // 첫 번째 push 만 인위적으로 지연시켜 레이스를 재현한다.
+    const push = jest.fn().mockImplementation((_id: string, text: string) => {
+      const delayMs = text === "SNS_INSIGHT_SUBMITTED" ? 30 : 0;
+      return new Promise<void>((resolve) =>
+        setTimeout(() => {
+          pushed.push(text);
+          resolve();
+        }, delayMs),
+      );
+    });
+    const svc = new LineDispatcherService(prisma, makeLineMock(push));
+
+    const first = svc.dispatch("SNS_INSIGHT_SUBMITTED", { application });
+    const second = svc.dispatch("SNS_CAMPAIGN_COMPLETED", { application });
+    await Promise.all([first, second]);
+
+    expect(pushed).toEqual(["SNS_INSIGHT_SUBMITTED", "SNS_CAMPAIGN_COMPLETED"]);
+  });
+
+  it("서로 다른 인플루언서 발송은 직렬화하지 않는다 (병렬 유지)", async () => {
+    const prisma = makePrismaMock();
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue({
+      id: "t1",
+      enabled: true,
+      body: "hi",
+    });
+    const order: string[] = [];
+    const push = jest.fn().mockImplementation((id: string) => {
+      // inf1 은 느리고 inf2 는 빠름 — 병렬이면 inf2 가 먼저 끝난다.
+      const delayMs = id === "inf1" ? 30 : 0;
+      return new Promise<void>((resolve) =>
+        setTimeout(() => {
+          order.push(id);
+          resolve();
+        }, delayMs),
+      );
+    });
+    const svc = new LineDispatcherService(prisma, makeLineMock(push));
+
+    await Promise.all([
+      svc.dispatch("SNS_APPLICATION_APPLIED", { application }),
+      svc.dispatch("FAKE_PURCHASE_APPLICATION_APPLIED", {
+        application: fakePurchaseApplication,
+      }),
+    ]);
+
+    expect(order).toEqual(["inf2", "inf1"]);
+  });
+
   it("템플릿 조회 키는 (category, triggerKey) 만 사용", async () => {
     const prisma = makePrismaMock();
     (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue(null);

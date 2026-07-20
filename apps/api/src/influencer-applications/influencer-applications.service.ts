@@ -751,10 +751,11 @@ export class InfluencerApplicationsService {
       where: { id: applicationId },
       include: { ...DISPATCH_APPLICATION_INCLUDE, settlement: true },
     });
+    // 같은 인플루언서 대상 메시지는 디스패처가 호출 순서대로 직렬 발송한다.
     void this.dispatcher.dispatch("SNS_INSIGHT_SUBMITTED", {
       application: refreshed,
     });
-    // 총액 0원 정산은 생성 즉시 완료 — 종료 메시지를 이 시점에 발송 (SNS 경로).
+    // 총액 0원 정산은 생성 즉시 완료 — 무보수 종료 안내를 이어서 발송 (SNS 경로).
     if (autoCompleted) {
       void this.dispatcher.dispatch("SNS_CAMPAIGN_COMPLETED", {
         application: refreshed,

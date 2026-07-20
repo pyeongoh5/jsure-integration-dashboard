@@ -8,13 +8,41 @@ import { renderTemplate } from "./template-renderer";
 @Injectable()
 export class LineDispatcherService {
   private readonly logger = new Logger(LineDispatcherService.name);
+  /** 인플루언서별 발송 직렬화 큐 — dispatch 호출 순서대로 push 되도록 보장. */
+  private readonly queueTails = new Map<string, Promise<void>>();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly line: LineMessagingService,
   ) {}
 
-  async dispatch(triggerKey: LineTriggerKey, context: DispatchContext): Promise<void> {
+  /**
+   * 같은 인플루언서에게 연달아 발송되는 메시지(예: 인사이트 제출 완료 →
+   * 무보수 캠페인 종료 안내)가 호출 순서 그대로 도착하도록, 인플루언서 단위로
+   * 발송을 직렬화한다. 서로 다른 인플루언서 간에는 병렬 그대로.
+   */
+  dispatch(triggerKey: LineTriggerKey, context: DispatchContext): Promise<void> {
+    const influencerId = context.application.influencerId;
+    const tail = this.queueTails.get(influencerId) ?? Promise.resolve();
+    // dispatchNow 는 내부에서 실패를 삼키지만, 만약을 대비해 앞 작업 실패가
+    // 뒤 메시지를 막지 않도록 catch 후 이어붙인다.
+    const next = tail
+      .catch(() => undefined)
+      .then(() => this.dispatchNow(triggerKey, context));
+    this.queueTails.set(influencerId, next);
+    void next.finally(() => {
+      // 내가 마지막 작업이면 맵에서 제거해 무한 성장 방지.
+      if (this.queueTails.get(influencerId) === next) {
+        this.queueTails.delete(influencerId);
+      }
+    });
+    return next;
+  }
+
+  private async dispatchNow(
+    triggerKey: LineTriggerKey,
+    context: DispatchContext,
+  ): Promise<void> {
     const meta = getMeta(triggerKey);
     const category = meta.category;
 

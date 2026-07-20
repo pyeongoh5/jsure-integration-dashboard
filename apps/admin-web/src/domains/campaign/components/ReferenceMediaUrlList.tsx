@@ -6,6 +6,7 @@ type Props = {
   onChange: (next: string[]) => void;
   max?: number;
   disabled?: boolean;
+  placeholder?: string;
   errorByIndex?: Record<number, string | undefined>;
 };
 
@@ -14,6 +15,7 @@ export function ReferenceMediaUrlList({
   onChange,
   max = 10,
   disabled,
+  placeholder = "https://...",
   errorByIndex,
 }: Props) {
   const setAt = (index: number, url: string) => {
@@ -37,7 +39,7 @@ export function ReferenceMediaUrlList({
           <input
             type="url"
             className={styles.input}
-            placeholder="https://..."
+            placeholder={placeholder}
             value={url}
             disabled={disabled}
             onChange={(event) => setAt(index, event.target.value)}

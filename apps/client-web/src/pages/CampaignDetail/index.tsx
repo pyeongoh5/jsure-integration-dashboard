@@ -209,9 +209,15 @@ export function CampaignDetail() {
         <section className={styles.section}>
           <h3>{t("pages.campaignDetail.sectionProduct")}</h3>
           <div className={styles.rich} dangerouslySetInnerHTML={{ __html: data.productSummary }} />
-          <a href={data.productDetailUrl} target="_blank" rel="noreferrer" className={styles.link}>
-            {t("pages.campaignDetail.productLinkText")}
-          </a>
+          {data.productDetailUrls.map((url, index) => ( // new — 상품 상세 URL 복수 지원
+            <div key={`${index}-${url}`}>
+              <a href={url} target="_blank" rel="noreferrer" className={styles.link}>
+                {data.productDetailUrls.length > 1
+                  ? `${t("pages.campaignDetail.productLinkNumberedPrefix")}${index + 1}${t("pages.campaignDetail.productLinkNumberedSuffix")}`
+                  : t("pages.campaignDetail.productLinkText")}
+              </a>
+            </div>
+          ))}
         </section>
 
         <section className={styles.section}>

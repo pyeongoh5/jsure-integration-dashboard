@@ -447,7 +447,10 @@ export const CampaignFormSchema = z
     recruits: CampaignRecruitInputArray,
     // HTML 본문 (tiptap) 을 저장하므로 길이 제한을 크게 둠.
     productSummary: z.string().max(50000),
-    productDetailUrl: z.string().url("URL 형식이어야 합니다"),
+    productDetailUrls: z
+      .array(z.string().url("URL 형식이어야 합니다"))
+      .min(1, "상품 상세 URL을 1개 이상 입력해주세요")
+      .max(10),
     guideline: z.string().max(50000),
     referenceMediaUrls: z.array(z.string().url()).max(10),
     cautions: z.string().max(50000),
@@ -480,7 +483,11 @@ export const UpdateCampaignRequestSchema = z
     postingPeriodDays: z.number().int().min(1).max(365).optional(),
     recruits: CampaignRecruitInputArray.optional(),
     productSummary: z.string().max(50000).optional(),
-    productDetailUrl: z.string().url().optional(),
+    productDetailUrls: z
+      .array(z.string().url("URL 형식이어야 합니다"))
+      .min(1, "상품 상세 URL을 1개 이상 입력해주세요")
+      .max(10)
+      .optional(),
     guideline: z.string().max(50000).optional(),
     referenceMediaUrls: z.array(z.string().url()).max(10).optional(),
     cautions: z.string().max(50000).optional(),
@@ -510,7 +517,7 @@ export const CampaignResponseSchema = z.object({
   closedAt: z.string().datetime().nullable(),
   postingPeriodDays: z.number().int().min(1),
   productSummary: z.string(),
-  productDetailUrl: z.string().url(),
+  productDetailUrls: z.array(z.string().url()),
   guideline: z.string(),
   referenceMediaUrls: z.array(z.string().url()),
   cautions: z.string(),
@@ -552,7 +559,7 @@ export type InfluencerCampaignCard = z.infer<
 
 export const InfluencerCampaignDetailSchema =
   InfluencerCampaignCardSchema.extend({
-    productDetailUrl: z.string().url(),
+    productDetailUrls: z.array(z.string().url()),
     guideline: z.string(),
     referenceMediaUrls: z.array(z.string().url()),
     cautions: z.string(),

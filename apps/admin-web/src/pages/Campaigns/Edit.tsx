@@ -40,7 +40,7 @@ export function CampaignEdit() {
           postingPeriodDays: res.postingPeriodDays,
           recruits: res.recruits,
           productSummary: res.productSummary,
-          productDetailUrl: res.productDetailUrl,
+          productDetailUrls: res.productDetailUrls,
           guideline: res.guideline,
           referenceMediaUrls: res.referenceMediaUrls,
           cautions: res.cautions,

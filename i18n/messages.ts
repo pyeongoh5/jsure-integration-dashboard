@@ -622,6 +622,8 @@ export const messages = {
       noLimit: { jp: "制限なし", kr: "제한 없음" },
       sectionProduct: { jp: "商品", kr: "상품" },
       productLinkText: { jp: "商品ページを見る →", kr: "상품 페이지 보기 →" },
+      productLinkNumberedPrefix: { jp: "商品ページを見る ", kr: "상품 페이지 보기 " }, // new — URL 2개 이상일 때 번호 표기
+      productLinkNumberedSuffix: { jp: " →", kr: " →" }, // new
       sectionGuideline: { jp: "ガイドライン", kr: "가이드라인" },
       sectionCautions: { jp: "注意事項", kr: "주의사항" },
       viewApplications: { jp: "応募履歴を見る", kr: "응모 내역 보기" },

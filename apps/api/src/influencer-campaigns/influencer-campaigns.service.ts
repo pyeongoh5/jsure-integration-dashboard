@@ -233,7 +233,7 @@ export class InfluencerCampaignsService {
     ]);
     return {
       ...card,
-      productDetailUrl: row.productDetailUrl,
+      productDetailUrls: row.productDetailUrls,
       guideline,
       referenceMediaUrls: row.referenceMediaUrls,
       cautions,

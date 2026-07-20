@@ -333,7 +333,7 @@ type CampaignRow = {
   closedAt: Date | null;
   postingPeriodDays: number;
   productSummary: string;
-  productDetailUrl: string;
+  productDetailUrls: string[];
   guideline: string;
   referenceMediaUrls: string[];
   cautions: string;
@@ -382,7 +382,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     closedAt: row.closedAt ? row.closedAt.toISOString() : null,
     postingPeriodDays: row.postingPeriodDays,
     productSummary: row.productSummary,
-    productDetailUrl: row.productDetailUrl,
+    productDetailUrls: row.productDetailUrls,
     guideline: row.guideline,
     referenceMediaUrls: row.referenceMediaUrls,
     cautions: row.cautions,
@@ -511,7 +511,7 @@ export class CampaignsService {
         recruitEndAt: jstDayEndUtc(input.recruitEndDate),
         postingPeriodDays: input.postingPeriodDays,
         productSummary: input.productSummary,
-        productDetailUrl: input.productDetailUrl,
+        productDetailUrls: input.productDetailUrls,
         guideline: input.guideline,
         referenceMediaUrls: input.referenceMediaUrls,
         cautions: input.cautions,
@@ -690,7 +690,7 @@ export class CampaignsService {
       data.postingPeriodDays = input.postingPeriodDays;
     }
     if (input.productSummary !== undefined) data.productSummary = input.productSummary;
-    if (input.productDetailUrl !== undefined) data.productDetailUrl = input.productDetailUrl;
+    if (input.productDetailUrls !== undefined) data.productDetailUrls = input.productDetailUrls;
     if (input.guideline !== undefined) data.guideline = input.guideline;
     if (input.referenceMediaUrls !== undefined) data.referenceMediaUrls = input.referenceMediaUrls;
     if (input.cautions !== undefined) data.cautions = input.cautions;

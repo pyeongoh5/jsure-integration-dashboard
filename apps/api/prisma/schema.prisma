@@ -108,7 +108,7 @@ model Campaign {
   closedAt           DateTime?
   postingPeriodDays  Int       @default(14)
   productSummary     String
-  productDetailUrl   String
+  productDetailUrls  String[]
   guideline          String
   referenceMediaUrls String[]
   cautions           String

@@ -28,7 +28,7 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   postingPeriodDays: Number.NaN,
   recruits: [],
   productSummary: "",
-  productDetailUrl: "",
+  productDetailUrls: [""],
   guideline: "",
   referenceMediaUrls: [],
   cautions: "",
@@ -51,6 +51,7 @@ type RecruitItemError = Partial<
 
 interface PerItemErrors {
   referenceMediaUrls?: Record<number, string>;
+  productDetailUrls?: Record<number, string>;
   recruits?: Record<number, RecruitItemError>;
 }
 
@@ -241,11 +242,14 @@ export function CampaignForm({
       for (const [key, value] of Object.entries(record)) {
         if (!value || typeof value !== "object") continue;
         const index = Number(key);
-        if (pathHead === "referenceMediaUrls" && Number.isInteger(index)) {
+        if (
+          (pathHead === "referenceMediaUrls" || pathHead === "productDetailUrls") &&
+          Number.isInteger(index)
+        ) {
           const message = (value as { message?: unknown }).message;
           if (typeof message === "string") {
-            items.referenceMediaUrls = {
-              ...(items.referenceMediaUrls ?? {}),
+            items[pathHead] = {
+              ...(items[pathHead] ?? {}),
               [index]: message,
             };
           }
@@ -276,6 +280,7 @@ export function CampaignForm({
       }
     };
     flatten(fieldErrors.referenceMediaUrls, "referenceMediaUrls");
+    flatten(fieldErrors.productDetailUrls, "productDetailUrls");
     flatten(fieldErrors.recruits, "recruits");
     setPerItemErrors(items);
 
@@ -691,19 +696,22 @@ export function CampaignForm({
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="cf-product-url">
-              상품 상세 URL (qoo10)
-            </label>
-            <input
-              id="cf-product-url"
-              type="url"
-              className={styles.input}
-              placeholder="https://www.qoo10.jp/..."
-              {...methods.register("productDetailUrl")}
-              disabled={submitting}
+            <label className={styles.label}>상품 상세 URL (qoo10)</label>
+            <Controller
+              control={methods.control}
+              name="productDetailUrls"
+              render={({ field }) => (
+                <ReferenceMediaUrlList
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={submitting}
+                  placeholder="https://www.qoo10.jp/..."
+                  errorByIndex={perItemErrors.productDetailUrls}
+                />
+              )}
             />
-            {rootError("productDetailUrl") && (
-              <div className={styles.error}>{rootError("productDetailUrl")}</div>
+            {rootError("productDetailUrls") && (
+              <div className={styles.error}>{rootError("productDetailUrls")}</div>
             )}
           </div>
         </section>

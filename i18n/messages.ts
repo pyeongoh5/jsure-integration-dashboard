@@ -358,17 +358,17 @@ export const messages = {
         submitItemsTitle: { jp: "提出項目", kr: "제출 항목" }, // new — 가구매 전용 제출 항목 안내
         submitItemsQoo10: {
           // new
-          jp: "：いいね・レビューのスクリーンショット",
+          jp: "：お気に入り登録・レビューのスクリーンショット",
           kr: " : 좋아요, 리뷰 스크린샷",
         },
         submitItemsLips: {
           // new
-          jp: "：いいねのスクリーンショット・レビューURL",
+          jp: "：お気に入り登録のスクリーンショット・レビューURL",
           kr: " : 좋아요 스크린샷, 리뷰 URL",
         },
         submitItemsCosme: {
           // new
-          jp: "：いいねのスクリーンショット・レビューURL",
+          jp: "：お気に入り登録のスクリーンショット・レビューURL",
           kr: " : 좋아요 스크린샷, 리뷰 URL",
         },
         urlLabel: { jp: "レビューURL", kr: "리뷰 URL" },

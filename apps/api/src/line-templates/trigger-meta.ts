@@ -483,10 +483,6 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     category: "FAKE_PURCHASE",
     variables: withBase(subType, totalSettlementJpy),
   },
-  FAKE_PURCHASE_CAMPAIGN_COMPLETED: {
-    category: "FAKE_PURCHASE",
-    variables: withBase(),
-  },
   SIMPLE_REVIEW_APPLICATION_APPLIED: {
     category: "SIMPLE_REVIEW",
     variables: withBase(subType),
@@ -551,11 +547,14 @@ export function getMeta(triggerKey: LineTriggerKey): TriggerMetaEntry {
   return TRIGGER_META[triggerKey];
 }
 
-/** 카테고리별 "캠페인 종료" 트리거 키. */
+/**
+ * 카테고리별 "무보수 캠페인 종료 안내" 트리거 키.
+ * 가구매는 상품 환급이 항상 있어 무보수가 불가능하므로 해당 트리거가 없다(null).
+ */
 export function campaignCompletedTriggerKeyFor(
   category: CampaignCategory,
-): LineTriggerKey {
-  if (category === "FAKE_PURCHASE") return "FAKE_PURCHASE_CAMPAIGN_COMPLETED";
+): LineTriggerKey | null {
+  if (category === "FAKE_PURCHASE") return null;
   if (category === "SIMPLE_REVIEW") return "SIMPLE_REVIEW_CAMPAIGN_COMPLETED";
   return "SNS_CAMPAIGN_COMPLETED";
 }

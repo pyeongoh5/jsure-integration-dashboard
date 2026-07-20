@@ -60,7 +60,8 @@ export class AdminLineTemplatesService {
     const template: LineMessageTemplateResponse = row
       ? {
           category: row.category,
-          triggerKey: row.triggerKey,
+          // where 가 triggerKey 로 unique 조회라 파라미터와 동일 — shared 타입 유지용
+          triggerKey,
           enabled: row.enabled,
           body: row.body,
           updatedAt: row.updatedAt.toISOString(),
@@ -115,7 +116,7 @@ export class AdminLineTemplatesService {
     });
     return {
       category: row.category,
-      triggerKey: row.triggerKey,
+      triggerKey,
       enabled: row.enabled,
       body: row.body,
       updatedAt: row.updatedAt.toISOString(),
@@ -150,7 +151,7 @@ export class AdminLineTemplatesService {
     });
     return {
       category: row.category,
-      triggerKey: row.triggerKey,
+      triggerKey,
       enabled: row.enabled,
       body: row.body,
       updatedAt: row.updatedAt.toISOString(),

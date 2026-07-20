@@ -513,9 +513,10 @@ export class AdminApplicationsService {
     if (refreshed) {
       const category = refreshed.campaign.category;
       // 총액 0원 정산은 생성 즉시 완료 — 입금 안내가 포함된 승인 메시지는
-      // 생략하고 캠페인 종료 메시지만 발송한다.
-      if (autoCompleted) {
-        void this.dispatcher.dispatch(campaignCompletedTriggerKeyFor(category), {
+      // 생략하고 무보수 캠페인 종료 안내만 발송한다.
+      const completedTriggerKey = campaignCompletedTriggerKeyFor(category);
+      if (autoCompleted && completedTriggerKey) {
+        void this.dispatcher.dispatch(completedTriggerKey, {
           application: refreshed,
           settlement: refreshed.settlement,
         });
@@ -662,16 +663,19 @@ export class AdminApplicationsService {
       },
       update: {},
     });
-    if (autoCompleted) {
+    const completedTriggerKey = campaignCompletedTriggerKeyFor(
+      existing.campaign.category,
+    );
+    if (autoCompleted && completedTriggerKey) {
       const refreshed = await this.prisma.campaignApplication.findUnique({
         where: { id: applicationId },
         include: { ...DISPATCH_APPLICATION_INCLUDE, settlement: true },
       });
       if (refreshed) {
-        void this.dispatcher.dispatch(
-          campaignCompletedTriggerKeyFor(existing.campaign.category),
-          { application: refreshed as never, settlement: refreshed.settlement },
-        );
+        void this.dispatcher.dispatch(completedTriggerKey, {
+          application: refreshed as never,
+          settlement: refreshed.settlement,
+        });
       }
     }
     return this.fetchSubmission(applicationId);
@@ -804,26 +808,28 @@ export class AdminApplicationsService {
     });
     for (const target of targets) {
       const category = target.application.campaign.category;
-      const settlementTriggerKey =
-        category === "FAKE_PURCHASE"
-          ? "FAKE_PURCHASE_SETTLEMENT_COMPLETED"
-          : category === "SIMPLE_REVIEW"
-            ? "SIMPLE_REVIEW_SETTLEMENT_COMPLETED"
-            : "SNS_SETTLEMENT_COMPLETED";
-      const campaignCompletedTriggerKey =
-        campaignCompletedTriggerKeyFor(category);
-      // 보수 0엔이면 정산 안내는 생략하고 종료 메시지만 발송.
       if (target.amountJpy > 0) {
+        const settlementTriggerKey =
+          category === "FAKE_PURCHASE"
+            ? "FAKE_PURCHASE_SETTLEMENT_COMPLETED"
+            : category === "SIMPLE_REVIEW"
+              ? "SIMPLE_REVIEW_SETTLEMENT_COMPLETED"
+              : "SNS_SETTLEMENT_COMPLETED";
         void this.dispatcher.dispatch(settlementTriggerKey, {
           application: target.application as never,
           settlement: target,
         });
+      } else {
+        // 0엔 정산(무보수)은 정산 안내 대신 무보수 캠페인 종료 안내만 발송.
+        const campaignCompletedTriggerKey =
+          campaignCompletedTriggerKeyFor(category);
+        if (campaignCompletedTriggerKey) {
+          void this.dispatcher.dispatch(campaignCompletedTriggerKey, {
+            application: target.application as never,
+            settlement: target,
+          });
+        }
       }
-      // 정산 완료 = 개인의 캠페인 프로세스 종료. 정산 알림과 별개로 종료 메시지를 발송.
-      void this.dispatcher.dispatch(campaignCompletedTriggerKey, {
-        application: target.application as never,
-        settlement: target,
-      });
     }
     return { completedCount: targets.length };
   }

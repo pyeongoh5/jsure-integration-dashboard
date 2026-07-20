@@ -89,11 +89,15 @@ export function settlementAmounts(
  * - rewardAmountJpy = UNIFIED 면 campaign.rewardJpy, PER_SUBTYPE 면 참여
  *   서브타입 기여 합산(옵션별 보수 분리 recruit 은 선택 옵션의 보수)
  * - productRefundJpy = 가구매(FAKE_PURCHASE)만 recruit.productPriceJpy 합산
+ *
+ * 총액 0원이면 정산 대기 없이 COMPLETED 로 자동 완료 생성한다. 이번 호출에서
+ * 자동 완료가 일어났을 때만 autoCompleted=true — 호출자가 캠페인 종료 메시지를
+ * 발송할지 판단하는 데 쓴다.
  */
 export async function ensureSettlementForApplication(
   prisma: PrismaService,
   applicationId: string,
-): Promise<void> {
+): Promise<{ autoCompleted: boolean }> {
   const application = await prisma.campaignApplication.findUnique({
     where: { id: applicationId },
     select: {
@@ -101,6 +105,7 @@ export async function ensureSettlementForApplication(
       subTypes: true,
       options: { select: { subType: true, option: true } },
       posts: { select: { subType: true, insightSubmittedAt: true } },
+      settlement: { select: { id: true } },
       campaign: {
         select: {
           category: true,
@@ -119,8 +124,12 @@ export async function ensureSettlementForApplication(
       },
     },
   });
-  if (!application) return;
-  if (application.submissionReviewStatus !== "APPROVED") return;
+  if (!application) return { autoCompleted: false };
+  if (application.submissionReviewStatus !== "APPROVED") {
+    return { autoCompleted: false };
+  }
+  // 이미 정산이 생성돼 있으면 그대로 둔다 (멱등).
+  if (application.settlement) return { autoCompleted: false };
 
   const { campaign } = application;
   const participatingRecruits = campaign.recruits.filter((recruit) =>
@@ -135,7 +144,7 @@ export async function ensureSettlementForApplication(
       );
       return !post || post.insightSubmittedAt === null;
     });
-    if (insightMissing) return;
+    if (insightMissing) return { autoCompleted: false };
   }
 
   const { rewardAmountJpy, productRefundJpy } = settlementAmounts(
@@ -143,16 +152,21 @@ export async function ensureSettlementForApplication(
     application.subTypes,
     application.options,
   );
+  const amountJpy = rewardAmountJpy + productRefundJpy;
+  // 총액 0원이면 정산 대기를 거치지 않고 즉시 완료 (캠페인 종료).
+  const autoCompleted = amountJpy === 0;
 
   await prisma.settlement.upsert({
     where: { applicationId },
     create: {
       applicationId,
-      amountJpy: rewardAmountJpy + productRefundJpy,
+      amountJpy,
       rewardAmountJpy,
       productRefundJpy,
-      status: "PENDING",
+      status: autoCompleted ? "COMPLETED" : "PENDING",
+      completedAt: autoCompleted ? new Date() : null,
     },
     update: {},
   });
+  return { autoCompleted };
 }

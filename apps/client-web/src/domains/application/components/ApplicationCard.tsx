@@ -31,7 +31,9 @@ export function ApplicationCard({ app, onSelect }: Props) {
   const ratio = (STAGE_PROGRESS[app.displayStage] / STAGE_TOTAL) * 100;
   const action = nextAction(app);
   const settled =
-    app.displayStage === "SETTLED" && app.settlement?.completedAt
+    app.displayStage === "SETTLED" &&
+    app.settlement?.completedAt &&
+    app.settlement.amountJpy > 0 // new — 0원 정산은 입금 표기 생략
       ? `¥${app.settlement.amountJpy.toLocaleString("ja-JP")} (${formatDate(app.settlement.completedAt)} ${t("application.card.transferSuffix")})`
       : null;
   return (

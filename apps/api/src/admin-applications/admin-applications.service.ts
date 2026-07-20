@@ -14,7 +14,10 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
-import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
+import {
+  DISPATCH_APPLICATION_INCLUDE,
+  campaignCompletedTriggerKeyFor,
+} from "../line-templates/trigger-meta";
 import { R2Service } from "../r2/r2.service";
 import {
   ensureSettlementForApplication,
@@ -490,7 +493,10 @@ export class AdminApplicationsService {
       },
     });
     // 인사이트가 이미 제출돼 있던 경우, 승인 시점에 자동 정산.
-    await ensureSettlementForApplication(this.prisma, applicationId);
+    const { autoCompleted } = await ensureSettlementForApplication(
+      this.prisma,
+      applicationId,
+    );
     const refreshed = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
       include: {
@@ -516,6 +522,13 @@ export class AdminApplicationsService {
         application: refreshed,
         settlement: refreshed.settlement,
       });
+      // 총액 0원 정산은 생성 즉시 완료되므로 종료 메시지를 이 시점에 발송.
+      if (autoCompleted) {
+        void this.dispatcher.dispatch(campaignCompletedTriggerKeyFor(category), {
+          application: refreshed,
+          settlement: refreshed.settlement,
+        });
+      }
     }
     return this.fetchSubmission(applicationId);
   }
@@ -604,6 +617,7 @@ export class AdminApplicationsService {
       where: { id: applicationId },
       include: {
         options: { select: { subType: true, option: true } },
+        settlement: { select: { id: true } },
         campaign: {
           select: {
             category: true,
@@ -630,18 +644,34 @@ export class AdminApplicationsService {
       existing.subTypes,
       existing.options,
     );
+    const amountJpy = rewardAmountJpy + productRefundJpy;
+    // 총액 0원이면 정산 대기 없이 즉시 완료 처리 (ensure-settlement 와 동일 규칙).
+    const autoCompleted = !existing.settlement && amountJpy === 0;
     // Settlement row 생성 (idempotent: 이미 있으면 그대로 유지)
     await this.prisma.settlement.upsert({
       where: { applicationId },
       create: {
         applicationId,
-        amountJpy: rewardAmountJpy + productRefundJpy,
+        amountJpy,
         rewardAmountJpy,
         productRefundJpy,
-        status: "PENDING",
+        status: autoCompleted ? "COMPLETED" : "PENDING",
+        completedAt: autoCompleted ? new Date() : null,
       },
       update: {},
     });
+    if (autoCompleted) {
+      const refreshed = await this.prisma.campaignApplication.findUnique({
+        where: { id: applicationId },
+        include: { ...DISPATCH_APPLICATION_INCLUDE, settlement: true },
+      });
+      if (refreshed) {
+        void this.dispatcher.dispatch(
+          campaignCompletedTriggerKeyFor(existing.campaign.category),
+          { application: refreshed as never, settlement: refreshed.settlement },
+        );
+      }
+    }
     return this.fetchSubmission(applicationId);
   }
 
@@ -779,11 +809,7 @@ export class AdminApplicationsService {
             ? "SIMPLE_REVIEW_SETTLEMENT_COMPLETED"
             : "SNS_SETTLEMENT_COMPLETED";
       const campaignCompletedTriggerKey =
-        category === "FAKE_PURCHASE"
-          ? "FAKE_PURCHASE_CAMPAIGN_COMPLETED"
-          : category === "SIMPLE_REVIEW"
-            ? "SIMPLE_REVIEW_CAMPAIGN_COMPLETED"
-            : "SNS_CAMPAIGN_COMPLETED";
+        campaignCompletedTriggerKeyFor(category);
       // 보수 0엔이면 정산 안내는 생략하고 종료 메시지만 발송.
       if (target.amountJpy > 0) {
         void this.dispatcher.dispatch(settlementTriggerKey, {

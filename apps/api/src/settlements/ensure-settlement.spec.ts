@@ -5,6 +5,8 @@ type ApplicationSelect = {
   subTypes: string[];
   options: { subType: string; option: string }[];
   posts: { subType: string; insightSubmittedAt: Date | null }[];
+  /** 기존 정산 존재 여부 — 생략 시 없음. */
+  settlement?: { id: string } | null;
   campaign: {
     category: "SNS" | "FAKE_PURCHASE" | "SIMPLE_REVIEW";
     rewardType: "UNIFIED" | "PER_SUBTYPE";
@@ -38,6 +40,8 @@ type UpsertArgs = {
     amountJpy: number;
     rewardAmountJpy: number;
     productRefundJpy: number;
+    status: "PENDING" | "COMPLETED";
+    completedAt: Date | null;
   };
 };
 
@@ -62,12 +66,17 @@ describe("ensureSettlementForApplication — FAKE_PURCHASE", () => {
         ],
       },
     });
-    await ensureSettlementForApplication(prisma, "app-1");
+    const { autoCompleted } = await ensureSettlementForApplication(
+      prisma,
+      "app-1",
+    );
     expect(upserts).toHaveLength(1);
     const args = upserts[0] as UpsertArgs;
     expect(args.create.amountJpy).toBe(8000);
     expect(args.create.rewardAmountJpy).toBe(5000);
     expect(args.create.productRefundJpy).toBe(3000);
+    expect(args.create.status).toBe("PENDING");
+    expect(autoCompleted).toBe(false);
   });
 
   it("가구매 리뷰가 아직 PENDING 이면 settlement 미생성", async () => {
@@ -195,6 +204,67 @@ describe("ensureSettlementForApplication — SNS", () => {
     // REELS 8000 + X 3000
     expect(args.create.rewardAmountJpy).toBe(11000);
     expect(args.create.amountJpy).toBe(11000);
+  });
+
+  it("총액 0원: PENDING 대신 COMPLETED 로 즉시 완료 생성 (autoCompleted)", async () => {
+    const { prisma, upserts } = makeStubPrisma({
+      submissionReviewStatus: "APPROVED",
+      subTypes: ["INSTAGRAM"],
+      options: [],
+      posts: [{ subType: "INSTAGRAM", insightSubmittedAt: new Date() }],
+      campaign: {
+        category: "SNS",
+        rewardType: "PER_SUBTYPE",
+        rewardJpy: 0,
+        recruits: [
+          {
+            subType: "INSTAGRAM",
+            insightRequired: true,
+            productPriceJpy: null,
+            rewardJpy: 0,
+          },
+        ],
+      },
+    });
+    const { autoCompleted } = await ensureSettlementForApplication(
+      prisma,
+      "app-1",
+    );
+    expect(autoCompleted).toBe(true);
+    expect(upserts).toHaveLength(1);
+    const args = upserts[0] as UpsertArgs;
+    expect(args.create.amountJpy).toBe(0);
+    expect(args.create.status).toBe("COMPLETED");
+    expect(args.create.completedAt).toBeInstanceOf(Date);
+  });
+
+  it("이미 정산이 존재하면 재호출해도 upsert 없이 autoCompleted=false", async () => {
+    const { prisma, upserts } = makeStubPrisma({
+      submissionReviewStatus: "APPROVED",
+      subTypes: ["INSTAGRAM"],
+      options: [],
+      settlement: { id: "settle-1" },
+      posts: [{ subType: "INSTAGRAM", insightSubmittedAt: new Date() }],
+      campaign: {
+        category: "SNS",
+        rewardType: "PER_SUBTYPE",
+        rewardJpy: 0,
+        recruits: [
+          {
+            subType: "INSTAGRAM",
+            insightRequired: true,
+            productPriceJpy: null,
+            rewardJpy: 0,
+          },
+        ],
+      },
+    });
+    const { autoCompleted } = await ensureSettlementForApplication(
+      prisma,
+      "app-1",
+    );
+    expect(autoCompleted).toBe(false);
+    expect(upserts).toHaveLength(0);
   });
 
   it("UNIFIED: 참여 서브타입 수와 무관하게 campaign.rewardJpy 로 생성", async () => {

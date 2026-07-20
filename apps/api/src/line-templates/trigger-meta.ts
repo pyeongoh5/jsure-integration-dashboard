@@ -551,6 +551,15 @@ export function getMeta(triggerKey: LineTriggerKey): TriggerMetaEntry {
   return TRIGGER_META[triggerKey];
 }
 
+/** 카테고리별 "캠페인 종료" 트리거 키. */
+export function campaignCompletedTriggerKeyFor(
+  category: CampaignCategory,
+): LineTriggerKey {
+  if (category === "FAKE_PURCHASE") return "FAKE_PURCHASE_CAMPAIGN_COMPLETED";
+  if (category === "SIMPLE_REVIEW") return "SIMPLE_REVIEW_CAMPAIGN_COMPLETED";
+  return "SNS_CAMPAIGN_COMPLETED";
+}
+
 export function listTriggersForCategory(category: CampaignCategory): LineTriggerKey[] {
   return (Object.keys(TRIGGER_META) as LineTriggerKey[]).filter(
     (k) => TRIGGER_META[k].category === category,

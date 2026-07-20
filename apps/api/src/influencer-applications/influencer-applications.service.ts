@@ -742,15 +742,25 @@ export class InfluencerApplicationsService {
       }
     }
     // 제출물이 이미 승인된 상태라면 인사이트 제출 시점에 자동 정산.
-    await ensureSettlementForApplication(this.prisma, applicationId);
+    const { autoCompleted } = await ensureSettlementForApplication(
+      this.prisma,
+      applicationId,
+    );
 
     const refreshed = await this.prisma.campaignApplication.findUniqueOrThrow({
       where: { id: applicationId },
-      include: DISPATCH_APPLICATION_INCLUDE,
+      include: { ...DISPATCH_APPLICATION_INCLUDE, settlement: true },
     });
     void this.dispatcher.dispatch("SNS_INSIGHT_SUBMITTED", {
       application: refreshed,
     });
+    // 총액 0원 정산은 생성 즉시 완료 — 종료 메시지를 이 시점에 발송 (SNS 경로).
+    if (autoCompleted) {
+      void this.dispatcher.dispatch("SNS_CAMPAIGN_COMPLETED", {
+        application: refreshed,
+        settlement: refreshed.settlement,
+      });
+    }
 
     return this.getForInfluencer(influencerId, applicationId);
   }

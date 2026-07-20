@@ -432,19 +432,21 @@ export function ApplicationDetail() {
             <p className={styles.thanksTitle}>
               {t("pages.applications.detail.thanksTitle")}
             </p>
-            <dl className={styles.thanksMeta}>
-              <div>
-                <dt>{t("pages.applications.detail.labelReward")}</dt>
-                <dd>
-                  ¥{data.settlement.amountJpy.toLocaleString("ja-JP")}
-                  {t("pages.applications.detail.yenSuffix")}
-                </dd>
-              </div>
-              <div>
-                <dt>{t("pages.applications.detail.labelPayer")}</dt>
-                <dd>{t("pages.applications.detail.companyName")}</dd>
-              </div>
-            </dl>
+            {data.settlement.amountJpy > 0 && ( // new — 0원 정산은 금액 표기 생략
+              <dl className={styles.thanksMeta}>
+                <div>
+                  <dt>{t("pages.applications.detail.labelReward")}</dt>
+                  <dd>
+                    ¥{data.settlement.amountJpy.toLocaleString("ja-JP")}
+                    {t("pages.applications.detail.yenSuffix")}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t("pages.applications.detail.labelPayer")}</dt>
+                  <dd>{t("pages.applications.detail.companyName")}</dd>
+                </div>
+              </dl>
+            )}
           </div>
         )}
 

@@ -5,6 +5,7 @@ import type {
   CampaignSubType,
   PostReviewStatus,
   Attachment,
+  SnsAccountSubType,
 } from "@jsure/shared";
 
 export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
@@ -53,6 +54,8 @@ export type DraftReview = {
   influencerId: string;
   influencerName: string;
   influencerHandle: string;
+  /** 응모 SNS 핸들이 없을 때(가구매·단순리뷰) 표기할 대표 SNS. 우선순위 Instagram→X→TikTok. */
+  representativeSns: { snsType: SnsAccountSubType; handle: string } | null;
   influencerFlagged: boolean;
   campaignId: string;
   campaignTitle: string;

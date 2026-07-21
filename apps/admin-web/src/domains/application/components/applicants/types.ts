@@ -3,6 +3,7 @@ import type {
   ApplicationStatus,
   CampaignCategory,
   CampaignSubType,
+  SnsAccountSubType,
 } from "@jsure/shared";
 
 // 검토/정산 단계로 넘어가지 않은 응모만 응모 관리에 노출한다.
@@ -25,6 +26,8 @@ export type Applicant = {
   influencerId: string;
   name: string;
   handle: string;
+  /** 응모 SNS 핸들이 없을 때(가구매·단순리뷰) 표기할 대표 SNS. 우선순위 Instagram→X→TikTok. */
+  representativeSns: { snsType: SnsAccountSubType; handle: string } | null;
   flagged: boolean;
   campaignId: string;
   campaign: string;

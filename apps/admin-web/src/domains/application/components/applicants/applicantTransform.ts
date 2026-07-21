@@ -1,7 +1,8 @@
-import type {
-  AdminApplication,
-  AdminInfluencerSnsAccount,
-  CampaignSubType,
+import {
+  pickRepresentativeSnsAccount,
+  type AdminApplication,
+  type AdminInfluencerSnsAccount,
+  type CampaignSubType,
 } from "@jsure/shared";
 import type { Applicant, ApplicantStatus, Media } from "./types";
 
@@ -78,11 +79,17 @@ export function toApplicant(
     application.influencer.snsAccounts,
     application.subTypes,
   );
+  const representative = pickRepresentativeSnsAccount(
+    application.influencer.snsAccounts,
+  );
   return {
     id: application.id,
     influencerId: application.influencer.id,
     name: application.influencer.name,
     handle: appliedAccounts[0]?.handle ?? "",
+    representativeSns: representative
+      ? { snsType: representative.snsType, handle: representative.handle }
+      : null,
     flagged: application.influencer.flagged,
     campaignId: application.campaign.id,
     campaign: application.campaign.title,

@@ -1,4 +1,4 @@
-import type { AdminSubmission } from "@jsure/shared";
+import { pickRepresentativeSnsAccount, type AdminSubmission } from "@jsure/shared";
 import { SNS_TO_MEDIA, type DraftReview, type DraftStatus } from "./types";
 
 function deriveStatus(
@@ -59,6 +59,9 @@ export function toDraftReview(
   const matchingAccount = submission.influencer.snsAccounts.find((account) =>
     submission.subTypes.includes(account.snsType),
   );
+  const representative = pickRepresentativeSnsAccount(
+    submission.influencer.snsAccounts,
+  );
   // 모든 게시물의 인사이트가 제출돼야 "인사이트 제출" 상태로 본다.
   const insightSubmitted =
     submission.posts.length > 0 &&
@@ -73,6 +76,9 @@ export function toDraftReview(
     influencerId: submission.influencer.id,
     influencerName: submission.influencer.name,
     influencerHandle: matchingAccount?.handle ?? "",
+    representativeSns: representative
+      ? { snsType: representative.snsType, handle: representative.handle }
+      : null,
     influencerFlagged: submission.influencer.flagged,
     campaignId: submission.campaign.id,
     campaignTitle: submission.campaign.title,

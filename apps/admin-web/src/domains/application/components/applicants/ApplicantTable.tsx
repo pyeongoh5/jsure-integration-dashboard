@@ -259,9 +259,14 @@ export function ApplicantTable({
                         {applicant.name}
                         {applicant.flagged && <span className={shared.flaggedBadge}>대상외</span>}
                       </div>
-                      {applicant.handle && (
+                      {applicant.handle ? (
                         <div className={shared.infHandle}>@{applicant.handle}</div>
-                      )}
+                      ) : applicant.representativeSns ? (
+                        <div className={shared.infHandle}>
+                          대표 SNS: {SUB_TYPE_LABEL[applicant.representativeSns.snsType]} - @
+                          {applicant.representativeSns.handle}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </td>

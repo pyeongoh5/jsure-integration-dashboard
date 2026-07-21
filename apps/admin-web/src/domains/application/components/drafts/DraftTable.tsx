@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { ScrollTable, SubTypePill } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { CATEGORY_LABEL_KO } from "../applicants/types";
-import { SUB_TYPE_OPTION_LABEL } from "@jsure/shared";
+import { SUB_TYPE_LABEL, SUB_TYPE_OPTION_LABEL } from "@jsure/shared";
 import {
   DRAFT_STATUS_LABEL,
   MEDIA_META,
@@ -221,9 +221,14 @@ export function DraftTable({
                               <span className={shared.flaggedBadge}>대상외</span>
                             )}
                           </div>
-                          {draft.influencerHandle && (
+                          {draft.influencerHandle ? (
                             <div className={shared.infHandle}>@{draft.influencerHandle}</div>
-                          )}
+                          ) : draft.representativeSns ? (
+                            <div className={shared.infHandle}>
+                              대표 SNS: {SUB_TYPE_LABEL[draft.representativeSns.snsType]} - @
+                              {draft.representativeSns.handle}
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </td>

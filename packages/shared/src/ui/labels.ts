@@ -30,6 +30,23 @@ export const SUB_TYPE_OPTION_LABEL: Record<string, string> = {
   ATCOSME: "@cosme",
 };
 
+/**
+ * 인플루언서의 대표 SNS 선택 우선순위. SNS 계정이 여럿일 때 이 순서로 대표를 고른다.
+ * 우선순위 목록에 없는 계정(YOUTUBE 등)만 있으면 목록의 첫 계정을 대표로 사용.
+ */
+export const REPRESENTATIVE_SNS_PRIORITY = ["INSTAGRAM", "X", "TIKTOK"] as const;
+
+/** 우선순위(Instagram → X → TikTok)에 따라 대표 SNS 계정 하나를 고른다. 없으면 null. */
+export function pickRepresentativeSnsAccount<Account extends { snsType: string }>(
+  accounts: readonly Account[],
+): Account | null {
+  for (const snsType of REPRESENTATIVE_SNS_PRIORITY) {
+    const account = accounts.find((candidate) => candidate.snsType === snsType);
+    if (account) return account;
+  }
+  return accounts[0] ?? null;
+}
+
 export const SNS_SUB_TYPES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
 export const FAKE_PURCHASE_SUB_TYPES = ["QOO10"] as const satisfies readonly CampaignSubType[];
 export const SIMPLE_REVIEW_SUB_TYPES = ["LIPS", "ATCOSME"] as const satisfies readonly CampaignSubType[];

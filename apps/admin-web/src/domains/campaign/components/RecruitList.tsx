@@ -136,6 +136,7 @@ function createRecruit(
     };
   }
   if (category === "SIMPLE_REVIEW") {
+    // 단순 리뷰는 서브타입 선택 = 필수 응모. 모집 인원은 캠페인 단위로 공통 적용.
     return {
       subType,
       minFollowers: 0,
@@ -144,7 +145,7 @@ function createRecruit(
       subTypeOptions: [],
       options: [],
       insightRequired: false,
-      isRequired: false,
+      isRequired: true,
       productPriceJpy: null,
       productUrl: null,
     };
@@ -195,8 +196,19 @@ export function RecruitList({
     if (index >= 0) {
       onChange(value.filter((_, i) => i !== index));
     } else {
-      onChange([...value, createRecruit(category, subType)]);
+      const created = createRecruit(category, subType);
+      // 단순 리뷰는 모집 인원이 캠페인 공통 — 새 서브타입도 기존 값을 물려받는다.
+      const sharedCount = value[0]?.recruitCount;
+      if (category === "SIMPLE_REVIEW" && sharedCount !== undefined) {
+        created.recruitCount = sharedCount;
+      }
+      onChange([...value, created]);
     }
+  };
+
+  // 단순 리뷰 전용: 선택한 전 서브타입에 동일 모집 인원 적용.
+  const setSimpleReviewRecruitCount = (count: number) => {
+    onChange(value.map((recruit) => ({ ...recruit, recruitCount: count })));
   };
 
   const toggleInstagramPostType = (index: number, postType: InstagramPostType) => {
@@ -349,8 +361,39 @@ export function RecruitList({
     );
   };
 
+  const simpleReviewCount = value[0]?.recruitCount;
+  const simpleReviewCountText =
+    value.length > 0 &&
+    simpleReviewCount !== undefined &&
+    Number.isFinite(simpleReviewCount)
+      ? String(simpleReviewCount)
+      : "";
+  const simpleReviewCountError =
+    value.length > 0 ? errorByIndex?.[0]?.recruitCount : undefined;
+
   return (
     <div className={styles.snsRecruits}>
+      {category === "SIMPLE_REVIEW" && (
+        <div className={styles.snsField}>
+          <label className={styles.subLabel}>모집 인원 (선택한 채널 공통)</label>
+          <div className={styles.snsCountRow}>
+            <input
+              type="text"
+              inputMode="numeric"
+              className={styles.input}
+              value={simpleReviewCountText}
+              disabled={disabled || value.length === 0}
+              onChange={(event) =>
+                setSimpleReviewRecruitCount(parseIntegerInput(event.target.value))
+              }
+            />
+            <span className={styles.snsSuffix}>명</span>
+          </div>
+          {simpleReviewCountError && (
+            <div className={styles.error}>{simpleReviewCountError}</div>
+          )}
+        </div>
+      )}
       {candidates.map((subType) => {
         const index = indexOf(subType);
         const selected = index >= 0;
@@ -388,47 +431,13 @@ export function RecruitList({
             )}
             {selected && row ? (
               category === "SIMPLE_REVIEW" ? (
-                <div className={styles.snsFields}>
-                  <div className={styles.snsField}>
-                    <label className={styles.subLabel}>모집 인원</label>
-                    <div className={styles.snsCountRow}>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        className={styles.input}
-                        value={Number.isFinite(row.recruitCount) ? String(row.recruitCount) : ""}
-                        disabled={disabled}
-                        onChange={(event) =>
-                          updateAt(index, {
-                            recruitCount: parseIntegerInput(event.target.value),
-                          })
-                        }
-                      />
-                      <span className={styles.snsSuffix}>명</span>
-                    </div>
-                    {errors?.recruitCount && (
-                      <div className={styles.error}>{errors.recruitCount}</div>
-                    )}
+                // 모집 인원은 캠페인 공통 입력으로, 필수 여부는 선택 자체로 갈음.
+                // 서브타입별로 남는 건 PER_SUBTYPE 보수뿐.
+                rewardType === "PER_SUBTYPE" ? (
+                  <div className={styles.snsFields}>
+                    {renderRewardField(index, row, errors)}
                   </div>
-                  {renderRewardField(index, row, errors)}
-                  <div className={`${styles.snsField} ${styles.snsFieldRight}`}>
-                    <label className={styles.snsToggle}>
-                      <input
-                        type="checkbox"
-                        checked={row.isRequired}
-                        disabled={disabled}
-                        onChange={() =>
-                          updateAt(index, {
-                            isRequired: !row.isRequired,
-                          })
-                        }
-                      />
-                      <span className={styles.snsToggleLabel}>
-                        응모 필수
-                      </span>
-                    </label>
-                  </div>
-                </div>
+                ) : null
               ) : category === "SNS" ? (
                 <div className={styles.snsFields}>
                   <div className={styles.snsField}>

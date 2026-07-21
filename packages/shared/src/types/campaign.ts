@@ -403,6 +403,14 @@ function refineRecruitsByCategory(
         });
         return;
       }
+      // 단순 리뷰는 서브타입 선택 자체가 필수 응모다.
+      if (!recruit.isRequired) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["recruits", index, "isRequired"],
+          message: "단순 리뷰는 선택한 서브타입이 모두 필수 응모입니다",
+        });
+      }
       if (recruit.subTypeOptions.length > 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -426,6 +434,18 @@ function refineRecruitsByCategory(
       }
     }
   });
+
+  // 단순 리뷰는 캠페인 단위 모집 인원 하나 — 전 서브타입 recruitCount 가 동일해야 한다.
+  if (category === "SIMPLE_REVIEW" && recruits.length > 1) {
+    const distinctCounts = new Set(recruits.map((recruit) => recruit.recruitCount));
+    if (distinctCounts.size > 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["recruits"],
+        message: "단순 리뷰는 모든 서브타입의 모집 인원이 같아야 합니다",
+      });
+    }
+  }
 }
 
 export const CampaignFormSchema = z

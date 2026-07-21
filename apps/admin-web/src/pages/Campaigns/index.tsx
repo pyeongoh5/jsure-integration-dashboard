@@ -77,7 +77,11 @@ function stripHtml(html: string): string {
 
 function toCard(c: CampaignResponse, now: Date): Campaign {
   const status = deriveStatus(c, now);
-  const capacity = c.recruits.reduce((sum, r) => sum + r.recruitCount, 0);
+  // 단순 리뷰는 응모자가 전 서브타입에 동시 응모하므로 정원은 합이 아니라 단일값(전 서브타입 동일).
+  const capacity =
+    c.category === "SIMPLE_REVIEW"
+      ? c.recruits.reduce((max, r) => Math.max(max, r.recruitCount), 0)
+      : c.recruits.reduce((sum, r) => sum + r.recruitCount, 0);
   return {
     id: c.id,
     brand: "",

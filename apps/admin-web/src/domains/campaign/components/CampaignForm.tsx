@@ -196,6 +196,7 @@ export function CampaignForm({
           return {
             ...recruit,
             rewardJpy,
+            isRequired: true, // 단순 리뷰는 선택한 서브타입이 곧 필수 응모
             options: [],
             productPriceJpy: null,
             productUrl: null,
@@ -603,7 +604,7 @@ export function CampaignForm({
             {methods.watch("category") === "FAKE_PURCHASE"
               ? "가구매를 진행할 채널을 선택하고, 채널별 모집 인원과 상품 정보를 입력하세요."
               : methods.watch("category") === "SIMPLE_REVIEW"
-                ? "리뷰를 받을 채널(LIPS/@cosme)을 선택하고, 채널별 모집 인원과 최소 팔로워 조건을 입력하세요."
+                ? "리뷰를 받을 채널(LIPS/@cosme)을 선택하세요. 선택한 채널은 모두 필수 응모이며, 모집 인원은 캠페인 단위로 하나만 입력합니다."
                 : "사용할 SNS를 선택하고, 각 SNS에 적용할 조건과 모집 인원을 입력하세요."}
           </p>
           {methods.watch("rewardType") === "PER_SUBTYPE" && (

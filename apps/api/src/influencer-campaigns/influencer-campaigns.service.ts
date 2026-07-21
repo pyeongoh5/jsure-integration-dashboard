@@ -43,7 +43,15 @@ type CampaignRow = {
   }[];
 };
 
-function totalRecruitCount(recruits: { recruitCount: number }[]) {
+function totalRecruitCount(
+  recruits: { recruitCount: number }[],
+  category: CampaignCategory,
+) {
+  // 단순 리뷰는 응모자가 전 서브타입에 동시 응모하므로 정원의 합이 아니라
+  // 단일 정원(전 서브타입 동일)이 캠페인 전체 모집 인원이다.
+  if (category === "SIMPLE_REVIEW") {
+    return recruits.reduce((max, r) => Math.max(max, r.recruitCount), 0);
+  }
   return recruits.reduce((acc, r) => acc + r.recruitCount, 0);
 }
 
@@ -68,7 +76,7 @@ function toCard(
     rewardType: row.rewardType,
     rewardJpy: row.rewardJpy,
     recruits: row.recruits,
-    recruitCount: totalRecruitCount(row.recruits),
+    recruitCount: totalRecruitCount(row.recruits, row.category),
     approvedCount,
     recruitStartAt: row.recruitStartAt.toISOString(),
     recruitEndAt: row.recruitEndAt.toISOString(),

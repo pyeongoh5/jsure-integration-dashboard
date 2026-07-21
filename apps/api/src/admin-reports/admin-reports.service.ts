@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import type {
-  CampaignParticipantsResponse,
-  CampaignReportParticipant,
-  CampaignReportResponse,
-  CampaignReportRow,
-  CampaignReportSortKey,
-  CampaignReportSortOrder,
+import {
+  SLOT_CONSUMING_STATUSES,
+  type CampaignParticipantsResponse,
+  type CampaignReportParticipant,
+  type CampaignReportResponse,
+  type CampaignReportRow,
+  type CampaignReportSortKey,
+  type CampaignReportSortOrder,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -46,15 +47,18 @@ export class AdminReportsService {
       let participantCount = 0;
 
       for (const application of campaign.applications) {
-        influencerSet.add(application.influencerId);
-        // 참여한 모든 서브타입 계정의 팔로워를 합산.
-        for (const account of application.influencer.snsAccounts) {
-          if (
-            application.subTypes.includes(
-              account.snsType as (typeof application.subTypes)[number],
-            )
-          ) {
-            totalFollowers += account.followerCount;
+        // 인플루언서 수·팔로워 합산은 응모가 승인된(승인 이후 상태 포함) 인플루언서만 대상.
+        if (SLOT_CONSUMING_STATUSES.includes(application.status)) {
+          influencerSet.add(application.influencerId);
+          // 참여한 모든 서브타입 계정의 팔로워를 합산.
+          for (const account of application.influencer.snsAccounts) {
+            if (
+              application.subTypes.includes(
+                account.snsType as (typeof application.subTypes)[number],
+              )
+            ) {
+              totalFollowers += account.followerCount;
+            }
           }
         }
 

@@ -601,7 +601,7 @@ export const messages = {
         yenSuffix: { jp: "円", kr: "엔" },
         labelPayer: { jp: "振込名", kr: "입금인" },
         companyName: { jp: "株式会社J-SURE", kr: "주식회사 J-SURE" },
-        rejectPrefix: { jp: "未選定となりました: ", kr: "미선정되었습니다: " },
+        rejectPrefix: { jp: "未選定となりました。ご希望に添えず申し訳ございません。また次のキャンペーンでお待ちしております！: ", kr: "미선정되었습니다. 기대에 부응하지 못해. 죄송합니다. 다음 캠페인에서 또 기다리고 있겠습니다!: " },
         cancelledNotice: {
           jp: "キャンセル済（同じキャンペーンに再応募はできません）",
           kr: "취소됨 (동일 캠페인에 재응모할 수 없습니다)",

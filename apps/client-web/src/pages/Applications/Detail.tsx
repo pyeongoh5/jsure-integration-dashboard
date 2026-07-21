@@ -453,7 +453,6 @@ export function ApplicationDetail() {
         {stage === "REJECTED" && (
           <p className={`${styles.msg} ${styles.msgErr}`}>
             {t("pages.applications.detail.rejectPrefix")}
-            {data.rejectReason ?? "—"}
           </p>
         )}
         {stage === "CANCELLED" && (

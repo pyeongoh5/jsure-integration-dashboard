@@ -61,7 +61,6 @@ type ApplicationRow = {
   deliveredAt: Date | null;
   receivedAt: Date | null;
   completedAt: Date | null;
-  rejectReason: string | null;
   subTypes: CampaignSubType[];
   options: { subType: CampaignSubType; option: string }[];
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
@@ -168,7 +167,6 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     deliveredAt: row.deliveredAt ? row.deliveredAt.toISOString() : null,
     receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
-    rejectReason: row.rejectReason,
     subTypes: row.subTypes,
     selectedOptions: row.options.map((entry) => ({
       subType: entry.subType,

@@ -242,7 +242,6 @@ export const InfluencerApplicationSchema = z.object({
   deliveredAt: z.string().datetime().nullable(),
   receivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
-  rejectReason: z.string().nullable(),
   /** 이 응모가 참여하는 서브타입 목록. */
   subTypes: z.array(CampaignSubTypeSchema),
   /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS 1개). */

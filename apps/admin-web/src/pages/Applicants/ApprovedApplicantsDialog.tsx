@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import type {
-  ApprovedApplicantExportResponse,
-  CampaignSubType,
-} from "@jsure/shared";
+import type { ApprovedApplicantExportResponse } from "@jsure/shared";
 import {
+  approvedApplicantChannelLabel,
   approvedApplicantsCsvFilename,
   buildApprovedApplicantsCsv,
   exportApprovedApplicants,
@@ -17,16 +15,6 @@ import styles from "./ApprovedApplicantsDialog.module.css";
 type Props = {
   campaignId?: string;
   onClose: () => void;
-};
-
-const SNS_LABEL: Record<CampaignSubType, string> = {
-  INSTAGRAM: "Instagram",
-  TIKTOK: "TikTok",
-  X: "X",
-  YOUTUBE: "YouTube",
-  QOO10: "Qoo10",
-  LIPS: "LIPS",
-  ATCOSME: "@cosme",
 };
 
 export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose }: Props) {
@@ -154,7 +142,7 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
                     <td>{row.nameKana ?? ""}</td>
                     <td>
                       {row.channels
-                        .map((channel) => SNS_LABEL[channel.subType])
+                        .map(approvedApplicantChannelLabel)
                         .join(" / ")}
                     </td>
                     <td>

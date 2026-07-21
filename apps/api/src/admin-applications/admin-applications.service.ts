@@ -857,6 +857,7 @@ export class AdminApplicationsService {
       select: {
         id: true,
         subTypes: true,
+        options: { select: { subType: true, option: true } },
         appliedAt: true,
         influencer: {
           select: {
@@ -898,7 +899,10 @@ export class AdminApplicationsService {
               subType === "YOUTUBE")
               ? buildSnsProfileUrl(subType, handle)
               : "";
-          return { subType, snsHandle: handle, profileUrl };
+          const selectedOption =
+            row.options.find((entry) => entry.subType === subType)?.option ??
+            null;
+          return { subType, option: selectedOption, snsHandle: handle, profileUrl };
         }),
         phone: row.influencer.phone,
         postalCode: row.influencer.postalCode,

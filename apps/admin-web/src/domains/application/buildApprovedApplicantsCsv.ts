@@ -1,7 +1,8 @@
-import type {
-  ApprovedApplicantExportResponse,
-  ApprovedApplicantExportRow,
-  CampaignSubType,
+import {
+  SUB_TYPE_LABEL,
+  SUB_TYPE_OPTION_LABEL,
+  type ApprovedApplicantExportResponse,
+  type ApprovedApplicantExportRow,
 } from "@jsure/shared";
 
 const HEADERS = [
@@ -16,15 +17,14 @@ const HEADERS = [
   "캠페인 신청날짜",
 ] as const;
 
-const SNS_LABEL: Record<CampaignSubType, string> = {
-  INSTAGRAM: "Instagram",
-  TIKTOK: "TikTok",
-  X: "X",
-  YOUTUBE: "YouTube",
-  QOO10: "Qoo10",
-  LIPS: "LIPS",
-  ATCOSME: "@cosme",
-};
+/** SNS 컬럼 표기 — 옵션이 있으면 "Instagram(피드)" 형태. */
+export function approvedApplicantChannelLabel(
+  channel: ApprovedApplicantExportRow["channels"][number],
+): string {
+  const snsLabel = SUB_TYPE_LABEL[channel.subType];
+  if (!channel.option) return snsLabel;
+  return `${snsLabel}(${SUB_TYPE_OPTION_LABEL[channel.option] ?? channel.option})`;
+}
 
 function escapeCsvCell(value: string): string {
   if (value === "") return "";
@@ -38,7 +38,7 @@ function formatRow(row: ApprovedApplicantExportRow): string[] {
   return [
     row.name,
     row.nameKana ?? "",
-    row.channels.map((channel) => SNS_LABEL[channel.subType]).join(" / "),
+    row.channels.map(approvedApplicantChannelLabel).join(" / "),
     row.channels.map((channel) => channel.snsHandle).join(" / "),
     row.channels
       .map((channel) => channel.profileUrl)

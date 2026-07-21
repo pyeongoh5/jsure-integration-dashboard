@@ -5,6 +5,7 @@ export * from "./exportApi";
 export {
   buildApprovedApplicantsCsv,
   approvedApplicantsCsvFilename,
+  approvedApplicantChannelLabel,
   triggerCsvDownload,
   formatAppliedAtJst,
 } from "./buildApprovedApplicantsCsv";

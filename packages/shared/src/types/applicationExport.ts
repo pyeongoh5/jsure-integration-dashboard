@@ -10,6 +10,8 @@ export const ApprovedApplicantExportRowSchema = z.object({
   channels: z.array(
     z.object({
       subType: CampaignSubTypeSchema,
+      /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS). 없으면 null. */
+      option: z.string().nullable(),
       snsHandle: z.string(),
       profileUrl: z.string(),
     }),

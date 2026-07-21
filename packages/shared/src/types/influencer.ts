@@ -71,6 +71,12 @@ export const InfluencerBankAccountSchema = z.object({
   branchCode: z.string().max(10),
   accountNumber: z.string().regex(/^\d{7}$/, "口座番号は7桁の数字"),
   accountHolderKana: z.string().regex(KANA_RE, "カナで入力してください"),
+  /** 適格請求書登録番号 (인보이스 등록번호). T + 13자리 숫자, 선택 입력. */
+  invoiceRegistrationNumber: z
+    .string()
+    .regex(/^T\d{13}$/, "T + 13桁の数字で入力してください")
+    .nullable()
+    .optional(),
 });
 
 export const JP_PREFECTURES = [

@@ -96,6 +96,8 @@ export class InfluencerAuthService {
             branchCode: input.bankAccount.branchCode,
             accountNumber: input.bankAccount.accountNumber,
             accountHolderKana: input.bankAccount.accountHolderKana,
+            invoiceRegistrationNumber:
+              input.bankAccount.invoiceRegistrationNumber ?? null,
           },
         });
 

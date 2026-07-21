@@ -116,6 +116,7 @@ export async function ensureSettlementForApplication(
               branchCode: true,
               accountNumber: true,
               accountHolderKana: true,
+              invoiceRegistrationNumber: true,
             },
           },
         },
@@ -179,6 +180,7 @@ export async function ensureSettlementForApplication(
     branchCode: null,
     accountNumber: null,
     accountHolderKana: null,
+    invoiceRegistrationNumber: null,
   };
 
   await prisma.settlement.upsert({

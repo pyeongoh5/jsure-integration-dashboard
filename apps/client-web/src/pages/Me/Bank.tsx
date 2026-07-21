@@ -24,6 +24,10 @@ const schema = z
     branchCode: z.string().regex(/^\d{3}$/, t("pages.me.bank.branchCodeError")),
     accountNumber: z.string().regex(/^\d{7}$/, t("pages.me.bank.accountNumberError")),
     accountHolderKana: z.string().regex(KANA_RE, t("pages.me.bank.kanaError")),
+    invoiceRegistrationNumber: z
+      .string()
+      .regex(/^T\d{13}$/, t("pages.me.bank.invoiceNumberError"))
+      .or(z.literal("")), // new
   })
   .superRefine((values, ctx) => {
     if (!values.bank) {
@@ -42,6 +46,7 @@ const EMPTY: Values = {
   branchCode: "",
   accountNumber: "",
   accountHolderKana: "",
+  invoiceRegistrationNumber: "", // new
 };
 
 export function MeBank() {
@@ -66,6 +71,8 @@ export function MeBank() {
         branchCode: data.bankAccount.branchCode,
         accountNumber: "",
         accountHolderKana: data.bankAccount.accountHolderKana,
+        invoiceRegistrationNumber:
+          data.bankAccount.invoiceRegistrationNumber ?? "", // new
       });
     }
   }, [data, methods]);
@@ -80,6 +87,7 @@ export function MeBank() {
         branchCode: values.branchCode,
         accountNumber: values.accountNumber,
         accountHolderKana: values.accountHolderKana,
+        invoiceRegistrationNumber: values.invoiceRegistrationNumber || null, // new
       });
       return upsertBankAccount(payload);
     },
@@ -218,6 +226,28 @@ export function MeBank() {
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 error={field.error}
+                aria-invalid={field["aria-invalid"]}
+              />
+            )}
+          </FormField>
+          <FormField
+            name="invoiceRegistrationNumber"
+            label={t("pages.me.bank.invoiceNumber")}
+            hint={t("pages.me.bank.invoiceNumberHint")}
+          >
+            {(field) => (
+              <Input
+                id={field.id}
+                value={field.value}
+                onChange={(value) =>
+                  field.onChange(
+                    value.toUpperCase().replace(/[^T\d]/g, "").slice(0, 14),
+                  )
+                }
+                onBlur={field.onBlur}
+                error={field.error}
+                maxLength={14}
+                placeholder="T1234567890123"
                 aria-invalid={field["aria-invalid"]}
               />
             )}

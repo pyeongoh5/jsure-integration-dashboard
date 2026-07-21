@@ -507,6 +507,9 @@ export const messages = {
         accountNumberLabel: { jp: "口座番号 (7桁)", kr: "계좌번호 (7자리)" }, // new
         accountHolderKanaLabel: { jp: "口座名義 (カナ)", kr: "예금주명 (가타카나)" },
         kanaHint: { jp: "例: ヤマダ ハナコ", kr: "예: ヤマダ ハナコ" },
+        invoiceNumberLabel: { jp: "適格請求書登録番号 (任意)", kr: "적격청구서 등록번호 (선택)" }, // new
+        invoiceNumberHint: { jp: "例: T1234567890123", kr: "예: T1234567890123" }, // new
+        invoiceNumberInvalid: { jp: "T + 13桁の数字で入力してください", kr: "T + 13자리 숫자로 입력해 주세요" }, // new
         submit: { jp: "登録完了", kr: "가입 완료" },
       },
       profile: {
@@ -677,6 +680,9 @@ export const messages = {
         branchCode: { jp: "支店コード (3桁)", kr: "지점 코드 (3자리)" },
         accountNumber: { jp: "口座番号", kr: "계좌번호" },
         accountHolderKana: { jp: "口座名義 (カナ)", kr: "예금주명 (가타카나)" },
+        invoiceNumber: { jp: "適格請求書登録番号 (任意)", kr: "적격청구서 등록번호 (선택)" }, // new
+        invoiceNumberHint: { jp: "例: T1234567890123", kr: "예: T1234567890123" }, // new
+        invoiceNumberError: { jp: "T + 13桁の数字", kr: "T + 13자리 숫자" }, // new
         saving: { jp: "保存中…", kr: "저장 중…" },
         save: { jp: "保存", kr: "저장" },
       },

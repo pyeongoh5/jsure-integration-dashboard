@@ -218,6 +218,8 @@ export const AdminSettlementSchema = z.object({
         branchCode: z.string(),
         accountNumber: z.string(),
         accountHolderKana: z.string(),
+        /** 適格請求書登録番号. 미지정이면 null. optional 은 구 API 응답 호환용. */
+        invoiceRegistrationNumber: z.string().nullable().optional(),
       })
       .nullable(),
   }),

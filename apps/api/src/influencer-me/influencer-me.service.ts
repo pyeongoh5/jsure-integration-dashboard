@@ -108,6 +108,7 @@ export class InfluencerMeService {
         branchCode: input.branchCode,
         accountNumber: input.accountNumber,
         accountHolderKana: input.accountHolderKana,
+        invoiceRegistrationNumber: input.invoiceRegistrationNumber ?? null,
       },
       update: {
         bankCode: input.bankCode,
@@ -116,6 +117,7 @@ export class InfluencerMeService {
         branchCode: input.branchCode,
         accountNumber: input.accountNumber,
         accountHolderKana: input.accountHolderKana,
+        invoiceRegistrationNumber: input.invoiceRegistrationNumber ?? null,
       },
     });
   }

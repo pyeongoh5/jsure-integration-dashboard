@@ -65,6 +65,7 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
     "지점코드",
     "계좌번호",
     "계좌명의(카나)",
+    "인보이스 등록번호",
     "보수(JPY)",
     "상품환급(JPY)",
     "합계(JPY)",
@@ -96,6 +97,7 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
         bankAccount?.branchCode ?? "",
         bankAccount?.accountNumber ?? "",
         bankAccount?.accountHolderKana ?? "",
+        bankAccount?.invoiceRegistrationNumber ?? "",
         row.rewardAmountJpy,
         row.productRefundJpy,
         row.amountJpy,
@@ -371,6 +373,7 @@ export function Payouts() {
                   <th>지점코드</th>
                   <th>계좌번호</th>
                   <th>계좌명의(카나)</th>
+                  <th>인보이스 등록번호</th>
                   <th>보수</th>
                   <th>상품환급</th>
                   <th>합계</th>
@@ -428,6 +431,7 @@ export function Payouts() {
                       <td>{row.influencer.bankAccount?.branchCode || "—"}</td>
                       <td>{row.influencer.bankAccount?.accountNumber ?? "—"}</td>
                       <td>{row.influencer.bankAccount?.accountHolderKana ?? "—"}</td>
+                      <td>{row.influencer.bankAccount?.invoiceRegistrationNumber ?? "—"}</td>
                       <td className={styles.amount}>{formatJpy(row.rewardAmountJpy)}</td>
                       <td className={styles.amount}>{formatRefund(row.productRefundJpy)}</td>
                       <td className={styles.amount}>{formatJpy(row.amountJpy)}</td>

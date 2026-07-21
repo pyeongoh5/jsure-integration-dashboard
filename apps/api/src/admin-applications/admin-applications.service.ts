@@ -631,6 +631,7 @@ export class AdminApplicationsService {
                 branchCode: true,
                 accountNumber: true,
                 accountHolderKana: true,
+                invoiceRegistrationNumber: true,
               },
             },
           },
@@ -682,6 +683,8 @@ export class AdminApplicationsService {
         accountNumber: existing.influencer.bankAccount?.accountNumber ?? null,
         accountHolderKana:
           existing.influencer.bankAccount?.accountHolderKana ?? null,
+        invoiceRegistrationNumber:
+          existing.influencer.bankAccount?.invoiceRegistrationNumber ?? null,
       },
       update: {},
     });
@@ -752,6 +755,7 @@ export class AdminApplicationsService {
                     branchCode: true,
                     accountNumber: true,
                     accountHolderKana: true,
+                    invoiceRegistrationNumber: true,
                   },
                 },
               },
@@ -1166,6 +1170,7 @@ type SettlementRow = {
   branchCode: string | null;
   accountNumber: string | null;
   accountHolderKana: string | null;
+  invoiceRegistrationNumber: string | null;
   application: {
     id: string;
     subTypes: CampaignSubType[];
@@ -1188,6 +1193,7 @@ type SettlementRow = {
         branchCode: string;
         accountNumber: string;
         accountHolderKana: string;
+        invoiceRegistrationNumber: string | null;
       } | null;
     };
   };
@@ -1207,6 +1213,7 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
           branchCode: row.branchCode ?? "",
           accountNumber: row.accountNumber,
           accountHolderKana: row.accountHolderKana ?? "",
+          invoiceRegistrationNumber: row.invoiceRegistrationNumber,
         }
       : row.application.influencer.bankAccount;
   return {

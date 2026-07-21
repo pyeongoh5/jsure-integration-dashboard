@@ -182,6 +182,8 @@ export class InfluencerAuthController {
             accountNumberMasked: maskAccountNumber(
               inf.bankAccount.accountNumber,
             ),
+            invoiceRegistrationNumber:
+              inf.bankAccount.invoiceRegistrationNumber,
           }
         : null,
     };

@@ -7,6 +7,17 @@ type ApplicationSelect = {
   posts: { subType: string; insightSubmittedAt: Date | null }[];
   /** 기존 정산 존재 여부 — 생략 시 없음. */
   settlement?: { id: string } | null;
+  /** 계좌 스냅샷용 — 생략 시 계좌 미등록. */
+  influencer?: {
+    bankAccount: {
+      bankCode: string;
+      bankName: string;
+      branchName: string;
+      branchCode: string;
+      accountNumber: string;
+      accountHolderKana: string;
+    } | null;
+  };
   campaign: {
     category: "SNS" | "FAKE_PURCHASE" | "SIMPLE_REVIEW";
     rewardType: "UNIFIED" | "PER_SUBTYPE";
@@ -24,7 +35,12 @@ type ApplicationSelect = {
 function makeStubPrisma(application: ApplicationSelect | null) {
   const upserts: unknown[] = [];
   const prisma = {
-    campaignApplication: { findUnique: async () => application },
+    campaignApplication: {
+      findUnique: async () =>
+        application
+          ? { influencer: { bankAccount: null }, ...application }
+          : null,
+    },
     settlement: {
       upsert: async (args: unknown) => {
         upserts.push(args);
@@ -42,6 +58,8 @@ type UpsertArgs = {
     productRefundJpy: number;
     status: "PENDING" | "COMPLETED";
     completedAt: Date | null;
+    bankCode: string | null;
+    accountNumber: string | null;
   };
 };
 
@@ -290,5 +308,65 @@ describe("ensureSettlementForApplication — SNS", () => {
     expect(upserts).toHaveLength(1);
     const args = upserts[0] as UpsertArgs;
     expect(args.create.amountJpy).toBe(10000);
+  });
+
+  it("정산 생성 시점의 계좌를 스냅샷으로 저장", async () => {
+    const { prisma, upserts } = makeStubPrisma({
+      submissionReviewStatus: "APPROVED",
+      subTypes: ["INSTAGRAM", "X"],
+      options: [],
+      posts: [
+        { subType: "INSTAGRAM", insightSubmittedAt: new Date() },
+        { subType: "X", insightSubmittedAt: new Date() },
+      ],
+      influencer: {
+        bankAccount: {
+          bankCode: "0001",
+          bankName: "みずほ銀行",
+          branchName: "本店",
+          branchCode: "001",
+          accountNumber: "1234567",
+          accountHolderKana: "ヤマダ タロウ",
+        },
+      },
+      campaign: {
+        category: "SNS",
+        rewardType: "UNIFIED",
+        rewardJpy: 10000,
+        recruits: SNS_RECRUITS.map((recruit) => ({
+          ...recruit,
+          rewardJpy: null,
+        })),
+      },
+    });
+    await ensureSettlementForApplication(prisma, "app-1");
+    const args = upserts[0] as UpsertArgs;
+    expect(args.create.bankCode).toBe("0001");
+    expect(args.create.accountNumber).toBe("1234567");
+  });
+
+  it("계좌 미등록이면 스냅샷은 null 로 생성", async () => {
+    const { prisma, upserts } = makeStubPrisma({
+      submissionReviewStatus: "APPROVED",
+      subTypes: ["INSTAGRAM", "X"],
+      options: [],
+      posts: [
+        { subType: "INSTAGRAM", insightSubmittedAt: new Date() },
+        { subType: "X", insightSubmittedAt: new Date() },
+      ],
+      campaign: {
+        category: "SNS",
+        rewardType: "UNIFIED",
+        rewardJpy: 10000,
+        recruits: SNS_RECRUITS.map((recruit) => ({
+          ...recruit,
+          rewardJpy: null,
+        })),
+      },
+    });
+    await ensureSettlementForApplication(prisma, "app-1");
+    const args = upserts[0] as UpsertArgs;
+    expect(args.create.bankCode).toBeNull();
+    expect(args.create.accountNumber).toBeNull();
   });
 });

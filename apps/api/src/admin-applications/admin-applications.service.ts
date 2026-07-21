@@ -621,6 +621,20 @@ export class AdminApplicationsService {
       include: {
         options: { select: { subType: true, option: true } },
         settlement: { select: { id: true } },
+        influencer: {
+          select: {
+            bankAccount: {
+              select: {
+                bankCode: true,
+                bankName: true,
+                branchName: true,
+                branchCode: true,
+                accountNumber: true,
+                accountHolderKana: true,
+              },
+            },
+          },
+        },
         campaign: {
           select: {
             category: true,
@@ -651,6 +665,7 @@ export class AdminApplicationsService {
     // 총액 0원이면 정산 대기 없이 즉시 완료 처리 (ensure-settlement 와 동일 규칙).
     const autoCompleted = !existing.settlement && amountJpy === 0;
     // Settlement row 생성 (idempotent: 이미 있으면 그대로 유지)
+    // 생성 시점 계좌를 스냅샷 — 이후 계좌 변경과 무관하게 입금 계좌 기록 보존.
     await this.prisma.settlement.upsert({
       where: { applicationId },
       create: {
@@ -660,6 +675,13 @@ export class AdminApplicationsService {
         productRefundJpy,
         status: autoCompleted ? "COMPLETED" : "PENDING",
         completedAt: autoCompleted ? new Date() : null,
+        bankCode: existing.influencer.bankAccount?.bankCode ?? null,
+        bankName: existing.influencer.bankAccount?.bankName ?? null,
+        branchName: existing.influencer.bankAccount?.branchName ?? null,
+        branchCode: existing.influencer.bankAccount?.branchCode ?? null,
+        accountNumber: existing.influencer.bankAccount?.accountNumber ?? null,
+        accountHolderKana:
+          existing.influencer.bankAccount?.accountHolderKana ?? null,
       },
       update: {},
     });
@@ -1138,6 +1160,12 @@ type SettlementRow = {
   status: "PENDING" | "COMPLETED";
   createdAt: Date;
   completedAt: Date | null;
+  bankCode: string | null;
+  bankName: string | null;
+  branchName: string | null;
+  branchCode: string | null;
+  accountNumber: string | null;
+  accountHolderKana: string | null;
   application: {
     id: string;
     subTypes: CampaignSubType[];
@@ -1169,6 +1197,18 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
   const matchingAccount = row.application.influencer.snsAccounts.find(
     (account) => row.application.subTypes.includes(account.snsType as CampaignSubType),
   );
+  // 정산 생성 시점 스냅샷 우선. 스냅샷 도입 전 정산 건은 현재 계좌로 fallback.
+  const bankAccount =
+    row.bankCode !== null && row.accountNumber !== null
+      ? {
+          bankName: row.bankName ?? "",
+          bankCode: row.bankCode,
+          branchName: row.branchName ?? "",
+          branchCode: row.branchCode ?? "",
+          accountNumber: row.accountNumber,
+          accountHolderKana: row.accountHolderKana ?? "",
+        }
+      : row.application.influencer.bankAccount;
   return {
     id: row.id,
     applicationId: row.applicationId,
@@ -1182,17 +1222,7 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
       id: row.application.influencer.id,
       name: row.application.influencer.name,
       handle: matchingAccount?.handle ?? "",
-      bankAccount: row.application.influencer.bankAccount
-        ? {
-            bankName: row.application.influencer.bankAccount.bankName,
-            bankCode: row.application.influencer.bankAccount.bankCode,
-            branchName: row.application.influencer.bankAccount.branchName,
-            branchCode: row.application.influencer.bankAccount.branchCode,
-            accountNumber: row.application.influencer.bankAccount.accountNumber,
-            accountHolderKana:
-              row.application.influencer.bankAccount.accountHolderKana,
-          }
-        : null,
+      bankAccount,
     },
     campaign: {
       id: row.application.campaign.id,

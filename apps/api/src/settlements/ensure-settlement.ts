@@ -106,6 +106,20 @@ export async function ensureSettlementForApplication(
       options: { select: { subType: true, option: true } },
       posts: { select: { subType: true, insightSubmittedAt: true } },
       settlement: { select: { id: true } },
+      influencer: {
+        select: {
+          bankAccount: {
+            select: {
+              bankCode: true,
+              bankName: true,
+              branchName: true,
+              branchCode: true,
+              accountNumber: true,
+              accountHolderKana: true,
+            },
+          },
+        },
+      },
       campaign: {
         select: {
           category: true,
@@ -156,6 +170,17 @@ export async function ensureSettlementForApplication(
   // 총액 0원이면 정산 대기를 거치지 않고 즉시 완료 (캠페인 종료).
   const autoCompleted = amountJpy === 0;
 
+  // 정산 대기풀 진입 시점의 계좌를 스냅샷 — 이후 마이페이지에서 계좌를 바꿔도
+  // 이 정산 건의 입금 계좌 기록은 보존된다.
+  const bankSnapshot = application.influencer.bankAccount ?? {
+    bankCode: null,
+    bankName: null,
+    branchName: null,
+    branchCode: null,
+    accountNumber: null,
+    accountHolderKana: null,
+  };
+
   await prisma.settlement.upsert({
     where: { applicationId },
     create: {
@@ -165,6 +190,7 @@ export async function ensureSettlementForApplication(
       productRefundJpy,
       status: autoCompleted ? "COMPLETED" : "PENDING",
       completedAt: autoCompleted ? new Date() : null,
+      ...bankSnapshot,
     },
     update: {},
   });

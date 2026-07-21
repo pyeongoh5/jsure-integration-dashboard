@@ -404,6 +404,15 @@ model Settlement {
   completedAt   DateTime?
   completedById String?
 
+  /// 정산 생성(대기풀 진입) 시점의 계좌 스냅샷 — 이후 마이페이지 변경과 무관하게 보존.
+  /// 스냅샷 도입 전 생성된 정산은 null (조회 시 현재 계좌로 fallback).
+  bankCode          String?
+  bankName          String?
+  branchName        String?
+  branchCode        String?
+  accountNumber     String?
+  accountHolderKana String?
+
   application CampaignApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([status])

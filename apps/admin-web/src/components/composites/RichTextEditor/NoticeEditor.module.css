@@ -40,6 +40,10 @@
 
 .body {
   min-height: 200px;
+  /* --rte-max-body-height 가 지정된 에디터(RichTextEditor)만 3배 높이에서 스크롤.
+     변수 미지정(NoticeEditor)이면 max-height 선언이 무효화돼 기존처럼 무제한. */
+  max-height: var(--rte-max-body-height);
+  overflow-y: auto;
   padding: var(--space-4);
   outline: none;
 }
@@ -47,6 +51,17 @@
 .body :global(.ProseMirror) {
   outline: none;
   min-height: 160px;
+}
+
+/* 브라우저 기본 단락 마진(위아래 1em)이 너무 넓어 빈 줄 간격을 좁힌다.
+   .body 는 CSS 모듈로 해시돼 이 에디터에만 적용되므로, 후손 셀렉터로
+   리스트/인용문 안 중첩 단락까지 일관되게 좁힌다. */
+.body p {
+  margin: 0 0 0.5em;
+}
+
+.body > :last-child {
+  margin-bottom: 0;
 }
 
 .body :global(.ProseMirror) img {

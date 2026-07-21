@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, type CSSProperties } from "react";
 import {
   EditorContent,
   ReactNodeViewRenderer,
@@ -103,17 +103,18 @@ export function RichTextEditor({
     editor.setEditable(!disabled);
   }, [editor, disabled]);
 
+  // 본문은 minHeight 의 3배까지만 커지고, 그 이상은 스크롤. 툴바는 스크롤 영역 밖이라 상단 고정.
+  const rootStyle = {
+    minHeight: minHeight + 48,
+    ["--rte-max-body-height" as string]: `${minHeight * 3}px`,
+  } as CSSProperties;
+
   if (!editor) {
     // 에디터 초기화 중에도 자리를 잡아둠 (높이가 0 으로 줄어들지 않게)
-    return (
-      <div
-        className={styles.root}
-        style={{ minHeight: minHeight + 48 }}
-      />
-    );
+    return <div className={styles.root} style={rootStyle} />;
   }
   return (
-    <div className={styles.root} style={{ minHeight: minHeight + 48 }}>
+    <div className={styles.root} style={rootStyle}>
       <Toolbar editor={editor} imageUploadEndpoint={imageUploadEndpoint} />
       <EditorContent editor={editor} />
     </div>

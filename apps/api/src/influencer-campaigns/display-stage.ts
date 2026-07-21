@@ -5,8 +5,8 @@ import type {
 } from "@jsure/shared";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-// 테스트 중: 0 (투고 직후 인사이트 제출 가능). 운영 복귀 시 7 로 돌릴 것.
-const INSIGHT_DUE_DAYS = 0;
+// 운영: 투고 7일 후 인사이트 제출 가능. 로컬/개발: 즉시 제출 가능(테스트 편의).
+const INSIGHT_DUE_DAYS = process.env.NODE_ENV === "production" ? 7 : 0;
 
 /** JST 기준 그 날 00:00 UTC 타임스탬프 (ms). */
 function startOfJstDay(d: Date): number {

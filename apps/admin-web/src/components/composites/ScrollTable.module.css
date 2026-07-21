@@ -1,5 +1,8 @@
 .scroll {
-  overflow-x: auto;
+  overflow: auto;
+  /* 부모 카드가 flex column 이면 남은 높이를 채우며 세로 스크롤. 아니면 기존처럼 가로 스크롤만. */
+  flex: 1;
+  min-height: 0;
 }
 
 .inner {

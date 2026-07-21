@@ -258,6 +258,7 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100dvh;
 }
 
 .admin__topbar {
@@ -317,6 +318,10 @@ body {
   background: #1d4ed8;
 }
 
+/* 페이지 스크롤은 본문 영역 안에서만 발생 — 테이블 페이지가 뷰포트 높이를 채울 수 있게 한다. */
 .admin__content {
   padding: 28px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }

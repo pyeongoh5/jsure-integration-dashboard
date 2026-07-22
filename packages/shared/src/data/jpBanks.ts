@@ -129,4 +129,5 @@ export const JP_BANKS: ReadonlyArray<JpBank> = [
   { code: "0591", nameJa: "宮崎太陽銀行", nameKo: "미야자키다이요은행", category: "REGIONAL_2" },
   { code: "0594", nameJa: "南日本銀行", nameKo: "미나미닛폰은행", category: "REGIONAL_2" },
   { code: "0596", nameJa: "沖縄海邦銀行", nameKo: "오키나와카이호은행", category: "REGIONAL_2" },
+  { code: "1552", nameJa: "岡崎信用金庫", nameKo: "오카자키신용금고", category: "SHINKIN" }
 ];

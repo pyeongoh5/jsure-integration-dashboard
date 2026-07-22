@@ -7,6 +7,7 @@ const CARRIERS = [
   { id: "yamato", label: "ヤマト運輸" },
   { id: "sagawa", label: "佐川急便" },
   { id: "jp", label: "日本郵便" },
+  { id: "kse", label: "KSE" },
   { id: "custom", label: "직접 입력" },
 ] as const;
 
@@ -25,31 +26,21 @@ function initialCarrierId(label: string | null | undefined): {
   customLabel: string;
 } {
   if (!label) return { carrierId: "yamato", customLabel: "" };
-  const known = CARRIERS.find(
-    (c) => c.id !== "custom" && c.label === label.trim(),
-  );
+  const known = CARRIERS.find((c) => c.id !== "custom" && c.label === label.trim());
   if (known) return { carrierId: known.id, customLabel: "" };
   return { carrierId: "custom", customLabel: label };
 }
 
-export function ApplicantShipDialog({
-  applicant,
-  mutating,
-  error,
-  onConfirm,
-  onCancel,
-}: Props) {
+export function ApplicantShipDialog({ applicant, mutating, error, onConfirm, onCancel }: Props) {
   const init = initialCarrierId(applicant.trackingCarrier);
   const [carrierId, setCarrierId] = useState<CarrierId>(init.carrierId);
   const [customLabel, setCustomLabel] = useState(init.customLabel);
-  const [trackingNumber, setTrackingNumber] = useState(
-    applicant.trackingNumber ?? "",
-  );
+  const [trackingNumber, setTrackingNumber] = useState(applicant.trackingNumber ?? "");
 
   const resolvedCarrier =
     carrierId === "custom"
       ? customLabel.trim()
-      : CARRIERS.find((c) => c.id === carrierId)?.label ?? "";
+      : (CARRIERS.find((c) => c.id === carrierId)?.label ?? "");
   const trimmedNumber = trackingNumber.trim();
   const canSubmit = !!resolvedCarrier && !!trimmedNumber;
 

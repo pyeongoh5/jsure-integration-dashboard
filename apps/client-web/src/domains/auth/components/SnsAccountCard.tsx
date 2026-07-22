@@ -9,6 +9,10 @@ interface Props {
   followerCount: string;
   onToggle: () => void;
   onChange: (field: "handle" | "followerCount", v: string) => void;
+  /** ID(핸들) 입력 검증 에러 메시지. 있으면 입력창 아래에 표시. */
+  handleError?: string;
+  /** ID(핸들) 입력창 블러 시 호출 — 해당 필드 검증 트리거용. */
+  onHandleBlur?: () => void;
 }
 
 const ICON: Record<SnsAccountSubType, string> = {
@@ -32,6 +36,8 @@ export function SnsAccountCard({
   followerCount,
   onToggle,
   onChange,
+  handleError,
+  onHandleBlur,
 }: Props) {
   return (
     <div className={[styles.card, enabled ? styles.cardOn : ""].filter(Boolean).join(" ")}>
@@ -48,8 +54,17 @@ export function SnsAccountCard({
               type="text"
               value={handle}
               onChange={(e) => onChange("handle", e.target.value)}
+              onBlur={onHandleBlur}
               placeholder="ID"
+              aria-invalid={handleError ? true : undefined}
             />
+            {handleError && (
+              <span
+                style={{ color: "#ef4444", fontSize: 11, marginTop: 2 }}
+              >
+                {handleError}
+              </span>
+            )}
           </label>
           <label className={styles.field}>
             <span>{t("auth.snsAccount.followerCount")}</span>

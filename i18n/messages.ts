@@ -531,6 +531,14 @@ export const messages = {
           kr: "1개 이상의 SNS 계정을 추가해 주세요",
         },
         handleRequired: { jp: "ハンドルを入力してください", kr: "핸들을 입력해 주세요" },
+        handleUrl: {
+          jp: "URLではなくID（ユーザー名）のみ入力してください",
+          kr: "URL이 아니라 ID(사용자명)만 입력해 주세요",
+        },
+        handleTooLong: {
+          jp: "IDは64文字以内で入力してください",
+          kr: "ID는 64자 이내로 입력해 주세요",
+        },
         followerCountInvalid: { jp: "フォロワー数は数字のみ", kr: "팔로워 수는 숫자만" },
         heading: { jp: "SNSアカウント", kr: "SNS 계정" },
         hint: {

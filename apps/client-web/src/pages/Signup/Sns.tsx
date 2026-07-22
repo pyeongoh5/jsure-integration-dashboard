@@ -3,9 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ENABLED_SNS_TYPES, type SnsAccountSubType } from "@jsure/shared";
+import {
+  ENABLED_SNS_TYPES,
+  normalizeSnsHandle,
+  type SnsAccountSubType,
+} from "@jsure/shared";
 import { SnsAccountCard } from "@/domains/auth";
-import { t } from "@i18n";
+import { t, type TranslationKey } from "@i18n";
 import { WizardFooter } from "@/components/composites/WizardFooter/WizardFooter";
 import { useSignup } from "../../context/SignupContext";
 
@@ -16,6 +20,30 @@ const fieldsSchema = z.object({
   handle: z.string(),
   followerCount: z.string(),
 });
+
+/** 핸들 ID 최대 길이 — 공유 스키마 InfluencerSnsAccountInputSchema.handle.max(64) 와 동일. */
+const HANDLE_MAX = 64;
+
+/**
+ * SNS 핸들 검증 결과. 공유 스키마와 동일 기준(normalizeSnsHandle → min(1).max(64))으로 판정하고,
+ * URL 붙여넣기(슬래시 포함)를 별도 안내한다. superRefine·isValid 가 이 헬퍼를 공유해 로직 일치를 보장한다.
+ */
+function checkHandle(raw: string): "ok" | "empty" | "url" | "tooLong" {
+  const normalized = normalizeSnsHandle(raw);
+  if (normalized.length === 0) return "empty";
+  if (normalized.includes("/")) return "url";
+  if (normalized.length > HANDLE_MAX) return "tooLong";
+  return "ok";
+}
+
+const HANDLE_ERROR_KEY: Record<
+  Exclude<ReturnType<typeof checkHandle>, "ok">,
+  TranslationKey
+> = {
+  empty: "pages.signup.sns.handleRequired",
+  url: "pages.signup.sns.handleUrl",
+  tooLong: "pages.signup.sns.handleTooLong",
+};
 
 const schema = z
   .object({
@@ -38,10 +66,11 @@ const schema = z
     }
     for (const key of enabled) {
       const fields = values[key];
-      if (fields.handle.trim().length === 0) {
+      const handleResult = checkHandle(fields.handle);
+      if (handleResult !== "ok") {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: t("pages.signup.sns.handleRequired"),
+          message: t(HANDLE_ERROR_KEY[handleResult]),
           path: [key, "handle"],
         });
       }
@@ -106,7 +135,7 @@ export function SignupSns() {
       return (
         !!fields &&
         typeof fields.handle === "string" &&
-        fields.handle.trim().length > 0 &&
+        checkHandle(fields.handle) === "ok" &&
         typeof fields.followerCount === "string" &&
         /^\d+$/.test(fields.followerCount)
       );
@@ -129,12 +158,14 @@ export function SignupSns() {
   ) {
     const key = TYPE_TO_KEY[type];
     const current = methods.getValues(key);
+    // 블러(또는 제출)로 에러가 한 번 표시된 뒤에는 입력 즉시 재검증해 에러를 갱신/해제한다.
+    const hasError = Boolean(methods.formState.errors[key]);
     methods.setValue(
       key,
       { ...current, [field]: value },
       {
         shouldDirty: true,
-        shouldValidate: methods.formState.isSubmitted,
+        shouldValidate: methods.formState.isSubmitted || hasError,
       },
     );
   }
@@ -180,6 +211,10 @@ export function SignupSns() {
               }
               onToggle={() => toggle(type)}
               onChange={(field, value) => changeField(type, field, value)}
+              handleError={
+                methods.formState.errors[TYPE_TO_KEY[type]]?.handle?.message
+              }
+              onHandleBlur={() => void methods.trigger(TYPE_TO_KEY[type])}
             />
           );
         })}

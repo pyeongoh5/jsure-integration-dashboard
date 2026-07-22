@@ -14,9 +14,9 @@ import {
   StageBadge,
   cancelApplication,
   confirmReceipt,
-  submitInsights, // new
+  submitInsights,
   submitOrder,
-  submitSubmission, // new
+  submitSubmission,
   submitReview,
   submitSimpleReview,
   useApplication,
@@ -67,7 +67,7 @@ export function ApplicationDetail() {
     },
   });
   const post = useMutation({
-    mutationFn: (posts: { subType: CampaignSubType; url: string }[]) => // new
+    mutationFn: (posts: { subType: CampaignSubType; url: string }[]) =>
       submitSubmission(id, posts),
     onSuccess: () => invalidate(),
   });
@@ -93,17 +93,17 @@ export function ApplicationDetail() {
   });
   const simpleReview = useMutation({
     mutationFn: ({
-      reviews, // new
+      reviews,
       screenshots,
     }: {
-      reviews: { subType: CampaignSubType; url: string }[]; // new
+      reviews: { subType: CampaignSubType; url: string }[];
       screenshots: AttachmentUploadInput[];
     }) => submitSimpleReview(id, reviews, screenshots),
     onSuccess: () => invalidate(),
   });
   const insight = useMutation({
     mutationFn: (
-      insights: { // new
+      insights: {
         subType: CampaignSubType;
         likes: number;
         comments: number;
@@ -216,7 +216,7 @@ export function ApplicationDetail() {
 
         {stage === "POSTING" && (
           <PostSubmitForm
-            subTypes={data.subTypes} // new
+            subTypes={data.subTypes}
             initial={Object.fromEntries(
               data.posts
                 .filter((p) => p.url !== null)
@@ -261,7 +261,7 @@ export function ApplicationDetail() {
               </div>
             )}
             <PostSubmitForm
-              subTypes={data.subTypes} // new
+              subTypes={data.subTypes}
               initial={Object.fromEntries(
                 data.posts
                   .filter((p) => p.url !== null)
@@ -283,7 +283,7 @@ export function ApplicationDetail() {
         {stage === "INSIGHT_DUE" && data.posts.length > 0 && (
           <InsightSubmitForm
             applicationId={data.id}
-            targets={data.posts.map((p) => ({ // new
+            targets={data.posts.map((p) => ({
               subType: p.subType,
               initial: p.insightSubmittedAt
                 ? {
@@ -318,7 +318,7 @@ export function ApplicationDetail() {
         {stage === "AWAITING_REVIEW" && data.campaignCategory === "SIMPLE_REVIEW" && (
           <SimpleReviewSubmitForm
             applicationId={data.id}
-            subTypes={data.subTypes} // new
+            subTypes={data.subTypes}
             initial={{}}
             onSubmit={async (reviews, screenshots) => {
               await simpleReview.mutateAsync({ reviews, screenshots });
@@ -392,7 +392,7 @@ export function ApplicationDetail() {
             {data.campaignCategory === "SIMPLE_REVIEW" ? (
               <SimpleReviewSubmitForm
                 applicationId={data.id}
-                subTypes={data.subTypes} // new
+                subTypes={data.subTypes}
                 initial={Object.fromEntries(
                   data.posts
                     .filter((p) => p.url !== null)
@@ -432,7 +432,7 @@ export function ApplicationDetail() {
             <p className={styles.thanksTitle}>
               {t("pages.applications.detail.thanksTitle")}
             </p>
-            {data.settlement.amountJpy > 0 && ( // new — 0원 정산은 금액 표기 생략
+            {data.settlement.amountJpy > 0 && ( // 0원 정산은 금액 표기 생략
               <dl className={styles.thanksMeta}>
                 <div>
                   <dt>{t("pages.applications.detail.labelReward")}</dt>

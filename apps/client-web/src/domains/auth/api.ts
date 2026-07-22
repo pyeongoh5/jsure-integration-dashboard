@@ -35,7 +35,7 @@ export async function lineCompleteSignup(
   return InfluencerAuthResponseSchema.parse(res.data);
 }
 
-// new — 서버 세션(리프레시 토큰) 폐기. 실패해도 로컬 로그아웃은 진행되므로 무시.
+// 서버 세션(리프레시 토큰) 폐기. 실패해도 로컬 로그아웃은 진행되므로 무시.
 export async function logout(): Promise<void> {
   const refreshToken = localStorage.getItem(REFRESH_STORAGE_KEY);
   if (!refreshToken) return;

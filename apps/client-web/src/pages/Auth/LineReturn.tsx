@@ -27,14 +27,14 @@ export function LineReturn() {
     }
 
     const token = params.get("line_access_token");
-    const refreshToken = params.get("line_refresh_token"); // new
+    const refreshToken = params.get("line_refresh_token");
     if (!token) {
       setError(t("pages.auth.lineReturn.errorReceive"));
       return;
     }
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
     if (refreshToken) {
-      localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken); // new
+      localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken);
     }
     fetchMe()
       .then((me) => {

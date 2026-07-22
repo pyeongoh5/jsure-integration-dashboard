@@ -15,7 +15,7 @@ import styles from "./InsightSubmitForm.module.css";
 type Metrics = Record<keyof InsightMetricValues, number>;
 
 export interface InsightEntry extends Metrics {
-  subType: CampaignSubType; // new
+  subType: CampaignSubType;
   attachments?: {
     objectKey: string;
     contentType: InsightImageContentType;
@@ -25,14 +25,14 @@ export interface InsightEntry extends Metrics {
 
 /** 인사이트 입력 대상 — 참여한 서브타입별 게시물. */
 export interface InsightTarget {
-  subType: CampaignSubType; // new
-  initial: Metrics | null; // new
+  subType: CampaignSubType;
+  initial: Metrics | null;
 }
 
 interface Props {
   applicationId: string;
-  targets: InsightTarget[]; // new — 참여한 모든 서브타입의 인사이트를 한 폼에서 일괄 제출
-  onSubmit: (insights: InsightEntry[]) => Promise<void>; // new
+  targets: InsightTarget[]; // 참여한 모든 서브타입의 인사이트를 한 폼에서 일괄 제출
+  onSubmit: (insights: InsightEntry[]) => Promise<void>;
   submitting: boolean;
   postSubmittedAt: string;
 }

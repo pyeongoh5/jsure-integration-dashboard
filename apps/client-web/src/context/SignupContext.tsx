@@ -56,7 +56,7 @@ interface BankDraft {
   branchCode: string;
   accountNumber: string;
   accountHolderKana: string;
-  invoiceRegistrationNumber: string; // new
+  invoiceRegistrationNumber: string;
 }
 
 interface SignupDraft {
@@ -90,7 +90,7 @@ const DEFAULT: SignupDraft = {
     branchCode: "",
     accountNumber: "",
     accountHolderKana: "",
-    invoiceRegistrationNumber: "", // new
+    invoiceRegistrationNumber: "",
   },
   lineSignupToken: null,
 };

@@ -1,6 +1,6 @@
 import type {
   ApplicationDisplayStage,
-  CampaignCategory, // new
+  CampaignCategory,
 } from "@jsure/shared";
 import { t } from "@i18n";
 
@@ -65,15 +65,15 @@ const STAGE_PROGRESS_DEFAULT: Record<ApplicationDisplayStage, number> = {
   REVIEW_REJECTED: 5,
 };
 
-// SIMPLE_REVIEW 카테고리용 매핑 (8스텝: 응모/승인/발송/수령확인/리뷰제출/검수/정산대기/캠페인종료). // new
-const STAGE_PROGRESS_SIMPLE_REVIEW: Record<ApplicationDisplayStage, number> = { // new
+// SIMPLE_REVIEW 카테고리용 매핑 (8스텝: 응모/승인/발송/수령확인/리뷰제출/검수/정산대기/캠페인종료).
+const STAGE_PROGRESS_SIMPLE_REVIEW: Record<ApplicationDisplayStage, number> = {
   APPLIED: 1,
   APPROVED: 2,
-  SHIPPED: 3, // new
-  AWAITING_RECEIPT: 4, // new
-  AWAITING_REVIEW: 5, // new — 수령 후 리뷰 제출 대기
+  SHIPPED: 3,
+  AWAITING_RECEIPT: 4,
+  AWAITING_REVIEW: 5, // 수령 후 리뷰 제출 대기
   REVIEW_REJECTED: 5,
-  REVIEW_PENDING: 6, // new — 리뷰 제출됨, 검수 대기
+  REVIEW_PENDING: 6, // 리뷰 제출됨, 검수 대기
   REVIEWING: 6,
   COMPLETED: 7, // 검수 승인 후 정산 대기
   SETTLED: 8, // 정산 완료(캠페인 종료)
@@ -86,7 +86,6 @@ const STAGE_PROGRESS_SIMPLE_REVIEW: Record<ApplicationDisplayStage, number> = { 
   AWAITING_ORDER: 0,
 };
 
-// new
 export function stageProgressFor(
   category: CampaignCategory,
   stage: ApplicationDisplayStage,
@@ -98,7 +97,7 @@ export function stageProgressFor(
   return table[stage];
 }
 
-// new — 카테고리별 스텝 총 개수. 스테퍼 렌더링용.
+// 카테고리별 스텝 총 개수. 스테퍼 렌더링용.
 export function stageTotalFor(_category: CampaignCategory): number {
   return 8;
 }

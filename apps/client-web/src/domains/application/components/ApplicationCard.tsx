@@ -33,7 +33,7 @@ export function ApplicationCard({ app, onSelect }: Props) {
   const settled =
     app.displayStage === "SETTLED" &&
     app.settlement?.completedAt &&
-    app.settlement.amountJpy > 0 // new — 0원 정산은 입금 표기 생략
+    app.settlement.amountJpy > 0 // 0원 정산은 입금 표기 생략
       ? `¥${app.settlement.amountJpy.toLocaleString("ja-JP")} (${formatDate(app.settlement.completedAt)} ${t("application.card.transferSuffix")})`
       : null;
   return (
@@ -41,7 +41,7 @@ export function ApplicationCard({ app, onSelect }: Props) {
       <div className={styles.head}>
         <div className={styles.title}>
           {app.campaignTitle}
-          {app.subTypes.map((subType) => { // new — 선택 옵션(FEED/REELS)은 한 태그로 합쳐 표기
+          {app.subTypes.map((subType) => { // 선택 옵션(FEED/REELS)은 한 태그로 합쳐 표기
             const selected = app.selectedOptions.find(
               (entry) => entry.subType === subType,
             );

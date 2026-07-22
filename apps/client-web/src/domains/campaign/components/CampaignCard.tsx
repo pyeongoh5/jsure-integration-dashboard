@@ -9,12 +9,12 @@ import { t } from "@i18n";
 import { rewardRangeJpy } from "../utils";
 import styles from "./CampaignCard.module.css";
 
-function categoryLabel(category: InfluencerCampaignCard["category"]): string { // new
+function categoryLabel(category: InfluencerCampaignCard["category"]): string {
   switch (category) {
     case "FAKE_PURCHASE":
       return t("campaign.category.fakePurchase");
     case "SIMPLE_REVIEW":
-      return t("campaign.category.simpleReview"); // new
+      return t("campaign.category.simpleReview");
     default:
       return t("campaign.category.sns");
   }
@@ -41,8 +41,8 @@ const SNS_ICON: Record<CampaignSubType, string> = {
   YOUTUBE: "fa-brands fa-youtube",
   X: "fa-brands fa-x-twitter",
   QOO10: "fa-solid fa-bag-shopping",
-  LIPS: "fa-solid fa-heart", // new
-  ATCOSME: "fa-solid fa-star", // new
+  LIPS: "fa-solid fa-heart",
+  ATCOSME: "fa-solid fa-star",
 };
 
 const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
@@ -51,8 +51,8 @@ const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   X: t("campaign.card.followerLabel"),
   YOUTUBE: t("campaign.card.subscriberLabel"),
   QOO10: t("campaign.card.followerLabel"),
-  LIPS: t("campaign.card.followerLabel"), // new
-  ATCOSME: t("campaign.card.followerLabel"), // new
+  LIPS: t("campaign.card.followerLabel"),
+  ATCOSME: t("campaign.card.followerLabel"),
 };
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<"FEED" | "REELS", string> = {
@@ -111,7 +111,7 @@ function condText(r: CampaignRecruit): string {
   if (r.subType === "QOO10") {
     return SUB_TYPE_LABEL[r.subType];
   }
-  if (r.subType === "LIPS" || r.subType === "ATCOSME") { // new
+  if (r.subType === "LIPS" || r.subType === "ATCOSME") {
     return SUB_TYPE_LABEL[r.subType];
   }
   const base =

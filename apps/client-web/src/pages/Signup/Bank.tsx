@@ -39,7 +39,7 @@ const schema = z
     invoiceRegistrationNumber: z
       .string()
       .regex(/^T\d{13}$/, t("pages.signup.bank.invoiceNumberInvalid"))
-      .or(z.literal("")), // new
+      .or(z.literal("")),
   })
   .superRefine((values, ctx) => {
     if (!values.bank) {
@@ -71,7 +71,7 @@ export function SignupBank() {
       branchCode: draft.bank.branchCode,
       accountNumber: draft.bank.accountNumber,
       accountHolderKana: draft.bank.accountHolderKana,
-      invoiceRegistrationNumber: draft.bank.invoiceRegistrationNumber, // new
+      invoiceRegistrationNumber: draft.bank.invoiceRegistrationNumber,
     },
   });
 
@@ -102,7 +102,7 @@ export function SignupBank() {
         branchCode: values.branchCode,
         accountNumber: values.accountNumber,
         accountHolderKana: values.accountHolderKana,
-        invoiceRegistrationNumber: values.invoiceRegistrationNumber || null, // new
+        invoiceRegistrationNumber: values.invoiceRegistrationNumber || null,
       },
       termsVersion: INFLUENCER_TERMS_VERSION,
       agreedItems: draft.agreedItems,
@@ -131,7 +131,7 @@ export function SignupBank() {
       branchCode: values.branchCode,
       accountNumber: values.accountNumber,
       accountHolderKana: values.accountHolderKana,
-      invoiceRegistrationNumber: values.invoiceRegistrationNumber, // new
+      invoiceRegistrationNumber: values.invoiceRegistrationNumber,
     });
     setSubmitting(true);
     try {
@@ -140,7 +140,7 @@ export function SignupBank() {
             parsed.data as Parameters<typeof lineCompleteSignup>[0],
           )
         : await signupApi(parsed.data as Parameters<typeof signupApi>[0]);
-      auth.setSession(res.accessToken, res.influencer, res.refreshToken); // new
+      auth.setSession(res.accessToken, res.influencer, res.refreshToken);
       setLineSignupTokenStorage(null);
       reset();
       nav("/", { replace: true });

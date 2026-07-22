@@ -50,18 +50,18 @@ export const EMPTY_METRIC_VALUES: InsightMetricValues = {
 };
 
 interface Props {
-  applicationId: string; // new
-  subType: CampaignSubType; // new
-  defaultValues: InsightMetricValues; // new
-  attachments: InsightAttachment[]; // new
-  onAttachmentsChange: (next: InsightAttachment[]) => void; // new
-  isFirstStep: boolean; // new
-  isLastStep: boolean; // new
-  submitting: boolean; // new
+  applicationId: string;
+  subType: CampaignSubType;
+  defaultValues: InsightMetricValues;
+  attachments: InsightAttachment[];
+  onAttachmentsChange: (next: InsightAttachment[]) => void;
+  isFirstStep: boolean;
+  isLastStep: boolean;
+  submitting: boolean;
   /** 이전 단계로 — 현재 입력값을 넘겨 저장한다(검증 없음). */
-  onBack: (currentValues: InsightMetricValues) => void; // new
+  onBack: (currentValues: InsightMetricValues) => void;
   /** 현재 단계 검증 통과 시 — 다음 단계 이동 또는 최종 제출. */
-  onNext: (values: InsightMetricValues) => void | Promise<void>; // new
+  onNext: (values: InsightMetricValues) => void | Promise<void>;
 }
 
 /**

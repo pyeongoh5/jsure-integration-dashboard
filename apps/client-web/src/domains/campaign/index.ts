@@ -14,4 +14,4 @@ export type {
   CampaignSubType,
 } from "./types";
 export { CampaignCard } from "./components/CampaignCard";
-export { CategoryTabBar } from "./components/CategoryTabBar"; // new
+export { CategoryTabBar } from "./components/CategoryTabBar";

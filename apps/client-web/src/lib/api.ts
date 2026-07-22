@@ -1,11 +1,11 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 const TOKEN_KEY = "influencerAccessToken";
-const REFRESH_KEY = "influencerRefreshToken"; // new
+const REFRESH_KEY = "influencerRefreshToken";
 const ME_KEY = "currentInfluencer";
 
 export const TOKEN_STORAGE_KEY = TOKEN_KEY;
-export const REFRESH_STORAGE_KEY = REFRESH_KEY; // new
+export const REFRESH_STORAGE_KEY = REFRESH_KEY;
 export const ME_STORAGE_KEY = ME_KEY;
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || "/api";

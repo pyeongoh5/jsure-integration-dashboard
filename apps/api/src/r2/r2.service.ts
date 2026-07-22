@@ -15,11 +15,20 @@ export type PresignPutInput = {
   contentLength: number;
 };
 
+/** 인플루언서 개인 데이터 키 프리픽스 — 프라이빗 버킷에 저장하고 공개 URL 발급을 금지한다. */
+const PRIVATE_KEY_PREFIXES = ["insights/", "attachments/"];
+
+function isPrivateKey(objectKey: string): boolean {
+  return PRIVATE_KEY_PREFIXES.some((prefix) => objectKey.startsWith(prefix));
+}
+
 @Injectable()
 export class R2Service implements OnModuleInit {
   private readonly logger = new Logger(R2Service.name);
   private client!: S3Client;
   private bucket!: string;
+  private privateBucket!: string;
+  private publicBaseUrl: string | null = null;
 
   constructor(private readonly config: ConfigService) {}
 
@@ -47,6 +56,26 @@ export class R2Service implements OnModuleInit {
       credentials: { accessKeyId, secretAccessKey },
     });
     this.bucket = bucket;
+    // 미설정이면 기존처럼 단일 버킷으로 동작 (하위 호환).
+    this.privateBucket =
+      this.config.get<string>("R2_PRIVATE_BUCKET") ?? bucket;
+    this.publicBaseUrl =
+      this.config.get<string>("R2_PUBLIC_BASE_URL")?.replace(/\/+$/, "") ??
+      null;
+  }
+
+  /** 키 프리픽스로 대상 버킷 결정 — 개인 데이터는 프라이빗 버킷. */
+  private bucketFor(objectKey: string): string {
+    return isPrivateKey(objectKey) ? this.privateBucket : this.bucket;
+  }
+
+  /**
+   * 공개 자산(캠페인 썸네일·공지 이미지 등)의 영구 공개 URL.
+   * R2_PUBLIC_BASE_URL 미설정이거나 비공개 키면 null — 호출자가 presign 으로 fallback.
+   */
+  publicUrl(objectKey: string): string | null {
+    if (!this.publicBaseUrl || isPrivateKey(objectKey)) return null;
+    return `${this.publicBaseUrl}/${objectKey}`;
   }
 
   private ensureReady(): void {
@@ -61,7 +90,7 @@ export class R2Service implements OnModuleInit {
   ): Promise<string> {
     this.ensureReady();
     const command = new PutObjectCommand({
-      Bucket: this.bucket,
+      Bucket: this.bucketFor(input.objectKey),
       Key: input.objectKey,
       ContentType: input.contentType,
       ContentLength: input.contentLength,
@@ -72,7 +101,7 @@ export class R2Service implements OnModuleInit {
   async presignGet(objectKey: string, expiresInSec = 300): Promise<string> {
     this.ensureReady();
     const command = new GetObjectCommand({
-      Bucket: this.bucket,
+      Bucket: this.bucketFor(objectKey),
       Key: objectKey,
     });
     return getSignedUrl(this.client, command, { expiresIn: expiresInSec });
@@ -83,7 +112,7 @@ export class R2Service implements OnModuleInit {
   ): Promise<{ contentType: string | null; contentLength: number | null }> {
     this.ensureReady();
     const out = await this.client.send(
-      new HeadObjectCommand({ Bucket: this.bucket, Key: objectKey }),
+      new HeadObjectCommand({ Bucket: this.bucketFor(objectKey), Key: objectKey }),
     );
     return {
       contentType: out.ContentType ?? null,
@@ -94,7 +123,7 @@ export class R2Service implements OnModuleInit {
   async deleteObject(objectKey: string): Promise<void> {
     this.ensureReady();
     await this.client.send(
-      new DeleteObjectCommand({ Bucket: this.bucket, Key: objectKey }),
+      new DeleteObjectCommand({ Bucket: this.bucketFor(objectKey), Key: objectKey }),
     );
   }
 }

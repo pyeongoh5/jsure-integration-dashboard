@@ -442,7 +442,7 @@ export class AdminApplicationsService {
         contentType: row.contentType,
         sizeBytes: row.sizeBytes,
         uploadedAt: row.uploadedAt.toISOString(),
-        viewUrl: await this.r2.presignGet(row.objectKey, 300),
+        viewUrl: await this.r2.presignGet(row.objectKey, 3600),
       })),
     );
   }
@@ -469,7 +469,7 @@ export class AdminApplicationsService {
         contentType: row.contentType,
         sizeBytes: row.sizeBytes,
         uploadedAt: row.uploadedAt.toISOString(),
-        viewUrl: await this.r2.presignGet(row.objectKey, 300),
+        viewUrl: await this.r2.presignGet(row.objectKey, 3600),
       })),
     );
   }
@@ -1058,7 +1058,7 @@ type SubmissionRow = {
 async function resolveThumbnail(raw: string | null, r2: R2Service): Promise<string | null> {
   if (!raw) return null;
   if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
-  return r2.presignGet(raw, 300);
+  return r2.publicUrl(raw) ?? r2.presignGet(raw, 86400);
 }
 
 async function toSubmissionResponse(

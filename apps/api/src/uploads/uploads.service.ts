@@ -24,7 +24,9 @@ import { PrismaService } from "../prisma/prisma.service";
 import { R2Service } from "../r2/r2.service";
 
 const PRESIGN_EXPIRES_SEC = 300;
-const VIEW_EXPIRES_SEC = 300;
+const VIEW_EXPIRES_SEC = 3600;
+// 공개 자산이 공개 URL 미설정으로 presign 에 fallback 할 때의 만료 — 화면에 오래 남아도 깨지지 않게 24시간.
+const PUBLIC_FALLBACK_EXPIRES_SEC = 86400;
 
 function extOf(contentType: string): string {
   switch (contentType) {
@@ -151,7 +153,10 @@ export class UploadsService {
         },
         PRESIGN_EXPIRES_SEC,
       ),
-      this.r2.presignGet(objectKey, VIEW_EXPIRES_SEC),
+      Promise.resolve(
+        this.r2.publicUrl(objectKey) ??
+          this.r2.presignGet(objectKey, VIEW_EXPIRES_SEC),
+      ),
     ]);
     return { objectKey, uploadUrl, viewUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
   }
@@ -172,7 +177,10 @@ export class UploadsService {
         },
         PRESIGN_EXPIRES_SEC,
       ),
-      this.r2.presignGet(objectKey, VIEW_EXPIRES_SEC),
+      Promise.resolve(
+        this.r2.publicUrl(objectKey) ??
+          this.r2.presignGet(objectKey, VIEW_EXPIRES_SEC),
+      ),
     ]);
     return { objectKey, uploadUrl, viewUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
   }
@@ -194,7 +202,10 @@ export class UploadsService {
         },
         PRESIGN_EXPIRES_SEC,
       ),
-      this.r2.presignGet(objectKey, VIEW_EXPIRES_SEC),
+      Promise.resolve(
+        this.r2.publicUrl(objectKey) ??
+          this.r2.presignGet(objectKey, VIEW_EXPIRES_SEC),
+      ),
     ]);
     return { objectKey, uploadUrl, viewUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
   }
@@ -211,7 +222,10 @@ export class UploadsService {
       new Set(matches.map((match) => match[1]).filter((key): key is string => Boolean(key))),
     );
     const entries = await Promise.all(
-      keys.map(async (key) => [key, await this.r2.presignGet(key, 300)] as const),
+      keys.map(
+        async (key) =>
+          [key, this.r2.publicUrl(key) ?? (await this.r2.presignGet(key, PUBLIC_FALLBACK_EXPIRES_SEC))] as const,
+      ),
     );
     const map = new Map(entries);
 
@@ -232,16 +246,16 @@ export class UploadsService {
   }
 
   /**
-   * 캠페인 응답에서 썸네일 키를 presigned GET URL로 변환.
+   * 캠페인 응답에서 썸네일 키를 표시용 URL로 변환.
    * - 외부 URL이거나 빈 값이면 그대로 반환
-   * - R2 객체 키(`campaigns/...`)면 5분짜리 presigned GET 발급
+   * - R2_PUBLIC_BASE_URL 설정 시 만료 없는 공개 URL, 미설정이면 presigned GET fallback
    */
   async resolveCampaignThumbnailUrl(
     raw: string | null,
   ): Promise<string | null> {
     if (!raw) return null;
     if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
-    return this.r2.presignGet(raw, 300);
+    return this.r2.publicUrl(raw) ?? this.r2.presignGet(raw, PUBLIC_FALLBACK_EXPIRES_SEC);
   }
 
   /**

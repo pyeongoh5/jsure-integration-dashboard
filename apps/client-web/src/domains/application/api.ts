@@ -1,7 +1,7 @@
 import {
   InfluencerApplicationListResponseSchema,
   InfluencerApplicationSchema,
-  type ApplicationOption, // new
+  type ApplicationOption,
   type AttachmentUploadInput,
   type InfluencerApplication,
   type CampaignSubType,
@@ -23,7 +23,7 @@ export async function getApplication(
 export async function createApplication(
   campaignId: string,
   subTypes: CampaignSubType[],
-  options: ApplicationOption[], // new — 서브타입 옵션 선택 (구 instagramPostType 일반화)
+  options: ApplicationOption[], // 서브타입 옵션 선택 (구 instagramPostType 일반화)
 ): Promise<InfluencerApplication> {
   const res = await api.post("/influencer/applications", {
     campaignId,
@@ -50,20 +50,20 @@ export async function confirmReceipt(
 }
 
 /** SNS 게시물 URL 일괄 제출 — 참여한 모든 서브타입을 한 번에. */
-export async function submitSubmission( // new
+export async function submitSubmission(
   id: string,
-  posts: { subType: CampaignSubType; url: string }[], // new
+  posts: { subType: CampaignSubType; url: string }[],
 ): Promise<InfluencerApplication> {
   const res = await api.put(`/influencer/applications/${id}/submission`, {
-    posts, // new
+    posts,
   });
   return InfluencerApplicationSchema.parse(res.data);
 }
 
 /** SNS 인사이트 일괄 제출 — 참여한 모든 서브타입을 한 번에. */
-export async function submitInsights( // new
+export async function submitInsights(
   id: string,
-  insights: { // new
+  insights: {
     subType: CampaignSubType;
     likes: number;
     comments: number;
@@ -80,7 +80,7 @@ export async function submitInsights( // new
   }[],
 ): Promise<InfluencerApplication> {
   const res = await api.put(`/influencer/applications/${id}/insights`, {
-    insights, // new
+    insights,
   });
   return InfluencerApplicationSchema.parse(res.data);
 }
@@ -111,12 +111,12 @@ export async function submitReview(
 
 export async function submitSimpleReview(
   applicationId: string,
-  reviews: { subType: CampaignSubType; url: string }[], // new
+  reviews: { subType: CampaignSubType; url: string }[],
   screenshots: AttachmentUploadInput[],
 ): Promise<InfluencerApplication> {
   const res = await api.post(
     `/influencer/applications/${applicationId}/simple-review`,
-    { reviews, screenshots }, // new
+    { reviews, screenshots },
   );
   return InfluencerApplicationSchema.parse(res.data);
 }

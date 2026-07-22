@@ -4,13 +4,13 @@ import { t } from "@i18n";
 import { presignInsightUpload } from "../api";
 import styles from "./InsightSubmitForm.module.css";
 
-export type InsightImageContentType = "image/png" | "image/jpeg" | "image/webp"; // new
+export type InsightImageContentType = "image/png" | "image/jpeg" | "image/webp";
 
 const ALLOWED: InsightImageContentType[] = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_FILES = 10;
 
-export interface InsightAttachment { // new
+export interface InsightAttachment {
   objectKey: string;
   contentType: InsightImageContentType;
   sizeBytes: number;
@@ -19,11 +19,11 @@ export interface InsightAttachment { // new
 }
 
 interface Props {
-  applicationId: string; // new
-  subType: CampaignSubType; // new
-  attachments: InsightAttachment[]; // new
-  onChange: (next: InsightAttachment[]) => void; // new
-  disabled: boolean; // new
+  applicationId: string;
+  subType: CampaignSubType;
+  attachments: InsightAttachment[];
+  onChange: (next: InsightAttachment[]) => void;
+  disabled: boolean;
 }
 
 /** 서브타입 1개의 인사이트 스크린샷 업로더. */

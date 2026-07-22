@@ -1,12 +1,12 @@
 import type {
   ApplicationDisplayStage,
-  CampaignCategory, // new
+  CampaignCategory,
 } from "@jsure/shared";
 import { t } from "@i18n";
-import { stageProgressFor, stageTotalFor } from "../utils"; // new
+import { stageProgressFor, stageTotalFor } from "../utils";
 import styles from "./ApplicationStepper.module.css";
 
-// new — 카테고리별 스텝 라벨 배열.
+// 카테고리별 스텝 라벨 배열.
 const STEPS_BY_CATEGORY: Record<CampaignCategory, readonly string[]> = {
   SNS: [
     t("application.stepper.step1"),
@@ -28,24 +28,24 @@ const STEPS_BY_CATEGORY: Record<CampaignCategory, readonly string[]> = {
     t("application.stepper.step7"),
     t("application.stepper.step8"),
   ],
-  SIMPLE_REVIEW: [ // new
+  SIMPLE_REVIEW: [
     t("application.stepper.simpleReview.step1"),
     t("application.stepper.simpleReview.step2"),
     t("application.stepper.simpleReview.step3"),
     t("application.stepper.simpleReview.step4"),
     t("application.stepper.simpleReview.step5"),
     t("application.stepper.simpleReview.step6"),
-    t("application.stepper.simpleReview.step7"), // new
-    t("application.stepper.simpleReview.step8"), // new
+    t("application.stepper.simpleReview.step7"),
+    t("application.stepper.simpleReview.step8"),
   ],
 };
 
-interface Props { // new
+interface Props {
   stage: ApplicationDisplayStage;
   category: CampaignCategory;
 }
 
-export function ApplicationStepper({ stage, category }: Props) { // new
+export function ApplicationStepper({ stage, category }: Props) {
   const current = stageProgressFor(category, stage);
   const total = stageTotalFor(category);
   const terminal = stage === "REJECTED" || stage === "CANCELLED";

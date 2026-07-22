@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchMe, logout as logoutApi } from "@/domains/auth"; // new
+import { fetchMe, logout as logoutApi } from "@/domains/auth";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
 import { t } from "@i18n";
 import styles from "./Me.module.css";
@@ -11,7 +11,7 @@ export function Me() {
   const { data } = useQuery({ queryKey: ["me"], queryFn: fetchMe });
 
   function logout() {
-    void logoutApi(); // new — 서버 리프레시 세션 폐기 (실패 무시)
+    void logoutApi(); // 서버 리프레시 세션 폐기 (실패 무시)
     auth.clear();
     nav("/login", { replace: true });
   }

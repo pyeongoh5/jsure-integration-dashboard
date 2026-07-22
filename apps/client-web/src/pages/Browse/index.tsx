@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { CampaignCategory } from "@jsure/shared"; // new
-import { CampaignCard, CategoryTabBar, useCampaignList } from "@/domains/campaign"; // new
+import type { CampaignCategory } from "@jsure/shared";
+import { CampaignCard, CategoryTabBar, useCampaignList } from "@/domains/campaign";
 import { t } from "@i18n";
 import styles from "./Browse.module.css";
 
 export function Browse() {
   const nav = useNavigate();
-  const [category, setCategory] = useState<CampaignCategory>("SNS"); // new
+  const [category, setCategory] = useState<CampaignCategory>("SNS");
 
-  const { data, isLoading, isError } = useCampaignList(category); // new
+  const { data, isLoading, isError } = useCampaignList(category);
 
   return (
     <div className={styles.browse}>

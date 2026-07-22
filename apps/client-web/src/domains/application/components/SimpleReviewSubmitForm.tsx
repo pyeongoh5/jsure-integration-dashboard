@@ -32,10 +32,10 @@ const PLACEHOLDER_BY_SUB_TYPE: Partial<Record<CampaignSubType, string>> = {
 interface Props {
 
   applicationId: string;
-  subTypes: CampaignSubType[]; // new — 참여한 모든 리뷰 채널의 URL 을 한 폼에서 일괄 제출
-  initial: Partial<Record<CampaignSubType, string>>; // new
+  subTypes: CampaignSubType[]; // 참여한 모든 리뷰 채널의 URL 을 한 폼에서 일괄 제출
+  initial: Partial<Record<CampaignSubType, string>>;
   onSubmit: (
-    reviews: { subType: CampaignSubType; url: string }[], // new
+    reviews: { subType: CampaignSubType; url: string }[],
     screenshots: AttachmentUploadInput[],
   ) => Promise<void>;
   submitting: boolean;

@@ -17,7 +17,7 @@ import {
 interface AuthState {
   influencer: PublicInfluencer | null;
   isReady: boolean;
-  setSession: ( // new — refreshToken 저장 추가
+  setSession: ( // refreshToken 저장 추가
     token: string,
     influencer: PublicInfluencer,
     refreshToken?: string,
@@ -51,7 +51,7 @@ export function InfluencerAuthProvider({ children }: { children: ReactNode }) {
     (token: string, inf: PublicInfluencer, refreshToken?: string) => {
       localStorage.setItem(TOKEN_STORAGE_KEY, token);
       if (refreshToken) {
-        localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken); // new
+        localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken);
       }
       localStorage.setItem(ME_STORAGE_KEY, JSON.stringify(inf));
       setInfluencer(inf);
@@ -61,7 +61,7 @@ export function InfluencerAuthProvider({ children }: { children: ReactNode }) {
 
   const clear = useCallback(() => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem(REFRESH_STORAGE_KEY); // new
+    localStorage.removeItem(REFRESH_STORAGE_KEY);
     localStorage.removeItem(ME_STORAGE_KEY);
     setInfluencer(null);
   }, []);

@@ -13,14 +13,14 @@ import styles from "./Apply.module.css";
 
 const CONFIRM_KEYS_SNS = ["PR_LABEL", "DEADLINE", "INSIGHTS", "YAKKIHO", "GUIDELINE"] as const;
 const CONFIRM_KEYS_FAKE_PURCHASE = [
-  "NATURAL_REVIEW", // new — 가구매는 PR 표기 대신 자연스러운 리뷰 항목
+  "NATURAL_REVIEW", // 가구매는 PR 표기 대신 자연스러운 리뷰 항목
   "DEADLINE",
   "YAKKIHO",
   "GUIDELINE",
 ] as const;
 
 const CONFIRM_KEYS_SIMPLE_REVIEW = [
-  "PR_LABEL", // new — 가구매는 PR 표기 대신 자연스러운 리뷰 항목
+  "PR_LABEL", // 가구매는 PR 표기 대신 자연스러운 리뷰 항목
   "DEADLINE",
   "YAKKIHO",
   "GUIDELINE",
@@ -31,13 +31,12 @@ type ConfirmKey =
   | (typeof CONFIRM_KEYS_FAKE_PURCHASE)[number]
   | (typeof CONFIRM_KEYS_SIMPLE_REVIEW)[number];
 
-// DEADLINE 은 캠페인의 postingPeriodDays 를 삽입해서 동적으로 노출한다. // new
+// DEADLINE 은 캠페인의 postingPeriodDays 를 삽입해서 동적으로 노출한다.
 function confirmLabel(key: ConfirmKey, postingPeriodDays: number): string {
-  // new
   switch (key) {
     case "PR_LABEL":
       return t("pages.apply.confirmPr");
-    case "NATURAL_REVIEW": // new
+    case "NATURAL_REVIEW":
       return t("pages.apply.confirmNaturalReview");
     case "DEADLINE":
       return `${t("pages.apply.confirmDeadlinePrefix")}${postingPeriodDays}${t("pages.apply.confirmDeadlineSuffix")}`;
@@ -62,8 +61,8 @@ const SNS_LABEL: Record<CampaignSubType, string> = {
   X: "X",
   YOUTUBE: "YouTube",
   QOO10: "Qoo10",
-  LIPS: "LIPS", // new
-  ATCOSME: "@cosme", // new
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
 };
 
 const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
@@ -72,8 +71,8 @@ const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
   X: t("pages.apply.snsFollower"),
   YOUTUBE: t("pages.apply.snsSubscriber"),
   QOO10: t("pages.apply.snsFollower"),
-  LIPS: t("pages.apply.snsFollower"), // new
-  ATCOSME: t("pages.apply.snsFollower"), // new
+  LIPS: t("pages.apply.snsFollower"),
+  ATCOSME: t("pages.apply.snsFollower"),
 };
 
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
@@ -94,7 +93,7 @@ export function Apply() {
   const me = useQuery({ queryKey: ["me"], queryFn: fetchMe });
 
   const isFakePurchaseCampaign = campaign.data?.category === "FAKE_PURCHASE";
-  const isSimpleReviewCampaign = campaign.data?.category === "SIMPLE_REVIEW"; // new
+  const isSimpleReviewCampaign = campaign.data?.category === "SIMPLE_REVIEW";
   let activeConfirmKeys: readonly ConfirmKey[];
 
   if (isFakePurchaseCampaign) {
@@ -117,7 +116,7 @@ export function Apply() {
     });
   }, [campaign.data]);
 
-  // 필수(isRequired=true) 로 지정된 서브타입은 자동 선택. // new
+  // 필수(isRequired=true) 로 지정된 서브타입은 자동 선택.
   useEffect(() => {
     if (!campaign.data) return;
     const required = campaign.data.recruits.filter((r) => r.isRequired).map((r) => r.subType);
@@ -137,7 +136,7 @@ export function Apply() {
 
   const qualifying = useMemo(() => {
     if (!campaign.data) return [];
-    // 가구매/단순리뷰는 팔로워 자격 조건이 없어 me 응답과 무관하게 전원 자격. // new
+    // 가구매/단순리뷰는 팔로워 자격 조건이 없어 me 응답과 무관하게 전원 자격.
     if (campaign.data.category === "FAKE_PURCHASE" || campaign.data.category === "SIMPLE_REVIEW") {
       return campaign.data.recruits.map((r) => r.subType);
     }
@@ -180,7 +179,7 @@ export function Apply() {
       createApplication(
         id,
         Array.from(selectedSns),
-        // new — 옵션 선택은 (subType, option) 배열로 전송
+        // 옵션 선택은 (subType, option) 배열로 전송
         wantsInstagram && instagramPostType
           ? [{ subType: "INSTAGRAM", option: instagramPostType }]
           : [],
@@ -202,18 +201,16 @@ export function Apply() {
   }
 
   const requiredSubTypes = useMemo<CampaignSubType[]>(() => {
-    // new
     if (!campaign.data) return [];
     return campaign.data.recruits.filter((r) => r.isRequired).map((r) => r.subType);
   }, [campaign.data]);
 
   const requiredNotQualified = useMemo<CampaignSubType[]>(() => {
-    // new
     return requiredSubTypes.filter((subType) => !qualifying.includes(subType));
   }, [requiredSubTypes, qualifying]);
 
   function toggleSns(s: CampaignSubType) {
-    if (requiredSubTypes.includes(s)) return; // new — 필수 서브타입은 해제 불가 방어
+    if (requiredSubTypes.includes(s)) return; // 필수 서브타입은 해제 불가 방어
     setSelectedSns((prev) => {
       const next = new Set(prev);
       if (next.has(s)) next.delete(s);
@@ -245,7 +242,7 @@ export function Apply() {
       </div>
     );
   }
-  // 응모는 캠페인 단위 1건 — 취소 이력 포함 재응모 불가. // new
+  // 응모는 캠페인 단위 1건 — 취소 이력 포함 재응모 불가.
   if (campaign.data.hasApplied) {
     return (
       <div>
@@ -283,10 +280,10 @@ export function Apply() {
             ))}
           </section>
         ) : (
-          // new — SIMPLE_REVIEW 도 SNS 처럼 서브타입 선택 UI 노출
+          // SIMPLE_REVIEW 도 SNS 처럼 서브타입 선택 UI 노출
           <section className={styles.sec}>
             <h3>{t("pages.apply.snsSectionTitle")}</h3>
-            {requiredNotQualified.length > 0 ? ( // new — 필수 서브타입 자격 미달이 우선
+            {requiredNotQualified.length > 0 ? ( // 필수 서브타입 자격 미달이 우선
               <p style={{ color: "#ef4444", fontSize: 13 }}>
                 {t("pages.apply.requiredNotQualifiedPrefix")}
                 {requiredNotQualified.map((subType) => SNS_LABEL[subType]).join(", ")}
@@ -337,7 +334,7 @@ export function Apply() {
                               {t("campaign.detail.productPrice")}: ¥
                               {(r.productPriceJpy ?? 0).toLocaleString("ja-JP")}
                             </div>
-                          ) : isSimpleReviewCampaign ? ( // new — 단순 리뷰는 서브타입만 표기
+                          ) : isSimpleReviewCampaign ? ( // 단순 리뷰는 서브타입만 표기
                             <div className={styles.snsCond}>{SNS_LABEL[r.subType]}</div>
                           ) : (
                             <div className={styles.snsCond}>
@@ -397,7 +394,7 @@ export function Apply() {
           </section>
         )}
 
-        {!isFakePurchaseCampaign && ( // new — SNS/단순 리뷰: 배송이 있으므로 주소 확인 노출
+        {!isFakePurchaseCampaign && ( // SNS/단순 리뷰: 배송이 있으므로 주소 확인 노출
           <section className={styles.sec}>
             <h3>{t("pages.apply.addressTitle")}</h3>
             {me.data?.address ? (
@@ -466,8 +463,8 @@ export function Apply() {
             !hasSelection ||
             instagramPostTypeMissing ||
             qualifying.length === 0 ||
-            requiredNotQualified.length > 0 || // new — 필수 서브타입 자격 미달 시 응모 자체 불가
-            (!isFakePurchaseCampaign && (!me.data?.address || !addressConfirmed)) || // new
+            requiredNotQualified.length > 0 || // 필수 서브타입 자격 미달 시 응모 자체 불가
+            (!isFakePurchaseCampaign && (!me.data?.address || !addressConfirmed)) ||
             apply.isPending
           }
           onClick={() => apply.mutate()}

@@ -22,8 +22,8 @@ const SNS_ROW_CLASS: Record<CampaignSubType, string | undefined> = {
   X: styles.snsRowX,
   YOUTUBE: styles.snsRowYoutube,
   QOO10: undefined,
-  LIPS: undefined, // new
-  ATCOSME: undefined, // new
+  LIPS: undefined,
+  ATCOSME: undefined,
 };
 
 const SNS_ICON: Record<CampaignSubType, string> = {
@@ -32,8 +32,8 @@ const SNS_ICON: Record<CampaignSubType, string> = {
   YOUTUBE: "fa-brands fa-youtube",
   X: "fa-brands fa-x-twitter",
   QOO10: "fa-solid fa-bag-shopping",
-  LIPS: "fa-solid fa-heart", // new
-  ATCOSME: "fa-solid fa-star", // new
+  LIPS: "fa-solid fa-heart",
+  ATCOSME: "fa-solid fa-star",
 };
 
 const SNS_LABEL = SUB_TYPE_LABEL;
@@ -63,7 +63,7 @@ const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
   REELS: t("pages.campaignDetail.instagramReels"),
 };
 
-/** 옵션별 정원 분리 recruit 은 "フィード1名・リール2名" 형태로 표기. */ // new
+/** 옵션별 정원 분리 recruit 은 "フィード1名・リール2名" 형태로 표기. */
 function formatRecruitCounts(recruit: CampaignRecruit): string {
   const suffix = t("pages.campaignDetail.recruitCountSuffix");
   const hasSplitCounts =
@@ -209,7 +209,7 @@ export function CampaignDetail() {
         <section className={styles.section}>
           <h3>{t("pages.campaignDetail.sectionProduct")}</h3>
           <div className={styles.rich} dangerouslySetInnerHTML={{ __html: data.productSummary }} />
-          {data.productDetailUrls.map((url, index) => ( // new — 상품 상세 URL 복수 지원
+          {data.productDetailUrls.map((url, index) => ( // 상품 상세 URL 복수 지원
             <div key={`${index}-${url}`}>
               <a href={url} target="_blank" rel="noreferrer" className={styles.link}>
                 {data.productDetailUrls.length > 1
@@ -243,19 +243,19 @@ export function CampaignDetail() {
       </div>
 
       <div className={styles.cta}>
-        {data.hasApplied && !data.hasCancelled && ( // new — 응모 이력은 캠페인 단위 1건
+        {data.hasApplied && !data.hasCancelled && ( // 응모 이력은 캠페인 단위 1건
           <PrimaryButton onClick={() => nav("/applications")}>
             {t("pages.campaignDetail.viewApplications")}
           </PrimaryButton>
         )}
-        {!data.hasApplied && ( // new — 취소 이력 포함 재응모 불가
+        {!data.hasApplied && ( // 취소 이력 포함 재응모 불가
           <PrimaryButton disabled={closed} onClick={() => nav(`/campaigns/${data.id}/apply`)}>
             {closed
               ? t("pages.campaignDetail.ctaClosed")
               : t("pages.campaignDetail.ctaApply")}
           </PrimaryButton>
         )}
-        {data.hasCancelled && ( // new
+        {data.hasCancelled && (
           <p className={styles.cancelledNotice}>
             {t("pages.campaignDetail.cancelledNotice")}
           </p>

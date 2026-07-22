@@ -27,7 +27,7 @@ const schema = z
     invoiceRegistrationNumber: z
       .string()
       .regex(/^T\d{13}$/, t("pages.me.bank.invoiceNumberError"))
-      .or(z.literal("")), // new
+      .or(z.literal("")),
   })
   .superRefine((values, ctx) => {
     if (!values.bank) {
@@ -46,7 +46,7 @@ const EMPTY: Values = {
   branchCode: "",
   accountNumber: "",
   accountHolderKana: "",
-  invoiceRegistrationNumber: "", // new
+  invoiceRegistrationNumber: "",
 };
 
 export function MeBank() {
@@ -72,7 +72,7 @@ export function MeBank() {
         accountNumber: "",
         accountHolderKana: data.bankAccount.accountHolderKana,
         invoiceRegistrationNumber:
-          data.bankAccount.invoiceRegistrationNumber ?? "", // new
+          data.bankAccount.invoiceRegistrationNumber ?? "",
       });
     }
   }, [data, methods]);
@@ -87,7 +87,7 @@ export function MeBank() {
         branchCode: values.branchCode,
         accountNumber: values.accountNumber,
         accountHolderKana: values.accountHolderKana,
-        invoiceRegistrationNumber: values.invoiceRegistrationNumber || null, // new
+        invoiceRegistrationNumber: values.invoiceRegistrationNumber || null,
       });
       return upsertBankAccount(payload);
     },

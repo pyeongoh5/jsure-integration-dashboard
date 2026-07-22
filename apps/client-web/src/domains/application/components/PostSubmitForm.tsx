@@ -22,10 +22,10 @@ const PLACEHOLDER_BY_SNS: Record<CampaignSubType, string> = {
 };
 
 interface Props {
-  subTypes: CampaignSubType[]; // new — 참여한 모든 서브타입의 URL 을 한 폼에서 일괄 제출
-  initial: Partial<Record<CampaignSubType, string>>; // new
+  subTypes: CampaignSubType[]; // 참여한 모든 서브타입의 URL 을 한 폼에서 일괄 제출
+  initial: Partial<Record<CampaignSubType, string>>;
   onSubmit: (
-    posts: { subType: CampaignSubType; url: string }[], // new
+    posts: { subType: CampaignSubType; url: string }[],
   ) => Promise<void>;
   submitting: boolean;
   postingDeadlineAt: string | null;

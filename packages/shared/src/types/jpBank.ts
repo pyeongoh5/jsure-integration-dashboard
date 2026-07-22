@@ -2,9 +2,18 @@ export type JpBankCategory =
   | "MEGA"
   | "TRUST"
   | "PUBLIC"
-  | "INTERNET"
-  | "REGIONAL_1"
-  | "REGIONAL_2";
+  | "FOREIGN"
+  | "REGIONAL"
+  | "REGIONAL2"
+  | "SHINKIN"
+  | "SHINKUMI"
+  | "ROKIN"
+  | "JA"
+  | "SHINREN"
+  | "JF"
+  | "GYOREN"
+  | "OTHER"
+  | "SPECIAL";
 
 export interface JpBank {
   code: string;

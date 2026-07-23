@@ -58,8 +58,8 @@ export const messages = {
     },
     category: {
       sns: { jp: "SNS", kr: "SNS" },
-      fakePurchase: { jp: "仮購入", kr: "가구매" },
-      simpleReview: { jp: "単純レビュー", kr: "단순 리뷰" }, // new
+      fakePurchase: { jp: "Qoo10 購入型レビュー", kr: "Qoo10 구입형 리뷰" },
+      simpleReview: { jp: "LIPS / @cosme", kr: "립스/앳코스메" }, // new
     },
     subType: {
       qoo10: { jp: "Qoo10", kr: "Qoo10" },
@@ -509,7 +509,10 @@ export const messages = {
         kanaHint: { jp: "例: ヤマダ ハナコ", kr: "예: ヤマダ ハナコ" },
         invoiceNumberLabel: { jp: "適格請求書登録番号 (任意)", kr: "적격청구서 등록번호 (선택)" }, // new
         invoiceNumberHint: { jp: "例: T1234567890123", kr: "예: T1234567890123" }, // new
-        invoiceNumberInvalid: { jp: "T + 13桁の数字で入力してください", kr: "T + 13자리 숫자로 입력해 주세요" }, // new
+        invoiceNumberInvalid: {
+          jp: "T + 13桁の数字で入力してください",
+          kr: "T + 13자리 숫자로 입력해 주세요",
+        }, // new
         submit: { jp: "登録完了", kr: "가입 완료" },
       },
       profile: {
@@ -531,8 +534,14 @@ export const messages = {
           kr: "1개 이상의 SNS 계정을 추가해 주세요",
         },
         handleRequired: { jp: "ハンドルを入力してください", kr: "핸들을 입력해 주세요" },
-        handleUrl: { jp: "URLではなくID（ユーザー名）のみ入力してください", kr: "URL이 아니라 ID(사용자명)만 입력해 주세요" }, // new
-        handleTooLong: { jp: "IDは64文字以内で入力してください", kr: "ID는 64자 이내로 입력해 주세요" }, // new
+        handleUrl: {
+          jp: "URLではなくID（ユーザー名）のみ入力してください",
+          kr: "URL이 아니라 ID(사용자명)만 입력해 주세요",
+        }, // new
+        handleTooLong: {
+          jp: "IDは64文字以内で入力してください",
+          kr: "ID는 64자 이내로 입력해 주세요",
+        }, // new
         followerCountInvalid: { jp: "フォロワー数は数字のみ", kr: "팔로워 수는 숫자만" },
         heading: { jp: "SNSアカウント", kr: "SNS 계정" },
         hint: {
@@ -606,7 +615,10 @@ export const messages = {
         yenSuffix: { jp: "円", kr: "엔" },
         labelPayer: { jp: "振込名", kr: "입금인" },
         companyName: { jp: "株式会社J-SURE", kr: "주식회사 J-SURE" },
-        rejectPrefix: { jp: "ご希望に添えず申し訳ございません。また次のキャンペーンでお待ちしております！", kr: "미선정되었습니다. 기대에 부응하지 못해. 죄송합니다. 다음 캠페인에서 또 기다리고 있겠습니다!" }, // new
+        rejectPrefix: {
+          jp: "ご希望に添えず申し訳ございません。また次のキャンペーンでお待ちしております！",
+          kr: "미선정되었습니다. 기대에 부응하지 못해. 죄송합니다. 다음 캠페인에서 또 기다리고 있겠습니다!",
+        }, // new
         cancelledNotice: {
           jp: "キャンセル済（同じキャンペーンに再応募はできません）",
           kr: "취소됨 (동일 캠페인에 재응모할 수 없습니다)",

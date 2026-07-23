@@ -8,22 +8,38 @@ interface Props {
   onChange: (b: { code: string; name: string }) => void;
 }
 
+const SCROLL_BATCH = 50;
+
 export function BankSelect({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(SCROLL_BATCH);
 
   const filtered = useMemo(() => {
     const q = query.trim();
-    if (!q) return JP_BANKS.slice(0, 30);
+    if (!q) return JP_BANKS;
     return JP_BANKS.filter(
       (b) => b.nameJa.includes(q) || b.code.startsWith(q),
-    ).slice(0, 40);
+    );
   }, [query]);
+
+  function updateQuery(next: string) {
+    setQuery(next);
+    setVisibleCount(SCROLL_BATCH);
+  }
+
+  // 바닥 근처까지 스크롤하면 다음 배치 렌더 (무한 스크롤)
+  function handleListScroll(event: React.UIEvent<HTMLDivElement>) {
+    const element = event.currentTarget;
+    if (element.scrollTop + element.clientHeight >= element.scrollHeight - 200) {
+      setVisibleCount((count) => Math.min(count + SCROLL_BATCH, filtered.length));
+    }
+  }
 
   function pick(b: JpBank) {
     onChange({ code: b.code, name: b.nameJa });
     setOpen(false);
-    setQuery("");
+    updateQuery("");
   }
 
   return (
@@ -53,15 +69,15 @@ export function BankSelect({ value, onChange }: Props) {
               className={styles.search}
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => updateQuery(e.target.value)}
               placeholder={t("me.bank.searchPlaceholder")}
             />
           </div>
-          <div className={styles.list}>
+          <div className={styles.list} onScroll={handleListScroll}>
             {filtered.length === 0 && (
               <div className={styles.empty}>{t("me.bank.empty")}</div>
             )}
-            {filtered.map((b) => (
+            {filtered.slice(0, visibleCount).map((b) => (
               <button
                 type="button"
                 key={b.code}

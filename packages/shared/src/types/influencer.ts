@@ -126,6 +126,8 @@ export const InfluencerBankAccountPublicSchema = InfluencerBankAccountSchema.omi
   accountNumber: true,
 }).extend({
   accountNumberMasked: z.string(),
+  /** 마이페이지 수정 폼 프리필용 전체 계좌번호. optional 은 구 API 응답 호환용. */
+  accountNumber: z.string().optional(),
 });
 export type InfluencerBankAccountPublic = z.infer<
   typeof InfluencerBankAccountPublicSchema

@@ -69,7 +69,7 @@ export function MeBank() {
         },
         branchName: data.bankAccount.branchName,
         branchCode: data.bankAccount.branchCode,
-        accountNumber: "",
+        accountNumber: data.bankAccount.accountNumber ?? "",
         accountHolderKana: data.bankAccount.accountHolderKana,
         invoiceRegistrationNumber:
           data.bankAccount.invoiceRegistrationNumber ?? "",
@@ -112,7 +112,7 @@ export function MeBank() {
         <PageHeader showBack title={t("pages.me.bank.title")} />
         <div style={{ padding: 16 }}>
           {serverError && <ErrorBanner message={serverError} />}
-          {data?.bankAccount && (
+          {data?.bankAccount && !data.bankAccount.accountNumber && (
             <div
               style={{
                 background: "#fef3c7",

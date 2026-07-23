@@ -182,6 +182,7 @@ export class InfluencerAuthController {
             accountNumberMasked: maskAccountNumber(
               inf.bankAccount.accountNumber,
             ),
+            accountNumber: inf.bankAccount.accountNumber,
             invoiceRegistrationNumber:
               inf.bankAccount.invoiceRegistrationNumber,
           }

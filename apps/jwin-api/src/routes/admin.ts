@@ -296,6 +296,11 @@ export async function adminRoutes(app: FastifyInstance) {
     // 수량 정정 시 이미 소진된 양(totalQty - remainingQty)보다 작게 줄일 수 없다.
     let remainingQty = prize.remainingQty;
     if (parsed.data.totalQty !== undefined) {
+      if (prize.type === 'CODE' && parsed.data.totalQty !== prize.totalQty) {
+        return reply.code(400).send({
+          error: 'CODE 경품의 수량은 코드 등록(POST /admin/prizes/:id/codes)으로만 변경됩니다',
+        });
+      }
       const consumed = prize.totalQty - prize.remainingQty;
       if (parsed.data.totalQty < consumed) {
         return reply

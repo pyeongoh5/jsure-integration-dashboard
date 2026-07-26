@@ -276,6 +276,61 @@ export async function adminRoutes(app: FastifyInstance) {
     return { imported: codes.length };
   });
 
+  // ③ 경품 정정 (확률·수량·이름·티어). 수량을 줄일 때 잔여 재고가 음수가 되지 않도록 검증.
+  app.patch<{ Params: { id: string } }>('/admin/prizes/:id', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const parsed = z
+      .object({
+        name: z.string().min(1).optional(),
+        tier: z.number().int().min(1).optional(),
+        totalQty: z.number().int().positive().optional(),
+        winProbability: z.number().gt(0).lt(1).optional(),
+      })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+
+    const prize = await prisma.prize.findUnique({ where: { id: req.params.id } });
+    if (!prize) return reply.code(404).send({ error: '경품을 찾을 수 없습니다' });
+
+    // 수량 정정 시 이미 소진된 양(totalQty - remainingQty)보다 작게 줄일 수 없다.
+    let remainingQty = prize.remainingQty;
+    if (parsed.data.totalQty !== undefined) {
+      const consumed = prize.totalQty - prize.remainingQty;
+      if (parsed.data.totalQty < consumed) {
+        return reply
+          .code(400)
+          .send({ error: `이미 배정된 수량(${consumed})보다 적게 줄일 수 없습니다` });
+      }
+      remainingQty = parsed.data.totalQty - consumed;
+    }
+
+    const updated = await prisma.prize.update({
+      where: { id: prize.id },
+      data: { ...parsed.data, remainingQty },
+    });
+    await audit(admin, 'prize.update', prize.id, parsed.data);
+
+    const availableCodeCount =
+      updated.type === 'CODE'
+        ? await prisma.prizeCode.count({ where: { prizeId: updated.id, status: 'AVAILABLE' } })
+        : 0;
+    return toPrize(updated, availableCodeCount);
+  });
+
+  // ⑤ 소재 삭제 — 이미 게시에 사용된 소재는 거부 (CampaignPost.templateId 참조)
+  app.delete<{ Params: { id: string } }>('/admin/post-templates/:id', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const usedCount = await prisma.campaignPost.count({ where: { templateId: req.params.id } });
+    if (usedCount > 0) {
+      return reply.code(409).send({ error: '이미 게시에 사용된 소재는 삭제할 수 없습니다' });
+    }
+    await prisma.postTemplate.delete({ where: { id: req.params.id } });
+    await audit(admin, 'template.delete', req.params.id);
+    return { deleted: true };
+  });
+
   // ── 모니터링 대시보드 (캠페인 단위) ──
   app.get<{ Params: { id: string } }>('/admin/campaigns/:id/stats', async (req, reply) => {
     if (!requireAdmin(req, reply)) return;

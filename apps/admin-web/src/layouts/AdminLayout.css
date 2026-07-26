@@ -15,6 +15,8 @@
   --r-md: 10px;
   --r-lg: 14px;
   --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.04);
+  /* 최상단 제품 스위처 높이 — 사이드바/본문 높이 계산의 기준 */
+  --product-bar-h: 52px;
 }
 
 body {
@@ -23,9 +25,18 @@ body {
 }
 
 .admin {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* 제품 스위처 아래의 실제 셸 — 사이드바 + 본문 */
+.admin__body {
   display: grid;
   grid-template-columns: 248px 1fr;
-  min-height: 100dvh;
+  flex: 1;
+  min-height: 0;
+  height: calc(100dvh - var(--product-bar-h));
 }
 
 /* Sidebar */
@@ -36,8 +47,9 @@ body {
   flex-direction: column;
   padding: 16px 12px;
   position: sticky;
-  top: 0;
-  height: 100dvh;
+  top: var(--product-bar-h);
+  height: 100%;
+  min-height: 0;
 }
 
 .admin__brand-link {
@@ -258,7 +270,7 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  height: 100dvh;
+  height: 100%;
 }
 
 .admin__topbar {

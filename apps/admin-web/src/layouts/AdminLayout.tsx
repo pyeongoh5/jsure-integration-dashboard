@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import "./AdminLayout.css";
+import { ProductSwitcher } from "@/components/ProductSwitcher";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { BroadcastProgressDock } from "@/domains/broadcast";
@@ -7,14 +8,18 @@ import { BroadcastProgressDock } from "@/domains/broadcast";
 export function AdminLayout() {
   return (
     <div className="admin">
-      <Sidebar />
+      <ProductSwitcher />
 
-      <div className="admin__main">
-        <Header />
+      <div className="admin__body">
+        <Sidebar />
 
-        <main className="admin__content">
-          <Outlet />
-        </main>
+        <div className="admin__main">
+          <Header />
+
+          <main className="admin__content">
+            <Outlet />
+          </main>
+        </div>
       </div>
 
       <BroadcastProgressDock />

@@ -44,6 +44,27 @@ export const adminMessages = {
       messageTemplates: { ko: "메시지 템플릿", en: "Message Templates", ja: "メッセージテンプレート" },
       team: { ko: "팀원/권한", en: "Team & Roles", ja: "チーム・権限" },
       brands: { ko: "광고주(브랜드)", en: "Advertisers (Brands)", ja: "広告主（ブランド）" },
+      jwinWinners: { ko: "당첨자 관리", en: "Winners", ja: "当選者管理" },
+      jwinPrizes: { ko: "경품·기프트코드", en: "Prizes & Gift Codes", ja: "景品・ギフトコード" },
+      jwinStats: { ko: "통계", en: "Statistics", ja: "統計" },
+    },
+    groupsJwin: {
+      prizes: { ko: "경품", en: "Prizes", ja: "景品" },
+      analytics: { ko: "분석", en: "Analytics", ja: "分析" },
+    },
+    products: {
+      influencer: { ko: "인플루언서", en: "Influencer", ja: "インフルエンサー" },
+      influencerDescription: {
+        ko: "J-SURE 인플루언서 캠페인",
+        en: "J-SURE influencer campaigns",
+        ja: "J-SUREインフルエンサーキャンペーン",
+      },
+      jwin: { ko: "J-WIN", en: "J-WIN", ja: "J-WIN" },
+      jwinDescription: {
+        ko: "X 인스턴트윈",
+        en: "X instant win",
+        ja: "Xインスタントウィン",
+      },
     },
   },
   components: {

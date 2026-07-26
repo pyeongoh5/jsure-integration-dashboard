@@ -12,6 +12,8 @@ export function Breadcrumb() {
 
   return (
     <div className={styles.root}>
+      <span>{t(match.product.label)}</span>
+      <span className={styles.sep}>›</span>
       <span>{t(match.group.title)}</span>
       <span className={styles.sep}>›</span>
       <span>{t(match.item.label)}</span>

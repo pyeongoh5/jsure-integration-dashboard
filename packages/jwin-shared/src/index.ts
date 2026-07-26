@@ -1,3 +1,5 @@
+export * from './adminApi';
+
 /** JST(UTC+9) 기준 "YYYY-MM-DD" 문자열. 응모/포스트 매칭 키. */
 export function dateJst(date: Date = new Date()): string {
   const jst = new Date(date.getTime() + 9 * 60 * 60 * 1000);

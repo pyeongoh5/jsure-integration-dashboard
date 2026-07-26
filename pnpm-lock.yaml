@@ -433,6 +433,10 @@ importers:
         version: 5.9.3
 
   packages/jwin-shared:
+    dependencies:
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
     devDependencies:
       '@jsure/tsconfig':
         specifier: workspace:*
@@ -440,6 +444,9 @@ importers:
       typescript:
         specifier: ^5.6.3
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.4
+        version: 2.1.9(@types/node@22.19.17)(terser@5.46.2)
 
   packages/shared:
     dependencies:

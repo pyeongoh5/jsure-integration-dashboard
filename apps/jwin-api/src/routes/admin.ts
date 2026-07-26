@@ -5,7 +5,14 @@ import { dateJst } from '@jsure/jwin-shared';
 import { config } from '../config';
 import { encrypt } from '../lib/crypto';
 import { AdminIdentity, getAdminIdentity } from '../lib/auth';
-import { toCampaignDetail, toPrize, toPostTemplate } from './adminMappers';
+import {
+  toCampaignDetail,
+  toPrize,
+  toPostTemplate,
+  toWinner,
+  decryptShipping,
+  canTransitionFulfillment,
+} from './adminMappers';
 
 /**
  * 어드민 API (v1: J-sure 운영자 단일 테넌트 — 브로커형)
@@ -317,16 +324,95 @@ export async function adminRoutes(app: FastifyInstance) {
     };
   });
 
-  // 당첨자 목록 (이행 처리용)
+  // 당첨자 목록 (이행 처리용) — 배송지 평문/암호문 미노출 (D-11)
   app.get<{ Params: { id: string } }>('/admin/campaigns/:id/winners', async (req, reply) => {
     if (!requireAdmin(req, reply)) return;
-    return prisma.winner.findMany({
+    const winners = await prisma.winner.findMany({
       where: { entry: { campaignId: req.params.id } },
-      include: {
+      select: {
+        id: true,
+        verification: true,
+        fulfillment: true,
+        encryptedShipping: true,
+        dmSentAt: true,
+        dmError: true,
         prize: { select: { name: true, type: true } },
         entry: { select: { dateJst: true, user: { select: { xUsername: true } } } },
       },
       orderBy: { createdAt: 'desc' },
     });
+    return { winners: winners.map(toWinner) };
   });
+
+  // ⑥ 배송지 복호화 열람 — 개인정보이므로 열람 자체를 감사 로그에 남긴다
+  app.get<{ Params: { id: string } }>('/admin/winners/:id/shipping', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const winner = await prisma.winner.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, encryptedShipping: true, shippingEnteredAt: true },
+    });
+    if (!winner) return reply.code(404).send({ error: '당첨자를 찾을 수 없습니다' });
+    await audit(admin, 'winner.shipping_view', winner.id);
+    return {
+      winnerId: winner.id,
+      shipping: decryptShipping(winner.encryptedShipping),
+      shippingEnteredAt: winner.shippingEnteredAt
+        ? winner.shippingEnteredAt.toISOString()
+        : null,
+    };
+  });
+
+  // ⑦ 이행 처리 — 허용 전이만: AWAITING_INFO→READY, READY→SHIPPED
+  app.patch<{ Params: { id: string } }>(
+    '/admin/winners/:id/fulfillment',
+    async (req, reply) => {
+      const admin = requireAdmin(req, reply);
+      if (!admin) return;
+      const parsed = z
+        .object({
+          fulfillment: z.enum(['NOT_READY', 'AWAITING_INFO', 'READY', 'DM_SENT', 'SHIPPED', 'FAILED']),
+        })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+
+      const winner = await prisma.winner.findUnique({
+        where: { id: req.params.id },
+        select: {
+          id: true,
+          verification: true,
+          fulfillment: true,
+          encryptedShipping: true,
+          dmSentAt: true,
+          dmError: true,
+          prize: { select: { name: true, type: true } },
+          entry: { select: { dateJst: true, user: { select: { xUsername: true } } } },
+        },
+      });
+      if (!winner) return reply.code(404).send({ error: '당첨자를 찾을 수 없습니다' });
+      if (!canTransitionFulfillment(winner.fulfillment, parsed.data.fulfillment)) {
+        return reply
+          .code(409)
+          .send({
+            error: `이행 상태를 ${winner.fulfillment}에서 ${parsed.data.fulfillment}(으)로 바꿀 수 없습니다`,
+          });
+      }
+      const updated = await prisma.winner.update({
+        where: { id: winner.id },
+        data: { fulfillment: parsed.data.fulfillment },
+        select: {
+          id: true,
+          verification: true,
+          fulfillment: true,
+          encryptedShipping: true,
+          dmSentAt: true,
+          dmError: true,
+          prize: { select: { name: true, type: true } },
+          entry: { select: { dateJst: true, user: { select: { xUsername: true } } } },
+        },
+      });
+      await audit(admin, 'winner.fulfillment', winner.id, { fulfillment: parsed.data.fulfillment });
+      return toWinner(updated);
+    },
+  );
 }

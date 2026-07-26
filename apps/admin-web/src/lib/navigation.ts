@@ -104,14 +104,6 @@ const JWIN_PRODUCT: Product = {
         { to: "/jwin/winners", label: "nav.items.jwinWinners", icon: "fa-solid fa-trophy" },
       ],
     },
-    {
-      title: "nav.groupsJwin.prizes",
-      items: [{ to: "/jwin/prizes", label: "nav.items.jwinPrizes", icon: "fa-solid fa-gift" }],
-    },
-    {
-      title: "nav.groupsJwin.analytics",
-      items: [{ to: "/jwin/stats", label: "nav.items.jwinStats", icon: "fa-solid fa-chart-line" }],
-    },
   ],
 };
 

@@ -18,9 +18,8 @@ import { NoticeEdit } from "./pages/Notices/Edit";
 import { MessageTemplates } from "./pages/MessageTemplates";
 import { MessageTemplateEdit } from "./pages/MessageTemplates/Edit";
 import { JwinCampaigns } from "./pages/Jwin/Campaigns";
+import { JwinCampaignEdit } from "./pages/Jwin/CampaignEdit";
 import { JwinWinners } from "./pages/Jwin/Winners";
-import { JwinPrizes } from "./pages/Jwin/Prizes";
-import { JwinStats } from "./pages/Jwin/Stats";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { NotFound } from "./pages/NotFound";
@@ -62,9 +61,9 @@ export function App() {
           {/* J-WIN (X 인스턴트윈). 기존 인플루언서 경로와 섞이지 않도록 /jwin 아래에 둔다. */}
           <Route path="/jwin" element={<Navigate to="/jwin/campaigns" replace />} />
           <Route path="/jwin/campaigns" element={<JwinCampaigns />} />
+          <Route path="/jwin/campaigns/new" element={<JwinCampaignEdit />} />
+          <Route path="/jwin/campaigns/:id" element={<JwinCampaignEdit />} />
           <Route path="/jwin/winners" element={<JwinWinners />} />
-          <Route path="/jwin/prizes" element={<JwinPrizes />} />
-          <Route path="/jwin/stats" element={<JwinStats />} />
         </Route>
         <Route path="/*" element={<NotFound />} />
       </Routes>

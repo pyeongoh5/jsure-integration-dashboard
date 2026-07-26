@@ -5,6 +5,7 @@ import { dateJst } from '@jsure/jwin-shared';
 import { config } from '../config';
 import { encrypt } from '../lib/crypto';
 import { AdminIdentity, getAdminIdentity } from '../lib/auth';
+import { toCampaignDetail, toPrize, toPostTemplate } from './adminMappers';
 
 /**
  * 어드민 API (v1: J-sure 운영자 단일 테넌트 — 브로커형)
@@ -100,6 +101,55 @@ export async function adminRoutes(app: FastifyInstance) {
       },
     });
   });
+
+  // ① 편집 폼 초기값 — 연동 상태·connectUrl 포함
+  app.get<{ Params: { id: string } }>('/admin/campaigns/:id', async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const campaign = await prisma.brandCampaign.findUnique({
+      where: { id: req.params.id },
+      include: { credential: { select: { refreshFailedAt: true } } },
+    });
+    if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
+    const connectUrl = `${config().API_BASE_URL}/oauth/brand/start?campaignId=${campaign.id}`;
+    return toCampaignDetail(campaign, connectUrl);
+  });
+
+  // ② 경품 목록 — id·확률·유형·코드 재고 포함
+  app.get<{ Params: { id: string } }>('/admin/campaigns/:id/prizes', async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const prizes = await prisma.prize.findMany({
+      where: { campaignId: req.params.id },
+      orderBy: { tier: 'asc' },
+    });
+    const withCounts = await Promise.all(
+      prizes.map(async (prize) => {
+        const availableCodeCount =
+          prize.type === 'CODE'
+            ? await prisma.prizeCode.count({ where: { prizeId: prize.id, status: 'AVAILABLE' } })
+            : 0;
+        return toPrize(prize, availableCodeCount);
+      }),
+    );
+    return { prizes: withCounts };
+  });
+
+  // ④ 포스트 소재 목록 — 커버리지 검사·삭제 가능 여부(used)용
+  app.get<{ Params: { id: string } }>(
+    '/admin/campaigns/:id/post-templates',
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+      const templates = await prisma.postTemplate.findMany({
+        where: { campaignId: req.params.id },
+        orderBy: { activeFrom: 'asc' },
+        include: { _count: { select: { posts: true } } },
+      });
+      return {
+        postTemplates: templates.map((template) =>
+          toPostTemplate(template, template._count.posts > 0),
+        ),
+      };
+    },
+  );
 
   app.patch<{ Params: { id: string } }>('/admin/campaigns/:id', async (req, reply) => {
     const admin = requireAdmin(req, reply);

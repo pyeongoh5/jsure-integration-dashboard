@@ -1,4 +1,4 @@
-import { jwinApi } from "../../lib/api";
+import { jwinApi } from "@/lib/api";
 import {
   AdminCampaignDetailSchema,
   AdminPrizeListSchema,

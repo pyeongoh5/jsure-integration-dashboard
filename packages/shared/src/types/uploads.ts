@@ -161,3 +161,33 @@ export const InfluencerAttachmentPresignResponseSchema = z.object({
 export type InfluencerAttachmentPresignResponse = z.infer<
   typeof InfluencerAttachmentPresignResponseSchema
 >;
+
+/** J-WIN 캠페인 포스트 미디어 — 이미지 + 동영상(mp4). X 게시 시각에 jwin-api가 fetch. */
+export const JWIN_MEDIA_MAX_BYTES = 100 * 1024 * 1024; // 100MB
+export const JWIN_MEDIA_ALLOWED_CONTENT_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "video/mp4",
+] as const;
+export const JwinMediaContentTypeSchema = z.enum(JWIN_MEDIA_ALLOWED_CONTENT_TYPES);
+export type JwinMediaContentType = z.infer<typeof JwinMediaContentTypeSchema>;
+
+export const JwinMediaUploadPresignRequestSchema = z.object({
+  contentType: JwinMediaContentTypeSchema,
+  sizeBytes: z.number().int().positive().max(JWIN_MEDIA_MAX_BYTES),
+});
+export type JwinMediaUploadPresignRequest = z.infer<
+  typeof JwinMediaUploadPresignRequestSchema
+>;
+
+export const JwinMediaUploadPresignResponseSchema = z.object({
+  objectKey: z.string(),
+  uploadUrl: z.string().url(),
+  /** 만료 없는 공개 URL (R2_PUBLIC_BASE_URL 필수) */
+  viewUrl: z.string().url(),
+  expiresInSec: z.number().int().positive(),
+});
+export type JwinMediaUploadPresignResponse = z.infer<
+  typeof JwinMediaUploadPresignResponseSchema
+>;

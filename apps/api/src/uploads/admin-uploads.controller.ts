@@ -3,12 +3,15 @@ import {
   CampaignImageUploadPresignRequestSchema,
   CampaignThumbnailUploadPresignRequestSchema,
   NoticeImageUploadPresignRequestSchema,
+  JwinMediaUploadPresignRequestSchema,
   type CampaignImageUploadPresignRequest,
   type CampaignImageUploadPresignResponse,
   type CampaignThumbnailUploadPresignRequest,
   type CampaignThumbnailUploadPresignResponse,
   type NoticeImageUploadPresignRequest,
   type NoticeImageUploadPresignResponse,
+  type JwinMediaUploadPresignRequest,
+  type JwinMediaUploadPresignResponse,
 } from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
@@ -41,5 +44,13 @@ export class AdminUploadsController {
     body: CampaignImageUploadPresignRequest,
   ): Promise<CampaignImageUploadPresignResponse> {
     return this.svc.presignCampaignImageUpload(body);
+  }
+
+  @Post("jwin-media/presign")
+  presignJwinMedia(
+    @Body(new ZodValidationPipe(JwinMediaUploadPresignRequestSchema))
+    body: JwinMediaUploadPresignRequest,
+  ): Promise<JwinMediaUploadPresignResponse> {
+    return this.svc.presignJwinMediaUpload(body);
   }
 }

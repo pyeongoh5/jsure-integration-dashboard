@@ -3,10 +3,12 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
 import {
   UPLOAD_MAX_BYTES,
+  JWIN_MEDIA_MAX_BYTES,
   type CampaignThumbnailUploadPresignRequest,
   type CampaignThumbnailUploadPresignResponse,
   type InsightAttachmentInput,
@@ -18,6 +20,8 @@ import {
   type CampaignImageUploadPresignResponse,
   type NoticeImageUploadPresignRequest,
   type NoticeImageUploadPresignResponse,
+  type JwinMediaUploadPresignRequest,
+  type JwinMediaUploadPresignResponse,
   type Attachment as SharedAttachment,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
@@ -36,6 +40,8 @@ function extOf(contentType: string): string {
       return "jpg";
     case "image/webp":
       return "webp";
+    case "video/mp4":
+      return "mp4";
     default:
       return "bin";
   }
@@ -207,6 +213,28 @@ export class UploadsService {
           this.r2.presignGet(objectKey, VIEW_EXPIRES_SEC),
       ),
     ]);
+    return { objectKey, uploadUrl, viewUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
+  }
+
+  async presignJwinMediaUpload(
+    body: JwinMediaUploadPresignRequest,
+  ): Promise<JwinMediaUploadPresignResponse> {
+    if (body.sizeBytes > JWIN_MEDIA_MAX_BYTES) {
+      throw new BadRequestException("파일 크기 한도를 초과했습니다");
+    }
+    const objectKey = `jwin/media/${randomUUID()}.${extOf(body.contentType)}`;
+    const uploadUrl = await this.r2.presignPut(
+      { objectKey, contentType: body.contentType, contentLength: body.sizeBytes },
+      PRESIGN_EXPIRES_SEC,
+    );
+    // J-WIN 미디어는 jwin-api가 게시 시각마다 fetch하므로 만료 URL을 쓰면 후반 게시가 실패한다.
+    // 만료 없는 공개 URL이 아니면 발급 자체를 막는다 (R2_PUBLIC_BASE_URL 필수).
+    const viewUrl = this.r2.publicUrl(objectKey);
+    if (!viewUrl) {
+      throw new InternalServerErrorException(
+        "R2_PUBLIC_BASE_URL이 설정되지 않아 J-WIN 미디어용 공개 URL을 발급할 수 없습니다",
+      );
+    }
     return { objectKey, uploadUrl, viewUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
   }
 

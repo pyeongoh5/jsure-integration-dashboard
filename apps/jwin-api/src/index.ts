@@ -12,7 +12,8 @@ async function main() {
 
   await app.register(cookie);
   await app.register(cors, {
-    origin: [config().WEB_BASE_URL],
+    // 응모자 웹(쿠키 세션) + 어드민 웹(Bearer 토큰, D-10)
+    origin: [config().WEB_BASE_URL, config().ADMIN_WEB_ORIGIN],
     credentials: true,
   });
   // 코드 CSV 업로드용 text/plain 파서

@@ -8,7 +8,7 @@
     "dev:client": "turbo dev --filter=@jsure/client-web --filter=@jsure/api",
     "dev:web": "turbo dev --filter=@jsure/client-web --filter=@jsure/admin-web",
     "dev:all": "turbo dev",
-    "dev:api": "turbo dev --filter=@jsure/api",
+    "dev:api": "turbo dev --filter=@jsure/api --filter=@jsure/jwin-api",
     "dev:admin-web": "turbo dev --filter=@jsure/admin-web",
     "dev:client-web": "turbo dev --filter=@jsure/client-web",
     "dev:client-web:kr": "VITE_I18N_REGION=kr turbo dev --filter=@jsure/client-web",

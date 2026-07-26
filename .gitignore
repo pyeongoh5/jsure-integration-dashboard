@@ -1,6 +1,9 @@
 node_modules
 dist
 build
+# Next.js (apps/jwin-web)
+.next
+next-env.d.ts
 .turbo
 *.tsbuildinfo
 coverage

@@ -39,6 +39,13 @@ export default defineConfig({
         target: "http://localhost:3000",
         changeOrigin: true,
       },
+      // J-WIN API (@jsure/jwin-api). dev 에서 CORS 없이 붙기 위한 프록시.
+      // 운영에서는 VITE_JWIN_API_BASE_URL 로 Railway 도메인을 직접 지정한다.
+      "/jwin-api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/jwin-api/, ""),
+      },
     },
   },
 });

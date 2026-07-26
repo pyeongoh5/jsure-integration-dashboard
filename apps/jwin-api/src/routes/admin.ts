@@ -1,16 +1,18 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { getPrisma } from '@jsure/jwin-db';
 import { dateJst } from '@jsure/jwin-shared';
 import { config } from '../config';
 import { encrypt } from '../lib/crypto';
-import { getAdminSession, setAdminSession } from '../lib/auth';
+import { AdminIdentity, getAdminIdentity } from '../lib/auth';
 
 /**
  * 어드민 API (v1: J-sure 운영자 단일 테넌트 — 브로커형)
  * F-1.1 캠페인 CRUD (기간 단위) / F-1.2 소재 / F-1.3 경품+코드 동시 등록 (F-7.3) /
  * F-1.5 중지 / F-1.6 감사 로그 / 캠페인 단위 통계
+ *
+ * 인증 (D-10): 로그인 엔드포인트가 없다. 대시보드(@jsure/api)에서 로그인해 받은
+ * access token을 Authorization: Bearer 로 실어 보내면 서명만 검증한다.
  */
 
 /** 엑셀 붙여넣기 대응: 개행/탭/쉼표로 분리, 공백 제거 (F-7.3) */
@@ -24,38 +26,37 @@ export function parseCodesInput(raw: string): string[] {
 export async function adminRoutes(app: FastifyInstance) {
   const prisma = getPrisma();
 
-  async function requireAdmin(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
-    const session = getAdminSession(req);
-    if (!session) {
+  function requireAdmin(req: FastifyRequest, reply: FastifyReply): AdminIdentity | null {
+    const admin = getAdminIdentity(req);
+    if (!admin) {
       reply.code(401).send({ error: 'admin login required' });
       return null;
     }
-    return session.adminId;
+    return admin;
   }
 
-  async function audit(adminId: string, action: string, target?: string, payload?: unknown) {
+  async function audit(
+    admin: AdminIdentity,
+    action: string,
+    target?: string,
+    payload?: unknown,
+  ) {
     await prisma.auditLog.create({
-      data: { adminId, action, target, payload: payload as object | undefined },
+      data: {
+        adminId: admin.adminId,
+        adminEmail: admin.email,
+        action,
+        target,
+        payload: payload as object | undefined,
+      },
     });
   }
 
-  // ── 로그인 ──
-  app.post<{ Body: { email: string; password: string } }>('/admin/login', async (req, reply) => {
-    const { email, password } = (req.body ?? {}) as { email?: string; password?: string };
-    if (!email || !password) return reply.code(400).send({ error: 'email/password required' });
-
-    // 최초 로그인 시 env 기반 어드민 자동 생성 (부트스트랩)
-    let admin = await prisma.adminUser.findUnique({ where: { email } });
-    if (!admin && email === config().ADMIN_EMAIL) {
-      admin = await prisma.adminUser.create({
-        data: { email, passwordHash: config().ADMIN_PASSWORD_HASH },
-      });
-    }
-    if (!admin || !(await bcrypt.compare(password, admin.passwordHash))) {
-      return reply.code(401).send({ error: 'invalid credentials' });
-    }
-    setAdminSession(reply, { adminId: admin.id });
-    return { ok: true };
+  /** 토큰 유효성 확인용 (admin-web이 J-WIN 접근 가능 여부를 판단) */
+  app.get('/admin/me', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    return { adminId: admin.adminId, email: admin.email, role: admin.role };
   });
 
   // ── 브랜드 캠페인 (F-1.1, F-1.5 — 기간 단위) ──
@@ -73,15 +74,15 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post('/admin/campaigns', async (req, reply) => {
-    const adminId = await requireAdmin(req, reply);
-    if (!adminId) return;
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
     const parsed = campaignSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
     if (parsed.data.endsAt <= parsed.data.startsAt) {
       return reply.code(400).send({ error: '종료일은 시작일 이후여야 합니다' });
     }
     const campaign = await prisma.brandCampaign.create({ data: parsed.data });
-    await audit(adminId, 'campaign.create', campaign.id, parsed.data);
+    await audit(admin, 'campaign.create', campaign.id, parsed.data);
     // 브랜드 담당자에게 전달할 X 연동 링크
     return {
       ...campaign,
@@ -90,7 +91,7 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.get('/admin/campaigns', async (req, reply) => {
-    if (!(await requireAdmin(req, reply))) return;
+    if (!requireAdmin(req, reply)) return;
     return prisma.brandCampaign.findMany({
       orderBy: { startsAt: 'desc' },
       include: {
@@ -101,8 +102,8 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.patch<{ Params: { id: string } }>('/admin/campaigns/:id', async (req, reply) => {
-    const adminId = await requireAdmin(req, reply);
-    if (!adminId) return;
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
     const parsed = campaignSchema
       .partial()
       .extend({ status: z.enum(['SETUP', 'ACTIVE', 'PAUSED', 'ENDED']).optional() })
@@ -112,7 +113,7 @@ export async function adminRoutes(app: FastifyInstance) {
       where: { id: req.params.id },
       data: parsed.data,
     });
-    await audit(adminId, 'campaign.update', campaign.id, parsed.data);
+    await audit(admin, 'campaign.update', campaign.id, parsed.data);
     return campaign;
   });
 
@@ -127,12 +128,12 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post('/admin/post-templates', async (req, reply) => {
-    const adminId = await requireAdmin(req, reply);
-    if (!adminId) return;
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
     const parsed = templateSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
     const template = await prisma.postTemplate.create({ data: parsed.data });
-    await audit(adminId, 'template.create', template.id);
+    await audit(admin, 'template.create', template.id);
     return template;
   });
 
@@ -149,8 +150,8 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   app.post('/admin/prizes', async (req, reply) => {
-    const adminId = await requireAdmin(req, reply);
-    if (!adminId) return;
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
     const parsed = prizeSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
     const { codesText, ...prizeData } = parsed.data;
@@ -184,14 +185,14 @@ export async function adminRoutes(app: FastifyInstance) {
       }
       return created;
     });
-    await audit(adminId, 'prize.create', prize.id, { ...prizeData, codeCount: codes.length });
+    await audit(admin, 'prize.create', prize.id, { ...prizeData, codeCount: codes.length });
     return { ...prize, codeCount: codes.length };
   });
 
   // 코드 추가 등록 (재고 보충 — 본문: text/plain 또는 붙여넣기 원문)
   app.post<{ Params: { id: string } }>('/admin/prizes/:id/codes', async (req, reply) => {
-    const adminId = await requireAdmin(req, reply);
-    if (!adminId) return;
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
     const body = typeof req.body === 'string' ? req.body : '';
     const codes = parseCodesInput(body);
     if (codes.length === 0) return reply.code(400).send({ error: '코드가 없습니다' });
@@ -214,13 +215,13 @@ export async function adminRoutes(app: FastifyInstance) {
         },
       }),
     ]);
-    await audit(adminId, 'prize.codes_append', req.params.id, { count: codes.length });
+    await audit(admin, 'prize.codes_append', req.params.id, { count: codes.length });
     return { imported: codes.length };
   });
 
   // ── 모니터링 대시보드 (캠페인 단위) ──
   app.get<{ Params: { id: string } }>('/admin/campaigns/:id/stats', async (req, reply) => {
-    if (!(await requireAdmin(req, reply))) return;
+    if (!requireAdmin(req, reply)) return;
     const campaign = await prisma.brandCampaign.findUnique({
       where: { id: req.params.id },
       include: {
@@ -268,7 +269,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
   // 당첨자 목록 (이행 처리용)
   app.get<{ Params: { id: string } }>('/admin/campaigns/:id/winners', async (req, reply) => {
-    if (!(await requireAdmin(req, reply))) return;
+    if (!requireAdmin(req, reply)) return;
     return prisma.winner.findMany({
       where: { entry: { campaignId: req.params.id } },
       include: {

@@ -252,27 +252,25 @@ model Winner {
 }
 
 // ── 어드민 ───────────────────────────────────────────
-
-model AdminUser {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
-
-  auditLogs AuditLog[]
-}
+//
+// D-10: 어드민 계정은 J-WIN DB에 두지 않는다. 인증은 대시보드(@jsure/api)가 발급한
+// JWT를 jwin-api가 같은 JWT_SECRET으로 검증하는 방식이며, 계정 원본은 대시보드 DB에 있다.
+// 따라서 AdminUser 모델은 없고, 감사 로그는 대시보드 유저 id/email을 값으로만 보관한다.
 
 // 어드민 조작 감사 로그 (F-7.5)
 model AuditLog {
-  id        String     @id @default(cuid())
-  adminId   String?
-  admin     AdminUser? @relation(fields: [adminId], references: [id])
-  action    String // 예: "campaign.create", "prize.codes_import"
-  target    String? // 대상 엔티티 id
-  payload   Json?
-  createdAt DateTime   @default(now())
+  id String @id @default(cuid())
+  /// 대시보드 AdminUser.id (JWT payload.sub) — DB가 달라 FK를 걸지 않는다
+  adminId String?
+  /// 조작 시점의 이메일 스냅샷 (대시보드 계정이 바뀌어도 추적 가능하도록)
+  adminEmail String?
+  action     String // 예: "campaign.create", "prize.codes_import"
+  target     String? // 대상 엔티티 id
+  payload    Json?
+  createdAt  DateTime @default(now())
 
   @@index([createdAt])
+  @@index([adminId])
 }
 
 // OAuth state/PKCE 임시 저장 (10분 TTL, 스케줄러가 청소)

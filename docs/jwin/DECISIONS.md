@@ -11,10 +11,10 @@
 | D-7 | X API 요금 전제 | 종량제(pay-per-use): 포스트 $0.015(URL 포함 $0.20), 읽기 $0.005~0.01, owned read $0.001, DM $0.015, 월 2M 읽기 캡 | 공식 문서 + 2026-04-20 개편 공지. **계약 전 Developer Console에서 최종 확인** | 2026-07-23 |
 | D-8 | 캠페인 구성 단위 | **Round(회차) 폐지 → 캠페인 기간 단위**. 기간(startsAt/endsAt)·slug·상태를 `BrandCampaign`으로 통합하고, 응모는 캠페인별 단독 LP `/c/{slug}`, 진행 중 목록은 별도 페이지 `/campaigns` | 라운드 = 복합 LP 구조가 실제 운영(브랜드별 개별 계약·기간·소재)과 어긋남. RoundStatus + CampaignStatus 이중 상태 관리를 `CampaignStatus` 하나로 줄여 운영·구현 모두 단순화 | 2026-07-26 |
 | D-9 | 미디어 첨부 포스팅 | **v1 필수로 승격.** `PostTemplate.mediaUrl`을 X v2 chunked media upload로 올린 뒤 `media_ids`로 첨부 | Atatter 대조 결과 이미지·동영상 없는 캠페인 포스트는 실사용이 어렵다고 판단. 업로드 자체는 무과금이라 비용 영향 없음 | 2026-07-26 |
+| D-10 | 어드민 인증·화면 | **대시보드(@jsure/api + admin-web)와 통합.** J-WIN은 어드민 계정도 로그인 엔드포인트도 갖지 않는다. 대시보드가 발급한 access token을 jwin-api가 동일한 `JWT_SECRET`으로 서명 검증(stateless)하고, 화면은 `@jsure/admin-web`에 J-WIN 모듈로 붙인다. `AdminUser` 모델 폐기, `AuditLog`는 대시보드 유저 id/email을 FK 없이 값으로 보관 | 운영자가 J-sure 단일 조직인데 로그인·계정 관리를 이중화할 이유가 없다. DB를 분리한 채로 인증만 공유할 수 있는 이유는 대시보드 JWT가 stateless(HS256)여서 서명 검증에 DB가 필요 없기 때문. **트레이드오프**: 두 서비스가 `JWT_SECRET`을 공유하므로 로테이션 시 동시 배포가 필요하고, 대시보드에서 세션을 폐기해도 이미 발급된 access token은 만료(기본 15분)까지 jwin-api에서 통과한다 | 2026-07-26 |
 
 ## 열린 항목 (v1 확정 전 결정 필요)
 
-- 어드민 웹 UI: v1은 API 우선. 화면은 최소한으로 후속 구현
 - 배송지 개인정보 보존 기간·삭제 배치 (일본 APPI 검토와 함께)
 - 낙첨/당첨 이미지 등 LP 디자인 소재 (독자 제작 — 전제조건 §2-2)
 - 리포스트 취소 후 재응모 어뷰징: 당일 1회 제약으로 1차 방어. 추가 정책 필요 여부

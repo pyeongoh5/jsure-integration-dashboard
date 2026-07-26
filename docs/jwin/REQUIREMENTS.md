@@ -90,7 +90,7 @@
 - **User**: X 유저 + 유저 토큰(암호화, 검증용)
 - **Entry**: 캠페인 × 유저 × 날짜(JST) 유니크. 결과(LOSE/WIN_PENDING/WIN_CONFIRMED) — WIN_FORFEITED(몰수)는 폐지
 - **Winner**: 검증 상태(PENDING/FOLLOW_FAILED/REPOST_FAILED/PASSED), 이행 상태(NOT_READY/AWAITING_INFO/READY/DM_SENT/SHIPPED/FAILED), 배송지(암호화, **`endsAt`까지 입력 가능**), DM 발송 기록. **verifyDeadlineAt은 D-2 개정으로 폐지**
-- **AdminUser / AuditLog / OAuthState**: 어드민 인증, 감사 로그, PKCE 임시 저장
+- **AuditLog / OAuthState**: 감사 로그, PKCE 임시 저장. **어드민 계정 테이블은 없다 (D-10)** — 인증은 대시보드 JWT 검증으로 처리하므로, AuditLog는 대시보드 유저 id/email을 FK 없이 값으로만 보관한다
 
 ---
 
@@ -143,7 +143,7 @@
 
 ### F-7. 어드민
 
-- F-7.1 어드민 로그인 (env 부트스트랩 + bcrypt)
+- F-7.1 어드민 인증: **J-WIN 자체 로그인 없음 (D-10)**. 운영자는 대시보드(`@jsure/admin-web`)에서 로그인하고, 발급된 access token을 `Authorization: Bearer`로 jwin-api에 전달한다. jwin-api는 대시보드와 동일한 `JWT_SECRET`으로 서명만 검증한다
 - F-7.2 캠페인 CRUD (생성 시 connectUrl 반환), 포스트 템플릿, 경품/확률/재고 관리
 - F-7.3 기프트코드 등록: 캠페인 생성(경품 등록) 시 수량과 함께 코드를 직접 입력. **엑셀에서 열을 복사해 붙여넣는 멀티라인 텍스트를 그대로 수용** (줄바꿈/탭/쉼표 구분 파싱, 공백 줄 무시, 중복 검출, 입력 개수와 수량 불일치 시 에러). 암호화 저장, 끝 4자리만 평문 노출
 - F-7.4 캠페인 통계 (응모/당첨/재고/DM 현황, 재연동 필요 여부), 당첨자 목록·배송지 열람
@@ -191,7 +191,7 @@
 | # | 항목 | 상태 |
 |---|------|------|
 | 1 | ~~미디어 업로드 포스팅~~ | **해결 — v1 필수로 승격 (D-9, 본 문서 F-2.3). 구현·스파이크 완료** |
-| 2 | 어드민 웹 UI | v1은 API-first. Atatter 5-step 폼을 레퍼런스로 추후 `@jsure/admin-web`에 추가 검토 |
+| 2 | 어드민 웹 UI | **방향 확정 (D-10) — `@jsure/admin-web`에 J-WIN 모듈로 추가.** 인증 배선(공유 JWT, axios 인스턴스, dev 프록시)은 완료. 화면(캠페인 목록·생성, 경품 등록, 통계) 구현은 미착수. Atatter 5-step 폼을 레퍼런스로 사용 |
 | 3 | 배송지 개인정보 보관 기간·삭제 정책 (APPI) | 첫 캠페인 전 J-sure와 합의 필요 |
 | 4 | LP 디자인 에셋 | 브랜드/J-sure 제공 대기 |
 | 5 | 리포스트 취소 어뷰징 (검증 통과 후 리포스트 삭제) | 정책 미정 — 재검증 시점 추가 여부 |

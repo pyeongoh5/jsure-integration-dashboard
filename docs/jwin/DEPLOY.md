@@ -8,13 +8,29 @@
 
 1. 기존 대시보드 DB와 **별도의** Neon 프로젝트(또는 별도 데이터베이스) 생성. 리전은 Railway 리전과 맞출 것
 2. `DATABASE_URL`(pooled), `DIRECT_DATABASE_URL`(direct) 두 개를 복사
-3. **첫 배포 전 초기 마이그레이션 생성 필수** — `packages/jwin-db/prisma/migrations/`가 비어 있으면 컨테이너 기동 시 `prisma migrate deploy`가 실패한다. 로컬에서 `pnpm db:jwin:migrate`로 초기 마이그레이션을 만들고 커밋할 것
+3. 로컬 `.env` 배치 — Prisma CLI는 `apps/jwin-api/.env`를 읽지 않는다. `packages/jwin-db/.env`에 `DATABASE_URL`/`DIRECT_DATABASE_URL`을 같은 값으로 한 벌 더 둔다
+4. **첫 배포 전 초기 마이그레이션 생성 필수** — `packages/jwin-db/prisma/migrations/`가 비어 있으면 컨테이너 기동 시 `prisma migrate deploy`가 실패한다. `migrate dev`는 기존 DB에 잘못 붙었을 때 리셋을 제안하므로, DB에 접속하지 않는 방식으로 만들고 커밋할 것:
+
+```bash
+cd packages/jwin-db
+mkdir -p prisma/migrations/0_init
+printf 'provider = "postgresql"\n' > prisma/migrations/migration_lock.toml
+DATABASE_URL=postgresql://dummy DIRECT_DATABASE_URL=postgresql://dummy \
+  pnpm exec prisma migrate diff --from-empty \
+  --to-schema-datamodel prisma/schema.prisma --script \
+  > prisma/migrations/0_init/migration.sql
+```
+
+적용은 빈 J-WIN DB에 `pnpm db:jwin:deploy`로 한다 (Railway 컨테이너가 기동 시 돌리는 것과 동일 경로).
 
 ## 2. Railway (API 서버) — 기존 프로젝트에 서비스 추가
 
 1. 기존 Railway 프로젝트에 새 서비스 생성, 같은 리포 연결
 2. 서비스 설정에서 Config File Path = `apps/jwin-api/railway.json` (Dockerfile 빌드)
-3. 환경변수: `apps/jwin-api/.env.example`의 API 섹션 전부 (`DATABASE_URL`, `DIRECT_DATABASE_URL`, `SESSION_SECRET`, `TOKEN_ENCRYPTION_KEY`, `X_CLIENT_ID/SECRET`, `ADMIN_*`, `TZ=Asia/Tokyo`)
+3. 환경변수: `apps/jwin-api/.env.example`의 키 전부 (`DATABASE_URL`, `DIRECT_DATABASE_URL`, `SESSION_SECRET`, `JWT_SECRET`, `TOKEN_ENCRYPTION_KEY`, `X_CLIENT_ID/SECRET`, `WEB_BASE_URL`, `ADMIN_WEB_ORIGIN`, `SCHEDULER_ENABLED=true`).
+   - **`JWT_SECRET`은 대시보드 API(`@jsure/api`) 서비스의 값과 반드시 동일해야 한다 (D-10).** 어드민 인증이 대시보드 발급 토큰의 서명 검증으로 이뤄지므로, 값이 어긋나면 어드민 API가 전부 401이 된다. 로테이션 시 두 서비스를 함께 배포할 것
+   - `ADMIN_WEB_ORIGIN`은 admin-web 운영 도메인. CORS 허용 목록에 들어간다
+   - **`TZ`는 설정하지 않는다** — 스케줄러 크론이 UTC 전제로 작성돼 있어 `TZ=Asia/Tokyo`를 켜면 당일분 생성 잡이 15시간 밀린다
 4. 배포 시 `prisma migrate deploy`가 선행됨 (Dockerfile CMD)
 5. **단일 replica 유지** — 스케줄러가 인프로세스라 다중 인스턴스 시 중복 게시 위험 (v2에서 잡 잠금 도입 전까지)
 6. Watch Paths를 `apps/jwin-api/**`, `packages/jwin-*/**`로 좁혀 기존 서비스와 배포 트리거 분리
@@ -51,7 +67,16 @@ Round(회차) 기반 `/r/{roundSlug}` 복합 LP는 폐지됐다. 공개 진입�
 | `GET /me`, `GET /me/wins` | 로그인 유저 정보·당첨 확정 히스토리 |
 | `POST /winners/:winnerId/shipping` | 배송지 저장 |
 | `GET /oauth/brand/*`, `GET /oauth/user/*` | OAuth2 + PKCE 시작·콜백 |
-| `/admin/*` | 어드민 로그인, 캠페인·소재·경품 CRUD, 코드 등록, 통계, 당첨자 목록 |
+| `/admin/*` | 캠페인·소재·경품 CRUD, 코드 등록, 통계, 당첨자 목록. **로그인 엔드포인트는 없다 (D-10)** — 대시보드 access token을 `Authorization: Bearer`로 전달. `GET /admin/me`로 토큰 유효성 확인 가능 |
+
+### 어드민 UI (`ADMIN_WEB_ORIGIN`, `@jsure/admin-web`)
+
+J-WIN 어드민 화면은 대시보드 admin-web 안에 들어간다. 로그인·토큰 갱신은 대시보드 API가 담당하고, J-WIN 호출만 jwin-api로 나간다.
+
+| 환경 | J-WIN API 접근 경로 |
+|------|--------------------|
+| 로컬 | vite 프록시 `/jwin-api` → `http://localhost:8080` (CORS 불필요) |
+| 운영 | `VITE_JWIN_API_BASE_URL` = Railway 도메인 (jwin-api의 `ADMIN_WEB_ORIGIN`에 admin-web 도메인 등록 필요) |
 
 `WEB_BASE_URL` / `API_BASE_URL`은 커스텀 도메인 연결 후 반드시 갱신한다. 자동 포스트 본문의 LP 링크가 `{WEB_BASE_URL}/c/{slug}`로 만들어지므로, 값이 틀리면 게시된 포스트가 잘못된 URL을 가리킨 채 남는다.
 
@@ -67,7 +92,7 @@ Round(회차) 기반 `/r/{roundSlug}` 복합 LP는 폐지됐다. 공개 진입�
 
 - [ ] G0 스파이크 5종 통과 기록 (spikes/README.md — 미디어 업로드 포함)
 - [ ] 초기 마이그레이션 적용 확인 (`prisma migrate deploy` 로그)
-- [ ] 어드민 로그인 확인, 캠페인 등록 (slug·`startsAt`/`endsAt`·`dailyPostTime`)
+- [ ] 대시보드 로그인 후 `GET /admin/me` 200 확인 (두 서비스의 `JWT_SECRET` 일치 검증), 캠페인 등록 (slug·`startsAt`/`endsAt`·`dailyPostTime`)
 - [ ] 경품 등록 + 기프트코드 붙여넣기 — 입력 개수와 수량 일치 확인
 - [ ] 포스트 소재(`PostTemplate`) 등록 — 캠페인 기간을 `activeFrom`~`activeTo`가 빈틈없이 덮는지 확인 (유효 소재가 없는 날은 게시가 건너뛰어짐)
 - [ ] 결과 화면 소재(`winMediaUrl`/`loseMediaUrl`)와 PR 전환 URL(`prUrl`) 등록

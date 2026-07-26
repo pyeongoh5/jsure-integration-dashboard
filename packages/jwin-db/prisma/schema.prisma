@@ -1,0 +1,286 @@
+// J-WIN 데이터 모델
+// 용어는 REQUIREMENTS.md §3을 따른다: BrandCampaign(브랜드 캠페인, 기간 단위),
+// CampaignPost(캠페인 포스트), Entry(응모), Prize(경품), Fulfillment(이행)
+
+generator client {
+  provider        = "prisma-client-js"
+  // 엔진리스 모드: Rust 쿼리 엔진 바이너리 없이 driver adapter(pg)로 실행
+  previewFeatures = ["queryCompiler", "driverAdapters"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ── 브랜드 캠페인 (기간 단위) ────────────────────────
+
+enum CampaignStatus {
+  SETUP  // 계정 연동 대기 등 준비 중
+  ACTIVE // 기간(startsAt~endsAt) 내에서만 포스팅·응모 동작
+  PAUSED // 도중 중지 → LP 비노출, 데이터 보존
+  ENDED
+}
+
+model BrandCampaign {
+  id            String         @id @default(cuid())
+  brandName     String
+  slug          String         @unique // 단독 LP URL: /c/{slug}
+  startsAt      DateTime // JST 기준 입력, UTC 저장
+  endsAt        DateTime // 종료 시점 = 배송지 입력 마감 (F-6.3)
+  status        CampaignStatus @default(SETUP)
+  // 연동된 X 계정 (OAuth 완료 후 채워짐)
+  xUserId       String? // X 계정의 numeric id
+  xUsername     String? // @handle (표시용, 변경될 수 있으므로 xUserId가 기준)
+  // 게시 스케줄: 매일 1회, JST 시각 "HH:mm"
+  dailyPostTime String         @default("11:00")
+  // 추첨 설정
+  dailyWinCap   Int? // 일별 당첨 상한 (null = 무제한, 재고만 따름)
+  // 결과 화면 (F-6.5)
+  prUrl         String? // PR 전환 대상 URL — 결과 화면에서 브랜드 사이트로 유도
+  winMediaUrl   String? // 당첨 결과 이미지/동영상
+  loseMediaUrl  String? // 낙첨 결과 이미지/동영상
+  // 당첨 DM 문구 (F-6.1) — 플레이스홀더: {{CODE}} {{PRIZE_NAME}} {{USERNAME}} {{BRAND_NAME}}
+  dmTemplate    String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  credential    BrandXCredential?
+  postTemplates PostTemplate[]
+  posts         CampaignPost[]
+  prizes        Prize[]
+  entries       Entry[]
+
+  @@index([status, startsAt, endsAt])
+}
+
+// 브랜드 X 계정 OAuth2 토큰. access/refresh 토큰은 AES-256-GCM 암호화 저장.
+model BrandXCredential {
+  id                    String        @id @default(cuid())
+  campaignId            String        @unique
+  campaign              BrandCampaign @relation(fields: [campaignId], references: [id])
+  xUserId               String
+  encryptedAccessToken  String
+  encryptedRefreshToken String
+  accessTokenExpiresAt  DateTime
+  scopes                String // space-separated
+  // 리프레시 실패(브랜드가 앱 연동 해제/비번 변경 등) 감지 → 어드민 알림
+  refreshFailedAt       DateTime?
+  refreshFailCount      Int           @default(0)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+}
+
+// ── 포스트 소재 · 게시 이력 ──────────────────────────
+
+// 주 단위 소재 교체. activeFrom~activeTo 구간에 유효한 소재.
+model PostTemplate {
+  id         String        @id @default(cuid())
+  campaignId String
+  campaign   BrandCampaign @relation(fields: [campaignId], references: [id])
+  label      String // 예: "1주차"
+  bodyText   String // LP 링크는 게시 시점에 자동 삽입 ({{LP_URL}} 플레이스홀더)
+  mediaUrl   String? // 첨부 이미지/동영상 URL — 게시 시 X media upload 후 첨부 (F-2.3)
+  activeFrom DateTime
+  activeTo   DateTime
+  createdAt  DateTime      @default(now())
+
+  posts CampaignPost[]
+
+  @@index([campaignId, activeFrom])
+}
+
+enum PostStatus {
+  SCHEDULED
+  POSTED
+  FAILED
+  SKIPPED // 캠페인 중지 등
+}
+
+// 매일 자동 게시되는 캠페인 포스트 1건 = 1행
+model CampaignPost {
+  id          String        @id @default(cuid())
+  campaignId  String
+  campaign    BrandCampaign @relation(fields: [campaignId], references: [id])
+  templateId  String?
+  template    PostTemplate? @relation(fields: [templateId], references: [id])
+  scheduledAt DateTime // 게시 예정 (UTC)
+  dateJst     String // "YYYY-MM-DD" JST — 응모 매칭 키 (D-1: 당일 포스트 리포스트만 인정)
+  status      PostStatus    @default(SCHEDULED)
+  xPostId     String? // 게시 성공 시 X post id — 리포스트 검증 대상
+  attempts    Int           @default(0)
+  lastError   String?
+  postedAt    DateTime?
+  createdAt   DateTime      @default(now())
+
+  entries Entry[]
+
+  @@unique([campaignId, dateJst])
+  @@index([status, scheduledAt])
+}
+
+// ── 경품 · 재고 ──────────────────────────────────────
+
+enum PrizeType {
+  PHYSICAL // 현물 → 배송지 입력
+  CODE     // 기프트코드 → DM 발송
+}
+
+model Prize {
+  id             String        @id @default(cuid())
+  campaignId     String
+  campaign       BrandCampaign @relation(fields: [campaignId], references: [id])
+  type           PrizeType
+  name           String // 예: "아마존 기프트권 1만엔"
+  tier           Int           @default(1) // 표시·정렬용 등급
+  totalQty       Int
+  remainingQty   Int // 원자적 차감 대상 (조건부 UPDATE)
+  // 응모 1회당 이 경품에 당첨될 확률 (0~1). 여러 경품이 있으면 순차 판정.
+  winProbability Float
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  codes   PrizeCode[]
+  winners Winner[]
+
+  @@index([campaignId])
+}
+
+enum CodeStatus {
+  AVAILABLE
+  ASSIGNED
+  SENT
+  REVOKED
+}
+
+// 경품 등록 시 직접 입력(엑셀 붙여넣기)으로 등록되는 기프트코드 재고. 코드 원문은 암호화 저장.
+model PrizeCode {
+  id            String     @id @default(cuid())
+  prizeId       String
+  prize         Prize      @relation(fields: [prizeId], references: [id])
+  encryptedCode String
+  codeLast4     String // 어드민 표시용
+  status        CodeStatus @default(AVAILABLE)
+  winnerId      String?    @unique
+  winner        Winner?    @relation(fields: [winnerId], references: [id])
+  createdAt     DateTime   @default(now())
+
+  @@index([prizeId, status])
+}
+
+// ── 유저 · 응모 · 당첨 ───────────────────────────────
+
+model User {
+  id                    String    @id @default(cuid())
+  xUserId               String    @unique
+  xUsername             String
+  displayName           String?
+  profileImageUrl       String?
+  // 유저 OAuth 토큰 — 자격 검증(owned read)에 사용. 암호화 저장.
+  encryptedAccessToken  String?
+  encryptedRefreshToken String?
+  accessTokenExpiresAt  DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  entries Entry[]
+}
+
+enum EntryResult {
+  LOSE
+  WIN_PENDING   // 당첨 후보 — 검증 대기 (lazy 검증, D-2 개정: 몰수·재고 회수 없음)
+  WIN_CONFIRMED // 검증 통과 → 당첨 확정
+}
+
+// 응모: 캠페인×일(JST) 단위 1회
+model Entry {
+  id         String        @id @default(cuid())
+  campaignId String
+  campaign   BrandCampaign @relation(fields: [campaignId], references: [id])
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  postId     String
+  post       CampaignPost  @relation(fields: [postId], references: [id])
+  dateJst    String // "YYYY-MM-DD"
+  result     EntryResult
+  createdAt  DateTime      @default(now())
+
+  winner Winner?
+
+  @@unique([campaignId, userId, dateJst]) // 어뷰징 방지: 하루 1회
+  @@index([campaignId, dateJst, result])
+}
+
+enum VerificationStatus {
+  PENDING       // 아직 미검증 — 당일 내 미완료 시 그대로 미이행 종료 (몰수 없음)
+  FOLLOW_FAILED
+  REPOST_FAILED
+  PASSED
+}
+
+enum FulfillmentStatus {
+  NOT_READY      // 검증 전
+  AWAITING_INFO  // 현물: 배송지 입력 대기 (캠페인 종료 시점까지)
+  READY          // 이행 가능 (배송 준비 / 코드 할당됨)
+  DM_SENT        // 코드 DM 발송 완료
+  SHIPPED        // 현물 발송 완료 (어드민 수동 처리)
+  FAILED
+}
+
+model Winner {
+  id                String             @id @default(cuid())
+  entryId           String             @unique
+  entry             Entry              @relation(fields: [entryId], references: [id])
+  prizeId           String
+  prize             Prize              @relation(fields: [prizeId], references: [id])
+  verification      VerificationStatus @default(PENDING)
+  verifiedAt        DateTime?
+  fulfillment       FulfillmentStatus  @default(NOT_READY)
+  // 현물: 배송지 (개인정보 — JSON 암호화 저장, 이행 완료 후 보존기간 지나면 삭제)
+  encryptedShipping String?
+  shippingEnteredAt DateTime?
+  dmSentAt          DateTime?
+  dmError           String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  code PrizeCode?
+
+  @@index([verification])
+  @@index([fulfillment])
+}
+
+// ── 어드민 ───────────────────────────────────────────
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  auditLogs AuditLog[]
+}
+
+// 어드민 조작 감사 로그 (F-7.5)
+model AuditLog {
+  id        String     @id @default(cuid())
+  adminId   String?
+  admin     AdminUser? @relation(fields: [adminId], references: [id])
+  action    String // 예: "campaign.create", "prize.codes_import"
+  target    String? // 대상 엔티티 id
+  payload   Json?
+  createdAt DateTime   @default(now())
+
+  @@index([createdAt])
+}
+
+// OAuth state/PKCE 임시 저장 (10분 TTL, 스케줄러가 청소)
+model OAuthState {
+  state        String   @id
+  kind         String // "brand" | "user"
+  codeVerifier String
+  campaignId   String? // brand 연동 시 대상 캠페인
+  redirectTo   String? // user 로그인 후 돌아갈 LP 경로
+  createdAt    DateTime @default(now())
+}

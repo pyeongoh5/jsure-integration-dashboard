@@ -23,6 +23,17 @@ export type AdminInfluencerSnsAccount = z.infer<
   typeof AdminInfluencerSnsAccountSchema
 >;
 
+export const AdminInfluencerAddressSchema = z.object({
+  postalCode: z.string(),
+  prefecture: z.string(),
+  city: z.string(),
+  addressLine1: z.string(),
+  addressLine2: z.string(),
+});
+export type AdminInfluencerAddress = z.infer<
+  typeof AdminInfluencerAddressSchema
+>;
+
 export const AdminInfluencerSchema = z.object({
   id: z.string(),
   email: z.string().email(),
@@ -33,6 +44,7 @@ export const AdminInfluencerSchema = z.object({
   memo: z.string().nullable(),
   flagged: z.boolean(),
   snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
+  address: AdminInfluencerAddressSchema,
   createdAt: z.string().datetime(),
 });
 export type AdminInfluencer = z.infer<typeof AdminInfluencerSchema>;

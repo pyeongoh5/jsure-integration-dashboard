@@ -23,6 +23,11 @@ type AdminInfluencerRow = {
   memo: string | null;
   flaggedAt: Date | null;
   createdAt: Date;
+  postalCode: string;
+  prefecture: string;
+  city: string;
+  addressLine1: string;
+  addressLine2: string;
   snsAccounts: {
     snsType: string;
     handle: string;
@@ -45,6 +50,13 @@ function toAdminResponse(row: AdminInfluencerRow): AdminInfluencer {
       handle: s.handle,
       followerCount: s.followerCount,
     })),
+    address: {
+      postalCode: row.postalCode,
+      prefecture: row.prefecture,
+      city: row.city,
+      addressLine1: row.addressLine1,
+      addressLine2: row.addressLine2,
+    },
     createdAt: row.createdAt.toISOString(),
   };
 }

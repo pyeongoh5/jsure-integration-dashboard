@@ -15,15 +15,24 @@ import type {
 const STORAGE_KEY = "signupDraft";
 const LINE_TOKEN_KEY = "lineSignupToken";
 
+// 인앱 브라우저(LINE 웹뷰 등)·프라이빗 모드에서는 sessionStorage 가 막히거나
+// OAuth 리다이렉트 왕복을 못 버텨, /signup/line 이후 토큰이 사라져 LineGate 가
+// /login 으로 튕겨내는 문제가 있었다. SPA 세션 동안 유지되는 메모리 변수를 1차
+// 소스로 쓰고 sessionStorage 는 새로고침 복구용 보조로만 둔다.
+let lineSignupTokenMemory: string | null = null;
+
 export function getLineSignupToken(): string | null {
+  if (lineSignupTokenMemory) return lineSignupTokenMemory;
   try {
-    return sessionStorage.getItem(LINE_TOKEN_KEY);
+    lineSignupTokenMemory = sessionStorage.getItem(LINE_TOKEN_KEY);
+    return lineSignupTokenMemory;
   } catch {
     return null;
   }
 }
 
 export function setLineSignupTokenStorage(token: string | null): void {
+  lineSignupTokenMemory = token;
   try {
     if (token) sessionStorage.setItem(LINE_TOKEN_KEY, token);
     else sessionStorage.removeItem(LINE_TOKEN_KEY);

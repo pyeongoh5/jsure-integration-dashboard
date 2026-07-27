@@ -198,15 +198,17 @@ export class LineRemindersService {
   }
 
   /**
-   * 단순 리뷰: 승인 후 postingPeriodDays 임박 시 리뷰 제출 리마인더.
-   * status=APPROVED 이면서 아직 SubmittedPost 가 없는 응모가 대상.
+   * 단순 리뷰: 수령 확인 후 postingPeriodDays 임박 시 리뷰 제출 리마인더.
+   * 상품 수령형 카테고리이므로 SNS 게시 마감과 동일하게 receivedAt(인플루언서
+   * 수령 확인 시각) 기준으로 마감을 계산한다. 승인만 되고 아직 수령 확인 전인
+   * (배송 전/운송장 미입력) 응모는 receivedAt 이 없어 대상에서 제외된다.
    */
   private async runSimpleReviewDeadlineReminders(): Promise<void> {
     const todayStart = startOfJstDay(new Date());
     const applications = await this.prisma.campaignApplication.findMany({
       where: {
-        status: "APPROVED",
-        reviewedAt: { not: null },
+        receivedAt: { not: null },
+        status: { in: ["SHIPPED", "DELIVERED"] },
         campaign: { category: "SIMPLE_REVIEW" },
       },
       include: {
@@ -216,11 +218,11 @@ export class LineRemindersService {
     });
 
     for (const application of applications) {
-      if (!application.reviewedAt) continue;
+      if (!application.receivedAt) continue;
       if (application.posts.length > 0) continue;
 
       const deadlineMs =
-        application.reviewedAt.getTime() +
+        application.receivedAt.getTime() +
         application.campaign.postingPeriodDays * DAY_MS;
       const deadlineDayStart = startOfJstDay(new Date(deadlineMs));
       const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);

@@ -3,7 +3,6 @@ export type { ButtonSize, ButtonVariant } from "./Button";
 export { IconButton } from "./IconButton";
 export { Input } from "./Input";
 export { Textarea } from "./Textarea";
-export { Select } from "./Select";
 export { Checkbox } from "./Checkbox";
 export { Radio } from "./Radio";
 export { Badge } from "./Badge";

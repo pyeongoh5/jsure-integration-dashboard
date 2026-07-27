@@ -168,7 +168,7 @@ export function FilterChip({
   );
 }
 
-type Option<T extends string> = { key: T; label: string };
+type Option<T extends string> = { key: T; label: string; icon?: string };
 
 type SingleSelectFilterChipProps<T extends string> = {
   emptyLabel: string;
@@ -221,6 +221,78 @@ export function SingleSelectFilterChip<T extends string>({
                   close();
                 }}
               >
+                {option.icon && (
+                  <i className={`${option.icon} ${styles.popoverOptionIcon}`} />
+                )}
+                <span className={styles.popoverOptionLabel}>{option.label}</span>
+                {on && <i className={`fa-solid fa-check ${styles.popoverOptionCheck}`} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    />
+  );
+}
+
+type MultiSelectFilterChipProps<T extends string> = {
+  emptyLabel: string;
+  /** 활성 라벨 접두. 예: "상태" → "상태: A, B". 없으면 선택 라벨만. */
+  labelPrefix?: string;
+  options: readonly Option<T>[];
+  value: Set<T>;
+  onChange: (value: Set<T>) => void;
+  popoverTitle?: string;
+};
+
+/**
+ * 다중 선택 chip. 옵션을 토글하며(선택해도 팝오버 유지), ✕ 로 전체 해제.
+ */
+export function MultiSelectFilterChip<T extends string>({
+  emptyLabel,
+  labelPrefix,
+  options,
+  value,
+  onChange,
+  popoverTitle,
+}: MultiSelectFilterChipProps<T>) {
+  const selectedLabels = options
+    .filter((option) => value.has(option.key))
+    .map((option) => option.label);
+  const activeLabel =
+    selectedLabels.length > 0
+      ? labelPrefix
+        ? `${labelPrefix}: ${selectedLabels.join(", ")}`
+        : selectedLabels.join(", ")
+      : null;
+
+  const toggle = (key: T) => {
+    const next = new Set(value);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    onChange(next);
+  };
+
+  return (
+    <FilterChip
+      activeLabel={activeLabel}
+      emptyLabel={emptyLabel}
+      onClear={() => onChange(new Set())}
+      popoverTitle={popoverTitle}
+      renderPopover={() => (
+        <div className={styles.popoverItems}>
+          {options.map((option) => {
+            const on = value.has(option.key);
+            return (
+              <button
+                key={option.key}
+                type="button"
+                className={`${styles.popoverOption}${on ? ` ${styles.popoverOptionOn}` : ""}`}
+                onClick={() => toggle(option.key)}
+              >
+                {option.icon && (
+                  <i className={`${option.icon} ${styles.popoverOptionIcon}`} />
+                )}
                 <span className={styles.popoverOptionLabel}>{option.label}</span>
                 {on && <i className={`fa-solid fa-check ${styles.popoverOptionCheck}`} />}
               </button>

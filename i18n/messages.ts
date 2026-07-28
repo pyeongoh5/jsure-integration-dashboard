@@ -44,7 +44,7 @@ export const messages = {
   campaign: {
     card: {
       ended: { jp: "終了", kr: "종료" },
-      full: { jp: "募集完了", kr: "모집 완료" }, // new
+      full: { jp: "募集終了", kr: "모집 완료" }, 
       upcoming: { jp: "開始前", kr: "시작 전" },
       upcomingStart: { jp: "開始予定", kr: "시작 예정" },
       followerLabel: { jp: "フォロワー", kr: "팔로워" },
@@ -439,8 +439,8 @@ export const messages = {
         jp: "応募条件を満たすSNSアカウントがありません",
         kr: "응모 조건을 충족하는 SNS 계정이 없습니다",
       },
-      requiredBadge: { jp: "必須", kr: "필수" }, // new
-      fullTag: { jp: "募集完了", kr: "모집 완료" }, // new
+      requiredBadge: { jp: "必須", kr: "필수" }, 
+      fullTag: { jp: "募集終了", kr: "모집 완료" }, 
       requiredNotQualifiedPrefix: {
         // new
         jp: "このキャンペーンは ",
@@ -486,7 +486,7 @@ export const messages = {
       registerAddress: { jp: "住所を登録する", kr: "주소 등록" },
       confirmSectionTitle: { jp: "応募にあたっての再確認", kr: "응모 전 재확인" },
       ctaClosed: { jp: "募集終了", kr: "모집 종료" },
-      ctaFull: { jp: "募集完了", kr: "모집 완료" }, // new
+      ctaFull: { jp: "募集終了", kr: "모집 완료" }, 
       ctaSubmitting: { jp: "送信中…", kr: "전송 중…" },
       ctaSubmit: { jp: "応募を送信", kr: "응모 제출" },
     },
@@ -648,7 +648,7 @@ export const messages = {
       sectionCautions: { jp: "注意事項", kr: "주의사항" },
       viewApplications: { jp: "応募履歴を見る", kr: "응모 내역 보기" },
       ctaClosed: { jp: "募集終了", kr: "모집 종료" },
-      ctaFull: { jp: "募集完了", kr: "모집 완료" }, // new
+      ctaFull: { jp: "募集終了", kr: "모집 완료" }, 
       ctaApply: { jp: "応募する", kr: "응모하기" },
       cancelledNotice: {
         // new — 취소한 캠페인은 재응모 불가

@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { InstagramPostType, CampaignSubType } from "@jsure/shared";
-import { useCampaign, formatRewardRange } from "@/domains/campaign";
+import {
+  useCampaign,
+  formatYen,
+  selectedRewardJpy,
+  campaignRecruitClosure,
+} from "@/domains/campaign";
 import { createApplication } from "@/domains/application";
 import { fetchMe } from "@/domains/auth";
 import { t } from "@i18n";
@@ -152,12 +157,10 @@ export function Apply() {
 
   const allAgreed = activeConfirmKeys.every((k) => agreed.has(k));
   const hasSelection = selectedSns.size > 0;
-  const isClosed = Boolean(
-    campaign.data &&
-    (campaign.data.isEnded ||
-      new Date(campaign.data.recruitEndAt) < new Date() ||
-      campaign.data.approvedCount >= campaign.data.recruitCount),
-  );
+  const closure = campaign.data
+    ? campaignRecruitClosure(campaign.data)
+    : ({ closed: false, reason: null } as const);
+  const isClosed = closure.closed;
 
   const wantsInstagram = selectedSns.has("INSTAGRAM");
   const allowedInstagramPostTypes = useMemo<InstagramPostType[]>(() => {
@@ -174,16 +177,21 @@ export function Apply() {
   }, [campaign.data]);
   const instagramPostTypeMissing = wantsInstagram && !instagramPostType;
 
+  // 옵션 선택은 (subType, option) 배열로 전송 — 보수 계산에도 동일 형태를 사용.
+  const selectedOptions = useMemo<{ subType: CampaignSubType; option: string }[]>(() => {
+    return wantsInstagram && instagramPostType
+      ? [{ subType: "INSTAGRAM", option: instagramPostType }]
+      : [];
+  }, [wantsInstagram, instagramPostType]);
+
+  // 선택한 서브타입/옵션 기준 확정 보수. 미확정이면 null → 금액 영역만 비워둔다.
+  const rewardJpy = useMemo(() => {
+    if (!campaign.data) return null;
+    return selectedRewardJpy(campaign.data, Array.from(selectedSns), selectedOptions);
+  }, [campaign.data, selectedSns, selectedOptions]);
+
   const apply = useMutation({
-    mutationFn: () =>
-      createApplication(
-        id,
-        Array.from(selectedSns),
-        // 옵션 선택은 (subType, option) 배열로 전송
-        wantsInstagram && instagramPostType
-          ? [{ subType: "INSTAGRAM", option: instagramPostType }]
-          : [],
-      ),
+    mutationFn: () => createApplication(id, Array.from(selectedSns), selectedOptions),
     onSuccess: () => nav("/applications", { replace: true }),
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { message?: string } } };
@@ -266,7 +274,10 @@ export function Apply() {
       <div className={styles.body}>
         <div className={styles.cam}>
           <div className={styles.camTitle}>{campaign.data.title}</div>
-          <div className={styles.camReward}>{formatRewardRange(campaign.data)}</div>
+          {/* 서브타입/옵션 미선택이면 금액 미확정 — "-" 로 표기 */}
+          <div className={styles.camReward}>
+            {rewardJpy === null ? "-" : formatYen(rewardJpy)} {/* new */}
+          </div>
         </div>
 
         {isFakePurchaseCampaign ? (
@@ -470,7 +481,9 @@ export function Apply() {
           onClick={() => apply.mutate()}
         >
           {isClosed
-            ? t("pages.apply.ctaClosed")
+            ? closure.reason === "full"
+              ? t("pages.apply.ctaFull")
+              : t("pages.apply.ctaClosed")
             : apply.isPending
               ? t("pages.apply.ctaSubmitting")
               : t("pages.apply.ctaSubmit")}

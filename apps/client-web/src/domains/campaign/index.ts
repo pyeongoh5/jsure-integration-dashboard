@@ -5,7 +5,8 @@ export {
   formatDate,
   formatRewardRange,
   rewardRangeJpy,
-  isCampaignClosed,
+  selectedRewardJpy,
+  campaignRecruitClosure,
 } from "./utils";
 export type {
   InfluencerCampaignCard,

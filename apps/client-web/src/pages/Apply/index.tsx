@@ -312,7 +312,8 @@ export function Apply() {
                   );
                   const isSelected = selectedSns.has(r.subType);
                   const isRequired = r.isRequired;
-                  const disabled = !isQualifying || isExcluded || isRequired; // 필수 서브타입은 해제 불가
+                  const isFull = campaign.data.fullSubTypes.includes(r.subType);
+                  const disabled = !isQualifying || isExcluded || isRequired || isFull; // 필수 서브타입은 해제 불가, 정원 찬 서브타입은 선택 불가
                   return (
                     <li key={r.subType}>
                       <label
@@ -337,6 +338,11 @@ export function Apply() {
                             {isRequired && !isExcluded && (
                               <span style={{ marginLeft: 8, color: "#2563eb", fontSize: 11 }}>
                                 {t("pages.apply.requiredBadge")}
+                              </span>
+                            )}
+                            {isFull && !isExcluded && (
+                              <span style={{ marginLeft: 8, color: "#6b7280", fontSize: 11 }}>
+                                {t("pages.apply.fullTag")}
                               </span>
                             )}
                           </div>

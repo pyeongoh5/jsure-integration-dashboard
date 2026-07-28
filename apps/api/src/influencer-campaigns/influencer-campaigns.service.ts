@@ -9,6 +9,7 @@ import {
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
+import { campaignHeadcount } from "../campaigns/campaign-headcount";
 
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -43,18 +44,6 @@ type CampaignRow = {
   }[];
 };
 
-function totalRecruitCount(
-  recruits: { recruitCount: number }[],
-  category: CampaignCategory,
-) {
-  // 단순 리뷰는 응모자가 전 서브타입에 동시 응모하므로 정원의 합이 아니라
-  // 단일 정원(전 서브타입 동일)이 캠페인 전체 모집 인원이다.
-  if (category === "SIMPLE_REVIEW") {
-    return recruits.reduce((max, r) => Math.max(max, r.recruitCount), 0);
-  }
-  return recruits.reduce((acc, r) => acc + r.recruitCount, 0);
-}
-
 function isNew(createdAt: Date, now: Date): boolean {
   return now.getTime() - createdAt.getTime() <= NEW_WINDOW_MS;
 }
@@ -76,7 +65,7 @@ function toCard(
     rewardType: row.rewardType,
     rewardJpy: row.rewardJpy,
     recruits: row.recruits,
-    recruitCount: totalRecruitCount(row.recruits, row.category),
+    recruitCount: campaignHeadcount(row.category, row.recruits),
     approvedCount,
     recruitStartAt: row.recruitStartAt.toISOString(),
     recruitEndAt: row.recruitEndAt.toISOString(),
@@ -234,6 +223,24 @@ export class InfluencerCampaignsService {
       ),
     ).filter((subType) => recruitedCampaignSubTypes.has(subType));
 
+    // 서브타입별 승인(슬롯 점유) 인원을 세어, 각자 정원이 찬 서브타입을 모은다.
+    // 선택 서브타입은 여기서 "선택 마감"으로 표시된다(필수 서브타입이 차면 헤드카운트로
+    // 캠페인 전체가 이미 마감).
+    const subTypeApprovedCounts = await Promise.all(
+      row.recruits.map((recruit) =>
+        this.prisma.campaignApplication.count({
+          where: {
+            campaignId: row.id,
+            subTypes: { has: recruit.subType },
+            status: { in: SLOT_CONSUMING_STATUSES },
+          },
+        }),
+      ),
+    );
+    const fullSubTypes = row.recruits
+      .filter((recruit, index) => (subTypeApprovedCounts[index] ?? 0) >= recruit.recruitCount)
+      .map((recruit) => recruit.subType);
+
     const card = await this.resolveCard(toCard(row, approvedCount, row.closedAt, now));
     const [guideline, cautions] = await Promise.all([
       this.uploads.resolveR2ImagesInHtml(row.guideline),
@@ -248,6 +255,7 @@ export class InfluencerCampaignsService {
       hasApplied: existing !== null,
       hasCancelled: existing?.status === "CANCELLED",
       excludedSubTypes: excludedCampaignSubTypes,
+      fullSubTypes,
     };
   }
 }

@@ -6,6 +6,8 @@ import {
 } from "@nestjs/common";
 import {
   OPTION_SELECTABLE_SUB_TYPES,
+  SLOT_CONSUMING_STATUSES,
+  SUB_TYPE_LABEL,
   type ApplicationOption,
   type ApplicationStatus,
   type AttachmentUploadInput,
@@ -16,6 +18,7 @@ import {
   type SubmittedPost,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { campaignHeadcount } from "../campaigns/campaign-headcount";
 import { UploadsService } from "../uploads/uploads.service";
 import {
   deriveDisplayStage,
@@ -311,6 +314,21 @@ export class InfluencerApplicationsService {
       });
     }
 
+    // 총정원(모집 인원) 마감 시 응모 차단. 헤드카운트·슬롯 점유(SLOT_CONSUMING_STATUSES,
+    // 승인 이후)는 인플웹 카드 표시와 동일 기준. APPLIED 는 아직 미점유.
+    const headcount = campaignHeadcount(campaign.category, campaign.recruits);
+    if (headcount > 0) {
+      const slotConsumingCount = await this.prisma.campaignApplication.count({
+        where: { campaignId, status: { in: SLOT_CONSUMING_STATUSES } },
+      });
+      if (slotConsumingCount >= headcount) {
+        throw new BadRequestException({
+          code: "CAMPAIGN_FULL",
+          message: "모집이 마감되었습니다",
+        });
+      }
+    }
+
     if (campaign.category === "FAKE_PURCHASE") {
       subTypes = ["QOO10"];
     } else if (campaign.category === "SIMPLE_REVIEW") {
@@ -350,6 +368,26 @@ export class InfluencerApplicationsService {
         code: "REQUIRED_SUBTYPE_MISSING",
         message: "필수 참여 서브타입이 응모에 포함되지 않았습니다",
       });
+    }
+
+    // 선택한 서브타입 중 개별 정원이 찬 게 있으면 응모 차단(선택 서브타입 "선택 마감").
+    // 필수 서브타입은 위 헤드카운트 가드가 이미 처리하지만 방어적으로 함께 검사한다.
+    for (const subType of subTypes) {
+      const recruit = campaign.recruits.find((r) => r.subType === subType);
+      if (!recruit) continue;
+      const subTypeApprovedCount = await this.prisma.campaignApplication.count({
+        where: {
+          campaignId,
+          subTypes: { has: subType },
+          status: { in: SLOT_CONSUMING_STATUSES },
+        },
+      });
+      if (subTypeApprovedCount >= recruit.recruitCount) {
+        throw new BadRequestException({
+          code: "SUBTYPE_FULL",
+          message: `${SUB_TYPE_LABEL[subType]} 모집이 마감되었습니다`,
+        });
+      }
     }
 
     // 한 캠페인에는 (취소 이력 포함) 1회만 응모할 수 있다.

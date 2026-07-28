@@ -448,6 +448,29 @@ function refineRecruitsByCategory(
   }
 }
 
+/**
+ * 필수 서브타입은 모든 응모자가 참여하므로 정원(모집 인원)이 서로 같아야 한다.
+ * (인플웹 모집 인원·모집 완료 판정이 필수 정원을 헤드카운트로 쓰기 때문.)
+ */
+function refineRequiredRecruitCounts(
+  recruits: z.infer<typeof CampaignRecruitInputSchema>[],
+  ctx: z.RefinementCtx,
+): void {
+  const required = recruits
+    .map((recruit, index) => ({ recruit, index }))
+    .filter((entry) => entry.recruit.isRequired);
+  if (required.length < 2) return;
+  const counts = new Set(required.map((entry) => entry.recruit.recruitCount));
+  if (counts.size <= 1) return;
+  for (const entry of required) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["recruits", entry.index, "recruitCount"],
+      message: "필수 서브타입의 모집 인원은 모두 같아야 합니다",
+    });
+  }
+}
+
 export const CampaignFormSchema = z
   .object({
     category: CampaignCategorySchema.default("SNS"),
@@ -486,6 +509,7 @@ export const CampaignFormSchema = z
     refineRecruitsByCategory(form.category, form.recruits, ctx);
     refineRecruitsByRewardType(form.rewardType, form.recruits, ctx);
     refineRecruitOptionConfigs(form.rewardType, form.recruits, ctx);
+    refineRequiredRecruitCounts(form.recruits, ctx);
   });
 export type CampaignForm = z.infer<typeof CampaignFormSchema>;
 
@@ -589,6 +613,8 @@ export const InfluencerCampaignDetailSchema =
     hasCancelled: z.boolean(),
     /** 과거 응모 이력(제외 캠페인) 때문에 이 캠페인에서 응모할 수 없는 서브타입 목록 */
     excludedSubTypes: z.array(CampaignSubTypeSchema),
+    /** 정원이 모두 찬 서브타입 목록 — 선택 서브타입 "선택 마감" 표시용 */
+    fullSubTypes: z.array(CampaignSubTypeSchema),
   });
 export type InfluencerCampaignDetail = z.infer<
   typeof InfluencerCampaignDetailSchema

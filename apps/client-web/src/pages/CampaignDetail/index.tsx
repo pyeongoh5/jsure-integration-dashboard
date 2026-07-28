@@ -10,6 +10,7 @@ import {
   useCampaign,
   formatDate,
   formatRewardRange,
+  campaignRecruitClosure,
 } from "@/domains/campaign";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
@@ -100,10 +101,7 @@ export function CampaignDetail() {
     );
   }
 
-  const closed =
-    data.isEnded ||
-    new Date(data.recruitEndAt) < new Date() ||
-    data.approvedCount >= data.recruitCount;
+  const closure = campaignRecruitClosure(data);
 
   return (
     <div className={styles.cdetail}>
@@ -249,10 +247,12 @@ export function CampaignDetail() {
           </PrimaryButton>
         )}
         {!data.hasApplied && ( // 취소 이력 포함 재응모 불가
-          <PrimaryButton disabled={closed} onClick={() => nav(`/campaigns/${data.id}/apply`)}>
-            {closed
-              ? t("pages.campaignDetail.ctaClosed")
-              : t("pages.campaignDetail.ctaApply")}
+          <PrimaryButton disabled={closure.closed} onClick={() => nav(`/campaigns/${data.id}/apply`)}>
+            {closure.reason === "full"
+              ? t("pages.campaignDetail.ctaFull")
+              : closure.reason === "ended"
+                ? t("pages.campaignDetail.ctaClosed")
+                : t("pages.campaignDetail.ctaApply")}
           </PrimaryButton>
         )}
         {data.hasCancelled && (

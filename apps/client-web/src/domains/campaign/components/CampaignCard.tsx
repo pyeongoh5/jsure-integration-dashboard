@@ -6,7 +6,7 @@ import {
   type CampaignRecruit,
 } from "@jsure/shared";
 import { t } from "@i18n";
-import { rewardRangeJpy } from "../utils";
+import { rewardRangeJpy, campaignRecruitClosure } from "../utils";
 import styles from "./CampaignCard.module.css";
 
 function categoryLabel(category: InfluencerCampaignCard["category"]): string {
@@ -220,7 +220,10 @@ export function CampaignCard({ card, onSelect }: Props) {
     ? Math.min(100, Math.round((card.approvedCount / card.recruitCount) * 100))
     : 0;
   const dday = daysUntil(card.recruitEndAt, new Date());
-  const disabled = card.isEnded || card.isUpcoming;
+  // 정원 마감(모집 완료). 상세 열람은 허용하되 뱃지·라벨로 표시. (ended 는 util 상 우선하므로 제외됨)
+  const full = campaignRecruitClosure(card).reason === "full";
+  // 예정(미시작) 캠페인만 진입 차단. 모집 종료·완료는 상세 열람 가능.
+  const disabled = card.isUpcoming;
   return (
     <button
       type="button"
@@ -237,6 +240,7 @@ export function CampaignCard({ card, onSelect }: Props) {
       >
         {card.isNew && <div className={styles.new}>NEW</div>}
         {card.isEnded && <div className={styles.endedBadge}>{t("campaign.card.ended")}</div>}
+        {full && <div className={styles.endedBadge}>{t("campaign.card.full")}</div>}
         {!card.isEnded && card.isUpcoming && (
           <div className={styles.upcomingBadge}>{t("campaign.card.upcoming")}</div>
         )}
@@ -281,6 +285,8 @@ export function CampaignCard({ card, onSelect }: Props) {
             <span className={`${styles.dday} ${styles.ddayUpcoming}`}>
               {t("campaign.card.upcomingStart")} {formatShortDate(card.recruitStartAt)}
             </span>
+          ) : full ? (
+            <span className={`${styles.dday} ${styles.ddayEnded}`}>{t("campaign.card.full")}</span>
           ) : (
             <span className={`${styles.dday} ${dday <= 7 ? styles.ddayUrgent : ""}`}>
               D-{dday}

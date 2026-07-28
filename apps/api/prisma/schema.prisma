@@ -96,10 +96,17 @@ enum RewardType {
   PER_SUBTYPE
 }
 
+/// 캠페인 발행 상태. DRAFT 는 어드민 임시저장으로, 인플루언서에게 노출되지 않는다.
+enum CampaignPublishState {
+  DRAFT
+  PUBLISHED
+}
+
 model Campaign {
   id                 String           @id @default(cuid())
   category           CampaignCategory @default(SNS)
   title              String
+  publishState       CampaignPublishState @default(PUBLISHED)
   rewardType         RewardType       @default(UNIFIED)
   /// UNIFIED 캠페인의 보수 금액. PER_SUBTYPE 캠페인에서는 사용하지 않는다.
   rewardJpy          Int

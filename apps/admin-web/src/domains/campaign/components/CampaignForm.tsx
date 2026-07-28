@@ -59,6 +59,10 @@ type Props = {
   initialValue: Values;
   submitLabel: string;
   onSubmit: (values: Values) => Promise<void>;
+  /** 넘기면 "임시저장" 버튼이 노출된다. 폼 검증을 거치지 않고 입력 상태 그대로 저장한다. */
+  onSaveDraft?: (values: Values) => Promise<void>;
+  /** 캠페인 복사 진입용 — 원본 썸네일을 그대로 이어받는다(미리보기 URL + 저장 키). */
+  initialThumbnail?: { objectKey: string; viewUrl: string };
   onCancel: () => void;
   selfCampaignId?: string;
 };
@@ -78,6 +82,8 @@ export function CampaignForm({
   initialValue,
   submitLabel,
   onSubmit,
+  onSaveDraft,
+  initialThumbnail,
   onCancel,
   selfCampaignId,
 }: Props) {
@@ -90,11 +96,14 @@ export function CampaignForm({
   const [banner, setBanner] = useState<string | null>(null);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [thumbnailError, setThumbnailError] = useState<string | null>(null);
-  const [thumbnailDraft, setThumbnailDraft] = useState<ThumbnailDraft>({
-    kind: "unchanged",
-  });
+  const [thumbnailDraft, setThumbnailDraft] = useState<ThumbnailDraft>(
+    initialThumbnail
+      ? { kind: "new", ...initialThumbnail }
+      : { kind: "unchanged" },
+  );
   const [perItemErrors, setPerItemErrors] = useState<PerItemErrors>({});
   const [bulkRewardJpy, setBulkRewardJpy] = useState<number>(Number.NaN);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -139,12 +148,49 @@ export function CampaignForm({
   }
 
   const submitting = methods.formState.isSubmitting;
+  // 임시저장 버튼 활성 조건 — 제목 1자 이상.
+  const draftTitle = methods.watch("title");
   const fieldErrors = methods.formState.errors;
 
   function rootError(name: keyof Values): string | undefined {
     const issue = fieldErrors[name];
     if (!issue) return undefined;
     return typeof issue.message === "string" ? issue.message : undefined;
+  }
+
+  /**
+   * 본문 이미지 직렬화 + 썸네일 반영. 썸네일을 건드리지 않았으면 필드를 지워
+   * 서버가 기존 값을 유지하게 한다.
+   */
+  function withMediaFields(values: Values): Values {
+    const next: Values = {
+      ...values,
+      productSummary: serializeRichTextHtml(values.productSummary),
+      guideline: serializeRichTextHtml(values.guideline),
+      cautions: serializeRichTextHtml(values.cautions),
+    };
+    if (thumbnailDraft.kind === "new") {
+      next.thumbnailUrl = thumbnailDraft.objectKey;
+    } else if (thumbnailDraft.kind === "removed") {
+      next.thumbnailUrl = null;
+    } else {
+      delete next.thumbnailUrl;
+    }
+    return next;
+  }
+
+  /** 임시저장 — 검증 없이 현재 입력을 그대로 보낸다(제목만 필수). */
+  async function saveDraft() {
+    if (!onSaveDraft || savingDraft) return;
+    setBanner(null);
+    setSavingDraft(true);
+    try {
+      await onSaveDraft(withMediaFields(methods.getValues()));
+    } catch (err) {
+      setBanner(err instanceof Error ? err.message : "임시저장에 실패했습니다.");
+    } finally {
+      setSavingDraft(false);
+    }
   }
 
   async function submit(values: Values) {
@@ -217,18 +263,8 @@ export function CampaignForm({
         // 개별 보수 캠페인에서는 통합 보수 금액을 사용하지 않는다.
         rewardJpy: values.rewardType === "PER_SUBTYPE" ? 0 : values.rewardJpy,
         recruits: normalizedRecruits,
-        productSummary: serializeRichTextHtml(values.productSummary),
-        guideline: serializeRichTextHtml(values.guideline),
-        cautions: serializeRichTextHtml(values.cautions),
       };
-      if (thumbnailDraft.kind === "new") {
-        finalValues.thumbnailUrl = thumbnailDraft.objectKey;
-      } else if (thumbnailDraft.kind === "removed") {
-        finalValues.thumbnailUrl = null;
-      } else {
-        delete finalValues.thumbnailUrl;
-      }
-      await onSubmit(finalValues);
+      await onSubmit(withMediaFields(finalValues));
     } catch (err) {
       setBanner(err instanceof Error ? err.message : "저장 중 오류가 발생했습니다.");
     }
@@ -801,6 +837,17 @@ export function CampaignForm({
           <Button variant="ghost" size="md" onClick={onCancel} disabled={submitting}>
             취소
           </Button>
+          {onSaveDraft && (
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={saveDraft}
+              disabled={submitting || savingDraft || draftTitle.trim() === ""}
+              loading={savingDraft}
+            >
+              {savingDraft ? "저장 중…" : "임시저장"}
+            </Button>
+          )}
           <Button
             type="submit"
             variant="primary"

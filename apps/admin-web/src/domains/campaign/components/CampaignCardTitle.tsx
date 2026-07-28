@@ -11,6 +11,7 @@ type Props = {
 const STATUS_CLASS: Record<CampaignStatus, string | undefined> = {
   recruit: styles.cardStatusRecruit,
   done: styles.cardStatusDone,
+  draft: styles.cardStatusDraft,
 };
 
 const CATEGORY_CLASS: Record<CampaignCategory, string | undefined> = {
@@ -28,7 +29,7 @@ export function CampaignCardTitle({ status, category, dday }: Props) {
           {CATEGORY_LABEL_KO[category]}
         </span>
       </span>
-      {status !== "done" && (
+      {status === "recruit" && (
         <span className={`${styles.cardDday} ${dday <= 7 ? styles.cardDdayUrgent : ""}`}>
           D-{dday}
         </span>

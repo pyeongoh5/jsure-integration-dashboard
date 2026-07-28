@@ -4,7 +4,7 @@ import { getCampaign, listCampaigns } from "./api";
 export function useCampaignList() {
   return useQuery({
     queryKey: ["campaigns"],
-    queryFn: listCampaigns,
+    queryFn: () => listCampaigns(),
   });
 }
 

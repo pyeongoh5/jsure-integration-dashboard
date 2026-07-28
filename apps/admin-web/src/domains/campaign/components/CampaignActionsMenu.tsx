@@ -7,19 +7,26 @@ const VIEWPORT_PADDING = 8;
 
 type Props = {
   anchor: { x: number; y: number };
+  /** 임시저장 캠페인은 응모/승인/종료가 없으므로 수정·복사·삭제만 노출한다. */
+  isDraft: boolean;
   onApplicants: () => void;
   onEdit: () => void;
+  onCopy: () => void;
   onViewApproved: () => void;
   onClose: () => void;
+  onDelete: () => void;
   onDismiss: () => void;
 };
 
 export function CampaignActionsMenu({
   anchor,
+  isDraft,
   onApplicants,
   onEdit,
+  onCopy,
   onViewApproved,
   onClose,
+  onDelete,
   onDismiss,
 }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -70,14 +77,16 @@ export function CampaignActionsMenu({
       style={{ left: pos.left, top: pos.top }}
       onClick={(e) => e.stopPropagation()}
     >
-      <button
-        type="button"
-        role="menuitem"
-        className={styles.item}
-        onClick={onApplicants}
-      >
-        응모자 관리
-      </button>
+      {!isDraft && (
+        <button
+          type="button"
+          role="menuitem"
+          className={styles.item}
+          onClick={onApplicants}
+        >
+          응모자 관리
+        </button>
+      )}
       <button
         type="button"
         role="menuitem"
@@ -90,18 +99,39 @@ export function CampaignActionsMenu({
         type="button"
         role="menuitem"
         className={styles.item}
-        onClick={onViewApproved}
+        onClick={onCopy}
       >
-        승인자 명단 보기
+        캠페인 복사
       </button>
-      <button
-        type="button"
-        role="menuitem"
-        className={`${styles.item} ${styles.itemDanger}`}
-        onClick={onClose}
-      >
-        캠페인 종료
-      </button>
+      {!isDraft && (
+        <button
+          type="button"
+          role="menuitem"
+          className={styles.item}
+          onClick={onViewApproved}
+        >
+          승인자 명단 보기
+        </button>
+      )}
+      {isDraft ? (
+        <button
+          type="button"
+          role="menuitem"
+          className={`${styles.item} ${styles.itemDanger}`}
+          onClick={onDelete}
+        >
+          임시저장 삭제
+        </button>
+      ) : (
+        <button
+          type="button"
+          role="menuitem"
+          className={`${styles.item} ${styles.itemDanger}`}
+          onClick={onClose}
+        >
+          캠페인 종료
+        </button>
+      )}
     </div>,
     document.body,
   );

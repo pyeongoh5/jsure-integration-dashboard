@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import {
@@ -32,9 +33,12 @@ export class CampaignsController {
     return this.campaigns.create(body);
   }
 
+  /** includeDrafts=1 은 어드민 캠페인 관리 화면 전용 — 임시저장을 함께 반환한다. */
   @Get()
-  async list(): Promise<CampaignListResponse> {
-    const campaigns = await this.campaigns.findAll();
+  async list(
+    @Query("includeDrafts") includeDrafts?: string,
+  ): Promise<CampaignListResponse> {
+    const campaigns = await this.campaigns.findAll(includeDrafts === "1");
     return { campaigns };
   }
 

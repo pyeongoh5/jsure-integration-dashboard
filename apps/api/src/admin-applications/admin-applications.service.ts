@@ -12,6 +12,7 @@ import {
   type CampaignSubType,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
 import {
@@ -868,8 +869,8 @@ export class AdminApplicationsService {
   async exportApprovedApplicants(
     campaignId: string,
   ): Promise<ApprovedApplicantExportResponse> {
-    const campaign = await this.prisma.campaign.findUnique({
-      where: { id: campaignId },
+    const campaign = await this.prisma.campaign.findFirst({
+      where: { id: campaignId, ...PUBLISHED_CAMPAIGN_WHERE },
       select: { id: true, title: true },
     });
     if (!campaign) throw new NotFoundException("Campaign not found");

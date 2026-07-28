@@ -1,0 +1,6 @@
+/**
+ * 임시저장(DRAFT) 캠페인을 제외하는 공용 where 조각.
+ * 인플루언서 노출 경로와 어드민 집계는 항상 이걸 걸어야 한다.
+ * 어드민 캠페인 관리 목록/상세만 DRAFT 를 포함해 조회한다.
+ */
+export const PUBLISHED_CAMPAIGN_WHERE = { publishState: "PUBLISHED" } as const;

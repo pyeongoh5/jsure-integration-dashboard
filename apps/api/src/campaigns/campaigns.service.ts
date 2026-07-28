@@ -10,6 +10,8 @@ import {
   SUB_TYPE_LABEL,
   type ApplicationStatus,
   type CampaignCategory,
+  type CampaignDraftRequest,
+  type CampaignPublishState,
   type CampaignResponse,
   type CreateCampaignRequest,
   type CampaignRecruit,
@@ -18,6 +20,7 @@ import {
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
+import { PUBLISHED_CAMPAIGN_WHERE } from "./published-campaign";
 
 export function jstDayStartUtc(dateStr: string): Date {
   return new Date(`${dateStr}T00:00:00+09:00`);
@@ -326,6 +329,7 @@ type CampaignRow = {
   id: string;
   category: CampaignCategory;
   title: string;
+  publishState: CampaignPublishState;
   rewardType: RewardType;
   rewardJpy: number;
   recruitStartAt: Date;
@@ -357,6 +361,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     id: row.id,
     category: row.category,
     title: row.title,
+    publishState: row.publishState,
     rewardType: row.rewardType,
     rewardJpy: row.rewardJpy,
     recruits: row.recruits.map((recruit) => ({
@@ -387,11 +392,69 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     referenceMediaUrls: row.referenceMediaUrls,
     cautions: row.cautions,
     thumbnailUrl: row.thumbnailUrl,
+    thumbnailObjectKey: row.thumbnailUrl,
     approvedCount: counts.approvedCount,
     appliedCount: counts.appliedCount,
     excludedCampaignIds: row.exclusionsAsExcluding.map((e) => e.excludedCampaignId),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+type DraftRecruitInput = NonNullable<CampaignDraftRequest["recruits"]>[number];
+
+const DEFAULT_POSTING_PERIOD_DAYS = 14;
+
+/**
+ * 임시저장 모집 입력 → prisma nested create 형태.
+ * 작성 중이라 비어 있는 정원·팔로워는 0 으로 채운다. 발행 시 엄격 검증을 다시 통과해야 한다.
+ */
+function toDraftRecruitCreateData(recruit: DraftRecruitInput) {
+  const options = (recruit.options ?? []).map((option) => ({
+    option: option.option,
+    recruitCount: option.recruitCount ?? null,
+    rewardJpy: option.rewardJpy ?? null,
+  }));
+  return {
+    subType: recruit.subType,
+    minFollowers: recruit.minFollowers ?? 0,
+    recruitCount: recruit.recruitCount ?? 0,
+    rewardJpy: recruit.rewardJpy ?? null,
+    subTypeOptions: recruit.subTypeOptions ?? [],
+    insightRequired: recruit.insightRequired ?? true,
+    isRequired: recruit.isRequired ?? false,
+    productPriceJpy: recruit.productPriceJpy ?? null,
+    productUrl: recruit.productUrl ?? null,
+    options: options.length > 0 ? { create: options } : undefined,
+  };
+}
+
+/**
+ * 임시저장 캠페인의 스칼라 필드 → DB 저장 형태.
+ * 미입력 모집기간은 저장 시각, 게시기간은 기본값으로 채운다 — DRAFT 동안 아무도 읽지 않는다.
+ */
+function toDraftCampaignData(input: CampaignDraftRequest, now: Date) {
+  return {
+    category: input.category ?? "SNS",
+    title: input.title,
+    rewardType: input.rewardType ?? "UNIFIED",
+    rewardJpy: input.rewardJpy ?? 0,
+    recruitStartAt: input.recruitStartDate
+      ? jstDayStartUtc(input.recruitStartDate)
+      : now,
+    recruitEndAt: input.recruitEndDate
+      ? jstDayEndUtc(input.recruitEndDate)
+      : now,
+    postingPeriodDays: input.postingPeriodDays || DEFAULT_POSTING_PERIOD_DAYS,
+    productSummary: input.productSummary ?? "",
+    productDetailUrls: input.productDetailUrls ?? [],
+    guideline: input.guideline ?? "",
+    referenceMediaUrls: input.referenceMediaUrls ?? [],
+    cautions: input.cautions ?? "",
+    // 썸네일은 미지정(undefined)이면 기존 값 유지 — 어드민 폼이 변경 없을 때 필드를 보내지 않는다.
+    ...(input.thumbnailUrl !== undefined
+      ? { thumbnailUrl: input.thumbnailUrl }
+      : {}),
   };
 }
 
@@ -628,8 +691,9 @@ export class CampaignsService {
       (id) => id !== selfId,
     );
     if (unique.length === 0) return [];
+    // 임시저장 캠페인은 응모 이력이 없으므로 제외 기준이 될 수 없다.
     const found = await this.prisma.campaign.findMany({
-      where: { id: { in: unique } },
+      where: { id: { in: unique }, ...PUBLISHED_CAMPAIGN_WHERE },
       select: { id: true },
     });
     const foundIds = new Set(found.map((c) => c.id));
@@ -642,8 +706,10 @@ export class CampaignsService {
     return unique;
   }
 
-  async findAll(): Promise<CampaignResponse[]> {
+  /** 어드민 캠페인 목록. includeDrafts 를 켠 캠페인 관리 화면만 임시저장을 함께 받는다. */
+  async findAll(includeDrafts = false): Promise<CampaignResponse[]> {
     const rows = await this.prisma.campaign.findMany({
+      where: includeDrafts ? undefined : PUBLISHED_CAMPAIGN_WHERE,
       orderBy: { createdAt: "desc" },
       include: RECRUITS_INCLUDE,
     });
@@ -741,9 +807,104 @@ export class CampaignsService {
     );
   }
 
+  /** 임시저장 캠페인 생성 — 제목만 있으면 저장되고 나머지는 기본값으로 채워진다. */
+  async createDraft(input: CampaignDraftRequest): Promise<CampaignResponse> {
+    const excludedCampaignIds = await this.validateExcludedCampaignIds(
+      input.excludedCampaignIds,
+    );
+    const row = await this.prisma.campaign.create({
+      data: {
+        ...toDraftCampaignData(input, new Date()),
+        publishState: "DRAFT",
+        recruits: {
+          create: (input.recruits ?? []).map(toDraftRecruitCreateData),
+        },
+        exclusionsAsExcluding: {
+          create: excludedCampaignIds.map((excludedCampaignId) => ({
+            excludedCampaignId,
+          })),
+        },
+      },
+      include: RECRUITS_INCLUDE,
+    });
+    return this.withResolved(toResponse(row, EMPTY_COUNTS));
+  }
+
+  /** 임시저장 갱신 — 모집/제외 관계는 전체 교체. 응모가 없으므로 카운트는 항상 0. */
+  async updateDraft(
+    id: string,
+    input: CampaignDraftRequest,
+  ): Promise<CampaignResponse> {
+    await this.assertDraft(id);
+    const excludedCampaignIds = await this.validateExcludedCampaignIds(
+      input.excludedCampaignIds,
+      id,
+    );
+    const row = await this.prisma.$transaction(async (tx) => {
+      await tx.campaignRecruit.deleteMany({ where: { campaignId: id } });
+      for (const recruit of input.recruits ?? []) {
+        await tx.campaignRecruit.create({
+          data: { campaignId: id, ...toDraftRecruitCreateData(recruit) },
+        });
+      }
+      await tx.campaignExclusion.deleteMany({ where: { campaignId: id } });
+      if (excludedCampaignIds.length > 0) {
+        await tx.campaignExclusion.createMany({
+          data: excludedCampaignIds.map((excludedCampaignId) => ({
+            campaignId: id,
+            excludedCampaignId,
+          })),
+        });
+      }
+      return tx.campaign.update({
+        where: { id },
+        data: toDraftCampaignData(input, new Date()),
+        include: RECRUITS_INCLUDE,
+      });
+    });
+    return this.withResolved(toResponse(row, EMPTY_COUNTS));
+  }
+
+  /**
+   * 임시저장 발행 — 완성된 폼을 기존 생성 경로와 동일한 엄격 검증으로 반영한 뒤
+   * PUBLISHED 로 전환한다. 검증 실패 시 아무것도 저장되지 않고 DRAFT 로 남는다.
+   */
+  async publishDraft(
+    id: string,
+    input: CreateCampaignRequest,
+  ): Promise<CampaignResponse> {
+    await this.assertDraft(id);
+    await this.update(id, input);
+    const row = await this.prisma.campaign.update({
+      where: { id },
+      data: { publishState: "PUBLISHED" },
+      include: RECRUITS_INCLUDE,
+    });
+    return this.withResolved(toResponse(row, EMPTY_COUNTS));
+  }
+
+  async deleteDraft(id: string): Promise<void> {
+    await this.assertDraft(id);
+    await this.prisma.campaign.delete({ where: { id } });
+  }
+
+  private async assertDraft(id: string): Promise<void> {
+    const existing = await this.prisma.campaign.findUnique({
+      where: { id },
+      select: { publishState: true },
+    });
+    if (!existing) throw new NotFoundException("Campaign not found");
+    if (existing.publishState !== "DRAFT") {
+      throw new BadRequestException("이미 발행된 캠페인입니다");
+    }
+  }
+
   async close(id: string): Promise<CampaignResponse> {
     const existing = await this.prisma.campaign.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException("Campaign not found");
+    if (existing.publishState === "DRAFT") {
+      throw new BadRequestException("임시저장 캠페인은 종료할 수 없습니다");
+    }
     if (existing.closedAt) {
       throw new ConflictException("Campaign already closed");
     }

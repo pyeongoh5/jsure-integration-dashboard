@@ -48,13 +48,17 @@ NOT NULL 컬럼을 nullable로 바꾸지 않는다. 대신 미입력 필드는 D
 
 DRAFT 상태에서 이 값을 읽는 경로가 없고, 발행 시점에 기존 엄격 스키마로 다시 검증하므로 무해하다.
 
-### 응답 스키마 완화 (3곳)
+### 응답 스키마 완화
 
-admin-web은 `CampaignResponseSchema`로 응답을 파싱한다. DRAFT를 그대로 왕복시키기 위해 세 필드를 완화한다.
+admin-web은 `CampaignResponseSchema`로 응답을 파싱한다. DRAFT를 그대로 왕복시키기 위해 아래를 완화한다.
 
 - `recruits[].recruitCount`: `positive` → `nonnegative`
-- `productDetailUrls`: `array(url)` → `array(string)` (작성 중인 URL 조각 보존)
+- `recruits[].productUrl`: `url().nullable()` → `string().nullable()`
+- `productDetailUrls` / `referenceMediaUrls`: `array(url)` → `array(string)` (작성 중인 URL 조각 보존)
 - `thumbnailUrl`: `url().nullable()` → `string().nullable()`
+
+응답에 `thumbnailObjectKey`(저장된 원본 키)를 추가한다. `thumbnailUrl`은 열람용 presigned URL이라
+복사 시 그것만으로는 새 캠페인에 썸네일을 붙일 수 없다.
 
 이 스키마는 어드민 응답 파싱 가드일 뿐이다. 생성·발행 시 검증은 `CampaignFormSchema`(=`CreateCampaignRequestSchema`)가
 그대로 담당하므로 실제 캠페인의 엄격성은 변하지 않는다. 인플루언서 응답 스키마는 손대지 않는다.
@@ -84,10 +88,11 @@ admin-web은 `CampaignResponseSchema`로 응답을 파싱한다. DRAFT를 그대
 
 ### 노출 차단
 
-`PUBLISHED_CAMPAIGN_WHERE = { publishState: "PUBLISHED" }` 상수를 만들어 아래에 적용한다.
+`PUBLISHED_CAMPAIGN_WHERE = { publishState: "PUBLISHED" }` 상수를 만들어 아래 7곳에 적용한다.
 
 - 인플루언서: 캠페인 목록, 캠페인 상세, 응모 검증
-- 어드민: 통계 카운트(admin-overview), 리포트(admin-reports), 제외 대상 캠페인 검증
+- 어드민: 통계 카운트(admin-overview), 캠페인 리포트·참여자 조회(admin-reports 2곳),
+  승인자 명단 export(admin-applications), 제외 대상 캠페인 검증
 
 admin-web에서 `GET /campaigns`를 소비하는 곳 중 캠페인 관리 목록 외의 3곳
 (`useCampaignOptions` → 응모자 페이지·승인자 다이얼로그·원고검수 페이지, `CampaignForm`의 제외캠페인 피커)은
@@ -104,13 +109,15 @@ admin-web에서 `GET /campaigns`를 소비하는 곳 중 캠페인 관리 목록
 
 ### 폼 화면
 
+임시저장 성공 후에는 목록으로 이동한다 — 페이지에 남으면 저장 여부를 알 수 없다.
+
 | 진입 | 버튼 |
 |---|---|
 | 신규 생성 | `[취소] [임시저장] [생성]` |
 | DRAFT 수정 | `[취소] [임시저장] [생성]` (생성 = publish) |
 | PUBLISHED 수정 | `[취소] [수정 저장]` (기존과 동일) |
 
-- `임시저장` 버튼은 제목 1자 이상이면 활성. 신규 화면에서 누르면 DRAFT 생성 후 `/campaigns/:id/edit`로 이동한다.
+- `임시저장` 버튼은 제목 1자 이상이면 활성. 저장 후에는 목록으로 이동해 임시저장 카드로 확인한다.
 - 폼 유효성 검사는 `생성` 버튼에만 적용된다.
 
 ### 복사
@@ -121,6 +128,8 @@ admin-web에서 `GET /campaigns`를 소비하는 곳 중 캠페인 관리 목록
 - 제목: 원본 뒤에 ` (복사)` 접미사 — 목록에서 원본과 구분되지 않으면 사고가 난다
 - 복사하는 것: 카테고리, 보수 체계·금액, `recruits` 전체(옵션별 정원·보수 포함), 게시기간, 상품 정보,
   가이드라인, 참고 미디어, 주의사항, 썸네일, 제외 캠페인 목록
+- 썸네일은 `thumbnailObjectKey`를 `CampaignForm`의 "새로 업로드한 이미지" 상태로 넣어 이어받는다
+  (미리보기는 presigned URL, 저장은 오브젝트 키). 원본과 같은 R2 오브젝트를 공유한다.
 - 저장하지 않는다. 운영자가 확인 후 `생성` 또는 `임시저장`을 누른다. DRAFT도 복사 원본이 될 수 있다.
 
 `New.tsx`가 비동기 초기값을 갖게 되면서 `Edit.tsx`의 로딩·에러 처리와 겹치므로 그 부분만
@@ -128,10 +137,15 @@ admin-web에서 `GET /campaigns`를 소비하는 곳 중 캠페인 관리 목록
 
 ## 테스트
 
-1. 인플루언서 캠페인 목록·상세·응모에서 DRAFT가 제외된다.
-2. `GET /campaigns` 기본 응답에 DRAFT가 없고, `includeDrafts=1`이면 포함된다.
-3. publish 검증 실패 시 400이고 `publishState`는 DRAFT로 유지된다.
-4. DRAFT는 `close` 할 수 없다(400).
+`apps/api/src/campaigns/campaign-drafts.spec.ts` (스텁 prisma):
+
+1. 제목만 있으면 저장되고 미입력 필드가 기본값(보수 0, 게시기간 14일, 저장 시각)으로 채워진다.
+2. 미완성 모집 행의 정원·팔로워는 0으로 저장된다.
+3. 이미 발행된 캠페인은 임시저장 갱신·삭제가 400, DRAFT는 `close`가 400이다.
+4. `findAll()`은 DRAFT를 제외하고 `findAll(true)`는 필터를 걸지 않는다.
+5. **누출 방지 가드**: `campaigns` 모듈 밖에서 `prisma.campaign.find*`를 호출하는 서비스 코드는
+   반드시 `PUBLISHED_CAMPAIGN_WHERE`를 함께 써야 한다 — 소스를 스캔해 위반을 잡는다.
+   새 조회 지점이 필터 없이 추가되면 이 테스트가 실패한다.
 
 ## 미포함 (YAGNI)
 
@@ -145,5 +159,5 @@ admin-web에서 `GET /campaigns`를 소비하는 곳 중 캠페인 관리 목록
 `packages/shared` 빌드 → **api(Railway, 마이그레이션 포함)** → **admin-web(Vercel)**.
 client-web은 변경 없음.
 
-사이드이펙트: `CampaignResponseSchema` 완화 3곳은 admin-web 전용 파싱 가드라 회귀 위험이 낮다.
+사이드이펙트: `CampaignResponseSchema` 완화는 admin-web 전용 파싱 가드라 회귀 위험이 낮다.
 `GET /campaigns` 기본 응답이 DRAFT를 제외하도록 바뀌지만 기존 데이터는 전부 PUBLISHED라 동작 변화가 없다.

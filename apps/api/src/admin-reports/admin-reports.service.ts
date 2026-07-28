@@ -9,6 +9,7 @@ import {
   type CampaignReportSortOrder,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 
 @Injectable()
 export class AdminReportsService {
@@ -19,6 +20,7 @@ export class AdminReportsService {
     order: CampaignReportSortOrder,
   ): Promise<CampaignReportResponse> {
     const campaigns = await this.prisma.campaign.findMany({
+      where: PUBLISHED_CAMPAIGN_WHERE,
       include: {
         applications: {
           include: {
@@ -119,8 +121,8 @@ export class AdminReportsService {
     page: number,
     pageSize: number,
   ): Promise<CampaignParticipantsResponse> {
-    const campaign = await this.prisma.campaign.findUnique({
-      where: { id: campaignId },
+    const campaign = await this.prisma.campaign.findFirst({
+      where: { id: campaignId, ...PUBLISHED_CAMPAIGN_WHERE },
       select: { id: true },
     });
     if (!campaign) throw new NotFoundException("Campaign not found");

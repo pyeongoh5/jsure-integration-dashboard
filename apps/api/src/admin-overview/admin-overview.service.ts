@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { AdminOverviewResponse } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 
 @Injectable()
 export class AdminOverviewService {
@@ -18,6 +19,7 @@ export class AdminOverviewService {
       // 모집 중: 모집 기간 안이고 closedAt 없음
       this.prisma.campaign.count({
         where: {
+          ...PUBLISHED_CAMPAIGN_WHERE,
           closedAt: null,
           recruitStartAt: { lte: now },
           recruitEndAt: { gte: now },

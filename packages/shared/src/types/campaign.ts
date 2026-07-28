@@ -19,6 +19,14 @@ export type CampaignCategory = z.infer<typeof CampaignCategorySchema>;
 export const RewardTypeSchema = z.enum(["UNIFIED", "PER_SUBTYPE"]);
 export type RewardType = z.infer<typeof RewardTypeSchema>;
 
+/**
+ * 캠페인 발행 상태.
+ * - DRAFT: 어드민 임시저장. 인플루언서에게 노출되지 않고 어드민 캠페인 관리 화면에서만 보인다.
+ * - PUBLISHED: 정상 캠페인.
+ */
+export const CampaignPublishStateSchema = z.enum(["DRAFT", "PUBLISHED"]);
+export type CampaignPublishState = z.infer<typeof CampaignPublishStateSchema>;
+
 const SNS_SUB_TYPE_VALUES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
 const FAKE_PURCHASE_SUB_TYPE_VALUES = ["QOO10"] as const;
 const SIMPLE_REVIEW_SUB_TYPE_VALUES = ["LIPS", "ATCOSME"] as const;
@@ -547,13 +555,75 @@ export const UpdateCampaignRequestSchema = z
   );
 export type UpdateCampaignRequest = z.infer<typeof UpdateCampaignRequestSchema>;
 
+/**
+ * 임시저장(DRAFT) 요청의 모집 입력 — 작성 중이라 정원·보수·옵션이 비어 있을 수 있다.
+ * 발행 시 CampaignRecruitInputSchema 로 다시 엄격 검증한다.
+ */
+const CampaignRecruitDraftSchema = z.object({
+  subType: CampaignSubTypeSchema,
+  minFollowers: z.number().int().nonnegative().nullable().optional(),
+  recruitCount: z.number().int().nonnegative().nullable().optional(),
+  rewardJpy: z.number().int().nonnegative().nullable().optional(),
+  subTypeOptions: z.array(z.string()).max(10).optional(),
+  insightRequired: z.boolean().optional(),
+  isRequired: z.boolean().optional(),
+  productPriceJpy: z.number().int().nonnegative().nullable().optional(),
+  productUrl: z.string().max(2000).nullable().optional(),
+  options: z
+    .array(
+      z.object({
+        option: z.string().min(1),
+        recruitCount: z.number().int().nonnegative().nullable().optional(),
+        rewardJpy: z.number().int().nonnegative().nullable().optional(),
+      }),
+    )
+    .max(10)
+    .optional(),
+});
+
+/**
+ * 임시저장 요청 — 제목만 필수이고 나머지는 미입력·미완성을 허용한다.
+ * 날짜는 폼의 빈 문자열, 숫자는 미입력(NaN → JSON null)이 그대로 올 수 있다.
+ * URL 은 작성 중인 조각을 보존하려고 형식 검증을 하지 않는다.
+ */
+export const CampaignDraftRequestSchema = z.object({
+  title: z.string().min(1, "제목을 입력해주세요").max(100),
+  category: CampaignCategorySchema.optional(),
+  rewardType: RewardTypeSchema.optional(),
+  rewardJpy: z.number().int().nonnegative().nullable().optional(),
+  recruitStartDate: z.union([DateOnly, z.literal("")]).optional(),
+  recruitEndDate: z.union([DateOnly, z.literal("")]).optional(),
+  postingPeriodDays: z.number().int().nonnegative().nullable().optional(),
+  recruits: z.array(CampaignRecruitDraftSchema).max(10).optional(),
+  productSummary: z.string().max(50000).optional(),
+  productDetailUrls: z.array(z.string().max(2000)).max(10).optional(),
+  guideline: z.string().max(50000).optional(),
+  referenceMediaUrls: z.array(z.string().max(2000)).max(10).optional(),
+  cautions: z.string().max(50000).optional(),
+  thumbnailUrl: z.string().min(1).nullable().optional(),
+  excludedCampaignIds: z.array(z.string()).max(50).optional(),
+});
+export type CampaignDraftRequest = z.infer<typeof CampaignDraftRequestSchema>;
+
+/** 어드민 응답용 모집 — 임시저장 왕복을 위해 정원 0과 미완성 상품 URL 을 허용한다. */
+const CampaignRecruitResponseSchema = CampaignRecruitSchema.extend({
+  recruitCount: z.number().int().nonnegative(),
+  productUrl: z.string().nullable().default(null),
+});
+
+/**
+ * 어드민 응답 파싱용 스키마.
+ * 정원·URL 계열 필드는 임시저장(DRAFT) 왕복을 위해 느슨하다.
+ * 실제 캠페인의 엄격한 검증은 CreateCampaignRequestSchema 가 담당한다.
+ */
 export const CampaignResponseSchema = z.object({
   id: z.string(),
   category: CampaignCategorySchema,
   title: z.string(),
   rewardType: RewardTypeSchema,
   rewardJpy: z.number().int().nonnegative(),
-  recruits: z.array(CampaignRecruitSchema),
+  publishState: CampaignPublishStateSchema,
+  recruits: z.array(CampaignRecruitResponseSchema),
   recruitStartDate: DateOnly,
   recruitEndDate: DateOnly,
   recruitStartAt: z.string().datetime(),
@@ -561,11 +631,13 @@ export const CampaignResponseSchema = z.object({
   closedAt: z.string().datetime().nullable(),
   postingPeriodDays: z.number().int().min(1),
   productSummary: z.string(),
-  productDetailUrls: z.array(z.string().url()),
+  productDetailUrls: z.array(z.string()),
   guideline: z.string(),
-  referenceMediaUrls: z.array(z.string().url()),
+  referenceMediaUrls: z.array(z.string()),
   cautions: z.string(),
-  thumbnailUrl: z.string().url().nullable(),
+  thumbnailUrl: z.string().nullable(),
+  /** 저장된 썸네일 오브젝트 키(thumbnailUrl 은 열람용 presigned URL). 캠페인 복사에 쓴다. */
+  thumbnailObjectKey: z.string().nullable(),
   approvedCount: z.number().int().nonnegative(),
   appliedCount: z.number().int().nonnegative(),
   excludedCampaignIds: z.array(z.string()),

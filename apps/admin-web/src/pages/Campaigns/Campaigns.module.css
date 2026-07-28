@@ -137,6 +137,17 @@
   color: var(--c-muted);
 }
 
+.cardStatusDraft {
+  background: var(--c-amber-soft);
+  color: var(--c-amber);
+}
+
+/* 임시저장 카드는 모집 진행률 대신 최종 수정 시각을 보여준다. */
+.cardDraftMeta {
+  font-size: 12px;
+  color: var(--c-muted);
+}
+
 .cardStatusDday {
   background: #f3f4f6;
   color: var(--c-muted);

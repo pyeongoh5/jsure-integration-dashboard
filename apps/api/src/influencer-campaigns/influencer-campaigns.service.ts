@@ -10,6 +10,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
 import { campaignHeadcount } from "../campaigns/campaign-headcount";
+import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -99,7 +100,10 @@ export class InfluencerCampaignsService {
   }): Promise<InfluencerCampaignCard[]> {
     const now = new Date();
     const rows = await this.prisma.campaign.findMany({
-      where: args.category ? { category: args.category } : {},
+      where: {
+        ...PUBLISHED_CAMPAIGN_WHERE,
+        ...(args.category ? { category: args.category } : {}),
+      },
       orderBy: [{ createdAt: "desc" }],
       include: {
         recruits: {
@@ -151,8 +155,8 @@ export class InfluencerCampaignsService {
     campaignId: string;
   }): Promise<InfluencerCampaignDetail> {
     const now = new Date();
-    const row = await this.prisma.campaign.findUnique({
-      where: { id: args.campaignId },
+    const row = await this.prisma.campaign.findFirst({
+      where: { id: args.campaignId, ...PUBLISHED_CAMPAIGN_WHERE },
       include: {
         recruits: {
           select: {

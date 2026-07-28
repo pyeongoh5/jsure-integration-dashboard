@@ -14,6 +14,7 @@ import {
   CampaignCardFooter,
   CampaignActionsMenu,
   closeCampaign,
+  deleteCampaignDraft,
   listCampaigns,
   campaignFormStyles,
 } from "@/domains/campaign";
@@ -28,13 +29,16 @@ type StatusFilterKey = "all" | CampaignStatus;
 const STATUS_FILTER_CHIP_OPTIONS: readonly { key: CampaignStatus; label: string }[] = [
   { key: "recruit", label: "모집중" },
   { key: "done", label: "완료" },
+  { key: "draft", label: "임시저장" },
 ];
 
 const STATUS_PARAM = "status";
 const CATEGORY_PARAM = "category";
 
 function isStatusFilterKey(value: string | null): value is StatusFilterKey {
-  return value === "all" || value === "recruit" || value === "done";
+  return (
+    value === "all" || value === "recruit" || value === "done" || value === "draft"
+  );
 }
 
 function isCategory(value: string | null): value is CampaignCategory {
@@ -44,6 +48,7 @@ function isCategory(value: string | null): value is CampaignCategory {
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function deriveStatus(c: CampaignResponse, now: Date): CampaignStatus {
+  if (c.publishState === "DRAFT") return "draft";
   if (c.closedAt) return "done";
   const end = new Date(c.recruitEndAt);
   if (now > end) return "done";
@@ -61,6 +66,12 @@ function formatDateRange(startYmd: string, endYmd: string): string {
     return `${Number(m)}/${Number(d)}`;
   };
   return `${fmt(startYmd)} — ${fmt(endYmd)}`;
+}
+
+function formatUpdatedAt(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function formatReward(jpy: number): string {
@@ -97,6 +108,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     applied: c.appliedCount,
     capacity,
     dday: daysUntil(c.recruitEndAt, now),
+    updatedAt: c.updatedAt,
     recruits: c.recruits.map((r) => ({
       subType: r.subType,
       minFollowers: r.minFollowers,
@@ -116,6 +128,9 @@ export function Campaigns() {
   const [openMenu, setOpenMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [approvedListCampaignId, setApprovedListCampaignId] = useState<string | null>(null);
   const [closeTargetId, setCloseTargetId] = useState<string | null>(null);
+  const [deleteDraftTargetId, setDeleteDraftTargetId] = useState<string | null>(null);
+  const [deletingDraft, setDeletingDraft] = useState(false);
+  const [deleteDraftError, setDeleteDraftError] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
   const [closeError, setCloseError] = useState<string | null>(null);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
@@ -124,7 +139,7 @@ export function Campaigns() {
   useEffect(() => {
     let cancelled = false;
     setState({ kind: "loading" });
-    listCampaigns()
+    listCampaigns({ includeDrafts: true })
       .then((campaigns) => {
         if (!cancelled) setState({ kind: "ready", campaigns });
       })
@@ -265,16 +280,23 @@ export function Campaigns() {
                   />
                 }
                 bottomAffix={
-                  <CampaignCardFooter
-                    approved={c.approved}
-                    applied={c.applied}
-                    capacity={c.capacity}
-                  />
+                  c.status === "draft" ? (
+                    <div className={styles.cardDraftMeta}>
+                      최종 수정 {formatUpdatedAt(c.updatedAt)}
+                    </div>
+                  ) : (
+                    <CampaignCardFooter
+                      approved={c.approved}
+                      applied={c.applied}
+                      capacity={c.capacity}
+                    />
+                  )
                 }
               />
               {openMenu && openMenu.id === c.id && (
                 <CampaignActionsMenu
                   anchor={{ x: openMenu.x, y: openMenu.y }}
+                  isDraft={c.status === "draft"}
                   onApplicants={() => {
                     setOpenMenu(null);
                     navigate(`/applicants?campaignId=${encodeURIComponent(c.id)}`);
@@ -282,6 +304,10 @@ export function Campaigns() {
                   onEdit={() => {
                     setOpenMenu(null);
                     navigate(`/campaigns/${encodeURIComponent(c.id)}/edit`);
+                  }}
+                  onCopy={() => {
+                    setOpenMenu(null);
+                    navigate(`/campaigns/new?copyFrom=${encodeURIComponent(c.id)}`);
                   }}
                   onViewApproved={() => {
                     setOpenMenu(null);
@@ -291,6 +317,11 @@ export function Campaigns() {
                     setOpenMenu(null);
                     setCloseError(null);
                     setCloseTargetId(c.id);
+                  }}
+                  onDelete={() => {
+                    setOpenMenu(null);
+                    setDeleteDraftError(null);
+                    setDeleteDraftTargetId(c.id);
                   }}
                   onDismiss={() => setOpenMenu(null)}
                 />
@@ -333,6 +364,39 @@ export function Campaigns() {
           if (closing) return;
           setCloseTargetId(null);
           setCloseError(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleteDraftTargetId !== null}
+        title="임시저장 삭제"
+        subtitle={
+          deleteDraftError ?? "이 임시저장을 삭제하시겠어요? 되돌릴 수 없습니다."
+        }
+        confirmLabel={deletingDraft ? "삭제 중…" : "삭제"}
+        cancelLabel="취소"
+        tone="danger"
+        busy={deletingDraft}
+        onConfirm={async () => {
+          if (!deleteDraftTargetId || deletingDraft) return;
+          setDeletingDraft(true);
+          setDeleteDraftError(null);
+          try {
+            await deleteCampaignDraft(deleteDraftTargetId);
+            setDeleteDraftTargetId(null);
+            setReloadKey((k) => k + 1);
+          } catch (err) {
+            setDeleteDraftError(
+              err instanceof Error ? err.message : "삭제에 실패했습니다.",
+            );
+          } finally {
+            setDeletingDraft(false);
+          }
+        }}
+        onCancel={() => {
+          if (deletingDraft) return;
+          setDeleteDraftTargetId(null);
+          setDeleteDraftError(null);
         }}
       />
     </div>

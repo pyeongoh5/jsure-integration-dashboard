@@ -1,75 +1,38 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { CampaignForm as Values } from "@jsure/shared";
 import {
   CampaignForm,
-  getCampaign,
-  updateCampaign,
   campaignFormStyles,
+  publishCampaignDraft,
+  updateCampaign,
+  updateCampaignDraft,
+  useCampaignFormInitial,
 } from "@/domains/campaign";
 import styles from "./Campaigns.module.css";
-
-type LoadState =
-  | { kind: "loading" }
-  | { kind: "ready"; initial: Values }
-  | { kind: "error"; message: string };
 
 export function CampaignEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
+  const state = useCampaignFormInitial(
+    id ? { kind: "edit", id } : { kind: "empty" },
+    reloadKey,
+  );
 
-  useEffect(() => {
-    if (!id) {
-      setState({ kind: "error", message: "잘못된 경로입니다." });
-      return;
-    }
-    let cancelled = false;
-    setState({ kind: "loading" });
-    getCampaign(id)
-      .then((res) => {
-        if (cancelled) return;
-        const initial: Values = {
-          category: res.category,
-          title: res.title,
-          rewardType: res.rewardType,
-          rewardJpy: res.rewardJpy,
-          recruitStartDate: res.recruitStartDate,
-          recruitEndDate: res.recruitEndDate,
-          postingPeriodDays: res.postingPeriodDays,
-          recruits: res.recruits,
-          productSummary: res.productSummary,
-          productDetailUrls: res.productDetailUrls,
-          guideline: res.guideline,
-          referenceMediaUrls: res.referenceMediaUrls,
-          cautions: res.cautions,
-          thumbnailUrl: res.thumbnailUrl,
-          excludedCampaignIds: res.excludedCampaignIds,
-        };
-        setState({ kind: "ready", initial });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState({
-          kind: "error",
-          message:
-            err instanceof Error ? err.message : "캠페인을 불러올 수 없습니다.",
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [id, reloadKey]);
-
-  const handleSubmit = async (values: Values) => {
-    if (!id) return;
-    await updateCampaign(id, values);
-    navigate("/campaigns");
-  };
-
+  if (!id) {
+    return (
+      <div className={styles.root}>
+        <div className={styles.empty}>잘못된 경로입니다.</div>
+      </div>
+    );
+  }
   if (state.kind === "loading") {
-    return <div className={styles.root}><div className={styles.empty}>불러오는 중…</div></div>;
+    return (
+      <div className={styles.root}>
+        <div className={styles.empty}>불러오는 중…</div>
+      </div>
+    );
   }
   if (state.kind === "error") {
     return (
@@ -88,16 +51,37 @@ export function CampaignEdit() {
     );
   }
 
+  // 임시저장은 "생성" 이 곧 발행이고, 계속 임시저장으로 남겨둘 수도 있다.
+  const isDraft = state.campaign?.publishState === "DRAFT";
+
+  const handleSubmit = async (values: Values) => {
+    if (isDraft) await publishCampaignDraft(id, values);
+    else await updateCampaign(id, values);
+    navigate("/campaigns");
+  };
+
+  const handleSaveDraft = async (values: Values) => {
+    await updateCampaignDraft(id, values);
+    navigate("/campaigns");
+  };
+
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <h1 className={styles.title}>캠페인 수정</h1>
-        <p className={styles.subtitle}>캠페인 정보를 수정하세요.</p>
+        <h1 className={styles.title}>
+          {isDraft ? "임시저장 캠페인" : "캠페인 수정"}
+        </h1>
+        <p className={styles.subtitle}>
+          {isDraft
+            ? "이어서 작성한 뒤 생성하거나 임시저장으로 남겨두세요."
+            : "캠페인 정보를 수정하세요."}
+        </p>
       </div>
       <CampaignForm
         initialValue={state.initial}
-        submitLabel="수정 저장"
+        submitLabel={isDraft ? "생성" : "수정 저장"}
         onSubmit={handleSubmit}
+        onSaveDraft={isDraft ? handleSaveDraft : undefined}
         onCancel={() => navigate("/campaigns")}
         selfCampaignId={id}
       />

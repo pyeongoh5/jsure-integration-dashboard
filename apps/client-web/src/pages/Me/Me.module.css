@@ -1,5 +1,7 @@
 .me {
-  padding-bottom: 100px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
@@ -45,8 +47,19 @@
   border-top: 1px solid var(--color-bg-muted);
 }
 
+.terms {
+  display: block;
+  margin: 16px var(--space-4) 0;
+  margin-top: auto;
+  padding-top: 16px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-decoration: underline;
+}
+
 .logout {
-  margin: 22px var(--space-4) 0;
+  margin: 16px var(--space-4) var(--space-4);
   width: calc(100% - 32px);
   height: 44px;
   border: 1px solid var(--color-border-strong);

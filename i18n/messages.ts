@@ -667,6 +667,7 @@ export const messages = {
         address: { jp: "配送先住所", kr: "배송지 주소" },
         login: { jp: "ログイン", kr: "로그인" },
         logout: { jp: "ログアウト", kr: "로그아웃" },
+        terms: { jp: "利用規約", kr: "이용약관" }, // new
       },
       profile: {
         required: { jp: "必須", kr: "필수" },

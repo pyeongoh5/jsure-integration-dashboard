@@ -73,6 +73,15 @@ export function Me() {
         <div style={{ fontSize: 13, color: "#111" }}>{data?.email ?? "—"}</div>
       </div>
 
+      <a
+        className={styles.terms}
+        href="https://j-sure.notion.site/tos?source=copy_link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {t("pages.me.index.terms")}
+      </a>
+
       <button type="button" className={styles.logout} onClick={logout}>
         {t("pages.me.index.logout")}
       </button>

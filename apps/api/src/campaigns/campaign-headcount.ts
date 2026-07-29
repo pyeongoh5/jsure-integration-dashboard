@@ -1,4 +1,4 @@
-import type { CampaignCategory } from "@jsure/shared";
+import type { CampaignCategory, CampaignListStatus } from "@jsure/shared";
 
 /**
  * 캠페인 모집 인원(헤드카운트, 명 단위) 산정.
@@ -26,3 +26,33 @@ export function campaignHeadcount(
   }
   return recruits.reduce((max, r) => Math.max(max, r.recruitCount), 0);
 }
+
+/**
+ * 어드민 캠페인 목록의 파생 상태. 뱃지 표기와 정렬의 단일 소스(서버 계산).
+ * 우선순위: 임시저장 > 마감·종료 > 정원 충족(모집 완료) > 모집중.
+ */
+export function deriveCampaignStatus(args: {
+  publishState: string;
+  category: CampaignCategory;
+  closedAt: Date | null;
+  recruitEndAt: Date;
+  recruits: { recruitCount: number; isRequired: boolean }[];
+  approvedCount: number;
+  now: Date;
+}): CampaignListStatus {
+  if (args.publishState === "DRAFT") return "draft";
+  if (args.closedAt !== null || args.now.getTime() > args.recruitEndAt.getTime()) {
+    return "done";
+  }
+  const headcount = campaignHeadcount(args.category, args.recruits);
+  if (headcount > 0 && args.approvedCount >= headcount) return "full";
+  return "recruit";
+}
+
+/** 목록 정렬 순위: 모집중 → 임시저장 → 모집 완료 → 모집 종료. */
+export const CAMPAIGN_STATUS_ORDER: Record<CampaignListStatus, number> = {
+  recruit: 0,
+  draft: 1,
+  full: 2,
+  done: 3,
+};

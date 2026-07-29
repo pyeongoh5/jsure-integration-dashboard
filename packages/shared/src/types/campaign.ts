@@ -605,6 +605,13 @@ export const CampaignDraftRequestSchema = z.object({
 });
 export type CampaignDraftRequest = z.infer<typeof CampaignDraftRequestSchema>;
 
+/**
+ * 어드민 캠페인 목록의 파생 상태(서버가 계산). 정렬·뱃지 표기의 단일 소스.
+ * - recruit: 모집중, full: 정원 충족(모집 완료), done: 마감·종료, draft: 임시저장
+ */
+export const CampaignListStatusSchema = z.enum(["recruit", "full", "done", "draft"]);
+export type CampaignListStatus = z.infer<typeof CampaignListStatusSchema>;
+
 /** 어드민 응답용 모집 — 임시저장 왕복을 위해 정원 0과 미완성 상품 URL 을 허용한다. */
 const CampaignRecruitResponseSchema = CampaignRecruitSchema.extend({
   recruitCount: z.number().int().nonnegative(),
@@ -623,6 +630,7 @@ export const CampaignResponseSchema = z.object({
   rewardType: RewardTypeSchema,
   rewardJpy: z.number().int().nonnegative(),
   publishState: CampaignPublishStateSchema,
+  status: CampaignListStatusSchema,
   recruits: z.array(CampaignRecruitResponseSchema),
   recruitStartDate: DateOnly,
   recruitEndDate: DateOnly,

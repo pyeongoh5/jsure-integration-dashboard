@@ -77,6 +77,16 @@ function toCard(
   };
 }
 
+// 목록 정렬 순위. 모집 완료(정원 충족)·종료는 모집중보다 뒤로 보낸다.
+// full 판정은 카드의 헤드카운트(recruitCount) 대비 승인 인원(approvedCount)으로,
+// CampaignCard 의 "모집 완료" 표기와 동일 기준.
+function listSortRank(card: InfluencerCampaignCard): number {
+  if (card.isEnded) return 3;
+  if (card.isUpcoming) return 1;
+  if (card.recruitCount > 0 && card.approvedCount >= card.recruitCount) return 2;
+  return 0;
+}
+
 @Injectable()
 export class InfluencerCampaignsService {
   constructor(
@@ -142,12 +152,9 @@ export class InfluencerCampaignsService {
       rows.map((r, i) => this.resolveCard(toCard(r, counts[i] ?? 0, r.closedAt, now))),
     );
     // DB orderBy 가 createdAt desc → stable sort 로 그룹 순서만 분리.
-    // 우선순위: 진행중 → 개시전 → 종료
-    return cards.sort((a, b) => {
-      if (a.isEnded !== b.isEnded) return a.isEnded ? 1 : -1;
-      if (a.isUpcoming !== b.isUpcoming) return a.isUpcoming ? 1 : -1;
-      return 0;
-    });
+    // 우선순위: 모집중 → 개시전 → 모집 완료(정원 충족) → 모집 종료.
+    // 정렬은 API 에서 수행하므로, 페이지네이션 도입 시에도 이 정렬 뒤 slice 하면 순서가 유지된다.
+    return cards.sort((first, second) => listSortRank(first) - listSortRank(second));
   }
 
   async detail(args: {

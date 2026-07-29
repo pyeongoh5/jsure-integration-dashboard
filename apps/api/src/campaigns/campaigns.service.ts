@@ -21,6 +21,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
 import { PUBLISHED_CAMPAIGN_WHERE } from "./published-campaign";
+import { CAMPAIGN_STATUS_ORDER, deriveCampaignStatus } from "./campaign-headcount";
 
 export function jstDayStartUtc(dateStr: string): Date {
   return new Date(`${dateStr}T00:00:00+09:00`);
@@ -362,6 +363,15 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     category: row.category,
     title: row.title,
     publishState: row.publishState,
+    status: deriveCampaignStatus({
+      publishState: row.publishState,
+      category: row.category,
+      closedAt: row.closedAt,
+      recruitEndAt: row.recruitEndAt,
+      recruits: row.recruits,
+      approvedCount: counts.approvedCount,
+      now: new Date(),
+    }),
     rewardType: row.rewardType,
     rewardJpy: row.rewardJpy,
     recruits: row.recruits.map((recruit) => ({
@@ -714,12 +724,17 @@ export class CampaignsService {
       include: RECRUITS_INCLUDE,
     });
     const counts = await this.loadCounts(rows.map((r) => r.id));
-    return Promise.all(
+    const responses = await Promise.all(
       rows.map((row) =>
         this.withResolved(
           toResponse(row, counts.get(row.id) ?? EMPTY_COUNTS),
         ),
       ),
+    );
+    // 모집중 → 임시저장 → 모집 완료 → 모집 종료 순. 동일 상태는 DB 정렬(createdAt desc) 유지.
+    // 클라이언트가 아닌 서버에서 정렬해야 향후 페이지네이션과 정합.
+    return responses.sort(
+      (a, b) => CAMPAIGN_STATUS_ORDER[a.status] - CAMPAIGN_STATUS_ORDER[b.status],
     );
   }
 

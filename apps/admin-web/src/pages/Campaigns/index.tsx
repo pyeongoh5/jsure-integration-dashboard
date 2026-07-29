@@ -28,7 +28,8 @@ type StatusFilterKey = "all" | CampaignStatus;
 
 const STATUS_FILTER_CHIP_OPTIONS: readonly { key: CampaignStatus; label: string }[] = [
   { key: "recruit", label: "모집중" },
-  { key: "done", label: "완료" },
+  { key: "full", label: "모집 완료" },
+  { key: "done", label: "모집 종료" },
   { key: "draft", label: "임시저장" },
 ];
 
@@ -37,7 +38,11 @@ const CATEGORY_PARAM = "category";
 
 function isStatusFilterKey(value: string | null): value is StatusFilterKey {
   return (
-    value === "all" || value === "recruit" || value === "done" || value === "draft"
+    value === "all" ||
+    value === "recruit" ||
+    value === "full" ||
+    value === "done" ||
+    value === "draft"
   );
 }
 
@@ -46,14 +51,6 @@ function isCategory(value: string | null): value is CampaignCategory {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-function deriveStatus(c: CampaignResponse, now: Date): CampaignStatus {
-  if (c.publishState === "DRAFT") return "draft";
-  if (c.closedAt) return "done";
-  const end = new Date(c.recruitEndAt);
-  if (now > end) return "done";
-  return "recruit";
-}
 
 function daysUntil(endIso: string, now: Date): number {
   const end = new Date(endIso);
@@ -87,7 +84,7 @@ function stripHtml(html: string): string {
 }
 
 function toCard(c: CampaignResponse, now: Date): Campaign {
-  const status = deriveStatus(c, now);
+  const status = c.status; // 상태·정렬은 서버가 계산해 내려준다.
   // 단순 리뷰는 응모자가 전 서브타입에 동시 응모하므로 정원은 합이 아니라 단일값(전 서브타입 동일).
   const capacity =
     c.category === "SIMPLE_REVIEW"
@@ -185,6 +182,7 @@ export function Campaigns() {
 
   const filtered = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
+    // 정렬은 서버가 이미 적용(모집중→임시저장→모집 완료→모집 종료). 여기선 필터만.
     return cards.filter((c) => {
       if (statusFilter !== "all" && c.status !== statusFilter) return false;
       if (categoryFilter !== null && c.category !== categoryFilter) return false;

@@ -10,6 +10,7 @@ type Props = {
 
 const STATUS_CLASS: Record<CampaignStatus, string | undefined> = {
   recruit: styles.cardStatusRecruit,
+  full: styles.cardStatusFull,
   done: styles.cardStatusDone,
   draft: styles.cardStatusDraft,
 };

@@ -62,21 +62,18 @@
 }
 
 /* Grid */
-/* Pinterest-style masonry via CSS columns. Cards flow top→bottom within
-   each column instead of being row-aligned, so a shorter card never leaves
-   trailing whitespace under it. */
+/* 행 기준 그리드(좌→우, 위→아래). 정렬된 마지막(모집 완료·종료) 카드가
+   실제 하단 행에 오도록 CSS 컬럼 대신 grid 를 쓴다. */
 .list {
-  column-width: 280px;
-  column-gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  align-items: start;
 }
 
 .camCardWrap {
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-  page-break-inside: avoid;
   display: block;
   width: 100%;
-  margin-bottom: 14px;
 }
 
 /* Card hover (applies to ui-card inside the list) */
@@ -128,6 +125,11 @@
 }
 
 .cardStatusProgress {
+  background: #ecfdf5;
+  color: var(--c-green);
+}
+
+.cardStatusFull {
   background: #ecfdf5;
   color: var(--c-green);
 }

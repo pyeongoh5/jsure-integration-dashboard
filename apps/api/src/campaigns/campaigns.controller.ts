@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -59,5 +60,22 @@ export class CampaignsController {
   @Post(":id/close")
   close(@Param("id") id: string): Promise<CampaignResponse> {
     return this.campaigns.close(id);
+  }
+
+  /** 비공개 전환 — 모집이 종결된 캠페인만 가능하다. */
+  @Post(":id/hide")
+  hide(@Param("id") id: string): Promise<CampaignResponse> {
+    return this.campaigns.hide(id);
+  }
+
+  @Post(":id/unhide")
+  unhide(@Param("id") id: string): Promise<CampaignResponse> {
+    return this.campaigns.unhide(id);
+  }
+
+  /** 임시저장은 물리 삭제, 발행된 캠페인은 종료와 함께 논리 삭제. */
+  @Delete(":id")
+  remove(@Param("id") id: string): Promise<void> {
+    return this.campaigns.remove(id);
   }
 }

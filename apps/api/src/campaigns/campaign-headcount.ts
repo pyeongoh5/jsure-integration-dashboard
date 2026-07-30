@@ -29,18 +29,20 @@ export function campaignHeadcount(
 
 /**
  * 어드민 캠페인 목록의 파생 상태. 뱃지 표기와 정렬의 단일 소스(서버 계산).
- * 우선순위: 임시저장 > 마감·종료 > 정원 충족(모집 완료) > 모집중.
+ * 우선순위: 임시저장 > 비공개 > 마감·종료 > 정원 충족(모집 완료) > 모집중.
  */
 export function deriveCampaignStatus(args: {
   publishState: string;
   category: CampaignCategory;
   closedAt: Date | null;
+  hiddenAt: Date | null;
   recruitEndAt: Date;
   recruits: { recruitCount: number; isRequired: boolean }[];
   approvedCount: number;
   now: Date;
 }): CampaignListStatus {
   if (args.publishState === "DRAFT") return "draft";
+  if (args.hiddenAt !== null) return "hidden";
   if (args.closedAt !== null || args.now.getTime() > args.recruitEndAt.getTime()) {
     return "done";
   }
@@ -49,10 +51,19 @@ export function deriveCampaignStatus(args: {
   return "recruit";
 }
 
-/** 목록 정렬 순위: 모집중 → 임시저장 → 모집 완료 → 모집 종료. */
+/**
+ * 비공개로 전환할 수 있는 상태 — 모집이 종결된 캠페인(모집 완료·모집 종료)만.
+ * 모집중 캠페인은 먼저 종료해야 한다.
+ */
+export function canHideCampaignStatus(status: CampaignListStatus): boolean {
+  return status === "full" || status === "done";
+}
+
+/** 목록 정렬 순위: 모집중 → 임시저장 → 모집 완료 → 모집 종료 → 비공개. */
 export const CAMPAIGN_STATUS_ORDER: Record<CampaignListStatus, number> = {
   recruit: 0,
   draft: 1,
   full: 2,
   done: 3,
+  hidden: 4,
 };

@@ -18,7 +18,7 @@
   border-radius: 6px;
   font-size: 13px;
   color: #111827;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -32,4 +32,50 @@
 
 .itemDanger:hover {
   background: #fef2f2;
+}
+
+/* 화살표가 라벨을 밀지 않도록 우측에 겹쳐 두고 텍스트는 가운데 정렬 유지. */
+.itemToggle {
+  position: relative;
+  padding-right: 24px;
+  padding-left: 24px;
+  font-weight: 600;
+}
+
+.chevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.manageWrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * 2뎁스 — 부모 항목 오른쪽으로 펼친다. 공간이 부족하면 submenuLeft 로 뒤집는다.
+ * 부모와 틈을 두면 마우스가 그 틈을 지날 때 hover 가 풀려 닫히므로 딱 붙인다.
+ */
+.submenu {
+  position: absolute;
+  top: -4px;
+  left: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  min-width: 150px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.submenuLeft {
+  left: auto;
+  right: 100%;
 }

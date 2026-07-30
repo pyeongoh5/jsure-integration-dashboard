@@ -113,6 +113,10 @@ model Campaign {
   recruitStartAt     DateTime
   recruitEndAt       DateTime
   closedAt           DateTime?
+  /// 비공개 전환 시각. 인플루언서 조회에서만 제외되고 어드민에는 계속 보인다.
+  hiddenAt           DateTime?
+  /// 논리 삭제 시각. 응모·정산 이력을 보존하기 위해 물리 삭제하지 않는다.
+  deletedAt          DateTime?
   postingPeriodDays  Int       @default(14)
   productSummary     String
   productDetailUrls  String[]

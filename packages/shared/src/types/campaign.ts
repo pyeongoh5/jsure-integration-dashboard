@@ -607,9 +607,16 @@ export type CampaignDraftRequest = z.infer<typeof CampaignDraftRequestSchema>;
 
 /**
  * 어드민 캠페인 목록의 파생 상태(서버가 계산). 정렬·뱃지 표기의 단일 소스.
- * - recruit: 모집중, full: 정원 충족(모집 완료), done: 마감·종료, draft: 임시저장
+ * - recruit: 모집중, full: 정원 충족(모집 완료), done: 마감·종료, draft: 임시저장,
+ *   hidden: 비공개(인플루언서 미노출)
  */
-export const CampaignListStatusSchema = z.enum(["recruit", "full", "done", "draft"]);
+export const CampaignListStatusSchema = z.enum([
+  "recruit",
+  "full",
+  "done",
+  "draft",
+  "hidden",
+]);
 export type CampaignListStatus = z.infer<typeof CampaignListStatusSchema>;
 
 /** 어드민 응답용 모집 — 임시저장 왕복을 위해 정원 0과 미완성 상품 URL 을 허용한다. */
@@ -637,6 +644,8 @@ export const CampaignResponseSchema = z.object({
   recruitStartAt: z.string().datetime(),
   recruitEndAt: z.string().datetime(),
   closedAt: z.string().datetime().nullable(),
+  /** 비공개 전환 시각. null 이면 인플루언서에게 노출된다. */
+  hiddenAt: z.string().datetime().nullable(),
   postingPeriodDays: z.number().int().min(1),
   productSummary: z.string(),
   productDetailUrls: z.array(z.string()),

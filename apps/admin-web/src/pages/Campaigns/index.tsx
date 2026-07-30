@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { CampaignResponse } from "@jsure/shared";
 import { Card } from "@/components/composites/Card";
-import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
 import {
   FilterChipBar,
   SingleSelectFilterChip,
@@ -13,8 +12,10 @@ import {
   CampaignCardBody,
   CampaignCardFooter,
   CampaignActionsMenu,
-  closeCampaign,
-  deleteCampaignDraft,
+  CloseCampaignDialog,
+  DeleteCampaignDialog,
+  HideCampaignDialog,
+  UnhideCampaignDialog,
   listCampaigns,
   campaignFormStyles,
 } from "@/domains/campaign";
@@ -31,6 +32,7 @@ const STATUS_FILTER_CHIP_OPTIONS: readonly { key: CampaignStatus; label: string 
   { key: "full", label: "모집 완료" },
   { key: "done", label: "모집 종료" },
   { key: "draft", label: "임시저장" },
+  { key: "hidden", label: "비공개" },
 ];
 
 const STATUS_PARAM = "status";
@@ -42,7 +44,8 @@ function isStatusFilterKey(value: string | null): value is StatusFilterKey {
     value === "recruit" ||
     value === "full" ||
     value === "done" ||
-    value === "draft"
+    value === "draft" ||
+    value === "hidden"
   );
 }
 
@@ -125,11 +128,9 @@ export function Campaigns() {
   const [openMenu, setOpenMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [approvedListCampaignId, setApprovedListCampaignId] = useState<string | null>(null);
   const [closeTargetId, setCloseTargetId] = useState<string | null>(null);
-  const [deleteDraftTargetId, setDeleteDraftTargetId] = useState<string | null>(null);
-  const [deletingDraft, setDeletingDraft] = useState(false);
-  const [deleteDraftError, setDeleteDraftError] = useState<string | null>(null);
-  const [closing, setClosing] = useState(false);
-  const [closeError, setCloseError] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [hideTargetId, setHideTargetId] = useState<string | null>(null);
+  const [unhideTargetId, setUnhideTargetId] = useState<string | null>(null);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -294,7 +295,7 @@ export function Campaigns() {
               {openMenu && openMenu.id === c.id && (
                 <CampaignActionsMenu
                   anchor={{ x: openMenu.x, y: openMenu.y }}
-                  isDraft={c.status === "draft"}
+                  status={c.status}
                   onApplicants={() => {
                     setOpenMenu(null);
                     navigate(`/applicants?campaignId=${encodeURIComponent(c.id)}`);
@@ -313,13 +314,19 @@ export function Campaigns() {
                   }}
                   onClose={() => {
                     setOpenMenu(null);
-                    setCloseError(null);
                     setCloseTargetId(c.id);
+                  }}
+                  onHide={() => {
+                    setOpenMenu(null);
+                    setHideTargetId(c.id);
+                  }}
+                  onUnhide={() => {
+                    setOpenMenu(null);
+                    setUnhideTargetId(c.id);
                   }}
                   onDelete={() => {
                     setOpenMenu(null);
-                    setDeleteDraftError(null);
-                    setDeleteDraftTargetId(c.id);
+                    setDeleteTargetId(c.id);
                   }}
                   onDismiss={() => setOpenMenu(null)}
                 />
@@ -336,66 +343,42 @@ export function Campaigns() {
         />
       )}
 
-      <ConfirmDialog
-        open={closeTargetId !== null}
-        title="캠페인 종료"
-        subtitle={closeError ?? "이 캠페인을 종료하시겠어요? 종료 후에는 되돌릴 수 없습니다."}
-        confirmLabel={closing ? "종료 중…" : "종료"}
-        cancelLabel="취소"
-        tone="danger"
-        busy={closing}
-        onConfirm={async () => {
-          if (!closeTargetId || closing) return;
-          setClosing(true);
-          setCloseError(null);
-          try {
-            await closeCampaign(closeTargetId);
-            setCloseTargetId(null);
-            setReloadKey((k) => k + 1);
-          } catch (err) {
-            setCloseError(err instanceof Error ? err.message : "종료에 실패했습니다.");
-          } finally {
-            setClosing(false);
-          }
-        }}
-        onCancel={() => {
-          if (closing) return;
+      <CloseCampaignDialog
+        campaignId={closeTargetId}
+        status={cards.find((c) => c.id === closeTargetId)?.status ?? "recruit"}
+        onDone={() => {
           setCloseTargetId(null);
-          setCloseError(null);
+          setReloadKey((k) => k + 1);
         }}
+        onCancel={() => setCloseTargetId(null)}
       />
 
-      <ConfirmDialog
-        open={deleteDraftTargetId !== null}
-        title="임시저장 삭제"
-        subtitle={
-          deleteDraftError ?? "이 임시저장을 삭제하시겠어요? 되돌릴 수 없습니다."
-        }
-        confirmLabel={deletingDraft ? "삭제 중…" : "삭제"}
-        cancelLabel="취소"
-        tone="danger"
-        busy={deletingDraft}
-        onConfirm={async () => {
-          if (!deleteDraftTargetId || deletingDraft) return;
-          setDeletingDraft(true);
-          setDeleteDraftError(null);
-          try {
-            await deleteCampaignDraft(deleteDraftTargetId);
-            setDeleteDraftTargetId(null);
-            setReloadKey((k) => k + 1);
-          } catch (err) {
-            setDeleteDraftError(
-              err instanceof Error ? err.message : "삭제에 실패했습니다.",
-            );
-          } finally {
-            setDeletingDraft(false);
-          }
+      <HideCampaignDialog
+        campaignId={hideTargetId}
+        status={cards.find((c) => c.id === hideTargetId)?.status ?? "done"}
+        onDone={() => {
+          setHideTargetId(null);
+          setReloadKey((k) => k + 1);
         }}
-        onCancel={() => {
-          if (deletingDraft) return;
-          setDeleteDraftTargetId(null);
-          setDeleteDraftError(null);
+        onCancel={() => setHideTargetId(null)}
+      />
+
+      <UnhideCampaignDialog
+        campaignId={unhideTargetId}
+        onDone={() => {
+          setUnhideTargetId(null);
+          setReloadKey((k) => k + 1);
         }}
+        onCancel={() => setUnhideTargetId(null)}
+      />
+
+      <DeleteCampaignDialog
+        campaignId={deleteTargetId}
+        onDone={() => {
+          setDeleteTargetId(null);
+          setReloadKey((k) => k + 1);
+        }}
+        onCancel={() => setDeleteTargetId(null)}
       />
     </div>
   );

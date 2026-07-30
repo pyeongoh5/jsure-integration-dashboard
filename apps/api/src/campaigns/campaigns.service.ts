@@ -21,7 +21,11 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
 import { PUBLISHED_CAMPAIGN_WHERE } from "./published-campaign";
-import { CAMPAIGN_STATUS_ORDER, deriveCampaignStatus } from "./campaign-headcount";
+import {
+  CAMPAIGN_STATUS_ORDER,
+  canHideCampaignStatus,
+  deriveCampaignStatus,
+} from "./campaign-headcount";
 
 export function jstDayStartUtc(dateStr: string): Date {
   return new Date(`${dateStr}T00:00:00+09:00`);
@@ -336,6 +340,7 @@ type CampaignRow = {
   recruitStartAt: Date;
   recruitEndAt: Date;
   closedAt: Date | null;
+  hiddenAt: Date | null;
   postingPeriodDays: number;
   productSummary: string;
   productDetailUrls: string[];
@@ -367,6 +372,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
       publishState: row.publishState,
       category: row.category,
       closedAt: row.closedAt,
+      hiddenAt: row.hiddenAt,
       recruitEndAt: row.recruitEndAt,
       recruits: row.recruits,
       approvedCount: counts.approvedCount,
@@ -395,6 +401,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     recruitStartAt: row.recruitStartAt.toISOString(),
     recruitEndAt: row.recruitEndAt.toISOString(),
     closedAt: row.closedAt ? row.closedAt.toISOString() : null,
+    hiddenAt: row.hiddenAt ? row.hiddenAt.toISOString() : null,
     postingPeriodDays: row.postingPeriodDays,
     productSummary: row.productSummary,
     productDetailUrls: row.productDetailUrls,
@@ -719,7 +726,7 @@ export class CampaignsService {
   /** 어드민 캠페인 목록. includeDrafts 를 켠 캠페인 관리 화면만 임시저장을 함께 받는다. */
   async findAll(includeDrafts = false): Promise<CampaignResponse[]> {
     const rows = await this.prisma.campaign.findMany({
-      where: includeDrafts ? undefined : PUBLISHED_CAMPAIGN_WHERE,
+      where: includeDrafts ? { deletedAt: null } : PUBLISHED_CAMPAIGN_WHERE,
       orderBy: { createdAt: "desc" },
       include: RECRUITS_INCLUDE,
     });
@@ -739,8 +746,8 @@ export class CampaignsService {
   }
 
   async findById(id: string): Promise<CampaignResponse> {
-    const row = await this.prisma.campaign.findUnique({
-      where: { id },
+    const row = await this.prisma.campaign.findFirst({
+      where: { id, deletedAt: null },
       include: RECRUITS_INCLUDE,
     });
     if (!row) throw new NotFoundException("Campaign not found");
@@ -898,11 +905,6 @@ export class CampaignsService {
     return this.withResolved(toResponse(row, EMPTY_COUNTS));
   }
 
-  async deleteDraft(id: string): Promise<void> {
-    await this.assertDraft(id);
-    await this.prisma.campaign.delete({ where: { id } });
-  }
-
   private async assertDraft(id: string): Promise<void> {
     const existing = await this.prisma.campaign.findUnique({
       where: { id },
@@ -931,5 +933,63 @@ export class CampaignsService {
     return this.withResolved(
       toResponse(row, await this.countsFor(id)),
     );
+  }
+
+  /**
+   * 비공개 전환 — 모집이 종결된 캠페인(모집 완료·모집 종료)만 가능하다.
+   * 인플루언서 조회에서만 사라지고 어드민·정산에는 그대로 남는다.
+   */
+  async hide(id: string): Promise<CampaignResponse> {
+    const current = await this.findById(id);
+    if (current.hiddenAt !== null) {
+      throw new ConflictException("이미 비공개 캠페인입니다");
+    }
+    if (!canHideCampaignStatus(current.status)) {
+      throw new BadRequestException(
+        "모집이 종결된 캠페인만 비공개로 전환할 수 있습니다",
+      );
+    }
+    return this.setHiddenAt(id, new Date());
+  }
+
+  async unhide(id: string): Promise<CampaignResponse> {
+    const current = await this.findById(id);
+    if (current.hiddenAt === null) {
+      throw new ConflictException("이미 공개 캠페인입니다");
+    }
+    return this.setHiddenAt(id, null);
+  }
+
+  private async setHiddenAt(
+    id: string,
+    hiddenAt: Date | null,
+  ): Promise<CampaignResponse> {
+    const row = await this.prisma.campaign.update({
+      where: { id },
+      data: { hiddenAt },
+      include: RECRUITS_INCLUDE,
+    });
+    return this.withResolved(toResponse(row, await this.countsFor(id)));
+  }
+
+  /**
+   * 캠페인 삭제. 임시저장은 이력이 없으므로 물리 삭제하고, 발행된 캠페인은
+   * 응모·정산 이력을 보존해야 하므로 종료 처리와 함께 논리 삭제한다.
+   */
+  async remove(id: string): Promise<void> {
+    const existing = await this.prisma.campaign.findFirst({
+      where: { id, deletedAt: null },
+      select: { publishState: true, closedAt: true },
+    });
+    if (!existing) throw new NotFoundException("Campaign not found");
+    if (existing.publishState === "DRAFT") {
+      await this.prisma.campaign.delete({ where: { id } });
+      return;
+    }
+    const now = new Date();
+    await this.prisma.campaign.update({
+      where: { id },
+      data: { deletedAt: now, closedAt: existing.closedAt ?? now },
+    });
   }
 }

@@ -10,7 +10,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
 import { campaignHeadcount } from "../campaigns/campaign-headcount";
-import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
+import { VISIBLE_PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -111,7 +111,7 @@ export class InfluencerCampaignsService {
     const now = new Date();
     const rows = await this.prisma.campaign.findMany({
       where: {
-        ...PUBLISHED_CAMPAIGN_WHERE,
+        ...VISIBLE_PUBLISHED_CAMPAIGN_WHERE,
         ...(args.category ? { category: args.category } : {}),
       },
       orderBy: [{ createdAt: "desc" }],
@@ -163,7 +163,7 @@ export class InfluencerCampaignsService {
   }): Promise<InfluencerCampaignDetail> {
     const now = new Date();
     const row = await this.prisma.campaign.findFirst({
-      where: { id: args.campaignId, ...PUBLISHED_CAMPAIGN_WHERE },
+      where: { id: args.campaignId, ...VISIBLE_PUBLISHED_CAMPAIGN_WHERE },
       include: {
         recruits: {
           select: {

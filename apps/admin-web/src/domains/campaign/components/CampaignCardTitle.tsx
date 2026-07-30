@@ -13,6 +13,7 @@ const STATUS_CLASS: Record<CampaignStatus, string | undefined> = {
   full: styles.cardStatusFull,
   done: styles.cardStatusDone,
   draft: styles.cardStatusDraft,
+  hidden: styles.cardStatusHidden,
 };
 
 const CATEGORY_CLASS: Record<CampaignCategory, string | undefined> = {

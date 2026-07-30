@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { CampaignForm as Values } from "@jsure/shared";
+import { Button } from "@/components/ui";
 import {
   CampaignForm,
   campaignFormStyles,
@@ -67,15 +68,27 @@ export function CampaignEdit() {
 
   return (
     <div className={styles.root}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>
-          {isDraft ? "임시저장 캠페인" : "캠페인 수정"}
-        </h1>
-        <p className={styles.subtitle}>
-          {isDraft
-            ? "이어서 작성한 뒤 생성하거나 임시저장으로 남겨두세요."
-            : "캠페인 정보를 수정하세요."}
-        </p>
+      <div className={`${styles.header} ${styles.headerRow}`}>
+        <div>
+          <h1 className={styles.title}>
+            {isDraft ? "임시저장 캠페인" : "캠페인 수정"}
+          </h1>
+          <p className={styles.subtitle}>
+            {isDraft
+              ? "이어서 작성한 뒤 생성하거나 임시저장으로 남겨두세요."
+              : "캠페인 정보를 수정하세요."}
+          </p>
+        </div>
+        {/* 같은 내용으로 새 캠페인을 만들 때 — 이 캠페인은 그대로 남는다. */}
+        <Button
+          variant="secondary"
+          size="md"
+          onClick={() =>
+            navigate(`/campaigns/new?copyFrom=${encodeURIComponent(id)}`)
+          }
+        >
+          캠페인 복사
+        </Button>
       </div>
       <CampaignForm
         initialValue={state.initial}

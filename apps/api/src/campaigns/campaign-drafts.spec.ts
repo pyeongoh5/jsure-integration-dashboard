@@ -10,6 +10,10 @@ function makeService(overrides: {
   onFindMany?: (args: CampaignFindArgs) => void;
   publishState?: "DRAFT" | "PUBLISHED";
   closedAt?: Date | null;
+  hiddenAt?: Date | null;
+  recruitEndAt?: Date;
+  onUpdate?: (args: { data: Record<string, unknown> }) => void;
+  onDelete?: (args: unknown) => void;
 }) {
   const row = {
     id: "c1",
@@ -19,8 +23,10 @@ function makeService(overrides: {
     rewardType: "UNIFIED",
     rewardJpy: 0,
     recruitStartAt: new Date("2026-07-28T00:00:00Z"),
-    recruitEndAt: new Date("2026-07-28T00:00:00Z"),
+    recruitEndAt: overrides.recruitEndAt ?? new Date("2026-07-28T00:00:00Z"),
     closedAt: overrides.closedAt ?? null,
+    hiddenAt: overrides.hiddenAt ?? null,
+    deletedAt: null,
     postingPeriodDays: 14,
     productSummary: "",
     productDetailUrls: [],
@@ -47,10 +53,19 @@ function makeService(overrides: {
         publishState: overrides.publishState ?? "DRAFT",
         closedAt: overrides.closedAt ?? null,
       }),
-      update: async () => row,
+      findFirst: async () => row,
+      update: async (args: { data: Record<string, unknown> }) => {
+        overrides.onUpdate?.(args);
+        return row;
+      },
+      delete: async (args: unknown) => {
+        overrides.onDelete?.(args);
+        return row;
+      },
     },
     campaignApplication: {
       groupBy: async () => [],
+      count: async () => 0,
     },
   } as never;
   const uploads = {
@@ -104,12 +119,11 @@ describe("임시저장 생성", () => {
 });
 
 describe("발행 상태 가드", () => {
-  it("이미 발행된 캠페인은 임시저장 갱신/발행/삭제가 막힌다", async () => {
+  it("이미 발행된 캠페인은 임시저장 갱신/발행이 막힌다", async () => {
     const service = makeService({ publishState: "PUBLISHED" });
     await expect(service.updateDraft("c1", { title: "x" })).rejects.toThrow(
       BadRequestException,
     );
-    await expect(service.deleteDraft("c1")).rejects.toThrow(BadRequestException);
   });
 
   it("임시저장 캠페인은 종료할 수 없다", async () => {
@@ -126,8 +140,74 @@ describe("어드민 캠페인 목록", () => {
     await service.findAll();
     await service.findAll(true);
 
-    expect(seen[0]!.where).toEqual({ publishState: "PUBLISHED" });
-    expect(seen[1]!.where).toBeUndefined();
+    expect(seen[0]!.where).toEqual({
+      publishState: "PUBLISHED",
+      deletedAt: null,
+    });
+    expect(seen[1]!.where).toEqual({ deletedAt: null });
+  });
+});
+
+describe("비공개 전환", () => {
+  it("모집중 캠페인은 비공개로 전환할 수 없다", async () => {
+    // 모집 종료일이 미래이고 정원 미충족이면 status=recruit.
+    const service = makeService({
+      publishState: "PUBLISHED",
+      recruitEndAt: new Date("2099-01-01T00:00:00Z"),
+    });
+
+    await expect(service.hide("c1")).rejects.toThrow(BadRequestException);
+  });
+
+  it("모집 종료 캠페인은 hiddenAt 이 채워진다", async () => {
+    let updated: { data: Record<string, unknown> } | null = null;
+    const service = makeService({
+      publishState: "PUBLISHED",
+      closedAt: new Date("2026-07-29T00:00:00Z"),
+      onUpdate: (args) => {
+        updated = args;
+      },
+    });
+
+    await service.hide("c1");
+
+    expect(updated!.data.hiddenAt).toBeInstanceOf(Date);
+  });
+});
+
+describe("캠페인 삭제", () => {
+  it("임시저장은 물리 삭제된다", async () => {
+    let deleted: unknown = null;
+    const service = makeService({
+      publishState: "DRAFT",
+      onDelete: (args) => {
+        deleted = args;
+      },
+    });
+
+    await service.remove("c1");
+
+    expect(deleted).toEqual({ where: { id: "c1" } });
+  });
+
+  it("발행된 캠페인은 종료와 함께 논리 삭제된다", async () => {
+    let updated: { data: Record<string, unknown> } | null = null;
+    let deleted: unknown = null;
+    const service = makeService({
+      publishState: "PUBLISHED",
+      onUpdate: (args) => {
+        updated = args;
+      },
+      onDelete: (args) => {
+        deleted = args;
+      },
+    });
+
+    await service.remove("c1");
+
+    expect(deleted).toBeNull();
+    expect(updated!.data.deletedAt).toBeInstanceOf(Date);
+    expect(updated!.data.closedAt).toBeInstanceOf(Date);
   });
 });
 

@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Param,
   Patch,
   Post,
@@ -51,10 +50,5 @@ export class CampaignDraftsController {
     body: CreateCampaignRequest,
   ): Promise<CampaignResponse> {
     return this.campaigns.publishDraft(id, body);
-  }
-
-  @Delete(":id")
-  remove(@Param("id") id: string): Promise<void> {
-    return this.campaigns.deleteDraft(id);
   }
 }

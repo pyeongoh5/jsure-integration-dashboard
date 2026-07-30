@@ -74,11 +74,23 @@ export async function publishCampaignDraft(
   return CampaignResponseSchema.parse(res.data);
 }
 
-export async function deleteCampaignDraft(id: string): Promise<void> {
-  await api.delete(`/campaign-drafts/${encodeURIComponent(id)}`);
+/** 임시저장은 물리 삭제, 발행된 캠페인은 종료와 함께 논리 삭제된다. */
+export async function deleteCampaign(id: string): Promise<void> {
+  await api.delete(`/campaigns/${encodeURIComponent(id)}`);
 }
 
 export async function closeCampaign(id: string): Promise<CampaignResponse> {
   const res = await api.post(`/campaigns/${encodeURIComponent(id)}/close`);
+  return CampaignResponseSchema.parse(res.data);
+}
+
+/** 비공개 전환 — 모집이 종결된 캠페인만 서버에서 허용한다. */
+export async function hideCampaign(id: string): Promise<CampaignResponse> {
+  const res = await api.post(`/campaigns/${encodeURIComponent(id)}/hide`);
+  return CampaignResponseSchema.parse(res.data);
+}
+
+export async function unhideCampaign(id: string): Promise<CampaignResponse> {
+  const res = await api.post(`/campaigns/${encodeURIComponent(id)}/unhide`);
   return CampaignResponseSchema.parse(res.data);
 }

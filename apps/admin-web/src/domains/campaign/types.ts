@@ -21,7 +21,7 @@ export type CampaignFormRecruit = CampaignForm["recruits"][number];
 export type CampaignFormRecruitSubType = CampaignFormRecruit["subType"];
 
 /** 카드/필터용 파생 상태. draft 는 서버의 publishState=DRAFT 를 그대로 반영한다. */
-export type CampaignStatus = "recruit" | "full" | "done" | "draft";
+export type CampaignStatus = "recruit" | "full" | "done" | "draft" | "hidden";
 
 export type CampaignCardRecruit = {
   subType: CampaignSubType;
@@ -78,4 +78,5 @@ export const STATUS_LABEL: Record<CampaignStatus, string> = {
   full: "모집 완료",
   done: "모집 종료",
   draft: "임시저장",
+  hidden: "비공개",
 };

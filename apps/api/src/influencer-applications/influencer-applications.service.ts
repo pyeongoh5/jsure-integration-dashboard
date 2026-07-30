@@ -19,7 +19,7 @@ import {
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { campaignHeadcount } from "../campaigns/campaign-headcount";
-import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
+import { VISIBLE_PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 import { UploadsService } from "../uploads/uploads.service";
 import {
   deriveDisplayStage,
@@ -282,7 +282,7 @@ export class InfluencerApplicationsService {
     let subTypes = subTypesInput;
     const now = new Date();
     const campaign = await this.prisma.campaign.findFirst({
-      where: { id: campaignId, ...PUBLISHED_CAMPAIGN_WHERE },
+      where: { id: campaignId, ...VISIBLE_PUBLISHED_CAMPAIGN_WHERE },
       include: {
         recruits: {
           select: {

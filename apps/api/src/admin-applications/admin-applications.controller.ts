@@ -81,6 +81,11 @@ export class AdminApplicationsController {
     return this.svc.exportApprovedApplicants(trimmed);
   }
 
+  @Get(":id/submission")
+  getSubmission(@Param("id") id: string): Promise<AdminSubmission> {
+    return this.svc.getSubmission(id);
+  }
+
   @Get(":id/attachments")
   async applicationAttachments(
     @Param("id") id: string,

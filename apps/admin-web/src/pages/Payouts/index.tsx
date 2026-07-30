@@ -4,8 +4,12 @@ import { SUB_TYPE_LABEL, type AdminSettlement, type CampaignCategory } from "@js
 import {
   completeSettlements,
   listSettlements,
+  fetchSubmission,
+  toDraftReview,
+  InsightDetailDialog,
   CATEGORY_LABEL_KO,
   CATEGORY_FILTER_OPTIONS,
+  type DraftReview,
 } from "@/domains/application";
 import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
@@ -49,16 +53,58 @@ function csvEscape(value: string | number | null): string {
   return s;
 }
 
+const CATEGORY_CODE: Record<CampaignCategory, string> = {
+  SNS: "SNS",
+  FAKE_PURCHASE: "Q10",
+  SIMPLE_REVIEW: "REV",
+};
+
+// 파일 내 그룹 키. 형식: YYMM-<카테고리코드>-NNN (예 2607-SNS-001).
+// 순번은 카테고리별로 001부터, 시트에 나오는 정산 행 순서로 부여.
+export function buildSettlementGroupIds(
+  rows: AdminSettlement[],
+  month: string,
+): string[] {
+  const yymm = month.slice(2, 4) + month.slice(5, 7);
+  const counters = new Map<string, number>();
+  return rows.map((row) => {
+    const code = CATEGORY_CODE[row.campaign.category];
+    const next = (counters.get(code) ?? 0) + 1;
+    counters.set(code, next);
+    return `${yymm}-${code}-${String(next).padStart(3, "0")}`;
+  });
+}
+
+function metricCell(value: number | null): string {
+  return value === null ? "" : String(value);
+}
+
+// 검토 페이지(DraftTable)의 보기 버튼 라벨과 동일 규칙.
+function submissionViewLabel(row: AdminSettlement): string {
+  if (row.campaign.category !== "SNS") return "제출 결과 보기";
+  const insightSubmitted =
+    row.posts.length > 0 &&
+    row.posts.every((post) => post.insightSubmittedAt !== null);
+  return insightSubmitted ? "인사이트 보기" : "제출 보기";
+}
+
 function downloadCsv(rows: AdminSettlement[], month: string): void {
   const headers = [
-    "정산 ID",
+    "그룹 ID",
     "인플루언서",
     "캠페인",
     "카테고리",
     "SNS",
-    "투고 URL",
+    "제출 URL",
     "투고 게시일",
     "인사이트 제출일",
+    "좋아요",
+    "댓글",
+    "공유",
+    "리포스트",
+    "저장",
+    "조회",
+    "리치",
     "은행명",
     "은행코드",
     "지점명",
@@ -73,42 +119,58 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
     "정산 완료일",
     "상태",
   ];
+  const groupIds = buildSettlementGroupIds(rows, month);
   const lines = [headers.join(",")];
-  for (const row of rows) {
+  rows.forEach((row, rowIndex) => {
+    const groupId = groupIds[rowIndex]!;
     const bankAccount = row.influencer.bankAccount;
-    lines.push(
-      [
-        row.id,
-        row.influencer.name,
-        row.campaign.title,
-        CATEGORY_LABEL_KO[row.campaign.category],
-        row.posts.map((post) => SUB_TYPE_LABEL[post.subType]).join(" / "),
-        row.posts
-          .map((post) => post.url)
-          .filter((url) => url !== null)
-          .join(" / "),
-        formatDateTime(latestDate(row.posts.map((post) => post.submittedAt))),
-        formatDateTime(
-          latestDate(row.posts.map((post) => post.insightSubmittedAt)),
-        ),
-        bankAccount?.bankName ?? "",
-        bankAccount?.bankCode ?? "",
-        bankAccount?.branchName ?? "",
-        bankAccount?.branchCode ?? "",
-        bankAccount?.accountNumber ?? "",
-        bankAccount?.accountHolderKana ?? "",
-        bankAccount?.invoiceRegistrationNumber ?? "",
-        row.rewardAmountJpy,
-        row.productRefundJpy,
-        row.amountJpy,
-        formatDateTime(row.createdAt),
-        formatDateTime(row.completedAt),
-        row.status === "COMPLETED" ? "완료" : "대기",
-      ]
-        .map(csvEscape)
-        .join(","),
-    );
-  }
+    // 정산·계좌 필드는 그룹 첫 행에만. 이후 서브타입 행에서는 공란.
+    const settlementCells = (first: boolean) =>
+      first
+        ? [
+            bankAccount?.bankName ?? "",
+            bankAccount?.bankCode ?? "",
+            bankAccount?.branchName ?? "",
+            bankAccount?.branchCode ?? "",
+            bankAccount?.accountNumber ?? "",
+            bankAccount?.accountHolderKana ?? "",
+            bankAccount?.invoiceRegistrationNumber ?? "",
+            row.rewardAmountJpy,
+            row.productRefundJpy,
+            row.amountJpy,
+            formatDateTime(row.createdAt),
+            formatDateTime(row.completedAt),
+            row.status === "COMPLETED" ? "완료" : "대기",
+          ]
+        : ["", "", "", "", "", "", "", "", "", "", "", "", ""];
+    // posts 가 없을 일은 없지만 방어적으로 한 행은 출력.
+    const posts = row.posts.length > 0 ? row.posts : [null];
+    posts.forEach((post, postIndex) => {
+      const first = postIndex === 0;
+      lines.push(
+        [
+          groupId,
+          row.influencer.name,
+          row.campaign.title,
+          CATEGORY_LABEL_KO[row.campaign.category],
+          post ? SUB_TYPE_LABEL[post.subType] : "",
+          post?.url ?? "",
+          post ? formatDateTime(post.submittedAt) : "",
+          post ? formatDateTime(post.insightSubmittedAt) : "",
+          metricCell(post?.insightLikes ?? null),
+          metricCell(post?.insightComments ?? null),
+          metricCell(post?.insightShares ?? null),
+          metricCell(post?.insightReposts ?? null),
+          metricCell(post?.insightSaves ?? null),
+          metricCell(post?.insightViews ?? null),
+          metricCell(post?.insightReach ?? null),
+          ...settlementCells(first),
+        ]
+          .map(csvEscape)
+          .join(","),
+      );
+    });
+  });
   const csv = "﻿" + lines.join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -137,6 +199,24 @@ export function Payouts() {
   const [month, setMonth] = useState<string>(currentJstMonth);
   const [categoryFilter, setCategoryFilter] =
     useState<CampaignCategory | null>(null);
+  // 제출물/인사이트 상세 모달 — 응모 단건 조회 후 검수 화면과 동일한 다이얼로그로 표시.
+  const [detailDraft, setDetailDraft] = useState<DraftReview | null>(null);
+  const [detailLoadingId, setDetailLoadingId] = useState<string | null>(null);
+
+  async function openSubmissionDetail(applicationId: string) {
+    if (detailLoadingId) return;
+    setDetailLoadingId(applicationId);
+    try {
+      const submission = await fetchSubmission(applicationId);
+      setDetailDraft(toDraftReview(submission, new Date()));
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "제출물을 불러올 수 없습니다.",
+      );
+    } finally {
+      setDetailLoadingId(null);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -363,8 +443,9 @@ export function Payouts() {
                   </th>
                   <th>인플루언서</th>
                   <th>캠페인</th>
-                  <th>카테고리</th>
+                  <th style={{ minWidth: 80 }}>카테고리</th>
                   <th>서브타입</th>
+                  <th style={{ width: 96 }}>제출물</th>
                   <th>투고 게시일</th>
                   <th>인사이트 제출일</th>
                   <th>은행명</th>
@@ -414,6 +495,19 @@ export function Payouts() {
                           .join(" / ")}
                       </td>
                       <td>
+                        {/* 검토 페이지와 동일한 제출물 보기 링크 UX. */}
+                        <button
+                          type="button"
+                          className={styles.insightLink}
+                          onClick={() => openSubmissionDetail(row.applicationId)}
+                          disabled={detailLoadingId !== null}
+                        >
+                          {detailLoadingId === row.applicationId
+                            ? "불러오는 중…"
+                            : submissionViewLabel(row)}
+                        </button>
+                      </td>
+                      <td>
                         {formatDateTime(
                           latestDate(row.posts.map((post) => post.submittedAt)),
                         )}
@@ -452,6 +546,13 @@ export function Payouts() {
           </ScrollTable>
         )}
       </div>
+
+      {detailDraft && (
+        <InsightDetailDialog
+          draft={detailDraft}
+          onClose={() => setDetailDraft(null)}
+        />
+      )}
     </div>
   );
 }

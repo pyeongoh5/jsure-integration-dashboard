@@ -66,5 +66,6 @@ export { DraftStatusFilter } from "./components/drafts/DraftStatusFilter";
 export { DraftTable } from "./components/drafts/DraftTable";
 export { DraftUndoDialog } from "./components/drafts/DraftUndoDialog";
 export { InsightDetailDialog } from "./components/drafts/InsightDetailDialog";
+export { toDraftReview } from "./components/drafts/draftTransform";
 export { useDraftMutations } from "./components/drafts/useDraftMutations";
 export { useDraftReviewsData } from "./components/drafts/useDraftReviewsData";

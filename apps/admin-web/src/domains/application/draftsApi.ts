@@ -23,6 +23,15 @@ export async function fetchSubmittedPostAttachments(
   return AttachmentListResponseSchema.parse(res.data).attachments;
 }
 
+export async function fetchSubmission(
+  applicationId: string,
+): Promise<AdminSubmission> {
+  const res = await api.get(
+    `/campaign-applications/${encodeURIComponent(applicationId)}/submission`,
+  );
+  return AdminSubmissionSchema.parse(res.data);
+}
+
 export async function fetchApplicationAttachments(
   applicationId: string,
 ): Promise<Attachment[]> {

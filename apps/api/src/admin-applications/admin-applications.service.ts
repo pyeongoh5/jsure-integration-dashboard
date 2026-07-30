@@ -707,6 +707,11 @@ export class AdminApplicationsService {
     return this.fetchSubmission(applicationId);
   }
 
+  /** 응모 단건 제출물 조회 — 정산 화면에서 정산 이후 제출물/인사이트 열람용. */
+  async getSubmission(applicationId: string): Promise<AdminSubmission> {
+    return this.fetchSubmission(applicationId);
+  }
+
   private async fetchSubmission(applicationId: string): Promise<AdminSubmission> {
     const row = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
@@ -737,6 +742,13 @@ export class AdminApplicationsService {
                 subType: true,
                 submittedAt: true,
                 insightSubmittedAt: true,
+                insightLikes: true,
+                insightComments: true,
+                insightShares: true,
+                insightReposts: true,
+                insightSaves: true,
+                insightViews: true,
+                insightReach: true,
               },
               orderBy: { subType: "asc" as const },
             },
@@ -1181,6 +1193,13 @@ type SettlementRow = {
       subType: CampaignSubType;
       submittedAt: Date;
       insightSubmittedAt: Date | null;
+      insightLikes: number | null;
+      insightComments: number | null;
+      insightShares: number | null;
+      insightReposts: number | null;
+      insightSaves: number | null;
+      insightViews: number | null;
+      insightReach: number | null;
     }[];
     campaign: { id: string; title: string; category: CampaignCategory };
     influencer: {
@@ -1245,6 +1264,13 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
       insightSubmittedAt: post.insightSubmittedAt
         ? post.insightSubmittedAt.toISOString()
         : null,
+      insightLikes: post.insightLikes,
+      insightComments: post.insightComments,
+      insightShares: post.insightShares,
+      insightReposts: post.insightReposts,
+      insightSaves: post.insightSaves,
+      insightViews: post.insightViews,
+      insightReach: post.insightReach,
     })),
   };
 }

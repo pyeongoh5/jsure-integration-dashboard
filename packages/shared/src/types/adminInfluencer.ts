@@ -247,6 +247,14 @@ export const AdminSettlementSchema = z.object({
       subType: CampaignSubTypeSchema,
       submittedAt: z.string().datetime(),
       insightSubmittedAt: z.string().datetime().nullable(),
+      // 인사이트 수치 — 정산 화면 열람·CSV 내보내기용. 미제출 서브타입은 null.
+      insightLikes: z.number().int().nullable(),
+      insightComments: z.number().int().nullable(),
+      insightShares: z.number().int().nullable(),
+      insightReposts: z.number().int().nullable(),
+      insightSaves: z.number().int().nullable(),
+      insightViews: z.number().int().nullable(),
+      insightReach: z.number().int().nullable(),
     }),
   ),
 });

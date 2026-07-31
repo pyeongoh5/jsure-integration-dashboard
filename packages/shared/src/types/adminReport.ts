@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  ApplicationStatusSchema,
+  PostReviewStatusSchema,
+} from "./application.js";
 import { CampaignSubTypeSchema } from "./influencer.js";
 
 export const CampaignReportParticipantSchema = z.object({
@@ -8,6 +12,10 @@ export const CampaignReportParticipantSchema = z.object({
   subType: CampaignSubTypeSchema,
   /** 이 서브타입 참여에서 선택한 옵션 (INSTAGRAM 이면 FEED/REELS). */
   option: z.string().nullable(),
+  /** 응모 상태. 리포트에는 승인 이후 단계만 들어온다. */
+  status: ApplicationStatusSchema,
+  /** 제출물 검수 상태. 아직 제출 전이면 null. */
+  submissionReviewStatus: PostReviewStatusSchema.nullable(),
   insight: z.object({
     likes: z.number().int().nullable(),
     comments: z.number().int().nullable(),
@@ -39,6 +47,7 @@ export const CampaignReportRowSchema = z.object({
   totalEngagement: z.number().int(),
   erByViews: z.number().nullable(),
   erByFollowers: z.number().nullable(),
+  /** 참여자 수(명) — 응모가 승인된 이후 단계인 인플루언서. */
   participantCount: z.number().int(),
 });
 

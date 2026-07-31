@@ -397,7 +397,7 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
           엑셀 다운로드
         </h2>
         <p className={styles.dialogSubtitle}>
-          다운로드할 캠페인을 선택하세요. 각 캠페인의 참여자(정산 대기 포함)가 시트별로 저장됩니다.
+          다운로드할 캠페인을 선택하세요. 각 캠페인의 참여자(승인 이후 전체)가 시트별로 저장됩니다.
         </p>
         <div className={styles.bulkRow}>
           <span>{selectedCampaignIds.size}개 선택됨</span>
@@ -433,7 +433,7 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
                 <span className={styles.columnDesc}>
                   {row.campaignTitle}
                   <span className={styles.campaignItemMeta}>
-                    참여 완료 {row.participantCount}명
+                    참여자 {row.participantCount}명
                   </span>
                 </span>
               </label>
@@ -513,6 +513,13 @@ const PARTICIPANT_COLUMNS: Array<{
     excelValue: (participant) => (participant.handle ? `@${participant.handle}` : ""),
   },
   {
+    key: "status",
+    label: "상태",
+    numeric: false,
+    format: (participant) => participantStatusLabel(participant),
+    excelValue: (participant) => participantStatusLabel(participant),
+  },
+  {
     key: "likes",
     label: "좋아요",
     numeric: false,
@@ -563,6 +570,28 @@ const PARTICIPANT_COLUMNS: Array<{
   },
 ];
 
+const PARTICIPANT_STATUS_LABEL: Record<CampaignReportParticipant["status"], string> = {
+  APPLIED: "승인 대기",
+  REJECTED: "반려",
+  APPROVED: "승인",
+  SHIPPED: "배송중",
+  DELIVERED: "수령 확인",
+  ORDER_SUBMITTED: "주문 제출",
+  REVIEW_SUBMITTED: "제출",
+  COMPLETED: "완료",
+  CANCELLED: "취소",
+};
+
+/** 제출 이후에는 검수 결과가 실제 진행 단계라서 상태 대신 검수 상태를 보여준다. */
+function participantStatusLabel(participant: CampaignReportParticipant): string {
+  if (participant.status === "REVIEW_SUBMITTED") {
+    if (participant.submissionReviewStatus === "REJECTED") return "검수 반려";
+    if (participant.submissionReviewStatus === "APPROVED") return "검수 승인";
+    return "검수 대기";
+  }
+  return PARTICIPANT_STATUS_LABEL[participant.status];
+}
+
 function formatSns(participant: CampaignReportParticipant): string {
   const snsLabel = SNS_LABEL[participant.subType];
   return participant.option
@@ -579,7 +608,9 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
   const [participants, setParticipants] = useState<CampaignReportParticipant[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const totalPages = Math.max(1, Math.ceil(totalCount / PARTICIPANTS_PER_PAGE));
+  // 참여자 1명이 여러 서브타입에 참여하면 행 수 > 명 수라 페이지 수는 응답의 total 로 센다.
+  const [rowTotal, setRowTotal] = useState(totalCount);
+  const totalPages = Math.max(1, Math.ceil(rowTotal / PARTICIPANTS_PER_PAGE));
   const safePage = Math.min(page, totalPages - 1);
 
   useEffect(() => {
@@ -593,7 +624,9 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
     setLoadError(null);
     getCampaignParticipants(campaignId, safePage, PARTICIPANTS_PER_PAGE)
       .then((response) => {
-        if (!cancelled) setParticipants(response.participants);
+        if (cancelled) return;
+        setParticipants(response.participants);
+        setRowTotal(response.total);
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
@@ -618,6 +651,7 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
     <div className={styles.participantsPanel}>
       <div className={styles.participantsHeader}>
         <span className={styles.participantsTitle}>참여자 ({totalCount}명)</span>
+        <span className={styles.participantsSubtitle}>승인 이후 단계인 응모 기준</span>
       </div>
       <div className={styles.participantsTableWrap}>
         <table className={styles.participantsTable}>

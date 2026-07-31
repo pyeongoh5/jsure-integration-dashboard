@@ -49,8 +49,12 @@ export class AdminReportsService {
       let participantCount = 0;
 
       for (const application of campaign.applications) {
-        // 인플루언서 수·팔로워 합산은 응모가 승인된(승인 이후 상태 포함) 인플루언서만 대상.
-        if (SLOT_CONSUMING_STATUSES.includes(application.status)) {
+        // 인플루언서 수·팔로워·참여자 수는 응모가 승인된(승인 이후 상태 포함) 인플루언서만 대상.
+        const isParticipant = SLOT_CONSUMING_STATUSES.includes(
+          application.status,
+        );
+        if (isParticipant) {
+          participantCount += 1;
           influencerSet.add(application.influencerId);
           // 참여한 모든 서브타입 계정의 팔로워를 합산.
           for (const account of application.influencer.snsAccounts) {
@@ -64,12 +68,16 @@ export class AdminReportsService {
           }
         }
 
-        // 정산 대기(PENDING) 포함 — 정산 흐름에 들어간 참여자는 리포트 대상.
+        // 정산 대기(PENDING) 포함 — 정산 흐름에 들어간 응모의 보수는 리포트 대상.
         if (application.settlement) {
           totalRewardJpy += application.settlement.amountJpy;
-          participantCount += application.posts.length;
         }
 
+        // 콘텐츠 수·인사이트 합계는 제출된 게시물 전체 기준.
+        // 취소된 응모와 검수 반려된 제출물은 실제 게재물이 아니므로 뺀다.
+        if (!isParticipant || application.submissionReviewStatus === "REJECTED") {
+          continue;
+        }
         for (const post of application.posts) {
           postCount += 1;
           totalLikes += post.insightLikes ?? 0;
@@ -136,56 +144,65 @@ export class AdminReportsService {
     };
   }
 
+  /**
+   * 참여자 목록 — 응모가 승인된 이후 단계인 인플루언서를 참여 서브타입별 행으로 편다.
+   * 아직 게시물을 제출하지 않았어도 행으로 나오며 인사이트는 빈 값이다.
+   */
   private async collectParticipants(campaignId: string): Promise<CampaignReportParticipant[]> {
-    const posts = await this.prisma.submittedPost.findMany({
-      where: {
-        // 정산 레코드가 생겼으면(대기 포함) 인사이트 열람 대상.
-        application: { campaignId, settlement: { isNot: null } },
-      },
-      orderBy: { submittedAt: "asc" },
-      include: {
-        application: {
+    const applications = await this.prisma.campaignApplication.findMany({
+      where: { campaignId, status: { in: SLOT_CONSUMING_STATUSES } },
+      orderBy: { appliedAt: "asc" },
+      select: {
+        status: true,
+        subTypes: true,
+        submissionReviewStatus: true,
+        options: { select: { subType: true, option: true } },
+        posts: true,
+        influencer: {
           select: {
-            options: { select: { subType: true, option: true } },
-            influencer: {
-              select: {
-                id: true,
-                name: true,
-                snsAccounts: {
-                  select: { snsType: true, handle: true },
-                },
-              },
-            },
+            id: true,
+            name: true,
+            snsAccounts: { select: { snsType: true, handle: true } },
           },
         },
       },
     });
 
-    return posts.map((post) => {
-      const matchedAccount = post.application.influencer.snsAccounts.find(
-        (account) => account.snsType === post.subType,
-      );
-      return {
-        influencerId: post.application.influencer.id,
-        influencerName: post.application.influencer.name,
-        handle: matchedAccount?.handle ?? "",
-        subType: post.subType,
-        option:
-          post.application.options.find(
-            (entry: { subType: string; option: string }) =>
-              entry.subType === post.subType,
-          )?.option ?? null,
-        insight: {
-          likes: post.insightLikes,
-          comments: post.insightComments,
-          shares: post.insightShares,
-          reposts: post.insightReposts,
-          saves: post.insightSaves,
-          views: post.insightViews,
-          reach: post.insightReach,
-        },
-      };
-    });
+    return applications.flatMap((application) =>
+      [...application.subTypes]
+        .sort()
+        .map((subType): CampaignReportParticipant => {
+          const post = application.posts.find(
+            (entry) => entry.subType === subType,
+          );
+          const matchedAccount = application.influencer.snsAccounts.find(
+            (account) => account.snsType === subType,
+          );
+          return {
+            influencerId: application.influencer.id,
+            influencerName: application.influencer.name,
+            handle: matchedAccount?.handle ?? "",
+            subType,
+            option:
+              application.options.find((entry) => entry.subType === subType)
+                ?.option ?? null,
+            status: application.status,
+            // 제출 전에는 검수 상태가 의미 없으므로 null 로 내린다.
+            submissionReviewStatus: post
+              ? application.submissionReviewStatus
+              : null,
+            insight: {
+              likes: post?.insightLikes ?? null,
+              comments: post?.insightComments ?? null,
+              shares: post?.insightShares ?? null,
+              reposts: post?.insightReposts ?? null,
+              saves: post?.insightSaves ?? null,
+              views: post?.insightViews ?? null,
+              reach: post?.insightReach ?? null,
+            },
+          };
+        }),
+    );
   }
 }
 

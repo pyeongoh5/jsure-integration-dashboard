@@ -169,6 +169,11 @@
   color: var(--c-text);
 }
 
+.participantsSubtitle {
+  font-size: 12px;
+  color: var(--c-muted);
+}
+
 .participantsEmpty {
   padding: 20px;
   text-align: center;

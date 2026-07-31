@@ -31,10 +31,10 @@
 | 필드 | 타입 | 용도 |
 |---|---|---|
 | `applicationId` | `string` | 상세 모달을 열 키 |
-| `postUrl` | `string \| null` | 게시물 URL (미입력 가능) |
-| `submittedAt` | `string` (ISO datetime) | 제출일 |
+| `postUrl` | `string \| null` | 게시물 URL. 제출 전이거나 URL 미입력이면 null |
+| `submittedAt` | `string \| null` (ISO datetime) | 제출일. 제출 전이면 null |
 
-`AdminReportsService.collectParticipants`는 이미 `submittedPost`를 조회한다. `select`에 `url`·`submittedAt`을 더하고 `application` select에 `id`를 추가한다. 추가 쿼리·N+1 없음.
+`AdminReportsService.collectParticipants`는 응모(`campaignApplication`)에서 시작해 참여 서브타입별 행을 펼치고, **제출 전 응모도 행으로 낸다**(승인 이후 전 단계 포함). 따라서 해당 서브타입의 `post`가 없을 수 있고 `postUrl`·`submittedAt`은 nullable이다. `select`에 응모 `id`를 추가하고 행 매핑에서 `post?.url`·`post?.submittedAt`을 읽는다. 추가 쿼리·N+1 없음.
 
 상세 조회 엔드포인트는 새로 만들지 않는다. 정산관리가 쓰는 `GET /campaign-applications/:applicationId/submission`을 그대로 쓴다.
 
@@ -58,7 +58,7 @@ const { open, loadingId, dialog } = useSubmissionDetail();
 호출부 변경:
 
 - **Payouts**: 상태 2개(`detailDraft`, `detailLoadingId`)·`openSubmissionDetail`·모달 렌더를 삭제하고 훅으로 교체. 사용자 눈에 보이는 동작 변화 없음.
-- **Reports**: 참여자 표 마지막에 `제출물` 열을 추가하고 버튼에서 `open(participant.applicationId)`.
+- **Reports**: 참여자 표 마지막에 `제출물` 열을 추가하고 버튼에서 `open(participant.applicationId)`. **제출 전 행(`submittedAt === null`)은 버튼 대신 `-`** 를 표시한다 — 열 것이 없다.
 
 대안(채택 안 함):
 - 정산관리 코드를 리포트에 복제 — 최소 변경이지만 같은 14줄이 두 화면에 남고 세 번째 화면에서 또 복제된다.
@@ -77,13 +77,13 @@ const { open, loadingId, dialog } = useSubmissionDetail();
 
 ## 에러 처리
 
-- 참여자 응답에 `applicationId`가 항상 있으므로 버튼은 조건부 렌더가 아니다.
-- `fetchSubmission` 404(제출물 없음) — `window.alert`로 서버 메시지 표시. 리포트 참여자는 posts가 있는 응모만 나오므로 정상 흐름에서는 발생하지 않는다.
+- 제출 전 행은 버튼 자체가 없으므로 열 수 없는 상세를 요청하지 않는다.
+- `fetchSubmission` 404(제출물 없음) — `window.alert`로 서버 메시지 표시. 버튼이 보이는 행은 제출물이 있으므로 정상 흐름에서는 발생하지 않는다.
 - 로딩 중 다른 행 클릭 — 훅이 무시한다.
 
 ## 테스트
 
-- **서버**: `collectParticipants`가 `applicationId`·`postUrl`·`submittedAt`을 채우는지 확인하는 단위 테스트 1건 추가(`admin-reports`에 기존 스펙 없음).
+- **서버**: 기존 `admin-reports.service.spec.ts`에 2건 추가 — 제출한 행이 `applicationId`·`postUrl`·`submittedAt`을 담는지, 제출 전 행은 URL·제출일이 null인지.
 - **클라이언트**: 테스트 인프라가 없어 신규 테스트 없음. `pnpm typecheck`가 스키마 변경을 두 화면에서 잡는다.
 - **수동 확인**: 리포트 참여자 행 → 모달 열림 / 정산관리 동작 무변화 / xlsx에 열 2개 추가.
 

@@ -5,7 +5,12 @@ type StubApplication = {
   status: string;
   subTypes: string[];
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
-  posts: { subType: string; insightLikes: number | null }[];
+  posts: {
+    subType: string;
+    insightLikes: number | null;
+    url?: string | null;
+    submittedAt?: Date;
+  }[];
   settlement: { amountJpy: number } | null;
   options?: { subType: string; option: string }[];
   influencer: {
@@ -14,6 +19,8 @@ type StubApplication = {
     snsAccounts: { snsType: string; handle: string; followerCount: number }[];
   };
 };
+
+const SUBMITTED_AT = new Date("2026-07-20T02:00:00Z");
 
 function makeService(applications: StubApplication[]) {
   const prisma = {
@@ -25,9 +32,15 @@ function makeService(applications: StubApplication[]) {
     },
     campaignApplication: {
       findMany: async () =>
-        applications.map((application) => ({
+        applications.map((application, index) => ({
           ...application,
+          id: `app${index + 1}`,
           options: application.options ?? [],
+          posts: application.posts.map((post) => ({
+            url: null,
+            submittedAt: SUBMITTED_AT,
+            ...post,
+          })),
         })),
     },
   } as never;
@@ -119,6 +132,41 @@ describe("참여자 목록", () => {
     expect(participants[0]!.status).toBe("APPROVED");
     expect(participants[0]!.submissionReviewStatus).toBeNull();
     expect(participants[0]!.insight.likes).toBeNull();
+  });
+
+  it("제출한 행은 상세 열람용 applicationId·URL·제출일을 내려준다", async () => {
+    const service = makeService([
+      application({
+        influencerId: "i1",
+        status: "REVIEW_SUBMITTED",
+        posts: [
+          {
+            subType: "INSTAGRAM",
+            insightLikes: 3,
+            url: "https://instagram.com/p/abc",
+          },
+        ],
+      }),
+    ]);
+
+    const { participants } = await service.campaignParticipants("c1", 0, 20);
+
+    expect(participants[0]).toMatchObject({
+      applicationId: "app1",
+      postUrl: "https://instagram.com/p/abc",
+      submittedAt: SUBMITTED_AT.toISOString(),
+    });
+  });
+
+  it("제출 전 행은 URL·제출일이 null 이라 상세 진입 대상이 아니다", async () => {
+    const service = makeService([
+      application({ influencerId: "i1", status: "APPROVED" }),
+    ]);
+
+    const { participants } = await service.campaignParticipants("c1", 0, 20);
+
+    expect(participants[0]!.postUrl).toBeNull();
+    expect(participants[0]!.submittedAt).toBeNull();
   });
 
   it("참여 서브타입마다 행이 나온다", async () => {

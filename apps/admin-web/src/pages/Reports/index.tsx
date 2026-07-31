@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import ExcelJS from "exceljs";
 import { SUB_TYPE_OPTION_LABEL, type CampaignReportParticipant } from "@jsure/shared";
 import { ScrollTable } from "@/components/composites";
+import { useSubmissionDetail } from "@/domains/application";
 import { Button } from "@/components/ui";
 import {
   getCampaignParticipants,
@@ -344,16 +345,17 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
         const sheetName = uniqueSheetName(target.campaignTitle, usedSheetNames);
         usedSheetNames.add(sheetName);
         const sheet = workbook.addWorksheet(sheetName);
-        sheet.columns = PARTICIPANT_COLUMNS.map((column) => ({
+        const sheetColumns = [...PARTICIPANT_COLUMNS, ...EXCEL_ONLY_COLUMNS];
+        sheet.columns = sheetColumns.map((column) => ({
           header: column.label,
           key: column.key,
-          width: column.numeric ? 12 : 18,
+          width: column.width ?? (column.numeric ? 12 : 18),
           style: column.numeric ? { alignment: { horizontal: "right" } } : undefined,
         }));
         sheet.getRow(1).font = { bold: true };
         for (const participant of response.participants) {
           const row: Record<string, string | number> = {};
-          for (const column of PARTICIPANT_COLUMNS) {
+          for (const column of sheetColumns) {
             row[column.key] = column.excelValue(participant);
           }
           sheet.addRow(row);
@@ -484,13 +486,17 @@ type ParticipantPanelProps = {
 
 const PARTICIPANTS_PER_PAGE = 20;
 
-const PARTICIPANT_COLUMNS: Array<{
+type ParticipantColumn = {
   key: string;
   label: string;
   numeric: boolean;
+  /** xlsx 열 너비. 생략하면 numeric 여부로 정한다. */
+  width?: number;
   format: (participant: CampaignReportParticipant) => string;
   excelValue: (participant: CampaignReportParticipant) => string | number;
-}> = [
+};
+
+const PARTICIPANT_COLUMNS: ParticipantColumn[] = [
   {
     key: "name",
     label: "이름",
@@ -570,6 +576,29 @@ const PARTICIPANT_COLUMNS: Array<{
   },
 ];
 
+/**
+ * xlsx 에만 넣는 컬럼. 화면 표에는 긴 URL 대신 '제출물' 버튼을 두고
+ * 상세는 모달에서 본다.
+ */
+const EXCEL_ONLY_COLUMNS: ParticipantColumn[] = [
+  {
+    key: "postUrl",
+    label: "게시물 URL",
+    numeric: false,
+    width: 48,
+    format: (participant) => participant.postUrl ?? "-",
+    excelValue: (participant) => participant.postUrl ?? "",
+  },
+  {
+    key: "submittedAt",
+    label: "제출일",
+    numeric: false,
+    format: (participant) => formatDate(participant.submittedAt),
+    excelValue: (participant) =>
+      participant.submittedAt ? formatDate(participant.submittedAt) : "",
+  },
+];
+
 const PARTICIPANT_STATUS_LABEL: Record<CampaignReportParticipant["status"], string> = {
   APPLIED: "승인 대기",
   REJECTED: "반려",
@@ -603,7 +632,15 @@ function formatInsightValue(value: number | null): string {
   return value === null ? "-" : formatInteger(value);
 }
 
+function formatDate(iso: string | null): string {
+  if (!iso) return "-";
+  const date = new Date(iso);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
+  const submissionDetail = useSubmissionDetail();
   const [page, setPage] = useState(0);
   const [participants, setParticipants] = useState<CampaignReportParticipant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -662,18 +699,19 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
                   {column.label}
                 </th>
               ))}
+              <th>제출물</th>
             </tr>
           </thead>
           <tbody>
             {loadError ? (
               <tr>
-                <td colSpan={PARTICIPANT_COLUMNS.length} className={styles.participantsEmpty}>
+                <td colSpan={PARTICIPANT_COLUMNS.length + 1} className={styles.participantsEmpty}>
                   {loadError}
                 </td>
               </tr>
             ) : loading ? (
               <tr>
-                <td colSpan={PARTICIPANT_COLUMNS.length} className={styles.participantsEmpty}>
+                <td colSpan={PARTICIPANT_COLUMNS.length + 1} className={styles.participantsEmpty}>
                   불러오는 중...
                 </td>
               </tr>
@@ -687,12 +725,29 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
                       {column.format(participant)}
                     </td>
                   ))}
+                  <td>
+                    {participant.submittedAt === null ? (
+                      "-"
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.submissionLink}
+                        onClick={() => submissionDetail.open(participant.applicationId)}
+                        disabled={submissionDetail.loadingId !== null}
+                      >
+                        {submissionDetail.loadingId === participant.applicationId
+                          ? "불러오는 중…"
+                          : "보기"}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+      {submissionDetail.dialog}
       {totalPages > 1 && (
         <div className={styles.pagination}>
           <Button

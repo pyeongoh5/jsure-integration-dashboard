@@ -4,12 +4,9 @@ import { SUB_TYPE_LABEL, type AdminSettlement, type CampaignCategory } from "@js
 import {
   completeSettlements,
   listSettlements,
-  fetchSubmission,
-  toDraftReview,
-  InsightDetailDialog,
+  useSubmissionDetail,
   CATEGORY_LABEL_KO,
   CATEGORY_FILTER_OPTIONS,
-  type DraftReview,
 } from "@/domains/application";
 import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
@@ -200,23 +197,7 @@ export function Payouts() {
   const [categoryFilter, setCategoryFilter] =
     useState<CampaignCategory | null>(null);
   // 제출물/인사이트 상세 모달 — 응모 단건 조회 후 검수 화면과 동일한 다이얼로그로 표시.
-  const [detailDraft, setDetailDraft] = useState<DraftReview | null>(null);
-  const [detailLoadingId, setDetailLoadingId] = useState<string | null>(null);
-
-  async function openSubmissionDetail(applicationId: string) {
-    if (detailLoadingId) return;
-    setDetailLoadingId(applicationId);
-    try {
-      const submission = await fetchSubmission(applicationId);
-      setDetailDraft(toDraftReview(submission, new Date()));
-    } catch (error) {
-      window.alert(
-        error instanceof Error ? error.message : "제출물을 불러올 수 없습니다.",
-      );
-    } finally {
-      setDetailLoadingId(null);
-    }
-  }
+  const submissionDetail = useSubmissionDetail();
 
   useEffect(() => {
     let cancelled = false;
@@ -499,10 +480,10 @@ export function Payouts() {
                         <button
                           type="button"
                           className={styles.insightLink}
-                          onClick={() => openSubmissionDetail(row.applicationId)}
-                          disabled={detailLoadingId !== null}
+                          onClick={() => submissionDetail.open(row.applicationId)}
+                          disabled={submissionDetail.loadingId !== null}
                         >
-                          {detailLoadingId === row.applicationId
+                          {submissionDetail.loadingId === row.applicationId
                             ? "불러오는 중…"
                             : submissionViewLabel(row)}
                         </button>
@@ -547,12 +528,7 @@ export function Payouts() {
         )}
       </div>
 
-      {detailDraft && (
-        <InsightDetailDialog
-          draft={detailDraft}
-          onClose={() => setDetailDraft(null)}
-        />
-      )}
+      {submissionDetail.dialog}
     </div>
   );
 }

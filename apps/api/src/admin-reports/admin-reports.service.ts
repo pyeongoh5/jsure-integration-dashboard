@@ -153,6 +153,7 @@ export class AdminReportsService {
       where: { campaignId, status: { in: SLOT_CONSUMING_STATUSES } },
       orderBy: { appliedAt: "asc" },
       select: {
+        id: true,
         status: true,
         subTypes: true,
         submissionReviewStatus: true,
@@ -179,10 +180,13 @@ export class AdminReportsService {
             (account) => account.snsType === subType,
           );
           return {
+            applicationId: application.id,
             influencerId: application.influencer.id,
             influencerName: application.influencer.name,
             handle: matchedAccount?.handle ?? "",
             subType,
+            postUrl: post?.url ?? null,
+            submittedAt: post ? post.submittedAt.toISOString() : null,
             option:
               application.options.find((entry) => entry.subType === subType)
                 ?.option ?? null,

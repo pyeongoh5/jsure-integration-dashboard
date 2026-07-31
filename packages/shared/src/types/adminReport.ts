@@ -6,10 +6,16 @@ import {
 import { CampaignSubTypeSchema } from "./influencer.js";
 
 export const CampaignReportParticipantSchema = z.object({
+  /** 제출물 상세 모달을 여는 키. */
+  applicationId: z.string(),
   influencerId: z.string(),
   influencerName: z.string(),
   handle: z.string(),
   subType: CampaignSubTypeSchema,
+  /** 게시물 URL — 아직 제출 전이거나 URL 미입력이면 null. */
+  postUrl: z.string().nullable(),
+  /** 제출물 제출 시각. 아직 제출 전이면 null. */
+  submittedAt: z.string().datetime().nullable(),
   /** 이 서브타입 참여에서 선택한 옵션 (INSTAGRAM 이면 FEED/REELS). */
   option: z.string().nullable(),
   /** 응모 상태. 리포트에는 승인 이후 단계만 들어온다. */

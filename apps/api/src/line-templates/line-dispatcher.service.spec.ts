@@ -17,7 +17,11 @@ function makePrismaMock(overrides: Record<string, unknown> = {}) {
   } as unknown as PrismaService;
 }
 
-function makeLineMock(pushTextImpl: (id: string, text: string) => Promise<void> = jest.fn()) {
+function makeLineMock(
+  pushTextImpl: (id: string, text: string) => Promise<unknown> = jest
+    .fn()
+    .mockResolvedValue({ ok: true }),
+) {
   return { pushText: pushTextImpl } as unknown as LineMessagingService;
 }
 
@@ -113,7 +117,7 @@ describe("LineDispatcherService", () => {
       enabled: true,
       body: "hi {{influencerName}} / {{campaignTitle}}",
     });
-    const push = jest.fn().mockResolvedValue(undefined);
+    const push = jest.fn().mockResolvedValue({ ok: true });
     const line = makeLineMock(push);
 
     const svc = new LineDispatcherService(prisma, line);
@@ -127,6 +131,53 @@ describe("LineDispatcherService", () => {
           renderedBody: "hi Alice / Test Campaign",
           templateId: "t1",
         }),
+      }),
+    );
+  });
+
+  it("LINE 이 실패를 반환하면(예외 아님) FAILED 로그 + 사유 기록", async () => {
+    const prisma = makePrismaMock();
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue({
+      id: "t1",
+      enabled: true,
+      body: "hi",
+    });
+    const push = jest
+      .fn()
+      .mockResolvedValue({ ok: false, skipped: false, reason: "HTTP 429: rate limit" });
+    const line = makeLineMock(push);
+
+    const svc = new LineDispatcherService(prisma, line);
+    await svc.dispatch("SNS_APPLICATION_APPLIED", { application });
+
+    expect(prisma.lineDispatchLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "FAILED",
+          errorMessage: "HTTP 429: rate limit",
+        }),
+      }),
+    );
+  });
+
+  it("LINE 미연동 등으로 건너뛰면 SKIPPED_DISABLED 로그", async () => {
+    const prisma = makePrismaMock();
+    (prisma.lineMessageTemplate.findUnique as jest.Mock).mockResolvedValue({
+      id: "t1",
+      enabled: true,
+      body: "hi",
+    });
+    const push = jest
+      .fn()
+      .mockResolvedValue({ ok: false, skipped: true, reason: "LINE 연동되지 않은 인플루언서" });
+    const line = makeLineMock(push);
+
+    const svc = new LineDispatcherService(prisma, line);
+    await svc.dispatch("SNS_APPLICATION_APPLIED", { application });
+
+    expect(prisma.lineDispatchLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: "SKIPPED_DISABLED" }),
       }),
     );
   });

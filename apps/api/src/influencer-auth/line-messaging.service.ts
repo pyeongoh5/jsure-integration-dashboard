@@ -21,6 +21,15 @@ interface CachedToken {
   expiresAt: number;
 }
 
+/**
+ * 발송 결과. 예외를 던지지 않는 대신 호출부가 실제 도달 여부를 알 수 있게 한다.
+ * skipped=true 는 "보낼 대상/설정이 없어 애초에 시도하지 않음"(발송 이력에서
+ * 실패와 구분해야 함), skipped=false 는 시도했으나 실패.
+ */
+export type LinePushResult =
+  | { ok: true }
+  | { ok: false; skipped: boolean; reason: string };
+
 @Injectable()
 export class LineMessagingService {
   private readonly logger = new Logger(LineMessagingService.name);
@@ -106,37 +115,26 @@ export class LineMessagingService {
    * Errors are logged but never thrown — messaging should never break the
    * primary business action that triggered it.
    */
-  async pushToInfluencer(influencerId: string, messages: LineMessage[]): Promise<void> {
+  async pushToInfluencer(
+    influencerId: string,
+    messages: LineMessage[],
+  ): Promise<LinePushResult> {
     const token = await this.resolveToken();
     if (!token) {
       this.logger.warn("LINE messaging token not configured; skipping push");
-      return;
+      return { ok: false, skipped: true, reason: "발송이 비활성화된 환경이거나 토큰 미설정" };
     }
     const inf = await this.prisma.influencer.findUnique({
       where: { id: influencerId },
       select: { lineUserId: true },
     });
-    if (!inf?.lineUserId) return;
-
-    try {
-      const res = await fetch(LINE_PUSH_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ to: inf.lineUserId, messages }),
-      });
-      if (!res.ok) {
-        const body = await res.text();
-        this.logger.warn(`LINE push failed (${res.status}) for inf=${influencerId}: ${body}`);
-      }
-    } catch (err) {
-      this.logger.error(`LINE push error for inf=${influencerId}`, err as Error);
+    if (!inf?.lineUserId) {
+      return { ok: false, skipped: true, reason: "LINE 연동되지 않은 인플루언서" };
     }
+    return this.push(inf.lineUserId, messages, token, `inf=${influencerId}`);
   }
 
-  pushText(influencerId: string, text: string): Promise<void> {
+  pushText(influencerId: string, text: string): Promise<LinePushResult> {
     return this.pushToInfluencer(influencerId, [{ type: "text", text }]);
   }
 
@@ -144,12 +142,25 @@ export class LineMessagingService {
    * Push messages directly to a raw LINE user ID (bypasses influencer lookup).
    * Used by admin test-send and other flows where the lineUserId is already known.
    */
-  async pushToLineUserId(lineUserId: string, messages: LineMessage[]): Promise<void> {
+  async pushToLineUserId(
+    lineUserId: string,
+    messages: LineMessage[],
+  ): Promise<LinePushResult> {
     const token = await this.resolveToken();
     if (!token) {
       this.logger.warn("LINE messaging token not configured; skipping push");
-      return;
+      return { ok: false, skipped: true, reason: "발송이 비활성화된 환경이거나 토큰 미설정" };
     }
+    return this.push(lineUserId, messages, token, `lineUserId=${lineUserId}`);
+  }
+
+  /** 실제 push 호출 — 실패는 던지지 않고 결과로 돌려준다. */
+  private async push(
+    lineUserId: string,
+    messages: LineMessage[],
+    token: string,
+    logLabel: string,
+  ): Promise<LinePushResult> {
     try {
       const res = await fetch(LINE_PUSH_URL, {
         method: "POST",
@@ -159,12 +170,17 @@ export class LineMessagingService {
         },
         body: JSON.stringify({ to: lineUserId, messages }),
       });
-      if (!res.ok) {
-        const body = await res.text();
-        this.logger.warn(`LINE push failed (${res.status}) for lineUserId=${lineUserId}: ${body}`);
-      }
+      if (res.ok) return { ok: true };
+      const body = await res.text();
+      this.logger.warn(`LINE push failed (${res.status}) for ${logLabel}: ${body}`);
+      return { ok: false, skipped: false, reason: `HTTP ${res.status}: ${body}`.slice(0, 500) };
     } catch (err) {
-      this.logger.error(`LINE push error for lineUserId=${lineUserId}`, err as Error);
+      this.logger.error(`LINE push error for ${logLabel}`, err as Error);
+      return {
+        ok: false,
+        skipped: false,
+        reason: err instanceof Error ? err.message : String(err),
+      };
     }
   }
 

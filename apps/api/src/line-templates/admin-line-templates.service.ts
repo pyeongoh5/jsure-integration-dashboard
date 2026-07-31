@@ -195,7 +195,9 @@ export class AdminLineTemplatesService {
       });
     }
     const rendered = renderTemplate(body, meta.variables, {} as never, { useSample: true });
-    await this.line.pushToLineUserId(admin.testLineUserId, [{ type: "text", text: rendered }]);
-    return { sent: true };
+    const result = await this.line.pushToLineUserId(admin.testLineUserId, [
+      { type: "text", text: rendered },
+    ]);
+    return { sent: result.ok };
   }
 }

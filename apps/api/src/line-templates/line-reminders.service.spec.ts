@@ -21,8 +21,10 @@ afterAll(() => {
 function matchesWhere(row: Record<string, unknown>, where: Record<string, unknown>): boolean {
   for (const [key, cond] of Object.entries(where)) {
     if (key === "campaign") {
-      const category = (cond as { category?: string }).category;
-      if (category && (row.campaign as { category?: string }).category !== category) return false;
+      const filter = cond as { category?: string; deletedAt?: unknown };
+      const target = row.campaign as { category?: string; deletedAt?: Date | null };
+      if (filter.category && target.category !== filter.category) return false;
+      if (filter.deletedAt === null && target.deletedAt != null) return false;
       continue;
     }
     if (key === "posts") continue; // relation 필터는 흉내내지 않음(대상 픽스처는 SIMPLE_REVIEW 뿐)
@@ -86,6 +88,29 @@ describe("LineRemindersService - SIMPLE_REVIEW 6-R", () => {
       "SIMPLE_REVIEW_DEADLINE_REMINDER",
       expect.anything(),
     );
+  });
+
+  it("삭제된 캠페인의 응모에는 리마인더를 보내지 않는다", async () => {
+    const now = Date.now();
+    const onDeletedCampaign = {
+      id: "deleted",
+      status: "DELIVERED",
+      reviewedAt: new Date(now - 20 * DAY_MS),
+      receivedAt: anchorForThreeDaysLeft(now),
+      submissionReviewStatus: "PENDING",
+      submissionReviewedAt: null,
+      posts: [],
+      campaign: { ...campaign, deletedAt: new Date(now - DAY_MS) },
+    };
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([onDeletedCampaign]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
   it("수령 확인(receivedAt) 기준으로 마감 3일 전이면 리마인더를 보낸다", async () => {

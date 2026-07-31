@@ -95,7 +95,12 @@ export class LineDispatcherService {
     }
 
     try {
-      await this.line.pushText(context.application.influencerId, renderedBody);
+      const result = await this.line.pushText(
+        context.application.influencerId,
+        renderedBody,
+      );
+      // LINE 이 4xx/5xx 를 주거나 대상이 없어도 예외가 아니므로, 결과를 그대로
+      // 상태에 반영해야 로그의 SUCCESS 가 실제 도달을 의미한다.
       await this.logDispatch({
         category,
         triggerKey,
@@ -103,7 +108,8 @@ export class LineDispatcherService {
         applicationId,
         toLineUserId,
         renderedBody,
-        status: "SUCCESS",
+        status: result.ok ? "SUCCESS" : result.skipped ? "SKIPPED_DISABLED" : "FAILED",
+        errorMessage: result.ok ? undefined : result.reason,
       });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);

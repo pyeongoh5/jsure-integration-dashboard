@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
+import type { CampaignCategory } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { linePushAllowed } from "../common/line-push-allowed";
 import { LineDispatcherService } from "./line-dispatcher.service";
@@ -11,6 +12,15 @@ const INSIGHT_REMINDER_DAY_AFTER_POST = 7;
 const INSIGHT_OVERDUE_REMINDER_DAY_AFTER_POST = 8;
 const POST_REJECTION_RESUBMIT_DAYS = 1;
 const JST_TZ = "Asia/Tokyo";
+
+/**
+ * 리마인더 대상 캠페인 조건 — 삭제된 캠페인의 응모에는 발송하지 않는다.
+ * (campaigns 모듈의 PUBLISHED_CAMPAIGN_WHERE 는 campaign 테이블 직접 조회용이고,
+ * 여기는 응모에서 출발해 campaign 을 중첩 필터로 거는 경로다.)
+ */
+function activeCampaign(category: CampaignCategory) {
+  return { category, deletedAt: null } as const;
+}
 
 /** JST 기준 그 날의 00:00 UTC 타임스탬프 (밀리초). */
 function startOfJstDay(d: Date): number {
@@ -63,7 +73,7 @@ export class LineRemindersService {
       where: {
         receivedAt: { not: null },
         status: { in: ["SHIPPED", "DELIVERED"] },
-        campaign: { category: "SNS" },
+        campaign: activeCampaign("SNS"),
       },
       include: {
         ...DISPATCH_APPLICATION_INCLUDE,
@@ -98,7 +108,7 @@ export class LineRemindersService {
       where: {
         submissionReviewStatus: "REJECTED",
         submissionReviewedAt: { not: null },
-        campaign: { category: "SNS" },
+        campaign: activeCampaign("SNS"),
       },
       include: DISPATCH_APPLICATION_INCLUDE,
     });
@@ -138,7 +148,7 @@ export class LineRemindersService {
         reviewSubmittedAt: { not: null },
         submissionReviewStatus: { in: ["PENDING", "APPROVED"] },
         posts: { some: { insightSubmittedAt: null } },
-        campaign: { category: "SNS" },
+        campaign: activeCampaign("SNS"),
       },
       include: DISPATCH_APPLICATION_INCLUDE,
     });
@@ -178,7 +188,7 @@ export class LineRemindersService {
       where: {
         status: "ORDER_SUBMITTED",
         orderSubmittedAt: { not: null },
-        campaign: { category: "FAKE_PURCHASE" },
+        campaign: activeCampaign("FAKE_PURCHASE"),
       },
       include: {
         ...DISPATCH_APPLICATION_INCLUDE,
@@ -216,7 +226,7 @@ export class LineRemindersService {
       where: {
         receivedAt: { not: null },
         status: { in: ["SHIPPED", "DELIVERED"] },
-        campaign: { category: "SIMPLE_REVIEW" },
+        campaign: activeCampaign("SIMPLE_REVIEW"),
       },
       include: {
         ...DISPATCH_APPLICATION_INCLUDE,
@@ -255,7 +265,7 @@ export class LineRemindersService {
       where: {
         submissionReviewStatus: "REJECTED",
         submissionReviewedAt: { not: null },
-        campaign: { category: "SIMPLE_REVIEW" },
+        campaign: activeCampaign("SIMPLE_REVIEW"),
       },
       include: DISPATCH_APPLICATION_INCLUDE,
     });

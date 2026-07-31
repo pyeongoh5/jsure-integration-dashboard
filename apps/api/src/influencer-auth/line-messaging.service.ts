@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
+import { linePushAllowed } from "../common/line-push-allowed";
 
 const LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push";
 const LINE_MULTICAST_URL = "https://api.line.me/v2/bot/message/multicast";
@@ -47,6 +48,12 @@ export class LineMessagingService {
    * 2. Short-lived v2 token issued from channel id + secret, cached until ~5min before expiry
    */
   private async resolveToken(): Promise<string | null> {
+    if (!linePushAllowed()) {
+      this.logger.warn(
+        "LINE push blocked: NODE_ENV != production (set LINE_PUSH_ENABLED=true to allow)",
+      );
+      return null;
+    }
     const stat = this.staticToken();
     if (stat) return stat;
 

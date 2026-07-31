@@ -4,6 +4,15 @@ import type { LineDispatcherService } from "./line-dispatcher.service";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// 테스트 환경은 기본적으로 LINE 발송이 막혀 runDaily 가 조기 반환한다.
+// 대상 선정 로직을 검증하려면 명시적으로 열어야 한다(디스패처는 mock).
+beforeAll(() => {
+  process.env.LINE_PUSH_ENABLED = "true";
+});
+afterAll(() => {
+  delete process.env.LINE_PUSH_ENABLED;
+});
+
 /**
  * findMany 를 미니 Prisma 필터로 흉내내어 서비스의 where 절이 실제로
  * 적용되도록 한다. 테스트에서 쓰는 where 형태(equals / {in} / {not:null} /

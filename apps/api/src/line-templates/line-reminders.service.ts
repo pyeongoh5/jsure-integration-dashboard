@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
+import { linePushAllowed } from "../common/line-push-allowed";
 import { LineDispatcherService } from "./line-dispatcher.service";
 import { DISPATCH_APPLICATION_INCLUDE } from "./trigger-meta";
 
@@ -31,6 +32,12 @@ export class LineRemindersService {
   /** 매일 JST 09:00에 1회. 그날 시간이 도래한 대상에게 리마인더 발송. */
   @Cron("0 9 * * *", { timeZone: JST_TZ })
   async runDaily(): Promise<void> {
+    // 발송이 막힌 환경에서는 대상 조회·발송 로그까지 전부 건너뛴다. 로그만 쌓여
+    // 프로덕션 발송 이력을 오염시키는 걸 막기 위함.
+    if (!linePushAllowed()) {
+      this.logger.warn("Reminder run skipped: LINE push disabled in this environment");
+      return;
+    }
     try {
       await this.runSnsPostingReminders();
       await this.runSnsInsightReminders();

@@ -346,3 +346,47 @@ src/pages/Applicants/index.tsx   // 위 부품을 조립만 한다
 3. `schema.prisma` 변경과 마이그레이션 파일이 **짝**으로 있는가?
 4. 생성된 마이그레이션 SQL 을 눈으로 확인했는가? 예상 밖 구문이 없는가?
 5. 기존 데이터가 새 제약을 위반하지 않는가? (default·nullable·백필 필요 여부)
+
+---
+
+## 10. 제어 흐름 가독성
+
+### 중첩 삼항연산자 금지
+
+- **DON'T** 삼항연산자를 중첩하지 않는다. `a ? x : b ? y : z` 형태는 **한 단계라도** 금지.
+  조건이 늘어날 때 diff 가 읽히지 않고, 어느 조건이 어느 값에 붙는지 눈으로 추적해야 한다.
+- **DO** 삼항연산자는 **분기 2개** 까지만. 그 이상은 아래 중 하나로 바꾼다.
+
+**① early return 하는 작은 함수** — 분기마다 조건과 결과가 한 줄에 붙어 있어 가장 읽기 쉽다. 기본 선택지.
+
+```ts
+// ❌
+const triggerKey =
+  remainingDays === OVERDUE_REMINDER_DAY ? overdueTriggerKey
+  : POSTING_REMINDER_DAYS.includes(remainingDays) ? deadlineTriggerKey
+  : null;
+
+// ✅
+function reminderTriggerKeyFor(remainingDays: number): LineTriggerKey | null {
+  if (remainingDays === OVERDUE_REMINDER_DAY) return overdueTriggerKey;
+  if (POSTING_REMINDER_DAYS.includes(remainingDays)) return deadlineTriggerKey;
+  return null;
+}
+```
+
+**② 값 매핑이면 `Record` 상수** — 조건이 "이 값이면 저 값"의 나열일 때. 함수 밖 상수로 두면 분기가 표로 보인다.
+
+```ts
+const NOT_ALLOWED_MESSAGE: Record<CampaignStatus, string | null> = {
+  recruit: "모집중인 캠페인은 비공개로 전환할 수 없습니다.",
+  full: null,
+  done: null,
+};
+```
+
+**③ 열거형 분기는 `switch`** — union 타입을 다룰 때. `default` 없이 모든 케이스를 적으면 타입 체커가 누락을 잡아준다.
+
+### JSX 안에서도 같다
+
+- **DO** JSX 조건 렌더는 삼항 1단 또는 `&&` 까지. 두 단 이상 필요하면 **컴포넌트를 쪼개거나** 렌더 함수로 빼낸다.
+- **DON'T** `{a ? <A /> : b ? <B /> : <C />}` — 어떤 상태에서 무엇이 그려지는지 읽을 수 없다.

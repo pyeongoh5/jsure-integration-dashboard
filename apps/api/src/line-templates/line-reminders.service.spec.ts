@@ -1,4 +1,8 @@
-import { LineRemindersService } from "./line-reminders.service";
+import {
+  DEADLINE_REMINDER_CONFIGS,
+  LineRemindersService,
+  reminderTriggerKeyFor,
+} from "./line-reminders.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { LineDispatcherService } from "./line-dispatcher.service";
 
@@ -58,9 +62,13 @@ const campaign = {
   postingPeriodDays: 14,
 };
 
-/** 마감 3일 전이 되도록 기준 시각을 now-11일로 잡는다 (기준 + 14일 = now + 3일). */
+/** 마감까지 남은 일수가 remainingDays 가 되도록 기준 시각을 역산한다. */
+function anchorForRemainingDays(now: number, remainingDays: number): Date {
+  return new Date(now - (campaign.postingPeriodDays - remainingDays) * DAY_MS);
+}
+
 function anchorForThreeDaysLeft(now: number): Date {
-  return new Date(now - (campaign.postingPeriodDays - 3) * DAY_MS);
+  return anchorForRemainingDays(now, 3);
 }
 
 describe("LineRemindersService - SIMPLE_REVIEW 6-R", () => {
@@ -140,5 +148,94 @@ describe("LineRemindersService - SIMPLE_REVIEW 6-R", () => {
         extra: { remainingDays: 3 },
       }),
     );
+  });
+});
+
+describe("reminderTriggerKeyFor", () => {
+  const config = DEADLINE_REMINDER_CONFIGS.find(
+    (entry) => entry.category === "SIMPLE_REVIEW",
+  )!;
+
+  it("마감 다음날(-1)은 독촉 트리거를 고른다", () => {
+    expect(reminderTriggerKeyFor(-1, config)).toBe("SIMPLE_REVIEW_OVERDUE_REMINDER");
+  });
+
+  it("마감 3일 전·1일 전은 마감 리마인더 트리거를 고른다", () => {
+    expect(reminderTriggerKeyFor(3, config)).toBe("SIMPLE_REVIEW_DEADLINE_REMINDER");
+    expect(reminderTriggerKeyFor(1, config)).toBe("SIMPLE_REVIEW_DEADLINE_REMINDER");
+  });
+
+  it("그 밖의 날에는 아무것도 보내지 않는다", () => {
+    // 0 = 마감 당일, -2 = 독촉 이후(1회만 보내므로 재발송 없음), 5 = 아직 이름.
+    expect(reminderTriggerKeyFor(0, config)).toBeNull();
+    expect(reminderTriggerKeyFor(-2, config)).toBeNull();
+    expect(reminderTriggerKeyFor(5, config)).toBeNull();
+  });
+
+  it("설정은 카테고리마다 서로 다른 트리거 키를 갖는다", () => {
+    const overdueKeys = DEADLINE_REMINDER_CONFIGS.map((entry) => entry.overdueTriggerKey);
+    expect(new Set(overdueKeys).size).toBe(DEADLINE_REMINDER_CONFIGS.length);
+  });
+});
+
+describe("LineRemindersService - 마감 경과 독촉", () => {
+  /** 마감 다음날인 미제출 응모 픽스처. */
+  function overdueApplication(now: number) {
+    return {
+      id: "overdue",
+      status: "DELIVERED",
+      reviewedAt: new Date(now - 20 * DAY_MS),
+      receivedAt: anchorForRemainingDays(now, -1),
+      submissionReviewStatus: "PENDING",
+      submissionReviewedAt: null,
+      posts: [],
+      campaign,
+    };
+  }
+
+  it("마감 다음날 미제출 응모에 독촉 트리거를 보낸다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([overdueApplication(now)]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).toHaveBeenCalledWith(
+      "SIMPLE_REVIEW_OVERDUE_REMINDER",
+      expect.objectContaining({
+        application: expect.objectContaining({ id: "overdue" }),
+      }),
+    );
+  });
+
+  it("이미 제출한 응모에는 독촉을 보내지 않는다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([{ ...overdueApplication(now), posts: [{ id: "p1" }] }]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("마감 이틀 뒤에는 독촉을 다시 보내지 않는다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([
+        { ...overdueApplication(now), receivedAt: anchorForRemainingDays(now, -2) },
+      ]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).not.toHaveBeenCalled();
   });
 });

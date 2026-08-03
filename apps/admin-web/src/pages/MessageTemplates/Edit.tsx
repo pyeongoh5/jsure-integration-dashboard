@@ -4,6 +4,7 @@ import {
   getTemplate,
   previewTemplate,
   updateTemplate,
+  TRIGGER_DESCRIPTIONS,
   TRIGGER_LABELS,
   VariablesPanel,
   type CampaignCategory,
@@ -123,6 +124,11 @@ export function MessageTemplateEdit(): JSX.Element {
 
       <div className={styles.editHeader}>
         <div className={styles.editTitle}>{TRIGGER_LABELS[triggerKey]}</div>
+        {TRIGGER_DESCRIPTIONS[triggerKey] && (
+          <div className={styles.triggerDescription}>
+            {TRIGGER_DESCRIPTIONS[triggerKey]}
+          </div>
+        )}
       </div>
 
       <div className={styles.editBody}>

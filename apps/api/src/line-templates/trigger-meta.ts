@@ -415,6 +415,11 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     category: "SNS",
     variables: withBase(remainingDays, postingDeadline),
   },
+  SNS_POST_OVERDUE_REMINDER: {
+    category: "SNS",
+    // 마감이 이미 지난 시점이라 남은 일수는 의미가 없어 제공하지 않는다.
+    variables: withBase(postingDeadline),
+  },
   SNS_POST_APPROVED: {
     category: "SNS",
     variables: withBase(),
@@ -479,6 +484,10 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     category: "FAKE_PURCHASE",
     variables: withBase(subType, reviewDeadline, remainingDays),
   },
+  FAKE_PURCHASE_REVIEW_OVERDUE_REMINDER: {
+    category: "FAKE_PURCHASE",
+    variables: withBase(subType, reviewDeadline),
+  },
   FAKE_PURCHASE_SETTLEMENT_COMPLETED: {
     category: "FAKE_PURCHASE",
     variables: withBase(subType, totalSettlementJpy),
@@ -520,6 +529,10 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   SIMPLE_REVIEW_DEADLINE_REMINDER: {
     category: "SIMPLE_REVIEW",
     variables: withBase(subType, remainingDays, postingDeadline),
+  },
+  SIMPLE_REVIEW_OVERDUE_REMINDER: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(subType, postingDeadline),
   },
   SIMPLE_REVIEW_APPROVED: {
     category: "SIMPLE_REVIEW",

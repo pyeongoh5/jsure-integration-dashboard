@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   listTemplates,
   setTemplateEnabled,
+  TRIGGER_DESCRIPTIONS,
   TRIGGER_LABELS,
   type CampaignCategory,
   type LineMessageTemplateListItem,
@@ -121,6 +122,11 @@ export function MessageTemplates(): JSX.Element {
                   >
                     <td>
                       <span className={styles.triggerCell}>{TRIGGER_LABELS[item.triggerKey]}</span>
+                      {TRIGGER_DESCRIPTIONS[item.triggerKey] && (
+                        <div className={styles.triggerDescription}>
+                          {TRIGGER_DESCRIPTIONS[item.triggerKey]}
+                        </div>
+                      )}
                     </td>
                     <td onClick={(event) => event.stopPropagation()}>
                       <Switch

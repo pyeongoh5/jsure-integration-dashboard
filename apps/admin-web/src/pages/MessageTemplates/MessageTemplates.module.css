@@ -120,6 +120,14 @@
   color: var(--color-text);
 }
 
+/* 리마인더 발송 시점 안내 — 트리거 제목 아래 보조 설명. */
+.triggerDescription {
+  margin-top: 2px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+}
+
 .testDialogBody {
   display: flex;
   flex-direction: column;

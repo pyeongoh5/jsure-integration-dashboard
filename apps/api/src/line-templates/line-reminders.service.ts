@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
-import type { CampaignCategory } from "@jsure/shared";
+import type { CampaignCategory, LineTriggerKey } from "@jsure/shared";
+import type { ApplicationStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { linePushAllowed } from "../common/line-push-allowed";
 import { LineDispatcherService } from "./line-dispatcher.service";
@@ -8,6 +9,8 @@ import { DISPATCH_APPLICATION_INCLUDE } from "./trigger-meta";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const POSTING_REMINDER_DAYS = [3, 1];
+/** 마감 다음날. 미제출자 독촉을 1회만 보내기 위해 동등 비교로 쓴다. */
+const OVERDUE_REMINDER_DAY = -1;
 const INSIGHT_REMINDER_DAY_AFTER_POST = 7;
 const INSIGHT_OVERDUE_REMINDER_DAY_AFTER_POST = 8;
 const POST_REJECTION_RESUBMIT_DAYS = 1;
@@ -30,6 +33,53 @@ function startOfJstDay(d: Date): number {
   return dayStartUtcShifted - jstOffsetMs;
 }
 
+/**
+ * 제출 마감 리마인더 설정. SNS 게시·가구매 리뷰·단순리뷰가 마감 계산과 발송 조건을
+ * 공유하고, 기준 시각 필드·응모 상태·트리거 키만 다르다.
+ */
+type DeadlineReminderConfig = {
+  category: CampaignCategory;
+  /** 마감 계산 기준 시각 필드. SNS·단순리뷰는 수령 확인, 가구매는 주문 제출. */
+  anchor: "receivedAt" | "orderSubmittedAt";
+  statuses: ApplicationStatus[];
+  deadlineTriggerKey: LineTriggerKey;
+  overdueTriggerKey: LineTriggerKey;
+};
+
+export const DEADLINE_REMINDER_CONFIGS: DeadlineReminderConfig[] = [
+  {
+    category: "SNS",
+    anchor: "receivedAt",
+    statuses: ["SHIPPED", "DELIVERED"],
+    deadlineTriggerKey: "SNS_POST_DEADLINE_REMINDER",
+    overdueTriggerKey: "SNS_POST_OVERDUE_REMINDER",
+  },
+  {
+    category: "FAKE_PURCHASE",
+    anchor: "orderSubmittedAt",
+    statuses: ["ORDER_SUBMITTED"],
+    deadlineTriggerKey: "FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER",
+    overdueTriggerKey: "FAKE_PURCHASE_REVIEW_OVERDUE_REMINDER",
+  },
+  {
+    category: "SIMPLE_REVIEW",
+    anchor: "receivedAt",
+    statuses: ["SHIPPED", "DELIVERED"],
+    deadlineTriggerKey: "SIMPLE_REVIEW_DEADLINE_REMINDER",
+    overdueTriggerKey: "SIMPLE_REVIEW_OVERDUE_REMINDER",
+  },
+];
+
+/** 마감까지 남은 일수로 보낼 리마인더를 고른다. 보낼 것이 없으면 null. */
+export function reminderTriggerKeyFor(
+  remainingDays: number,
+  config: DeadlineReminderConfig,
+): LineTriggerKey | null {
+  if (remainingDays === OVERDUE_REMINDER_DAY) return config.overdueTriggerKey;
+  if (POSTING_REMINDER_DAYS.includes(remainingDays)) return config.deadlineTriggerKey;
+  return null;
+}
+
 @Injectable()
 export class LineRemindersService {
   private readonly logger = new Logger(LineRemindersService.name);
@@ -49,12 +99,12 @@ export class LineRemindersService {
       return;
     }
     try {
-      await this.runSnsPostingReminders();
+      for (const config of DEADLINE_REMINDER_CONFIGS) {
+        await this.runDeadlineReminders(config);
+      }
       await this.runSnsInsightReminders();
       await this.runSnsInsightOverdueReminders();
       await this.runSnsPostRejectionReminders();
-      await this.runFakePurchaseReviewReminders();
-      await this.runSimpleReviewDeadlineReminders();
       await this.runSimpleReviewRejectionReminders();
     } catch (err) {
       this.logger.error("Reminder daily run failed", err as Error);
@@ -66,14 +116,18 @@ export class LineRemindersService {
     return this.runDaily();
   }
 
-  private async runSnsPostingReminders(): Promise<void> {
+  /**
+   * 제출 마감 리마인더 — 마감 3일 전·1일 전 독려와 마감 다음날 독촉을 함께 처리한다.
+   * 아직 제출물이 없는 응모만 대상이며, 각 시점에 1회만 발송된다.
+   */
+  private async runDeadlineReminders(config: DeadlineReminderConfig): Promise<void> {
     const todayStart = startOfJstDay(new Date());
 
-    const apps = await this.prisma.campaignApplication.findMany({
+    const applications = await this.prisma.campaignApplication.findMany({
       where: {
-        receivedAt: { not: null },
-        status: { in: ["SHIPPED", "DELIVERED"] },
-        campaign: activeCampaign("SNS"),
+        [config.anchor]: { not: null },
+        status: { in: config.statuses },
+        campaign: activeCampaign(config.category),
       },
       include: {
         ...DISPATCH_APPLICATION_INCLUDE,
@@ -81,18 +135,22 @@ export class LineRemindersService {
       },
     });
 
-    for (const app of apps) {
-      if (!app.receivedAt) continue;
-      // 이미 투고가 들어왔으면 투고기간 리마인더는 더 이상 보내지 않음.
-      if (app.posts.length > 0) continue;
+    for (const application of applications) {
+      const anchorAt = application[config.anchor];
+      if (!anchorAt) continue;
+      // 이미 제출이 들어왔으면 마감 리마인더는 더 이상 보내지 않음.
+      if (application.posts.length > 0) continue;
 
-      const deadlineMs = app.receivedAt.getTime() + app.campaign.postingPeriodDays * DAY_MS;
+      const deadlineMs =
+        anchorAt.getTime() + application.campaign.postingPeriodDays * DAY_MS;
       const deadlineDayStart = startOfJstDay(new Date(deadlineMs));
       const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);
-      if (!POSTING_REMINDER_DAYS.includes(remainingDays)) continue;
 
-      await this.dispatcher.dispatch("SNS_POST_DEADLINE_REMINDER", {
-        application: app,
+      const triggerKey = reminderTriggerKeyFor(remainingDays, config);
+      if (!triggerKey) continue;
+
+      await this.dispatcher.dispatch(triggerKey, {
+        application,
         extra: { remainingDays },
       });
     }
@@ -178,76 +236,6 @@ export class LineRemindersService {
     for (const application of applications) {
       await this.dispatcher.dispatch("SNS_INSIGHT_OVERDUE_REMINDER", {
         application,
-      });
-    }
-  }
-
-  private async runFakePurchaseReviewReminders(): Promise<void> {
-    const todayStart = startOfJstDay(new Date());
-    const applications = await this.prisma.campaignApplication.findMany({
-      where: {
-        status: "ORDER_SUBMITTED",
-        orderSubmittedAt: { not: null },
-        campaign: activeCampaign("FAKE_PURCHASE"),
-      },
-      include: {
-        ...DISPATCH_APPLICATION_INCLUDE,
-        posts: { select: { id: true } },
-      },
-    });
-
-    for (const application of applications) {
-      if (!application.orderSubmittedAt) continue;
-      if (application.posts.length > 0) continue;
-
-      const deadlineMs =
-        application.orderSubmittedAt.getTime() +
-        application.campaign.postingPeriodDays * DAY_MS;
-      const deadlineDayStart = startOfJstDay(new Date(deadlineMs));
-      const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);
-      if (!POSTING_REMINDER_DAYS.includes(remainingDays)) continue;
-
-      await this.dispatcher.dispatch("FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER", {
-        application,
-        extra: { remainingDays },
-      });
-    }
-  }
-
-  /**
-   * 단순 리뷰: 수령 확인 후 postingPeriodDays 임박 시 리뷰 제출 리마인더.
-   * 상품 수령형 카테고리이므로 SNS 게시 마감과 동일하게 receivedAt(인플루언서
-   * 수령 확인 시각) 기준으로 마감을 계산한다. 승인만 되고 아직 수령 확인 전인
-   * (배송 전/운송장 미입력) 응모는 receivedAt 이 없어 대상에서 제외된다.
-   */
-  private async runSimpleReviewDeadlineReminders(): Promise<void> {
-    const todayStart = startOfJstDay(new Date());
-    const applications = await this.prisma.campaignApplication.findMany({
-      where: {
-        receivedAt: { not: null },
-        status: { in: ["SHIPPED", "DELIVERED"] },
-        campaign: activeCampaign("SIMPLE_REVIEW"),
-      },
-      include: {
-        ...DISPATCH_APPLICATION_INCLUDE,
-        posts: { select: { id: true } },
-      },
-    });
-
-    for (const application of applications) {
-      if (!application.receivedAt) continue;
-      if (application.posts.length > 0) continue;
-
-      const deadlineMs =
-        application.receivedAt.getTime() +
-        application.campaign.postingPeriodDays * DAY_MS;
-      const deadlineDayStart = startOfJstDay(new Date(deadlineMs));
-      const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);
-      if (!POSTING_REMINDER_DAYS.includes(remainingDays)) continue;
-
-      await this.dispatcher.dispatch("SIMPLE_REVIEW_DEADLINE_REMINDER", {
-        application,
-        extra: { remainingDays },
       });
     }
   }

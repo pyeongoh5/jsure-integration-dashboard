@@ -7,8 +7,11 @@ type Props = {
   campaignId: string | null;
   campaignLabel: string | null; // resolved title (null while loading or unknown id)
   campaignsLoaded: boolean;
-  campaignOptions: CampaignOption[]; // already filtered to non-closed
+  campaignOptions: CampaignOption[];
   onCampaignChange: (id: string | null) => void;
+  // 후보 캠페인의 범위가 화면마다 달라 문구를 받는다. 기본값은 응모 관리 기준.
+  popoverTitle?: string;
+  emptyMessage?: string;
 };
 
 export function CampaignFilterChip({
@@ -17,6 +20,8 @@ export function CampaignFilterChip({
   campaignsLoaded,
   campaignOptions,
   onCampaignChange,
+  popoverTitle = "캠페인 선택 (진행중)",
+  emptyMessage = "진행중인 캠페인이 없습니다.",
 }: Props) {
   const resolved = campaignLabel ?? (campaignsLoaded ? campaignId : "불러오는 중…");
   const activeLabel = campaignId ? `캠페인: ${resolved}` : null;
@@ -26,11 +31,12 @@ export function CampaignFilterChip({
       activeLabel={activeLabel}
       emptyLabel="+ 캠페인"
       onClear={() => onCampaignChange(null)}
-      popoverTitle="캠페인 선택 (진행중)"
+      popoverTitle={popoverTitle}
       renderPopover={(close) => (
         <CampaignPopover
           campaignId={campaignId}
           campaignOptions={campaignOptions}
+          emptyMessage={emptyMessage}
           onSelect={(id) => {
             onCampaignChange(id);
             close();
@@ -46,11 +52,13 @@ export function CampaignFilterChip({
 function CampaignPopover({
   campaignId,
   campaignOptions,
+  emptyMessage,
   onSelect,
   onClose,
 }: {
   campaignId: string | null;
   campaignOptions: CampaignOption[];
+  emptyMessage: string;
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
@@ -75,7 +83,7 @@ function CampaignPopover({
         />
       </div>
       {campaignOptions.length === 0 ? (
-        <div className={styles.popoverEmpty}>진행중인 캠페인이 없습니다.</div>
+        <div className={styles.popoverEmpty}>{emptyMessage}</div>
       ) : filtered.length === 0 ? (
         <div className={styles.popoverEmpty}>검색 결과가 없습니다.</div>
       ) : (

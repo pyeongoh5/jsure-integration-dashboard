@@ -5,10 +5,12 @@ import {
   completeSettlements,
   listSettlements,
   useSubmissionDetail,
+  CampaignFilterChip,
   CATEGORY_LABEL_KO,
   CATEGORY_FILTER_OPTIONS,
 } from "@/domains/application";
 import { ScrollTable } from "@/components/composites";
+import { FilterChipBar } from "@/components/composites/FilterChip";
 import { Button } from "@/components/ui";
 import styles from "./Payouts.module.css";
 
@@ -196,6 +198,7 @@ export function Payouts() {
   const [month, setMonth] = useState<string>(currentJstMonth);
   const [categoryFilter, setCategoryFilter] =
     useState<CampaignCategory | null>(null);
+  const [campaignId, setCampaignId] = useState<string | null>(null);
   // 제출물/인사이트 상세 모달 — 응모 단건 조회 후 검수 화면과 동일한 다이얼로그로 표시.
   const submissionDetail = useSubmissionDetail();
 
@@ -203,6 +206,8 @@ export function Payouts() {
     let cancelled = false;
     setState({ kind: "loading" });
     setSelected(new Set());
+    // 캠페인 후보는 조회된 월의 정산 행에서 뽑으므로 월이 바뀌면 선택을 비운다.
+    setCampaignId(null);
     listSettlements(month)
       .then((rows) => {
         if (!cancelled) setState({ kind: "ready", rows });
@@ -219,11 +224,23 @@ export function Payouts() {
     };
   }, [reloadKey, month]);
 
+  // 정산 대상 캠페인은 대부분 이미 종료돼 있어 진행중 목록(useCampaignOptions)으로는
+  // 찾을 수 없다. 조회된 정산 행에서 뽑으면 추가 요청 없이 실제 후보만 남는다.
+  const campaignOptions = useMemo(() => {
+    if (state.kind !== "ready") return [];
+    const byId = new Map<string, string>();
+    for (const row of state.rows) byId.set(row.campaign.id, row.campaign.title);
+    return [...byId].map(([id, title]) => ({ id, title }));
+  }, [state]);
+
   const visibleRows = useMemo(() => {
     if (state.kind !== "ready") return [];
-    if (categoryFilter === null) return state.rows;
-    return state.rows.filter((row) => row.campaign.category === categoryFilter);
-  }, [state, categoryFilter]);
+    return state.rows.filter((row) => {
+      if (categoryFilter !== null && row.campaign.category !== categoryFilter) return false;
+      if (campaignId !== null && row.campaign.id !== campaignId) return false;
+      return true;
+    });
+  }, [state, categoryFilter, campaignId]);
 
   const pendingRows = useMemo(
     () => visibleRows.filter((r) => r.status === "PENDING"),
@@ -370,6 +387,22 @@ export function Payouts() {
             {completing ? "처리 중…" : completeLabel}
           </Button>
         </div>
+      </div>
+
+      <div className={styles.filterBar}>
+        <FilterChipBar>
+          <CampaignFilterChip
+            campaignId={campaignId}
+            campaignLabel={
+              campaignOptions.find((option) => option.id === campaignId)?.title ?? null
+            }
+            campaignsLoaded={state.kind === "ready"}
+            campaignOptions={campaignOptions}
+            onCampaignChange={setCampaignId}
+            popoverTitle="캠페인 선택 (이 달 정산 대상)"
+            emptyMessage="이 달 정산 대상 캠페인이 없습니다."
+          />
+        </FilterChipBar>
       </div>
 
       <div className={styles.card}>

@@ -49,6 +49,7 @@ export { ApplicantApproveDialog } from "./components/applicants/ApplicantApprove
 export { ApplicantDeliverDialog } from "./components/applicants/ApplicantDeliverDialog";
 export { ApplicantDialogs } from "./components/applicants/ApplicantDialogs";
 export { ApplicantFilters } from "./components/applicants/ApplicantFilters";
+export { CampaignFilterChip } from "./components/applicants/CampaignFilterChip";
 export { ApplicantRejectDialog } from "./components/applicants/ApplicantRejectDialog";
 export { ApplicantShipDialog } from "./components/applicants/ApplicantShipDialog";
 export { ApplicantStatusFilter } from "./components/applicants/ApplicantStatusFilter";

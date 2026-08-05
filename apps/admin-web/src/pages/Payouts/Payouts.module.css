@@ -50,6 +50,14 @@
   gap: var(--space-2);
 }
 
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--space-3);
+}
+
 .card {
   background: var(--color-bg);
   border: 1px solid var(--color-border);

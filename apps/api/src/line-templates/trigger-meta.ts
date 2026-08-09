@@ -278,12 +278,52 @@ function subTypeLabel(value: string): string {
   }
 }
 
+/** 투고 타입 라벨. 인플루언서에게 그대로 노출되므로 일본어 표기를 쓴다. */
+function subTypeOptionLabel(value: string): string {
+  switch (value) {
+    case "FEED":
+      return "フィード";
+    case "REELS":
+      return "リール";
+    case "LIPS":
+      return "LIPS";
+    case "ATCOSME":
+      return "@cosme";
+    default:
+      return value;
+  }
+}
+
 const subType: TriggerVariableWithResolver = {
   key: "subType",
   label: "서브타입",
   description: "応募したプラットフォームの表示ラベル",
   sample: "Qoo10",
   resolver: (ctx) => ctx.application.subTypes.map(subTypeLabel).join("・"),
+};
+
+const subTypeWithOption: TriggerVariableWithResolver = {
+  key: "subTypeWithOption",
+  label: "서브타입(투고 타입)",
+  description: "応募したプラットフォームと投稿タイプ（フィード / リール）",
+  sample: "Instagram（リール）",
+  resolver: (ctx) => {
+    // 옵션은 서브타입마다 여러 개일 수 있어 서브타입 기준으로 모은다.
+    const optionsBySubType = new Map<string, string[]>();
+    for (const entry of ctx.application.options) {
+      const bucket = optionsBySubType.get(entry.subType) ?? [];
+      bucket.push(subTypeOptionLabel(entry.option));
+      optionsBySubType.set(entry.subType, bucket);
+    }
+    return ctx.application.subTypes
+      .map((value) => {
+        const options = optionsBySubType.get(value);
+        const label = subTypeLabel(value);
+        // 옵션이 없는 서브타입(TikTok 등)은 플랫폼명만.
+        return options?.length ? `${label}（${options.join("・")}）` : label;
+      })
+      .join("・");
+  },
 };
 
 /** 참여 서브타입에 해당하는 recruit 중 가구매(QOO10) 모집 정보. */
@@ -386,6 +426,9 @@ const BASE_VARS: TriggerVariableWithResolver[] = [
   campaignRewardJpy,
   campaignPostingPeriodDays,
   campaignProductSummary,
+  // 참여 서브타입은 어느 트리거에서든 응모에서 바로 구할 수 있어 공통으로 둔다.
+  subType,
+  subTypeWithOption,
 ];
 
 function withBase(...extra: TriggerVariableWithResolver[]): TriggerVariableWithResolver[] {
@@ -479,11 +522,11 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   },
   FAKE_PURCHASE_APPLICATION_APPLIED: {
     category: "FAKE_PURCHASE",
-    variables: withBase(subType, productPriceJpy, productUrl, totalSettlementJpy),
+    variables: withBase(productPriceJpy, productUrl, totalSettlementJpy),
   },
   FAKE_PURCHASE_APPLICATION_APPROVED: {
     category: "FAKE_PURCHASE",
-    variables: withBase(subType, productPriceJpy, productUrl, totalSettlementJpy),
+    variables: withBase(productPriceJpy, productUrl, totalSettlementJpy),
   },
   FAKE_PURCHASE_APPLICATION_REJECTED: {
     category: "FAKE_PURCHASE",
@@ -492,60 +535,59 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   FAKE_PURCHASE_ORDER_DEADLINE_REMINDER: {
     category: "FAKE_PURCHASE",
     // "지금 여기서 주문하세요"가 목적이라 상품 링크·가격을 함께 제공한다.
-    variables: withBase(subType, productUrl, productPriceJpy, orderDeadline, remainingDays),
+    variables: withBase(productUrl, productPriceJpy, orderDeadline, remainingDays),
   },
   FAKE_PURCHASE_ORDER_EXPIRED: {
     category: "FAKE_PURCHASE",
-    variables: withBase(subType, orderDeadline),
+    variables: withBase(orderDeadline),
   },
   FAKE_PURCHASE_ORDER_SUBMITTED: {
     category: "FAKE_PURCHASE",
-    variables: withBase(subType, orderNumber, orderSubmittedDate, reviewDeadline),
+    variables: withBase(orderNumber, orderSubmittedDate, reviewDeadline),
   },
   FAKE_PURCHASE_REVIEW_SUBMITTED: {
     category: "FAKE_PURCHASE",
-    variables: withBase(subType, reviewUrl),
+    variables: withBase(reviewUrl),
   },
   FAKE_PURCHASE_REVIEW_APPROVED: {
     category: "FAKE_PURCHASE",
-    variables: withBase(subType, reviewUrl, totalSettlementJpy),
+    variables: withBase(reviewUrl, totalSettlementJpy),
   },
   FAKE_PURCHASE_REVIEW_REJECTED: {
     category: "FAKE_PURCHASE",
-    variables: withBase(subType, reviewUrl, rejectReason),
+    variables: withBase(reviewUrl, rejectReason),
   },
   FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER: {
     category: "FAKE_PURCHASE",
-    variables: withBase(subType, reviewDeadline, remainingDays),
+    variables: withBase(reviewDeadline, remainingDays),
   },
   FAKE_PURCHASE_REVIEW_OVERDUE_REMINDER: {
     category: "FAKE_PURCHASE",
-    variables: withBase(subType, reviewDeadline),
+    variables: withBase(reviewDeadline),
   },
   FAKE_PURCHASE_SETTLEMENT_COMPLETED: {
     category: "FAKE_PURCHASE",
-    variables: withBase(subType, totalSettlementJpy),
+    variables: withBase(totalSettlementJpy),
   },
   SIMPLE_REVIEW_APPLICATION_APPLIED: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType),
+    variables: withBase(),
   },
   SIMPLE_REVIEW_APPLICATION_APPROVED: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, postingDeadline),
+    variables: withBase(postingDeadline),
   },
   SIMPLE_REVIEW_APPLICATION_REJECTED: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, rejectReason),
+    variables: withBase(rejectReason),
   },
   SIMPLE_REVIEW_APPLICATION_SHIPPED: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, trackingCarrier, trackingNumber, applicationShippedDate),
+    variables: withBase(trackingCarrier, trackingNumber, applicationShippedDate),
   },
   SIMPLE_REVIEW_APPLICATION_DELIVERED: {
     category: "SIMPLE_REVIEW",
     variables: withBase(
-      subType,
       trackingCarrier,
       trackingNumber,
       applicationShippedDate,
@@ -555,7 +597,6 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   SIMPLE_REVIEW_APPLICATION_DELIVERY_REMINDER: {
     category: "SIMPLE_REVIEW",
     variables: withBase(
-      subType,
       trackingCarrier,
       trackingNumber,
       applicationShippedDate,
@@ -564,39 +605,39 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   },
   SIMPLE_REVIEW_APPLICATION_RECEIPT_CONFIRMED: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, applicationDeliveredDate, applicationReceivedDate, postingDeadline),
+    variables: withBase(applicationDeliveredDate, applicationReceivedDate, postingDeadline),
   },
   SIMPLE_REVIEW_SUBMITTED: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, reviewUrl),
+    variables: withBase(reviewUrl),
   },
   SIMPLE_REVIEW_DEADLINE_REMINDER: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, remainingDays, postingDeadline),
+    variables: withBase(remainingDays, postingDeadline),
   },
   SIMPLE_REVIEW_OVERDUE_REMINDER: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, postingDeadline),
+    variables: withBase(postingDeadline),
   },
   SIMPLE_REVIEW_APPROVED: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, reviewUrl),
+    variables: withBase(reviewUrl),
   },
   SIMPLE_REVIEW_REJECTED: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, reviewUrl, rejectReason, resubmitDeadline),
+    variables: withBase(reviewUrl, rejectReason, resubmitDeadline),
   },
   SIMPLE_REVIEW_REJECTION_REMINDER: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, rejectReason, finalDeadline),
+    variables: withBase(rejectReason, finalDeadline),
   },
   SIMPLE_REVIEW_SETTLEMENT_COMPLETED: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType, rewardJpy),
+    variables: withBase(rewardJpy),
   },
   SIMPLE_REVIEW_CAMPAIGN_COMPLETED: {
     category: "SIMPLE_REVIEW",
-    variables: withBase(subType),
+    variables: withBase(),
   },
 };
 

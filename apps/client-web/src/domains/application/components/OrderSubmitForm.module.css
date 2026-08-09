@@ -149,3 +149,24 @@
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
 }
+
+/* 주문 마감 안내 — 기한 경과는 위험색, 남은 기간은 주의색. */
+.deadline {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-danger);
+  background: #fef2f2;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  margin: 0;
+}
+
+.deadlineOk {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-warning, #b45309);
+  background: #fef3c7;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  margin: 0;
+}

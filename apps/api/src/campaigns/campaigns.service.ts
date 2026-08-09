@@ -342,6 +342,7 @@ type CampaignRow = {
   closedAt: Date | null;
   hiddenAt: Date | null;
   postingPeriodDays: number;
+  orderPeriodDays: number | null;
   productSummary: string;
   productDetailUrls: string[];
   guideline: string;
@@ -403,6 +404,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     closedAt: row.closedAt ? row.closedAt.toISOString() : null,
     hiddenAt: row.hiddenAt ? row.hiddenAt.toISOString() : null,
     postingPeriodDays: row.postingPeriodDays,
+    orderPeriodDays: row.orderPeriodDays,
     productSummary: row.productSummary,
     productDetailUrls: row.productDetailUrls,
     guideline: row.guideline,
@@ -463,6 +465,7 @@ function toDraftCampaignData(input: CampaignDraftRequest, now: Date) {
       ? jstDayEndUtc(input.recruitEndDate)
       : now,
     postingPeriodDays: input.postingPeriodDays || DEFAULT_POSTING_PERIOD_DAYS,
+    orderPeriodDays: input.orderPeriodDays ?? null,
     productSummary: input.productSummary ?? "",
     productDetailUrls: input.productDetailUrls ?? [],
     guideline: input.guideline ?? "",
@@ -590,6 +593,7 @@ export class CampaignsService {
         recruitStartAt: jstDayStartUtc(input.recruitStartDate),
         recruitEndAt: jstDayEndUtc(input.recruitEndDate),
         postingPeriodDays: input.postingPeriodDays,
+        orderPeriodDays: input.orderPeriodDays ?? null,
         productSummary: input.productSummary,
         productDetailUrls: input.productDetailUrls,
         guideline: input.guideline,
@@ -776,6 +780,9 @@ export class CampaignsService {
     }
     if (input.postingPeriodDays !== undefined) {
       data.postingPeriodDays = input.postingPeriodDays;
+    }
+    if (input.orderPeriodDays !== undefined) {
+      data.orderPeriodDays = input.orderPeriodDays;
     }
     if (input.productSummary !== undefined) data.productSummary = input.productSummary;
     if (input.productDetailUrls !== undefined) data.productDetailUrls = input.productDetailUrls;

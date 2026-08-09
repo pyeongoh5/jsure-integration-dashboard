@@ -23,7 +23,7 @@ import { VISIBLE_PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaig
 import { UploadsService } from "../uploads/uploads.service";
 import {
   deriveDisplayStage,
-  postingDeadline,
+  deadlineFrom,
 } from "../influencer-campaigns/display-stage";
 import {
   applicationRewardJpy,
@@ -59,6 +59,7 @@ type ApplicationRow = {
   campaignId: string;
   status: ApplicationStatus;
   appliedAt: Date;
+  reviewedAt: Date | null;
   trackingCarrier: string | null;
   trackingNumber: string | null;
   shippedAt: Date | null;
@@ -86,6 +87,7 @@ type ApplicationRow = {
     rewardType: RewardType;
     rewardJpy: number;
     postingPeriodDays: number;
+    orderPeriodDays: number | null;
     recruits: {
       subType: CampaignSubType;
       insightRequired: boolean;
@@ -124,10 +126,12 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     row.campaign.category === "FAKE_PURCHASE"
       ? row.orderSubmittedAt
       : row.receivedAt;
-  const deadline = postingDeadline(
+  const deadline = deadlineFrom(
     deadlineAnchor,
     row.campaign.postingPeriodDays,
   );
+  // 가구매 주문 마감 — 승인일 + 캠페인 orderPeriodDays. 마감 미설정이면 null.
+  const orderDeadline = deadlineFrom(row.reviewedAt, row.campaign.orderPeriodDays);
   const settlement = row.settlement
     ? {
         status: row.settlement.status,
@@ -184,6 +188,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     settlement,
     orderNumber: row.orderNumber,
     orderSubmittedAt: row.orderSubmittedAt ? row.orderSubmittedAt.toISOString() : null,
+    orderDeadlineAt: orderDeadline ? orderDeadline.toISOString() : null,
     reviewSubmittedAt: row.reviewSubmittedAt ? row.reviewSubmittedAt.toISOString() : null,
   };
 }
@@ -209,6 +214,7 @@ const INCLUDE = {
       thumbnailUrl: true,
       rewardType: true,
       rewardJpy: true,
+      orderPeriodDays: true,
       postingPeriodDays: true,
       recruits: {
         select: {

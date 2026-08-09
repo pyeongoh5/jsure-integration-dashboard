@@ -308,6 +308,7 @@ export function ApplicationDetail() {
         {stage === "AWAITING_ORDER" && (
           <OrderSubmitForm
             applicationId={data.id}
+            orderDeadlineAt={data.orderDeadlineAt}
             onSubmit={async (orderNumber, receipts) => {
               await order.mutateAsync({ orderNumber, receipts });
             }}

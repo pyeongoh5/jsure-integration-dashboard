@@ -14,6 +14,7 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, string> = {
   SNS_APPLICATION_REJECTED: "2-b. 신청 반려",
   SNS_APPLICATION_SHIPPED: "3. 상품 발송",
   SNS_APPLICATION_DELIVERED: "4. 배송 완료",
+  SNS_APPLICATION_DELIVERY_REMINDER: "4-r. 배송완료 리마인더",
   SNS_APPLICATION_RECEIPT_CONFIRMED: "5. 수령 확인",
   SNS_POST_SUBMITTED: "6. 게시물 제출",
   SNS_POST_DEADLINE_REMINDER: "6-R. 게시 마감 리마인더",
@@ -29,6 +30,8 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, string> = {
   FAKE_PURCHASE_APPLICATION_APPLIED: "1. 신청 접수",
   FAKE_PURCHASE_APPLICATION_APPROVED: "2-a. 신청 승인",
   FAKE_PURCHASE_APPLICATION_REJECTED: "2-b. 신청 반려",
+  FAKE_PURCHASE_ORDER_DEADLINE_REMINDER: "2-r. 주문 리마인더",
+  FAKE_PURCHASE_ORDER_EXPIRED: "2-x. 주문 기한 초과 취소 안내",
   FAKE_PURCHASE_ORDER_SUBMITTED: "3. 주문 제출",
   FAKE_PURCHASE_REVIEW_SUBMITTED: "4. 리뷰 제출",
   FAKE_PURCHASE_REVIEW_APPROVED: "5-a. 리뷰 승인",
@@ -41,6 +44,7 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, string> = {
   SIMPLE_REVIEW_APPLICATION_REJECTED: "2-b. 신청 반려",
   SIMPLE_REVIEW_APPLICATION_SHIPPED: "3. 상품 발송",
   SIMPLE_REVIEW_APPLICATION_DELIVERED: "4. 배송 완료",
+  SIMPLE_REVIEW_APPLICATION_DELIVERY_REMINDER: "4-r. 배송완료 리마인더",
   SIMPLE_REVIEW_APPLICATION_RECEIPT_CONFIRMED: "5. 수령 확인",
   SIMPLE_REVIEW_SUBMITTED: "6. 리뷰 제출",
   SIMPLE_REVIEW_DEADLINE_REMINDER: "6-R. 리뷰 마감 리마인더",
@@ -60,13 +64,18 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, string> = {
  * 이 표를 함께 고쳐야 한다.
  */
 export const TRIGGER_DESCRIPTIONS: Partial<Record<LineTriggerKey, string>> = {
+  SNS_APPLICATION_DELIVERY_REMINDER: "배송완료 다음날 발송 (수령확인 미완료자)",
   SNS_POST_DEADLINE_REMINDER: "게시 마감 3일 전·1일 전 발송",
   SNS_POST_OVERDUE_REMINDER: "게시 마감 다음날 발송 (미제출자 독촉)",
   SNS_POST_REJECTION_REMINDER: "게시물 반려 다음날 발송 (재제출 독려)",
   SNS_INSIGHT_REMINDER: "게시물 제출 7일 후 발송",
   SNS_INSIGHT_OVERDUE_REMINDER: "게시물 제출 8일 후 발송 (미제출자 독촉)",
+  FAKE_PURCHASE_ORDER_DEADLINE_REMINDER: "주문 마감 3일 전·당일 발송",
+  FAKE_PURCHASE_ORDER_EXPIRED: "주문 마감 다음날 자동 취소 시 발송",
   FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER: "리뷰 마감 3일 전·1일 전 발송",
   FAKE_PURCHASE_REVIEW_OVERDUE_REMINDER: "리뷰 마감 다음날 발송 (미제출자 독촉)",
+  SIMPLE_REVIEW_APPLICATION_DELIVERY_REMINDER:
+    "배송완료 다음날 발송 (수령확인 미완료자)",
   SIMPLE_REVIEW_DEADLINE_REMINDER: "리뷰 마감 3일 전·1일 전 발송",
   SIMPLE_REVIEW_OVERDUE_REMINDER: "리뷰 마감 다음날 발송 (미제출자 독촉)",
   SIMPLE_REVIEW_REJECTION_REMINDER: "리뷰 반려 다음날 발송 (재제출 독려)",

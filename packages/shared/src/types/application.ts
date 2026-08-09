@@ -258,6 +258,11 @@ export const InfluencerApplicationSchema = z.object({
   orderNumber: z.string().nullable(),
   /** 가구매 캠페인용: 주문 정보 제출 시각. */
   orderSubmittedAt: z.string().datetime().nullable(),
+  /**
+   * 가구매 캠페인용: 주문 마감 시각 (승인일 + 캠페인 orderPeriodDays).
+   * 캠페인에 마감이 설정되지 않았거나 아직 승인 전이면 null.
+   */
+  orderDeadlineAt: z.string().datetime().nullable(),
   /** 가구매 캠페인용: 리뷰 제출 시각. */
   reviewSubmittedAt: z.string().datetime().nullable(),
 });

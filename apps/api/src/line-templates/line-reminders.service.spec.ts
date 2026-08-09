@@ -1,6 +1,7 @@
 import {
   DEADLINE_REMINDER_CONFIGS,
   LineRemindersService,
+  orderDeadlineActionFor,
   reminderTriggerKeyFor,
 } from "./line-reminders.service";
 import type { PrismaService } from "../prisma/prisma.service";
@@ -25,10 +26,24 @@ afterAll(() => {
 function matchesWhere(row: Record<string, unknown>, where: Record<string, unknown>): boolean {
   for (const [key, cond] of Object.entries(where)) {
     if (key === "campaign") {
-      const filter = cond as { category?: string; deletedAt?: unknown };
-      const target = row.campaign as { category?: string; deletedAt?: Date | null };
+      const filter = cond as {
+        category?: string;
+        deletedAt?: unknown;
+        orderPeriodDays?: { not?: unknown };
+      };
+      const target = row.campaign as {
+        category?: string;
+        deletedAt?: Date | null;
+        orderPeriodDays?: number | null;
+      };
       if (filter.category && target.category !== filter.category) return false;
       if (filter.deletedAt === null && target.deletedAt != null) return false;
+      if (
+        filter.orderPeriodDays?.not === null &&
+        target.orderPeriodDays == null
+      ) {
+        return false;
+      }
       continue;
     }
     if (key === "posts") continue; // relation 필터는 흉내내지 않음(대상 픽스처는 SIMPLE_REVIEW 뿐)
@@ -44,12 +59,16 @@ function matchesWhere(row: Record<string, unknown>, where: Record<string, unknow
   return true;
 }
 
-function makePrismaMock(rows: Array<Record<string, unknown>>): PrismaService {
+function makePrismaMock(
+  rows: Array<Record<string, unknown>>,
+  update: jest.Mock = jest.fn().mockResolvedValue(undefined),
+): PrismaService {
   return {
     campaignApplication: {
       findMany: jest.fn(({ where }: { where: Record<string, unknown> }) =>
         Promise.resolve(rows.filter((row) => matchesWhere(row, where))),
       ),
+      update,
     },
     submissionRejection: { findFirst: jest.fn().mockResolvedValue(null) },
   } as unknown as PrismaService;
@@ -148,6 +167,218 @@ describe("LineRemindersService - SIMPLE_REVIEW 6-R", () => {
         extra: { remainingDays: 3 },
       }),
     );
+  });
+});
+
+describe("LineRemindersService - 배송완료 후 수령확인 리마인더", () => {
+  /** 어제 배송완료됐고 아직 수령확인하지 않은 응모 픽스처. */
+  function deliveredYesterday(now: number) {
+    return {
+      id: "delivered",
+      status: "DELIVERED",
+      deliveredAt: new Date(now - DAY_MS),
+      receivedAt: null,
+      submissionReviewStatus: "PENDING",
+      submissionReviewedAt: null,
+      posts: [],
+      campaign,
+    };
+  }
+
+  it("어제 배송완료된 미수령 응모에 리마인더를 보낸다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([deliveredYesterday(now)]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).toHaveBeenCalledWith(
+      "SIMPLE_REVIEW_APPLICATION_DELIVERY_REMINDER",
+      expect.objectContaining({
+        application: expect.objectContaining({ id: "delivered" }),
+      }),
+    );
+  });
+
+  it("이미 수령확인한 응모에는 보내지 않는다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([
+        { ...deliveredYesterday(now), receivedAt: new Date(now - DAY_MS / 2) },
+      ]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).not.toHaveBeenCalledWith(
+      "SIMPLE_REVIEW_APPLICATION_DELIVERY_REMINDER",
+      expect.anything(),
+    );
+  });
+
+  it("이틀 전 배송완료 건에는 다시 보내지 않는다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([
+        { ...deliveredYesterday(now), deliveredAt: new Date(now - 2 * DAY_MS) },
+      ]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("삭제된 캠페인의 응모에는 보내지 않는다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([
+        {
+          ...deliveredYesterday(now),
+          campaign: { ...campaign, deletedAt: new Date(now - DAY_MS) },
+        },
+      ]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});
+
+describe("orderDeadlineActionFor", () => {
+  it("마감 3일 전과 마감 당일에 리마인더를 보낸다", () => {
+    expect(orderDeadlineActionFor(3)).toBe("remind");
+    expect(orderDeadlineActionFor(0)).toBe("remind");
+  });
+
+  it("마감 다음날에는 취소한다", () => {
+    expect(orderDeadlineActionFor(-1)).toBe("cancel");
+  });
+
+  it("그 밖의 날에는 아무것도 하지 않는다", () => {
+    // -2 는 이미 취소된 다음날 — 재처리하지 않는다.
+    for (const remainingDays of [5, 2, 1, -2, -10]) {
+      expect(orderDeadlineActionFor(remainingDays)).toBe("none");
+    }
+  });
+});
+
+describe("LineRemindersService - 가구매 주문 마감", () => {
+  const fakePurchaseCampaign = {
+    id: "c2",
+    title: "가구매 캠페인",
+    category: "FAKE_PURCHASE",
+    postingPeriodDays: 14,
+    orderPeriodDays: 5,
+  };
+
+  /** 주문 마감까지 남은 일수가 remainingDays 가 되도록 승인 시각을 역산한다. */
+  function awaitingOrder(now: number, remainingDays: number) {
+    return {
+      id: "order",
+      status: "APPROVED",
+      reviewedAt: new Date(
+        now - (fakePurchaseCampaign.orderPeriodDays - remainingDays) * DAY_MS,
+      ),
+      receivedAt: null,
+      submissionReviewStatus: "PENDING",
+      submissionReviewedAt: null,
+      posts: [],
+      campaign: fakePurchaseCampaign,
+    };
+  }
+
+  it("마감 3일 전이면 주문 리마인더를 보낸다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([awaitingOrder(now, 3)]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).toHaveBeenCalledWith(
+      "FAKE_PURCHASE_ORDER_DEADLINE_REMINDER",
+      expect.objectContaining({ extra: { remainingDays: 3 } }),
+    );
+  });
+
+  it("마감 다음날이면 응모를 취소하고 안내를 보낸다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const update = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([awaitingOrder(now, -1)], update),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(update).toHaveBeenCalledWith({
+      where: { id: "order" },
+      data: { status: "CANCELLED" },
+    });
+    expect(dispatch).toHaveBeenCalledWith(
+      "FAKE_PURCHASE_ORDER_EXPIRED",
+      expect.objectContaining({
+        application: expect.objectContaining({ id: "order" }),
+      }),
+    );
+  });
+
+  it("이미 주문한 응모는 대상이 아니다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const update = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock(
+        [{ ...awaitingOrder(now, -1), status: "ORDER_SUBMITTED" }],
+        update,
+      ),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(update).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalledWith(
+      "FAKE_PURCHASE_ORDER_EXPIRED",
+      expect.anything(),
+    );
+  });
+
+  it("주문 마감이 없는 캠페인은 대상이 아니다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const update = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock(
+        [
+          {
+            ...awaitingOrder(now, -1),
+            campaign: { ...fakePurchaseCampaign, orderPeriodDays: null },
+          },
+        ],
+        update,
+      ),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(update).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
   });
 });
 

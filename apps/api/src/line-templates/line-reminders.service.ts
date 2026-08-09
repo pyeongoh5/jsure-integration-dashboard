@@ -70,6 +70,40 @@ export const DEADLINE_REMINDER_CONFIGS: DeadlineReminderConfig[] = [
   },
 ];
 
+/** 가구매 주문 마감 리마인더 발송 시점 — 마감 3일 전, 마감 당일. */
+const ORDER_REMINDER_DAYS = [3, 0];
+/** 가구매 주문 마감 다음날. 이날 아직 주문하지 않은 응모를 취소한다. */
+const ORDER_CANCEL_DAY = -1;
+
+export type OrderDeadlineAction = "remind" | "cancel" | "none";
+
+/** 주문 마감까지 남은 일수로 그날 할 일을 고른다. */
+export function orderDeadlineActionFor(remainingDays: number): OrderDeadlineAction {
+  if (ORDER_REMINDER_DAYS.includes(remainingDays)) return "remind";
+  if (remainingDays === ORDER_CANCEL_DAY) return "cancel";
+  return "none";
+}
+
+/** 배송완료 다음날. 수령확인 독촉을 1회만 보내기 위해 동등 비교로 쓴다. */
+const DELIVERY_RECEIPT_REMINDER_DAY = 1;
+
+/**
+ * 배송완료 후 수령확인 리마인더 설정. 배송 단계가 있는 두 카테고리가 조건을
+ * 공유하고 트리거 키만 다르다. 가구매는 배송 단계가 없어 대상이 아니다.
+ */
+type DeliveryReceiptReminderConfig = {
+  category: CampaignCategory;
+  triggerKey: LineTriggerKey;
+};
+
+export const DELIVERY_RECEIPT_REMINDER_CONFIGS: DeliveryReceiptReminderConfig[] = [
+  { category: "SNS", triggerKey: "SNS_APPLICATION_DELIVERY_REMINDER" },
+  {
+    category: "SIMPLE_REVIEW",
+    triggerKey: "SIMPLE_REVIEW_APPLICATION_DELIVERY_REMINDER",
+  },
+];
+
 /** 마감까지 남은 일수로 보낼 리마인더를 고른다. 보낼 것이 없으면 null. */
 export function reminderTriggerKeyFor(
   remainingDays: number,
@@ -99,6 +133,10 @@ export class LineRemindersService {
       return;
     }
     try {
+      await this.runOrderDeadlineReminders();
+      for (const config of DELIVERY_RECEIPT_REMINDER_CONFIGS) {
+        await this.runDeliveryReceiptReminders(config);
+      }
       for (const config of DEADLINE_REMINDER_CONFIGS) {
         await this.runDeadlineReminders(config);
       }
@@ -114,6 +152,90 @@ export class LineRemindersService {
   /** 수동 트리거용 — 디버깅/관리자 호출에서 같은 로직 재사용. */
   async runNow(): Promise<void> {
     return this.runDaily();
+  }
+
+  /**
+   * 가구매 주문 마감 — 마감 3일 전·당일 리마인더를 보내고, 마감 다음날까지
+   * 주문하지 않은 응모를 취소한다. 대상 조건이 같아 한 번의 조회로 처리한다.
+   * 캠페인에 orderPeriodDays 가 없으면 마감 개념이 없어 대상이 아니다.
+   */
+  private async runOrderDeadlineReminders(): Promise<void> {
+    const todayStart = startOfJstDay(new Date());
+
+    const applications = await this.prisma.campaignApplication.findMany({
+      where: {
+        // APPROVED 가 곧 "주문 대기" — 주문을 낸 응모는 ORDER_SUBMITTED 로 빠진다.
+        status: "APPROVED",
+        reviewedAt: { not: null },
+        campaign: {
+          ...activeCampaign("FAKE_PURCHASE"),
+          orderPeriodDays: { not: null },
+        },
+      },
+      include: DISPATCH_APPLICATION_INCLUDE,
+    });
+
+    for (const application of applications) {
+      const { reviewedAt } = application;
+      const { orderPeriodDays } = application.campaign;
+      if (!reviewedAt || orderPeriodDays == null) continue;
+
+      const deadlineMs = reviewedAt.getTime() + orderPeriodDays * DAY_MS;
+      const deadlineDayStart = startOfJstDay(new Date(deadlineMs));
+      const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);
+
+      switch (orderDeadlineActionFor(remainingDays)) {
+        case "remind":
+          await this.dispatcher.dispatch("FAKE_PURCHASE_ORDER_DEADLINE_REMINDER", {
+            application,
+            extra: { remainingDays },
+          });
+          break;
+        case "cancel":
+          // 취소를 먼저 확정하고 안내를 보낸다. 발송이 실패해도 취소는 유지되고
+          // 실패는 line_dispatch_logs 에 남는다.
+          await this.prisma.campaignApplication.update({
+            where: { id: application.id },
+            data: { status: "CANCELLED" },
+          });
+          await this.dispatcher.dispatch("FAKE_PURCHASE_ORDER_EXPIRED", {
+            application,
+          });
+          break;
+        case "none":
+          break;
+      }
+    }
+  }
+
+  /**
+   * 배송완료 다음날까지 수령확인을 하지 않은 응모에 리마인더.
+   * 수령확인이 없으면 receivedAt 이 비어 게시 마감 리마인더까지 전부 발송되지
+   * 않으므로, 응모가 조용히 방치되는 걸 막는 지점이다.
+   */
+  private async runDeliveryReceiptReminders(
+    config: DeliveryReceiptReminderConfig,
+  ): Promise<void> {
+    const todayStart = startOfJstDay(new Date());
+
+    const applications = await this.prisma.campaignApplication.findMany({
+      where: {
+        status: "DELIVERED",
+        receivedAt: null,
+        deliveredAt: { not: null },
+        campaign: activeCampaign(config.category),
+      },
+      include: DISPATCH_APPLICATION_INCLUDE,
+    });
+
+    for (const application of applications) {
+      if (!application.deliveredAt) continue;
+      const deliveredDayStart = startOfJstDay(application.deliveredAt);
+      const elapsedDays = Math.round((todayStart - deliveredDayStart) / DAY_MS);
+      if (elapsedDays !== DELIVERY_RECEIPT_REMINDER_DAY) continue;
+
+      await this.dispatcher.dispatch(config.triggerKey, { application });
+    }
   }
 
   /**

@@ -143,10 +143,15 @@ function deriveSnsStage(input: DisplayStageInput): ApplicationDisplayStage {
   return "APPLIED";
 }
 
-export function postingDeadline(
+/**
+ * 기준 시각 + 허용 일수로 마감 시각을 계산한다.
+ * 게시 마감(수령확인·주문제출 기준)과 주문 마감(승인 기준) 양쪽에서 쓴다.
+ * 기준 시각이나 일수가 없으면 마감이 없다는 뜻으로 null.
+ */
+export function deadlineFrom(
   anchor: Date | null,
-  postingPeriodDays: number,
+  periodDays: number | null,
 ): Date | null {
-  if (!anchor) return null;
-  return new Date(anchor.getTime() + postingPeriodDays * DAY_MS);
+  if (!anchor || periodDays == null) return null;
+  return new Date(anchor.getTime() + periodDays * DAY_MS);
 }

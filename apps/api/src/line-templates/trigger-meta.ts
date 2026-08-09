@@ -23,6 +23,7 @@ export type ApplicationWithRels = CampaignApplication & {
     | "rewardJpy"
     | "productSummary"
     | "category"
+    | "orderPeriodDays"
   > & {
     recruits: (Pick<
       CampaignRecruit,
@@ -72,6 +73,7 @@ export const DISPATCH_APPLICATION_INCLUDE = {
       rewardJpy: true,
       productSummary: true,
       category: true,
+      orderPeriodDays: true,
       recruits: {
         select: {
           subType: true,
@@ -357,6 +359,19 @@ const reviewDeadline: TriggerVariableWithResolver = {
   },
 };
 
+const orderDeadline: TriggerVariableWithResolver = {
+  key: "orderDeadline",
+  label: "주문 마감일",
+  description: "注文期限 (承認日 + キャンペーンの注文期限日数)",
+  sample: "7月10日",
+  resolver: (ctx) => {
+    const { reviewedAt } = ctx.application;
+    const { orderPeriodDays } = ctx.application.campaign;
+    if (!reviewedAt || orderPeriodDays == null) return "";
+    return formatJstMonthDay(new Date(reviewedAt.getTime() + orderPeriodDays * DAY_MS));
+  },
+};
+
 const reviewUrl: TriggerVariableWithResolver = {
   key: "reviewUrl",
   label: "리뷰 URL",
@@ -396,6 +411,16 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   },
   SNS_APPLICATION_DELIVERED: {
     category: "SNS",
+    variables: withBase(
+      trackingCarrier,
+      trackingNumber,
+      applicationShippedDate,
+      applicationDeliveredDate,
+    ),
+  },
+  SNS_APPLICATION_DELIVERY_REMINDER: {
+    category: "SNS",
+    // 같은 배송 건을 다시 안내하므로 배송 완료 트리거와 변수를 맞춘다.
     variables: withBase(
       trackingCarrier,
       trackingNumber,
@@ -464,6 +489,15 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     category: "FAKE_PURCHASE",
     variables: withBase(rejectReason),
   },
+  FAKE_PURCHASE_ORDER_DEADLINE_REMINDER: {
+    category: "FAKE_PURCHASE",
+    // "지금 여기서 주문하세요"가 목적이라 상품 링크·가격을 함께 제공한다.
+    variables: withBase(subType, productUrl, productPriceJpy, orderDeadline, remainingDays),
+  },
+  FAKE_PURCHASE_ORDER_EXPIRED: {
+    category: "FAKE_PURCHASE",
+    variables: withBase(subType, orderDeadline),
+  },
   FAKE_PURCHASE_ORDER_SUBMITTED: {
     category: "FAKE_PURCHASE",
     variables: withBase(subType, orderNumber, orderSubmittedDate, reviewDeadline),
@@ -509,6 +543,16 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     variables: withBase(subType, trackingCarrier, trackingNumber, applicationShippedDate),
   },
   SIMPLE_REVIEW_APPLICATION_DELIVERED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(
+      subType,
+      trackingCarrier,
+      trackingNumber,
+      applicationShippedDate,
+      applicationDeliveredDate,
+    ),
+  },
+  SIMPLE_REVIEW_APPLICATION_DELIVERY_REMINDER: {
     category: "SIMPLE_REVIEW",
     variables: withBase(
       subType,

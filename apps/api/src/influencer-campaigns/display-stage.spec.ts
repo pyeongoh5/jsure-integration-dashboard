@@ -1,4 +1,4 @@
-import { deriveDisplayStage, postingDeadline } from "./display-stage";
+import { deriveDisplayStage, deadlineFrom } from "./display-stage";
 
 const NOW = new Date("2026-06-01T00:00:00Z");
 
@@ -323,16 +323,16 @@ describe("deriveDisplayStage — 가구매 카테고리", () => {
   });
 });
 
-describe("postingDeadline", () => {
+describe("deadlineFrom", () => {
   it("null receivedAt → null", () => {
-    expect(postingDeadline(null, 14)).toBeNull();
+    expect(deadlineFrom(null, 14)).toBeNull();
   });
   it("adds N days based on postingPeriodDays", () => {
     const d = new Date("2026-06-01T00:00:00Z");
-    expect(postingDeadline(d, 14)?.toISOString()).toBe(
+    expect(deadlineFrom(d, 14)?.toISOString()).toBe(
       "2026-06-15T00:00:00.000Z",
     );
-    expect(postingDeadline(d, 7)?.toISOString()).toBe(
+    expect(deadlineFrom(d, 7)?.toISOString()).toBe(
       "2026-06-08T00:00:00.000Z",
     );
   });

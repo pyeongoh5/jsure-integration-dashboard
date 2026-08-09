@@ -236,6 +236,26 @@ export const messages = {
         kr: "주문 명세서 스크린샷을 1장 이상 제출해 주세요",
       },
       submitting: { jp: "送信中…", kr: "전송 중…" },
+      deadlineDaysPrefix: {
+        // new
+        jp: "注文期限まであと ",
+        kr: "주문 기한까지 ",
+      },
+      deadlineDaysSuffix: {
+        // new
+        jp: " 日です",
+        kr: "일 남았습니다",
+      },
+      deadlineToday: {
+        // new
+        jp: "本日が注文期限です",
+        kr: "오늘이 주문 기한입니다",
+      },
+      deadlinePassed: {
+        // new
+        jp: "注文期限を過ぎています。ご応募が取り消される場合があります",
+        kr: "주문 기한이 지났습니다. 응모가 취소될 수 있습니다",
+      },
     },
     reviewForm: {
       urlPlaceholder: { jp: "https://…", kr: "https://…" },

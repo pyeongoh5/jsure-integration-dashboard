@@ -495,6 +495,14 @@ export const CampaignFormSchema = z
       .int("정수만 입력")
       .min(1, "1 이상의 일수여야 합니다")
       .max(365, "365 이하의 일수여야 합니다"),
+    /** 가구매 전용 주문 마감 기한(승인일 + N일). null 이면 마감 없음. */
+    orderPeriodDays: z
+      .number({ invalid_type_error: "숫자를 입력해주세요" })
+      .int("정수만 입력")
+      .min(1, "1 이상의 일수여야 합니다")
+      .max(365, "365 이하의 일수여야 합니다")
+      .nullable()
+      .optional(),
     recruits: CampaignRecruitInputArray,
     // HTML 본문 (tiptap) 을 저장하므로 길이 제한을 크게 둠.
     productSummary: z.string().max(50000),
@@ -533,6 +541,7 @@ export const UpdateCampaignRequestSchema = z
     recruitStartDate: DateOnly.optional(),
     recruitEndDate: DateOnly.optional(),
     postingPeriodDays: z.number().int().min(1).max(365).optional(),
+    orderPeriodDays: z.number().int().min(1).max(365).nullable().optional(),
     recruits: CampaignRecruitInputArray.optional(),
     productSummary: z.string().max(50000).optional(),
     productDetailUrls: z
@@ -594,6 +603,7 @@ export const CampaignDraftRequestSchema = z.object({
   recruitStartDate: z.union([DateOnly, z.literal("")]).optional(),
   recruitEndDate: z.union([DateOnly, z.literal("")]).optional(),
   postingPeriodDays: z.number().int().nonnegative().nullable().optional(),
+  orderPeriodDays: z.number().int().nonnegative().nullable().optional(),
   recruits: z.array(CampaignRecruitDraftSchema).max(10).optional(),
   productSummary: z.string().max(50000).optional(),
   productDetailUrls: z.array(z.string().max(2000)).max(10).optional(),
@@ -647,6 +657,8 @@ export const CampaignResponseSchema = z.object({
   /** 비공개 전환 시각. null 이면 인플루언서에게 노출된다. */
   hiddenAt: z.string().datetime().nullable(),
   postingPeriodDays: z.number().int().min(1),
+  /** 가구매 전용 주문 마감 기한(승인일 + N일). null 이면 마감 없음. */
+  orderPeriodDays: z.number().int().min(1).nullable(),
   productSummary: z.string(),
   productDetailUrls: z.array(z.string()),
   guideline: z.string(),

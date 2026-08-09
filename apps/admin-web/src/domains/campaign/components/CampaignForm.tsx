@@ -26,6 +26,7 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   recruitStartDate: "",
   recruitEndDate: "",
   postingPeriodDays: Number.NaN,
+  orderPeriodDays: null,
   recruits: [],
   productSummary: "",
   productDetailUrls: [""],
@@ -260,6 +261,9 @@ export function CampaignForm({
       });
       const finalValues: Values = {
         ...values,
+        // 주문 마감은 가구매 전용 — 카테고리를 바꿔도 값이 남지 않게 한다.
+        orderPeriodDays:
+          values.category === "FAKE_PURCHASE" ? (values.orderPeriodDays ?? null) : null,
         // 개별 보수 캠페인에서는 통합 보수 금액을 사용하지 않는다.
         rewardJpy: values.rewardType === "PER_SUBTYPE" ? 0 : values.rewardJpy,
         recruits: normalizedRecruits,
@@ -587,6 +591,39 @@ export function CampaignForm({
               <div className={styles.error}>{rootError("postingPeriodDays")}</div>
             )}
           </div>
+
+          {methods.watch("category") === "FAKE_PURCHASE" && (
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="cf-order-period">
+                주문 마감 기한 (승인 후 N일)
+              </label>
+              <Controller
+                control={methods.control}
+                name="orderPeriodDays"
+                render={({ field }) => (
+                  <input
+                    id="cf-order-period"
+                    className={styles.input}
+                    inputMode="numeric"
+                    placeholder="비워두면 주문 마감 없음"
+                    value={field.value == null ? "" : String(field.value)}
+                    onChange={(event) => {
+                      const parsed = parseIntegerInput(event.target.value);
+                      field.onChange(Number.isFinite(parsed) ? parsed : null);
+                    }}
+                    onBlur={field.onBlur}
+                    disabled={submitting}
+                  />
+                )}
+              />
+              <div className={styles.hint}>
+                기한까지 주문하지 않으면 마감 다음날 응모가 자동 취소됩니다.
+              </div>
+              {rootError("orderPeriodDays") && (
+                <div className={styles.error}>{rootError("orderPeriodDays")}</div>
+              )}
+            </div>
+          )}
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="cf-thumbnail">

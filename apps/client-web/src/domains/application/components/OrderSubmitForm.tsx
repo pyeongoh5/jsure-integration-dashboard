@@ -23,6 +23,8 @@ type Values = z.infer<typeof schema>;
 
 interface Props {
   applicationId: string;
+  /** 주문 마감 시각 (ISO). 캠페인에 마감이 없으면 null 이라 안내를 표시하지 않는다. */
+  orderDeadlineAt: string | null; // new
   onSubmit: (
     orderNumber: string,
     receipts: AttachmentUploadInput[],
@@ -30,7 +32,18 @@ interface Props {
   submitting: boolean;
 }
 
-export function OrderSubmitForm({ applicationId, onSubmit, submitting }: Props) {
+/** 마감까지 남은 일수. 0 이면 당일, 음수면 기한 경과. */
+function computeRemainingDays(orderDeadlineAt: string): number {
+  const diffMs = new Date(orderDeadlineAt).getTime() - Date.now();
+  return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+}
+
+export function OrderSubmitForm({
+  applicationId,
+  orderDeadlineAt,
+  onSubmit,
+  submitting,
+}: Props) {
   const methods = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { orderNumber: "" },
@@ -81,6 +94,10 @@ export function OrderSubmitForm({ applicationId, onSubmit, submitting }: Props) 
         <p className={styles.description}>
           {t("application.stage.awaitingOrder.description")}
         </p>
+
+        {orderDeadlineAt !== null && (
+          <OrderDeadlineNotice orderDeadlineAt={orderDeadlineAt} />
+        )}
 
         <FormField
           name="orderNumber"
@@ -206,5 +223,30 @@ export function OrderSubmitForm({ applicationId, onSubmit, submitting }: Props) 
         </PrimaryButton>
       </form>
     </FormProvider>
+  );
+}
+
+/** 주문 마감 안내 — 남은 일수, 당일, 기한 경과를 각각 다르게 표시한다. */
+function OrderDeadlineNotice({ orderDeadlineAt }: { orderDeadlineAt: string }) {
+  const remainingDays = computeRemainingDays(orderDeadlineAt);
+
+  if (remainingDays < 0) {
+    return (
+      <p className={styles.deadline}>
+        {t("application.orderForm.deadlinePassed")}
+      </p>
+    );
+  }
+  if (remainingDays === 0) {
+    return (
+      <p className={styles.deadline}>{t("application.orderForm.deadlineToday")}</p>
+    );
+  }
+  return (
+    <p className={styles.deadlineOk}>
+      {t("application.orderForm.deadlineDaysPrefix")}
+      {remainingDays}
+      {t("application.orderForm.deadlineDaysSuffix")}
+    </p>
   );
 }

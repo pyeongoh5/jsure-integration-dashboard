@@ -27,6 +27,7 @@ function toFormValues(campaign: CampaignResponse): Values {
     recruitStartDate: campaign.recruitStartDate,
     recruitEndDate: campaign.recruitEndDate,
     postingPeriodDays: campaign.postingPeriodDays,
+    orderPeriodDays: campaign.orderPeriodDays,
     recruits: campaign.recruits,
     productSummary: campaign.productSummary,
     productDetailUrls: campaign.productDetailUrls,

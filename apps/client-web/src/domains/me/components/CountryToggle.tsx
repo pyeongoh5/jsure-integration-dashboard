@@ -15,8 +15,8 @@ type Props = {
 };
 
 const COUNTRY_LABEL: Record<AddressCountry, () => string> = {
-  JP: () => t("me.country.jp"),
-  KR: () => t("me.country.kr"),
+  JP: () => t("me.country.japan"),
+  KR: () => t("me.country.korea"),
 };
 
 /**

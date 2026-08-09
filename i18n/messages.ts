@@ -107,8 +107,9 @@ export const messages = {
     country: {
       // new
       label: { jp: "国", kr: "국가" },
-      jp: { jp: "日本", kr: "일본" },
-      kr: { jp: "韓国", kr: "한국" },
+      // 키 이름을 jp/kr 로 두면 로케일 키와 겹쳐 검증기가 leaf 로 오인한다.
+      japan: { jp: "日本", kr: "일본" },
+      korea: { jp: "韓国", kr: "한국" },
       cancel: { jp: "キャンセル", kr: "취소" },
       confirm: { jp: "変更する", kr: "변경" },
       confirmAddressToJp: {

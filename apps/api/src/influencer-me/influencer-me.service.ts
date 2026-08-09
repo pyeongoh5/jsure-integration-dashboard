@@ -11,6 +11,7 @@ import type {
   UpdateInfluencerProfileRequest,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { addressColumns, bankAccountColumns } from "../common/account-columns";
 
 @Injectable()
 export class InfluencerMeService {
@@ -36,13 +37,8 @@ export class InfluencerMeService {
   ): Promise<void> {
     await this.prisma.influencer.update({
       where: { id: influencerId },
-      data: {
-        postalCode: input.postalCode,
-        prefecture: input.prefecture,
-        city: input.city,
-        addressLine1: input.addressLine1,
-        addressLine2: input.addressLine2 ?? "",
-      },
+      // 국가 전환 시 이전 국가의 잔여 값이 남지 않도록 전체 컬럼을 덮어쓴다.
+      data: addressColumns(input),
     });
   }
 
@@ -98,27 +94,12 @@ export class InfluencerMeService {
     influencerId: string,
     input: InfluencerBankAccount,
   ): Promise<void> {
+    // 국가 전환 시 이전 국가의 잔여 값이 남지 않도록 전체 컬럼을 덮어쓴다.
+    const columns = bankAccountColumns(input);
     await this.prisma.influencerBankAccount.upsert({
       where: { influencerId },
-      create: {
-        influencerId,
-        bankCode: input.bankCode,
-        bankName: input.bankName,
-        branchName: input.branchName,
-        branchCode: input.branchCode,
-        accountNumber: input.accountNumber,
-        accountHolderKana: input.accountHolderKana,
-        invoiceRegistrationNumber: input.invoiceRegistrationNumber ?? null,
-      },
-      update: {
-        bankCode: input.bankCode,
-        bankName: input.bankName,
-        branchName: input.branchName,
-        branchCode: input.branchCode,
-        accountNumber: input.accountNumber,
-        accountHolderKana: input.accountHolderKana,
-        invoiceRegistrationNumber: input.invoiceRegistrationNumber ?? null,
-      },
+      create: { influencerId, ...columns },
+      update: columns,
     });
   }
 }

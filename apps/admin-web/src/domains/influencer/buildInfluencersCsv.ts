@@ -18,6 +18,7 @@ const HEADERS = [
   ]),
   "상태",
   "가입일",
+  "주소 국가",
   "우편번호",
   "주소",
 ] as const;
@@ -28,6 +29,11 @@ function snsCells(row: AdminInfluencer, type: SnsAccountSubType): [string, strin
   if (!account) return ["", ""];
   return [`@${account.handle}`, String(account.followerCount)];
 }
+
+const COUNTRY_LABEL: Record<AdminInfluencer["address"]["country"], string> = {
+  JP: "일본",
+  KR: "한국",
+};
 
 function formatAddress(address: AdminInfluencer["address"]): string {
   return [
@@ -66,6 +72,7 @@ function formatRow(row: AdminInfluencer): string[] {
     ...SNS_COLUMNS.flatMap((column) => snsCells(row, column.type)),
     row.status === "ACTIVE" ? "활성" : "정지",
     formatJoinDate(row.createdAt),
+    COUNTRY_LABEL[row.address.country],
     row.address.postalCode,
     formatAddress(row.address),
   ];

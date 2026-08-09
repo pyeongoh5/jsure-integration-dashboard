@@ -1,0 +1,78 @@
+.root {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.option {
+  flex: 1;
+  padding: 10px 0;
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.optionOn {
+  border-color: var(--color-primary, #2563eb);
+  background: var(--color-primary-soft, #eff6ff);
+  color: var(--color-primary, #2563eb);
+}
+
+.dim {
+  position: fixed;
+  inset: 0;
+  overscroll-behavior: contain;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 320px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.dialogBody {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text, #111);
+  white-space: pre-line;
+}
+
+.dialogActions {
+  display: flex;
+  gap: 8px;
+}
+
+.dialogCancel,
+.dialogConfirm {
+  flex: 1;
+  padding: 11px 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dialogCancel {
+  border: 1px solid var(--color-border, #d1d5db);
+  background: #fff;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.dialogConfirm {
+  border: none;
+  background: var(--color-primary, #2563eb);
+  color: #fff;
+}

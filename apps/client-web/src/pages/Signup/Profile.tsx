@@ -46,8 +46,9 @@ export function SignupProfile() {
       phone: draft.profile.phone,
       birthDate: draft.profile.birthDate,
       address: {
+        country: draft.profile.addressCountry,
         postalCode: draft.profile.postalCode,
-        prefecture: draft.profile.prefecture as Values["address"]["prefecture"],
+        prefecture: draft.profile.prefecture,
         city: draft.profile.city,
         addressLine1: draft.profile.addressLine1,
         addressLine2: draft.profile.addressLine2,
@@ -61,6 +62,7 @@ export function SignupProfile() {
       nameKana: values.nameKana,
       phone: values.phone,
       birthDate: values.birthDate,
+      addressCountry: values.address.country,
       postalCode: values.address.postalCode,
       prefecture: values.address.prefecture,
       city: values.address.city,

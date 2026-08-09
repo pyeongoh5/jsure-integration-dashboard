@@ -65,6 +65,12 @@ enum CampaignSubType {
   ATCOSME
 }
 
+/// 주소·계좌의 국가. 활성 값은 항상 하나이며 주소와 계좌는 서로 독립이다.
+enum AddressCountry {
+  JP
+  KR
+}
+
 enum InfluencerStatus {
   ACTIVE
   SUSPENDED
@@ -210,10 +216,16 @@ model Influencer {
   nameKana      String?
   phone         String
   birthDate     DateTime?
+  /// 주소 형식의 국가. JP 는 7자리 우편번호+도도부현, KR 은 5자리 우편번호+시/도.
+  addressCountry AddressCountry      @default(JP)
   postalCode    String               @default("")
+  /// JP: 都道府県 / KR: 시·도
   prefecture    String               @default("")
+  /// JP: 市区町村 / KR: 시·군·구
   city          String               @default("")
+  /// JP: 番地 / KR: 도로명 주소
   addressLine1  String               @default("")
+  /// JP: 建物名・部屋番号 / KR: 상세 주소
   addressLine2  String               @default("")
   memo          String?
   status        InfluencerStatus     @default(ACTIVE)
@@ -297,12 +309,17 @@ model InfluencerConsent {
 model InfluencerBankAccount {
   id                String               @id @default(cuid())
   influencerId      String               @unique
+  /// 계좌 형식의 국가. 주소 국가와 무관하게 따로 고른다.
+  bankCountry       AddressCountry       @default(JP)
+  /// JP: 4자리 금융기관 코드 / KR: 3자리 표준 금융기관 코드
   bankCode          String
   bankName          String
+  /// 한국 계좌는 지점이 이체에 무관하므로 빈 문자열.
   branchName        String
   branchCode        String               @default("")
   accountNumber     String
-  accountHolderKana String
+  /// 예금주명. JP 는 カナ 표기, KR 은 한글.
+  accountHolder String
   /// 適格請求書登録番号 (인보이스 등록번호). T + 13자리 숫자, 선택 입력.
   invoiceRegistrationNumber String?
 
@@ -422,12 +439,13 @@ model Settlement {
 
   /// 정산 생성(대기풀 진입) 시점의 계좌 스냅샷 — 이후 마이페이지 변경과 무관하게 보존.
   /// 스냅샷 도입 전 생성된 정산은 null (조회 시 현재 계좌로 fallback).
+  bankCountry       AddressCountry?
   bankCode          String?
   bankName          String?
   branchName        String?
   branchCode        String?
   accountNumber     String?
-  accountHolderKana String?
+  accountHolder String?
   invoiceRegistrationNumber String?
 
   application CampaignApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)

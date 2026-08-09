@@ -3,6 +3,7 @@ import {
   SLOT_CONSUMING_STATUSES,
   SUB_TYPE_OPTION_LABEL,
   buildSnsProfileUrl,
+  type AddressCountry,
   type AdminApplication,
   type AdminSettlement,
   type AdminSubmission,
@@ -626,12 +627,13 @@ export class AdminApplicationsService {
           select: {
             bankAccount: {
               select: {
+                bankCountry: true,
                 bankCode: true,
                 bankName: true,
                 branchName: true,
                 branchCode: true,
                 accountNumber: true,
-                accountHolderKana: true,
+                accountHolder: true,
                 invoiceRegistrationNumber: true,
               },
             },
@@ -677,13 +679,14 @@ export class AdminApplicationsService {
         productRefundJpy,
         status: autoCompleted ? "COMPLETED" : "PENDING",
         completedAt: autoCompleted ? new Date() : null,
+        bankCountry: existing.influencer.bankAccount?.bankCountry ?? null,
         bankCode: existing.influencer.bankAccount?.bankCode ?? null,
         bankName: existing.influencer.bankAccount?.bankName ?? null,
         branchName: existing.influencer.bankAccount?.branchName ?? null,
         branchCode: existing.influencer.bankAccount?.branchCode ?? null,
         accountNumber: existing.influencer.bankAccount?.accountNumber ?? null,
-        accountHolderKana:
-          existing.influencer.bankAccount?.accountHolderKana ?? null,
+        accountHolder:
+          existing.influencer.bankAccount?.accountHolder ?? null,
         invoiceRegistrationNumber:
           existing.influencer.bankAccount?.invoiceRegistrationNumber ?? null,
       },
@@ -762,12 +765,13 @@ export class AdminApplicationsService {
                 },
                 bankAccount: {
                   select: {
+                    bankCountry: true,
                     bankName: true,
                     bankCode: true,
                     branchName: true,
                     branchCode: true,
                     accountNumber: true,
-                    accountHolderKana: true,
+                    accountHolder: true,
                     invoiceRegistrationNumber: true,
                   },
                 },
@@ -1177,12 +1181,13 @@ type SettlementRow = {
   status: "PENDING" | "COMPLETED";
   createdAt: Date;
   completedAt: Date | null;
+  bankCountry: AddressCountry | null;
   bankCode: string | null;
   bankName: string | null;
   branchName: string | null;
   branchCode: string | null;
   accountNumber: string | null;
-  accountHolderKana: string | null;
+  accountHolder: string | null;
   invoiceRegistrationNumber: string | null;
   application: {
     id: string;
@@ -1207,12 +1212,13 @@ type SettlementRow = {
       name: string;
       snsAccounts: { snsType: string; handle: string }[];
       bankAccount: {
+        bankCountry: AddressCountry;
         bankName: string;
         bankCode: string;
         branchName: string;
         branchCode: string;
         accountNumber: string;
-        accountHolderKana: string;
+        accountHolder: string;
         invoiceRegistrationNumber: string | null;
       } | null;
     };
@@ -1227,12 +1233,14 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
   const bankAccount =
     row.bankCode !== null && row.accountNumber !== null
       ? {
+          // 스냅샷 도입 전 행은 bankCountry 가 없다 — 당시엔 일본 계좌뿐이었다.
+          bankCountry: row.bankCountry ?? "JP",
           bankName: row.bankName ?? "",
           bankCode: row.bankCode,
           branchName: row.branchName ?? "",
           branchCode: row.branchCode ?? "",
           accountNumber: row.accountNumber,
-          accountHolderKana: row.accountHolderKana ?? "",
+          accountHolder: row.accountHolder ?? "",
           invoiceRegistrationNumber: row.invoiceRegistrationNumber,
         }
       : row.application.influencer.bankAccount;

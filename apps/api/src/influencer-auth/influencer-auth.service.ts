@@ -7,6 +7,7 @@ import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { addressColumns, bankAccountColumns } from "../common/account-columns";
 import {
   InfluencerSessionsService,
   type SessionContext,
@@ -68,11 +69,7 @@ export class InfluencerAuthService {
             nameKana: input.nameKana,
             phone: input.phone,
             birthDate: new Date(`${input.birthDate}T00:00:00Z`),
-            postalCode: input.address.postalCode,
-            prefecture: input.address.prefecture,
-            city: input.address.city,
-            addressLine1: input.address.addressLine1,
-            addressLine2: input.address.addressLine2 ?? "",
+            ...addressColumns(input.address),
           },
         });
 
@@ -90,14 +87,7 @@ export class InfluencerAuthService {
         await tx.influencerBankAccount.create({
           data: {
             influencerId: created.id,
-            bankCode: input.bankAccount.bankCode,
-            bankName: input.bankAccount.bankName,
-            branchName: input.bankAccount.branchName,
-            branchCode: input.bankAccount.branchCode,
-            accountNumber: input.bankAccount.accountNumber,
-            accountHolderKana: input.bankAccount.accountHolderKana,
-            invoiceRegistrationNumber:
-              input.bankAccount.invoiceRegistrationNumber ?? null,
+            ...bankAccountColumns(input.bankAccount),
           },
         });
 

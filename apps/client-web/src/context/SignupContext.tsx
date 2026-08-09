@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type {
+  AddressCountry,
   ConsentItem,
   InfluencerSnsAccountInput,
 } from "@jsure/shared";
@@ -46,6 +47,8 @@ interface ProfileDraft {
   nameKana: string;
   phone: string;
   birthDate: string;
+  /** 주소 형식의 국가. 계좌 국가와 무관하게 따로 고른다. */
+  addressCountry: AddressCountry;
   postalCode: string;
   prefecture: string;
   city: string;
@@ -59,12 +62,14 @@ interface AccountDraft {
 }
 
 interface BankDraft {
+  /** 계좌 형식의 국가. 주소 국가와 무관하게 따로 고른다. */
+  bankCountry: AddressCountry;
   bankCode: string;
   bankName: string;
   branchName: string;
   branchCode: string;
   accountNumber: string;
-  accountHolderKana: string;
+  accountHolder: string;
   invoiceRegistrationNumber: string;
 }
 
@@ -85,6 +90,7 @@ const DEFAULT: SignupDraft = {
     nameKana: "",
     phone: "",
     birthDate: "",
+    addressCountry: "JP",
     postalCode: "",
     prefecture: "",
     city: "",
@@ -93,12 +99,13 @@ const DEFAULT: SignupDraft = {
   },
   snsAccounts: [],
   bank: {
+    bankCountry: "JP",
     bankCode: "",
     bankName: "",
     branchName: "",
     branchCode: "",
     accountNumber: "",
-    accountHolderKana: "",
+    accountHolder: "",
     invoiceRegistrationNumber: "",
   },
   lineSignupToken: null,

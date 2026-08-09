@@ -104,6 +104,80 @@ export const messages = {
       addressLine2Label: { jp: "建物名・部屋番号 (任意)", kr: "건물명·호수 (선택)" },
       addressLine2Placeholder: { jp: "ABCビル 502号室", kr: "ABC빌딩 502호" },
     },
+    country: {
+      // new
+      label: { jp: "国", kr: "국가" },
+      jp: { jp: "日本", kr: "일본" },
+      kr: { jp: "韓国", kr: "한국" },
+      cancel: { jp: "キャンセル", kr: "취소" },
+      confirm: { jp: "変更する", kr: "변경" },
+      confirmAddressToJp: {
+        jp: "日本の住所に切り替えると、入力済みの韓国の住所はすべて削除されます。続けますか？",
+        kr: "일본 주소로 전환하면 입력하신 한국 주소가 모두 지워집니다. 계속하시겠습니까?",
+      },
+      confirmAddressToKr: {
+        jp: "韓国の住所に切り替えると、入力済みの日本の住所はすべて削除されます。続けますか？",
+        kr: "한국 주소로 전환하면 입력하신 일본 주소가 모두 지워집니다. 계속하시겠습니까?",
+      },
+      confirmBankToJp: {
+        jp: "日本の口座に切り替えると、入力済みの韓国の口座情報はすべて削除されます。続けますか？",
+        kr: "일본 계좌로 전환하면 입력하신 한국 계좌 정보가 모두 지워집니다. 계속하시겠습니까?",
+      },
+      confirmBankToKr: {
+        jp: "韓国の口座に切り替えると、入力済みの日本の口座情報はすべて削除されます。続けますか？",
+        kr: "한국 계좌로 전환하면 입력하신 일본 계좌 정보가 모두 지워집니다. 계속하시겠습니까?",
+      },
+    },
+    addressKr: {
+      // new
+      postalCodeLabel: { jp: "郵便番号", kr: "우편번호" },
+      postalCodeError: { jp: "郵便番号は5桁", kr: "우편번호는 5자리 숫자" },
+      postalCodePlaceholder: { jp: "住所検索から入力", kr: "주소 검색으로 입력" },
+      postalHint: { jp: "例: 06236", kr: "예: 06236" },
+      searchButton: { jp: "住所検索", kr: "주소 검색" },
+      searchLoading: { jp: "準備中…", kr: "준비 중…" },
+      searchTitle: { jp: "住所検索", kr: "주소 검색" },
+      searchClose: { jp: "閉じる", kr: "닫기" },
+      searchRequired: {
+        jp: "住所検索から住所を選択してください",
+        kr: "주소 검색으로 주소를 선택해 주세요",
+      },
+      searchUnavailable: {
+        jp: "住所検索を読み込めませんでした。お手数ですが直接ご入力ください。",
+        kr: "주소 검색을 불러오지 못했습니다. 번거로우시겠지만 직접 입력해 주세요.",
+      },
+      addressLabel: { jp: "住所", kr: "주소" },
+      addressPlaceholder: {
+        jp: "住所検索から入力されます",
+        kr: "주소 검색으로 채워집니다",
+      },
+      provinceLabel: { jp: "市・道", kr: "시/도" },
+      provinceError: { jp: "市・道を選択してください", kr: "시/도를 선택해 주세요" },
+      provincePlaceholder: { jp: "選択してください", kr: "선택해 주세요" },
+      cityLabel: { jp: "市・郡・区", kr: "시·군·구" },
+      cityError: { jp: "市・郡・区は必須", kr: "시·군·구는 필수" },
+      cityPlaceholder: { jp: "江南区", kr: "강남구" },
+      addressLine1Label: { jp: "道路名住所", kr: "도로명 주소" },
+      addressLine1Error: { jp: "道路名住所は必須", kr: "도로명 주소는 필수" },
+      addressLine1Placeholder: { jp: "テヘラン路123", kr: "테헤란로 123" },
+      addressLine2Label: { jp: "詳細住所 (任意)", kr: "상세 주소 (선택)" },
+      addressLine2Placeholder: { jp: "4階 401号", kr: "4층 401호" },
+    },
+    bankKr: {
+      // new
+      searchPlaceholder: { jp: "銀行名 / 3桁コード", kr: "은행명 / 3자리 코드" },
+      bankLabel: { jp: "銀行", kr: "은행" },
+      bankError: { jp: "銀行を選択してください", kr: "은행을 선택해 주세요" },
+      accountNumberLabel: { jp: "口座番号", kr: "계좌번호" },
+      accountNumberError: {
+        jp: "口座番号は数字とハイフンのみ",
+        kr: "계좌번호는 숫자와 하이픈만 입력해 주세요",
+      },
+      accountNumberPlaceholder: { jp: "110-123-456789", kr: "110-123-456789" },
+      accountHolderLabel: { jp: "口座名義", kr: "예금주명" },
+      accountHolderError: { jp: "口座名義を入力してください", kr: "예금주명을 입력해 주세요" },
+      accountHolderPlaceholder: { jp: "ホン・ギルドン", kr: "홍길동" },
+    },
     bank: {
       searchTrigger: { jp: "銀行を検索", kr: "은행 검색" },
       closeAriaLabel: { jp: "閉じる", kr: "닫기" },
@@ -528,7 +602,7 @@ export const messages = {
         branchNamePlaceholder: { jp: "渋谷支店", kr: "시부야 지점" },
         branchCodeLabel: { jp: "支店コード (3桁)", kr: "지점 코드 (3자리)" },
         accountNumberLabel: { jp: "口座番号 (7桁)", kr: "계좌번호 (7자리)" }, // new
-        accountHolderKanaLabel: { jp: "口座名義 (カナ)", kr: "예금주명 (가타카나)" },
+        accountHolderLabel: { jp: "口座名義 (カナ)", kr: "예금주명 (가타카나)" },
         kanaHint: { jp: "例: ヤマダ ハナコ", kr: "예: ヤマダ ハナコ" },
         invoiceNumberLabel: { jp: "適格請求書登録番号 (任意)", kr: "적격청구서 등록번호 (선택)" }, // new
         invoiceNumberHint: { jp: "例: T1234567890123", kr: "예: T1234567890123" }, // new
@@ -718,7 +792,7 @@ export const messages = {
         branchName: { jp: "支店名", kr: "지점명" },
         branchCode: { jp: "支店コード (3桁)", kr: "지점 코드 (3자리)" },
         accountNumber: { jp: "口座番号", kr: "계좌번호" },
-        accountHolderKana: { jp: "口座名義 (カナ)", kr: "예금주명 (가타카나)" },
+        accountHolder: { jp: "口座名義 (カナ)", kr: "예금주명 (가타카나)" },
         invoiceNumber: { jp: "適格請求書登録番号 (任意)", kr: "적격청구서 등록번호 (선택)" }, // new
         invoiceNumberHint: { jp: "例: T1234567890123", kr: "예: T1234567890123" }, // new
         invoiceNumberError: { jp: "T + 13桁の数字", kr: "T + 13자리 숫자" }, // new

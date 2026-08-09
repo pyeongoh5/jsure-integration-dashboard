@@ -1,0 +1,13 @@
+.body {
+  padding: 16px;
+}
+
+/* 계좌번호가 마스킹만 남아 재입력이 필요한 경우의 안내. */
+.reenterNotice {
+  margin-bottom: 14px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+}

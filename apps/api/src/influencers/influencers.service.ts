@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import type {
+  AddressCountry,
   AdminInfluencer,
   InfluencerNotesResponse,
   InfluencerMemoEntry,
@@ -23,6 +24,7 @@ type AdminInfluencerRow = {
   memo: string | null;
   flaggedAt: Date | null;
   createdAt: Date;
+  addressCountry: AddressCountry;
   postalCode: string;
   prefecture: string;
   city: string;
@@ -51,6 +53,7 @@ function toAdminResponse(row: AdminInfluencerRow): AdminInfluencer {
       followerCount: s.followerCount,
     })),
     address: {
+      country: row.addressCountry,
       postalCode: row.postalCode,
       prefecture: row.prefecture,
       city: row.city,

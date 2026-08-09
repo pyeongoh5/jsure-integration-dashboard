@@ -24,10 +24,13 @@ import {
   type InfluencerMeResponse,
   type InfluencerRefreshRequest,
   type InfluencerSignupRequest,
-  type JpPrefecture,
   type LineCompleteSignupRequest,
 } from "@jsure/shared";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
+import {
+  toAddressResponse,
+  toBankAccountResponse,
+} from "../common/account-columns";
 import { InfluencerAuthService } from "./influencer-auth.service";
 import { InfluencerLineAuthService } from "./influencer-line-auth.service";
 import { InfluencerJwtAuthGuard } from "./guards/influencer-jwt-auth.guard";
@@ -157,35 +160,18 @@ export class InfluencerAuthController {
       birthDate: inf.birthDate
         ? inf.birthDate.toISOString().slice(0, 10)
         : null,
-      address: hasAddress
-        ? {
-            postalCode: inf.postalCode,
-            // DB 는 string 으로 저장, 회원가입에서 enum 검증을 거치므로 안전
-            prefecture: inf.prefecture as JpPrefecture,
-            city: inf.city,
-            addressLine1: inf.addressLine1,
-            addressLine2: inf.addressLine2 ?? "",
-          }
-        : null,
+      // DB 는 string 으로 저장하고 회원가입에서 국가별 enum 검증을 거치므로 안전.
+      address: hasAddress ? toAddressResponse(inf) : null,
       snsAccounts: inf.snsAccounts.map((s) => ({
         snsType: s.snsType as InfluencerMeResponse["snsAccounts"][number]["snsType"],
         handle: s.handle,
         followerCount: s.followerCount,
       })),
       bankAccount: inf.bankAccount
-        ? {
-            bankCode: inf.bankAccount.bankCode,
-            bankName: inf.bankAccount.bankName,
-            branchName: inf.bankAccount.branchName,
-            branchCode: inf.bankAccount.branchCode,
-            accountHolderKana: inf.bankAccount.accountHolderKana,
-            accountNumberMasked: maskAccountNumber(
-              inf.bankAccount.accountNumber,
-            ),
-            accountNumber: inf.bankAccount.accountNumber,
-            invoiceRegistrationNumber:
-              inf.bankAccount.invoiceRegistrationNumber,
-          }
+        ? toBankAccountResponse(
+            inf.bankAccount,
+            maskAccountNumber(inf.bankAccount.accountNumber),
+          )
         : null,
     };
   }

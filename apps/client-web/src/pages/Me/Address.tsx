@@ -9,20 +9,14 @@ import { fetchMe } from "@/domains/auth";
 import { updateAddress } from "@/domains/me";
 import { PageHeader } from "../../components/composites/PageHeader";
 import { PrimaryButton } from "../../components/composites/PrimaryButton";
-import { AddressFormFields, AddressZodSchema } from "@/domains/me";
+import { AddressFormFields, AddressZodSchema, EMPTY_ADDRESS } from "@/domains/me";
 import { ErrorBanner } from "../../components/composites/ErrorBanner";
 import { t } from "@i18n";
 
 const schema = AddressZodSchema;
 type Values = z.infer<typeof schema>;
 
-const EMPTY: Values = {
-  postalCode: "",
-  prefecture: "" as Values["prefecture"],
-  city: "",
-  addressLine1: "",
-  addressLine2: "",
-};
+const EMPTY: Values = EMPTY_ADDRESS;
 
 export function MeAddress() {
   const nav = useNavigate();
@@ -38,8 +32,9 @@ export function MeAddress() {
   useEffect(() => {
     if (data?.address) {
       methods.reset({
+        country: data.address.country,
         postalCode: data.address.postalCode,
-        prefecture: data.address.prefecture as Values["prefecture"],
+        prefecture: data.address.prefecture,
         city: data.address.city,
         addressLine1: data.address.addressLine1,
         addressLine2: data.address.addressLine2 ?? "",

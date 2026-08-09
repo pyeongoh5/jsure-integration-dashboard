@@ -11,6 +11,8 @@ interface Props {
   error?: string;
   hint?: string;
   maxLength?: number;
+  /** 값을 다른 수단(주소 검색 등)으로만 채우는 칸. */
+  readOnly?: boolean;
 }
 
 export function LabeledInput({
@@ -24,6 +26,7 @@ export function LabeledInput({
   error,
   hint,
   maxLength,
+  readOnly,
 }: Props) {
   return (
     <label className={styles.field}>
@@ -38,6 +41,7 @@ export function LabeledInput({
         inputMode={inputMode}
         autoComplete={autoComplete}
         maxLength={maxLength}
+        readOnly={readOnly}
         onChange={(event) => onChange(event.target.value)}
       />
       {hint && !error && <span className={styles.hint}>{hint}</span>}

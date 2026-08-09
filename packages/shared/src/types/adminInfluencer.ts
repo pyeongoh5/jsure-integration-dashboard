@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  AddressCountrySchema,
   CampaignSubTypeSchema,
   SnsAccountSubTypeSchema,
 } from "./influencer.js";
@@ -24,6 +25,8 @@ export type AdminInfluencerSnsAccount = z.infer<
 >;
 
 export const AdminInfluencerAddressSchema = z.object({
+  /** 주소 형식의 국가. 라벨과 표시 형식을 고르는 근거. */
+  country: AddressCountrySchema,
   postalCode: z.string(),
   prefecture: z.string(),
   city: z.string(),
@@ -224,12 +227,14 @@ export const AdminSettlementSchema = z.object({
     handle: z.string(),
     bankAccount: z
       .object({
+        /** 계좌 형식의 국가. 스냅샷 도입 전 정산 건은 일본으로 간주한다. */
+        bankCountry: AddressCountrySchema,
         bankName: z.string(),
         bankCode: z.string(),
         branchName: z.string(),
         branchCode: z.string(),
         accountNumber: z.string(),
-        accountHolderKana: z.string(),
+        accountHolder: z.string(),
         /** 適格請求書登録番号. 미지정이면 null. optional 은 구 API 응답 호환용. */
         invoiceRegistrationNumber: z.string().nullable().optional(),
       })

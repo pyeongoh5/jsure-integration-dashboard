@@ -74,6 +74,11 @@ export function buildSettlementGroupIds(
   });
 }
 
+const BANK_COUNTRY_LABEL: Record<"JP" | "KR", string> = {
+  JP: "일본",
+  KR: "한국",
+};
+
 function metricCell(value: number | null): string {
   return value === null ? "" : String(value);
 }
@@ -104,12 +109,13 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
     "저장",
     "조회",
     "리치",
+    "계좌 국가",
     "은행명",
     "은행코드",
     "지점명",
     "지점코드",
     "계좌번호",
-    "계좌명의(카나)",
+    "계좌명의",
     "인보이스 등록번호",
     "보수(JPY)",
     "상품환급(JPY)",
@@ -127,12 +133,13 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
     const settlementCells = (first: boolean) =>
       first
         ? [
+            bankAccount ? BANK_COUNTRY_LABEL[bankAccount.bankCountry] : "",
             bankAccount?.bankName ?? "",
             bankAccount?.bankCode ?? "",
             bankAccount?.branchName ?? "",
             bankAccount?.branchCode ?? "",
             bankAccount?.accountNumber ?? "",
-            bankAccount?.accountHolderKana ?? "",
+            bankAccount?.accountHolder ?? "",
             bankAccount?.invoiceRegistrationNumber ?? "",
             row.rewardAmountJpy,
             row.productRefundJpy,
@@ -141,7 +148,7 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
             formatDateTime(row.completedAt),
             row.status === "COMPLETED" ? "완료" : "대기",
           ]
-        : ["", "", "", "", "", "", "", "", "", "", "", "", ""];
+        : ["", "", "", "", "", "", "", "", "", "", "", "", "", ""];
     // posts 가 없을 일은 없지만 방어적으로 한 행은 출력.
     const posts = row.posts.length > 0 ? row.posts : [null];
     posts.forEach((post, postIndex) => {
@@ -462,12 +469,13 @@ export function Payouts() {
                   <th style={{ width: 96 }}>제출물</th>
                   <th>투고 게시일</th>
                   <th>인사이트 제출일</th>
+                  <th style={{ width: 70 }}>계좌 국가</th>
                   <th>은행명</th>
                   <th>은행코드</th>
                   <th>지점명</th>
                   <th>지점코드</th>
                   <th>계좌번호</th>
-                  <th>계좌명의(카나)</th>
+                  <th>계좌명의</th>
                   <th>인보이스 등록번호</th>
                   <th>보수</th>
                   <th>상품환급</th>
@@ -533,13 +541,19 @@ export function Payouts() {
                           ),
                         )}
                       </td>
+                      <td>
+                        {row.influencer.bankAccount
+                          ? BANK_COUNTRY_LABEL[row.influencer.bankAccount.bankCountry]
+                          : "—"}
+                      </td>
                       <td>{row.influencer.bankAccount?.bankName ?? "—"}</td>
                       <td>{row.influencer.bankAccount?.bankCode ?? "—"}</td>
-                      <td>{row.influencer.bankAccount?.branchName ?? "—"}</td>
+                      {/* 한국 계좌는 지점·인보이스를 쓰지 않아 빈 값으로 저장된다. */}
+                      <td>{row.influencer.bankAccount?.branchName || "—"}</td>
                       <td>{row.influencer.bankAccount?.branchCode || "—"}</td>
                       <td>{row.influencer.bankAccount?.accountNumber ?? "—"}</td>
-                      <td>{row.influencer.bankAccount?.accountHolderKana ?? "—"}</td>
-                      <td>{row.influencer.bankAccount?.invoiceRegistrationNumber ?? "—"}</td>
+                      <td>{row.influencer.bankAccount?.accountHolder ?? "—"}</td>
+                      <td>{row.influencer.bankAccount?.invoiceRegistrationNumber || "—"}</td>
                       <td className={styles.amount}>{formatJpy(row.rewardAmountJpy)}</td>
                       <td className={styles.amount}>{formatRefund(row.productRefundJpy)}</td>
                       <td className={styles.amount}>{formatJpy(row.amountJpy)}</td>

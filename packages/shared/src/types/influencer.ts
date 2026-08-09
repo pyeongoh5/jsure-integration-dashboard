@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizeSnsHandle } from "../utils/snsHandle.js";
+import { KR_PROVINCES } from "../data/krBanks.js";
 
 /**
  * 캠페인 서브타입.
@@ -64,13 +65,18 @@ export type ConsentItem = z.infer<typeof ConsentItemSchema>;
 
 const KANA_RE = /^[゠-ヿ　\sー]+$/;
 
-export const InfluencerBankAccountSchema = z.object({
+/** 주소·계좌 형식의 국가. 활성 값은 항상 하나이고 주소와 계좌는 서로 독립이다. */
+export const AddressCountrySchema = z.enum(["JP", "KR"]);
+export type AddressCountry = z.infer<typeof AddressCountrySchema>;
+
+export const JpBankAccountSchema = z.object({
+  country: z.literal("JP"),
   bankCode: z.string().regex(/^\d{4}$/, "4桁の銀行コードを入力してください"),
   bankName: z.string().min(1).max(40),
   branchName: z.string().min(1).max(50),
   branchCode: z.string().max(10),
   accountNumber: z.string().regex(/^\d{7}$/, "口座番号は7桁の数字"),
-  accountHolderKana: z.string().regex(KANA_RE, "カナで入力してください"),
+  accountHolder: z.string().regex(KANA_RE, "カナで入力してください"),
   /** 適格請求書登録番号 (인보이스 등록번호). T + 13자리 숫자, 선택 입력. */
   invoiceRegistrationNumber: z
     .string()
@@ -78,6 +84,25 @@ export const InfluencerBankAccountSchema = z.object({
     .nullable()
     .optional(),
 });
+
+/**
+ * 한국 계좌. 지점은 국내이체에 무관하므로 받지 않고, 인보이스 등록번호도 쓰지 않는다.
+ * 서버가 저장할 때 일본 전용 컬럼(branchName/branchCode)을 빈 문자열로 채운다.
+ */
+export const KrBankAccountSchema = z.object({
+  country: z.literal("KR"),
+  bankCode: z.string().regex(/^\d{3}$/, "은행을 선택해 주세요"),
+  bankName: z.string().min(1).max(40),
+  accountNumber: z
+    .string()
+    .regex(/^[\d-]{6,20}$/, "계좌번호는 숫자와 하이픈만 입력해 주세요"),
+  accountHolder: z.string().min(1, "예금주명을 입력해 주세요").max(40),
+});
+
+export const InfluencerBankAccountSchema = z.discriminatedUnion("country", [
+  JpBankAccountSchema,
+  KrBankAccountSchema,
+]);
 
 export const JP_PREFECTURES = [
   "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
@@ -91,7 +116,11 @@ export const JP_PREFECTURES = [
 export const JpPrefectureSchema = z.enum(JP_PREFECTURES);
 export type JpPrefecture = z.infer<typeof JpPrefectureSchema>;
 
-export const InfluencerAddressSchema = z.object({
+export const KrProvinceSchema = z.enum(KR_PROVINCES);
+export type KrProvince = z.infer<typeof KrProvinceSchema>;
+
+export const JpAddressSchema = z.object({
+  country: z.literal("JP"),
   postalCode: z
     .string()
     .regex(/^\d{3}-?\d{4}$/, "郵便番号は7桁の数字")
@@ -101,6 +130,21 @@ export const InfluencerAddressSchema = z.object({
   addressLine1: z.string().min(1, "番地は必須").max(100),
   addressLine2: z.string().max(100).optional().default(""),
 });
+
+/** 한국 주소. 컬럼은 일본과 공유하고 의미만 시/도·시군구·도로명·상세로 바뀐다. */
+export const KrAddressSchema = z.object({
+  country: z.literal("KR"),
+  postalCode: z.string().regex(/^\d{5}$/, "우편번호는 5자리 숫자"),
+  prefecture: KrProvinceSchema,
+  city: z.string().min(1, "시·군·구는 필수").max(100),
+  addressLine1: z.string().min(1, "도로명 주소는 필수").max(100),
+  addressLine2: z.string().max(100).optional().default(""),
+});
+
+export const InfluencerAddressSchema = z.discriminatedUnion("country", [
+  JpAddressSchema,
+  KrAddressSchema,
+]);
 export type InfluencerAddress = z.infer<typeof InfluencerAddressSchema>;
 export type InfluencerBankAccount = z.infer<typeof InfluencerBankAccountSchema>;
 
@@ -122,13 +166,21 @@ export const InfluencerSnsAccountSchema = InfluencerSnsAccountInputSchema.extend
 });
 export type InfluencerSnsAccount = z.infer<typeof InfluencerSnsAccountSchema>;
 
-export const InfluencerBankAccountPublicSchema = InfluencerBankAccountSchema.omit({
-  accountNumber: true,
-}).extend({
+/** 응답용 계좌번호 필드. 목록에는 마스킹만, 수정 폼 프리필에는 전체 번호를 쓴다. */
+const publicAccountNumberFields = {
   accountNumberMasked: z.string(),
   /** 마이페이지 수정 폼 프리필용 전체 계좌번호. optional 은 구 API 응답 호환용. */
   accountNumber: z.string().optional(),
-});
+};
+
+export const InfluencerBankAccountPublicSchema = z.discriminatedUnion("country", [
+  JpBankAccountSchema.omit({ accountNumber: true }).extend(
+    publicAccountNumberFields,
+  ),
+  KrBankAccountSchema.omit({ accountNumber: true }).extend(
+    publicAccountNumberFields,
+  ),
+]);
 export type InfluencerBankAccountPublic = z.infer<
   typeof InfluencerBankAccountPublicSchema
 >;

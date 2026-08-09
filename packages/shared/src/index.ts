@@ -17,5 +17,7 @@ export * from "./types/lineTemplate.js";
 export * from "./data/applicationStatuses.js";
 export * from "./data/influencerTerms.js";
 export { JP_BANKS } from "./data/jpBanks.js";
+export { KR_BANKS, KR_PROVINCES, type KrBank } from "./data/krBanks.js";
 export * from "./utils/snsHandle.js";
+export * from "./utils/krAddress.js";
 export * from "./ui/labels.js";

@@ -110,12 +110,13 @@ export async function ensureSettlementForApplication(
         select: {
           bankAccount: {
             select: {
+              bankCountry: true,
               bankCode: true,
               bankName: true,
               branchName: true,
               branchCode: true,
               accountNumber: true,
-              accountHolderKana: true,
+              accountHolder: true,
               invoiceRegistrationNumber: true,
             },
           },
@@ -174,12 +175,13 @@ export async function ensureSettlementForApplication(
   // 정산 대기풀 진입 시점의 계좌를 스냅샷 — 이후 마이페이지에서 계좌를 바꿔도
   // 이 정산 건의 입금 계좌 기록은 보존된다.
   const bankSnapshot = application.influencer.bankAccount ?? {
+    bankCountry: null,
     bankCode: null,
     bankName: null,
     branchName: null,
     branchCode: null,
     accountNumber: null,
-    accountHolderKana: null,
+    accountHolder: null,
     invoiceRegistrationNumber: null,
   };
 

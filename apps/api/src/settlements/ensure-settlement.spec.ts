@@ -15,7 +15,7 @@ type ApplicationSelect = {
       branchName: string;
       branchCode: string;
       accountNumber: string;
-      accountHolderKana: string;
+      accountHolder: string;
     } | null;
   };
   campaign: {
@@ -326,7 +326,7 @@ describe("ensureSettlementForApplication — SNS", () => {
           branchName: "本店",
           branchCode: "001",
           accountNumber: "1234567",
-          accountHolderKana: "ヤマダ タロウ",
+          accountHolder: "ヤマダ タロウ",
         },
       },
       campaign: {

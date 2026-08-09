@@ -67,7 +67,7 @@ export const TRIGGER_DESCRIPTIONS: Partial<Record<LineTriggerKey, string>> = {
   SNS_APPLICATION_DELIVERY_REMINDER: "배송완료 다음날 발송 (수령확인 미완료자)",
   SNS_POST_DEADLINE_REMINDER: "게시 마감 3일 전·1일 전 발송",
   SNS_POST_OVERDUE_REMINDER: "게시 마감 다음날 발송 (미제출자 독촉)",
-  SNS_POST_REJECTION_REMINDER: "게시물 반려 다음날 발송 (재제출 독려)",
+  SNS_POST_REJECTION_REMINDER: "게시물 반려 3일 후 발송 (재제출 독려)",
   SNS_INSIGHT_REMINDER: "게시물 제출 7일 후 발송",
   SNS_INSIGHT_OVERDUE_REMINDER: "게시물 제출 8일 후 발송 (미제출자 독촉)",
   FAKE_PURCHASE_ORDER_DEADLINE_REMINDER: "주문 마감 3일 전·당일 발송",
@@ -78,7 +78,7 @@ export const TRIGGER_DESCRIPTIONS: Partial<Record<LineTriggerKey, string>> = {
     "배송완료 다음날 발송 (수령확인 미완료자)",
   SIMPLE_REVIEW_DEADLINE_REMINDER: "리뷰 마감 3일 전·1일 전 발송",
   SIMPLE_REVIEW_OVERDUE_REMINDER: "리뷰 마감 다음날 발송 (미제출자 독촉)",
-  SIMPLE_REVIEW_REJECTION_REMINDER: "리뷰 반려 다음날 발송 (재제출 독려)",
+  SIMPLE_REVIEW_REJECTION_REMINDER: "리뷰 반려 3일 후 발송 (재제출 독려)",
 };
 
 export type {

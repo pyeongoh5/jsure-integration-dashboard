@@ -4,6 +4,7 @@ import type { CampaignCategory, LineTriggerKey } from "@jsure/shared";
 import type { ApplicationStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { linePushAllowed } from "../common/line-push-allowed";
+import { POST_REJECTION_RESUBMIT_DAYS } from "../common/resubmit-deadline";
 import { LineDispatcherService } from "./line-dispatcher.service";
 import { DISPATCH_APPLICATION_INCLUDE } from "./trigger-meta";
 
@@ -13,7 +14,6 @@ const POSTING_REMINDER_DAYS = [3, 1];
 const OVERDUE_REMINDER_DAY = -1;
 const INSIGHT_REMINDER_DAY_AFTER_POST = 7;
 const INSIGHT_OVERDUE_REMINDER_DAY_AFTER_POST = 8;
-const POST_REJECTION_RESUBMIT_DAYS = 1;
 const JST_TZ = "Asia/Tokyo";
 
 /**
@@ -280,7 +280,7 @@ export class LineRemindersService {
 
   private async runSnsPostRejectionReminders(): Promise<void> {
     const todayStart = startOfJstDay(new Date());
-    const yesterdayStart = todayStart - DAY_MS;
+    const reminderDayStart = todayStart - POST_REJECTION_RESUBMIT_DAYS * DAY_MS;
 
     // submissionReviewedAt 은 반려 시점에 가장 최근 반려와 동일하게 갱신되므로
     // "현재 활성 반려"의 시각을 그대로 나타낸다. 과거 반려 row 는 무관.
@@ -295,7 +295,7 @@ export class LineRemindersService {
 
     for (const application of applications) {
       if (!application.submissionReviewedAt) continue;
-      if (startOfJstDay(application.submissionReviewedAt) !== yesterdayStart) continue;
+      if (startOfJstDay(application.submissionReviewedAt) !== reminderDayStart) continue;
 
       const latest = await this.prisma.submissionRejection.findFirst({
         where: { applicationId: application.id },
@@ -369,7 +369,7 @@ export class LineRemindersService {
    */
   private async runSimpleReviewRejectionReminders(): Promise<void> {
     const todayStart = startOfJstDay(new Date());
-    const yesterdayStart = todayStart - POST_REJECTION_RESUBMIT_DAYS * DAY_MS;
+    const reminderDayStart = todayStart - POST_REJECTION_RESUBMIT_DAYS * DAY_MS;
 
     const applications = await this.prisma.campaignApplication.findMany({
       where: {
@@ -382,7 +382,7 @@ export class LineRemindersService {
 
     for (const application of applications) {
       if (!application.submissionReviewedAt) continue;
-      if (startOfJstDay(application.submissionReviewedAt) !== yesterdayStart) continue;
+      if (startOfJstDay(application.submissionReviewedAt) !== reminderDayStart) continue;
 
       const latest = await this.prisma.submissionRejection.findFirst({
         where: { applicationId: application.id },

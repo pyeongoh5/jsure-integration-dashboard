@@ -13,6 +13,7 @@ import {
   type CampaignSubType,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { POST_REJECTION_RESUBMIT_DAYS } from "../common/resubmit-deadline";
 import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
@@ -26,7 +27,6 @@ import {
   settlementAmounts,
 } from "../settlements/ensure-settlement";
 
-const POST_REJECTION_RESUBMIT_DAYS = 1;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type AdminApplicationRow = {

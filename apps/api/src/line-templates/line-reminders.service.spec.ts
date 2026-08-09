@@ -470,3 +470,56 @@ describe("LineRemindersService - 마감 경과 독촉", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 });
+
+describe("LineRemindersService - 반려 재제출 리마인더", () => {
+  /** 반려된 지 elapsedDays 일 지난 단순리뷰 응모. */
+  function rejected(now: number, elapsedDays: number) {
+    return {
+      id: "rejected",
+      status: "REVIEW_SUBMITTED",
+      reviewedAt: new Date(now - 20 * DAY_MS),
+      receivedAt: null,
+      submissionReviewStatus: "REJECTED",
+      submissionReviewedAt: new Date(now - elapsedDays * DAY_MS),
+      posts: [],
+      campaign,
+    };
+  }
+
+  function makeService(rows: Array<Record<string, unknown>>, dispatch: jest.Mock) {
+    const prisma = makePrismaMock(rows) as unknown as {
+      submissionRejection: { findFirst: jest.Mock };
+    };
+    // 반려 이력이 있어야 발송 대상이 된다.
+    prisma.submissionRejection.findFirst = jest
+      .fn()
+      .mockResolvedValue({ comment: "다시 올려주세요" });
+    return new LineRemindersService(
+      prisma as unknown as PrismaService,
+      { dispatch } as unknown as LineDispatcherService,
+    );
+  }
+
+  it("반려 3일 후에 재제출 리마인더를 보낸다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+
+    await makeService([rejected(now, 3)], dispatch).runNow();
+
+    expect(dispatch).toHaveBeenCalledWith(
+      "SIMPLE_REVIEW_REJECTION_REMINDER",
+      expect.objectContaining({
+        application: expect.objectContaining({ id: "rejected" }),
+      }),
+    );
+  });
+
+  it("반려 다음날에는 보내지 않는다", async () => {
+    const now = Date.now();
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+
+    await makeService([rejected(now, 1)], dispatch).runNow();
+
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});

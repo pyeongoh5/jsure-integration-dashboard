@@ -126,7 +126,7 @@ export class InfluencerApplicationsController {
     @Body(new ZodValidationPipe(SubmitSubmissionRequestSchema))
     dto: SubmitSubmissionRequest,
   ) {
-    return this.svc.submitSubmission(req.user.id, id, dto.posts);
+    return this.svc.submitSubmission(req.user.id, id, dto.posts, dto.crossPosts);
   }
 
   /** SNS 인사이트 일괄 제출 — 참여한 모든 서브타입을 한 번에. */

@@ -43,6 +43,7 @@ function makeApplicationRow(overrides: Record<string, unknown> = {}) {
     orderSubmittedAt: new Date("2026-07-01T00:00:00Z"),
     reviewSubmittedAt: null,
     posts: [],
+    crossPosts: [],
     campaign: {
       id: "camp-1",
       category: "FAKE_PURCHASE",
@@ -526,5 +527,118 @@ describe("InfluencerApplicationsService.submitReview", () => {
         LIPS: "https://lips.example.com/review/1",
       }),
     ).rejects.toThrow(/3장 이상/);
+  });
+});
+
+describe("InfluencerApplicationsService.submitSubmission 추가 공유", () => {
+  const posts = [
+    { subType: "INSTAGRAM" as const, url: "https://www.instagram.com/p/1" },
+  ];
+
+  function makeSnsPrisma(
+    crossPostSpies: {
+      deleteMany: jest.Mock;
+      createMany: jest.Mock;
+    },
+    subTypes: string[] = ["INSTAGRAM"],
+  ) {
+    const snsRow = makeApplicationRow({
+      status: "SHIPPED",
+      subTypes,
+      receivedAt: new Date("2026-07-05T00:00:00Z"),
+      campaign: {
+        id: "camp-1",
+        category: "SNS",
+        title: "SNSキャンペーン",
+        thumbnailUrl: null,
+        rewardType: "UNIFIED",
+        rewardJpy: 1000,
+        postingPeriodDays: 14,
+        orderPeriodDays: null,
+        recruits: [],
+      },
+      crossPosts: [],
+      submissionReviewStatus: "PENDING",
+      submissionRejections: [],
+      settlement: null,
+    });
+    const tx = {
+      submittedPost: { upsert: jest.fn(async () => ({})) },
+      crossPost: crossPostSpies,
+      campaignApplication: { update: jest.fn(async () => ({})) },
+    };
+    return {
+      campaignApplication: {
+        findUnique: jest
+          .fn()
+          // assertOwnedWithCampaign
+          .mockResolvedValueOnce({
+            id: "app-1",
+            influencerId: "inf-1",
+            status: "SHIPPED",
+            receivedAt: new Date("2026-07-05T00:00:00Z"),
+            subTypes,
+            submissionReviewStatus: "PENDING",
+            campaign: { category: "SNS" },
+          })
+          // getForInfluencer 재조회
+          .mockResolvedValueOnce(snsRow),
+        findUniqueOrThrow: jest.fn(async () => snsRow),
+      },
+      $transaction: async (fn: (t: unknown) => Promise<unknown>) => fn(tx),
+    };
+  }
+
+  it("제출한 내용으로 통째 교체 — 기존 행을 지우고 새로 만든다", async () => {
+    const deleteMany = jest.fn(async () => ({ count: 2 }));
+    const createMany = jest.fn(async () => ({ count: 1 }));
+    const svc = makeService({ prisma: makeSnsPrisma({ deleteMany, createMany }) });
+
+    await svc.submitSubmission("inf-1", "app-1", posts, [
+      { platform: "LIPS", url: "https://lipscosme.com/posts/1" },
+    ]);
+
+    expect(deleteMany).toHaveBeenCalledWith({
+      where: { applicationId: "app-1" },
+    });
+    expect(createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          applicationId: "app-1",
+          platform: "LIPS",
+          platformName: null,
+          url: "https://lipscosme.com/posts/1",
+        }),
+      ],
+    });
+  });
+
+  it("빈 배열이면 기존 행만 지우고 createMany 는 부르지 않는다", async () => {
+    const deleteMany = jest.fn(async () => ({ count: 1 }));
+    const createMany = jest.fn(async () => ({ count: 0 }));
+    const svc = makeService({ prisma: makeSnsPrisma({ deleteMany, createMany }) });
+
+    await svc.submitSubmission("inf-1", "app-1", posts, []);
+
+    expect(deleteMany).toHaveBeenCalled();
+    expect(createMany).not.toHaveBeenCalled();
+  });
+
+  it("참여 서브타입과 겹치는 플랫폼은 CROSS_POST_DUPLICATE", async () => {
+    const deleteMany = jest.fn(async () => ({ count: 0 }));
+    const createMany = jest.fn(async () => ({ count: 0 }));
+    const svc = makeService({
+      prisma: makeSnsPrisma({ deleteMany, createMany }, ["INSTAGRAM", "X"]),
+    });
+
+    await expect(
+      svc.submitSubmission(
+        "inf-1",
+        "app-1",
+        [...posts, { subType: "X" as const, url: "https://x.com/user/status/1" }],
+        [{ platform: "X", url: "https://x.com/user/status/2" }],
+      ),
+    ).rejects.toThrow(/CROSS_POST_DUPLICATE|이미 참여 중인/);
+    expect(deleteMany).not.toHaveBeenCalled();
   });
 });

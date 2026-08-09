@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  CROSS_POST_PLATFORM_LABEL,
   QOO10_REVIEW_CHANNEL_LABEL,
   SUB_TYPE_LABEL,
   type Attachment,
@@ -251,6 +252,29 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                       })}
                   </section>
                 )}
+
+              {draft.crossPosts.length > 0 && (
+                <section className={styles.section}>
+                  <h3 className={styles.sectionTitle}>추가 공유</h3>
+                  {draft.crossPosts.map((crossPost) => (
+                    <div key={crossPost.id}>
+                      <span className={styles.reviewChannelLabel}>
+                        {crossPost.platform === "OTHER"
+                          ? crossPost.platformName
+                          : CROSS_POST_PLATFORM_LABEL[crossPost.platform]}
+                      </span>
+                      <a
+                        className={styles.url}
+                        href={crossPost.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {crossPost.url}
+                      </a>
+                    </div>
+                  ))}
+                </section>
+              )}
             </>
           )}
         </div>

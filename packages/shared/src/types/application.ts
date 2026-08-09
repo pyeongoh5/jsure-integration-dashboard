@@ -72,6 +72,56 @@ export const AttachmentUploadInputSchema = z.object({
 });
 export type AttachmentUploadInput = z.infer<typeof AttachmentUploadInputSchema>;
 
+/**
+ * 응모하지 않은 채 자발적으로 함께 공유한 플랫폼.
+ * OTHER 는 사용자가 platformName 에 이름을 직접 적는다.
+ */
+export const CrossPostPlatformSchema = z.enum([
+  "LIPS",
+  "ATCOSME",
+  "TIKTOK",
+  "YOUTUBE",
+  "X",
+  "OTHER",
+]);
+export type CrossPostPlatform = z.infer<typeof CrossPostPlatformSchema>;
+
+/** 한 응모에 제출할 수 있는 추가 공유 최대 건수. */
+export const MAX_CROSS_POSTS = 10;
+
+export const CrossPostInputSchema = z
+  .object({
+    platform: CrossPostPlatformSchema,
+    platformName: z.string().trim().min(1).max(40).optional(),
+    url: z.string().url(),
+  })
+  .superRefine((dto, ctx) => {
+    if (dto.platform === "OTHER" && !dto.platformName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["platformName"],
+        message: "プラットフォーム名を入力してください",
+      });
+    }
+    if (dto.platform !== "OTHER" && dto.platformName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["platformName"],
+        message: "その他以外はプラットフォーム名を入力できません",
+      });
+    }
+  });
+export type CrossPostInput = z.infer<typeof CrossPostInputSchema>;
+
+export const CrossPostSchema = z.object({
+  id: z.string(),
+  platform: CrossPostPlatformSchema,
+  platformName: z.string().nullable(),
+  url: z.string(),
+  submittedAt: z.string().datetime(),
+});
+export type CrossPost = z.infer<typeof CrossPostSchema>;
+
 /** SNS 게시물 URL 일괄 제출 — 참여한 모든 SNS 서브타입의 URL 을 한 번에 제출한다. */
 export const SubmitSubmissionRequestSchema = z.object({
   posts: z
@@ -86,6 +136,11 @@ export const SubmitSubmissionRequestSchema = z.object({
       (arr) => new Set(arr.map((p) => p.subType)).size === arr.length,
       "投稿先が重複しています",
     ),
+  /**
+   * 응모하지 않은 플랫폼에 함께 공유한 기록(선택). 제출할 때마다 통째로 교체된다.
+   * 보수·검토와 무관하며 다음 캠페인 선정 우대 자료로만 쓴다.
+   */
+  crossPosts: z.array(CrossPostInputSchema).max(MAX_CROSS_POSTS).default([]),
 });
 export type SubmitSubmissionRequest = z.infer<
   typeof SubmitSubmissionRequestSchema
@@ -251,6 +306,8 @@ export const InfluencerApplicationSchema = z.object({
   /** 제출물 반려 시 최신 반려 코멘트. */
   lastRejectionComment: z.string().nullable(),
   posts: z.array(SubmittedPostSchema),
+  /** 응모하지 않은 플랫폼에 함께 공유한 기록. SNS 캠페인에서만 채워진다. */
+  crossPosts: z.array(CrossPostSchema),
   postingPeriodDays: z.number().int().min(1),
   postingDeadlineAt: z.string().datetime().nullable(),
   settlement: InfluencerApplicationSettlementSchema.nullable(),

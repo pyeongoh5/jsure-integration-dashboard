@@ -1,4 +1,5 @@
 import type { CampaignCategory, CampaignSubType } from "../types/campaign.js";
+import type { CrossPostPlatform } from "../types/application.js";
 
 export const CATEGORY_LABEL_JA: Record<CampaignCategory, string> = {
   SNS: "SNS",
@@ -14,6 +15,19 @@ export const SUB_TYPE_LABEL: Record<CampaignSubType, string> = {
   QOO10: "Qoo10",
   LIPS: "LIPS",
   ATCOSME: "@cosme",
+};
+
+/**
+ * 추가 공유 플랫폼 라벨. OTHER 는 사용자가 입력한 platformName 을 대신 표시하므로
+ * 이 라벨은 폴백으로만 쓴다.
+ */
+export const CROSS_POST_PLATFORM_LABEL: Record<CrossPostPlatform, string> = {
+  LIPS: "LIPS",
+  ATCOSME: "@cosme",
+  TIKTOK: "TikTok",
+  YOUTUBE: "YouTube",
+  X: "X",
+  OTHER: "その他",
 };
 
 /** 가구매(QOO10) 리뷰 채널 라벨. subTypeOptions 값에 대응. */

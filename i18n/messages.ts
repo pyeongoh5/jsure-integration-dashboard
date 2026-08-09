@@ -411,6 +411,30 @@ export const messages = {
       },
       deadlineLabelPrefix: { jp: "投稿締切日: ", kr: "게시 마감일: " },
     },
+    crossPost: {
+      // new — 응모하지 않은 플랫폼에 함께 공유한 기록(선택 입력)
+      title: {
+        jp: "他のプラットフォームにも共有しましたか？（任意）",
+        kr: "다른 플랫폼에도 공유하셨나요? (선택)",
+      },
+      hint: {
+        jp: "ご提出いただいた実績は、次回のキャンペーン選考時に優遇いたします。",
+        kr: "제출해 주신 실적은 다음 캠페인 선정 시 우대됩니다.",
+      },
+      platformPlaceholder: { jp: "選択", kr: "선택" },
+      platformOther: { jp: "その他", kr: "기타" },
+      platformRequired: {
+        jp: "プラットフォームを選択してください",
+        kr: "플랫폼을 선택해 주세요",
+      },
+      namePlaceholder: { jp: "サービス名", kr: "서비스명" },
+      nameRequired: {
+        jp: "プラットフォーム名を入力してください",
+        kr: "플랫폼 이름을 입력해 주세요",
+      },
+      add: { jp: "＋ 共有先を追加", kr: "＋ 공유처 추가" },
+      removeAriaLabel: { jp: "削除", kr: "삭제" },
+    },
     simpleReviewForm: {
       // new
       urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },

@@ -8,6 +8,7 @@ import { CampaignCategorySchema } from "./campaign.js";
 import {
   ApplicationOptionSchema,
   ApplicationStatusSchema,
+  CrossPostSchema,
   PostReviewStatusSchema,
 } from "./application.js";
 import { AttachmentSchema } from "./uploads.js";
@@ -48,6 +49,8 @@ export const AdminInfluencerSchema = z.object({
   flagged: z.boolean(),
   snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   address: AdminInfluencerAddressSchema,
+  /** 지금까지 제출한 추가 공유(크로스포스팅) 누적 건수. 선정 우대 판단용. */
+  crossPostCount: z.number().int().nonnegative(),
   createdAt: z.string().datetime(),
 });
 export type AdminInfluencer = z.infer<typeof AdminInfluencerSchema>;
@@ -166,6 +169,10 @@ export const AdminSubmissionSchema = z.object({
   rejectionHistory: z.array(SubmittedPostRejectionSchema),
 
   posts: z.array(AdminSubmissionPostSchema),
+  /**
+   * 응모하지 않은 플랫폼에 함께 공유한 기록. 참고 표시용이며 승인·반려 대상이 아니다.
+   */
+  crossPosts: z.array(CrossPostSchema),
 
   settlement: z
     .object({

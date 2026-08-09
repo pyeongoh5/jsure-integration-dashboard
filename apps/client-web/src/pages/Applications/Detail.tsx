@@ -1,6 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { SUB_TYPE_LABEL, type CampaignSubType } from "@jsure/shared";
+import {
+  SUB_TYPE_LABEL,
+  type CampaignSubType,
+  type CrossPostInput,
+} from "@jsure/shared";
 import { useState } from "react";
 import {
   ApplicationStepper,
@@ -67,8 +71,13 @@ export function ApplicationDetail() {
     },
   });
   const post = useMutation({
-    mutationFn: (posts: { subType: CampaignSubType; url: string }[]) =>
-      submitSubmission(id, posts),
+    mutationFn: ({
+      posts,
+      crossPosts,
+    }: {
+      posts: { subType: CampaignSubType; url: string }[];
+      crossPosts: CrossPostInput[];
+    }) => submitSubmission(id, posts, crossPosts),
     onSuccess: () => invalidate(),
   });
   const order = useMutation({
@@ -222,8 +231,9 @@ export function ApplicationDetail() {
                 .filter((p) => p.url !== null)
                 .map((p) => [p.subType, p.url ?? ""]),
             )}
-            onSubmit={async (posts) => {
-              await post.mutateAsync(posts);
+            initialCrossPosts={data.crossPosts}
+            onSubmit={async (posts, crossPosts) => {
+              await post.mutateAsync({ posts, crossPosts });
             }}
             submitting={post.isPending}
             postingDeadlineAt={data.postingDeadlineAt}
@@ -267,8 +277,9 @@ export function ApplicationDetail() {
                   .filter((p) => p.url !== null)
                   .map((p) => [p.subType, p.url ?? ""]),
               )}
-              onSubmit={async (posts) => {
-                await post.mutateAsync(posts);
+              initialCrossPosts={data.crossPosts}
+              onSubmit={async (posts, crossPosts) => {
+                await post.mutateAsync({ posts, crossPosts });
               }}
               submitting={post.isPending}
               postingDeadlineAt={data.postingDeadlineAt}

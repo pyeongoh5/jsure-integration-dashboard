@@ -5,6 +5,7 @@ import {
   type AttachmentUploadInput,
   type InfluencerApplication,
   type CampaignSubType,
+  type CrossPostInput,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
@@ -53,9 +54,11 @@ export async function confirmReceipt(
 export async function submitSubmission(
   id: string,
   posts: { subType: CampaignSubType; url: string }[],
+  crossPosts: CrossPostInput[],
 ): Promise<InfluencerApplication> {
   const res = await api.put(`/influencer/applications/${id}/submission`, {
     posts,
+    crossPosts,
   });
   return InfluencerApplicationSchema.parse(res.data);
 }

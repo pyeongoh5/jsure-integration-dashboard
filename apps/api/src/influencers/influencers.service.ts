@@ -37,7 +37,10 @@ type AdminInfluencerRow = {
   }[];
 };
 
-function toAdminResponse(row: AdminInfluencerRow): AdminInfluencer {
+function toAdminResponse(
+  row: AdminInfluencerRow,
+  crossPostCount: number,
+): AdminInfluencer {
   return {
     id: row.id,
     email: row.email,
@@ -60,6 +63,7 @@ function toAdminResponse(row: AdminInfluencerRow): AdminInfluencer {
       addressLine1: row.addressLine1,
       addressLine2: row.addressLine2,
     },
+    crossPostCount,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -84,11 +88,31 @@ export class InfluencersService {
   }
 
   async listForAdmin(): Promise<AdminInfluencer[]> {
-    const rows = await this.prisma.influencer.findMany({
-      orderBy: { createdAt: "desc" },
-      include: ADMIN_INFLUENCER_INCLUDE,
-    });
-    return rows.map(toAdminResponse);
+    const [rows, applicationsWithCrossPosts] = await Promise.all([
+      this.prisma.influencer.findMany({
+        orderBy: { createdAt: "desc" },
+        include: ADMIN_INFLUENCER_INCLUDE,
+      }),
+      // 크로스포스팅 누적은 응모를 거쳐 인플루언서로 합산한다.
+      this.prisma.campaignApplication.findMany({
+        where: { crossPosts: { some: {} } },
+        select: {
+          influencerId: true,
+          _count: { select: { crossPosts: true } },
+        },
+      }),
+    ]);
+    const crossPostCountByInfluencer = new Map<string, number>();
+    for (const application of applicationsWithCrossPosts) {
+      crossPostCountByInfluencer.set(
+        application.influencerId,
+        (crossPostCountByInfluencer.get(application.influencerId) ?? 0) +
+          application._count.crossPosts,
+      );
+    }
+    return rows.map((row) =>
+      toAdminResponse(row, crossPostCountByInfluencer.get(row.id) ?? 0),
+    );
   }
 
   async getNotes(influencerId: string): Promise<InfluencerNotesResponse> {

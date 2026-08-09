@@ -11,6 +11,7 @@ import {
   type ApprovedApplicantExportResponse,
   type CampaignCategory,
   type CampaignSubType,
+  type CrossPostPlatform,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { POST_REJECTION_RESUBMIT_DAYS } from "../common/resubmit-deadline";
@@ -981,6 +982,9 @@ const SUBMISSION_INCLUDE = {
       },
     },
   },
+  crossPosts: {
+    orderBy: { submittedAt: "asc" as const },
+  },
   settlement: {
     select: {
       id: true,
@@ -1044,6 +1048,13 @@ type SubmissionRow = {
       sizeBytes: number;
       uploadedAt: Date;
     }[];
+  }[];
+  crossPosts: {
+    id: string;
+    platform: CrossPostPlatform;
+    platformName: string | null;
+    url: string;
+    submittedAt: Date;
   }[];
   settlement: {
     id: string;
@@ -1139,6 +1150,13 @@ async function toSubmissionResponse(
         uploadedAt: attachment.uploadedAt.toISOString(),
         viewUrl: null,
       })),
+    })),
+    crossPosts: row.crossPosts.map((crossPost) => ({
+      id: crossPost.id,
+      platform: crossPost.platform,
+      platformName: crossPost.platformName,
+      url: crossPost.url,
+      submittedAt: crossPost.submittedAt.toISOString(),
     })),
     settlement: row.settlement
       ? {

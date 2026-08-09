@@ -193,6 +193,7 @@ export function Influencers() {
                   <th>이름</th>
                   <th>이메일 / 연락처</th>
                   <th>SNS 계정</th>
+                  <th title="응모하지 않은 플랫폼에 함께 공유한 누적 건수">추가 공유</th>
                   <th>상태</th>
                   <th>가입일</th>
                   <th style={{ width: 90 }}>액션</th>
@@ -241,6 +242,13 @@ export function Influencers() {
                             </span>
                           ))}
                         </div>
+                      )}
+                    </td>
+                    <td>
+                      {r.crossPostCount === 0 ? (
+                        <span className={styles.emptyCell}>—</span>
+                      ) : (
+                        `${r.crossPostCount}건`
                       )}
                     </td>
                     <td>

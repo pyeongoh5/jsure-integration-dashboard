@@ -65,6 +65,16 @@ enum CampaignSubType {
   ATCOSME
 }
 
+/// 응모하지 않은 채 자발적으로 함께 공유한 플랫폼. OTHER 는 사용자가 이름을 직접 적는다.
+enum CrossPostPlatform {
+  LIPS
+  ATCOSME
+  TIKTOK
+  YOUTUBE
+  X
+  OTHER
+}
+
 /// 주소·계좌의 국가. 활성 값은 항상 하나이며 주소와 계좌는 서로 독립이다.
 enum AddressCountry {
   JP
@@ -367,6 +377,7 @@ model CampaignApplication {
   campaign   Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   influencer Influencer      @relation(fields: [influencerId], references: [id], onDelete: Restrict)
   posts      SubmittedPost[]
+  crossPosts CrossPost[]
   attachments Attachment[]
   lineDispatchLogs LineDispatchLog[]
   submissionRejections SubmissionRejection[]
@@ -419,6 +430,23 @@ model SubmittedPost {
   @@unique([applicationId, subType])
   @@index([applicationId])
   @@map("submitted_posts")
+}
+
+/// 응모 시 선택하지 않은 플랫폼에 자발적으로 함께 공유한 기록.
+/// 보수·검토와 무관하며, 다음 캠페인 선정 시 우대 판단 자료로만 쓴다.
+model CrossPost {
+  id            String            @id @default(cuid())
+  applicationId String
+  platform      CrossPostPlatform
+  /// OTHER 일 때만 사용하는 사용자 입력 플랫폼명.
+  platformName  String?
+  url           String
+  submittedAt   DateTime          @default(now())
+
+  application CampaignApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("cross_posts")
 }
 
 enum SettlementStatus {

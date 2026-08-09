@@ -13,6 +13,9 @@ import {
   type AttachmentUploadInput,
   type CampaignCategory,
   type CampaignSubType,
+  type CrossPost,
+  type CrossPostInput,
+  type CrossPostPlatform,
   type InfluencerApplication,
   type RewardType,
   type SubmittedPost,
@@ -54,6 +57,14 @@ type PostRow = {
   insightSubmittedAt: Date | null;
 };
 
+type CrossPostRow = {
+  id: string;
+  platform: CrossPostPlatform;
+  platformName: string | null;
+  url: string;
+  submittedAt: Date;
+};
+
 type ApplicationRow = {
   id: string;
   campaignId: string;
@@ -74,6 +85,7 @@ type ApplicationRow = {
   orderSubmittedAt: Date | null;
   reviewSubmittedAt: Date | null;
   posts: PostRow[];
+  crossPosts: CrossPostRow[];
   settlement: {
     status: "PENDING" | "COMPLETED";
     amountJpy: number;
@@ -118,6 +130,16 @@ function toPost(row: PostRow): SubmittedPost {
     insightSubmittedAt: row.insightSubmittedAt
       ? row.insightSubmittedAt.toISOString()
       : null,
+  };
+}
+
+function toCrossPost(row: CrossPostRow): CrossPost {
+  return {
+    id: row.id,
+    platform: row.platform,
+    platformName: row.platformName,
+    url: row.url,
+    submittedAt: row.submittedAt.toISOString(),
   };
 }
 
@@ -183,6 +205,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     submissionReviewStatus: row.submissionReviewStatus,
     lastRejectionComment: latestRejection ? latestRejection.comment : null,
     posts: row.posts.map(toPost),
+    crossPosts: row.crossPosts.map(toCrossPost),
     postingPeriodDays: row.campaign.postingPeriodDays,
     postingDeadlineAt: deadline ? deadline.toISOString() : null,
     settlement,
@@ -195,6 +218,9 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
 
 const INCLUDE = {
   posts: true,
+  crossPosts: {
+    orderBy: { submittedAt: "asc" as const },
+  },
   options: {
     select: { subType: true, option: true },
   },
@@ -640,6 +666,7 @@ export class InfluencerApplicationsService {
     influencerId: string,
     applicationId: string,
     posts: { subType: CampaignSubType; url: string }[],
+    crossPosts: CrossPostInput[],
   ): Promise<InfluencerApplication> {
     const app = await this.assertOwnedWithCampaign(influencerId, applicationId);
     if (app.campaign.category !== "SNS") {
@@ -679,6 +706,17 @@ export class InfluencerApplicationsService {
       });
     }
 
+    // 추가 공유는 응모하지 않은 플랫폼 전용 — 참여 서브타입과 겹치면 본 투고와 중복된다.
+    const duplicated = crossPosts.find((crossPost) =>
+      participating.has(crossPost.platform as CampaignSubType),
+    );
+    if (duplicated) {
+      throw new BadRequestException({
+        code: "CROSS_POST_DUPLICATE",
+        message: "이미 참여 중인 플랫폼입니다",
+      });
+    }
+
     const now = new Date();
     await this.prisma.$transaction(async (tx) => {
       for (const post of posts) {
@@ -688,6 +726,19 @@ export class InfluencerApplicationsService {
           },
           create: { applicationId, subType: post.subType, url: post.url },
           update: { url: post.url, submittedAt: now },
+        });
+      }
+      // 제출한 내용으로 통째 교체 — 폼에서 지운 행은 그대로 사라진다.
+      await tx.crossPost.deleteMany({ where: { applicationId } });
+      if (crossPosts.length > 0) {
+        await tx.crossPost.createMany({
+          data: crossPosts.map((crossPost) => ({
+            applicationId,
+            platform: crossPost.platform,
+            platformName: crossPost.platformName ?? null,
+            url: crossPost.url,
+            submittedAt: now,
+          })),
         });
       }
       await tx.campaignApplication.update({

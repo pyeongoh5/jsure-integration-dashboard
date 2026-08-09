@@ -3,6 +3,7 @@ import type {
   ApplicationStatus,
   CampaignCategory,
   CampaignSubType,
+  CrossPost,
   PostReviewStatus,
   Attachment,
   SnsAccountSubType,
@@ -67,6 +68,8 @@ export type DraftReview = {
   selectedOptions: ApplicationOption[];
   posts: DraftPost[];
   reviewUrls: Partial<Record<"LIPS" | "ATCOSME", string>>;
+  /** 응모하지 않은 플랫폼에 함께 공유한 기록. 참고 표시용이며 승인·반려 대상이 아니다. */
+  crossPosts: CrossPost[];
   submittedAt: string; // relative
   /** 모든 게시물의 인사이트가 제출되었는지. */
   insightSubmitted: boolean;

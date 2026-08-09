@@ -141,7 +141,11 @@ export function PostSubmitForm({
           defaultOpen={initialCrossPosts.length > 0}
           disabled={submitting}
         />
-        <PrimaryButton type="submit" disabled={submitting}>
+        <PrimaryButton
+          type="submit"
+          disabled={submitting}
+          style={{ marginTop: 18 }}
+        >
           {submitting
             ? t("application.postForm.submitting")
             : hasInitial

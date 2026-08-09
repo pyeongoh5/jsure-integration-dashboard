@@ -47,6 +47,20 @@
   flex: 0 0 110px;
 }
 
+/*
+ * 좁은 셀렉트라 네이티브 화살표가 우측 모서리에 붙어 보인다.
+ * 화살표는 padding 으로 움직일 수 없어 appearance 를 끄고 직접 그린다.
+ */
+.platform select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-left: var(--space-3);
+  padding-right: var(--space-6);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+}
+
 .name {
   flex: 0 0 92px;
 }

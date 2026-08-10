@@ -97,11 +97,10 @@ model AdminActivityLog {
 
   createdAt DateTime @default(now())
 
+  /// 1차는 실제로 쿼리되는 2개만 만든다. campaignId/influencerId/actorId
+  /// 인덱스는 해당 조회 API 를 붙이는 후속 작업에서 additive 마이그레이션으로
+  /// 추가한다 — 미사용 인덱스는 매 INSERT 유지비만 낸다.
   @@index([applicationId, createdAt])
-  @@index([campaignId, createdAt])
-  @@index([influencerId, createdAt])
-  @@index([settlementId])
-  @@index([actorId, createdAt])
   @@index([createdAt])
   @@map("admin_activity_logs")
 }
@@ -112,6 +111,7 @@ model AdminActivityLog {
 - **정산 로그에도 `applicationId`를 함께 넣는다.** 정산은 응모 단위 1건(`Settlement.applicationId @unique`)이므로 항상 알 수 있고, 이렇게 하면 응모 타임라인이 `WHERE applicationId = ?` **단일 인덱스 쿼리**로 완성된다(정산 로그를 별도 조인/합집합할 필요 없음).
 - **FK 대신 스냅샷.** 기존 actor 컬럼의 "FK 없는 String" 문제는 dangling 시 정보가 소실되는 것이었는데, 여기서는 `actorName`·`metadata`가 사람이 읽을 문맥을 자체 보존하므로 id 가 dangling 이 돼도 감사 기록 가치가 유지된다. 도메인 모델 5개에 역참조 관계를 심지 않아 침습도도 낮다.
 - **인덱스 = 성능 답변.** 응모건별 조회는 `(applicationId, createdAt)` 인덱스의 range scan 이라 테이블 총량과 무관하게 반환 행 수(응모당 수십 건)에만 비례한다. 전역 피드는 `(createdAt)` + cursor 페이지네이션.
+- **actor 는 스냅샷만 읽는다.** 조회 응답의 `actor.name` 은 `actorName` 컬럼을 그대로 내려준다 — `AdminUser` 조인 없음. 어드민이 개명하면 과거 로그는 당시 이름으로 남는다(감사 기록으로서 의도된 동작).
 
 ### 2. shared 타입 (`packages/shared/src/types/adminActivity.ts`)
 
@@ -227,7 +227,7 @@ export class AuditService {
 | 액션 | 변경 | 비고 |
 |---|---|---|
 | `SETTLEMENT_CREATE` / `SETTLEMENT_AUTO_COMPLETE` | `ensureSettlementForApplication` 반환을 `{ autoCompleted, createdSettlementId: string \| null }`로 확장(신규 생성 시에만 id). **기록은 호출자가 한다** — ensure-settlement 는 순수 함수 성격을 유지하고 AuditService 를 주입받지 않는다. `approveSubmission` 호출부는 `CASCADE`+승인자, `influencer-applications` 호출부는 `SYSTEM`+`metadata.triggeredBy: "INSIGHT_SUBMITTED"` | 자동완료 1건은 CREATE·AUTO_COMPLETE 로그 2행이 아니라 `SETTLEMENT_AUTO_COMPLETE` 1행으로 남긴다(생성 즉시 완료이므로) |
-| `SETTLEMENT_REGISTER` | `settleSubmission` 컨트롤러에 `@Req()` 추가(현재 미수신) + 서비스에 actor 전달. 이 경로의 auto-complete 도 `Settlement.completedById` 를 함께 채운다(상태 컬럼 공백 보완) | `{ amountJpy }` 수준. 계좌정보 금지 |
+| `SETTLEMENT_REGISTER` | `settleSubmission` 컨트롤러에 `@Req()` 추가(현재 미수신) + 서비스에 actor 전달. 이 경로의 auto-complete 도 `Settlement.completedById` 를 함께 채운다(상태 컬럼 공백 보완) | `{ amountJpy, autoCompleted }`. 어드민이 누른 액션은 '등록' 하나이므로 0엔 즉시완료도 `SETTLEMENT_REGISTER` **1행**으로 남기고 자동완료 여부는 metadata 로 표기. 계좌정보 금지 |
 | `SETTLEMENT_COMPLETE` | `completeSettlements`: 정산 건당 로그 1행(`recordMany`), 각 행에 `settlementId`+`applicationId` | `{ batchSize }` — 일괄 실행이었음을 표시 |
 
 #### 캠페인 (`campaigns`, `campaign-drafts`) — 현재 완전 사각지대
@@ -244,9 +244,10 @@ export class AuditService {
 
 ### 5. 조회 API + 타임라인 UI
 
-- `GET /admin/applications/:id/activity` → `ApplicationActivityResponse`. 구현: `WHERE applicationId = :id ORDER BY createdAt DESC` (인덱스 커버). 응모당 로그가 수십 건 수준이라 페이지네이션 없이 전량 반환으로 시작한다.
+- `GET /api/campaign-applications/:id/activity` → `ApplicationActivityResponse`. `AdminApplicationsController`(`@Controller("campaign-applications")`, 글로벌 prefix `api`)에 추가한다. 구현: `WHERE applicationId = :id ORDER BY createdAt DESC` (인덱스 커버). 응모당 로그가 수십 건 수준이라 페이지네이션 없이 전량 반환으로 시작한다.
+  - 라우트 등록 순서 주의: 같은 컨트롤러에 `@Get("settlements")` 같은 리터럴 경로가 `:id` 뒤에 오는 기존 배치가 있다. `:id/activity` 는 세그먼트가 2개라 리터럴 단일 세그먼트와 충돌하지 않지만, 기존 `@Get(":id/submission")` 인근에 두어 순서 일관성을 유지한다.
 - admin-web: 응모 상세(제출물 다이얼로그 또는 응모 행 확장)에 타임라인 섹션. §7 컨벤션대로 `useApplicationActivity.ts`(fetch hook) + `ActivityTimeline.tsx`(presentational) 분리. 액션 라벨 매핑은 `Record<AdminActivityAction, string>` — 전체 키 필수라 액션 추가 시 typecheck 가 누락을 잡는다.
-- 캠페인별(`GET /admin/campaigns/:id/activity`)·어드민별 활동 피드는 인덱스가 이미 준비돼 있으므로 후속에서 API 만 추가하면 된다. 전역 피드는 반드시 cursor 페이지네이션(`createdAt, id`).
+- 캠페인별(`GET /api/campaigns/:id/activity`)·어드민별 활동 피드는 후속. API 와 함께 해당 인덱스(`(campaignId, createdAt)` 등)를 additive 마이그레이션으로 추가한다. 전역 피드는 반드시 cursor 페이지네이션(`createdAt, id`).
 
 ### 6. 퍼포먼스 판단 근거
 
@@ -262,9 +263,12 @@ export class AuditService {
 
 ## 테스트
 
-- `audit.service.spec.ts`: 정상 기록 / prisma 실패 시 예외를 삼키고 액션에 전파하지 않음 / `recordMany`.
-- `ensure-settlement.spec.ts`: 반환 확장(`createdSettlementId`) 반영 — 신규 생성/기존 존재/미충족 각 케이스.
-- `admin-applications.service` 관련 기존 spec: prisma mock 에 `adminActivityLog.create` 추가 필요. **계측이 들어가는 서비스의 기존 spec 은 모두 이 수정이 필요하다** — 도메인 로직 단위로 나눠 진행하며 각 단계에서 `pnpm typecheck` + 해당 spec 실행.
+- `audit.service.spec.ts` (신규): 정상 기록 / prisma 실패 시 예외를 삼키고 액션에 전파하지 않음 / `recordMany`.
+- `ensure-settlement.spec.ts` (기존): 반환 확장(`createdSettlementId`) 반영 — 신규 생성/기존 존재/미충족 각 케이스.
+- `campaigns.service.spec.ts` · `campaign-drafts.spec.ts` (기존): `create`/`update`/`close`/`hide`/`unhide`/`remove`/드래프트 메서드에 actor 파라미터가 추가되므로 호출부 수정 + prisma mock 에 `adminActivityLog.create` 추가.
+- `influencer-applications.service.spec.ts` (기존): `ensureSettlementForApplication` 호출부에 `SYSTEM` 기록이 붙으므로 mock 에 `adminActivityLog.create` 추가.
+- `admin-applications` 에는 **기존 spec 파일이 없다** — 이 도메인은 신규 spec 을 만들지 않고 `pnpm typecheck` + 수동 검증으로 진행한다. 계측 로직이 `audit.record` 호출 한 줄이라 별도 단위 테스트의 가치가 낮다.
+- 각 단계에서 `pnpm typecheck` + 영향받는 spec 실행.
 - 캠페인 계측: 컨트롤러 시그니처 변경이 admin-web 호출과 계약이 달라지지 않는지(요청 body 불변) typecheck 로 확인.
 
 ## 구현 순서 (다음 세션에서 이어서)

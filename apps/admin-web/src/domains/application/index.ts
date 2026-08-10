@@ -2,6 +2,7 @@
 export * from "./api";
 export * from "./draftsApi";
 export * from "./exportApi";
+export * from "./activityApi";
 export {
   buildApprovedApplicantsCsv,
   approvedApplicantsCsvFilename,
@@ -55,6 +56,13 @@ export { ApplicantShipDialog } from "./components/applicants/ApplicantShipDialog
 export { ApplicantStatusFilter } from "./components/applicants/ApplicantStatusFilter";
 export { ApplicantTable } from "./components/applicants/ApplicantTable";
 export { ApplicantUndoDialog } from "./components/applicants/ApplicantUndoDialog";
+export { ActivityTimeline } from "./components/applicants/ActivityTimeline";
+export {
+  ACTIVITY_ACTION_LABEL,
+  ACTIVITY_ORIGIN_BADGE,
+} from "./components/applicants/activityLabels";
+export { useApplicationActivity } from "./components/applicants/useApplicationActivity";
+export type { ActivityState } from "./components/applicants/useApplicationActivity";
 export { useApplicantMutations } from "./components/applicants/useApplicantMutations";
 export { useApplicantsData } from "./components/applicants/useApplicantsData";
 export { useCampaignOptions } from "./components/applicants/useCampaignOptions";

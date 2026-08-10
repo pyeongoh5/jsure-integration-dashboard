@@ -668,3 +668,46 @@ model LineDispatchLog {
   @@index([createdAt])
   @@map("line_dispatch_logs")
 }
+
+enum AdminActivityOrigin {
+  ADMIN
+  CASCADE
+  SYSTEM
+}
+
+/// 어드민 도메인 액션의 append-only 감사 로그. 상태 컬럼(reviewedById 등)은
+/// "현재 값", 이 테이블은 "누가 언제 무엇을 했는지"의 이력을 담당한다.
+model AdminActivityLog {
+  id     String              @id @default(cuid())
+  /// AdminActivityAction (packages/shared zod enum) 값. Prisma enum 이 아닌
+  /// String 인 이유: 액션 종류는 계속 늘어나는데 PostgreSQL enum 은 값 제거가
+  /// 불가능해 마이그레이션 부채가 쌓인다. 유효성은 AuditService 시그니처
+  /// (z.infer 유니온 타입)가 컴파일 타임에 보장한다.
+  action String
+  origin AdminActivityOrigin @default(ADMIN)
+
+  /// 수행 어드민. SYSTEM 이면 null.
+  actorId   String?
+  /// 행위 시점의 어드민 이름 스냅샷 — 계정 삭제/개명 후에도 감사 기록 보존.
+  actorName String?
+
+  /// 대상 참조. FK 를 걸지 않는다 — 감사 로그는 도메인 row 의 삭제를 막아서도,
+  /// 삭제에 딸려 지워져서도 안 된다. 참조는 "그 시점의 사실"이고, 사람이 읽을
+  /// 문맥은 metadata 스냅샷이 담당한다.
+  applicationId String?
+  campaignId    String?
+  settlementId  String?
+  influencerId  String?
+
+  /// 액션 부가 정보(사유, 변경 필드명, 유발 이벤트 등). PII(계좌번호·주소 등)
+  /// 는 넣지 않는다.
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  /// 1차는 실제로 쿼리되는 2개만. campaignId/influencerId/actorId 인덱스는
+  /// 해당 조회 API 를 붙이는 후속 작업에서 additive 로 추가한다.
+  @@index([applicationId, createdAt])
+  @@index([createdAt])
+  @@map("admin_activity_logs")
+}

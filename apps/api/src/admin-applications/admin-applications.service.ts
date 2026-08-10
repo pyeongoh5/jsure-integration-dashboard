@@ -4,6 +4,7 @@ import {
   SUB_TYPE_OPTION_LABEL,
   buildSnsProfileUrl,
   type AddressCountry,
+  type AdminActivityLog,
   type AdminApplication,
   type AdminSettlement,
   type AdminSubmission,
@@ -14,6 +15,7 @@ import {
   type CrossPostPlatform,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { toActivityLog } from "../audit/application-activity";
 import { POST_REJECTION_RESUBMIT_DAYS } from "../common/resubmit-deadline";
 import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
@@ -815,6 +817,32 @@ export class AdminApplicationsService {
   /** 응모 단건 제출물 조회 — 정산 화면에서 정산 이후 제출물/인사이트 열람용. */
   async getSubmission(applicationId: string): Promise<AdminSubmission> {
     return this.fetchSubmission(applicationId);
+  }
+
+  /**
+   * 응모건 감사 로그 타임라인. (applicationId, createdAt) 인덱스 range scan 이라
+   * 테이블 총량과 무관하다. 응모당 수십 건 수준이라 페이지네이션 없이 전량 반환.
+   */
+  async listActivity(applicationId: string): Promise<AdminActivityLog[]> {
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: { id: applicationId },
+      select: { id: true },
+    });
+    if (!existing) throw new NotFoundException("응모를 찾을 수 없습니다");
+    const rows = await this.prisma.adminActivityLog.findMany({
+      where: { applicationId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        action: true,
+        origin: true,
+        actorId: true,
+        actorName: true,
+        metadata: true,
+        createdAt: true,
+      },
+    });
+    return rows.map(toActivityLog);
   }
 
   private async fetchSubmission(applicationId: string): Promise<AdminSubmission> {

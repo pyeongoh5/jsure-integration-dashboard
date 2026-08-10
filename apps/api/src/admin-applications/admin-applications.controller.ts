@@ -17,6 +17,7 @@ import {
   ShipApplicationRequestSchema,
   type AdminApplication,
   type AdminApplicationCountsResponse,
+  type ApplicationActivityResponse,
   type AdminApplicationListResponse,
   type AdminSubmission,
   type AdminSettlementListResponse,
@@ -84,6 +85,14 @@ export class AdminApplicationsController {
   @Get(":id/submission")
   getSubmission(@Param("id") id: string): Promise<AdminSubmission> {
     return this.svc.getSubmission(id);
+  }
+
+  @Get(":id/activity")
+  async activity(
+    @Param("id") id: string,
+  ): Promise<ApplicationActivityResponse> {
+    const items = await this.svc.listActivity(id);
+    return { items };
   }
 
   @Get(":id/attachments")

@@ -1,10 +1,15 @@
 import type { AdminActivityAction, AdminActivityLog } from "@jsure/shared";
 
-/** 합성에 필요한 응모 필드. 전부 인플루언서 행동으로 채워지는 컬럼이다. */
+/**
+ * 합성에 필요한 응모 필드. 전부 인플루언서 행동으로 채워지는 컬럼이다.
+ *
+ * reviewSubmittedAt 은 쓰지 않는다 — 카테고리 무관하게 모든 제출 경로가 찍는
+ * "제출 완료" 마커라서 posts.submittedAt 과 같은 사건이고, posts 쪽이 서브타입까지
+ * 담아 더 정확하다.
+ */
 export type InfluencerActivitySource = {
   appliedAt: Date;
   orderSubmittedAt: Date | null;
-  reviewSubmittedAt: Date | null;
   receivedAt: Date | null;
   posts: {
     subType: string;
@@ -71,15 +76,6 @@ export function influencerActivityEntries(
         "synthetic-order-submit",
         "APPLICATION_ORDER_SUBMIT",
         source.orderSubmittedAt,
-      ),
-    );
-  }
-  if (source.reviewSubmittedAt) {
-    entries.push(
-      entry(
-        "synthetic-review-submit",
-        "APPLICATION_REVIEW_SUBMIT",
-        source.reviewSubmittedAt,
       ),
     );
   }

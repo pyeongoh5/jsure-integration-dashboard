@@ -37,7 +37,6 @@
 |---|---|
 | 응모 | `appliedAt` |
 | 주문번호 제출 | `orderSubmittedAt` |
-| 리뷰 제출 | `reviewSubmittedAt` |
 | 수령 확인 | `receivedAt` |
 | 투고 제출 | `posts.submittedAt` |
 | 인사이트 제출 | `posts.insightSubmittedAt` |
@@ -56,6 +55,11 @@
 추가한다.
 
 **응모 취소는 합성할 수 없다** — 전용 타임스탬프 없이 `status` 만 바뀐다.
+
+**`reviewSubmittedAt` 은 쓰지 않는다** — 컬럼명이 가구매 전용처럼 보이지만 실제로는
+카테고리 무관하게 모든 제출 경로가 `status: REVIEW_SUBMITTED` 와 함께 찍는 "제출
+완료" 마커다. `posts.submittedAt` 과 같은 사건이라 둘 다 넣으면 SNS 응모에서
+`투고 제출`과 `리뷰 제출`이 같은 시각에 중복으로 뜬다.
 
 `AdminActivityOriginSchema` 에 `INFLUENCER` 를 추가했지만 Prisma enum 에는 넣지
 않았다. 합성 전용이라 DB 에 기록되지 않으며, `AuditEntry.origin` 을

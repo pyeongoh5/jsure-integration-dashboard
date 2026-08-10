@@ -8,7 +8,6 @@ function makeSource(
   return {
     appliedAt: APPLIED_AT,
     orderSubmittedAt: null,
-    reviewSubmittedAt: null,
     receivedAt: null,
     posts: [],
     ...overrides,
@@ -41,18 +40,16 @@ describe("influencerActivityEntries", () => {
     ]);
   });
 
-  it("주문번호·리뷰 제출도 각각 1건씩", () => {
+  it("주문번호 제출도 1건 나온다", () => {
     const entries = influencerActivityEntries(
       makeSource({
         orderSubmittedAt: new Date("2026-08-02T01:00:00.000Z"),
-        reviewSubmittedAt: new Date("2026-08-03T01:00:00.000Z"),
       }),
     );
 
     expect(entries.map((entry) => entry.action)).toEqual([
       "APPLICATION_APPLY",
       "APPLICATION_ORDER_SUBMIT",
-      "APPLICATION_REVIEW_SUBMIT",
     ]);
   });
 

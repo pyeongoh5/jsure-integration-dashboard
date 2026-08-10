@@ -834,7 +834,6 @@ export class AdminApplicationsService {
       select: {
         appliedAt: true,
         orderSubmittedAt: true,
-        reviewSubmittedAt: true,
         receivedAt: true,
         posts: {
           select: {

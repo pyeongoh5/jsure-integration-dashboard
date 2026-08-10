@@ -35,7 +35,6 @@ export const AdminActivityActionSchema = z.enum([
   // 컬럼(appliedAt 등)에서 조회 시점에 합성된다 — DB 에 기록되지 않는다.
   "APPLICATION_APPLY",
   "APPLICATION_ORDER_SUBMIT",
-  "APPLICATION_REVIEW_SUBMIT",
   "APPLICATION_RECEIVE_CONFIRM",
   "POST_SUBMIT",
   "INSIGHT_SUBMIT",

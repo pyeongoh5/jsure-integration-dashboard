@@ -27,7 +27,6 @@ export const ACTIVITY_ACTION_LABEL: Record<AdminActivityAction, string> = {
   CAMPAIGN_DRAFT_PUBLISH: "임시저장 발행",
   APPLICATION_APPLY: "응모",
   APPLICATION_ORDER_SUBMIT: "주문번호 제출",
-  APPLICATION_REVIEW_SUBMIT: "리뷰 제출",
   APPLICATION_RECEIVE_CONFIRM: "수령 확인",
   POST_SUBMIT: "투고 제출",
   INSIGHT_SUBMIT: "인사이트 제출",

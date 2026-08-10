@@ -19,6 +19,8 @@ import {
   type UpdateCampaignRequest,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
+import type { AuditActor } from "../audit/audit.service";
 import { UploadsService } from "../uploads/uploads.service";
 import { PUBLISHED_CAMPAIGN_WHERE } from "./published-campaign";
 import {
@@ -507,6 +509,7 @@ export class CampaignsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly uploads: UploadsService,
+    private readonly audit: AuditService,
   ) {}
 
   private async withResolvedThumbnail(
@@ -576,7 +579,10 @@ export class CampaignsService {
     return map.get(id) ?? EMPTY_COUNTS;
   }
 
-  async create(input: CreateCampaignRequest): Promise<CampaignResponse> {
+  async create(
+    input: CreateCampaignRequest,
+    actor: AuditActor,
+  ): Promise<CampaignResponse> {
     const excludedCampaignIds = await this.validateExcludedCampaignIds(
       input.excludedCampaignIds,
     );
@@ -610,6 +616,12 @@ export class CampaignsService {
         },
       },
       include: RECRUITS_INCLUDE,
+    });
+    await this.audit.record({
+      action: "CAMPAIGN_CREATE",
+      actor,
+      campaignId: row.id,
+      metadata: { title: row.title, category: row.category },
     });
     return this.withResolved(toResponse(row, EMPTY_COUNTS));
   }
@@ -763,7 +775,29 @@ export class CampaignsService {
   async update(
     id: string,
     input: UpdateCampaignRequest,
+    actor: AuditActor,
   ): Promise<CampaignResponse> {
+    const { response, changedFields } = await this.applyCampaignUpdate(
+      id,
+      input,
+    );
+    await this.audit.record({
+      action: "CAMPAIGN_UPDATE",
+      actor,
+      campaignId: id,
+      metadata: { changedFields },
+    });
+    return response;
+  }
+
+  /**
+   * 캠페인 필드 반영. 감사 로그를 남기지 않는다 — 발행(publishDraft)도 이 경로를
+   * 재사용하는데, 그때 남길 액션은 CAMPAIGN_UPDATE 가 아니라 DRAFT_PUBLISH 다.
+   */
+  private async applyCampaignUpdate(
+    id: string,
+    input: UpdateCampaignRequest,
+  ): Promise<{ response: CampaignResponse; changedFields: string[] }> {
     const existing = await this.prisma.campaign.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException("Campaign not found");
 
@@ -831,13 +865,19 @@ export class CampaignsService {
         include: RECRUITS_INCLUDE,
       });
     });
-    return this.withResolved(
-      toResponse(row, await this.countsFor(id)),
-    );
+    return {
+      response: await this.withResolved(
+        toResponse(row, await this.countsFor(id)),
+      ),
+      changedFields: Object.keys(data),
+    };
   }
 
   /** 임시저장 캠페인 생성 — 제목만 있으면 저장되고 나머지는 기본값으로 채워진다. */
-  async createDraft(input: CampaignDraftRequest): Promise<CampaignResponse> {
+  async createDraft(
+    input: CampaignDraftRequest,
+    actor: AuditActor,
+  ): Promise<CampaignResponse> {
     const excludedCampaignIds = await this.validateExcludedCampaignIds(
       input.excludedCampaignIds,
     );
@@ -856,6 +896,12 @@ export class CampaignsService {
       },
       include: RECRUITS_INCLUDE,
     });
+    await this.audit.record({
+      action: "CAMPAIGN_DRAFT_CREATE",
+      actor,
+      campaignId: row.id,
+      metadata: { title: row.title },
+    });
     return this.withResolved(toResponse(row, EMPTY_COUNTS));
   }
 
@@ -863,6 +909,7 @@ export class CampaignsService {
   async updateDraft(
     id: string,
     input: CampaignDraftRequest,
+    actor: AuditActor,
   ): Promise<CampaignResponse> {
     await this.assertDraft(id);
     const excludedCampaignIds = await this.validateExcludedCampaignIds(
@@ -891,6 +938,11 @@ export class CampaignsService {
         include: RECRUITS_INCLUDE,
       });
     });
+    await this.audit.record({
+      action: "CAMPAIGN_DRAFT_UPDATE",
+      actor,
+      campaignId: id,
+    });
     return this.withResolved(toResponse(row, EMPTY_COUNTS));
   }
 
@@ -901,13 +953,21 @@ export class CampaignsService {
   async publishDraft(
     id: string,
     input: CreateCampaignRequest,
+    actor: AuditActor,
   ): Promise<CampaignResponse> {
     await this.assertDraft(id);
-    await this.update(id, input);
+    // CAMPAIGN_UPDATE 로그를 남기지 않는 내부 경로 — 발행은 DRAFT_PUBLISH 1행이다.
+    await this.applyCampaignUpdate(id, input);
     const row = await this.prisma.campaign.update({
       where: { id },
       data: { publishState: "PUBLISHED" },
       include: RECRUITS_INCLUDE,
+    });
+    await this.audit.record({
+      action: "CAMPAIGN_DRAFT_PUBLISH",
+      actor,
+      campaignId: id,
+      metadata: { title: row.title, category: row.category },
     });
     return this.withResolved(toResponse(row, EMPTY_COUNTS));
   }
@@ -923,7 +983,7 @@ export class CampaignsService {
     }
   }
 
-  async close(id: string): Promise<CampaignResponse> {
+  async close(id: string, actor: AuditActor): Promise<CampaignResponse> {
     const existing = await this.prisma.campaign.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException("Campaign not found");
     if (existing.publishState === "DRAFT") {
@@ -937,6 +997,11 @@ export class CampaignsService {
       data: { closedAt: new Date() },
       include: RECRUITS_INCLUDE,
     });
+    await this.audit.record({
+      action: "CAMPAIGN_CLOSE",
+      actor,
+      campaignId: id,
+    });
     return this.withResolved(
       toResponse(row, await this.countsFor(id)),
     );
@@ -946,7 +1011,7 @@ export class CampaignsService {
    * 비공개 전환 — 모집이 종결된 캠페인(모집 완료·모집 종료)만 가능하다.
    * 인플루언서 조회에서만 사라지고 어드민·정산에는 그대로 남는다.
    */
-  async hide(id: string): Promise<CampaignResponse> {
+  async hide(id: string, actor: AuditActor): Promise<CampaignResponse> {
     const current = await this.findById(id);
     if (current.hiddenAt !== null) {
       throw new ConflictException("이미 비공개 캠페인입니다");
@@ -956,15 +1021,27 @@ export class CampaignsService {
         "모집이 종결된 캠페인만 비공개로 전환할 수 있습니다",
       );
     }
-    return this.setHiddenAt(id, new Date());
+    const response = await this.setHiddenAt(id, new Date());
+    await this.audit.record({
+      action: "CAMPAIGN_HIDE",
+      actor,
+      campaignId: id,
+    });
+    return response;
   }
 
-  async unhide(id: string): Promise<CampaignResponse> {
+  async unhide(id: string, actor: AuditActor): Promise<CampaignResponse> {
     const current = await this.findById(id);
     if (current.hiddenAt === null) {
       throw new ConflictException("이미 공개 캠페인입니다");
     }
-    return this.setHiddenAt(id, null);
+    const response = await this.setHiddenAt(id, null);
+    await this.audit.record({
+      action: "CAMPAIGN_UNHIDE",
+      actor,
+      campaignId: id,
+    });
+    return response;
   }
 
   private async setHiddenAt(
@@ -983,7 +1060,7 @@ export class CampaignsService {
    * 캠페인 삭제. 임시저장은 이력이 없으므로 물리 삭제하고, 발행된 캠페인은
    * 응모·정산 이력을 보존해야 하므로 종료 처리와 함께 논리 삭제한다.
    */
-  async remove(id: string): Promise<void> {
+  async remove(id: string, actor: AuditActor): Promise<void> {
     const existing = await this.prisma.campaign.findFirst({
       where: { id, deletedAt: null },
       select: { publishState: true, closedAt: true },
@@ -991,12 +1068,25 @@ export class CampaignsService {
     if (!existing) throw new NotFoundException("Campaign not found");
     if (existing.publishState === "DRAFT") {
       await this.prisma.campaign.delete({ where: { id } });
+      // 임시저장은 물리 삭제라 row 가 사라진다 — 로그가 유일한 흔적이다.
+      await this.audit.record({
+        action: "CAMPAIGN_DELETE",
+        actor,
+        campaignId: id,
+        metadata: { publishState: "DRAFT", hardDeleted: true },
+      });
       return;
     }
     const now = new Date();
     await this.prisma.campaign.update({
       where: { id },
       data: { deletedAt: now, closedAt: existing.closedAt ?? now },
+    });
+    await this.audit.record({
+      action: "CAMPAIGN_DELETE",
+      actor,
+      campaignId: id,
+      metadata: { publishState: "PUBLISHED", hardDeleted: false },
     });
   }
 }

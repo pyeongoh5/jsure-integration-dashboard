@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from "@nestjs/common";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
+import type { AuthenticatedUser } from "../auth/strategies/jwt.strategy";
 import { CampaignsService } from "./campaigns.service";
 
 @UseGuards(JwtAuthGuard)
@@ -28,10 +30,11 @@ export class CampaignsController {
 
   @Post()
   create(
+    @Req() req: { user: AuthenticatedUser },
     @Body(new ZodValidationPipe(CreateCampaignRequestSchema))
     body: CreateCampaignRequest,
   ): Promise<CampaignResponse> {
-    return this.campaigns.create(body);
+    return this.campaigns.create(body, req.user);
   }
 
   /** includeDrafts=1 은 어드민 캠페인 관리 화면 전용 — 임시저장을 함께 반환한다. */
@@ -50,32 +53,45 @@ export class CampaignsController {
 
   @Patch(":id")
   update(
+    @Req() req: { user: AuthenticatedUser },
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateCampaignRequestSchema))
     body: UpdateCampaignRequest,
   ): Promise<CampaignResponse> {
-    return this.campaigns.update(id, body);
+    return this.campaigns.update(id, body, req.user);
   }
 
   @Post(":id/close")
-  close(@Param("id") id: string): Promise<CampaignResponse> {
-    return this.campaigns.close(id);
+  close(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<CampaignResponse> {
+    return this.campaigns.close(id, req.user);
   }
 
   /** 비공개 전환 — 모집이 종결된 캠페인만 가능하다. */
   @Post(":id/hide")
-  hide(@Param("id") id: string): Promise<CampaignResponse> {
-    return this.campaigns.hide(id);
+  hide(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<CampaignResponse> {
+    return this.campaigns.hide(id, req.user);
   }
 
   @Post(":id/unhide")
-  unhide(@Param("id") id: string): Promise<CampaignResponse> {
-    return this.campaigns.unhide(id);
+  unhide(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<CampaignResponse> {
+    return this.campaigns.unhide(id, req.user);
   }
 
   /** 임시저장은 물리 삭제, 발행된 캠페인은 종료와 함께 논리 삭제. */
   @Delete(":id")
-  remove(@Param("id") id: string): Promise<void> {
-    return this.campaigns.remove(id);
+  remove(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<void> {
+    return this.campaigns.remove(id, req.user);
   }
 }

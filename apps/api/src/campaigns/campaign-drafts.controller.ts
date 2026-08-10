@@ -4,6 +4,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from "@nestjs/common";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
+import type { AuthenticatedUser } from "../auth/strategies/jwt.strategy";
 import { CampaignsService } from "./campaigns.service";
 
 /**
@@ -28,27 +30,30 @@ export class CampaignDraftsController {
 
   @Post()
   create(
+    @Req() req: { user: AuthenticatedUser },
     @Body(new ZodValidationPipe(CampaignDraftRequestSchema))
     body: CampaignDraftRequest,
   ): Promise<CampaignResponse> {
-    return this.campaigns.createDraft(body);
+    return this.campaigns.createDraft(body, req.user);
   }
 
   @Patch(":id")
   update(
+    @Req() req: { user: AuthenticatedUser },
     @Param("id") id: string,
     @Body(new ZodValidationPipe(CampaignDraftRequestSchema))
     body: CampaignDraftRequest,
   ): Promise<CampaignResponse> {
-    return this.campaigns.updateDraft(id, body);
+    return this.campaigns.updateDraft(id, body, req.user);
   }
 
   @Post(":id/publish")
   publish(
+    @Req() req: { user: AuthenticatedUser },
     @Param("id") id: string,
     @Body(new ZodValidationPipe(CreateCampaignRequestSchema))
     body: CreateCampaignRequest,
   ): Promise<CampaignResponse> {
-    return this.campaigns.publishDraft(id, body);
+    return this.campaigns.publishDraft(id, body, req.user);
   }
 }

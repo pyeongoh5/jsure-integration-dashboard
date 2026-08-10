@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { BadRequestException } from "@nestjs/common";
 import { CampaignsService } from "./campaigns.service";
 
+const TEST_ACTOR = { id: "admin-1", name: "테스트 어드민" };
+
 type CampaignFindArgs = { where?: Record<string, unknown> };
 
 function makeService(overrides: {
@@ -72,7 +74,11 @@ function makeService(overrides: {
     resolveCampaignThumbnailUrl: async (value: string | null) => value,
     resolveR2ImagesInHtml: async (value: string) => value,
   } as never;
-  return new CampaignsService(prisma, uploads);
+  const audit = {
+    record: jest.fn(),
+    recordMany: jest.fn(),
+  } as never;
+  return new CampaignsService(prisma, uploads, audit);
 }
 
 describe("임시저장 생성", () => {
@@ -84,7 +90,7 @@ describe("임시저장 생성", () => {
       },
     });
 
-    await service.createDraft({ title: "작성 중인 캠페인" });
+    await service.createDraft({ title: "작성 중인 캠페인" }, TEST_ACTOR);
 
     const data = created!.data;
     expect(data.publishState).toBe("DRAFT");
@@ -107,10 +113,13 @@ describe("임시저장 생성", () => {
       },
     });
 
-    await service.createDraft({
-      title: "작성 중",
-      recruits: [{ subType: "INSTAGRAM", recruitCount: null }],
-    });
+    await service.createDraft(
+      {
+        title: "작성 중",
+        recruits: [{ subType: "INSTAGRAM", recruitCount: null }],
+      },
+      TEST_ACTOR,
+    );
 
     const recruit = created!.data.recruits.create[0]!;
     expect(recruit.recruitCount).toBe(0);
@@ -121,14 +130,14 @@ describe("임시저장 생성", () => {
 describe("발행 상태 가드", () => {
   it("이미 발행된 캠페인은 임시저장 갱신/발행이 막힌다", async () => {
     const service = makeService({ publishState: "PUBLISHED" });
-    await expect(service.updateDraft("c1", { title: "x" })).rejects.toThrow(
+    await expect(service.updateDraft("c1", { title: "x" }, TEST_ACTOR)).rejects.toThrow(
       BadRequestException,
     );
   });
 
   it("임시저장 캠페인은 종료할 수 없다", async () => {
     const service = makeService({ publishState: "DRAFT" });
-    await expect(service.close("c1")).rejects.toThrow(BadRequestException);
+    await expect(service.close("c1", TEST_ACTOR)).rejects.toThrow(BadRequestException);
   });
 });
 
@@ -156,7 +165,7 @@ describe("비공개 전환", () => {
       recruitEndAt: new Date("2099-01-01T00:00:00Z"),
     });
 
-    await expect(service.hide("c1")).rejects.toThrow(BadRequestException);
+    await expect(service.hide("c1", TEST_ACTOR)).rejects.toThrow(BadRequestException);
   });
 
   it("모집 종료 캠페인은 hiddenAt 이 채워진다", async () => {
@@ -169,7 +178,7 @@ describe("비공개 전환", () => {
       },
     });
 
-    await service.hide("c1");
+    await service.hide("c1", TEST_ACTOR);
 
     expect(updated!.data.hiddenAt).toBeInstanceOf(Date);
   });
@@ -185,7 +194,7 @@ describe("캠페인 삭제", () => {
       },
     });
 
-    await service.remove("c1");
+    await service.remove("c1", TEST_ACTOR);
 
     expect(deleted).toEqual({ where: { id: "c1" } });
   });
@@ -203,7 +212,7 @@ describe("캠페인 삭제", () => {
       },
     });
 
-    await service.remove("c1");
+    await service.remove("c1", TEST_ACTOR);
 
     expect(deleted).toBeNull();
     expect(updated!.data.deletedAt).toBeInstanceOf(Date);

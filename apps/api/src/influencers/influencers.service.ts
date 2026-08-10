@@ -6,6 +6,8 @@ import type {
   InfluencerMemoEntry,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
+import type { AuditActor } from "../audit/audit.service";
 
 const ADMIN_INFLUENCER_INCLUDE = {
   snsAccounts: {
@@ -70,7 +72,10 @@ function toAdminResponse(
 
 @Injectable()
 export class InfluencersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   findByEmail(email: string) {
     return this.prisma.influencer.findUnique({ where: { email } });
@@ -203,7 +208,7 @@ export class InfluencersService {
 
   async createMemo(
     influencerId: string,
-    creatorId: string,
+    actor: AuditActor,
     comment: string,
     campaignId: string | null,
   ): Promise<InfluencerMemoEntry> {
@@ -217,20 +222,24 @@ export class InfluencersService {
       data: {
         influencerId,
         comment,
-        createdById: creatorId,
+        createdById: actor.id,
         campaignId: campaignId ?? null,
       },
       include: { campaign: { select: { id: true, title: true } } },
     });
-    const creator = await this.prisma.adminUser.findUnique({
-      where: { id: creatorId },
-      select: { id: true, name: true },
+    // 메모 본문은 InfluencerMemo 가 원본 — 로그에는 참조만 남긴다.
+    await this.audit.record({
+      action: "INFLUENCER_MEMO_CREATE",
+      actor,
+      influencerId,
+      campaignId: created.campaign?.id ?? undefined,
+      metadata: { memoId: created.id },
     });
     return {
       id: created.id,
       comment: created.comment,
       createdAt: created.createdAt.toISOString(),
-      createdBy: creator ? { id: creator.id, name: creator.name } : null,
+      createdBy: { id: actor.id, name: actor.name },
       campaignId: created.campaign?.id ?? null,
       campaignTitle: created.campaign?.title ?? null,
     };
@@ -238,20 +247,37 @@ export class InfluencersService {
 
   async setFlagged(
     influencerId: string,
-    actorId: string,
+    actor: AuditActor,
   ): Promise<{ flaggedAt: string }> {
     const updated = await this.prisma.influencer.update({
       where: { id: influencerId },
-      data: { flaggedAt: new Date(), flaggedById: actorId },
+      data: { flaggedAt: new Date(), flaggedById: actor.id },
       select: { flaggedAt: true },
+    });
+    await this.audit.record({
+      action: "INFLUENCER_FLAG_SET",
+      actor,
+      influencerId,
     });
     return { flaggedAt: updated.flaggedAt!.toISOString() };
   }
 
-  async clearFlagged(influencerId: string): Promise<void> {
+  async clearFlagged(influencerId: string, actor: AuditActor): Promise<void> {
+    const existing = await this.prisma.influencer.findUnique({
+      where: { id: influencerId },
+      select: { flaggedById: true },
+    });
+    if (!existing) throw new NotFoundException("Influencer not found");
     await this.prisma.influencer.update({
       where: { id: influencerId },
       data: { flaggedAt: null, flaggedById: null },
+    });
+    // 해제는 flaggedById 를 소거하므로 이전 설정자를 로그에 보존한다.
+    await this.audit.record({
+      action: "INFLUENCER_FLAG_CLEAR",
+      actor,
+      influencerId,
+      metadata: { previousFlaggedById: existing.flaggedById },
     });
   }
 }

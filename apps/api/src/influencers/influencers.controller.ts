@@ -47,7 +47,7 @@ export class InfluencersController {
   ): Promise<InfluencerMemoEntry> {
     return this.svc.createMemo(
       id,
-      req.user.id,
+      req.user,
       body.comment.trim(),
       body.campaignId ?? null,
     );
@@ -59,12 +59,15 @@ export class InfluencersController {
     @Req() req: { user: AuthenticatedUser },
     @Param("id") id: string,
   ): Promise<{ flaggedAt: string }> {
-    return this.svc.setFlagged(id, req.user.id);
+    return this.svc.setFlagged(id, req.user);
   }
 
   @Delete(":id/flag")
   @HttpCode(204)
-  async unflag(@Param("id") id: string): Promise<void> {
-    await this.svc.clearFlagged(id);
+  async unflag(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<void> {
+    await this.svc.clearFlagged(id, req.user);
   }
 }

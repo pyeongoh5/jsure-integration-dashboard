@@ -8,6 +8,8 @@ import {
   OPTION_SELECTABLE_SUB_TYPES,
   SLOT_CONSUMING_STATUSES,
   SUB_TYPE_LABEL,
+  SUB_TYPE_OPTION_LABEL,
+  usesOptionCountSplit,
   type ApplicationOption,
   type ApplicationStatus,
   type AttachmentUploadInput,
@@ -323,6 +325,7 @@ export class InfluencerApplicationsService {
             recruitCount: true,
             subTypeOptions: true,
             isRequired: true,
+            options: { select: { option: true, recruitCount: true } },
           },
         },
         exclusionsAsExcluding: { select: { excludedCampaignId: true } },
@@ -419,6 +422,34 @@ export class InfluencerApplicationsService {
         throw new BadRequestException({
           code: "SUBTYPE_FULL",
           message: `${SUB_TYPE_LABEL[subType]} 모집이 마감되었습니다`,
+        });
+      }
+    }
+
+    // 옵션별 정원 분리(FEED/REELS 등)를 쓰는 recruit 은 서브타입 정원이 남아 있어도
+    // 선택한 옵션이 이미 찼을 수 있다. 옵션 단위로 따로 막는다.
+    for (const selected of optionsInput) {
+      const recruit = campaign.recruits.find(
+        (candidate) => candidate.subType === selected.subType,
+      );
+      if (!recruit || !usesOptionCountSplit(recruit)) continue;
+      const optionRecruit = recruit.options.find(
+        (option) => option.option === selected.option,
+      );
+      if (!optionRecruit?.recruitCount) continue;
+      const optionApprovedCount = await this.prisma.campaignApplication.count({
+        where: {
+          campaignId,
+          status: { in: SLOT_CONSUMING_STATUSES },
+          options: { some: { subType: selected.subType, option: selected.option } },
+        },
+      });
+      if (optionApprovedCount >= optionRecruit.recruitCount) {
+        throw new BadRequestException({
+          code: "OPTION_FULL",
+          message: `${SUB_TYPE_LABEL[selected.subType]} ${
+            SUB_TYPE_OPTION_LABEL[selected.option] ?? selected.option
+          } 모집이 마감되었습니다`,
         });
       }
     }

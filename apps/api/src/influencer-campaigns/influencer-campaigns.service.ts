@@ -10,6 +10,10 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
 import { campaignHeadcount } from "../campaigns/campaign-headcount";
+import {
+  optionCapacitySlots,
+  subTypesWithAllOptionsFull,
+} from "../campaigns/option-capacity";
 import { VISIBLE_PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
@@ -248,8 +252,35 @@ export class InfluencerCampaignsService {
         }),
       ),
     );
+    // 옵션별 정원 분리(FEED/REELS 등)를 쓰는 recruit 은 서브타입 정원과 별개로
+    // 옵션마다 마감이 온다.
+    const splitOptions = optionCapacitySlots(row.recruits);
+    const optionApprovedCounts = await Promise.all(
+      splitOptions.map((entry) =>
+        this.prisma.campaignApplication.count({
+          where: {
+            campaignId: row.id,
+            status: { in: SLOT_CONSUMING_STATUSES },
+            options: { some: { subType: entry.subType, option: entry.option } },
+          },
+        }),
+      ),
+    );
+    const fullOptions = splitOptions
+      .filter((entry, index) => (optionApprovedCounts[index] ?? 0) >= entry.recruitCount)
+      .map((entry) => ({ subType: entry.subType, option: entry.option }));
+
+    const allOptionsFullSubTypes = subTypesWithAllOptionsFull(
+      row.recruits,
+      fullOptions,
+    );
+
     const fullSubTypes = row.recruits
-      .filter((recruit, index) => (subTypeApprovedCounts[index] ?? 0) >= recruit.recruitCount)
+      .filter(
+        (recruit, index) =>
+          (subTypeApprovedCounts[index] ?? 0) >= recruit.recruitCount ||
+          allOptionsFullSubTypes.includes(recruit.subType),
+      )
       .map((recruit) => recruit.subType);
 
     const card = await this.resolveCard(toCard(row, approvedCount, row.closedAt, now));
@@ -267,6 +298,7 @@ export class InfluencerCampaignsService {
       hasCancelled: existing?.status === "CANCELLED",
       excludedSubTypes: excludedCampaignSubTypes,
       fullSubTypes,
+      fullOptions,
     };
   }
 }

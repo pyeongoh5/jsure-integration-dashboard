@@ -174,6 +174,19 @@ const ENABLED_SNS_SUB_TYPE_SET = new Set<CampaignSubType>(
   EnabledSnsTypeSchema.options,
 );
 
+/**
+ * recruit 가 옵션별 정원 분리를 사용하는지 (모든 옵션 행에 recruitCount 존재).
+ * 분리 중이면 서브타입 정원과 별개로 옵션마다 마감을 따로 판정해야 한다.
+ */
+export function usesOptionCountSplit(recruit: {
+  options: { recruitCount: number | null }[];
+}): boolean {
+  return (
+    recruit.options.length > 0 &&
+    recruit.options.every((option) => option.recruitCount !== null)
+  );
+}
+
 /** recruit 가 옵션별 보수 분리를 사용하는지 (모든 옵션 행에 rewardJpy 존재). */
 function usesOptionRewardSplit(recruit: {
   options: { rewardJpy: number | null }[];
@@ -716,6 +729,14 @@ export const InfluencerCampaignDetailSchema =
     excludedSubTypes: z.array(CampaignSubTypeSchema),
     /** 정원이 모두 찬 서브타입 목록 — 선택 서브타입 "선택 마감" 표시용 */
     fullSubTypes: z.array(CampaignSubTypeSchema),
+    /**
+     * 정원이 모두 찬 옵션 목록 — 옵션별 정원 분리(FEED/REELS 등)를 쓰는 recruit 에서만
+     * 채워진다. 옵션 단위 "마감" 표시용.
+     */
+    fullOptions: z
+      .array(z.object({ subType: CampaignSubTypeSchema, option: z.string() }))
+      // 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
+      .default([]),
   });
 export type InfluencerCampaignDetail = z.infer<
   typeof InfluencerCampaignDetailSchema

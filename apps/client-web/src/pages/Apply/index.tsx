@@ -386,19 +386,32 @@ export function Apply() {
             <ul className={styles.snsPick}>
               {allowedInstagramPostTypes.map((postType) => {
                 const isSelected = instagramPostType === postType;
+                const isFull = campaign.data.fullOptions.some(
+                  (full) => full.subType === "INSTAGRAM" && full.option === postType,
+                );
                 return (
                   <li key={postType}>
                     <label
-                      className={`${styles.snsItem} ${isSelected ? styles.snsItemSelected : ""}`}
+                      className={`${styles.snsItem} ${
+                        isFull ? styles.snsItemDisabled : ""
+                      } ${isSelected ? styles.snsItemSelected : ""}`}
                     >
                       <input
                         type="radio"
                         name="instagram-post-type"
                         checked={isSelected}
+                        disabled={isFull}
                         onChange={() => setInstagramPostType(postType)}
                       />
                       <div className={styles.snsInfo}>
-                        <div className={styles.snsName}>{INSTAGRAM_POST_TYPE_LABEL[postType]}</div>
+                        <div className={styles.snsName}>
+                          {INSTAGRAM_POST_TYPE_LABEL[postType]}
+                          {isFull && (
+                            <span style={{ marginLeft: 8, color: "#6b7280", fontSize: 11 }}>
+                              {t("pages.apply.fullTag")}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </label>
                   </li>

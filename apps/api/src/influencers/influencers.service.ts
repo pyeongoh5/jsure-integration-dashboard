@@ -140,6 +140,9 @@ export class InfluencersService {
           id: true,
           rejectReason: true,
           reviewedAt: true,
+          // undo 가 rejectReason 과 reviewedById 를 함께 비우므로, 이 쿼리에
+          // 걸린 행의 검토자는 항상 그 거절을 수행한 어드민이다.
+          reviewedById: true,
           campaign: { select: { title: true } },
         },
       }),
@@ -151,6 +154,7 @@ export class InfluencersService {
           applicationId: true,
           comment: true,
           rejectedAt: true,
+          rejectedById: true,
           application: {
             select: { campaign: { select: { title: true } } },
           },
@@ -158,32 +162,32 @@ export class InfluencersService {
       }),
     ]);
 
-    const memoCreatorIds = Array.from(
+    // 메모 작성자·응모 거절자·제출물 반려자를 한 번에 조회한다.
+    const adminIds = Array.from(
       new Set(
-        memoRows
-          .map((memo) => memo.createdById)
-          .filter((id): id is string => id !== null),
+        [
+          ...memoRows.map((memo) => memo.createdById),
+          ...applicationRows.map((application) => application.reviewedById),
+          ...postRejectionRows.map((rejection) => rejection.rejectedById),
+        ].filter((id): id is string => id !== null),
       ),
     );
-    const creators = memoCreatorIds.length
+    const admins = adminIds.length
       ? await this.prisma.adminUser.findMany({
-          where: { id: { in: memoCreatorIds } },
+          where: { id: { in: adminIds } },
           select: { id: true, name: true },
         })
       : [];
-    const creatorById = new Map(creators.map((user) => [user.id, user]));
+    const adminById = new Map(admins.map((user) => [user.id, user]));
+    const toActor = (id: string | null) =>
+      id ? { id, name: adminById.get(id)?.name ?? null } : null;
 
     return {
       memos: memoRows.map((memo) => ({
         id: memo.id,
         comment: memo.comment,
         createdAt: memo.createdAt.toISOString(),
-        createdBy: memo.createdById
-          ? {
-              id: memo.createdById,
-              name: creatorById.get(memo.createdById)?.name ?? null,
-            }
-          : null,
+        createdBy: toActor(memo.createdById),
         campaignId: memo.campaign?.id ?? null,
         campaignTitle: memo.campaign?.title ?? null,
       })),
@@ -194,6 +198,7 @@ export class InfluencersService {
           ? application.reviewedAt.toISOString()
           : null,
         campaignTitle: application.campaign.title,
+        rejectedBy: toActor(application.reviewedById),
       })),
       postRejections: postRejectionRows.map((rejection) => ({
         id: rejection.id,
@@ -201,6 +206,7 @@ export class InfluencersService {
         comment: rejection.comment,
         rejectedAt: rejection.rejectedAt.toISOString(),
         campaignTitle: rejection.application.campaign.title,
+        rejectedBy: toActor(rejection.rejectedById),
       })),
       flaggedAt: influencer.flaggedAt ? influencer.flaggedAt.toISOString() : null,
     };

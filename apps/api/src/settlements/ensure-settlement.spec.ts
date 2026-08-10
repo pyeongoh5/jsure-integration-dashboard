@@ -32,7 +32,10 @@ type ApplicationSelect = {
   };
 };
 
-function makeStubPrisma(application: ApplicationSelect | null) {
+function makeStubPrisma(
+  application: ApplicationSelect | null,
+  createdSettlementId = "settle-created",
+) {
   const upserts: unknown[] = [];
   const prisma = {
     campaignApplication: {
@@ -44,7 +47,7 @@ function makeStubPrisma(application: ApplicationSelect | null) {
     settlement: {
       upsert: async (args: unknown) => {
         upserts.push(args);
-        return null;
+        return { id: createdSettlementId };
       },
     },
   } as never;
@@ -119,6 +122,68 @@ describe("ensureSettlementForApplication — FAKE_PURCHASE", () => {
     });
     await ensureSettlementForApplication(prisma, "app-1");
     expect(upserts).toHaveLength(0);
+  });
+});
+
+describe("ensureSettlementForApplication — createdSettlementId", () => {
+  const approvedFakePurchase: ApplicationSelect = {
+    submissionReviewStatus: "APPROVED",
+    subTypes: ["QOO10"],
+    options: [],
+    posts: [],
+    campaign: {
+      category: "FAKE_PURCHASE",
+      rewardType: "UNIFIED",
+      rewardJpy: 3000,
+      recruits: [
+        {
+          subType: "QOO10",
+          insightRequired: false,
+          productPriceJpy: 1000,
+          rewardJpy: null,
+        },
+      ],
+    },
+  };
+
+  it("신규 생성 시 upsert 가 만든 정산 id 를 반환한다", async () => {
+    const { prisma } = makeStubPrisma(approvedFakePurchase, "settle-new");
+
+    const result = await ensureSettlementForApplication(prisma, "app-1");
+
+    expect(result.createdSettlementId).toBe("settle-new");
+    expect(result.autoCompleted).toBe(false);
+  });
+
+  it("이미 정산이 있으면 upsert 없이 createdSettlementId 는 null", async () => {
+    const { prisma, upserts } = makeStubPrisma({
+      ...approvedFakePurchase,
+      settlement: { id: "settle-existing" },
+    });
+
+    const result = await ensureSettlementForApplication(prisma, "app-1");
+
+    expect(result.createdSettlementId).toBeNull();
+    expect(upserts).toHaveLength(0);
+  });
+
+  it("조건 미충족(제출물 미승인)이면 createdSettlementId 는 null", async () => {
+    const { prisma } = makeStubPrisma({
+      ...approvedFakePurchase,
+      submissionReviewStatus: "PENDING",
+    });
+
+    const result = await ensureSettlementForApplication(prisma, "app-1");
+
+    expect(result.createdSettlementId).toBeNull();
+  });
+
+  it("응모가 없으면 createdSettlementId 는 null", async () => {
+    const { prisma } = makeStubPrisma(null);
+
+    const result = await ensureSettlementForApplication(prisma, "app-1");
+
+    expect(result.createdSettlementId).toBeNull();
   });
 });
 

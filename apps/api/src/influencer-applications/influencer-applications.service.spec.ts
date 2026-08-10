@@ -5,6 +5,7 @@ type ServiceOverrides = Partial<{
   uploads: unknown;
   line: unknown;
   dispatcher: unknown;
+  audit: unknown;
 }>;
 
 function makeService(overrides?: ServiceOverrides) {
@@ -15,11 +16,16 @@ function makeService(overrides?: ServiceOverrides) {
   };
   const line = overrides?.line ?? {};
   const dispatcher = overrides?.dispatcher ?? { dispatch: jest.fn() };
+  const audit = overrides?.audit ?? {
+    record: jest.fn(),
+    recordMany: jest.fn(),
+  };
   return new InfluencerApplicationsService(
     prisma as never,
     uploads as never,
     line as never,
     dispatcher as never,
+    audit as never,
   );
 }
 

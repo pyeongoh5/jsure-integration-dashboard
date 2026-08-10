@@ -93,11 +93,14 @@ export function settlementAmounts(
  * 총액 0원이면 정산 대기 없이 COMPLETED 로 자동 완료 생성한다. 이번 호출에서
  * 자동 완료가 일어났을 때만 autoCompleted=true — 호출자가 캠페인 종료 메시지를
  * 발송할지 판단하는 데 쓴다.
+ *
+ * 이번 호출에서 새로 생성한 경우에만 createdSettlementId 가 채워진다 —
+ * 호출자가 감사 로그의 settlementId 로 쓴다.
  */
 export async function ensureSettlementForApplication(
   prisma: PrismaService,
   applicationId: string,
-): Promise<{ autoCompleted: boolean }> {
+): Promise<{ autoCompleted: boolean; createdSettlementId: string | null }> {
   const application = await prisma.campaignApplication.findUnique({
     where: { id: applicationId },
     select: {
@@ -140,12 +143,14 @@ export async function ensureSettlementForApplication(
       },
     },
   });
-  if (!application) return { autoCompleted: false };
+  if (!application) return { autoCompleted: false, createdSettlementId: null };
   if (application.submissionReviewStatus !== "APPROVED") {
-    return { autoCompleted: false };
+    return { autoCompleted: false, createdSettlementId: null };
   }
   // 이미 정산이 생성돼 있으면 그대로 둔다 (멱등).
-  if (application.settlement) return { autoCompleted: false };
+  if (application.settlement) {
+    return { autoCompleted: false, createdSettlementId: null };
+  }
 
   const { campaign } = application;
   const participatingRecruits = campaign.recruits.filter((recruit) =>
@@ -160,7 +165,9 @@ export async function ensureSettlementForApplication(
       );
       return !post || post.insightSubmittedAt === null;
     });
-    if (insightMissing) return { autoCompleted: false };
+    if (insightMissing) {
+      return { autoCompleted: false, createdSettlementId: null };
+    }
   }
 
   const { rewardAmountJpy, productRefundJpy } = settlementAmounts(
@@ -185,7 +192,7 @@ export async function ensureSettlementForApplication(
     invoiceRegistrationNumber: null,
   };
 
-  await prisma.settlement.upsert({
+  const created = await prisma.settlement.upsert({
     where: { applicationId },
     create: {
       applicationId,
@@ -197,6 +204,7 @@ export async function ensureSettlementForApplication(
       ...bankSnapshot,
     },
     update: {},
+    select: { id: true },
   });
-  return { autoCompleted };
+  return { autoCompleted, createdSettlementId: created.id };
 }

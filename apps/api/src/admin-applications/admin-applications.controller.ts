@@ -133,8 +133,11 @@ export class AdminApplicationsController {
 
   @Post(":id/submission/settle")
   @HttpCode(200)
-  settleSubmission(@Param("id") id: string): Promise<AdminSubmission> {
-    return this.svc.settleSubmission(id);
+  settleSubmission(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<AdminSubmission> {
+    return this.svc.settleSubmission(id, req.user);
   }
 
   @Get("settlements")
@@ -161,7 +164,7 @@ export class AdminApplicationsController {
     @Req() req: { user: AuthenticatedUser },
     @Body() body: { ids?: string[] },
   ): Promise<{ completedCount: number }> {
-    return this.svc.completeSettlements(req.user.id, body.ids);
+    return this.svc.completeSettlements(req.user, body.ids);
   }
 
   @Post(":id/approve")

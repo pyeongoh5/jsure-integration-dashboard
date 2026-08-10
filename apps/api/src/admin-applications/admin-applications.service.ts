@@ -547,10 +547,22 @@ export class AdminApplicationsService {
       campaignId: existing.campaignId,
     });
     // 인사이트가 이미 제출돼 있던 경우, 승인 시점에 자동 정산.
-    const { autoCompleted } = await ensureSettlementForApplication(
-      this.prisma,
-      applicationId,
-    );
+    const { autoCompleted, createdSettlementId } =
+      await ensureSettlementForApplication(this.prisma, applicationId);
+    if (createdSettlementId) {
+      // 어드민 승인의 부수효과 — 액터는 승인자지만 "직접 정산 버튼을 눌렀다"와
+      // 구분되도록 origin 은 CASCADE.
+      await this.audit.record({
+        action: autoCompleted
+          ? "SETTLEMENT_AUTO_COMPLETE"
+          : "SETTLEMENT_CREATE",
+        origin: "CASCADE",
+        actor,
+        applicationId,
+        campaignId: existing.campaignId,
+        settlementId: createdSettlementId,
+      });
+    }
     const refreshed = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
       include: {
@@ -690,7 +702,10 @@ export class AdminApplicationsService {
   }
 
   /** 승인된 제출물을 인사이트 제출 여부와 무관하게 수동 정산 등록. */
-  async settleSubmission(applicationId: string): Promise<AdminSubmission> {
+  async settleSubmission(
+    applicationId: string,
+    actor: AuditActor,
+  ): Promise<AdminSubmission> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
       include: {
@@ -743,7 +758,7 @@ export class AdminApplicationsService {
     const autoCompleted = !existing.settlement && amountJpy === 0;
     // Settlement row 생성 (idempotent: 이미 있으면 그대로 유지)
     // 생성 시점 계좌를 스냅샷 — 이후 계좌 변경과 무관하게 입금 계좌 기록 보존.
-    await this.prisma.settlement.upsert({
+    const created = await this.prisma.settlement.upsert({
       where: { applicationId },
       create: {
         applicationId,
@@ -752,6 +767,9 @@ export class AdminApplicationsService {
         productRefundJpy,
         status: autoCompleted ? "COMPLETED" : "PENDING",
         completedAt: autoCompleted ? new Date() : null,
+        // 이 경로의 자동완료는 어드민이 등록 버튼을 눌러 일어났으므로
+        // 상태 컬럼에도 완료자를 남긴다 (기존엔 공백이었다).
+        completedById: autoCompleted ? actor.id : null,
         bankCountry: existing.influencer.bankAccount?.bankCountry ?? null,
         bankCode: existing.influencer.bankAccount?.bankCode ?? null,
         bankName: existing.influencer.bankAccount?.bankName ?? null,
@@ -764,6 +782,17 @@ export class AdminApplicationsService {
           existing.influencer.bankAccount?.invoiceRegistrationNumber ?? null,
       },
       update: {},
+      select: { id: true },
+    });
+    // 어드민이 누른 액션은 '등록' 하나다. 0엔 즉시완료는 그 결과이므로
+    // 별도 행으로 남기지 않고 metadata 로 표기한다.
+    await this.audit.record({
+      action: "SETTLEMENT_REGISTER",
+      actor,
+      applicationId,
+      campaignId: existing.campaignId,
+      settlementId: created.id,
+      metadata: { amountJpy, autoCompleted },
     });
     const completedTriggerKey = campaignCompletedTriggerKeyFor(
       existing.campaign.category,
@@ -890,7 +919,7 @@ export class AdminApplicationsService {
 
   /** PENDING Settlement 들을 COMPLETED 로. ids 가 비어있으면 모든 PENDING 대상. */
   async completeSettlements(
-    completerId: string,
+    actor: AuditActor,
     ids?: string[],
   ): Promise<{ completedCount: number }> {
     const where = {
@@ -919,9 +948,21 @@ export class AdminApplicationsService {
       data: {
         status: "COMPLETED",
         completedAt: now,
-        completedById: completerId,
+        completedById: actor.id,
       },
     });
+    // 정산 건당 1행. applicationId 를 함께 넣어 응모 타임라인이 단일 인덱스
+    // 쿼리로 정산 이력까지 커버하게 한다.
+    await this.audit.recordMany(
+      targets.map((target) => ({
+        action: "SETTLEMENT_COMPLETE" as const,
+        actor,
+        applicationId: target.applicationId,
+        campaignId: target.application.campaignId,
+        settlementId: target.id,
+        metadata: { batchSize: targets.length, amountJpy: target.amountJpy },
+      })),
+    );
     for (const target of targets) {
       const category = target.application.campaign.category;
       if (target.amountJpy > 0) {

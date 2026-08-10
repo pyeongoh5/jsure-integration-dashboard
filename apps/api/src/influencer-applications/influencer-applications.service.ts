@@ -37,6 +37,7 @@ import {
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
 import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
 import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
+import { AuditService } from "../audit/audit.service";
 
 /** 응모 후 인플루언서가 직접 취소할 수 있는 기간(2일, 밀리초). */
 const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
@@ -265,6 +266,7 @@ export class InfluencerApplicationsService {
     private readonly uploads: UploadsService,
     private readonly line: LineMessagingService,
     private readonly dispatcher: LineDispatcherService,
+    private readonly audit: AuditService,
   ) {}
 
   private async resolveResponse(
@@ -867,10 +869,21 @@ export class InfluencerApplicationsService {
       }
     }
     // 제출물이 이미 승인된 상태라면 인사이트 제출 시점에 자동 정산.
-    const { autoCompleted } = await ensureSettlementForApplication(
-      this.prisma,
-      applicationId,
-    );
+    const { autoCompleted, createdSettlementId } =
+      await ensureSettlementForApplication(this.prisma, applicationId);
+    if (createdSettlementId) {
+      // 인플루언서 행동이 유발한 자동 처리 — 과거의 승인자에게 귀속하지 않고
+      // actorId 없이 SYSTEM 으로 남긴다.
+      await this.audit.record({
+        action: autoCompleted
+          ? "SETTLEMENT_AUTO_COMPLETE"
+          : "SETTLEMENT_CREATE",
+        origin: "SYSTEM",
+        applicationId,
+        settlementId: createdSettlementId,
+        metadata: { triggeredBy: "INSIGHT_SUBMITTED" },
+      });
+    }
 
     const refreshed = await this.prisma.campaignApplication.findUniqueOrThrow({
       where: { id: applicationId },

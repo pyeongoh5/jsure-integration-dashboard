@@ -20,6 +20,8 @@ type TimelineEntry =
       at: string;
       comment: string;
       campaignTitle: string | null;
+      /** 메모 작성자 / 반려를 수행한 어드민. 계정 삭제 시 null. */
+      actorName: string | null;
     }
   | {
       kind: "application";
@@ -27,6 +29,7 @@ type TimelineEntry =
       at: string;
       comment: string;
       campaignTitle: string;
+      actorName: string | null;
     }
   | {
       kind: "post";
@@ -34,6 +37,7 @@ type TimelineEntry =
       at: string;
       comment: string;
       campaignTitle: string;
+      actorName: string | null;
     };
 
 function buildTimeline(data: InfluencerNotesResponse): TimelineEntry[] {
@@ -45,6 +49,7 @@ function buildTimeline(data: InfluencerNotesResponse): TimelineEntry[] {
       at: memo.createdAt,
       comment: memo.comment,
       campaignTitle: memo.campaignTitle,
+      actorName: memo.createdBy?.name ?? null,
     });
   }
   for (const rejection of data.applicationRejections) {
@@ -55,6 +60,7 @@ function buildTimeline(data: InfluencerNotesResponse): TimelineEntry[] {
       at: rejection.rejectedAt,
       comment: rejection.comment,
       campaignTitle: rejection.campaignTitle,
+      actorName: rejection.rejectedBy?.name ?? null,
     });
   }
   for (const rejection of data.postRejections) {
@@ -64,6 +70,7 @@ function buildTimeline(data: InfluencerNotesResponse): TimelineEntry[] {
       at: rejection.rejectedAt,
       comment: rejection.comment,
       campaignTitle: rejection.campaignTitle,
+      actorName: rejection.rejectedBy?.name ?? null,
     });
   }
   entries.sort((left, right) => (left.at < right.at ? 1 : -1));
@@ -308,6 +315,11 @@ export function InfluencerNotesDialog({
                           </span>
                         )}
                         <span>{formatDateTime(entry.at)}</span>
+                        {entry.actorName && (
+                          <span className={styles.entryActor}>
+                            {entry.actorName}
+                          </span>
+                        )}
                       </div>
                       <div className={styles.entryBody}>{entry.comment}</div>
                     </article>

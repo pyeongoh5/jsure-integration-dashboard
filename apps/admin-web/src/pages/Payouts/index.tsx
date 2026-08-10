@@ -5,9 +5,11 @@ import {
   completeSettlements,
   listSettlements,
   useSubmissionDetail,
+  ApplicationHistoryDialog,
   CampaignFilterChip,
   CATEGORY_LABEL_KO,
   CATEGORY_FILTER_OPTIONS,
+  type HistoryTarget,
 } from "@/domains/application";
 import { ScrollTable } from "@/components/composites";
 import { FilterChipBar } from "@/components/composites/FilterChip";
@@ -206,6 +208,7 @@ export function Payouts() {
   const [categoryFilter, setCategoryFilter] =
     useState<CampaignCategory | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(null);
   // 제출물/인사이트 상세 모달 — 응모 단건 조회 후 검수 화면과 동일한 다이얼로그로 표시.
   const submissionDetail = useSubmissionDetail();
 
@@ -483,6 +486,7 @@ export function Payouts() {
                   <th>정산 등록일</th>
                   <th>정산 완료일</th>
                   <th style={{ width: 70 }}>상태</th>
+                  <th style={{ width: 60 }}>이력</th>
                 </tr>
               </thead>
               <tbody>
@@ -566,6 +570,23 @@ export function Payouts() {
                           <span className={`${styles.pill} ${styles.pillPending}`}>대기</span>
                         )}
                       </td>
+                      <td>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            setHistoryTarget({
+                              applicationId: row.applicationId,
+                              campaignTitle: row.campaign.title,
+                              influencerName: row.influencer.name,
+                              statusLabel:
+                                row.status === "COMPLETED" ? "정산 완료" : "정산 대기",
+                            })
+                          }
+                        >
+                          이력
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -576,6 +597,13 @@ export function Payouts() {
       </div>
 
       {submissionDetail.dialog}
+
+      {historyTarget && (
+        <ApplicationHistoryDialog
+          target={historyTarget}
+          onClose={() => setHistoryTarget(null)}
+        />
+      )}
     </div>
   );
 }

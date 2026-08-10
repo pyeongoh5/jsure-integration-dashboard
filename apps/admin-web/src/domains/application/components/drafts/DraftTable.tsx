@@ -61,6 +61,8 @@ type ActionHandlers = {
   onSettle: (draft: DraftReview) => void;
   onViewInsight: (draft: DraftReview) => void;
   onMemo: (draft: DraftReview) => void;
+  /** 감사 로그 다이얼로그 열기. showHistory(반려 이력 확장 행)와 다른 개념이다. */
+  onHistory: (draft: DraftReview) => void;
 };
 
 function formatJpy(amount: number): string {
@@ -100,6 +102,11 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
       메모
     </Button>
   );
+  const historyButton = (
+    <Button variant="secondary" size="sm" onClick={() => handlers.onHistory(draft)}>
+      이력
+    </Button>
+  );
 
   if (draft.status === "REVIEW_PENDING") {
     return (
@@ -111,6 +118,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
           반려
         </Button>
         {memoButton}
+        {historyButton}
       </div>
     );
   }
@@ -125,6 +133,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
           되돌리기
         </Button>
         {memoButton}
+        {historyButton}
       </div>
     );
   }
@@ -136,6 +145,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
           정산하기
         </Button>
         {memoButton}
+        {historyButton}
       </div>
     );
   }
@@ -147,12 +157,18 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
           되돌리기
         </Button>
         {memoButton}
+        {historyButton}
       </div>
     );
   }
 
   // SETTLEMENT_PENDING / SETTLED / REJECTED_LOCKED — 추가 액션 없음(메모만).
-  return <div className={styles.actions}>{memoButton}</div>;
+  return (
+    <div className={styles.actions}>
+      {memoButton}
+      {historyButton}
+    </div>
+  );
 }
 
 type Props = {
@@ -164,6 +180,8 @@ type Props = {
   onSettle: (draft: DraftReview) => void;
   onViewInsight: (draft: DraftReview) => void;
   onMemo: (draft: DraftReview) => void;
+  /** 감사 로그 다이얼로그 열기. showHistory(반려 이력 확장 행)와 다른 개념이다. */
+  onHistory: (draft: DraftReview) => void;
 };
 
 export function DraftTable({
@@ -175,6 +193,7 @@ export function DraftTable({
   onSettle,
   onViewInsight,
   onMemo,
+  onHistory,
 }: Props) {
   if (items.length === 0) {
     return (
@@ -295,6 +314,7 @@ export function DraftTable({
                         onSettle,
                         onViewInsight,
                         onMemo,
+                        onHistory,
                       })}
                     </td>
                   </tr>

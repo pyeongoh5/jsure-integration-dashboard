@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import type { Attachment } from "@jsure/shared";
 import { SUB_TYPE_LABEL } from "@jsure/shared";
 import {
-  ActivityTimeline,
   fetchApplicationAttachments,
-  useApplicationActivity,
   type Applicant,
 } from "@/domains/application";
 import { CATEGORY_LABEL_KO } from "@/domains/application";
@@ -25,7 +23,6 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
     kind: "loading",
   });
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-  const { state: activityState } = useApplicationActivity(applicant.id);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,11 +138,6 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
               </div>
             </section>
           )}
-
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>작업 이력</h3>
-            <ActivityTimeline state={activityState} />
-          </section>
         </div>
       </div>
 

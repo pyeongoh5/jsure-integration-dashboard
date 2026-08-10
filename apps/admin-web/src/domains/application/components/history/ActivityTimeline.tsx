@@ -3,6 +3,8 @@ import {
   ACTIVITY_ACTION_LABEL,
   ACTIVITY_ORIGIN_BADGE,
 } from "./activityLabels";
+import { formatElapsedSince } from "./elapsed";
+import { METADATA_KEY_LABEL } from "./metadataLabels";
 import type { ActivityState } from "./useApplicationActivity";
 import styles from "./ActivityTimeline.module.css";
 
@@ -18,17 +20,23 @@ export function ActivityTimeline({ state }: Props) {
     return <div className={styles.empty}>{state.message}</div>;
   }
   if (state.items.length === 0) {
-    return <div className={styles.empty}>기록된 작업 이력이 없습니다.</div>;
+    return (
+      <div className={styles.empty}>
+        이 응모에 기록된 작업 이력이 없습니다. 감사 로그 도입 이전 처리 건일 수
+        있습니다.
+      </div>
+    );
   }
   return (
     <ol className={styles.list}>
-      {state.items.map((entry) => (
+      {state.items.map((entry, index) => (
         <li key={entry.id} className={styles.item}>
           <div className={styles.head}>
             <span className={styles.action}>
               {ACTIVITY_ACTION_LABEL[entry.action]}
             </span>
             <OriginBadge log={entry} />
+            <ElapsedSincePrevious items={state.items} index={index} />
             <span className={styles.at}>{formatJst(entry.createdAt)}</span>
           </div>
           <div className={styles.actor}>{actorLabel(entry)}</div>
@@ -37,6 +45,21 @@ export function ActivityTimeline({ state }: Props) {
       ))}
     </ol>
   );
+}
+
+/** 목록은 최신순이라 직전 액션은 바로 다음 인덱스다. 가장 오래된 항목은 표시 없음. */
+function ElapsedSincePrevious({
+  items,
+  index,
+}: {
+  items: AdminActivityLog[];
+  index: number;
+}) {
+  const previous = items[index + 1];
+  if (!previous) return null;
+  const elapsed = formatElapsedSince(previous.createdAt, items[index]!.createdAt);
+  if (!elapsed) return null;
+  return <span className={styles.elapsed}>{elapsed}</span>;
 }
 
 function OriginBadge({ log }: { log: AdminActivityLog }) {
@@ -64,7 +87,8 @@ function metadataSummary(
   const parts: string[] = [];
   for (const [key, value] of Object.entries(metadata)) {
     const rendered = renderMetadataValue(value);
-    if (rendered !== null) parts.push(`${key}: ${rendered}`);
+    if (rendered === null) continue;
+    parts.push(`${METADATA_KEY_LABEL[key] ?? key}: ${rendered}`);
   }
   return parts.length > 0 ? parts.join(" · ") : null;
 }

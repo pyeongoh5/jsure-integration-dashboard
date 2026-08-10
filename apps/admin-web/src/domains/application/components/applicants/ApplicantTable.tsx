@@ -20,6 +20,7 @@ type ActionHandlers = {
   onDeliver: (applicant: Applicant) => void;
   onMemo: (applicant: Applicant) => void;
   onDetail: (applicant: Applicant) => void;
+  onHistory: (applicant: Applicant) => void;
 };
 
 function renderActions(applicant: Applicant, handlers: ActionHandlers) {
@@ -34,6 +35,11 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
         상세
       </Button>
     ) : null;
+  const historyButton = (
+    <Button variant="secondary" size="sm" onClick={() => handlers.onHistory(applicant)}>
+      이력
+    </Button>
+  );
   const hasShipping = applicant.category === "SNS" || applicant.category === "SIMPLE_REVIEW";
 
   switch (applicant.status) {
@@ -48,6 +54,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
           </Button>
           {detailButton}
           {memoButton}
+          {historyButton}
         </div>
       );
     case "PRE_SHIP":
@@ -63,6 +70,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
           </Button>
           {detailButton}
           {memoButton}
+          {historyButton}
         </div>
       );
     case "SHIPPING":
@@ -75,6 +83,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
           )}
           {detailButton}
           {memoButton}
+          {historyButton}
         </div>
       );
     case "DELIVERED":
@@ -85,6 +94,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
         <div className={styles.actions}>
           {detailButton}
           {memoButton}
+          {historyButton}
         </div>
       );
     case "AWAITING_ORDER":
@@ -95,6 +105,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
           </Button>
           {detailButton}
           {memoButton}
+          {historyButton}
         </div>
       );
     case "REJECTED":
@@ -105,6 +116,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
           </Button>
           {detailButton}
           {memoButton}
+          {historyButton}
         </div>
       );
   }
@@ -188,6 +200,7 @@ type Props = {
   onDeliver: (applicant: Applicant) => void;
   onMemo: (applicant: Applicant) => void;
   onDetail: (applicant: Applicant) => void;
+  onHistory: (applicant: Applicant) => void;
 };
 
 export function ApplicantTable({
@@ -202,6 +215,7 @@ export function ApplicantTable({
   onDeliver,
   onMemo,
   onDetail,
+  onHistory,
 }: Props) {
   if (items.length === 0) {
     return (
@@ -336,6 +350,7 @@ export function ApplicantTable({
                     onDeliver,
                     onMemo,
                     onDetail,
+                    onHistory,
                   })}
                 </td>
               </tr>

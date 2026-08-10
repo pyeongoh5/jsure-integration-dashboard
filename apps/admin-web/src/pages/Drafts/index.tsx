@@ -4,9 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { CampaignCategory } from "@jsure/shared";
 import {
   ApplicantFilters,
+  ApplicationHistoryDialog,
   DraftDialogs,
   DraftStatusFilter,
   DraftTable,
+  DRAFT_STATUS_LABEL,
   InsightDetailDialog,
   useCampaignOptions,
   useDraftMutations,
@@ -14,6 +16,7 @@ import {
   type ApplicantMedia as Media,
   type DraftReview,
   type DraftStatus,
+  type HistoryTarget,
 } from "@/domains/application";
 import { InfluencerNotesDialog } from "@/domains/influencer";
 import styles from "./Drafts.module.css";
@@ -38,6 +41,7 @@ export function Drafts() {
     useState<CampaignCategory | null>(null);
   const [insightView, setInsightView] = useState<DraftReview | null>(null);
   const [notesTarget, setNotesTarget] = useState<DraftReview | null>(null);
+  const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(null);
   const { state, drafts, reload } = useDraftReviewsData();
   const {
     campaignOptions,
@@ -122,6 +126,14 @@ export function Drafts() {
           }}
           onViewInsight={setInsightView}
           onMemo={setNotesTarget}
+          onHistory={(draft) =>
+            setHistoryTarget({
+              applicationId: draft.id,
+              campaignTitle: draft.campaignTitle,
+              influencerName: draft.influencerName,
+              statusLabel: DRAFT_STATUS_LABEL[draft.status],
+            })
+          }
         />
       )}
 
@@ -132,6 +144,13 @@ export function Drafts() {
         onConfirm={mutations.confirm}
         onCancel={mutations.cancel}
       />
+
+      {historyTarget && (
+        <ApplicationHistoryDialog
+          target={historyTarget}
+          onClose={() => setHistoryTarget(null)}
+        />
+      )}
 
       {insightView && (
         <InsightDetailDialog

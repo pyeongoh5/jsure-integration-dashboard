@@ -7,12 +7,15 @@ import {
   ApplicantStatusFilter,
   ApplicantTable,
   ApplicantDialogs,
+  ApplicationHistoryDialog,
+  APPLICANT_STATUS_LABEL,
   useApplicantsData,
   useCampaignOptions,
   useApplicantMutations,
   type Applicant,
   type ApplicantStatus,
   type ApplicantMedia as Media,
+  type HistoryTarget,
 } from "@/domains/application";
 import { InfluencerNotesDialog } from "@/domains/influencer";
 import { Button } from "@/components/ui";
@@ -25,6 +28,7 @@ export function Applicants() {
   const campaignId = searchParams.get("campaignId");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [notesTarget, setNotesTarget] = useState<Applicant | null>(null);
+  const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(null);
   const [mediaFilter, setMediaFilter] = useState<Set<Media>>(() => new Set());
   const [minFollowers, setMinFollowers] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<Set<ApplicantStatus>>(
@@ -163,6 +167,14 @@ export function Applicants() {
           onDeliver={mutations.openDeliver}
           onMemo={setNotesTarget}
           onDetail={setDetailTarget}
+          onHistory={(applicant) =>
+            setHistoryTarget({
+              applicationId: applicant.id,
+              campaignTitle: applicant.campaign,
+              influencerName: applicant.name,
+              statusLabel: APPLICANT_STATUS_LABEL[applicant.status],
+            })
+          }
         />
       )}
 
@@ -192,6 +204,13 @@ export function Applicants() {
         <ApplicantDetailDialog
           applicant={detailTarget}
           onClose={() => setDetailTarget(null)}
+        />
+      )}
+
+      {historyTarget && (
+        <ApplicationHistoryDialog
+          target={historyTarget}
+          onClose={() => setHistoryTarget(null)}
         />
       )}
     </div>

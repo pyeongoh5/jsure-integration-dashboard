@@ -306,8 +306,11 @@ export const InfluencerApplicationSchema = z.object({
   /** 제출물 반려 시 최신 반려 코멘트. */
   lastRejectionComment: z.string().nullable(),
   posts: z.array(SubmittedPostSchema),
-  /** 응모하지 않은 플랫폼에 함께 공유한 기록. SNS 캠페인에서만 채워진다. */
-  crossPosts: z.array(CrossPostSchema),
+  /**
+   * 응모하지 않은 플랫폼에 함께 공유한 기록. SNS 캠페인에서만 채워진다.
+   * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
+   */
+  crossPosts: z.array(CrossPostSchema).default([]),
   postingPeriodDays: z.number().int().min(1),
   postingDeadlineAt: z.string().datetime().nullable(),
   settlement: InfluencerApplicationSettlementSchema.nullable(),

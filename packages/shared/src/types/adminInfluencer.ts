@@ -49,8 +49,11 @@ export const AdminInfluencerSchema = z.object({
   flagged: z.boolean(),
   snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   address: AdminInfluencerAddressSchema,
-  /** 지금까지 제출한 추가 공유(크로스포스팅) 누적 건수. 선정 우대 판단용. */
-  crossPostCount: z.number().int().nonnegative(),
+  /**
+   * 지금까지 제출한 추가 공유(크로스포스팅) 누적 건수. 선정 우대 판단용.
+   * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
+   */
+  crossPostCount: z.number().int().nonnegative().default(0),
   createdAt: z.string().datetime(),
 });
 export type AdminInfluencer = z.infer<typeof AdminInfluencerSchema>;
@@ -171,8 +174,9 @@ export const AdminSubmissionSchema = z.object({
   posts: z.array(AdminSubmissionPostSchema),
   /**
    * 응모하지 않은 플랫폼에 함께 공유한 기록. 참고 표시용이며 승인·반려 대상이 아니다.
+   * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
    */
-  crossPosts: z.array(CrossPostSchema),
+  crossPosts: z.array(CrossPostSchema).default([]),
 
   settlement: z
     .object({

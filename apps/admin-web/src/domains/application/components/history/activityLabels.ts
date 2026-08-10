@@ -7,7 +7,7 @@ export const ACTIVITY_ACTION_LABEL: Record<AdminActivityAction, string> = {
   APPLICATION_APPROVE: "응모 승인",
   APPLICATION_REJECT: "응모 거절",
   APPLICATION_REVIEW_UNDO: "응모 검토 취소",
-  APPLICATION_SHIP: "발송 처리",
+  APPLICATION_SHIP: "택배 발송",
   APPLICATION_DELIVER: "배송 완료",
   SUBMISSION_APPROVE: "제출물 승인",
   SUBMISSION_REJECT: "제출물 반려",

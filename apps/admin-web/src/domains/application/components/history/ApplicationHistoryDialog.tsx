@@ -34,6 +34,8 @@ export function ApplicationHistoryDialog({ target, onClose }: Props) {
           <div>
             <h2 className={styles.title}>{target.campaignTitle}</h2>
             <div className={styles.sub}>
+              {/* 담당자 컬럼과 같은 이름이 나올 수 있어 무엇의 이름인지 밝힌다. */}
+              <span className={styles.subLabel}>인플루언서</span>
               {target.influencerName}
               <span className={styles.statusBadge}>{target.statusLabel}</span>
             </div>

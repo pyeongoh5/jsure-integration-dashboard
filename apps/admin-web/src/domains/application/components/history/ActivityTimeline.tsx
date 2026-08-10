@@ -28,22 +28,38 @@ export function ActivityTimeline({ state }: Props) {
     );
   }
   return (
-    <ol className={styles.list}>
-      {state.items.map((entry, index) => (
-        <li key={entry.id} className={styles.item}>
-          <div className={styles.head}>
-            <span className={styles.action}>
-              {ACTIVITY_ACTION_LABEL[entry.action]}
-            </span>
-            <OriginBadge log={entry} />
-            <ElapsedSincePrevious items={state.items} index={index} />
-            <span className={styles.at}>{formatJst(entry.createdAt)}</span>
-          </div>
-          <div className={styles.actor}>{actorLabel(entry)}</div>
-          <MetadataLine log={entry} />
-        </li>
-      ))}
-    </ol>
+    <div className={styles.scroll}>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>액션</th>
+            <th>시각</th>
+            <th>담당자</th>
+            <th>상세</th>
+          </tr>
+        </thead>
+        <tbody>
+          {state.items.map((entry, index) => (
+            <tr key={entry.id}>
+              <td>
+                <span className={styles.action}>
+                  {ACTIVITY_ACTION_LABEL[entry.action]}
+                </span>
+                <OriginBadge log={entry} />
+              </td>
+              <td className={styles.atCell}>
+                {formatJst(entry.createdAt)}
+                <ElapsedSincePrevious items={state.items} index={index} />
+              </td>
+              <td className={styles.actor}>{actorLabel(entry)}</td>
+              <td className={styles.meta}>
+                {metadataSummary(entry.metadata) ?? "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -57,21 +73,18 @@ function ElapsedSincePrevious({
 }) {
   const previous = items[index + 1];
   if (!previous) return null;
-  const elapsed = formatElapsedSince(previous.createdAt, items[index]!.createdAt);
+  const elapsed = formatElapsedSince(
+    previous.createdAt,
+    items[index]!.createdAt,
+  );
   if (!elapsed) return null;
-  return <span className={styles.elapsed}>{elapsed}</span>;
+  return <div className={styles.elapsed}>직전 액션 {elapsed}</div>;
 }
 
 function OriginBadge({ log }: { log: AdminActivityLog }) {
   const badge = ACTIVITY_ORIGIN_BADGE[log.origin];
   if (!badge) return null;
   return <span className={styles.badge}>{badge}</span>;
-}
-
-function MetadataLine({ log }: { log: AdminActivityLog }) {
-  const summary = metadataSummary(log.metadata);
-  if (!summary) return null;
-  return <div className={styles.meta}>{summary}</div>;
 }
 
 function actorLabel(log: AdminActivityLog): string {
@@ -95,7 +108,7 @@ function metadataSummary(
 
 function renderMetadataValue(value: unknown): string | null {
   if (typeof value === "string") return value || null;
-  if (typeof value === "number") return String(value);
+  if (typeof value === "number") return value.toLocaleString();
   if (typeof value === "boolean") return value ? "예" : "아니오";
   if (Array.isArray(value)) {
     const items = value.filter((item) => typeof item === "string");
@@ -104,13 +117,14 @@ function renderMetadataValue(value: unknown): string | null {
   return null;
 }
 
+/** MM/DD HH:mm (JST). 연도는 컬럼 폭을 잡아먹고 판단에 거의 쓰이지 않아 뺐다. */
 function formatJst(isoString: string): string {
   return new Date(isoString).toLocaleString("ko-KR", {
     timeZone: "Asia/Tokyo",
-    year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 }

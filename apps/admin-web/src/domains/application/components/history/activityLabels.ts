@@ -25,15 +25,25 @@ export const ACTIVITY_ACTION_LABEL: Record<AdminActivityAction, string> = {
   CAMPAIGN_DRAFT_CREATE: "임시저장 생성",
   CAMPAIGN_DRAFT_UPDATE: "임시저장 수정",
   CAMPAIGN_DRAFT_PUBLISH: "임시저장 발행",
+  APPLICATION_APPLY: "응모",
+  APPLICATION_ORDER_SUBMIT: "주문번호 제출",
+  APPLICATION_REVIEW_SUBMIT: "리뷰 제출",
+  APPLICATION_RECEIVE_CONFIRM: "수령 확인",
+  POST_SUBMIT: "투고 제출",
+  INSIGHT_SUBMIT: "인사이트 제출",
   INFLUENCER_MEMO_CREATE: "인플루언서 메모 작성",
   INFLUENCER_FLAG_SET: "인플루언서 플래그 설정",
   INFLUENCER_FLAG_CLEAR: "인플루언서 플래그 해제",
 };
 
-/** ADMIN 은 기본값이라 배지를 달지 않는다. */
+/**
+ * 배지는 "어드민이 직접 하지 않은 자동 처리"만 표시한다. ADMIN·INFLUENCER 는
+ * 담당자 컬럼이 행위자를 말해주므로 배지가 중복이다.
+ */
 export const ACTIVITY_ORIGIN_BADGE: Record<AdminActivityOrigin, string | null> =
   {
     ADMIN: null,
     CASCADE: "연쇄",
     SYSTEM: "시스템",
+    INFLUENCER: null,
   };

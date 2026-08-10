@@ -31,7 +31,15 @@ export const AdminActivityActionSchema = z.enum([
   "CAMPAIGN_DRAFT_CREATE",
   "CAMPAIGN_DRAFT_UPDATE",
   "CAMPAIGN_DRAFT_PUBLISH",
-  // 인플루언서
+  // 인플루언서 본인이 수행한 액션. 감사 로그 행이 아니라 응모의 타임스탬프
+  // 컬럼(appliedAt 등)에서 조회 시점에 합성된다 — DB 에 기록되지 않는다.
+  "APPLICATION_APPLY",
+  "APPLICATION_ORDER_SUBMIT",
+  "APPLICATION_REVIEW_SUBMIT",
+  "APPLICATION_RECEIVE_CONFIRM",
+  "POST_SUBMIT",
+  "INSIGHT_SUBMIT",
+  // 인플루언서 (어드민이 인플루언서에게 한 액션)
   "INFLUENCER_MEMO_CREATE",
   "INFLUENCER_FLAG_SET",
   "INFLUENCER_FLAG_CLEAR",
@@ -40,9 +48,19 @@ export type AdminActivityAction = z.infer<typeof AdminActivityActionSchema>;
 
 /**
  * ADMIN = 어드민 직접 액션, CASCADE = 어드민 액션에 연쇄된 자동 처리,
- * SYSTEM = 크론·인플루언서 행동이 유발한 자동 처리(actor 없음).
+ * SYSTEM = 크론·인플루언서 행동이 유발한 자동 처리(actor 없음),
+ * INFLUENCER = 인플루언서 본인의 액션.
+ *
+ * INFLUENCER 는 Prisma enum(AdminActivityOrigin)에 없다 — 합성 항목 전용이라
+ * DB 에 기록되지 않기 때문이다. 인플루언서 액션을 실제로 계측하게 되면 그때
+ * 마이그레이션으로 추가한다.
  */
-export const AdminActivityOriginSchema = z.enum(["ADMIN", "CASCADE", "SYSTEM"]);
+export const AdminActivityOriginSchema = z.enum([
+  "ADMIN",
+  "CASCADE",
+  "SYSTEM",
+  "INFLUENCER",
+]);
 export type AdminActivityOrigin = z.infer<typeof AdminActivityOriginSchema>;
 
 export const AdminActivityActorSchema = z.object({

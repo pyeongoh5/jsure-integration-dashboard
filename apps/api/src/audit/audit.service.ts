@@ -17,8 +17,11 @@ export type AuditMetadata = Record<string, AuditMetadataValue>;
 
 export type AuditEntry = {
   action: AdminActivityAction;
-  /** 기본 ADMIN. 연쇄 액션은 CASCADE, 어드민 미개입은 SYSTEM. */
-  origin?: AdminActivityOrigin;
+  /**
+   * 기본 ADMIN. 연쇄 액션은 CASCADE, 어드민 미개입은 SYSTEM.
+   * INFLUENCER 는 조회 시 합성되는 값이라 Prisma enum 에 없어 기록할 수 없다.
+   */
+  origin?: Exclude<AdminActivityOrigin, "INFLUENCER">;
   /** SYSTEM 이면 생략하거나 null. */
   actor?: AuditActor | null;
   applicationId?: string;

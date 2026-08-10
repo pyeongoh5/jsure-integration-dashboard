@@ -88,8 +88,9 @@ function OriginBadge({ log }: { log: AdminActivityLog }) {
 }
 
 function actorLabel(log: AdminActivityLog): string {
-  if (!log.actor) return "시스템";
-  return log.actor.name ?? log.actor.id;
+  if (log.actor) return log.actor.name ?? log.actor.id;
+  // 합성 항목은 그 응모의 인플루언서가 행위자다. 나머지 actor 없는 행은 자동 처리.
+  return log.origin === "INFLUENCER" ? "인플루언서" : "시스템";
 }
 
 /** 사람이 읽을 값만 골라 한 줄로. 객체/중첩은 표시하지 않는다. */

@@ -19,5 +19,6 @@ export const METADATA_KEY_LABEL: Record<string, string> = {
   publishState: "발행 상태",
   hardDeleted: "물리 삭제",
   memoId: "메모 ID",
+  subTypes: "서브타입",
   previousFlaggedById: "이전 설정자",
 };

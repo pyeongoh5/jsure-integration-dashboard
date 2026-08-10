@@ -16,6 +16,7 @@ import {
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { toActivityLog } from "../audit/application-activity";
+import { influencerActivityEntries } from "../audit/influencer-activity";
 import { POST_REJECTION_RESUBMIT_DAYS } from "../common/resubmit-deadline";
 import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
@@ -820,18 +821,33 @@ export class AdminApplicationsService {
   }
 
   /**
-   * 응모건 감사 로그 타임라인. (applicationId, createdAt) 인덱스 range scan 이라
-   * 테이블 총량과 무관하다. 응모당 수십 건 수준이라 페이지네이션 없이 전량 반환.
+   * 응모건 활동 타임라인. 어드민 액션은 감사 로그 행에서, 인플루언서 액션은
+   * 응모의 타임스탬프 컬럼에서 합성해 시간순으로 합친다 — 합성 덕분에 감사 로그
+   * 계측 이전 응모도 인플루언서 흐름이 보인다.
+   *
+   * (applicationId, createdAt) 인덱스 range scan 이라 테이블 총량과 무관하다.
+   * 응모당 수십 건 수준이라 페이지네이션 없이 전량 반환.
    */
   async listActivity(applicationId: string): Promise<AdminActivityLog[]> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
-      select: { id: true },
+      select: {
+        appliedAt: true,
+        orderSubmittedAt: true,
+        reviewSubmittedAt: true,
+        receivedAt: true,
+        posts: {
+          select: {
+            subType: true,
+            submittedAt: true,
+            insightSubmittedAt: true,
+          },
+        },
+      },
     });
     if (!existing) throw new NotFoundException("응모를 찾을 수 없습니다");
     const rows = await this.prisma.adminActivityLog.findMany({
       where: { applicationId },
-      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         action: true,
@@ -842,7 +858,8 @@ export class AdminApplicationsService {
         createdAt: true,
       },
     });
-    return rows.map(toActivityLog);
+    return [...rows.map(toActivityLog), ...influencerActivityEntries(existing)]
+      .sort((left, right) => (left.createdAt < right.createdAt ? 1 : -1));
   }
 
   private async fetchSubmission(applicationId: string): Promise<AdminSubmission> {

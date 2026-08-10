@@ -108,7 +108,7 @@ export class AdminApplicationsController {
     @Req() req: { user: AuthenticatedUser },
     @Param("id") id: string,
   ): Promise<AdminSubmission> {
-    return this.svc.approveSubmission(id, req.user.id);
+    return this.svc.approveSubmission(id, req.user);
   }
 
   @Post(":id/submission/reject")
@@ -119,13 +119,16 @@ export class AdminApplicationsController {
     @Body(new ZodValidationPipe(RejectSubmissionRequestSchema))
     body: RejectSubmissionRequest,
   ): Promise<AdminSubmission> {
-    return this.svc.rejectSubmission(id, req.user.id, body.comment.trim());
+    return this.svc.rejectSubmission(id, req.user, body.comment.trim());
   }
 
   @Post(":id/submission/undo")
   @HttpCode(200)
-  undoSubmissionReview(@Param("id") id: string): Promise<AdminSubmission> {
-    return this.svc.undoSubmissionReview(id);
+  undoSubmissionReview(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<AdminSubmission> {
+    return this.svc.undoSubmissionReview(id, req.user);
   }
 
   @Post(":id/submission/settle")
@@ -167,7 +170,7 @@ export class AdminApplicationsController {
     @Req() req: { user: AuthenticatedUser },
     @Param("id") id: string,
   ): Promise<AdminApplication> {
-    return this.svc.approve(id, req.user.id);
+    return this.svc.approve(id, req.user);
   }
 
   @Post(":id/reject")
@@ -178,24 +181,29 @@ export class AdminApplicationsController {
     @Body(new ZodValidationPipe(RejectApplicationRequestSchema))
     body: RejectApplicationRequest,
   ): Promise<AdminApplication> {
-    return this.svc.reject(id, req.user.id, body.reason);
+    return this.svc.reject(id, req.user, body.reason);
   }
 
   @Post(":id/undo")
   @HttpCode(200)
-  undo(@Param("id") id: string): Promise<AdminApplication> {
-    return this.svc.undo(id);
+  undo(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<AdminApplication> {
+    return this.svc.undo(id, req.user);
   }
 
   @Post(":id/ship")
   @HttpCode(200)
   ship(
+    @Req() req: { user: AuthenticatedUser },
     @Param("id") id: string,
     @Body(new ZodValidationPipe(ShipApplicationRequestSchema))
     body: ShipApplicationRequest,
   ): Promise<AdminApplication> {
     return this.svc.ship(
       id,
+      req.user,
       body.trackingCarrier.trim(),
       body.trackingNumber.trim(),
     );
@@ -203,8 +211,11 @@ export class AdminApplicationsController {
 
   @Post(":id/deliver")
   @HttpCode(200)
-  deliver(@Param("id") id: string): Promise<AdminApplication> {
-    return this.svc.deliver(id);
+  deliver(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<AdminApplication> {
+    return this.svc.deliver(id, req.user);
   }
 }
 

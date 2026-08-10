@@ -27,6 +27,8 @@ import {
   ensureSettlementForApplication,
   settlementAmounts,
 } from "../settlements/ensure-settlement";
+import { AuditService } from "../audit/audit.service";
+import type { AuditActor } from "../audit/audit.service";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -128,6 +130,7 @@ export class AdminApplicationsService {
     private readonly line: LineMessagingService,
     private readonly dispatcher: LineDispatcherService,
     private readonly r2: R2Service,
+    private readonly audit: AuditService,
   ) {}
 
   private async fetch(id: string): Promise<AdminApplication> {
@@ -139,7 +142,7 @@ export class AdminApplicationsService {
     return toResponse(row);
   }
 
-  async approve(id: string, reviewerId: string): Promise<AdminApplication> {
+  async approve(id: string, actor: AuditActor): Promise<AdminApplication> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
       include: {
@@ -224,9 +227,15 @@ export class AdminApplicationsService {
       data: {
         status: "APPROVED",
         reviewedAt: new Date(),
-        reviewedById: reviewerId,
+        reviewedById: actor.id,
         rejectReason: null,
       },
+    });
+    await this.audit.record({
+      action: "APPLICATION_APPROVE",
+      actor,
+      applicationId: id,
+      campaignId: existing.campaignId,
     });
     const approveTriggerKey =
       existing.campaign.category === "FAKE_PURCHASE"
@@ -238,7 +247,11 @@ export class AdminApplicationsService {
     return this.fetch(id);
   }
 
-  async reject(id: string, reviewerId: string, reason: string): Promise<AdminApplication> {
+  async reject(
+    id: string,
+    actor: AuditActor,
+    reason: string,
+  ): Promise<AdminApplication> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
       include: {
@@ -260,9 +273,16 @@ export class AdminApplicationsService {
       data: {
         status: "REJECTED",
         reviewedAt: new Date(),
-        reviewedById: reviewerId,
+        reviewedById: actor.id,
         rejectReason: reason.trim() || null,
       },
+    });
+    await this.audit.record({
+      action: "APPLICATION_REJECT",
+      actor,
+      applicationId: id,
+      campaignId: existing.campaignId,
+      metadata: { reason: reason.trim() },
     });
     const rejectTriggerKey =
       existing.campaign.category === "FAKE_PURCHASE"
@@ -275,7 +295,7 @@ export class AdminApplicationsService {
     return this.fetch(id);
   }
 
-  async undo(id: string): Promise<AdminApplication> {
+  async undo(id: string, actor: AuditActor): Promise<AdminApplication> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
     });
@@ -292,11 +312,23 @@ export class AdminApplicationsService {
         rejectReason: null,
       },
     });
+    // undo 는 reviewedById 를 null 로 소거하므로 이전 검토자를 로그에 보존한다.
+    await this.audit.record({
+      action: "APPLICATION_REVIEW_UNDO",
+      actor,
+      applicationId: id,
+      campaignId: existing.campaignId,
+      metadata: {
+        previousStatus: existing.status,
+        previousReviewerId: existing.reviewedById,
+      },
+    });
     return this.fetch(id);
   }
 
   async ship(
     id: string,
+    actor: AuditActor,
     trackingCarrier: string,
     trackingNumber: string,
   ): Promise<AdminApplication> {
@@ -328,6 +360,13 @@ export class AdminApplicationsService {
         shippedAt: new Date(),
       },
     });
+    await this.audit.record({
+      action: "APPLICATION_SHIP",
+      actor,
+      applicationId: id,
+      campaignId: existing.campaignId,
+      metadata: { trackingCarrier, trackingNumber },
+    });
     const shippedTriggerKey =
       existing.campaign.category === "SIMPLE_REVIEW"
         ? "SIMPLE_REVIEW_APPLICATION_SHIPPED"
@@ -338,7 +377,7 @@ export class AdminApplicationsService {
     return this.fetch(id);
   }
 
-  async deliver(id: string): Promise<AdminApplication> {
+  async deliver(id: string, actor: AuditActor): Promise<AdminApplication> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
       include: {
@@ -364,6 +403,12 @@ export class AdminApplicationsService {
         status: "DELIVERED",
         deliveredAt: new Date(),
       },
+    });
+    await this.audit.record({
+      action: "APPLICATION_DELIVER",
+      actor,
+      applicationId: id,
+      campaignId: existing.campaignId,
     });
     const deliveredTriggerKey =
       existing.campaign.category === "SIMPLE_REVIEW"
@@ -480,11 +525,11 @@ export class AdminApplicationsService {
   /** 제출물 전체 승인 — 응모 단위. */
   async approveSubmission(
     applicationId: string,
-    reviewerId: string,
+    actor: AuditActor,
   ): Promise<AdminSubmission> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
-      select: { id: true },
+      select: { id: true, campaignId: true },
     });
     if (!existing) throw new NotFoundException("Application not found");
     await this.prisma.campaignApplication.update({
@@ -492,8 +537,14 @@ export class AdminApplicationsService {
       data: {
         submissionReviewStatus: "APPROVED",
         submissionReviewedAt: new Date(),
-        submissionReviewedById: reviewerId,
+        submissionReviewedById: actor.id,
       },
+    });
+    await this.audit.record({
+      action: "SUBMISSION_APPROVE",
+      actor,
+      applicationId,
+      campaignId: existing.campaignId,
     });
     // 인사이트가 이미 제출돼 있던 경우, 승인 시점에 자동 정산.
     const { autoCompleted } = await ensureSettlementForApplication(
@@ -542,7 +593,7 @@ export class AdminApplicationsService {
   /** 제출물 전체 반려 — 응모 단위. 인플루언서는 수정 후 전체 재제출한다. */
   async rejectSubmission(
     applicationId: string,
-    reviewerId: string,
+    actor: AuditActor,
     comment: string,
   ): Promise<AdminSubmission> {
     const existing = await this.prisma.campaignApplication.findUnique({
@@ -565,18 +616,25 @@ export class AdminApplicationsService {
         data: {
           submissionReviewStatus: "REJECTED",
           submissionReviewedAt: rejectedAt,
-          submissionReviewedById: reviewerId,
+          submissionReviewedById: actor.id,
         },
       }),
       this.prisma.submissionRejection.create({
         data: {
           applicationId,
           comment,
-          rejectedById: reviewerId,
+          rejectedById: actor.id,
           rejectedAt,
         },
       }),
     ]);
+    await this.audit.record({
+      action: "SUBMISSION_REJECT",
+      actor,
+      applicationId,
+      campaignId: existing.campaignId,
+      metadata: { reason: comment },
+    });
     const resubmitDeadlineAt = new Date(
       rejectedAt.getTime() + POST_REJECTION_RESUBMIT_DAYS * DAY_MS,
     );
@@ -594,7 +652,10 @@ export class AdminApplicationsService {
     return this.fetchSubmission(applicationId);
   }
 
-  async undoSubmissionReview(applicationId: string): Promise<AdminSubmission> {
+  async undoSubmissionReview(
+    applicationId: string,
+    actor: AuditActor,
+  ): Promise<AdminSubmission> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
       include: { posts: { select: { insightSubmittedAt: true } } },
@@ -612,6 +673,17 @@ export class AdminApplicationsService {
         submissionReviewStatus: "PENDING",
         submissionReviewedAt: null,
         submissionReviewedById: null,
+      },
+    });
+    // 검토 취소는 submissionReviewedById 를 소거하므로 이전 검토자를 보존한다.
+    await this.audit.record({
+      action: "SUBMISSION_REVIEW_UNDO",
+      actor,
+      applicationId,
+      campaignId: existing.campaignId,
+      metadata: {
+        previousStatus: existing.submissionReviewStatus,
+        previousReviewerId: existing.submissionReviewedById,
       },
     });
     return this.fetchSubmission(applicationId);

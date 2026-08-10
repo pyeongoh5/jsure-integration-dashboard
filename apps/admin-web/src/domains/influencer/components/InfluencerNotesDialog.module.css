@@ -181,9 +181,16 @@
   color: var(--color-text);
 }
 
-/* 담당자 — 시각 옆에 붙어 누가 한 작업인지 밝힌다. */
+/* 담당자 — 메타 줄 오른쪽 끝에 칩으로 붙여 사유·캠페인명과 구분한다. */
 .entryActor {
-  color: var(--color-text-muted);
+  margin-left: auto;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
 }
 
 .entryBody {

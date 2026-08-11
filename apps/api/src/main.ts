@@ -8,7 +8,8 @@ async function bootstrap() {
   const config = app.get(ConfigService);
 
   // Railway 프록시 뒤에 있어 X-Forwarded-For 를 신뢰해야 req.ip 가 실제 클라이언트 IP 가 된다.
-  app.getHttpAdapter().getInstance().set("trust proxy", 1);
+  // 프록시가 2홉 이상이라 1로는 엣지 IP 가 찍혀 true(맨 왼쪽 XFF)로 둔다 — 진단 용도라 스푸핑 위험 감수.
+  app.getHttpAdapter().getInstance().set("trust proxy", true);
 
   app.setGlobalPrefix("api");
 

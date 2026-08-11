@@ -3,6 +3,7 @@ import {
   SignupProvider,
   getLineSignupToken,
 } from "../context/SignupContext";
+import { logAuthBounce } from "../lib/sentry";
 import "./SignupShell.css";
 
 const SIGNUP_STEPS = [
@@ -23,6 +24,7 @@ function LineGate({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   if (pathname === "/signup/line") return <>{children}</>;
   if (!getLineSignupToken()) {
+    logAuthBounce(`LineGate: lineSignupToken 없음 (${pathname})`);
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;

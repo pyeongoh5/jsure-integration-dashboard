@@ -1,4 +1,5 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { logAuthBounce } from "./sentry";
 
 const TOKEN_KEY = "influencerAccessToken";
 const REFRESH_KEY = "influencerRefreshToken";
@@ -52,6 +53,7 @@ function redirectToLogin(): void {
   const path = window.location.pathname;
   const onAuthPage = path === "/login" || path.startsWith("/signup");
   if (!onAuthPage) {
+    logAuthBounce(`api 401: 리프레시 실패 (${path})`);
     const from = encodeURIComponent(path + window.location.search);
     window.location.assign(`/login?from=${from}`);
   }

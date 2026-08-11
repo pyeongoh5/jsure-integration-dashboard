@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Logger,
   Post,
   Query,
   Redirect,
@@ -52,6 +53,8 @@ function maskAccountNumber(value: string): string {
 
 @Controller("influencer-auth")
 export class InfluencerAuthController {
+  private readonly logger = new Logger(InfluencerAuthController.name);
+
   constructor(
     private readonly auth: InfluencerAuthService,
     private readonly line: InfluencerLineAuthService,
@@ -74,16 +77,27 @@ export class InfluencerAuthController {
     @Request() req: ExpressRequest,
   ) {
     if (error) {
+      this.logger.warn(`LINE 콜백 실패: LINE 측 에러 (${error}) ip=${req.ip}`);
       throw new BadRequestException(`LINE auth error: ${error}`);
     }
     if (!code || !state) {
+      this.logger.warn(`LINE 콜백 실패: code/state 누락 ip=${req.ip}`);
       throw new BadRequestException("Missing code or state");
     }
-    const result = await this.line.handleCallback({
-      code,
-      state,
-      ctx: ctxFrom(req),
-    });
+    let result: Awaited<ReturnType<InfluencerLineAuthService["handleCallback"]>>;
+    try {
+      result = await this.line.handleCallback({
+        code,
+        state,
+        ctx: ctxFrom(req),
+      });
+    } catch (err) {
+      this.logger.warn(
+        `LINE 콜백 실패: ${err instanceof Error ? err.message : String(err)} ip=${req.ip}`,
+      );
+      throw err;
+    }
+    this.logger.log(`LINE 콜백 성공: kind=${result.kind} ip=${req.ip}`);
     if (result.kind === "login") {
       const url = new URL(result.redirectTo);
       url.searchParams.set("line_access_token", result.auth.accessToken);

@@ -13,3 +13,11 @@ export function initSentry(): void {
     sendDefaultPii: false,
   });
 }
+
+/** /login 으로 튕겨내는 모든 지점에서 호출 — 어떤 가드가 왜 튕겼는지 Sentry 에 남긴다. */
+export function logAuthBounce(reason: string): void {
+  Sentry.captureMessage(`auth-bounce: ${reason}`, {
+    level: "warning",
+    extra: { url: window.location.href },
+  });
+}

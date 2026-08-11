@@ -4,6 +4,7 @@ import { fetchMe } from "@/domains/auth";
 import { t } from "@i18n";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
 import { REFRESH_STORAGE_KEY, TOKEN_STORAGE_KEY } from "../../lib/api";
+import { logAuthBounce } from "../../lib/sentry";
 
 export function LineReturn() {
   const [params] = useSearchParams();
@@ -29,6 +30,7 @@ export function LineReturn() {
     const token = params.get("line_access_token");
     const refreshToken = params.get("line_refresh_token");
     if (!token) {
+      logAuthBounce("LineReturn: signup_token 도 line_access_token 도 없음");
       setError(t("pages.auth.lineReturn.errorReceive"));
       return;
     }
@@ -50,6 +52,7 @@ export function LineReturn() {
         nav("/", { replace: true });
       })
       .catch(() => {
+        logAuthBounce("LineReturn: LINE 로그인 후 fetchMe 실패");
         setError(t("pages.auth.lineReturn.errorLogin"));
       });
   }, [params, nav, auth]);

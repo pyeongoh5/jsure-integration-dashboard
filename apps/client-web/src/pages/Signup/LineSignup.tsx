@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { setLineSignupTokenStorage } from "../../context/SignupContext";
+import { logAuthBounce } from "../../lib/sentry";
 import { t } from "@i18n";
 
 export function LineSignup() {
@@ -14,6 +15,7 @@ export function LineSignup() {
 
     const token = params.get("signup_token");
     if (!token) {
+      logAuthBounce("LineSignup: URL 에 signup_token 없음");
       nav("/login", { replace: true });
       return;
     }

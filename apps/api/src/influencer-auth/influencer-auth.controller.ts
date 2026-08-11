@@ -97,7 +97,15 @@ export class InfluencerAuthController {
       );
       throw err;
     }
-    this.logger.log(`LINE 콜백 성공: kind=${result.kind} ip=${req.ip}`);
+    if (result.kind === "login") {
+      this.logger.log(
+        `LINE 콜백 성공: kind=login influencer=${result.auth.influencer.id} email=${result.auth.influencer.email} ip=${req.ip}`,
+      );
+    } else {
+      this.logger.log(
+        `LINE 콜백 성공: kind=signup displayName=${result.displayName ?? "(없음)"} ip=${req.ip}`,
+      );
+    }
     if (result.kind === "login") {
       const url = new URL(result.redirectTo);
       url.searchParams.set("line_access_token", result.auth.accessToken);

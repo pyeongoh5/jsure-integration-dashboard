@@ -7,6 +7,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
 
+  // Railway 프록시 뒤에 있어 X-Forwarded-For 를 신뢰해야 req.ip 가 실제 클라이언트 IP 가 된다.
+  app.getHttpAdapter().getInstance().set("trust proxy", 1);
+
   app.setGlobalPrefix("api");
 
   app.enableCors({

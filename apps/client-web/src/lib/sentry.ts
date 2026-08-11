@@ -21,3 +21,11 @@ export function logAuthBounce(reason: string): void {
     extra: { url: window.location.href },
   });
 }
+
+/** LINE 로그인 성공 경로의 각 단계 — 콜백과 튕김 사이 깜깜한 구간을 밝힌다. */
+export function logAuthTrace(step: string): void {
+  Sentry.captureMessage(`auth-trace: ${step}`, {
+    level: "info",
+    extra: { url: window.location.href },
+  });
+}

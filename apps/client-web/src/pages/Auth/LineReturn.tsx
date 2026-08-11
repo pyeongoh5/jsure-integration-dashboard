@@ -4,7 +4,7 @@ import { fetchMe } from "@/domains/auth";
 import { t } from "@i18n";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
 import { REFRESH_STORAGE_KEY, TOKEN_STORAGE_KEY } from "../../lib/api";
-import { logAuthBounce } from "../../lib/sentry";
+import { logAuthBounce, logAuthTrace } from "../../lib/sentry";
 
 export function LineReturn() {
   const [params] = useSearchParams();
@@ -19,6 +19,9 @@ export function LineReturn() {
 
     const signupToken = params.get("signup_token");
     const displayName = params.get("display_name");
+    logAuthTrace(
+      `LineReturn 진입: signup_token=${signupToken ? "있음" : "없음"} line_access_token=${params.get("line_access_token") ? "있음" : "없음"}`,
+    );
     if (signupToken) {
       const search = new URLSearchParams();
       search.set("signup_token", signupToken);
@@ -34,9 +37,16 @@ export function LineReturn() {
       setError(t("pages.auth.lineReturn.errorReceive"));
       return;
     }
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    if (refreshToken) {
-      localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken);
+    try {
+      localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      if (refreshToken) {
+        localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken);
+      }
+    } catch {
+      // 스토리지가 막힌 환경(프라이빗 모드 등). 인터셉터가 토큰을 localStorage
+      // 에서 읽으므로 이후 fetchMe 는 401 로 실패하지만, 조용히 죽는 대신
+      // 이벤트를 남겨 원인 추적이 가능하게 한다.
+      logAuthBounce("LineReturn: localStorage 쓰기 실패");
     }
     fetchMe()
       .then((me) => {
@@ -49,6 +59,7 @@ export function LineReturn() {
           },
           refreshToken ?? undefined,
         );
+        logAuthTrace(`LineReturn: fetchMe 성공 (${me.id}) → / 이동`);
         nav("/", { replace: true });
       })
       .catch(() => {

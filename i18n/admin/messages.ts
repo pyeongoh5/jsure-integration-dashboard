@@ -28,6 +28,11 @@ export const adminMessages = {
       team: { ko: "팀원/권한", en: "Team & Roles", ja: "チーム・権限" },
     },
   },
+  components: {
+    spinner: {
+      loading: { ko: "로딩 중", en: "Loading", ja: "読み込み中" },
+    },
+  },
   sidebar: {
     footer: {
       guest: { ko: "게스트", en: "Guest", ja: "ゲスト" },

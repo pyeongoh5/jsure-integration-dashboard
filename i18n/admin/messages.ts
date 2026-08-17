@@ -65,6 +65,126 @@ export const adminMessages = {
       originalSize: { ko: "원본", en: "Original", ja: "元のサイズ" },
     },
   },
+  domains: {
+    auth: {
+      checkEmailAndPassword: {
+        ko: "이메일 형식과 비밀번호(8자 이상)를 확인해주세요.",
+        en: "Please check the email format and password (at least 8 characters).",
+        ja: "メールアドレスの形式とパスワード（8文字以上）をご確認ください。",
+      },
+    },
+  },
+  pages: {
+    login: {
+      title: { ko: "로그인", en: "Log in", ja: "ログイン" },
+      subtitle: {
+        ko: "운영 콘솔 계정으로 로그인하세요.",
+        en: "Log in with your operations console account.",
+        ja: "運営コンソールのアカウントでログインしてください。",
+      },
+      emailLabel: { ko: "이메일", en: "Email", ja: "メールアドレス" },
+      passwordLabel: { ko: "비밀번호", en: "Password", ja: "パスワード" },
+      submit: { ko: "로그인", en: "Log in", ja: "ログイン" },
+      submitting: { ko: "로그인 중...", en: "Logging in...", ja: "ログイン中..." },
+      noAccount: {
+        ko: "계정이 없으신가요?",
+        en: "Don't have an account?",
+        ja: "アカウントをお持ちでない方は",
+      },
+      registerLink: { ko: "회원가입", en: "Sign up", ja: "新規登録" },
+      invalidCredentials: {
+        ko: "이메일 또는 비밀번호가 올바르지 않습니다.",
+        en: "The email or password is incorrect.",
+        ja: "メールアドレスまたはパスワードが正しくありません。",
+      },
+      accountPending: {
+        ko: "아직 승인 대기 중인 계정입니다. 승인이 완료되면 로그인할 수 있습니다.",
+        en: "Your account is still pending approval. You can log in once it is approved.",
+        ja: "まだ承認待ちのアカウントです。承認が完了するとログインできます。",
+      },
+      accountSuspended: {
+        ko: "정지된 계정입니다. 관리자에게 문의하세요.",
+        en: "This account has been suspended. Please contact an administrator.",
+        ja: "停止されたアカウントです。管理者にお問い合わせください。",
+      },
+      loginNotAllowed: {
+        ko: "로그인할 수 없습니다.",
+        en: "Unable to log in.",
+        ja: "ログインできません。",
+      },
+      loginFailed: {
+        ko: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        en: "A problem occurred while logging in. Please try again later.",
+        ja: "ログイン中に問題が発生しました。しばらくしてからもう一度お試しください。",
+      },
+    },
+    register: {
+      title: { ko: "계정 생성", en: "Create account", ja: "アカウント作成" },
+      subtitle: {
+        ko: "가입 요청 후 관리자의 승인이 완료되어야 로그인할 수 있습니다.",
+        en: "After requesting to sign up, you can log in once an administrator approves your request.",
+        ja: "登録リクエスト後、管理者の承認が完了するとログインできます。",
+      },
+      emailLabel: { ko: "이메일", en: "Email", ja: "メールアドレス" },
+      nameLabel: { ko: "이름 (선택)", en: "Name (optional)", ja: "名前（任意）" },
+      passwordLabel: {
+        ko: "비밀번호 (8자 이상)",
+        en: "Password (at least 8 characters)",
+        ja: "パスワード（8文字以上）",
+      },
+      submit: { ko: "가입 요청", en: "Request sign-up", ja: "登録リクエスト" },
+      submitting: { ko: "요청 중...", en: "Requesting...", ja: "リクエスト中..." },
+      hasAccount: {
+        ko: "이미 계정이 있으신가요?",
+        en: "Already have an account?",
+        ja: "すでにアカウントをお持ちの方は",
+      },
+      loginLink: { ko: "로그인", en: "Log in", ja: "ログイン" },
+      emailInUse: {
+        ko: "이미 사용 중인 이메일입니다.",
+        en: "This email is already in use.",
+        ja: "すでに使用されているメールアドレスです。",
+      },
+      registerFailed: {
+        ko: "계정 생성 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        en: "A problem occurred while creating the account. Please try again later.",
+        ja: "アカウント作成中に問題が発生しました。しばらくしてからもう一度お試しください。",
+      },
+      successTitle: {
+        ko: "가입이 요청되었습니다",
+        en: "Sign-up requested",
+        ja: "登録がリクエストされました",
+      },
+      successReceived: {
+        ko: "{email}로 가입 요청이 접수되었습니다.",
+        en: "A sign-up request has been received for {email}.",
+        ja: "{email}宛の登録リクエストを受け付けました。",
+      },
+      successApprovalNote: {
+        ko: "관리자의 승인이 완료되면 로그인할 수 있습니다.",
+        en: "You can log in once an administrator approves your request.",
+        ja: "管理者の承認が完了するとログインできます。",
+      },
+      goToLogin: {
+        ko: "로그인 페이지로 이동",
+        en: "Go to login page",
+        ja: "ログインページへ移動",
+      },
+    },
+    notFound: {
+      title: {
+        ko: "페이지를 찾을 수 없어요",
+        en: "Page not found",
+        ja: "ページが見つかりません",
+      },
+      subtitle: {
+        ko: "요청하신 주소가 변경되었거나 더 이상 존재하지 않습니다.",
+        en: "The address you requested has been changed or no longer exists.",
+        ja: "ご指定のアドレスは変更されたか、存在しません。",
+      },
+      goHome: { ko: "홈으로", en: "Go home", ja: "ホームへ" },
+    },
+  },
   sidebar: {
     footer: {
       guest: { ko: "게스트", en: "Guest", ja: "ゲスト" },

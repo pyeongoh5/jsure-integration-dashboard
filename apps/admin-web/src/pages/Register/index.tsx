@@ -6,6 +6,7 @@ import { z } from "zod";
 import axios from "axios";
 import { RegisterRequestSchema } from "@jsure/shared";
 import { register } from "@/domains/auth";
+import { useT } from "@/lib/i18n";
 import { hangulToEn } from "@/lib/hangulToEn";
 import { FormField } from "@/components/composites";
 import styles from "../_shared/Auth.module.css";
@@ -18,6 +19,7 @@ const formSchema = z.object({
 type Values = z.infer<typeof formSchema>;
 
 export function Register() {
+  const t = useT();
   const methods = useForm<Values>({
     resolver: zodResolver(formSchema),
     defaultValues: { email: "", name: "", password: "" },
@@ -33,7 +35,7 @@ export function Register() {
       name: values.name.trim() || undefined,
     });
     if (!parsed.success) {
-      setServerError("이메일 형식과 비밀번호(8자 이상)를 확인해주세요.");
+      setServerError(t("domains.auth.checkEmailAndPassword"));
       return;
     }
     try {
@@ -41,17 +43,15 @@ export function Register() {
       setSubmittedEmail(res.email);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
-        setServerError("이미 사용 중인 이메일입니다.");
+        setServerError(t("pages.register.emailInUse"));
       } else {
-        setServerError(
-          "계정 생성 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
-        );
+        setServerError(t("pages.register.registerFailed"));
       }
     }
   }
 
   function onInvalid() {
-    setServerError("이메일 형식과 비밀번호(8자 이상)를 확인해주세요.");
+    setServerError(t("domains.auth.checkEmailAndPassword"));
   }
 
   if (submittedEmail) {
@@ -64,15 +64,15 @@ export function Register() {
           </div>
 
           <div className={styles.successIcon}>✓</div>
-          <h1 className={styles.title}>가입이 요청되었습니다</h1>
+          <h1 className={styles.title}>{t("pages.register.successTitle")}</h1>
           <p className={styles.subtitle}>
-            <strong>{submittedEmail}</strong>로 가입 요청이 접수되었습니다.
+            {t("pages.register.successReceived", { email: submittedEmail })}
             <br />
-            관리자의 <strong>승인이 완료되면</strong> 로그인할 수 있습니다.
+            <strong>{t("pages.register.successApprovalNote")}</strong>
           </p>
 
           <Link to="/login" className={`${styles.submit} ${styles.submitLink}`}>
-            로그인 페이지로 이동
+            {t("pages.register.goToLogin")}
           </Link>
         </div>
       </div>
@@ -90,16 +90,14 @@ export function Register() {
             <div className={styles.brandText}>JSure Console</div>
           </div>
 
-          <h1 className={styles.title}>계정 생성</h1>
-          <p className={styles.subtitle}>
-            가입 요청 후 관리자의 승인이 완료되어야 로그인할 수 있습니다.
-          </p>
+          <h1 className={styles.title}>{t("pages.register.title")}</h1>
+          <p className={styles.subtitle}>{t("pages.register.subtitle")}</p>
 
           <form
             onSubmit={methods.handleSubmit(handleSubmit, onInvalid)}
             noValidate
           >
-            <FormField name="email" label="이메일">
+            <FormField name="email" label={t("pages.register.emailLabel")}>
               {(field) => (
                 <input
                   id={field.id}
@@ -115,7 +113,7 @@ export function Register() {
               )}
             </FormField>
 
-            <FormField name="name" label="이름 (선택)">
+            <FormField name="name" label={t("pages.register.nameLabel")}>
               {(field) => (
                 <input
                   id={field.id}
@@ -129,7 +127,7 @@ export function Register() {
               )}
             </FormField>
 
-            <FormField name="password" label="비밀번호 (8자 이상)">
+            <FormField name="password" label={t("pages.register.passwordLabel")}>
               {(field) => (
                 <input
                   id={field.id}
@@ -155,14 +153,14 @@ export function Register() {
               className={styles.submit}
               disabled={submitting}
             >
-              {submitting ? "요청 중..." : "가입 요청"}
+              {submitting ? t("pages.register.submitting") : t("pages.register.submit")}
             </button>
           </form>
 
           <div className={styles.footer}>
-            이미 계정이 있으신가요?
+            {t("pages.register.hasAccount")}
             <Link to="/login" className={styles.link}>
-              로그인
+              {t("pages.register.loginLink")}
             </Link>
           </div>
         </div>

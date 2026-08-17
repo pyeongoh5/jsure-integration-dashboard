@@ -6,6 +6,7 @@ import { z } from "zod";
 import axios from "axios";
 import { LoginRequestSchema } from "@jsure/shared";
 import { login } from "@/domains/auth";
+import { useT } from "@/lib/i18n";
 import { hangulToEn } from "@/lib/hangulToEn";
 import { FormField } from "@/components/composites";
 import styles from "../_shared/Auth.module.css";
@@ -15,6 +16,7 @@ type LocationState = { from?: string } | null;
 type Values = z.infer<typeof LoginRequestSchema>;
 
 export function Login() {
+  const t = useT();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as LocationState)?.from ?? "/overview";
@@ -33,33 +35,27 @@ export function Login() {
     } catch (err) {
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401) {
-          setServerError("이메일 또는 비밀번호가 올바르지 않습니다.");
+          setServerError(t("pages.login.invalidCredentials"));
         } else if (err.response?.status === 403) {
           const code = (err.response.data as { code?: string } | undefined)?.code;
           if (code === "ACCOUNT_PENDING") {
-            setServerError(
-              "아직 승인 대기 중인 계정입니다. 승인이 완료되면 로그인할 수 있습니다.",
-            );
+            setServerError(t("pages.login.accountPending"));
           } else if (code === "ACCOUNT_SUSPENDED") {
-            setServerError("정지된 계정입니다. 관리자에게 문의하세요.");
+            setServerError(t("pages.login.accountSuspended"));
           } else {
-            setServerError("로그인할 수 없습니다.");
+            setServerError(t("pages.login.loginNotAllowed"));
           }
         } else {
-          setServerError(
-            "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
-          );
+          setServerError(t("pages.login.loginFailed"));
         }
       } else {
-        setServerError(
-          "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
-        );
+        setServerError(t("pages.login.loginFailed"));
       }
     }
   }
 
   function onInvalid() {
-    setServerError("이메일 형식과 비밀번호(8자 이상)를 확인해주세요.");
+    setServerError(t("domains.auth.checkEmailAndPassword"));
   }
 
   const submitting = methods.formState.isSubmitting;
@@ -73,14 +69,14 @@ export function Login() {
             <div className={styles.brandText}>JSure Console</div>
           </div>
 
-          <h1 className={styles.title}>로그인</h1>
-          <p className={styles.subtitle}>운영 콘솔 계정으로 로그인하세요.</p>
+          <h1 className={styles.title}>{t("pages.login.title")}</h1>
+          <p className={styles.subtitle}>{t("pages.login.subtitle")}</p>
 
           <form
             onSubmit={methods.handleSubmit(handleSubmit, onInvalid)}
             noValidate
           >
-            <FormField name="email" label="이메일">
+            <FormField name="email" label={t("pages.login.emailLabel")}>
               {(field) => (
                 <input
                   id={field.id}
@@ -96,7 +92,7 @@ export function Login() {
               )}
             </FormField>
 
-            <FormField name="password" label="비밀번호">
+            <FormField name="password" label={t("pages.login.passwordLabel")}>
               {(field) => (
                 <input
                   id={field.id}
@@ -121,14 +117,14 @@ export function Login() {
               className={styles.submit}
               disabled={submitting}
             >
-              {submitting ? "로그인 중..." : "로그인"}
+              {submitting ? t("pages.login.submitting") : t("pages.login.submit")}
             </button>
           </form>
 
           <div className={styles.footer}>
-            계정이 없으신가요?
+            {t("pages.login.noAccount")}
             <Link to="/register" className={styles.link}>
-              회원가입
+              {t("pages.login.registerLink")}
             </Link>
           </div>
         </div>

@@ -23,6 +23,52 @@ export const FulfillmentStatusSchema = z.enum([
   'FAILED',
 ]);
 
+/** GET /admin/campaigns — 목록 항목 (S1). 경고 판정에 필요한 필드만 포함 */
+export const AdminCampaignListItemSchema = z.object({
+  id: z.string(),
+  brandName: z.string(),
+  slug: z.string(),
+  status: CampaignStatusSchema,
+  startsAt: z.string(),
+  endsAt: z.string(),
+  xUserId: z.string().nullable(),
+  xUsername: z.string().nullable(),
+  needsReconnect: z.boolean(),
+  entryCount: z.number().int(),
+  /** 게시 실패한 포스트 수 (F-1.5 운영 감지) */
+  failedPostCount: z.number().int(),
+});
+export type AdminCampaignListItem = z.infer<typeof AdminCampaignListItemSchema>;
+
+export const AdminCampaignListSchema = z.object({
+  campaigns: z.array(AdminCampaignListItemSchema),
+});
+export type AdminCampaignList = z.infer<typeof AdminCampaignListSchema>;
+
+/** POST /admin/campaigns (요청) — 날짜는 ISO 문자열 */
+export const AdminCampaignCreateSchema = z.object({
+  brandName: z.string().min(1),
+  slug: z.string().regex(/^[a-z0-9-]+$/),
+  startsAt: z.string(),
+  endsAt: z.string(),
+  dailyPostTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .default('11:00'),
+  dailyWinCap: z.number().int().positive().nullable().optional(),
+});
+export type AdminCampaignCreate = z.infer<typeof AdminCampaignCreateSchema>;
+
+/** PATCH /admin/campaigns/:id (요청) — 결과화면·상태 전환 포함 */
+export const AdminCampaignPatchSchema = AdminCampaignCreateSchema.partial().extend({
+  status: CampaignStatusSchema.optional(),
+  prUrl: z.string().url().nullable().optional(),
+  winMediaUrl: z.string().url().nullable().optional(),
+  loseMediaUrl: z.string().url().nullable().optional(),
+  dmTemplate: z.string().max(1000).nullable().optional(),
+});
+export type AdminCampaignPatch = z.infer<typeof AdminCampaignPatchSchema>;
+
 /** ① GET /admin/campaigns/:id */
 export const AdminCampaignDetailSchema = z.object({
   id: z.string(),

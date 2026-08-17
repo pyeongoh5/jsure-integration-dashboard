@@ -1,5 +1,6 @@
 import type {
   AdminCampaignDetail,
+  AdminCampaignListItem,
   AdminPrize,
   AdminPostTemplate,
   AdminWinner,
@@ -60,6 +61,34 @@ export function toCampaignDetail(
     xUsername: campaign.xUsername,
     needsReconnect: !!campaign.credential?.refreshFailedAt,
     connectUrl,
+  };
+}
+
+export function toCampaignListItem(campaign: {
+  id: string;
+  brandName: string;
+  slug: string;
+  status: string;
+  startsAt: Date;
+  endsAt: Date;
+  xUserId: string | null;
+  xUsername: string | null;
+  credential?: { refreshFailedAt: Date | null } | null;
+  _count: { entries: number };
+  posts: unknown[];
+}): AdminCampaignListItem {
+  return {
+    id: campaign.id,
+    brandName: campaign.brandName,
+    slug: campaign.slug,
+    status: campaign.status as AdminCampaignListItem['status'],
+    startsAt: campaign.startsAt.toISOString(),
+    endsAt: campaign.endsAt.toISOString(),
+    xUserId: campaign.xUserId,
+    xUsername: campaign.xUsername,
+    needsReconnect: !!campaign.credential?.refreshFailedAt,
+    entryCount: campaign._count.entries,
+    failedPostCount: campaign.posts.length,
   };
 }
 

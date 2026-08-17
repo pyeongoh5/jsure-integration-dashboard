@@ -7,6 +7,7 @@ import { encrypt } from '../lib/crypto';
 import { AdminIdentity, getAdminIdentity } from '../lib/auth';
 import {
   toCampaignDetail,
+  toCampaignListItem,
   toPrize,
   toPostTemplate,
   toWinner,
@@ -92,21 +93,21 @@ export async function adminRoutes(app: FastifyInstance) {
     const campaign = await prisma.brandCampaign.create({ data: parsed.data });
     await audit(admin, 'campaign.create', campaign.id, parsed.data);
     // 브랜드 담당자에게 전달할 X 연동 링크
-    return {
-      ...campaign,
-      connectUrl: `${config().API_BASE_URL}/oauth/brand/start?campaignId=${campaign.id}`,
-    };
+    const connectUrl = `${config().API_BASE_URL}/oauth/brand/start?campaignId=${campaign.id}`;
+    return toCampaignDetail(campaign, connectUrl);
   });
 
   app.get('/admin/campaigns', async (req, reply) => {
     if (!requireAdmin(req, reply)) return;
-    return prisma.brandCampaign.findMany({
+    const campaigns = await prisma.brandCampaign.findMany({
       orderBy: { startsAt: 'desc' },
       include: {
         _count: { select: { entries: true } },
         credential: { select: { refreshFailedAt: true } },
+        posts: { where: { status: 'FAILED' }, select: { id: true } },
       },
     });
+    return { campaigns: campaigns.map(toCampaignListItem) };
   });
 
   // ① 편집 폼 초기값 — 연동 상태·connectUrl 포함
@@ -169,9 +170,11 @@ export async function adminRoutes(app: FastifyInstance) {
     const campaign = await prisma.brandCampaign.update({
       where: { id: req.params.id },
       data: parsed.data,
+      include: { credential: { select: { refreshFailedAt: true } } },
     });
     await audit(admin, 'campaign.update', campaign.id, parsed.data);
-    return campaign;
+    const connectUrl = `${config().API_BASE_URL}/oauth/brand/start?campaignId=${campaign.id}`;
+    return toCampaignDetail(campaign, connectUrl);
   });
 
   // ── 포스트 소재 (F-1.2 주 단위 교체, mediaUrl 첨부 F-2.3) ──

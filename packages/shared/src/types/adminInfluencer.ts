@@ -165,6 +165,8 @@ export const AdminSubmissionSchema = z.object({
   subTypes: z.array(CampaignSubTypeSchema),
   /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS 1개). */
   selectedOptions: z.array(ApplicationOptionSchema),
+  /** 가구매 주문번호. default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비. */
+  orderNumber: z.string().nullable().default(null),
   reviewSubmittedAt: z.string().datetime().nullable(),
 
   submissionReviewStatus: PostReviewStatusSchema,

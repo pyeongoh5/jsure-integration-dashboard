@@ -87,6 +87,7 @@ export function toDraftReview(
     subTypes: submission.subTypes,
     media: submission.subTypes.map((subType) => SNS_TO_MEDIA[subType]),
     selectedOptions: submission.selectedOptions,
+    orderNumber: submission.orderNumber,
     posts: submission.posts.map((post) => ({
       id: post.id,
       subType: post.subType,

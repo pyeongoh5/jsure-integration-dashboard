@@ -80,6 +80,11 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
     return kindFiltered.filter((item) => activeAttachmentIds.has(item.id));
   }, [attachmentsState, attachmentKind, isReviewCategory, activePost]);
   const submittedUrls = visiblePosts.filter((post) => post.url !== null);
+  // 가구매는 주문 명세서(ORDER_RECEIPT)도 같은 첨부 응답에 실려온다.
+  const orderReceipts =
+    isFakePurchase && attachmentsState.kind === "ready"
+      ? attachmentsState.items.filter((item) => item.kind === "ORDER_RECEIPT")
+      : [];
 
   useEffect(() => {
     if (!contentSubmitted) return;
@@ -137,6 +142,57 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
             <div className={styles.empty}>{emptyLabel}</div>
           ) : (
             <>
+              {isFakePurchase && (
+                <>
+                  <section className={styles.section}>
+                    <h3 className={styles.sectionTitle}>주문 정보</h3>
+                    <div className={styles.fields}>
+                      <div className={styles.fieldLabel}>주문번호</div>
+                      <div className={styles.fieldValue}>
+                        {draft.orderNumber ?? "—"}
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className={styles.section}>
+                    <h3 className={styles.sectionTitle}>
+                      주문 명세서
+                      {orderReceipts.length > 0 && (
+                        <span className={styles.count}>
+                          {orderReceipts.length}
+                        </span>
+                      )}
+                    </h3>
+                    {attachmentsState.kind === "loading" ? (
+                      <div className={styles.empty}>불러오는 중…</div>
+                    ) : orderReceipts.length === 0 ? (
+                      <div className={styles.empty}>
+                        명세서가 아직 제출되지 않았습니다.
+                      </div>
+                    ) : (
+                      <div className={styles.grid}>
+                        {orderReceipts.map((attachment) => (
+                          <button
+                            type="button"
+                            key={attachment.id}
+                            className={styles.tile}
+                            onClick={() =>
+                              attachment.viewUrl &&
+                              setLightbox(attachment.viewUrl)
+                            }
+                            disabled={!attachment.viewUrl}
+                          >
+                            {attachment.viewUrl && (
+                              <img src={attachment.viewUrl} alt="" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </>
+              )}
+
               {!isReviewCategory && draft.posts.length > 1 && (
                 <SegmentedTabs
                   className={styles.subTypeTabs}

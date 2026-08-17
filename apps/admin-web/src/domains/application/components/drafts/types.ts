@@ -66,6 +66,8 @@ export type DraftReview = {
   media: Media[];
   /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS). */
   selectedOptions: ApplicationOption[];
+  /** 가구매 주문번호. */
+  orderNumber: string | null;
   posts: DraftPost[];
   reviewUrls: Partial<Record<"LIPS" | "ATCOSME", string>>;
   /** 응모하지 않은 플랫폼에 함께 공유한 기록. 참고 표시용이며 승인·반려 대상이 아니다. */

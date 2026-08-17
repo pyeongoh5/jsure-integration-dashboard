@@ -1180,6 +1180,7 @@ type SubmissionRow = {
   status: ApplicationStatus;
   subTypes: CampaignSubType[];
   options: { subType: CampaignSubType; option: string }[];
+  orderNumber: string | null;
   reviewSubmittedAt: Date | null;
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
   submissionReviewedAt: Date | null;
@@ -1262,6 +1263,7 @@ async function toSubmissionResponse(
       subType: entry.subType,
       option: entry.option,
     })),
+    orderNumber: row.orderNumber,
     reviewSubmittedAt: row.reviewSubmittedAt
       ? row.reviewSubmittedAt.toISOString()
       : null,

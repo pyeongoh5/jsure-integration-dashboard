@@ -22,6 +22,37 @@ export type ApplicantStatus =
 
 export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
 
+/** 서브타입 필터 전용 키 — 인스타그램은 응모 옵션(FEED/REELS) 기준으로 세분화한다. */
+export type MediaFilterKey = Exclude<Media, "ig"> | "ig-feed" | "ig-reels";
+
+const INSTAGRAM_OPTION_BY_FILTER_KEY: Partial<Record<MediaFilterKey, string>> = {
+  "ig-feed": "FEED",
+  "ig-reels": "REELS",
+};
+
+/**
+ * 서브타입 필터 매칭. 인스타그램 키는 참여 여부가 아니라 응모가 선택한
+ * FEED/REELS 옵션으로 판정한다 (INSTAGRAM 응모는 옵션 선택이 필수라 누락 없음).
+ */
+export function matchesMediaFilter(
+  media: Media[],
+  selectedOptions: ApplicationOption[],
+  filter: Set<MediaFilterKey>,
+): boolean {
+  if (filter.size === 0) return true;
+  return [...filter].some((filterKey) => {
+    const instagramOption = INSTAGRAM_OPTION_BY_FILTER_KEY[filterKey];
+    if (instagramOption) {
+      return selectedOptions.some(
+        (selected) =>
+          selected.subType === "INSTAGRAM" &&
+          selected.option === instagramOption,
+      );
+    }
+    return media.includes(filterKey as Media);
+  });
+}
+
 export type Applicant = {
   id: string;
   influencerId: string;

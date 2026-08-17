@@ -287,6 +287,8 @@ export const adminMessages = {
             en: "Select sub-types (multiple)",
             ja: "サブタイプ選択（複数可）",
           },
+          feedOption: { ko: "{brand} 피드", en: "{brand} Feed", ja: "{brand}フィード" },
+          reelsOption: { ko: "{brand} 릴스", en: "{brand} Reels", ja: "{brand}リール" },
         },
         minFollowersFilter: {
           chipEmpty: { ko: "+ 팔로워 범위", en: "+ Follower range", ja: "+ フォロワー範囲" },
@@ -1999,6 +2001,20 @@ export const adminMessages = {
     },
     reports: {
       subtitleError: { ko: "오류: {message}", en: "Error: {message}", ja: "エラー: {message}" },
+      recruitPeriod: { ko: "모집기간", en: "Recruitment period", ja: "募集期間" },
+      recruitPeriodStartAria: {
+        ko: "모집기간 검색 시작일",
+        en: "Recruitment period search start date",
+        ja: "募集期間検索の開始日",
+      },
+      recruitPeriodEndAria: {
+        ko: "모집기간 검색 종료일",
+        en: "Recruitment period search end date",
+        ja: "募集期間検索の終了日",
+      },
+      categoryFilter: { ko: "카테고리", en: "Category", ja: "カテゴリー" },
+      recruitStartDate: { ko: "모집 시작일", en: "Recruitment start", ja: "募集開始日" },
+      recruitEndDate: { ko: "모집 종료일", en: "Recruitment end", ja: "募集終了日" },
       totalCampaigns: {
         ko: "총 {count}개 캠페인",
         en: "{count} campaigns total",

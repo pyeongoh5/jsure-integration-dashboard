@@ -1,4 +1,5 @@
 import type { CampaignCategory } from "@jsure/shared";
+import type { AdminTranslationKey } from "@i18n/admin";
 import { useT } from "@/lib/i18n";
 import {
   FilterChipBar,
@@ -12,13 +13,35 @@ import {
   MEDIA_META,
   type CampaignOption,
   type Media,
+  type MediaFilterKey,
 } from "./types";
 
-const MEDIA_OPTIONS = (Object.keys(MEDIA_META) as Media[]).map((media) => ({
-  key: media,
-  label: MEDIA_META[media].label,
-  icon: MEDIA_META[media].icon,
-}));
+// 인스타그램은 응모 옵션(피드/릴스) 단위로 필터링할 수 있게 두 항목으로 나눈다.
+function buildMediaOptions(
+  t: (key: AdminTranslationKey, params?: Record<string, string | number>) => string,
+): { key: MediaFilterKey; label: string; icon: string }[] {
+  return (Object.keys(MEDIA_META) as Media[]).flatMap(
+    (media): { key: MediaFilterKey; label: string; icon: string }[] =>
+      media === "ig"
+        ? [
+            {
+              key: "ig-feed",
+              label: t("domains.application.applicants.subTypeFilter.feedOption", {
+                brand: MEDIA_META.ig.label,
+              }),
+              icon: MEDIA_META.ig.icon,
+            },
+            {
+              key: "ig-reels",
+              label: t("domains.application.applicants.subTypeFilter.reelsOption", {
+                brand: MEDIA_META.ig.label,
+              }),
+              icon: MEDIA_META.ig.icon,
+            },
+          ]
+        : [{ key: media, label: MEDIA_META[media].label, icon: MEDIA_META[media].icon }],
+  );
+}
 
 type Props = {
   campaignId: string | null;
@@ -27,8 +50,8 @@ type Props = {
   campaignOptions: CampaignOption[]; // 전체 캠페인 (closed 포함, 세그먼트로 구분)
   onCampaignChange: (id: string | null) => void;
 
-  mediaFilter: Set<Media>;
-  onMediaChange: (next: Set<Media>) => void;
+  mediaFilter: Set<MediaFilterKey>;
+  onMediaChange: (next: Set<MediaFilterKey>) => void;
 
   // 팔로워 필터는 응모 관리 페이지 전용 — props 를 생략하면 칩이 사라진다.
   minFollowers?: number | null;
@@ -57,6 +80,7 @@ export function ApplicantFilters({
     key: option.key,
     label: t(option.label),
   }));
+  const mediaOptions = buildMediaOptions(t);
 
   return (
     <FilterChipBar>
@@ -91,7 +115,7 @@ export function ApplicantFilters({
         emptyLabel={t("domains.application.applicants.subTypeFilter.chipEmpty")}
         labelPrefix={t("domains.application.applicants.subTypeFilter.prefix")}
         popoverTitle={t("domains.application.applicants.subTypeFilter.title")}
-        options={MEDIA_OPTIONS}
+        options={mediaOptions}
         value={mediaFilter}
         onChange={onMediaChange}
       />

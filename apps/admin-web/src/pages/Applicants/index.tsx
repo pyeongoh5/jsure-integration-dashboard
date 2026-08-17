@@ -12,9 +12,10 @@ import {
   useApplicantsData,
   useCampaignOptions,
   useApplicantMutations,
+  matchesMediaFilter,
   type Applicant,
   type ApplicantStatus,
-  type ApplicantMedia as Media,
+  type MediaFilterKey,
   type HistoryTarget,
 } from "@/domains/application";
 import { InfluencerNotesDialog } from "@/domains/influencer";
@@ -31,7 +32,9 @@ export function Applicants() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [notesTarget, setNotesTarget] = useState<Applicant | null>(null);
   const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(null);
-  const [mediaFilter, setMediaFilter] = useState<Set<Media>>(() => new Set());
+  const [mediaFilter, setMediaFilter] = useState<Set<MediaFilterKey>>(
+    () => new Set(),
+  );
   const [minFollowers, setMinFollowers] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<Set<ApplicantStatus>>(
     () => new Set(),
@@ -65,8 +68,11 @@ export function Applicants() {
     const normalizedQuery = query.trim().toLowerCase();
     return applicants.filter((applicant) => {
       if (
-        mediaFilter.size > 0 &&
-        !applicant.media.some((media) => mediaFilter.has(media))
+        !matchesMediaFilter(
+          applicant.media,
+          applicant.selectedOptions,
+          mediaFilter,
+        )
       ) {
         return false;
       }

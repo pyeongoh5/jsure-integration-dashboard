@@ -21,10 +21,12 @@ export type {
   ApplicantStatus,
   CampaignOption,
   Media as ApplicantMedia,
+  MediaFilterKey,
 } from "./components/applicants/types";
 
 // applicant constants
 export {
+  matchesMediaFilter,
   APPLICANT_STATUS_LABEL,
   APPLICANT_STATUS_OPTIONS,
   CATEGORY_LABEL_KO,

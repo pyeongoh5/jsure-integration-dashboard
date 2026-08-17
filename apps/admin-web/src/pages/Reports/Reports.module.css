@@ -372,3 +372,41 @@
   opacity: 0.6;
   cursor: default;
 }
+
+.filterBar {
+  margin-bottom: 12px;
+}
+
+.dateRange {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--c-muted);
+}
+
+.dateRangeLabel {
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+}
+
+.dateInput {
+  /* 좁은 화면에서도 한 행 유지 — 라벨 대신 input 이 줄어든다. */
+  min-width: 0;
+  flex: 0 1 150px;
+  padding: 4px 8px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--c-text);
+  background: var(--c-card);
+}
+
+.recruitPeriod {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--c-muted);
+}

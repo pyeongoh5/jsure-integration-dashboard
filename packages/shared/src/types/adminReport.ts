@@ -3,6 +3,7 @@ import {
   ApplicationStatusSchema,
   PostReviewStatusSchema,
 } from "./application.js";
+import { CampaignCategorySchema } from "./campaign.js";
 import { CampaignSubTypeSchema } from "./influencer.js";
 
 export const CampaignReportParticipantSchema = z.object({
@@ -39,6 +40,11 @@ export type CampaignReportParticipant = z.infer<
 export const CampaignReportRowSchema = z.object({
   campaignId: z.string(),
   campaignTitle: z.string(),
+  category: CampaignCategorySchema,
+  /** 모집 시작일 (JST, YYYY-MM-DD). */
+  recruitStartDate: z.string(),
+  /** 모집 종료일 (JST, YYYY-MM-DD). */
+  recruitEndDate: z.string(),
   influencerCount: z.number().int(),
   totalFollowers: z.number().int(),
   postCount: z.number().int(),

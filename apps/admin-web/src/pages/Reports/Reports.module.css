@@ -372,3 +372,37 @@
   opacity: 0.6;
   cursor: default;
 }
+
+.filterBar {
+  margin-bottom: 12px;
+}
+
+.dateRange {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--c-muted);
+}
+
+.dateRangeLabel {
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.dateInput {
+  padding: 4px 8px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--c-text);
+  background: var(--c-card);
+}
+
+.recruitPeriod {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--c-muted);
+}

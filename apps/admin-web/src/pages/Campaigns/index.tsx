@@ -12,6 +12,7 @@ import {
   CampaignCardBody,
   CampaignCardFooter,
   CampaignActionsMenu,
+  BumpCampaignDialog,
   CloseCampaignDialog,
   DeleteCampaignDialog,
   HideCampaignDialog,
@@ -127,6 +128,7 @@ export function Campaigns() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [openMenu, setOpenMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [approvedListCampaignId, setApprovedListCampaignId] = useState<string | null>(null);
+  const [bumpTargetId, setBumpTargetId] = useState<string | null>(null);
   const [closeTargetId, setCloseTargetId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [hideTargetId, setHideTargetId] = useState<string | null>(null);
@@ -316,6 +318,10 @@ export function Campaigns() {
                     setOpenMenu(null);
                     setCloseTargetId(c.id);
                   }}
+                  onBump={() => {
+                    setOpenMenu(null);
+                    setBumpTargetId(c.id);
+                  }}
                   onHide={() => {
                     setOpenMenu(null);
                     setHideTargetId(c.id);
@@ -342,6 +348,15 @@ export function Campaigns() {
           onClose={() => setApprovedListCampaignId(null)}
         />
       )}
+
+      <BumpCampaignDialog
+        campaignId={bumpTargetId}
+        onDone={() => {
+          setBumpTargetId(null);
+          setReloadKey((k) => k + 1);
+        }}
+        onCancel={() => setBumpTargetId(null)}
+      />
 
       <CloseCampaignDialog
         campaignId={closeTargetId}

@@ -7,6 +7,7 @@ export {
   getCampaign,
   createCampaign,
   updateCampaign,
+  bumpCampaign,
   closeCampaign,
   hideCampaign,
   unhideCampaign,
@@ -31,6 +32,7 @@ export {
 export { CampaignForm, EMPTY_CAMPAIGN_FORM } from "./components/CampaignForm";
 export { default as campaignFormStyles } from "./components/CampaignForm.module.css";
 export { CampaignActionsMenu } from "./components/CampaignActionsMenu";
+export { BumpCampaignDialog } from "./components/BumpCampaignDialog";
 export { CloseCampaignDialog } from "./components/CloseCampaignDialog";
 export { HideCampaignDialog } from "./components/HideCampaignDialog";
 export { UnhideCampaignDialog } from "./components/UnhideCampaignDialog";

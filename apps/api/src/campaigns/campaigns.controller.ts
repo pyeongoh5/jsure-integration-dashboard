@@ -61,6 +61,15 @@ export class CampaignsController {
     return this.campaigns.update(id, body, req.user);
   }
 
+  /** 끌어올리기 — 인플루언서 목록에서 같은 상태 그룹 내 최상단으로 올린다. */
+  @Post(":id/bump")
+  bump(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<CampaignResponse> {
+    return this.campaigns.bump(id, req.user);
+  }
+
   @Post(":id/close")
   close(
     @Req() req: { user: AuthenticatedUser },

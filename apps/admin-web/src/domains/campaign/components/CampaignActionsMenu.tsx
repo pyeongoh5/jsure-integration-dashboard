@@ -15,6 +15,7 @@ type Props = {
   onCopy: () => void;
   onViewApproved: () => void;
   onClose: () => void;
+  onBump: () => void;
   onHide: () => void;
   onUnhide: () => void;
   onDelete: () => void;
@@ -29,6 +30,7 @@ export function CampaignActionsMenu({
   onCopy,
   onViewApproved,
   onClose,
+  onBump,
   onHide,
   onUnhide,
   onDelete,
@@ -161,6 +163,16 @@ export function CampaignActionsMenu({
             >
               캠페인 복사
             </button>
+            {!isDraft && (
+              <button
+                type="button"
+                role="menuitem"
+                className={styles.item}
+                onClick={onBump}
+              >
+                캠페인 끌어올리기
+              </button>
+            )}
             {!isDraft &&
               (isHidden ? (
                 <button

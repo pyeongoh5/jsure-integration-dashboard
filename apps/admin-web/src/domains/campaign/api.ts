@@ -79,6 +79,12 @@ export async function deleteCampaign(id: string): Promise<void> {
   await api.delete(`/campaigns/${encodeURIComponent(id)}`);
 }
 
+/** 끌어올리기 — 인플루언서 목록에서 같은 상태 그룹 내 최상단으로 올린다. */
+export async function bumpCampaign(id: string): Promise<CampaignResponse> {
+  const res = await api.post(`/campaigns/${encodeURIComponent(id)}/bump`);
+  return CampaignResponseSchema.parse(res.data);
+}
+
 export async function closeCampaign(id: string): Promise<CampaignResponse> {
   const res = await api.post(`/campaigns/${encodeURIComponent(id)}/close`);
   return CampaignResponseSchema.parse(res.data);

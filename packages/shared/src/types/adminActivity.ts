@@ -27,6 +27,7 @@ export const AdminActivityActionSchema = z.enum([
   "CAMPAIGN_CLOSE",
   "CAMPAIGN_HIDE",
   "CAMPAIGN_UNHIDE",
+  "CAMPAIGN_BUMP",
   "CAMPAIGN_DELETE",
   "CAMPAIGN_DRAFT_CREATE",
   "CAMPAIGN_DRAFT_UPDATE",

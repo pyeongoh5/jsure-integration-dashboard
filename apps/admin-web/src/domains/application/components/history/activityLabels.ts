@@ -21,6 +21,7 @@ export const ACTIVITY_ACTION_LABEL: Record<AdminActivityAction, string> = {
   CAMPAIGN_CLOSE: "캠페인 종료",
   CAMPAIGN_HIDE: "캠페인 비공개",
   CAMPAIGN_UNHIDE: "캠페인 공개",
+  CAMPAIGN_BUMP: "캠페인 끌어올리기",
   CAMPAIGN_DELETE: "캠페인 삭제",
   CAMPAIGN_DRAFT_CREATE: "임시저장 생성",
   CAMPAIGN_DRAFT_UPDATE: "임시저장 수정",

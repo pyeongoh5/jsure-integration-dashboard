@@ -983,6 +983,31 @@ export class CampaignsService {
     }
   }
 
+  /**
+   * 끌어올리기 — bumpedAt 만 갱신해 인플루언서 목록에서 같은 상태 그룹 내
+   * 최상단으로 올린다. updatedAt(일반 수정)과 분리된 별도 기준값이다.
+   */
+  async bump(id: string, actor: AuditActor): Promise<CampaignResponse> {
+    const existing = await this.prisma.campaign.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException("Campaign not found");
+    if (existing.publishState === "DRAFT") {
+      throw new BadRequestException("임시저장 캠페인은 끌어올릴 수 없습니다");
+    }
+    const row = await this.prisma.campaign.update({
+      where: { id },
+      data: { bumpedAt: new Date() },
+      include: RECRUITS_INCLUDE,
+    });
+    await this.audit.record({
+      action: "CAMPAIGN_BUMP",
+      actor,
+      campaignId: id,
+    });
+    return this.withResolved(
+      toResponse(row, await this.countsFor(id)),
+    );
+  }
+
   async close(id: string, actor: AuditActor): Promise<CampaignResponse> {
     const existing = await this.prisma.campaign.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException("Campaign not found");

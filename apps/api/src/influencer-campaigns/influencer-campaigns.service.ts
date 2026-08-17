@@ -118,7 +118,9 @@ export class InfluencerCampaignsService {
         ...VISIBLE_PUBLISHED_CAMPAIGN_WHERE,
         ...(args.category ? { category: args.category } : {}),
       },
-      orderBy: [{ createdAt: "desc" }],
+      // 끌어올리기(bump)를 반영한 정렬. bumpedAt 은 생성 시 createdAt 과 같아
+      // 끌어올린 적 없는 캠페인은 기존 최신순 그대로다.
+      orderBy: [{ bumpedAt: "desc" }],
       include: {
         recruits: {
           select: {

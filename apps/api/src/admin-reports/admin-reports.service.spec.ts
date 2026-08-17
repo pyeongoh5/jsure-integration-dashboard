@@ -26,7 +26,14 @@ function makeService(applications: StubApplication[]) {
   const prisma = {
     campaign: {
       findMany: async () => [
-        { id: "c1", title: "캠페인", applications },
+        {
+          id: "c1",
+          title: "캠페인",
+          category: "SNS",
+          recruitStartAt: new Date("2026-06-30T15:00:00Z"), // JST 2026-07-01 00:00
+          recruitEndAt: new Date("2026-07-31T14:59:59Z"), // JST 2026-07-31 23:59
+          applications,
+        },
       ],
       findFirst: async () => ({ id: "c1" }),
     },
@@ -193,5 +200,13 @@ describe("참여자 목록", () => {
     // 제출한 서브타입만 검수 상태가 붙는다.
     expect(participants[0]!.submissionReviewStatus).toBe("PENDING");
     expect(participants[1]!.submissionReviewStatus).toBeNull();
+  });
+
+  it("campaignReports 는 카테고리와 JST 모집기간을 내려준다", async () => {
+    const service = makeService([]);
+    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    expect(rows[0]!.category).toBe("SNS");
+    expect(rows[0]!.recruitStartDate).toBe("2026-07-01");
+    expect(rows[0]!.recruitEndDate).toBe("2026-07-31");
   });
 });

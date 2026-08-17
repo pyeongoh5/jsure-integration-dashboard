@@ -1,8 +1,13 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import ExcelJS from "exceljs";
-import { SUB_TYPE_OPTION_LABEL, type CampaignReportParticipant } from "@jsure/shared";
+import {
+  SUB_TYPE_OPTION_LABEL,
+  type CampaignCategory,
+  type CampaignReportParticipant,
+} from "@jsure/shared";
 import { ScrollTable } from "@/components/composites";
-import { useSubmissionDetail } from "@/domains/application";
+import { FilterChipBar, MultiSelectFilterChip } from "@/components/composites/FilterChip";
+import { CATEGORY_FILTER_OPTIONS, useSubmissionDetail } from "@/domains/application";
 import { Button } from "@/components/ui";
 import {
   getCampaignParticipants,
@@ -134,6 +139,26 @@ function formatPercent(value: number | null): string {
   return `${value.toFixed(2)}%`;
 }
 
+/** "2026-07-01","2026-07-31" → "26.07.01 - 07.31" (같은 해면 종료일 연도 생략). */
+function formatRecruitPeriod(startDate: string, endDate: string): string {
+  const shorten = (dateStr: string) => dateStr.slice(2).replaceAll("-", ".");
+  const sameYear = startDate.slice(0, 4) === endDate.slice(0, 4);
+  const endLabel = sameYear ? shorten(endDate).slice(3) : shorten(endDate);
+  return `${shorten(startDate)} - ${endLabel}`;
+}
+
+/** 모집기간과 필터 기간이 하루라도 겹치면 true. 빈 필터 값은 열린 구간으로 본다. */
+function recruitPeriodOverlaps(
+  row: CampaignReportRow,
+  filterStartDate: string,
+  filterEndDate: string,
+): boolean {
+  // YYYY-MM-DD 문자열은 사전순 비교가 곧 날짜 비교라 Date 변환이 필요 없다.
+  if (filterEndDate !== "" && row.recruitStartDate > filterEndDate) return false;
+  if (filterStartDate !== "" && row.recruitEndDate < filterStartDate) return false;
+  return true;
+}
+
 export function Reports() {
   const [rows, setRows] = useState<CampaignReportRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -142,6 +167,11 @@ export function Reports() {
   const [sortOrder, setSortOrder] = useState<CampaignReportSortOrder>("desc");
   const [downloadOpen, setDownloadOpen] = useState<boolean>(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [filterStartDate, setFilterStartDate] = useState<string>("");
+  const [filterEndDate, setFilterEndDate] = useState<string>("");
+  const [selectedCategories, setSelectedCategories] = useState<Set<CampaignCategory>>(
+    () => new Set(),
+  );
 
   const toggleExpand = (campaignId: string) => {
     setExpanded((previous) => {
@@ -183,11 +213,21 @@ export function Reports() {
     }
   };
 
+  const filteredRows = useMemo(
+    () =>
+      rows.filter(
+        (row) =>
+          recruitPeriodOverlaps(row, filterStartDate, filterEndDate) &&
+          (selectedCategories.size === 0 || selectedCategories.has(row.category)),
+      ),
+    [rows, filterStartDate, filterEndDate, selectedCategories],
+  );
+
   const subtitle = useMemo(() => {
     if (loading) return "불러오는 중...";
     if (error) return `오류: ${error}`;
-    return `총 ${rows.length}개 캠페인`;
-  }, [loading, error, rows.length]);
+    return `총 ${filteredRows.length}개 캠페인`;
+  }, [loading, error, filteredRows.length]);
 
   return (
     <div className={styles.root}>
@@ -200,11 +240,41 @@ export function Reports() {
           variant="success"
           size="md"
           onClick={() => setDownloadOpen(true)}
-          disabled={rows.length === 0}
+          disabled={filteredRows.length === 0}
           iconLeft={<i className="fa-solid fa-file-excel" aria-hidden="true" />}
         >
           엑셀 다운로드
         </Button>
+      </div>
+
+      <div className={styles.filterBar}>
+        <FilterChipBar>
+          <div className={styles.dateRange}>
+            <span className={styles.dateRangeLabel}>모집기간</span>
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={filterStartDate}
+              onChange={(event) => setFilterStartDate(event.target.value)}
+              aria-label="모집기간 검색 시작일"
+            />
+            <span aria-hidden="true">~</span>
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={filterEndDate}
+              onChange={(event) => setFilterEndDate(event.target.value)}
+              aria-label="모집기간 검색 종료일"
+            />
+          </div>
+          <MultiSelectFilterChip
+            emptyLabel="카테고리"
+            labelPrefix="카테고리"
+            options={CATEGORY_FILTER_OPTIONS}
+            value={selectedCategories}
+            onChange={setSelectedCategories}
+          />
+        </FilterChipBar>
       </div>
 
       <div className={styles.card}>
@@ -235,14 +305,14 @@ export function Reports() {
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 && !loading ? (
+              {filteredRows.length === 0 && !loading ? (
                 <tr>
                   <td colSpan={COLUMNS.length} className={styles.empty}>
                     표시할 데이터가 없습니다.
                   </td>
                 </tr>
               ) : (
-                rows.map((row) => {
+                filteredRows.map((row) => {
                   const isExpanded = expanded.has(row.campaignId);
                   return (
                     <Fragment key={row.campaignId}>
@@ -259,15 +329,23 @@ export function Reports() {
                             .join(" ");
                           return (
                             <td key={column.key} className={cellClassNames || undefined}>
-                              {columnIndex === 0 && (
-                                <span
-                                  className={`${styles.expandIcon} ${isExpanded ? styles.expandIconOpen : ""}`}
-                                  aria-hidden="true"
-                                >
-                                  ▶
-                                </span>
+                              {columnIndex === 0 ? (
+                                <>
+                                  <span
+                                    className={`${styles.expandIcon} ${isExpanded ? styles.expandIconOpen : ""}`}
+                                    aria-hidden="true"
+                                  >
+                                    ▶
+                                  </span>
+                                  <span>{row.campaignTitle}</span>
+                                  <span className={styles.recruitPeriod}>
+                                    🗓️{" "}
+                                    {formatRecruitPeriod(row.recruitStartDate, row.recruitEndDate)}
+                                  </span>
+                                </>
+                              ) : (
+                                column.format(row)
                               )}
-                              {column.format(row)}
                             </td>
                           );
                         })}
@@ -292,7 +370,7 @@ export function Reports() {
       </div>
 
       {downloadOpen && (
-        <CampaignDownloadDialog rows={rows} onClose={() => setDownloadOpen(false)} />
+        <CampaignDownloadDialog rows={filteredRows} onClose={() => setDownloadOpen(false)} />
       )}
     </div>
   );
@@ -337,26 +415,37 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
       const usedSheetNames = new Set<string>();
       for (const target of targets) {
         // 다운로드 시점에 백엔드에서 전체 참여자 일괄 조회.
-        const response = await getCampaignParticipants(
-          target.campaignId,
-          0,
-          Math.max(1, target.participantCount),
-        );
+        const participants = await fetchAllParticipants(target.campaignId);
         const sheetName = uniqueSheetName(target.campaignTitle, usedSheetNames);
         usedSheetNames.add(sheetName);
         const sheet = workbook.addWorksheet(sheetName);
         const sheetColumns = [...PARTICIPANT_COLUMNS, ...EXCEL_ONLY_COLUMNS];
-        sheet.columns = sheetColumns.map((column) => ({
-          header: column.label,
-          key: column.key,
-          width: column.width ?? (column.numeric ? 12 : 18),
-          style: column.numeric ? { alignment: { horizontal: "right" } } : undefined,
-        }));
+        // 캠페인 단위 값이라 participant 기반 컬럼과 분리해 행마다 반복 기록한다.
+        const recruitPeriodColumns = [
+          { key: "recruitStartDate", label: "모집 시작일", value: target.recruitStartDate },
+          { key: "recruitEndDate", label: "모집 종료일", value: target.recruitEndDate },
+        ];
+        sheet.columns = [
+          ...sheetColumns.map((column) => ({
+            header: column.label,
+            key: column.key,
+            width: column.width ?? (column.numeric ? 12 : 18),
+            style: column.numeric ? { alignment: { horizontal: "right" } } : undefined,
+          })),
+          ...recruitPeriodColumns.map((column) => ({
+            header: column.label,
+            key: column.key,
+            width: 14,
+          })),
+        ];
         sheet.getRow(1).font = { bold: true };
-        for (const participant of response.participants) {
+        for (const participant of participants) {
           const row: Record<string, string | number> = {};
           for (const column of sheetColumns) {
             row[column.key] = column.excelValue(participant);
+          }
+          for (const column of recruitPeriodColumns) {
+            row[column.key] = column.value;
           }
           sheet.addRow(row);
         }
@@ -461,6 +550,29 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
       </div>
     </div>
   );
+}
+
+/** 서버 pageSize 상한(10000)에 맞춘 다운로드용 페이지 크기. */
+const PARTICIPANTS_DOWNLOAD_PAGE_SIZE = 10000;
+
+/**
+ * 참여자 전량 수집. 서버는 응모를 서브타입별 행으로 펼치므로
+ * participantCount(응모 수)보다 행이 많을 수 있어 total 도달까지 반복 조회한다.
+ */
+async function fetchAllParticipants(
+  campaignId: string,
+): Promise<CampaignReportParticipant[]> {
+  const collected: CampaignReportParticipant[] = [];
+  for (let page = 0; ; page += 1) {
+    const response = await getCampaignParticipants(
+      campaignId,
+      page,
+      PARTICIPANTS_DOWNLOAD_PAGE_SIZE,
+    );
+    collected.push(...response.participants);
+    const noMoreRows = response.participants.length === 0;
+    if (collected.length >= response.total || noMoreRows) return collected;
+  }
 }
 
 /** 엑셀 시트 이름은 31자 제한 + `\/?*[]:` 금지. 중복 시 (2), (3)... 접미사. */

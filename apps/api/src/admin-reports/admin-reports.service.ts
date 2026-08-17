@@ -10,6 +10,7 @@ import {
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
+import { utcToJstDateStr } from "../campaigns/campaigns.service";
 
 @Injectable()
 export class AdminReportsService {
@@ -97,6 +98,9 @@ export class AdminReportsService {
       return {
         campaignId: campaign.id,
         campaignTitle: campaign.title,
+        category: campaign.category,
+        recruitStartDate: utcToJstDateStr(campaign.recruitStartAt),
+        recruitEndDate: utcToJstDateStr(campaign.recruitEndAt),
         influencerCount: influencerSet.size,
         totalFollowers,
         postCount,

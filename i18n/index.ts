@@ -1,2 +1,2 @@
-export { t } from "./t";
-export type { TranslationKey } from "./t";
+export { t } from "./client/t";
+export type { TranslationKey } from "./client/t";

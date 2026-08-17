@@ -1,20 +1,17 @@
-import { messages } from "../messages";
-
-type UnknownRecord = Record<string, unknown>;
+import { messages } from "../client/messages";
+import { adminMessages } from "../admin/messages";
 
 const missing: string[] = [];
 
-function walk(node: unknown, path: string[]): void {
+function walk(node: unknown, path: string[], locales: readonly string[]): void {
   if (node === null || typeof node !== "object") {
     missing.push(`${path.join(".")}: leaf가 객체가 아님`);
     return;
   }
-  const record = node as UnknownRecord;
-  const keys = Object.keys(record);
-  const hasKr = "kr" in record;
-  const hasJp = "jp" in record;
-  if (hasKr || hasJp) {
-    for (const locale of ["kr", "jp"] as const) {
+  const record = node as Record<string, unknown>;
+  const isLeaf = locales.some((locale) => locale in record);
+  if (isLeaf) {
+    for (const locale of locales) {
       const value = record[locale];
       if (typeof value !== "string" || value.trim() === "") {
         missing.push(`${path.join(".")}.${locale}: 값이 비어있음`);
@@ -22,12 +19,13 @@ function walk(node: unknown, path: string[]): void {
     }
     return;
   }
-  for (const key of keys) {
-    walk(record[key], [...path, key]);
+  for (const key of Object.keys(record)) {
+    walk(record[key], [...path, key], locales);
   }
 }
 
-walk(messages, []);
+walk(messages, ["client"], ["kr", "jp"]);
+walk(adminMessages, ["admin"], ["ko", "en", "ja"]);
 
 if (missing.length > 0) {
   console.error("[i18n] 번역 누락:");

@@ -415,26 +415,37 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
       const usedSheetNames = new Set<string>();
       for (const target of targets) {
         // 다운로드 시점에 백엔드에서 전체 참여자 일괄 조회.
-        const response = await getCampaignParticipants(
-          target.campaignId,
-          0,
-          Math.max(1, target.participantCount),
-        );
+        const participants = await fetchAllParticipants(target.campaignId);
         const sheetName = uniqueSheetName(target.campaignTitle, usedSheetNames);
         usedSheetNames.add(sheetName);
         const sheet = workbook.addWorksheet(sheetName);
         const sheetColumns = [...PARTICIPANT_COLUMNS, ...EXCEL_ONLY_COLUMNS];
-        sheet.columns = sheetColumns.map((column) => ({
-          header: column.label,
-          key: column.key,
-          width: column.width ?? (column.numeric ? 12 : 18),
-          style: column.numeric ? { alignment: { horizontal: "right" } } : undefined,
-        }));
+        // 캠페인 단위 값이라 participant 기반 컬럼과 분리해 행마다 반복 기록한다.
+        const recruitPeriodColumns = [
+          { key: "recruitStartDate", label: "모집 시작일", value: target.recruitStartDate },
+          { key: "recruitEndDate", label: "모집 종료일", value: target.recruitEndDate },
+        ];
+        sheet.columns = [
+          ...sheetColumns.map((column) => ({
+            header: column.label,
+            key: column.key,
+            width: column.width ?? (column.numeric ? 12 : 18),
+            style: column.numeric ? { alignment: { horizontal: "right" } } : undefined,
+          })),
+          ...recruitPeriodColumns.map((column) => ({
+            header: column.label,
+            key: column.key,
+            width: 14,
+          })),
+        ];
         sheet.getRow(1).font = { bold: true };
-        for (const participant of response.participants) {
+        for (const participant of participants) {
           const row: Record<string, string | number> = {};
           for (const column of sheetColumns) {
             row[column.key] = column.excelValue(participant);
+          }
+          for (const column of recruitPeriodColumns) {
+            row[column.key] = column.value;
           }
           sheet.addRow(row);
         }
@@ -539,6 +550,29 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
       </div>
     </div>
   );
+}
+
+/** 서버 pageSize 상한(10000)에 맞춘 다운로드용 페이지 크기. */
+const PARTICIPANTS_DOWNLOAD_PAGE_SIZE = 10000;
+
+/**
+ * 참여자 전량 수집. 서버는 응모를 서브타입별 행으로 펼치므로
+ * participantCount(응모 수)보다 행이 많을 수 있어 total 도달까지 반복 조회한다.
+ */
+async function fetchAllParticipants(
+  campaignId: string,
+): Promise<CampaignReportParticipant[]> {
+  const collected: CampaignReportParticipant[] = [];
+  for (let page = 0; ; page += 1) {
+    const response = await getCampaignParticipants(
+      campaignId,
+      page,
+      PARTICIPANTS_DOWNLOAD_PAGE_SIZE,
+    );
+    collected.push(...response.participants);
+    const noMoreRows = response.participants.length === 0;
+    if (collected.length >= response.total || noMoreRows) return collected;
+  }
 }
 
 /** 엑셀 시트 이름은 31자 제한 + `\/?*[]:` 금지. 중복 시 (2), (3)... 접미사. */

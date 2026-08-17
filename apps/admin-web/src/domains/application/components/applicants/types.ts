@@ -1,3 +1,4 @@
+import type { AdminTranslationKey } from "@i18n/admin";
 import type {
   ApplicationOption,
   ApplicationStatus,
@@ -70,30 +71,37 @@ export const MEDIA_META: Record<
   atcosme: { label: "@cosme", icon: "fa-solid fa-star", cls: "mediaQoo10" },
 };
 
-export const APPLICANT_STATUS_LABEL: Record<ApplicantStatus, string> = {
-  APPLIED: "승인 대기",
-  PRE_SHIP: "승인·배송전",
-  SHIPPING: "배송중",
-  DELIVERED: "수령 확인 대기",
-  POST_DUE: "투고 대기",
-  AWAITING_ORDER: "주문 대기",
-  AWAITING_REVIEW: "리뷰 대기",
-  REJECTED: "반려",
+// 값은 i18n 키 — 표시 시점에 컴포넌트에서 t(...) 로 번역한다.
+export const APPLICANT_STATUS_LABEL: Record<ApplicantStatus, AdminTranslationKey> = {
+  APPLIED: "domains.application.status.applied",
+  PRE_SHIP: "domains.application.status.preShip",
+  SHIPPING: "domains.application.status.shipping",
+  DELIVERED: "domains.application.status.delivered",
+  POST_DUE: "domains.application.status.postDue",
+  AWAITING_ORDER: "domains.application.status.awaitingOrder",
+  AWAITING_REVIEW: "domains.application.status.awaitingReview",
+  REJECTED: "domains.application.status.rejected",
 };
 
-export const CATEGORY_LABEL_KO: Record<CampaignCategory, string> = {
-  SNS: "SNS",
-  FAKE_PURCHASE: "가구매",
-  SIMPLE_REVIEW: "단순 리뷰",
+export const CATEGORY_LABEL_KO: Record<CampaignCategory, AdminTranslationKey> = {
+  SNS: "domains.application.category.sns",
+  FAKE_PURCHASE: "domains.application.category.fakePurchase",
+  SIMPLE_REVIEW: "domains.application.category.simpleReview",
 };
 
-export const CATEGORY_FILTER_OPTIONS: { key: CampaignCategory; label: string }[] = [
+export const CATEGORY_FILTER_OPTIONS: {
+  key: CampaignCategory;
+  label: AdminTranslationKey;
+}[] = [
   { key: "SNS", label: CATEGORY_LABEL_KO.SNS },
   { key: "FAKE_PURCHASE", label: CATEGORY_LABEL_KO.FAKE_PURCHASE },
   { key: "SIMPLE_REVIEW", label: CATEGORY_LABEL_KO.SIMPLE_REVIEW },
 ];
 
-export const APPLICANT_STATUS_OPTIONS: { key: ApplicantStatus; label: string }[] = [
+export const APPLICANT_STATUS_OPTIONS: {
+  key: ApplicantStatus;
+  label: AdminTranslationKey;
+}[] = [
   { key: "APPLIED", label: APPLICANT_STATUS_LABEL.APPLIED },
   { key: "PRE_SHIP", label: APPLICANT_STATUS_LABEL.PRE_SHIP },
   { key: "SHIPPING", label: APPLICANT_STATUS_LABEL.SHIPPING },

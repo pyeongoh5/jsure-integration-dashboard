@@ -1,4 +1,6 @@
 import { useState } from "react";
+import type { AdminTranslationKey } from "@i18n/admin";
+import { useT } from "@/lib/i18n";
 import { FilterChip } from "@/components/composites/FilterChip";
 import styles from "@/components/composites/FilterChip/FilterChip.module.css";
 import type { CampaignOption } from "./types";
@@ -8,11 +10,20 @@ type CampaignStatusScope = "ongoing" | "all" | "closed";
 
 const STATUS_SCOPE_META: Record<
   CampaignStatusScope,
-  { label: string; emptyMessage: string }
+  { labelKey: AdminTranslationKey; emptyMessageKey: AdminTranslationKey }
 > = {
-  ongoing: { label: "진행중", emptyMessage: "진행중인 캠페인이 없습니다." },
-  all: { label: "전체", emptyMessage: "캠페인이 없습니다." },
-  closed: { label: "종료", emptyMessage: "종료된 캠페인이 없습니다." },
+  ongoing: {
+    labelKey: "domains.application.applicants.campaignFilter.scopeOngoing",
+    emptyMessageKey: "domains.application.applicants.campaignFilter.emptyOngoing",
+  },
+  all: {
+    labelKey: "domains.application.applicants.campaignFilter.scopeAll",
+    emptyMessageKey: "domains.application.applicants.campaignFilter.emptyAll",
+  },
+  closed: {
+    labelKey: "domains.application.applicants.campaignFilter.scopeClosed",
+    emptyMessageKey: "domains.application.applicants.campaignFilter.emptyClosed",
+  },
 };
 
 const STATUS_SCOPES = Object.keys(STATUS_SCOPE_META) as CampaignStatusScope[];
@@ -45,24 +56,40 @@ export function CampaignFilterChip({
   campaignOptions,
   onCampaignChange,
   showStatusSegments = false,
-  popoverTitle = showStatusSegments ? "캠페인 선택" : "캠페인 선택 (진행중)",
-  emptyMessage = "진행중인 캠페인이 없습니다.",
+  popoverTitle,
+  emptyMessage,
 }: Props) {
-  const resolved = campaignLabel ?? (campaignsLoaded ? campaignId : "불러오는 중…");
-  const activeLabel = campaignId ? `캠페인: ${resolved}` : null;
+  const t = useT();
+  const resolvedPopoverTitle =
+    popoverTitle ??
+    (showStatusSegments
+      ? t("domains.application.applicants.campaignFilter.title")
+      : t("domains.application.applicants.campaignFilter.titleOngoing"));
+  const resolvedEmptyMessage =
+    emptyMessage ?? t("domains.application.applicants.campaignFilter.emptyOngoing");
+  const resolved =
+    campaignLabel ??
+    (campaignsLoaded
+      ? campaignId
+      : t("domains.application.applicants.campaignFilter.loading"));
+  const activeLabel = campaignId
+    ? t("domains.application.applicants.campaignFilter.activeLabel", {
+        title: resolved ?? "",
+      })
+    : null;
 
   return (
     <FilterChip
       activeLabel={activeLabel}
-      emptyLabel="+ 캠페인"
+      emptyLabel={t("domains.application.applicants.campaignFilter.chipEmpty")}
       onClear={() => onCampaignChange(null)}
-      popoverTitle={popoverTitle}
+      popoverTitle={resolvedPopoverTitle}
       renderPopover={(close) => (
         <CampaignPopover
           campaignId={campaignId}
           campaignOptions={campaignOptions}
           showStatusSegments={showStatusSegments}
-          emptyMessage={emptyMessage}
+          emptyMessage={resolvedEmptyMessage}
           onSelect={(id) => {
             onCampaignChange(id);
             close();
@@ -90,6 +117,7 @@ function CampaignPopover({
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [statusScope, setStatusScope] =
     useState<CampaignStatusScope>("ongoing");
@@ -106,7 +134,7 @@ function CampaignPopover({
       )
     : scoped;
   const resolvedEmptyMessage = showStatusSegments
-    ? STATUS_SCOPE_META[statusScope].emptyMessage
+    ? t(STATUS_SCOPE_META[statusScope].emptyMessageKey)
     : emptyMessage;
 
   return (
@@ -120,7 +148,7 @@ function CampaignPopover({
               className={`${styles.popoverSegment}${scope === statusScope ? ` ${styles.popoverSegmentOn}` : ""}`}
               onClick={() => setStatusScope(scope)}
             >
-              {STATUS_SCOPE_META[scope].label}
+              {t(STATUS_SCOPE_META[scope].labelKey)}
             </button>
           ))}
         </div>
@@ -129,7 +157,7 @@ function CampaignPopover({
         <input
           type="text"
           className={styles.popoverInput}
-          placeholder="캠페인 검색"
+          placeholder={t("domains.application.applicants.campaignFilter.searchPlaceholder")}
           autoFocus
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -138,7 +166,9 @@ function CampaignPopover({
       {scoped.length === 0 ? (
         <div className={styles.popoverEmpty}>{resolvedEmptyMessage}</div>
       ) : filtered.length === 0 ? (
-        <div className={styles.popoverEmpty}>검색 결과가 없습니다.</div>
+        <div className={styles.popoverEmpty}>
+          {t("domains.application.applicants.campaignFilter.noSearchResults")}
+        </div>
       ) : (
         <div className={`${styles.popoverItems} ${styles.popoverItemsScroll}`}>
           {filtered.map((campaign) => {
@@ -165,7 +195,7 @@ function CampaignPopover({
           className={styles.popoverBtnPrimary}
           onClick={onClose}
         >
-          닫기
+          {t("common.close")}
         </button>
       </div>
     </>

@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import { useT } from "@/lib/i18n";
 import styles from "@/pages/Applicants/Applicants.module.css";
 import type { Applicant } from "./types";
 
+// label 은 저장되는 택배사명 그대로 (고유명사) — custom 만 UI 에서 번역해 표시한다.
 const CARRIERS = [
   { id: "yamato", label: "ヤマト運輸" },
   { id: "sagawa", label: "佐川急便" },
   { id: "jp", label: "日本郵便" },
   { id: "kse", label: "KSE" },
-  { id: "custom", label: "직접 입력" },
+  { id: "custom", label: "" },
 ] as const;
 
 type CarrierId = (typeof CARRIERS)[number]["id"];
@@ -32,6 +34,7 @@ function initialCarrierId(label: string | null | undefined): {
 }
 
 export function ApplicantShipDialog({ applicant, mutating, error, onConfirm, onCancel }: Props) {
+  const t = useT();
   const init = initialCarrierId(applicant.trackingCarrier);
   const [carrierId, setCarrierId] = useState<CarrierId>(init.carrierId);
   const [customLabel, setCustomLabel] = useState(init.customLabel);
@@ -47,20 +50,22 @@ export function ApplicantShipDialog({ applicant, mutating, error, onConfirm, onC
   return (
     <ConfirmDialog
       open
-      title="운송장 정보를 입력하세요"
+      title={t("domains.application.applicants.shipDialog.title")}
       subtitle={
         <div className={styles.shipForm}>
           <div className={styles.shipField}>
-            <label className={styles.shipLabel}>택배사</label>
+            <label className={styles.shipLabel}>{t("domains.application.applicants.shipDialog.carrier")}</label>
             <select
               className={styles.trackingInput}
               value={carrierId}
               onChange={(e) => setCarrierId(e.target.value as CarrierId)}
               disabled={mutating}
             >
-              {CARRIERS.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
+              {CARRIERS.map((carrier) => (
+                <option key={carrier.id} value={carrier.id}>
+                  {carrier.id === "custom"
+                    ? t("domains.application.applicants.shipDialog.customCarrierOption")
+                    : carrier.label}
                 </option>
               ))}
             </select>
@@ -68,11 +73,11 @@ export function ApplicantShipDialog({ applicant, mutating, error, onConfirm, onC
 
           {carrierId === "custom" && (
             <div className={styles.shipField}>
-              <label className={styles.shipLabel}>택배사명</label>
+              <label className={styles.shipLabel}>{t("domains.application.applicants.shipDialog.carrierName")}</label>
               <input
                 type="text"
                 className={styles.trackingInput}
-                placeholder="택배사 이름 직접 입력"
+                placeholder={t("domains.application.applicants.shipDialog.customCarrierPlaceholder")}
                 value={customLabel}
                 onChange={(e) => setCustomLabel(e.target.value)}
                 disabled={mutating}
@@ -81,11 +86,11 @@ export function ApplicantShipDialog({ applicant, mutating, error, onConfirm, onC
           )}
 
           <div className={styles.shipField}>
-            <label className={styles.shipLabel}>운송장 번호</label>
+            <label className={styles.shipLabel}>{t("domains.application.applicants.shipDialog.trackingNumber")}</label>
             <input
               type="text"
               className={styles.trackingInput}
-              placeholder="운송장 번호"
+              placeholder={t("domains.application.applicants.shipDialog.trackingNumber")}
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
               disabled={mutating}
@@ -96,8 +101,8 @@ export function ApplicantShipDialog({ applicant, mutating, error, onConfirm, onC
           {error && <div className={styles.mutationError}>{error}</div>}
         </div>
       }
-      confirmLabel="배송 시작"
-      cancelLabel="취소"
+      confirmLabel={t("domains.application.applicants.shipDialog.confirm")}
+      cancelLabel={t("common.cancel")}
       tone="primary"
       busy={mutating}
       confirmDisabled={!canSubmit}

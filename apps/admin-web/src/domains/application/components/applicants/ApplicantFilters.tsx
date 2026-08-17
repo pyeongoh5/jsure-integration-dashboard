@@ -1,4 +1,5 @@
 import type { CampaignCategory } from "@jsure/shared";
+import { useT } from "@/lib/i18n";
 import {
   FilterChipBar,
   SingleSelectFilterChip,
@@ -51,6 +52,12 @@ export function ApplicantFilters({
   category,
   onCategoryChange,
 }: Props) {
+  const t = useT();
+  const categoryOptions = CATEGORY_FILTER_OPTIONS.map((option) => ({
+    key: option.key,
+    label: t(option.label),
+  }));
+
   return (
     <FilterChipBar>
       <CampaignFilterChip
@@ -64,10 +71,10 @@ export function ApplicantFilters({
 
       {onCategoryChange && (
         <SingleSelectFilterChip
-          emptyLabel="+ 카테고리"
-          labelPrefix="카테고리"
-          popoverTitle="카테고리 선택"
-          options={CATEGORY_FILTER_OPTIONS}
+          emptyLabel={t("domains.application.applicants.categoryFilter.chipEmpty")}
+          labelPrefix={t("domains.application.applicants.categoryFilter.prefix")}
+          popoverTitle={t("domains.application.applicants.categoryFilter.title")}
+          options={categoryOptions}
           value={category ?? null}
           onChange={onCategoryChange}
         />
@@ -81,9 +88,9 @@ export function ApplicantFilters({
       )}
 
       <MultiSelectFilterChip
-        emptyLabel="+ 서브타입"
-        labelPrefix="서브타입"
-        popoverTitle="서브타입 선택 (복수 가능)"
+        emptyLabel={t("domains.application.applicants.subTypeFilter.chipEmpty")}
+        labelPrefix={t("domains.application.applicants.subTypeFilter.prefix")}
+        popoverTitle={t("domains.application.applicants.subTypeFilter.title")}
         options={MEDIA_OPTIONS}
         value={mediaFilter}
         onChange={onMediaChange}

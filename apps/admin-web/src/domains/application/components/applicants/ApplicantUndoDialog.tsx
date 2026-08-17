@@ -1,4 +1,5 @@
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import { useT } from "@/lib/i18n";
 import styles from "@/pages/Applicants/Applicants.module.css";
 import type { Applicant } from "./types";
 
@@ -17,10 +18,12 @@ export function ApplicantUndoDialog({
   onConfirm,
   onCancel,
 }: Props) {
+  const t = useT();
+
   return (
     <ConfirmDialog
       open
-      title="심사를 되돌릴까요?"
+      title={t("domains.application.applicants.undoDialog.title")}
       subtitle={
         <>
           <div>
@@ -29,13 +32,17 @@ export function ApplicantUndoDialog({
             {applicant.campaign}
           </div>
           <div className={styles.dialogHint}>
-            대기 상태로 되돌립니다.
+            {t("domains.application.applicants.undoDialog.hint")}
           </div>
           {error && <div className={styles.mutationError}>{error}</div>}
         </>
       }
-      confirmLabel={mutating ? "처리 중…" : "되돌리기"}
-      cancelLabel="취소"
+      confirmLabel={
+        mutating
+          ? t("components.confirmDialog.processing")
+          : t("domains.application.applicants.actions.undo")
+      }
+      cancelLabel={t("common.cancel")}
       tone="danger"
       busy={mutating}
       onConfirm={onConfirm}

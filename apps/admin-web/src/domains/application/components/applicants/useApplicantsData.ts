@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { translate } from "@i18n/admin";
+import { getStoredLanguage, useLanguage } from "@/lib/i18n";
 import type { AdminApplication } from "@jsure/shared";
 import { listApplications } from "../api";
 import { toApplicant } from "./applicantTransform";
@@ -18,6 +20,7 @@ export type UseApplicantsDataResult = {
 export function useApplicantsData(
   campaignId: string | null,
 ): UseApplicantsDataResult {
+  const { language } = useLanguage();
   const [state, setState] = useState<ApplicantsLoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -35,7 +38,10 @@ export function useApplicantsData(
           message:
             error instanceof Error
               ? error.message
-              : "응모자 목록을 불러올 수 없습니다.",
+              : translate(
+                  "domains.application.applicants.errors.loadFailed",
+                  getStoredLanguage(),
+                ),
         });
       });
     return () => {
@@ -48,9 +54,9 @@ export function useApplicantsData(
   const applicants = useMemo<Applicant[]>(() => {
     if (state.kind !== "ready") return [];
     return state.rows
-      .map((application) => toApplicant(application, now))
+      .map((application) => toApplicant(application, now, language))
       .filter((applicant): applicant is Applicant => applicant !== null);
-  }, [state, now]);
+  }, [state, now, language]);
 
   return {
     state,

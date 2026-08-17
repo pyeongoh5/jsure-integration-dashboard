@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useT } from "@/lib/i18n";
 import { FilterChip } from "@/components/composites/FilterChip";
 import styles from "@/components/composites/FilterChip/FilterChip.module.css";
 
@@ -8,15 +9,20 @@ type Props = {
 };
 
 export function MinFollowersFilterChip({ value, onChange }: Props) {
+  const t = useT();
   const activeLabel =
-    value !== null ? `팔로워 ${value.toLocaleString()}명 이상` : null;
+    value !== null
+      ? t("domains.application.applicants.minFollowersFilter.activeLabel", {
+          count: value.toLocaleString(),
+        })
+      : null;
 
   return (
     <FilterChip
       activeLabel={activeLabel}
-      emptyLabel="+ 팔로워 범위"
+      emptyLabel={t("domains.application.applicants.minFollowersFilter.chipEmpty")}
       onClear={() => onChange(null)}
-      popoverTitle="팔로워 최소값"
+      popoverTitle={t("domains.application.applicants.minFollowersFilter.title")}
       renderPopover={(close) => (
         <MinFollowersPopover value={value} onChange={onChange} close={close} />
       )}
@@ -34,6 +40,7 @@ function MinFollowersPopover({
   onChange: (followers: number | null) => void;
   close: () => void;
 }) {
+  const t = useT();
   const [draft, setDraft] = useState(value !== null ? String(value) : "");
 
   const apply = () => {
@@ -54,7 +61,7 @@ function MinFollowersPopover({
           type="text"
           inputMode="numeric"
           className={styles.popoverInput}
-          placeholder="예: 10000"
+          placeholder={t("domains.application.applicants.minFollowersFilter.placeholder")}
           autoFocus
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
@@ -65,11 +72,13 @@ function MinFollowersPopover({
             }
           }}
         />
-        <span className={styles.popoverSuffix}>명 이상</span>
+        <span className={styles.popoverSuffix}>
+          {t("domains.application.applicants.minFollowersFilter.suffix")}
+        </span>
       </div>
       <div className={styles.popoverActions}>
         <button type="button" className={styles.popoverBtnPrimary} onClick={apply}>
-          적용
+          {t("common.apply")}
         </button>
       </div>
     </>

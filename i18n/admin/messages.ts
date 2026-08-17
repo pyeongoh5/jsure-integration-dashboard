@@ -2,6 +2,8 @@ export const adminMessages = {
   common: {
     languageName: { ko: "한국어", en: "English", ja: "日本語" },
     cancel: { ko: "취소", en: "Cancel", ja: "キャンセル" },
+    close: { ko: "닫기", en: "Close", ja: "閉じる" },
+    apply: { ko: "적용", en: "Apply", ja: "適用" },
     roles: {
       guest: { ko: "게스트", en: "Guest", ja: "ゲスト" },
       admin: { ko: "Admin", en: "Admin", ja: "Admin" },
@@ -66,6 +68,205 @@ export const adminMessages = {
     },
   },
   domains: {
+    application: {
+      status: {
+        applied: { ko: "승인 대기", en: "Pending approval", ja: "承認待ち" },
+        preShip: { ko: "승인·배송전", en: "Approved · Pre-ship", ja: "承認済み・発送前" },
+        shipping: { ko: "배송중", en: "Shipping", ja: "配送中" },
+        delivered: { ko: "수령 확인 대기", en: "Awaiting receipt", ja: "受取確認待ち" },
+        postDue: { ko: "투고 대기", en: "Awaiting post", ja: "投稿待ち" },
+        awaitingOrder: { ko: "주문 대기", en: "Awaiting order", ja: "注文待ち" },
+        awaitingReview: { ko: "리뷰 대기", en: "Awaiting review", ja: "レビュー待ち" },
+        rejected: { ko: "반려", en: "Rejected", ja: "却下" },
+      },
+      category: {
+        sns: { ko: "SNS", en: "SNS", ja: "SNS" },
+        fakePurchase: { ko: "가구매", en: "Fake purchase", ja: "仮購入" },
+        simpleReview: { ko: "단순 리뷰", en: "Simple review", ja: "簡易レビュー" },
+      },
+      applicants: {
+        time: {
+          justNow: { ko: "방금", en: "Just now", ja: "たった今" },
+        },
+        errors: {
+          loadFailed: {
+            ko: "응모자 목록을 불러올 수 없습니다.",
+            en: "Failed to load the applicant list.",
+            ja: "応募者一覧を読み込めませんでした。",
+          },
+          mutationFailed: {
+            ko: "처리에 실패했습니다.",
+            en: "The operation failed.",
+            ja: "処理に失敗しました。",
+          },
+          trackingRequired: {
+            ko: "택배사와 운송장 번호를 입력하세요.",
+            en: "Enter the carrier and tracking number.",
+            ja: "配送業者と送り状番号を入力してください。",
+          },
+        },
+        table: {
+          influencer: { ko: "인플루언서", en: "Influencer", ja: "インフルエンサー" },
+          campaign: { ko: "캠페인", en: "Campaign", ja: "キャンペーン" },
+          category: { ko: "카테고리", en: "Category", ja: "カテゴリー" },
+          subType: { ko: "서브타입", en: "Sub-type", ja: "サブタイプ" },
+          followers: { ko: "팔로워", en: "Followers", ja: "フォロワー" },
+          appliedAt: { ko: "응모 시각", en: "Applied at", ja: "応募日時" },
+          status: { ko: "상태", en: "Status", ja: "ステータス" },
+          actions: { ko: "액션", en: "Actions", ja: "アクション" },
+          empty: {
+            ko: "해당 상태의 응모자가 없습니다.",
+            en: "No applicants in this status.",
+            ja: "この状態の応募者はいません。",
+          },
+          flagged: { ko: "대상외", en: "Excluded", ja: "対象外" },
+          representativeSns: {
+            ko: "대표 SNS: {snsType} - @{handle}",
+            en: "Main SNS: {snsType} - @{handle}",
+            ja: "代表SNS: {snsType} - @{handle}",
+          },
+        },
+        actions: {
+          memo: { ko: "메모", en: "Memo", ja: "メモ" },
+          detail: { ko: "상세", en: "Details", ja: "詳細" },
+          history: { ko: "이력", en: "History", ja: "履歴" },
+          approve: { ko: "승인", en: "Approve", ja: "承認" },
+          reject: { ko: "반려", en: "Reject", ja: "却下" },
+          enterTracking: { ko: "운송장 입력", en: "Enter tracking", ja: "送り状入力" },
+          undo: { ko: "되돌리기", en: "Undo", ja: "元に戻す" },
+          deliver: { ko: "배송 완료", en: "Mark delivered", ja: "配送完了" },
+        },
+        approveDialog: {
+          title: {
+            ko: "응모를 승인할까요?",
+            en: "Approve this application?",
+            ja: "この応募を承認しますか？",
+          },
+        },
+        rejectDialog: {
+          title: {
+            ko: "응모를 반려할까요?",
+            en: "Reject this application?",
+            ja: "この応募を却下しますか？",
+          },
+          reasonPlaceholder: {
+            ko: "반려 사유를 입력하세요 (선택)",
+            en: "Enter a rejection reason (optional)",
+            ja: "却下理由を入力してください（任意）",
+          },
+        },
+        undoDialog: {
+          title: {
+            ko: "심사를 되돌릴까요?",
+            en: "Undo the review?",
+            ja: "審査を元に戻しますか？",
+          },
+          hint: {
+            ko: "대기 상태로 되돌립니다.",
+            en: "It will be returned to the pending state.",
+            ja: "承認待ちの状態に戻します。",
+          },
+        },
+        shipDialog: {
+          title: {
+            ko: "운송장 정보를 입력하세요",
+            en: "Enter tracking information",
+            ja: "送り状情報を入力してください",
+          },
+          carrier: { ko: "택배사", en: "Carrier", ja: "配送業者" },
+          carrierName: { ko: "택배사명", en: "Carrier name", ja: "配送業者名" },
+          customCarrierOption: { ko: "직접 입력", en: "Enter manually", ja: "直接入力" },
+          customCarrierPlaceholder: {
+            ko: "택배사 이름 직접 입력",
+            en: "Enter the carrier name manually",
+            ja: "配送業者名を直接入力",
+          },
+          trackingNumber: { ko: "운송장 번호", en: "Tracking number", ja: "送り状番号" },
+          confirm: { ko: "배송 시작", en: "Start shipping", ja: "配送開始" },
+        },
+        deliverDialog: {
+          title: {
+            ko: "배송 완료로 표시할까요?",
+            en: "Mark as delivered?",
+            ja: "配送完了にしますか？",
+          },
+          trackingInfo: {
+            ko: "운송장 번호: {tracking}",
+            en: "Tracking number: {tracking}",
+            ja: "送り状番号: {tracking}",
+          },
+        },
+        campaignFilter: {
+          chipEmpty: { ko: "+ 캠페인", en: "+ Campaign", ja: "+ キャンペーン" },
+          activeLabel: { ko: "캠페인: {title}", en: "Campaign: {title}", ja: "キャンペーン: {title}" },
+          loading: { ko: "불러오는 중…", en: "Loading…", ja: "読み込み中…" },
+          title: { ko: "캠페인 선택", en: "Select campaign", ja: "キャンペーン選択" },
+          titleOngoing: {
+            ko: "캠페인 선택 (진행중)",
+            en: "Select campaign (ongoing)",
+            ja: "キャンペーン選択（進行中）",
+          },
+          searchPlaceholder: { ko: "캠페인 검색", en: "Search campaigns", ja: "キャンペーン検索" },
+          noSearchResults: {
+            ko: "검색 결과가 없습니다.",
+            en: "No search results.",
+            ja: "検索結果はありません。",
+          },
+          scopeOngoing: { ko: "진행중", en: "Ongoing", ja: "進行中" },
+          scopeAll: { ko: "전체", en: "All", ja: "すべて" },
+          scopeClosed: { ko: "종료", en: "Closed", ja: "終了" },
+          emptyOngoing: {
+            ko: "진행중인 캠페인이 없습니다.",
+            en: "No ongoing campaigns.",
+            ja: "進行中のキャンペーンはありません。",
+          },
+          emptyAll: {
+            ko: "캠페인이 없습니다.",
+            en: "No campaigns.",
+            ja: "キャンペーンはありません。",
+          },
+          emptyClosed: {
+            ko: "종료된 캠페인이 없습니다.",
+            en: "No closed campaigns.",
+            ja: "終了したキャンペーンはありません。",
+          },
+        },
+        statusFilter: {
+          chipEmpty: { ko: "+ 상태", en: "+ Status", ja: "+ ステータス" },
+          prefix: { ko: "상태", en: "Status", ja: "ステータス" },
+          title: {
+            ko: "상태 선택 (복수 가능)",
+            en: "Select statuses (multiple)",
+            ja: "ステータス選択（複数可）",
+          },
+        },
+        categoryFilter: {
+          chipEmpty: { ko: "+ 카테고리", en: "+ Category", ja: "+ カテゴリー" },
+          prefix: { ko: "카테고리", en: "Category", ja: "カテゴリー" },
+          title: { ko: "카테고리 선택", en: "Select category", ja: "カテゴリー選択" },
+        },
+        subTypeFilter: {
+          chipEmpty: { ko: "+ 서브타입", en: "+ Sub-type", ja: "+ サブタイプ" },
+          prefix: { ko: "서브타입", en: "Sub-type", ja: "サブタイプ" },
+          title: {
+            ko: "서브타입 선택 (복수 가능)",
+            en: "Select sub-types (multiple)",
+            ja: "サブタイプ選択（複数可）",
+          },
+        },
+        minFollowersFilter: {
+          chipEmpty: { ko: "+ 팔로워 범위", en: "+ Follower range", ja: "+ フォロワー範囲" },
+          title: { ko: "팔로워 최소값", en: "Minimum followers", ja: "フォロワー最小値" },
+          activeLabel: {
+            ko: "팔로워 {count}명 이상",
+            en: "{count}+ followers",
+            ja: "フォロワー{count}人以上",
+          },
+          suffix: { ko: "명 이상", en: "or more", ja: "人以上" },
+          placeholder: { ko: "예: 10000", en: "e.g. 10000", ja: "例: 10000" },
+        },
+      },
+    },
     auth: {
       checkEmailAndPassword: {
         ko: "이메일 형식과 비밀번호(8자 이상)를 확인해주세요.",

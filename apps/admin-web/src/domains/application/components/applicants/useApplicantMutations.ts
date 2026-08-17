@@ -1,5 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
+import { translate } from "@i18n/admin";
+import { getStoredLanguage } from "@/lib/i18n";
 import {
   approveApplication,
   deliverApplication,
@@ -48,7 +50,12 @@ function extractErrorMessage(err: unknown): string {
       return message[0];
     }
   }
-  return err instanceof Error ? err.message : "처리에 실패했습니다.";
+  return err instanceof Error
+    ? err.message
+    : translate(
+        "domains.application.applicants.errors.mutationFailed",
+        getStoredLanguage(),
+      );
 }
 
 export function useApplicantMutations(
@@ -94,7 +101,12 @@ export function useApplicantMutations(
             !input.trackingCarrier?.trim() ||
             !input.trackingNumber?.trim()
           ) {
-            setError("택배사와 운송장 번호를 입력하세요.");
+            setError(
+              translate(
+                "domains.application.applicants.errors.trackingRequired",
+                getStoredLanguage(),
+              ),
+            );
             return false;
           }
           await shipApplication(

@@ -4,6 +4,7 @@ import {
   type AdminInfluencerSnsAccount,
   type CampaignSubType,
 } from "@jsure/shared";
+import { translate, type AdminLanguage } from "@i18n/admin";
 import type { Applicant, ApplicantStatus, Media } from "./types";
 
 export const SNS_TO_MEDIA: Record<CampaignSubType, Media> = {
@@ -16,8 +17,6 @@ export const SNS_TO_MEDIA: Record<CampaignSubType, Media> = {
   ATCOSME: "atcosme",
 };
 
-const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
-
 function pickAccounts(
   accounts: AdminInfluencerSnsAccount[],
   subTypes: CampaignSubType[],
@@ -27,17 +26,26 @@ function pickAccounts(
   );
 }
 
-export function formatRelative(iso: string, now: Date): string {
+export function formatRelative(
+  iso: string,
+  now: Date,
+  language: AdminLanguage,
+): string {
+  const relativeTimeFormat = new Intl.RelativeTimeFormat(language, {
+    numeric: "auto",
+  });
   const then = new Date(iso);
   const diffMs = now.getTime() - then.getTime();
   const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return "방금";
-  if (minutes < 60) return RELATIVE_TIME.format(-minutes, "minute");
+  if (minutes < 1) {
+    return translate("domains.application.applicants.time.justNow", language);
+  }
+  if (minutes < 60) return relativeTimeFormat.format(-minutes, "minute");
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return RELATIVE_TIME.format(-hours, "hour");
+  if (hours < 24) return relativeTimeFormat.format(-hours, "hour");
   const days = Math.floor(hours / 24);
-  if (days < 7) return RELATIVE_TIME.format(-days, "day");
-  return then.toLocaleDateString("ko-KR", {
+  if (days < 7) return relativeTimeFormat.format(-days, "day");
+  return then.toLocaleDateString(language, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -72,6 +80,7 @@ function deriveStatus(application: AdminApplication): ApplicantStatus | null {
 export function toApplicant(
   application: AdminApplication,
   now: Date,
+  language: AdminLanguage,
 ): Applicant | null {
   const status = deriveStatus(application);
   if (!status) return null;
@@ -111,7 +120,7 @@ export function toApplicant(
         : [];
     }),
     engagementRate: 0,
-    appliedAt: formatRelative(application.appliedAt, now),
+    appliedAt: formatRelative(application.appliedAt, now, language),
     status,
     rawStatus: application.status,
     trackingCarrier: application.trackingCarrier,

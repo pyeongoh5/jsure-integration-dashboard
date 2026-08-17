@@ -1,6 +1,7 @@
 import { SUB_TYPE_LABEL, SUB_TYPE_OPTION_LABEL } from "@jsure/shared";
 import { ScrollTable, SubTypePill } from "@/components/composites";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import {
   APPLICANT_STATUS_LABEL,
   CATEGORY_LABEL_KO,
@@ -11,6 +12,8 @@ import {
 import { SNS_TO_MEDIA } from "./applicantTransform";
 import styles from "@/pages/Applicants/Applicants.module.css";
 import shared from "../application.module.css";
+
+type TranslateFunction = ReturnType<typeof useT>;
 
 type ActionHandlers = {
   onApprove: (applicant: Applicant) => void;
@@ -23,21 +26,21 @@ type ActionHandlers = {
   onHistory: (applicant: Applicant) => void;
 };
 
-function renderActions(applicant: Applicant, handlers: ActionHandlers) {
+function renderActions(applicant: Applicant, handlers: ActionHandlers, t: TranslateFunction) {
   const memoButton = (
     <Button variant="secondary" size="sm" onClick={() => handlers.onMemo(applicant)}>
-      메모
+      {t("domains.application.applicants.actions.memo")}
     </Button>
   );
   const detailButton =
     applicant.category === "FAKE_PURCHASE" ? (
       <Button variant="secondary" size="sm" onClick={() => handlers.onDetail(applicant)}>
-        상세
+        {t("domains.application.applicants.actions.detail")}
       </Button>
     ) : null;
   const historyButton = (
     <Button variant="secondary" size="sm" onClick={() => handlers.onHistory(applicant)}>
-      이력
+      {t("domains.application.applicants.actions.history")}
     </Button>
   );
   const hasShipping = applicant.category === "SNS" || applicant.category === "SIMPLE_REVIEW";
@@ -47,10 +50,10 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
       return (
         <div className={styles.actions}>
           <Button variant="primary" size="sm" onClick={() => handlers.onApprove(applicant)}>
-            승인
+            {t("domains.application.applicants.actions.approve")}
           </Button>
           <Button variant="danger" size="sm" onClick={() => handlers.onReject(applicant)}>
-            반려
+            {t("domains.application.applicants.actions.reject")}
           </Button>
           {detailButton}
           {memoButton}
@@ -62,11 +65,11 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
         <div className={styles.actions}>
           {hasShipping && (
             <Button variant="primary" size="sm" onClick={() => handlers.onShip(applicant)}>
-              운송장 입력
+              {t("domains.application.applicants.actions.enterTracking")}
             </Button>
           )}
           <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(applicant)}>
-            되돌리기
+            {t("domains.application.applicants.actions.undo")}
           </Button>
           {detailButton}
           {memoButton}
@@ -78,7 +81,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
         <div className={styles.actions}>
           {hasShipping && (
             <Button variant="primary" size="sm" onClick={() => handlers.onDeliver(applicant)}>
-              배송 완료
+              {t("domains.application.applicants.actions.deliver")}
             </Button>
           )}
           {detailButton}
@@ -101,7 +104,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
       return (
         <div className={styles.actions}>
           <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(applicant)}>
-            되돌리기
+            {t("domains.application.applicants.actions.undo")}
           </Button>
           {detailButton}
           {memoButton}
@@ -112,7 +115,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
       return (
         <div className={styles.actions}>
           <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(applicant)}>
-            되돌리기
+            {t("domains.application.applicants.actions.undo")}
           </Button>
           {detailButton}
           {memoButton}
@@ -122,12 +125,12 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers) {
   }
 }
 
-function renderCategory(applicant: Applicant) {
+function renderCategory(applicant: Applicant, t: TranslateFunction) {
   const className =
     applicant.category === "SNS" ? shared.categoryBadgeSns : shared.categoryBadgeFake;
   return (
     <span className={`${shared.categoryBadge} ${className}`}>
-      {CATEGORY_LABEL_KO[applicant.category]}
+      {t(CATEGORY_LABEL_KO[applicant.category])}
     </span>
   );
 }
@@ -143,14 +146,14 @@ const STATUS_BADGE_CLASS: Record<ApplicantStatus, string | undefined> = {
   REJECTED: styles.statusRejected,
 };
 
-function renderStatus(applicant: Applicant) {
+function renderStatus(applicant: Applicant, t: TranslateFunction) {
   const trackingVisible =
     (applicant.status === "SHIPPING" || applicant.status === "DELIVERED") &&
     applicant.trackingNumber !== null;
   return (
     <div className={styles.stage}>
       <span className={`${styles.stagePill} ${STATUS_BADGE_CLASS[applicant.status]}`}>
-        {APPLICANT_STATUS_LABEL[applicant.status]}
+        {t(APPLICANT_STATUS_LABEL[applicant.status])}
       </span>
       {trackingVisible && (
         <span className={styles.stageTracking}>
@@ -217,10 +220,12 @@ export function ApplicantTable({
   onDetail,
   onHistory,
 }: Props) {
+  const t = useT();
+
   if (items.length === 0) {
     return (
       <div className={styles.card}>
-        <div className={styles.empty}>해당 상태의 응모자가 없습니다.</div>
+        <div className={styles.empty}>{t("domains.application.applicants.table.empty")}</div>
       </div>
     );
   }
@@ -240,14 +245,14 @@ export function ApplicantTable({
                   onChange={(event) => onToggleAll(event.target.checked)}
                 />
               </th>
-              <th>인플루언서</th>
-              <th>캠페인</th>
-              <th>카테고리</th>
-              <th>서브타입</th>
-              <th>팔로워</th>
-              <th>응모 시각</th>
-              <th style={{ textAlign: "center" }}>상태</th>
-              <th>액션</th>
+              <th>{t("domains.application.applicants.table.influencer")}</th>
+              <th>{t("domains.application.applicants.table.campaign")}</th>
+              <th>{t("domains.application.applicants.table.category")}</th>
+              <th>{t("domains.application.applicants.table.subType")}</th>
+              <th>{t("domains.application.applicants.table.followers")}</th>
+              <th>{t("domains.application.applicants.table.appliedAt")}</th>
+              <th style={{ textAlign: "center" }}>{t("domains.application.applicants.table.status")}</th>
+              <th>{t("domains.application.applicants.table.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -271,21 +276,23 @@ export function ApplicantTable({
                     <div>
                       <div className={shared.infName}>
                         {applicant.name}
-                        {applicant.flagged && <span className={shared.flaggedBadge}>대상외</span>}
+                        {applicant.flagged && <span className={shared.flaggedBadge}>{t("domains.application.applicants.table.flagged")}</span>}
                       </div>
                       {applicant.handle ? (
                         <div className={shared.infHandle}>@{applicant.handle}</div>
                       ) : applicant.representativeSns ? (
                         <div className={shared.infHandle}>
-                          대표 SNS: {SUB_TYPE_LABEL[applicant.representativeSns.snsType]} - @
-                          {applicant.representativeSns.handle}
+                          {t("domains.application.applicants.table.representativeSns", {
+                            snsType: SUB_TYPE_LABEL[applicant.representativeSns.snsType],
+                            handle: applicant.representativeSns.handle,
+                          })}
                         </div>
                       ) : null}
                     </div>
                   </div>
                 </td>
                 <td>{applicant.campaign}</td>
-                <td width="100">{renderCategory(applicant)}</td>
+                <td width="100">{renderCategory(applicant, t)}</td>
                 <td>
                   <div className={styles.mediaList}>
                     {applicant.category === "FAKE_PURCHASE" ||
@@ -339,19 +346,23 @@ export function ApplicantTable({
                 </td>
                 <td className={styles.time}>{applicant.appliedAt}</td>
                 <td className={styles.stageCell} style={{ textAlign: "center" }}>
-                  {renderStatus(applicant)}
+                  {renderStatus(applicant, t)}
                 </td>
                 <td>
-                  {renderActions(applicant, {
-                    onApprove,
-                    onReject,
-                    onUndo,
-                    onShip,
-                    onDeliver,
-                    onMemo,
-                    onDetail,
-                    onHistory,
-                  })}
+                  {renderActions(
+                    applicant,
+                    {
+                      onApprove,
+                      onReject,
+                      onUndo,
+                      onShip,
+                      onDeliver,
+                      onMemo,
+                      onDetail,
+                      onHistory,
+                    },
+                    t,
+                  )}
                 </td>
               </tr>
             ))}

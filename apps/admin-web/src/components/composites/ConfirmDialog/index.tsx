@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import styles from "./ConfirmDialog.module.css";
 
 type ConfirmDialogProps = {
@@ -21,14 +22,15 @@ export function ConfirmDialog({
   open,
   title,
   subtitle,
-  confirmLabel = "확인",
-  cancelLabel = "취소",
+  confirmLabel,
+  cancelLabel,
   tone = "primary",
   busy = false,
   confirmDisabled = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const t = useT();
   const confirmRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             disabled={busy}
           >
-            {cancelLabel}
+            {cancelLabel ?? t("common.cancel")}
           </Button>
           <Button
             ref={confirmRef}
@@ -84,7 +86,9 @@ export function ConfirmDialog({
             disabled={busy || confirmDisabled}
             loading={busy}
           >
-            {busy ? "처리 중..." : confirmLabel}
+            {busy
+              ? t("components.confirmDialog.processing")
+              : (confirmLabel ?? t("components.confirmDialog.confirm"))}
           </Button>
         </div>
       </div>

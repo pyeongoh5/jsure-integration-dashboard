@@ -15,6 +15,7 @@ import {
   RichTextImageUploadError,
   startRichTextImageUpload,
 } from "@/lib/richTextImages";
+import { useT } from "@/lib/i18n";
 import { ResizableImageView } from "./ResizableImageView";
 import styles from "./NoticeEditor.module.css";
 
@@ -128,6 +129,7 @@ function Toolbar({
   editor: Editor;
   imageUploadEndpoint?: string;
 }) {
+  const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImage = useCallback(
@@ -140,7 +142,7 @@ function Toolbar({
         const message =
           caught instanceof RichTextImageUploadError
             ? caught.message
-            : "이미지 업로드에 실패했습니다";
+            : t("components.richTextEditor.imageUploadFailed");
         window.alert(message);
         return;
       }
@@ -187,7 +189,7 @@ function Toolbar({
           const message =
             caught instanceof RichTextImageUploadError
               ? caught.message
-              : "이미지 업로드에 실패했습니다";
+              : t("components.richTextEditor.imageUploadFailed");
           window.alert(message);
           const tr = editor.state.tr;
           let removed = false;
@@ -207,7 +209,7 @@ function Toolbar({
           URL.revokeObjectURL(previewUrl);
         });
     },
-    [editor, imageUploadEndpoint],
+    [editor, imageUploadEndpoint, t],
   );
 
   const onPickFile = useCallback(
@@ -221,31 +223,34 @@ function Toolbar({
 
   const onSetLink = useCallback(() => {
     const previous = editor.getAttributes("link").href as string | undefined;
-    const url = window.prompt("링크 URL", previous ?? "https://");
+    const url = window.prompt(
+      t("components.richTextEditor.linkUrlPrompt"),
+      previous ?? "https://",
+    );
     if (url === null) return;
     if (url === "") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
-  }, [editor]);
+  }, [editor, t]);
 
   return (
     <div className={styles.toolbar}>
       <ToolbarButton
         action={() => editor.chain().focus().toggleBold().run()}
         active={editor.isActive("bold")}
-        label="굵게"
+        label={t("components.richTextEditor.bold")}
       />
       <ToolbarButton
         action={() => editor.chain().focus().toggleItalic().run()}
         active={editor.isActive("italic")}
-        label="기울임"
+        label={t("components.richTextEditor.italic")}
       />
       <ToolbarButton
         action={() => editor.chain().focus().toggleStrike().run()}
         active={editor.isActive("strike")}
-        label="취소선"
+        label={t("components.richTextEditor.strikethrough")}
       />
       <span className={styles.divider} />
       <ToolbarButton
@@ -261,23 +266,23 @@ function Toolbar({
       <ToolbarButton
         action={() => editor.chain().focus().toggleBulletList().run()}
         active={editor.isActive("bulletList")}
-        label="• 목록"
+        label={t("components.richTextEditor.bulletList")}
       />
       <ToolbarButton
         action={() => editor.chain().focus().toggleOrderedList().run()}
         active={editor.isActive("orderedList")}
-        label="1. 목록"
+        label={t("components.richTextEditor.orderedList")}
       />
       <ToolbarButton
         action={() => editor.chain().focus().toggleBlockquote().run()}
         active={editor.isActive("blockquote")}
-        label="인용"
+        label={t("components.richTextEditor.blockquote")}
       />
       <span className={styles.divider} />
       <input
         type="color"
         className={styles.color}
-        title="글자 색"
+        title={t("components.richTextEditor.textColor")}
         value={(editor.getAttributes("textStyle").color as string) ?? "#000000"}
         onChange={(event) => {
           editor.chain().focus().setColor(event.target.value).run();
@@ -287,17 +292,17 @@ function Toolbar({
       <ToolbarButton
         action={() => editor.chain().focus().setTextAlign("left").run()}
         active={editor.isActive({ textAlign: "left" })}
-        label="좌"
+        label={t("components.richTextEditor.alignLeft")}
       />
       <ToolbarButton
         action={() => editor.chain().focus().setTextAlign("center").run()}
         active={editor.isActive({ textAlign: "center" })}
-        label="중"
+        label={t("components.richTextEditor.alignCenter")}
       />
       <ToolbarButton
         action={() => editor.chain().focus().setTextAlign("right").run()}
         active={editor.isActive({ textAlign: "right" })}
-        label="우"
+        label={t("components.richTextEditor.alignRight")}
       />
       <span className={styles.divider} />
       <button
@@ -305,7 +310,7 @@ function Toolbar({
         className={styles.button}
         onClick={onSetLink}
       >
-        링크
+        {t("components.richTextEditor.link")}
       </button>
       {imageUploadEndpoint ? (
         <>
@@ -314,7 +319,7 @@ function Toolbar({
             className={styles.button}
             onClick={() => fileRef.current?.click()}
           >
-            이미지
+            {t("components.richTextEditor.image")}
           </button>
           <input
             ref={fileRef}
@@ -331,6 +336,7 @@ function Toolbar({
 }
 
 function ImageSizeControls({ editor }: { editor: Editor }) {
+  const t = useT();
   const currentWidth = editor.getAttributes("image").width as string | null;
 
   const setWidthWithFocus = (width: string | null) => {
@@ -349,7 +355,7 @@ function ImageSizeControls({ editor }: { editor: Editor }) {
     <>
       <span className={styles.divider} />
       <span style={{ fontSize: 11, color: "#6b7280", alignSelf: "center" }}>
-        이미지
+        {t("components.richTextEditor.image")}
       </span>
       {["25%", "50%", "75%", "100%"].map((preset) => (
         <button
@@ -364,13 +370,13 @@ function ImageSizeControls({ editor }: { editor: Editor }) {
       <input
         type="text"
         className={styles.sizeInput}
-        placeholder="예: 300"
+        placeholder={t("components.richTextEditor.widthPlaceholder")}
         value={pxValue}
         onChange={(event) => {
           const raw = event.target.value.replace(/[^\d]/g, "");
           updateWidthOnly(raw ? `${raw}px` : null);
         }}
-        title="픽셀(px) 단위 너비"
+        title={t("components.richTextEditor.widthInPixelsTitle")}
       />
       <span style={{ fontSize: 11, color: "#6b7280", alignSelf: "center" }}>
         px
@@ -379,9 +385,9 @@ function ImageSizeControls({ editor }: { editor: Editor }) {
         type="button"
         className={styles.button}
         onClick={() => setWidthWithFocus(null)}
-        title="원본 크기"
+        title={t("components.richTextEditor.originalSizeTitle")}
       >
-        원본
+        {t("components.richTextEditor.originalSize")}
       </button>
     </>
   );

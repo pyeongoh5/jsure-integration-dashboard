@@ -32,6 +32,38 @@ export const adminMessages = {
     spinner: {
       loading: { ko: "로딩 중", en: "Loading", ja: "読み込み中" },
     },
+    confirmDialog: {
+      confirm: { ko: "확인", en: "OK", ja: "確認" },
+      processing: { ko: "처리 중...", en: "Processing...", ja: "処理中..." },
+    },
+    richTextEditor: {
+      bold: { ko: "굵게", en: "Bold", ja: "太字" },
+      italic: { ko: "기울임", en: "Italic", ja: "斜体" },
+      strikethrough: { ko: "취소선", en: "Strikethrough", ja: "取り消し線" },
+      bulletList: { ko: "• 목록", en: "• List", ja: "• リスト" },
+      orderedList: { ko: "1. 목록", en: "1. List", ja: "1. リスト" },
+      blockquote: { ko: "인용", en: "Quote", ja: "引用" },
+      textColor: { ko: "글자 색", en: "Text color", ja: "文字色" },
+      alignLeft: { ko: "좌", en: "Left", ja: "左" },
+      alignCenter: { ko: "중", en: "Center", ja: "中央" },
+      alignRight: { ko: "우", en: "Right", ja: "右" },
+      link: { ko: "링크", en: "Link", ja: "リンク" },
+      linkUrlPrompt: { ko: "링크 URL", en: "Link URL", ja: "リンクURL" },
+      image: { ko: "이미지", en: "Image", ja: "画像" },
+      imageUploadFailed: {
+        ko: "이미지 업로드에 실패했습니다",
+        en: "Image upload failed",
+        ja: "画像のアップロードに失敗しました",
+      },
+      widthPlaceholder: { ko: "예: 300", en: "e.g. 300", ja: "例: 300" },
+      widthInPixelsTitle: {
+        ko: "픽셀(px) 단위 너비",
+        en: "Width in pixels (px)",
+        ja: "ピクセル(px)単位の幅",
+      },
+      originalSizeTitle: { ko: "원본 크기", en: "Original size", ja: "元のサイズ" },
+      originalSize: { ko: "원본", en: "Original", ja: "元のサイズ" },
+    },
   },
   sidebar: {
     footer: {

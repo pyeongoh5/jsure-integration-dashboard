@@ -5,7 +5,9 @@ import {
   type CampaignThumbnailUploadPresignResponse,
   type UploadContentType,
 } from "@jsure/shared";
+import { translate } from "@i18n/admin";
 import { api } from "./api";
+import { getStoredLanguage } from "./i18n";
 
 export class UploadError extends Error {
   constructor(message: string) {
@@ -15,12 +17,15 @@ export class UploadError extends Error {
 }
 
 function assertAllowed(file: File): UploadContentType {
+  const language = getStoredLanguage();
   if (!UPLOAD_ALLOWED_CONTENT_TYPES.includes(file.type as UploadContentType)) {
-    throw new UploadError("PNG, JPEG, WebP 형식만 업로드할 수 있습니다");
+    throw new UploadError(translate("components.uploads.invalidImageType", language));
   }
   if (file.size > UPLOAD_MAX_BYTES) {
     throw new UploadError(
-      `파일 크기가 너무 큽니다 (${(UPLOAD_MAX_BYTES / 1024 / 1024).toFixed(0)}MB 이하)`,
+      translate("components.uploads.fileTooLarge", language, {
+        maxMb: (UPLOAD_MAX_BYTES / 1024 / 1024).toFixed(0),
+      }),
     );
   }
   return file.type as UploadContentType;
@@ -63,7 +68,11 @@ export async function uploadCampaignThumbnail(
     body: file,
   });
   if (!putRes.ok) {
-    throw new UploadError(`업로드에 실패했습니다 (HTTP ${putRes.status})`);
+    throw new UploadError(
+      translate("components.uploads.uploadFailedHttp", getStoredLanguage(), {
+        status: putRes.status,
+      }),
+    );
   }
 
   return { objectKey: presign.objectKey, viewUrl: presign.viewUrl };

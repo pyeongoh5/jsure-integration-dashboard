@@ -1,8 +1,10 @@
 import { useLocation } from "react-router-dom";
 import { findNavMatch } from "@/lib/navigation";
+import { useT } from "@/lib/i18n";
 import styles from "./Breadcrumb.module.css";
 
 export function Breadcrumb() {
+  const t = useT();
   const { pathname } = useLocation();
   const match = findNavMatch(pathname);
 
@@ -10,9 +12,9 @@ export function Breadcrumb() {
 
   return (
     <div className={styles.root}>
-      <span>{match.group.title}</span>
+      <span>{t(match.group.title)}</span>
       <span className={styles.sep}>›</span>
-      <span>{match.item.label}</span>
+      <span>{t(match.item.label)}</span>
     </div>
   );
 }

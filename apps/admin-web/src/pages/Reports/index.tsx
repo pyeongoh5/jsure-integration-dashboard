@@ -1,9 +1,11 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import ExcelJS from "exceljs";
 import { SUB_TYPE_OPTION_LABEL, type CampaignReportParticipant } from "@jsure/shared";
+import { translate, type AdminTranslationKey } from "@i18n/admin";
 import { ScrollTable } from "@/components/composites";
 import { useSubmissionDetail } from "@/domains/application";
 import { Button } from "@/components/ui";
+import { getStoredLanguage, useT } from "@/lib/i18n";
 import {
   getCampaignParticipants,
   getCampaignReports,
@@ -25,7 +27,7 @@ const SNS_LABEL: Record<CampaignReportParticipant["subType"], string> = {
 
 type ColumnDef = {
   key: CampaignReportSortKey;
-  label: string;
+  labelKey: AdminTranslationKey;
   numeric: boolean;
   format: (row: CampaignReportRow) => string;
   cellClass?: "titleCell";
@@ -34,92 +36,92 @@ type ColumnDef = {
 const COLUMNS: ColumnDef[] = [
   {
     key: "campaignTitle",
-    label: "캠페인",
+    labelKey: "domains.application.applicants.table.campaign",
     numeric: false,
     format: (row) => row.campaignTitle,
     cellClass: "titleCell",
   },
   {
     key: "influencerCount",
-    label: "인플루언서 수",
+    labelKey: "pages.reports.columns.influencerCount",
     numeric: true,
     format: (row) => formatInteger(row.influencerCount),
   },
   {
     key: "totalFollowers",
-    label: "총 팔로워",
+    labelKey: "pages.reports.columns.totalFollowers",
     numeric: true,
     format: (row) => formatInteger(row.totalFollowers),
   },
   {
     key: "postCount",
-    label: "콘텐츠 수",
+    labelKey: "pages.reports.columns.postCount",
     numeric: true,
     format: (row) => formatInteger(row.postCount),
   },
   {
     key: "totalRewardJpy",
-    label: "총 광고비(¥)",
+    labelKey: "pages.reports.columns.totalRewardJpy",
     numeric: true,
     format: (row) => `¥${formatInteger(row.totalRewardJpy)}`,
   },
   {
     key: "totalLikes",
-    label: "좋아요",
+    labelKey: "domains.report.metrics.likes",
     numeric: true,
     format: (row) => formatInteger(row.totalLikes),
   },
   {
     key: "totalComments",
-    label: "댓글",
+    labelKey: "domains.report.metrics.comments",
     numeric: true,
     format: (row) => formatInteger(row.totalComments),
   },
   {
     key: "totalShares",
-    label: "공유",
+    labelKey: "domains.report.metrics.shares",
     numeric: true,
     format: (row) => formatInteger(row.totalShares),
   },
   {
     key: "totalReposts",
-    label: "리포스트",
+    labelKey: "domains.report.metrics.reposts",
     numeric: true,
     format: (row) => formatInteger(row.totalReposts),
   },
   {
     key: "totalSaves",
-    label: "저장",
+    labelKey: "domains.report.metrics.saves",
     numeric: true,
     format: (row) => formatInteger(row.totalSaves),
   },
   {
     key: "totalViews",
-    label: "조회",
+    labelKey: "domains.report.metrics.views",
     numeric: true,
     format: (row) => formatInteger(row.totalViews),
   },
   {
     key: "totalReach",
-    label: "도달",
+    labelKey: "domains.report.metrics.reach",
     numeric: true,
     format: (row) => formatInteger(row.totalReach),
   },
   {
     key: "totalEngagement",
-    label: "인게이지먼트",
+    labelKey: "domains.report.metrics.engagement",
     numeric: true,
     format: (row) => formatInteger(row.totalEngagement),
   },
   {
     key: "erByViews",
-    label: "ER(조회%)",
+    labelKey: "pages.reports.columns.erByViews",
     numeric: true,
     format: (row) => formatPercent(row.erByViews),
   },
   {
     key: "erByFollowers",
-    label: "ER(팔로워%)",
+    labelKey: "pages.reports.columns.erByFollowers",
     numeric: true,
     format: (row) => formatPercent(row.erByFollowers),
   },
@@ -135,6 +137,7 @@ function formatPercent(value: number | null): string {
 }
 
 export function Reports() {
+  const t = useT();
   const [rows, setRows] = useState<CampaignReportRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -162,7 +165,8 @@ export function Reports() {
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
-          const message = reason instanceof Error ? reason.message : "불러오기에 실패했습니다.";
+          const message =
+            reason instanceof Error ? reason.message : translate("pages.reports.loadFailed", getStoredLanguage());
           setError(message);
         }
       })
@@ -184,16 +188,16 @@ export function Reports() {
   };
 
   const subtitle = useMemo(() => {
-    if (loading) return "불러오는 중...";
-    if (error) return `오류: ${error}`;
-    return `총 ${rows.length}개 캠페인`;
-  }, [loading, error, rows.length]);
+    if (loading) return t("common.loading");
+    if (error) return t("pages.reports.subtitleError", { message: error });
+    return t("pages.reports.totalCampaigns", { count: rows.length });
+  }, [loading, error, rows.length, t]);
 
   return (
     <div className={styles.root}>
       <div className={styles.header}>
         <div className={styles.headerText}>
-          <h1 className={styles.title}>리포트</h1>
+          <h1 className={styles.title}>{t("nav.items.reports")}</h1>
           <p className={styles.subtitle}>{subtitle}</p>
         </div>
         <Button
@@ -203,7 +207,7 @@ export function Reports() {
           disabled={rows.length === 0}
           iconLeft={<i className="fa-solid fa-file-excel" aria-hidden="true" />}
         >
-          엑셀 다운로드
+          {t("common.downloadExcel")}
         </Button>
       </div>
 
@@ -222,7 +226,7 @@ export function Reports() {
                         className={styles.sortButton}
                         onClick={() => handleSortClick(column.key)}
                       >
-                        <span>{column.label}</span>
+                        <span>{t(column.labelKey)}</span>
                         <span
                           className={`${styles.sortIndicator} ${active ? styles.sortIndicatorActive : ""}`}
                         >
@@ -238,7 +242,7 @@ export function Reports() {
               {rows.length === 0 && !loading ? (
                 <tr>
                   <td colSpan={COLUMNS.length} className={styles.empty}>
-                    표시할 데이터가 없습니다.
+                    {t("pages.reports.empty")}
                   </td>
                 </tr>
               ) : (
@@ -304,6 +308,7 @@ type CampaignDownloadDialogProps = {
 };
 
 function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) {
+  const t = useT();
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<Set<string>>(() => new Set());
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -333,6 +338,7 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
     setDownloading(true);
     setError(null);
     try {
+      const language = getStoredLanguage();
       const workbook = new ExcelJS.Workbook();
       const usedSheetNames = new Set<string>();
       for (const target of targets) {
@@ -342,21 +348,26 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
           0,
           Math.max(1, target.participantCount),
         );
-        const sheetName = uniqueSheetName(target.campaignTitle, usedSheetNames);
+        const sheetName = uniqueSheetName(
+          target.campaignTitle,
+          usedSheetNames,
+          translate("domains.application.applicants.table.campaign", language),
+        );
         usedSheetNames.add(sheetName);
         const sheet = workbook.addWorksheet(sheetName);
         const sheetColumns = [...PARTICIPANT_COLUMNS, ...EXCEL_ONLY_COLUMNS];
         sheet.columns = sheetColumns.map((column) => ({
-          header: column.label,
+          header: translate(column.labelKey, language),
           key: column.key,
           width: column.width ?? (column.numeric ? 12 : 18),
           style: column.numeric ? { alignment: { horizontal: "right" } } : undefined,
         }));
         sheet.getRow(1).font = { bold: true };
+        const translateLabel: Translator = (key, params) => translate(key, language, params);
         for (const participant of response.participants) {
           const row: Record<string, string | number> = {};
           for (const column of sheetColumns) {
-            row[column.key] = column.excelValue(participant);
+            row[column.key] = column.excelValue(participant, translateLabel);
           }
           sheet.addRow(row);
         }
@@ -375,7 +386,11 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
       URL.revokeObjectURL(url);
       onClose();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "다운로드에 실패했습니다.");
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : t("pages.reports.downloadDialog.downloadFailed"),
+      );
     } finally {
       setDownloading(false);
     }
@@ -396,13 +411,15 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
         aria-labelledby="csv-dialog-title"
       >
         <h2 id="csv-dialog-title" className={styles.dialogTitle}>
-          엑셀 다운로드
+          {t("common.downloadExcel")}
         </h2>
-        <p className={styles.dialogSubtitle}>
-          다운로드할 캠페인을 선택하세요. 각 캠페인의 참여자(승인 이후 전체)가 시트별로 저장됩니다.
-        </p>
+        <p className={styles.dialogSubtitle}>{t("pages.reports.downloadDialog.subtitle")}</p>
         <div className={styles.bulkRow}>
-          <span>{selectedCampaignIds.size}개 선택됨</span>
+          <span>
+            {t("pages.reports.downloadDialog.selectedCount", {
+              count: selectedCampaignIds.size,
+            })}
+          </span>
           <Button
             variant={allSelected ? "primary" : "secondary"}
             size="sm"
@@ -415,7 +432,9 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
               />
             }
           >
-            {allSelected ? "전체 해제" : "전체 선택"}
+            {allSelected
+              ? t("domains.broadcast.dialog.deselectAll")
+              : t("domains.broadcast.dialog.selectAll")}
           </Button>
         </div>
         <div className={styles.columnList}>
@@ -435,7 +454,9 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
                 <span className={styles.columnDesc}>
                   {row.campaignTitle}
                   <span className={styles.campaignItemMeta}>
-                    참여자 {row.participantCount}명
+                    {t("pages.reports.downloadDialog.participantCount", {
+                      count: row.participantCount,
+                    })}
                   </span>
                 </span>
               </label>
@@ -445,7 +466,7 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
         {error && <div className={styles.dialogError}>{error}</div>}
         <div className={styles.dialogActions}>
           <Button variant="secondary" size="md" onClick={onClose} disabled={downloading}>
-            취소
+            {t("common.cancel")}
           </Button>
           <Button
             variant="success"
@@ -455,7 +476,9 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
             loading={downloading}
             iconLeft={<i className="fa-solid fa-file-excel" aria-hidden="true" />}
           >
-            {downloading ? "생성 중..." : "다운로드"}
+            {downloading
+              ? t("pages.reports.downloadDialog.generating")
+              : t("pages.reports.downloadDialog.download")}
           </Button>
         </div>
       </div>
@@ -464,12 +487,12 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
 }
 
 /** 엑셀 시트 이름은 31자 제한 + `\/?*[]:` 금지. 중복 시 (2), (3)... 접미사. */
-function uniqueSheetName(rawTitle: string, used: Set<string>): string {
+function uniqueSheetName(rawTitle: string, used: Set<string>, fallbackName: string): string {
   const sanitized =
     rawTitle
       .replace(/[\\/?*[\]:]/g, "_")
       .trim()
-      .slice(0, 31) || "캠페인";
+      .slice(0, 31) || fallbackName;
   if (!used.has(sanitized)) return sanitized;
   for (let suffix = 2; suffix < 1000; suffix += 1) {
     const tag = ` (${suffix})`;
@@ -486,90 +509,100 @@ type ParticipantPanelProps = {
 
 const PARTICIPANTS_PER_PAGE = 20;
 
+type Translator = (
+  key: AdminTranslationKey,
+  params?: Record<string, string | number>,
+) => string;
+
 type ParticipantColumn = {
   key: string;
-  label: string;
+  labelKey: AdminTranslationKey;
   numeric: boolean;
   /** xlsx 열 너비. 생략하면 numeric 여부로 정한다. */
   width?: number;
-  format: (participant: CampaignReportParticipant) => string;
-  excelValue: (participant: CampaignReportParticipant) => string | number;
+  format: (participant: CampaignReportParticipant, translateLabel: Translator) => string;
+  excelValue: (
+    participant: CampaignReportParticipant,
+    translateLabel: Translator,
+  ) => string | number;
 };
 
 const PARTICIPANT_COLUMNS: ParticipantColumn[] = [
   {
     key: "name",
-    label: "이름",
+    labelKey: "common.name",
     numeric: false,
     format: (participant) => participant.influencerName,
     excelValue: (participant) => participant.influencerName,
   },
   {
     key: "sns",
-    label: "SNS",
+    labelKey: "domains.application.export.sns",
     numeric: false,
     format: (participant) => formatSns(participant),
     excelValue: (participant) => formatSns(participant),
   },
   {
     key: "handle",
-    label: "SNS ID",
+    labelKey: "domains.application.export.snsId",
     numeric: false,
     format: (participant) => (participant.handle ? `@${participant.handle}` : "-"),
     excelValue: (participant) => (participant.handle ? `@${participant.handle}` : ""),
   },
   {
     key: "status",
-    label: "상태",
+    labelKey: "common.status",
     numeric: false,
-    format: (participant) => participantStatusLabel(participant),
-    excelValue: (participant) => participantStatusLabel(participant),
+    format: (participant, translateLabel) =>
+      translateLabel(participantStatusLabelKey(participant)),
+    excelValue: (participant, translateLabel) =>
+      translateLabel(participantStatusLabelKey(participant)),
   },
   {
     key: "likes",
-    label: "좋아요",
+    labelKey: "domains.report.metrics.likes",
     numeric: false,
     format: (participant) => formatInsightValue(participant.insight.likes),
     excelValue: (participant) => participant.insight.likes ?? "",
   },
   {
     key: "comments",
-    label: "댓글",
+    labelKey: "domains.report.metrics.comments",
     numeric: false,
     format: (participant) => formatInsightValue(participant.insight.comments),
     excelValue: (participant) => participant.insight.comments ?? "",
   },
   {
     key: "shares",
-    label: "공유",
+    labelKey: "domains.report.metrics.shares",
     numeric: false,
     format: (participant) => formatInsightValue(participant.insight.shares),
     excelValue: (participant) => participant.insight.shares ?? "",
   },
   {
     key: "reposts",
-    label: "리포스트",
+    labelKey: "domains.report.metrics.reposts",
     numeric: false,
     format: (participant) => formatInsightValue(participant.insight.reposts),
     excelValue: (participant) => participant.insight.reposts ?? "",
   },
   {
     key: "saves",
-    label: "저장",
+    labelKey: "domains.report.metrics.saves",
     numeric: false,
     format: (participant) => formatInsightValue(participant.insight.saves),
     excelValue: (participant) => participant.insight.saves ?? "",
   },
   {
     key: "views",
-    label: "조회",
+    labelKey: "domains.report.metrics.views",
     numeric: false,
     format: (participant) => formatInsightValue(participant.insight.views),
     excelValue: (participant) => participant.insight.views ?? "",
   },
   {
     key: "reach",
-    label: "도달",
+    labelKey: "domains.report.metrics.reach",
     numeric: false,
     format: (participant) => formatInsightValue(participant.insight.reach),
     excelValue: (participant) => participant.insight.reach ?? "",
@@ -583,7 +616,7 @@ const PARTICIPANT_COLUMNS: ParticipantColumn[] = [
 const EXCEL_ONLY_COLUMNS: ParticipantColumn[] = [
   {
     key: "postUrl",
-    label: "게시물 URL",
+    labelKey: "pages.reports.columns.postUrl",
     numeric: false,
     width: 48,
     format: (participant) => participant.postUrl ?? "-",
@@ -591,7 +624,7 @@ const EXCEL_ONLY_COLUMNS: ParticipantColumn[] = [
   },
   {
     key: "submittedAt",
-    label: "제출일",
+    labelKey: "pages.reports.columns.submittedAt",
     numeric: false,
     format: (participant) => formatDate(participant.submittedAt),
     excelValue: (participant) =>
@@ -599,26 +632,35 @@ const EXCEL_ONLY_COLUMNS: ParticipantColumn[] = [
   },
 ];
 
-const PARTICIPANT_STATUS_LABEL: Record<CampaignReportParticipant["status"], string> = {
-  APPLIED: "승인 대기",
-  REJECTED: "반려",
-  APPROVED: "승인",
-  SHIPPED: "배송중",
-  DELIVERED: "수령 확인",
-  ORDER_SUBMITTED: "주문 제출",
-  REVIEW_SUBMITTED: "제출",
-  COMPLETED: "완료",
-  CANCELLED: "취소",
+const PARTICIPANT_STATUS_LABEL_KEY: Record<
+  CampaignReportParticipant["status"],
+  AdminTranslationKey
+> = {
+  APPLIED: "domains.application.status.applied",
+  REJECTED: "domains.application.status.rejected",
+  APPROVED: "pages.reports.participantStatus.approved",
+  SHIPPED: "domains.application.status.shipping",
+  DELIVERED: "domains.application.history.actions.applicationReceiveConfirm",
+  ORDER_SUBMITTED: "pages.reports.participantStatus.orderSubmitted",
+  REVIEW_SUBMITTED: "pages.reports.participantStatus.reviewSubmitted",
+  COMPLETED: "common.completed",
+  CANCELLED: "pages.reports.participantStatus.cancelled",
 };
 
 /** 제출 이후에는 검수 결과가 실제 진행 단계라서 상태 대신 검수 상태를 보여준다. */
-function participantStatusLabel(participant: CampaignReportParticipant): string {
+function participantStatusLabelKey(
+  participant: CampaignReportParticipant,
+): AdminTranslationKey {
   if (participant.status === "REVIEW_SUBMITTED") {
-    if (participant.submissionReviewStatus === "REJECTED") return "검수 반려";
-    if (participant.submissionReviewStatus === "APPROVED") return "검수 승인";
-    return "검수 대기";
+    if (participant.submissionReviewStatus === "REJECTED") {
+      return "pages.reports.participantStatus.reviewRejected";
+    }
+    if (participant.submissionReviewStatus === "APPROVED") {
+      return "pages.reports.participantStatus.reviewApproved";
+    }
+    return "pages.reports.participantStatus.reviewPending";
   }
-  return PARTICIPANT_STATUS_LABEL[participant.status];
+  return PARTICIPANT_STATUS_LABEL_KEY[participant.status];
 }
 
 function formatSns(participant: CampaignReportParticipant): string {
@@ -640,6 +682,7 @@ function formatDate(iso: string | null): string {
 }
 
 function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
+  const t = useT();
   const submissionDetail = useSubmissionDetail();
   const [page, setPage] = useState(0);
   const [participants, setParticipants] = useState<CampaignReportParticipant[]>([]);
@@ -668,7 +711,9 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
       .catch((reason: unknown) => {
         if (!cancelled) {
           setLoadError(
-            reason instanceof Error ? reason.message : "참여자 목록을 불러올 수 없습니다.",
+            reason instanceof Error
+              ? reason.message
+              : translate("pages.reports.participants.loadFailed", getStoredLanguage()),
           );
         }
       })
@@ -681,14 +726,18 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
   }, [campaignId, safePage, totalCount]);
 
   if (totalCount === 0) {
-    return <div className={styles.participantsEmpty}>참여자가 없습니다.</div>;
+    return <div className={styles.participantsEmpty}>{t("pages.reports.participants.empty")}</div>;
   }
 
   return (
     <div className={styles.participantsPanel}>
       <div className={styles.participantsHeader}>
-        <span className={styles.participantsTitle}>참여자 ({totalCount}명)</span>
-        <span className={styles.participantsSubtitle}>승인 이후 단계인 응모 기준</span>
+        <span className={styles.participantsTitle}>
+          {t("pages.reports.participants.title", { count: totalCount })}
+        </span>
+        <span className={styles.participantsSubtitle}>
+          {t("pages.reports.participants.subtitle")}
+        </span>
       </div>
       <div className={styles.participantsTableWrap}>
         <table className={styles.participantsTable}>
@@ -696,10 +745,10 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
             <tr>
               {PARTICIPANT_COLUMNS.map((column) => (
                 <th key={column.key} className={column.numeric ? styles.numeric : undefined}>
-                  {column.label}
+                  {t(column.labelKey)}
                 </th>
               ))}
-              <th>제출물</th>
+              <th>{t("domains.application.drafts.table.submissions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -712,7 +761,7 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
             ) : loading ? (
               <tr>
                 <td colSpan={PARTICIPANT_COLUMNS.length + 1} className={styles.participantsEmpty}>
-                  불러오는 중...
+                  {t("common.loading")}
                 </td>
               </tr>
             ) : (
@@ -722,7 +771,7 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
                 >
                   {PARTICIPANT_COLUMNS.map((column) => (
                     <td key={column.key} className={column.numeric ? styles.numeric : undefined}>
-                      {column.format(participant)}
+                      {column.format(participant, t)}
                     </td>
                   ))}
                   <td>
@@ -736,8 +785,8 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
                         disabled={submissionDetail.loadingId !== null}
                       >
                         {submissionDetail.loadingId === participant.applicationId
-                          ? "불러오는 중…"
-                          : "보기"}
+                          ? t("common.loading")
+                          : t("common.view")}
                       </button>
                     )}
                   </td>
@@ -756,7 +805,7 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
             onClick={() => setPage((current) => Math.max(0, current - 1))}
             disabled={safePage === 0 || loading}
           >
-            이전
+            {t("common.previous")}
           </Button>
           <span className={styles.pageStatus}>
             {safePage + 1} / {totalPages}
@@ -767,7 +816,7 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
             onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
             disabled={safePage >= totalPages - 1 || loading}
           >
-            다음
+            {t("common.next")}
           </Button>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { jwinApi } from "@/lib/api";
 import {
+  AdminCampaignListSchema,
   AdminCampaignDetailSchema,
   AdminPrizeListSchema,
   AdminPostTemplateListSchema,
@@ -7,7 +8,10 @@ import {
   AdminShippingSchema,
   AdminPrizeSchema,
   AdminWinnerSchema,
+  type AdminCampaignList,
   type AdminCampaignDetail,
+  type AdminCampaignCreate,
+  type AdminCampaignPatch,
   type AdminPrizeList,
   type AdminPostTemplateList,
   type AdminWinnerList,
@@ -18,8 +22,26 @@ import {
   type AdminFulfillmentPatch,
 } from "./types";
 
+export async function fetchCampaigns(): Promise<AdminCampaignList> {
+  const response = await jwinApi.get(`/admin/campaigns`);
+  return AdminCampaignListSchema.parse(response.data);
+}
+
 export async function fetchCampaign(campaignId: string): Promise<AdminCampaignDetail> {
   const response = await jwinApi.get(`/admin/campaigns/${campaignId}`);
+  return AdminCampaignDetailSchema.parse(response.data);
+}
+
+export async function createCampaign(body: AdminCampaignCreate): Promise<AdminCampaignDetail> {
+  const response = await jwinApi.post(`/admin/campaigns`, body);
+  return AdminCampaignDetailSchema.parse(response.data);
+}
+
+export async function updateCampaign(
+  campaignId: string,
+  body: AdminCampaignPatch,
+): Promise<AdminCampaignDetail> {
+  const response = await jwinApi.patch(`/admin/campaigns/${campaignId}`, body);
   return AdminCampaignDetailSchema.parse(response.data);
 }
 

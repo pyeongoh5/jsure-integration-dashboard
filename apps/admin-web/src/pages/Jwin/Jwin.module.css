@@ -1,0 +1,88 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.headerMain {
+  flex: 1;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--c-muted);
+  font-size: 14px;
+}
+
+.card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--c-muted);
+  font-size: 14px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--c-muted);
+  cursor: pointer;
+}
+
+.backLink:hover {
+  color: var(--c-text);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.saveRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.saved {
+  font-size: 13px;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.saveError {
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.tabContent {
+  padding-top: 4px;
+}

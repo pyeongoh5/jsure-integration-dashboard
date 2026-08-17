@@ -1,0 +1,1 @@
+export { JwinStatusBadge } from "./JwinStatusBadge";

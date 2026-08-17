@@ -1,5 +1,9 @@
 /** J-WIN 어드민 계약 타입 재노출 — 화면·hook은 이 파일에서만 가져온다. */
 export {
+  AdminCampaignListItemSchema,
+  AdminCampaignListSchema,
+  AdminCampaignCreateSchema,
+  AdminCampaignPatchSchema,
   AdminCampaignDetailSchema,
   AdminPrizeSchema,
   AdminPrizeListSchema,
@@ -12,6 +16,10 @@ export {
   AdminFulfillmentPatchSchema,
 } from "@jsure/jwin-shared";
 export type {
+  AdminCampaignListItem,
+  AdminCampaignList,
+  AdminCampaignCreate,
+  AdminCampaignPatch,
   AdminCampaignDetail,
   AdminPrize,
   AdminPrizeList,

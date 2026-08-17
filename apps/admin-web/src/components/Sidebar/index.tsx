@@ -1,41 +1,47 @@
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import type { AdminTranslationKey } from "@i18n/admin";
 import { Logo } from "@/components/Sidebar/Logo";
 import { FooterUser } from "@/components/Sidebar/FooterUser";
+import { useT } from "@/lib/i18n";
 import {
   fetchAppliedCount,
   fetchPendingReviewCount,
   fetchPendingSettlementCount,
 } from "@/domains/application";
 
-type NavItem = { to: string; label: string; icon: ReactNode; badge?: ReactNode };
-type NavGroup = { title: string; items: NavItem[] };
+type NavItem = { to: string; label: AdminTranslationKey; icon: ReactNode; badge?: ReactNode };
+type NavGroup = { title: AdminTranslationKey; items: NavItem[] };
 
 const NAV: NavGroup[] = [
   {
-    title: "운영",
+    title: "nav.groups.operations",
     items: [
-      { to: "/", label: "대시보드", icon: <i className="fa-solid fa-table-cells-large" /> },
+      {
+        to: "/",
+        label: "nav.items.dashboard",
+        icon: <i className="fa-solid fa-table-cells-large" />,
+      },
       {
         to: "/campaigns",
-        label: "캠페인 관리",
+        label: "nav.items.campaigns",
         icon: <i className="fa-solid fa-bullhorn" />,
       },
       {
         to: "/applicants",
-        label: "응모자 관리",
+        label: "nav.items.applicants",
         icon: <i className="fa-solid fa-user-check" />,
       },
-      { to: "/drafts", label: "검토", icon: <i className="fa-solid fa-file-pen" /> },
+      { to: "/drafts", label: "nav.items.drafts", icon: <i className="fa-solid fa-file-pen" /> },
     ],
   },
   {
-    title: "고객",
+    title: "nav.groups.customers",
     items: [
       {
         to: "/influencers",
-        label: "인플루언서",
+        label: "nav.items.influencers",
         icon: <i className="fa-solid fa-user-group" />,
       },
       // {
@@ -46,31 +52,36 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    title: "재무",
+    title: "nav.groups.finance",
     items: [
       {
         to: "/payouts",
-        label: "정산 관리",
+        label: "nav.items.payouts",
         icon: <i className="fa-solid fa-money-check-dollar" />,
       },
-      { to: "/reports", label: "리포트", icon: <i className="fa-solid fa-chart-line" /> },
+      {
+        to: "/reports",
+        label: "nav.items.reports",
+        icon: <i className="fa-solid fa-chart-line" />,
+      },
     ],
   },
   {
-    title: "시스템",
+    title: "nav.groups.system",
     items: [
-      { to: "/notices", label: "공지사항", icon: <i className="fa-solid fa-bullhorn" /> },
+      { to: "/notices", label: "nav.items.notices", icon: <i className="fa-solid fa-bullhorn" /> },
       {
         to: "/message-templates",
-        label: "메시지 템플릿",
+        label: "nav.items.messageTemplates",
         icon: <i className="fa-solid fa-comment-dots" />,
       },
-      { to: "/team", label: "팀원/권한", icon: <i className="fa-solid fa-user-plus" /> },
+      { to: "/team", label: "nav.items.team", icon: <i className="fa-solid fa-user-plus" /> },
     ],
   },
 ];
 
 export const Sidebar = () => {
+  const t = useT();
   const { data: pendingPayouts } = useQuery({
     queryKey: ["settlements-pending-count"],
     queryFn: fetchPendingSettlementCount,
@@ -110,7 +121,7 @@ export const Sidebar = () => {
       <nav className="admin__nav">
         {NAV.map((group) => (
           <div key={group.title} className="admin__nav-group">
-            <div className="admin__nav-title">{group.title}</div>
+            <div className="admin__nav-title">{t(group.title)}</div>
             {group.items.map((item) => {
               const badge = item.badge ?? dynamicBadge(item.to);
               return (
@@ -121,7 +132,7 @@ export const Sidebar = () => {
                   className={({ isActive }) => "admin__nav-item" + (isActive ? " is-active" : "")}
                 >
                   <span className="admin__nav-icon">{item.icon}</span>
-                  <span className="admin__nav-label">{item.label}</span>
+                  <span className="admin__nav-label">{t(item.label)}</span>
                   {badge !== undefined && <span className="admin__nav-badge">{badge}</span>}
                 </NavLink>
               );

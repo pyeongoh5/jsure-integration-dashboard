@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { AdminActivityLog } from "@jsure/shared";
 import { translate } from "@i18n/admin";
 import { getStoredLanguage } from "@/lib/i18n";
-import { fetchApplicationActivity } from "../../activityApi";
+import { fetchApplicationActivity } from "@/domains/application/activityApi";
 
 export type ActivityState =
   | { kind: "loading" }

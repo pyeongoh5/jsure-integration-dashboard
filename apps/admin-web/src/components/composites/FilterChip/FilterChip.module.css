@@ -118,6 +118,29 @@
 }
 
 /* 커스텀 팝오버(검색/숫자 입력)용 콘텐츠 클래스 */
+.popoverSegments {
+  display: flex;
+  gap: 4px;
+}
+
+.popoverSegment {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  color: #6b7280;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.popoverSegmentOn {
+  border-color: var(--c-brand);
+  color: var(--c-brand);
+  font-weight: 500;
+}
+
 .popoverInputRow {
   display: flex;
   align-items: center;

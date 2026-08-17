@@ -53,6 +53,8 @@ export type Applicant = {
 export type CampaignOption = {
   id: string;
   title: string;
+  // 종료 여부(closedAt 존재). 상태 세그먼트를 쓰지 않는 화면은 생략 가능.
+  closed?: boolean;
 };
 
 export const MEDIA_META: Record<

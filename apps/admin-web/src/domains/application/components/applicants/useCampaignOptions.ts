@@ -24,9 +24,11 @@ export function useCampaignOptions(): UseCampaignOptionsResult {
           new Map(rows.map((campaign) => [campaign.id, campaign.title])),
         );
         setCampaignOptions(
-          rows
-            .filter((campaign) => campaign.closedAt === null)
-            .map((campaign) => ({ id: campaign.id, title: campaign.title })),
+          rows.map((campaign) => ({
+            id: campaign.id,
+            title: campaign.title,
+            closed: campaign.closedAt !== null,
+          })),
         );
       })
       .catch(() => {

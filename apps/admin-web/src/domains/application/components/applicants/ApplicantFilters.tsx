@@ -23,7 +23,7 @@ type Props = {
   campaignId: string | null;
   campaignLabel: string | null; // resolved title (null while loading or unknown id)
   campaignsLoaded: boolean;
-  campaignOptions: CampaignOption[]; // already filtered to non-closed
+  campaignOptions: CampaignOption[]; // 전체 캠페인 (closed 포함, 세그먼트로 구분)
   onCampaignChange: (id: string | null) => void;
 
   mediaFilter: Set<Media>;
@@ -59,6 +59,7 @@ export function ApplicantFilters({
         campaignsLoaded={campaignsLoaded}
         campaignOptions={campaignOptions}
         onCampaignChange={onCampaignChange}
+        showStatusSegments
       />
 
       {onCategoryChange && (

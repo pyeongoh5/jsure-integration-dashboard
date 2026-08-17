@@ -24,7 +24,12 @@ type Props = {
 
 export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose }: Props) {
   const showCampaignSelector = !fixedCampaignId;
-  const { campaignOptions, loaded: campaignsLoaded } = useCampaignOptions();
+  // 승인자 내보내기는 진행중 캠페인만 대상 — 종료 캠페인은 셀렉트에서 제외.
+  const { campaignOptions: allCampaignOptions, loaded: campaignsLoaded } =
+    useCampaignOptions();
+  const campaignOptions = allCampaignOptions.filter(
+    (campaign) => !campaign.closed,
+  );
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(fixedCampaignId ?? "");
   const [data, setData] = useState<ApprovedApplicantExportResponse | null>(null);
   const [campaign, setCampaign] = useState<CampaignResponse | null>(null);

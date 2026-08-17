@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { translate, type AdminLanguage } from "@i18n/admin";
 import { listApplications } from "@/domains/application";
+import { useLanguage } from "@/lib/i18n";
 
 export type MonthlyApplicationPoint = {
   label: string;
@@ -16,6 +18,7 @@ const MONTH_WINDOW = 12;
 function buildPoints(
   applications: { appliedAt: string }[],
   now: Date,
+  language: AdminLanguage,
 ): MonthlyApplicationPoint[] {
   const counts = new Map<string, number>();
   for (const application of applications) {
@@ -28,7 +31,9 @@ function buildPoints(
     const target = new Date(now.getFullYear(), now.getMonth() - offset, 1);
     const key = `${target.getFullYear()}-${target.getMonth()}`;
     points.push({
-      label: `${target.getMonth() + 1}월`,
+      label: translate("pages.overview.chart.monthLabel", language, {
+        month: target.getMonth() + 1,
+      }),
       count: counts.get(key) ?? 0,
     });
   }
@@ -36,6 +41,7 @@ function buildPoints(
 }
 
 export function useMonthlyApplicationCounts() {
+  const { language } = useLanguage();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
 
   useEffect(() => {
@@ -43,7 +49,7 @@ export function useMonthlyApplicationCounts() {
     listApplications()
       .then((applications) => {
         if (cancelled) return;
-        const points = buildPoints(applications, new Date());
+        const points = buildPoints(applications, new Date(), language);
         setState({ kind: "ready", points });
       })
       .catch((error: unknown) => {
@@ -53,13 +59,13 @@ export function useMonthlyApplicationCounts() {
           message:
             error instanceof Error
               ? error.message
-              : "응모 추이를 불러올 수 없습니다.",
+              : translate("pages.overview.chart.loadFailed", language),
         });
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [language]);
 
   return state;
 }

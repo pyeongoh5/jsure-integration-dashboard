@@ -9,18 +9,26 @@ import {
 import { getStoredUser } from "@/domains/auth";
 import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
+import { useLanguage, useT } from "@/lib/i18n";
+import type { AdminTranslationKey } from "@i18n/admin";
 import styles from "./Team.module.css";
 
-const ROLE_META: Record<AdminUserRole, { label: string; className: string | undefined }> = {
-  OWNER: { label: "소유자(Owner)", className: styles.roleOwner },
-  ADMIN: { label: "관리자(Admin)", className: styles.roleAdmin },
-  GUEST: { label: "게스트(Guest)", className: styles.roleGuest },
+const ROLE_META: Record<
+  AdminUserRole,
+  { labelKey: AdminTranslationKey; className: string | undefined }
+> = {
+  OWNER: { labelKey: "pages.team.roles.owner", className: styles.roleOwner },
+  ADMIN: { labelKey: "pages.team.roles.admin", className: styles.roleAdmin },
+  GUEST: { labelKey: "pages.team.roles.guest", className: styles.roleGuest },
 };
 
-const STATUS_META: Record<AdminUserStatus, { label: string; className: string | undefined }> = {
-  ACTIVE: { label: "활성", className: styles.statusActive },
-  PENDING: { label: "승인 대기", className: styles.statusPending },
-  SUSPENDED: { label: "정지", className: styles.statusSuspended },
+const STATUS_META: Record<
+  AdminUserStatus,
+  { labelKey: AdminTranslationKey; className: string | undefined }
+> = {
+  ACTIVE: { labelKey: "common.active", className: styles.statusActive },
+  PENDING: { labelKey: "pages.team.statusPending", className: styles.statusPending },
+  SUSPENDED: { labelKey: "common.suspended", className: styles.statusSuspended },
 };
 
 const AVATAR_PALETTE = [
@@ -55,22 +63,34 @@ function initialsOf(name: string | null, email: string): string {
   return source.slice(0, 2).toUpperCase();
 }
 
-function formatLastActivity(iso: string | null, now: Date): string {
-  if (!iso) return "활동 없음";
+type TranslateFn = (
+  key: AdminTranslationKey,
+  params?: Record<string, string | number>,
+) => string;
+
+function formatLastActivity(
+  iso: string | null,
+  now: Date,
+  t: TranslateFn,
+  language: string,
+): string {
+  if (!iso) return t("pages.team.time.none");
   const then = new Date(iso);
   const diffMs = now.getTime() - then.getTime();
   const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return "지금";
-  if (minutes < 60) return `${minutes}분 전`;
+  if (minutes < 1) return t("pages.team.time.justNow");
+  if (minutes < 60) return t("pages.team.time.minutesAgo", { minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}시간 전`;
+  if (hours < 24) return t("pages.team.time.hoursAgo", { hours });
   const days = Math.floor(hours / 24);
-  if (days === 1) return "어제";
-  if (days < 7) return `${days}일 전`;
-  return then.toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
+  if (days === 1) return t("pages.team.time.yesterday");
+  if (days < 7) return t("pages.team.time.daysAgo", { days });
+  return then.toLocaleDateString(language, { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
 export function Team() {
+  const t = useT();
+  const { language } = useLanguage();
   const [users, setUsers] = useState<PublicAdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -85,7 +105,7 @@ export function Team() {
   useEffect(() => {
     listAdminUsers()
       .then((rows) => setUsers(rows))
-      .catch(() => setError("팀원 목록을 불러오지 못했습니다."));
+      .catch(() => setError(t("pages.team.loadFailed")));
   }, []);
 
   const handleApprove = async (id: string) => {
@@ -97,7 +117,7 @@ export function Team() {
         prev ? prev.map((u) => (u.id === id ? updated : u)) : prev,
       );
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "승인에 실패했습니다");
+      window.alert(err instanceof Error ? err.message : t("pages.team.approveFailed"));
     } finally {
       setPendingId(null);
     }
@@ -105,7 +125,8 @@ export function Team() {
 
   const handleRoleChange = async (id: string, role: AdminUserRole) => {
     if (pendingId) return;
-    if (!window.confirm(`이 팀원의 권한을 "${ROLE_META[role].label}" 로 변경할까요?`)) {
+    const roleLabel = t(ROLE_META[role].labelKey);
+    if (!window.confirm(t("pages.team.roleChangeConfirm", { role: roleLabel }))) {
       return;
     }
     setPendingId(id);
@@ -115,7 +136,7 @@ export function Team() {
         prev ? prev.map((u) => (u.id === id ? updated : u)) : prev,
       );
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "권한 변경에 실패했습니다");
+      window.alert(err instanceof Error ? err.message : t("pages.team.roleChangeFailed"));
     } finally {
       setPendingId(null);
     }
@@ -123,7 +144,7 @@ export function Team() {
 
   const handleReject = async (id: string) => {
     if (pendingId) return;
-    if (!window.confirm("이 요청을 반려할까요? 반려된 계정은 정지 상태가 됩니다.")) {
+    if (!window.confirm(t("pages.team.rejectConfirm"))) {
       return;
     }
     setPendingId(id);
@@ -133,7 +154,7 @@ export function Team() {
         prev ? prev.map((u) => (u.id === id ? updated : u)) : prev,
       );
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "반려에 실패했습니다");
+      window.alert(err instanceof Error ? err.message : t("pages.team.rejectFailed"));
     } finally {
       setPendingId(null);
     }
@@ -146,9 +167,11 @@ export function Team() {
     <div className={styles.root}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>팀원/권한</h1>
+          <h1 className={styles.title}>{t("nav.items.team")}</h1>
           <p className={styles.subtitle}>
-            {users ? `${activeCount}명의 운영자가 활동 중` : "운영자 정보를 불러오는 중..."}
+            {users
+              ? t("pages.team.activeSummary", { count: activeCount })
+              : t("pages.team.loadingSummary")}
           </p>
         </div>
         <Button
@@ -156,28 +179,28 @@ export function Team() {
           size="md"
           iconLeft={<i className="fa-solid fa-plus" aria-hidden="true" />}
         >
-          팀원 초대
+          {t("pages.team.invite")}
         </Button>
       </div>
 
       {error ? (
         <div className={`${styles.state} ${styles.stateError}`}>{error}</div>
       ) : !users ? (
-        <div className={styles.state}>불러오는 중...</div>
+        <div className={styles.state}>{t("common.loading")}</div>
       ) : users.length === 0 ? (
-        <div className={styles.state}>등록된 팀원이 없습니다.</div>
+        <div className={styles.state}>{t("pages.team.emptyMembers")}</div>
       ) : (
         <div className={styles.card}>
           <ScrollTable>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>이름</th>
-                <th>이메일</th>
-                <th>역할</th>
-                <th>마지막 활동</th>
-                <th>상태</th>
-                {hasPending && <th aria-label="작업" />}
+                <th>{t("common.name")}</th>
+                <th>{t("common.email")}</th>
+                <th>{t("pages.team.table.role")}</th>
+                <th>{t("pages.team.table.lastActivity")}</th>
+                <th>{t("common.status")}</th>
+                {hasPending && <th aria-label={t("pages.team.table.actionsAria")} />}
               </tr>
             </thead>
             <tbody>
@@ -210,23 +233,25 @@ export function Team() {
                           }
                         >
                           {currentUser?.role === "OWNER" && (
-                            <option value="OWNER">{ROLE_META.OWNER.label}</option>
+                            <option value="OWNER">{t(ROLE_META.OWNER.labelKey)}</option>
                           )}
-                          <option value="ADMIN">{ROLE_META.ADMIN.label}</option>
-                          <option value="GUEST">{ROLE_META.GUEST.label}</option>
+                          <option value="ADMIN">{t(ROLE_META.ADMIN.labelKey)}</option>
+                          <option value="GUEST">{t(ROLE_META.GUEST.labelKey)}</option>
                         </select>
                       ) : (
                         <span className={`${styles.badge} ${role.className}`}>
                           <span className={styles.badgeDot} />
-                          {role.label}
+                          {t(role.labelKey)}
                         </span>
                       )}
                     </td>
-                    <td className={styles.activity}>{formatLastActivity(u.lastSeenAt, now)}</td>
+                    <td className={styles.activity}>
+                      {formatLastActivity(u.lastSeenAt, now, t, language)}
+                    </td>
                     <td>
                       <span className={`${styles.badge} ${status.className}`}>
                         <span className={styles.badgeDot} />
-                        {status.label}
+                        {t(status.labelKey)}
                       </span>
                     </td>
                     {hasPending && (
@@ -239,7 +264,7 @@ export function Team() {
                               onClick={() => handleApprove(u.id)}
                               disabled={pendingId === u.id}
                             >
-                              승인
+                              {t("domains.application.applicants.actions.approve")}
                             </Button>
                             <Button
                               variant="danger"
@@ -247,7 +272,7 @@ export function Team() {
                               onClick={() => handleReject(u.id)}
                               disabled={pendingId === u.id}
                             >
-                              반려
+                              {t("domains.application.applicants.actions.reject")}
                             </Button>
                           </>
                         ) : null}

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/composites/Card";
 import { MonthlyCampaignChart } from "./MonthlyCampaignChart";
 import { getOverviewStats } from "@/domains/overview";
+import { useT } from "@/lib/i18n";
 import styles from "./Overview.module.css";
 import { ReactNode } from "react";
 
@@ -15,46 +16,53 @@ type Kpi = {
   to?: string;
 };
 
+type TranslateFn = ReturnType<typeof useT>;
+
 function formatJpy(value: number): string {
   if (value >= 1_000_000) return `¥${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `¥${(value / 1_000).toFixed(0)}K`;
   return `¥${value.toLocaleString()}`;
 }
 
-function buildKpis(stats: {
-  recruitingCampaignCount: number;
-  pendingApplicationCount: number;
-  pendingPostReviewCount: number;
-  pendingSettlementAmountJpy: number;
-  pendingSettlementCount: number;
-}): Kpi[] {
+function buildKpis(
+  stats: {
+    recruitingCampaignCount: number;
+    pendingApplicationCount: number;
+    pendingPostReviewCount: number;
+    pendingSettlementAmountJpy: number;
+    pendingSettlementCount: number;
+  },
+  t: TranslateFn,
+): Kpi[] {
   return [
     {
       icon: <i className="fa-solid fa-bullhorn" />,
-      label: "모집 중 캠페인",
+      label: t("pages.overview.kpi.recruitingCampaigns"),
       value: String(stats.recruitingCampaignCount),
       to: "/campaigns?status=recruit",
     },
     {
       icon: "✓",
-      label: "응모자 검토",
+      label: t("pages.overview.kpi.applicantReview"),
       value: String(stats.pendingApplicationCount),
-      delta: { text: "검토 대기 응모", tone: "neutral" },
+      delta: { text: t("pages.overview.kpi.pendingApplications"), tone: "neutral" },
       to: "/applicants",
     },
     {
       icon: <i className="fa-solid fa-file-pen" />,
-      label: "게시물 검토",
+      label: t("pages.overview.kpi.postReview"),
       value: String(stats.pendingPostReviewCount),
-      delta: { text: "검토 대기 게시물", tone: "neutral" },
+      delta: { text: t("pages.overview.kpi.pendingPosts"), tone: "neutral" },
       to: "/drafts",
     },
     {
       icon: <i className="fa-solid fa-money-check-dollar" />,
-      label: "지급 대기 금액",
+      label: t("pages.overview.kpi.pendingPayoutAmount"),
       value: formatJpy(stats.pendingSettlementAmountJpy),
       delta: {
-        text: `${stats.pendingSettlementCount}건 정산 대기`,
+        text: t("pages.overview.kpi.pendingSettlements", {
+          count: stats.pendingSettlementCount,
+        }),
         tone: "neutral",
       },
       to: "/payouts",
@@ -115,6 +123,7 @@ const _URGENT: UrgentRow[] = [
 ];
 
 export function Overview() {
+  const t = useT();
   const user = getStoredUser();
   const { data: stats } = useQuery({
     queryKey: ["admin", "overview"],
@@ -129,15 +138,17 @@ export function Overview() {
       pendingSettlementAmountJpy: 0,
       pendingSettlementCount: 0,
     },
+    t,
   );
 
   return (
     <div className={styles.ov}>
       <div className={styles.header}>
         <h1 className={styles.title}>
-          안녕하세요, {user?.name}님 <span className={styles.wave}>👋</span>
+          {t("pages.overview.greeting", { name: user?.name ?? "" })}{" "}
+          <span className={styles.wave}>👋</span>
         </h1>
-        <p className={styles.subtitle}>오늘 운영 현황을 한눈에 확인하세요.</p>
+        <p className={styles.subtitle}>{t("pages.overview.subtitle")}</p>
       </div>
 
       <div className={styles.kpis}>

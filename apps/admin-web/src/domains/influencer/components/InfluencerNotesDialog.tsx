@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type { InfluencerNotesResponse } from "@jsure/shared";
+import type { AdminTranslationKey } from "@i18n/admin";
 import {
   createInfluencerMemo,
   fetchInfluencerNotes,
   flagInfluencer,
   unflagInfluencer,
 } from "../api";
+import { useT } from "@/lib/i18n";
 import styles from "./InfluencerNotesDialog.module.css";
 
 type NotesState =
@@ -88,6 +90,18 @@ function formatDateTime(iso: string): string {
   return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
 }
 
+const ENTRY_CHIP_CLASS: Record<TimelineEntry["kind"], string | undefined> = {
+  memo: styles.entryChipMemo,
+  application: styles.entryChipApp,
+  post: styles.entryChipPost,
+};
+
+const ENTRY_CHIP_LABEL_KEY: Record<TimelineEntry["kind"], AdminTranslationKey> = {
+  memo: "domains.influencer.notesDialog.chipMemo",
+  application: "domains.influencer.notesDialog.chipApplicationRejection",
+  post: "domains.influencer.notesDialog.chipPostRejection",
+};
+
 type Props = {
   influencerId: string;
   influencerName: string;
@@ -103,6 +117,7 @@ export function InfluencerNotesDialog({
   onClose,
   onChanged,
 }: Props) {
+  const t = useT();
   const [state, setState] = useState<NotesState>({ kind: "loading" });
   const [memoDraft, setMemoDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -123,7 +138,7 @@ export function InfluencerNotesDialog({
           message:
             cause instanceof Error
               ? cause.message
-              : "노트를 불러올 수 없습니다.",
+              : t("domains.influencer.notesDialog.loadFailed"),
         });
       });
     return () => {
@@ -159,7 +174,9 @@ export function InfluencerNotesDialog({
       onChanged?.();
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "메모를 저장할 수 없습니다.",
+        cause instanceof Error
+          ? cause.message
+          : t("domains.influencer.notesDialog.memoSaveFailed"),
       );
     } finally {
       setSubmitting(false);
@@ -169,9 +186,10 @@ export function InfluencerNotesDialog({
   async function handleToggleFlag() {
     if (state.kind !== "ready") return;
     const currentlyFlagged = state.data.flaggedAt !== null;
-    const ok = window.confirm(
-      currentlyFlagged ? "대상외 지정을 해제하시겠습니까?" : "이 인플루언서를 대상외로 지정하시겠습니까?",
-    );
+    const confirmKey: AdminTranslationKey = currentlyFlagged
+      ? "domains.influencer.notesDialog.unflagConfirm"
+      : "domains.influencer.notesDialog.flagConfirm";
+    const ok = window.confirm(t(confirmKey));
     if (!ok) return;
     setToggling(true);
     setError(null);
@@ -194,7 +212,7 @@ export function InfluencerNotesDialog({
       setError(
         cause instanceof Error
           ? cause.message
-          : "대상외 설정을 변경할 수 없습니다.",
+          : t("domains.influencer.notesDialog.flagUpdateFailed"),
       );
     } finally {
       setToggling(false);
@@ -214,25 +232,29 @@ export function InfluencerNotesDialog({
         <header className={styles.header}>
           <div>
             <div className={styles.title}>
-              {influencerName} 메모/히스토리
-              {flagged && <span className={styles.flaggedBadge}>대상외</span>}
+              {t("domains.influencer.notesDialog.title", { name: influencerName })}
+              {flagged && (
+                <span className={styles.flaggedBadge}>
+                  {t("domains.application.applicants.table.flagged")}
+                </span>
+              )}
             </div>
             <div className={styles.sub}>
-              인플루언서 단위로 메모와 응모/투고 반려 이력을 확인합니다.
+              {t("domains.influencer.notesDialog.subtitle")}
             </div>
           </div>
           <button
             type="button"
             className={styles.close}
             onClick={onClose}
-            aria-label="닫기"
+            aria-label={t("common.close")}
           >
             ×
           </button>
         </header>
 
         {state.kind === "loading" && (
-          <div className={styles.timelineEmpty}>불러오는 중…</div>
+          <div className={styles.timelineEmpty}>{t("common.loading")}</div>
         )}
 
         {state.kind === "error" && (
@@ -248,20 +270,24 @@ export function InfluencerNotesDialog({
                 onClick={handleToggleFlag}
                 disabled={toggling}
               >
-                {flagged ? "대상외 해제" : "대상외 지정"}
+                {flagged
+                  ? t("domains.influencer.notesDialog.unflag")
+                  : t("domains.influencer.notesDialog.flag")}
               </button>
             </div>
 
             {error && <div className={styles.error}>{error}</div>}
 
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>메모 추가</h3>
+              <h3 className={styles.sectionTitle}>
+                {t("domains.influencer.notesDialog.addMemoTitle")}
+              </h3>
               <div className={styles.memoForm}>
                 <textarea
                   className={styles.memoTextarea}
                   value={memoDraft}
                   onChange={(event) => setMemoDraft(event.target.value)}
-                  placeholder="이 인플루언서에 대한 메모를 입력하세요."
+                  placeholder={t("domains.influencer.notesDialog.memoPlaceholder")}
                   maxLength={2000}
                 />
                 <button
@@ -270,16 +296,20 @@ export function InfluencerNotesDialog({
                   onClick={handleSubmitMemo}
                   disabled={submitting || memoDraft.trim().length === 0}
                 >
-                  {submitting ? "저장 중…" : "메모 추가"}
+                  {submitting
+                    ? t("domains.influencer.notesDialog.saving")
+                    : t("domains.influencer.notesDialog.addMemoTitle")}
                 </button>
               </div>
             </section>
 
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>히스토리</h3>
+              <h3 className={styles.sectionTitle}>
+                {t("domains.influencer.notesDialog.historyTitle")}
+              </h3>
               {timeline.length === 0 ? (
                 <div className={styles.timelineEmpty}>
-                  기록된 메모/반려 이력이 없습니다.
+                  {t("domains.influencer.notesDialog.historyEmpty")}
                 </div>
               ) : (
                 <div className={styles.timeline}>
@@ -290,19 +320,9 @@ export function InfluencerNotesDialog({
                     >
                       <div className={styles.entryHeader}>
                         <span
-                          className={`${styles.entryChip} ${
-                            entry.kind === "memo"
-                              ? styles.entryChipMemo
-                              : entry.kind === "application"
-                                ? styles.entryChipApp
-                                : styles.entryChipPost
-                          }`}
+                          className={`${styles.entryChip} ${ENTRY_CHIP_CLASS[entry.kind]}`}
                         >
-                          {entry.kind === "memo"
-                            ? "메모"
-                            : entry.kind === "application"
-                              ? "응모 반려"
-                              : "투고 반려"}
+                          {t(ENTRY_CHIP_LABEL_KEY[entry.kind])}
                         </span>
                         {entry.kind !== "memo" && (
                           <span className={styles.entryCampaign}>

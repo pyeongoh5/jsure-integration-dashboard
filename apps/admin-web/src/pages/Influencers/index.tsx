@@ -15,6 +15,7 @@ import {
   MultiSelectFilterChip,
 } from "@/components/composites/FilterChip";
 import { Button } from "@/components/ui";
+import { useLanguage, useT } from "@/lib/i18n";
 import styles from "./Influencers.module.css";
 
 // SNS 필터 옵션 순서 (테이블 아이콘 순서와 동일).
@@ -65,6 +66,8 @@ type LoadState =
   | { kind: "error"; message: string };
 
 export function Influencers() {
+  const t = useT();
+  const { language } = useLanguage();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
   const [query, setQuery] = useState("");
@@ -85,7 +88,8 @@ export function Influencers() {
         if (cancelled) return;
         setState({
           kind: "error",
-          message: err instanceof Error ? err.message : "인플루언서 목록을 불러올 수 없습니다.",
+          message:
+            err instanceof Error ? err.message : t("pages.influencers.loadFailed"),
         });
       });
     return () => {
@@ -125,9 +129,11 @@ export function Influencers() {
   return (
     <div className={styles.inf}>
       <div>
-        <h1 className={styles.title}>인플루언서</h1>
+        <h1 className={styles.title}>{t("nav.items.influencers")}</h1>
         <p className={styles.subtitle}>
-          {state.kind === "ready" ? `총 ${state.rows.length}명` : "목록을 불러오는 중..."}
+          {state.kind === "ready"
+            ? t("pages.influencers.totalCount", { count: state.rows.length })
+            : t("pages.influencers.loadingList")}
         </p>
       </div>
       <div className={styles.header}>
@@ -135,7 +141,7 @@ export function Influencers() {
           <MultiSelectFilterChip
             emptyLabel="+ SNS"
             labelPrefix="SNS"
-            popoverTitle="SNS 선택 (복수 가능)"
+            popoverTitle={t("pages.influencers.snsPopoverTitle")}
             options={snsOptions}
             value={snsFilter}
             onChange={setSnsFilter}
@@ -145,7 +151,7 @@ export function Influencers() {
           <div className={styles.search}>
             <i className="fa-solid fa-magnifying-glass" />
             <input
-              placeholder="이름, 이메일, 핸들 검색"
+              placeholder={t("pages.influencers.searchPlaceholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -159,7 +165,7 @@ export function Influencers() {
             disabled={state.kind !== "ready" || filtered.length === 0}
             iconLeft={<i className="fa-solid fa-download" aria-hidden="true" />}
           >
-            CSV 다운로드
+            {t("pages.influencers.csvDownload")}
           </Button>
           <Button
             variant="primary"
@@ -168,35 +174,39 @@ export function Influencers() {
             disabled={state.kind !== "ready"}
             iconLeft={<i className="fa-regular fa-paper-plane" aria-hidden="true" />}
           >
-            메시지 발송
+            {t("pages.influencers.sendMessage")}
           </Button>
         </div>
       </div>
 
       {state.kind === "loading" ? (
-        <div className={styles.empty}>불러오는 중…</div>
+        <div className={styles.empty}>{t("common.loading")}</div>
       ) : state.kind === "error" ? (
         <div className={styles.empty}>
           {state.message}{" "}
           <Button variant="secondary" size="sm" onClick={() => setReloadKey((k) => k + 1)}>
-            다시 시도
+            {t("common.retry")}
           </Button>
         </div>
       ) : filtered.length === 0 ? (
-        <div className={styles.empty}>조건에 맞는 인플루언서가 없습니다.</div>
+        <div className={styles.empty}>{t("pages.influencers.emptyFiltered")}</div>
       ) : (
         <div className={styles.card}>
           <ScrollTable>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>이름</th>
-                  <th>이메일 / 연락처</th>
-                  <th>SNS 계정</th>
-                  <th title="응모하지 않은 플랫폼에 함께 공유한 누적 건수">추가 공유</th>
-                  <th>상태</th>
-                  <th>가입일</th>
-                  <th style={{ width: 90 }}>액션</th>
+                  <th>{t("common.name")}</th>
+                  <th>{t("pages.influencers.table.emailPhone")}</th>
+                  <th>{t("pages.influencers.table.snsAccounts")}</th>
+                  <th title={t("pages.influencers.table.crossPostTitle")}>
+                    {t("pages.influencers.table.crossPost")}
+                  </th>
+                  <th>{t("common.status")}</th>
+                  <th>{t("common.joinedAt")}</th>
+                  <th style={{ width: 90 }}>
+                    {t("domains.application.applicants.table.actions")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -213,7 +223,11 @@ export function Influencers() {
                         <div>
                           <div className={styles.nameText}>
                             {r.name}
-                            {r.flagged && <span className={styles.flaggedBadge}>대상외</span>}
+                            {r.flagged && (
+                              <span className={styles.flaggedBadge}>
+                                {t("domains.application.applicants.table.flagged")}
+                              </span>
+                            )}
                           </div>
                           {r.nameKana && <div className={styles.nameSub}>{r.nameKana}</div>}
                         </div>
@@ -248,7 +262,7 @@ export function Influencers() {
                       {r.crossPostCount === 0 ? (
                         <span className={styles.emptyCell}>—</span>
                       ) : (
-                        `${r.crossPostCount}건`
+                        t("common.itemCount", { count: r.crossPostCount })
                       )}
                     </td>
                     <td>
@@ -257,11 +271,11 @@ export function Influencers() {
                           r.status === "ACTIVE" ? styles.statusActive : styles.statusSuspended
                         }`}
                       >
-                        {r.status === "ACTIVE" ? "활성" : "정지"}
+                        {r.status === "ACTIVE" ? t("common.active") : t("common.suspended")}
                       </span>
                     </td>
                     <td className={styles.date}>
-                      {new Date(r.createdAt).toLocaleDateString("ko-KR", {
+                      {new Date(r.createdAt).toLocaleDateString(language, {
                         year: "numeric",
                         month: "2-digit",
                         day: "2-digit",
@@ -269,7 +283,7 @@ export function Influencers() {
                     </td>
                     <td>
                       <Button variant="secondary" size="sm" onClick={() => setNotesTarget(r)}>
-                        메모
+                        {t("domains.application.applicants.actions.memo")}
                       </Button>
                     </td>
                   </tr>

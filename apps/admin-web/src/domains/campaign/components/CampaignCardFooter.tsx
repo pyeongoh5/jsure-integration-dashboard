@@ -1,4 +1,5 @@
 import styles from "@/pages/Campaigns/Campaigns.module.css";
+import { useT } from "@/lib/i18n";
 
 type Props = {
   approved: number;
@@ -7,13 +8,14 @@ type Props = {
 };
 
 export function CampaignCardFooter({ approved, applied, capacity }: Props) {
+  const t = useT();
   const ratio = capacity > 0 ? Math.min(100, Math.round((approved / capacity) * 100)) : 0;
 
   return (
     <div className={styles.cardAffix}>
       <div className={styles.cardProgress}>
         <div className={styles.cardProgressText}>
-          모집 {approved}/{capacity}명 ({ratio}%) · 응모 {applied}명
+          {t("domains.campaign.card.footer", { approved, capacity, ratio, applied })}
         </div>
         <div className={styles.cardProgressBar}>
           <div className={styles.cardProgressFill} style={{ width: `${ratio}%` }} />

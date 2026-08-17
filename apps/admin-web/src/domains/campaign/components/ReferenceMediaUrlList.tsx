@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import styles from "./CampaignForm.module.css";
 
 type Props = {
@@ -18,6 +19,7 @@ export function ReferenceMediaUrlList({
   placeholder = "https://...",
   errorByIndex,
 }: Props) {
+  const t = useT();
   const setAt = (index: number, url: string) => {
     const next = value.slice();
     next[index] = url;
@@ -49,9 +51,11 @@ export function ReferenceMediaUrlList({
             size="sm"
             onClick={() => removeAt(index)}
             disabled={disabled}
-            aria-label={`항목 ${index + 1} 삭제`}
+            aria-label={t("domains.campaign.referenceUrlList.removeItemAria", {
+              index: index + 1,
+            })}
           >
-            삭제
+            {t("domains.campaign.referenceUrlList.remove")}
           </Button>
           {errorByIndex?.[index] && (
             <div className={styles.error}>{errorByIndex[index]}</div>
@@ -64,7 +68,7 @@ export function ReferenceMediaUrlList({
         onClick={add}
         disabled={disabled || value.length >= max}
       >
-        URL 추가 ({value.length}/{max})
+        {t("domains.campaign.referenceUrlList.addUrl", { count: value.length, max })}
       </Button>
     </div>
   );

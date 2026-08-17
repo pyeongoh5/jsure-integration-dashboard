@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import type { AdminTranslationKey } from "@i18n/admin";
 import {
   isEnabledSnsType,
   QOO10_REVIEW_CHANNEL_LABEL,
@@ -10,19 +11,16 @@ import {
   type RewardType,
   type SnsAccountSubType,
 } from "@jsure/shared";
-import type { CampaignFormRecruit, CampaignFormRecruitSubType } from "../types";
+import { useT } from "@/lib/i18n";
+import { INSTAGRAM_POST_TYPE_LABEL, type CampaignFormRecruit, type CampaignFormRecruitSubType } from "../types";
 import styles from "./CampaignForm.module.css";
 
-const INSTAGRAM_POST_TYPE_LABELS: Record<InstagramPostType, string> = {
-  FEED: "피드",
-  REELS: "릴스",
-};
 const INSTAGRAM_POST_TYPE_OPTIONS: readonly InstagramPostType[] = ["FEED", "REELS"];
 
 const QOO10_REVIEW_CHANNEL_OPTIONS: readonly ("LIPS" | "ATCOSME")[] = ["LIPS", "ATCOSME"];
 
 type SubTypeMeta = {
-  followerLabel: string;
+  followerLabel: AdminTranslationKey;
   icon: string;
   iconClass?: string;
 };
@@ -35,35 +33,35 @@ function isSnsAccountSubType(subType: CampaignSubType): subType is SnsAccountSub
 
 const SUB_TYPE_META: Record<CampaignSubType, SubTypeMeta> = {
   INSTAGRAM: {
-    followerLabel: "팔로워",
+    followerLabel: "domains.campaign.followerLabel.follower",
     icon: "fa-brands fa-instagram",
     iconClass: styles.snsIconInstagram,
   },
   TIKTOK: {
-    followerLabel: "팔로워",
+    followerLabel: "domains.campaign.followerLabel.follower",
     icon: "fa-brands fa-tiktok",
     iconClass: styles.snsIconTiktok,
   },
   X: {
-    followerLabel: "팔로워",
+    followerLabel: "domains.campaign.followerLabel.follower",
     icon: "fa-brands fa-x-twitter",
     iconClass: styles.snsIconX,
   },
   YOUTUBE: {
-    followerLabel: "구독자",
+    followerLabel: "domains.campaign.followerLabel.subscriber",
     icon: "fa-brands fa-youtube",
     iconClass: styles.snsIconYoutube,
   },
   QOO10: {
-    followerLabel: "팔로워",
+    followerLabel: "domains.campaign.followerLabel.follower",
     icon: "fa-solid fa-bag-shopping",
   },
   LIPS: {
-    followerLabel: "팔로워",
+    followerLabel: "domains.campaign.followerLabel.follower",
     icon: "fa-solid fa-heart",
   },
   ATCOSME: {
-    followerLabel: "팔로워",
+    followerLabel: "domains.campaign.followerLabel.follower",
     icon: "fa-solid fa-star",
   },
 };
@@ -172,6 +170,7 @@ export function RecruitList({
   disabled,
   errorByIndex,
 }: Props) {
+  const t = useT();
   const candidates = subTypesForCategory(category).filter((subType) => {
     if (category === "SNS" && isSnsAccountSubType(subType)) {
       return isEnabledSnsType(subType);
@@ -334,13 +333,13 @@ export function RecruitList({
     if (optionAttributeOn(row, "rewardJpy")) return null;
     return (
       <div className={styles.snsField}>
-        <label className={styles.subLabel}>보수 금액 (JPY)</label>
+        <label className={styles.subLabel}>{t("domains.campaign.recruitList.rewardAmountJpyLabel")}</label>
         <div className={styles.snsCountRow}>
           <input
             type="text"
             inputMode="numeric"
             className={styles.input}
-            placeholder="예시: 5000"
+            placeholder={t("domains.campaign.recruitList.rewardPlaceholder")}
             value={
               typeof row.rewardJpy === "number" && Number.isFinite(row.rewardJpy)
                 ? String(row.rewardJpy)
@@ -375,7 +374,9 @@ export function RecruitList({
     <div className={styles.snsRecruits}>
       {category === "SIMPLE_REVIEW" && (
         <div className={styles.snsField}>
-          <label className={styles.subLabel}>모집 인원 (선택한 채널 공통)</label>
+          <label className={styles.subLabel}>
+            {t("domains.campaign.recruitList.sharedRecruitCountLabel")}
+          </label>
           <div className={styles.snsCountRow}>
             <input
               type="text"
@@ -387,7 +388,9 @@ export function RecruitList({
                 setSimpleReviewRecruitCount(parseIntegerInput(event.target.value))
               }
             />
-            <span className={styles.snsSuffix}>명</span>
+            <span className={styles.snsSuffix}>
+              {t("domains.campaign.recruitList.personSuffix")}
+            </span>
           </div>
           {simpleReviewCountError && (
             <div className={styles.error}>{simpleReviewCountError}</div>
@@ -441,7 +444,11 @@ export function RecruitList({
               ) : category === "SNS" ? (
                 <div className={styles.snsFields}>
                   <div className={styles.snsField}>
-                    <label className={styles.subLabel}>최소 {meta.followerLabel}</label>
+                    <label className={styles.subLabel}>
+                      {t("domains.campaign.recruitList.minFollowersLabel", {
+                        label: t(meta.followerLabel),
+                      })}
+                    </label>
                     <div className={styles.snsCountRow}>
                       <input
                         type="text"
@@ -456,7 +463,9 @@ export function RecruitList({
                           })
                         }
                       />
-                      <span className={styles.snsSuffix}>명 이상</span>
+                      <span className={styles.snsSuffix}>
+                        {t("domains.application.applicants.minFollowersFilter.suffix")}
+                      </span>
                     </div>
                     {errors?.minFollowers && (
                       <div className={styles.error}>{errors.minFollowers}</div>
@@ -464,8 +473,9 @@ export function RecruitList({
                   </div>
                   <div className={styles.snsField}>
                     <label className={styles.subLabel}>
-                      모집 인원
-                      {optionAttributeOn(row, "recruitCount") && " (타입별 합계)"}
+                      {t("domains.campaign.recruitList.recruitCountLabel")}
+                      {optionAttributeOn(row, "recruitCount") &&
+                        t("domains.campaign.recruitList.recruitCountSumSuffix")}
                     </label>
                     <div className={styles.snsCountRow}>
                       <input
@@ -481,7 +491,7 @@ export function RecruitList({
                           })
                         }
                       />
-                      <span className={styles.snsSuffix}>명</span>
+                      <span className={styles.snsSuffix}>{t("domains.campaign.recruitList.personSuffix")}</span>
                     </div>
                     {errors?.recruitCount && (
                       <div className={styles.error}>{errors.recruitCount}</div>
@@ -490,7 +500,9 @@ export function RecruitList({
                   {renderRewardField(index, row, errors)}
                   {subType === "INSTAGRAM" && (
                     <div className={styles.snsField}>
-                      <label className={styles.subLabel}>모집 포스트 타입</label>
+                      <label className={styles.subLabel}>
+                        {t("domains.campaign.recruitList.postTypesLabel")}
+                      </label>
                       <div className={styles.snsCountRow}>
                         {INSTAGRAM_POST_TYPE_OPTIONS.map((postType) => (
                           <label
@@ -505,7 +517,7 @@ export function RecruitList({
                               onChange={() => toggleInstagramPostType(index, postType)}
                             />
                             <span className={styles.snsToggleLabel}>
-                              {INSTAGRAM_POST_TYPE_LABELS[postType]}
+                              {t(INSTAGRAM_POST_TYPE_LABEL[postType])}
                             </span>
                           </label>
                         ))}
@@ -517,7 +529,9 @@ export function RecruitList({
                   )}
                   {subType === "INSTAGRAM" && row.subTypeOptions.length > 0 && (
                     <div className={styles.snsField} style={{ gridColumn: "1 / -1" }}>
-                      <label className={styles.subLabel}>포스트 타입별 세부 설정</label>
+                      <label className={styles.subLabel}>
+                        {t("domains.campaign.recruitList.postTypeDetailLabel")}
+                      </label>
                       <div className={styles.snsCountRow}>
                         <label className={styles.snsToggle} style={{ marginRight: 12 }}>
                           <input
@@ -526,7 +540,9 @@ export function RecruitList({
                             disabled={disabled}
                             onChange={() => toggleOptionAttribute(index, "recruitCount")}
                           />
-                          <span className={styles.snsToggleLabel}>타입별 인원</span>
+                          <span className={styles.snsToggleLabel}>
+                            {t("domains.campaign.recruitList.perTypeCount")}
+                          </span>
                         </label>
                         {rewardType === "PER_SUBTYPE" && (
                           <label className={styles.snsToggle}>
@@ -536,7 +552,9 @@ export function RecruitList({
                               disabled={disabled}
                               onChange={() => toggleOptionAttribute(index, "rewardJpy")}
                             />
-                            <span className={styles.snsToggleLabel}>타입별 보수</span>
+                            <span className={styles.snsToggleLabel}>
+                              {t("domains.campaign.recruitList.perTypeReward")}
+                            </span>
                           </label>
                         )}
                       </div>
@@ -547,9 +565,13 @@ export function RecruitList({
                           style={{ marginTop: 6 }}
                         >
                           <span className={styles.snsToggleLabel} style={{ minWidth: 36 }}>
-                            {INSTAGRAM_POST_TYPE_LABELS[
-                              optionRow.option as InstagramPostType
-                            ] ?? optionRow.option}
+                            {optionRow.option in INSTAGRAM_POST_TYPE_LABEL
+                              ? t(
+                                  INSTAGRAM_POST_TYPE_LABEL[
+                                    optionRow.option as InstagramPostType
+                                  ],
+                                )
+                              : optionRow.option}
                           </span>
                           {optionAttributeOn(row, "recruitCount") && (
                             <>
@@ -558,7 +580,7 @@ export function RecruitList({
                                 inputMode="numeric"
                                 className={styles.input}
                                 style={{ maxWidth: 90 }}
-                                placeholder="인원"
+                                placeholder={t("domains.campaign.recruitList.countPlaceholder")}
                                 value={
                                   typeof optionRow.recruitCount === "number" &&
                                   Number.isFinite(optionRow.recruitCount)
@@ -572,7 +594,7 @@ export function RecruitList({
                                   })
                                 }
                               />
-                              <span className={styles.snsSuffix}>명</span>
+                              <span className={styles.snsSuffix}>{t("domains.campaign.recruitList.personSuffix")}</span>
                             </>
                           )}
                           {optionAttributeOn(row, "rewardJpy") && (
@@ -582,7 +604,9 @@ export function RecruitList({
                                 inputMode="numeric"
                                 className={styles.input}
                                 style={{ maxWidth: 110 }}
-                                placeholder="보수"
+                                placeholder={t(
+                                  "domains.campaign.recruitList.rewardShortPlaceholder",
+                                )}
                                 value={
                                   typeof optionRow.rewardJpy === "number" &&
                                   Number.isFinite(optionRow.rewardJpy)
@@ -618,7 +642,9 @@ export function RecruitList({
                           })
                         }
                       />
-                      <span className={styles.snsToggleLabel}>인사이트 제출 필수</span>
+                      <span className={styles.snsToggleLabel}>
+                        {t("domains.campaign.recruitList.insightRequired")}
+                      </span>
                     </label>
                     <label className={styles.snsToggle} style={{ marginTop: 8 }}>
                       <input
@@ -632,7 +658,7 @@ export function RecruitList({
                         }
                       />
                       <span className={styles.snsToggleLabel}>
-                        응모 필수
+                        {t("domains.campaign.recruitList.applyRequired")}
                       </span>
                     </label>
                   </div>
@@ -640,7 +666,9 @@ export function RecruitList({
               ) : (
                 <div className={styles.snsFields}>
                   <div className={styles.snsField}>
-                    <label className={styles.subLabel}>모집 인원</label>
+                    <label className={styles.subLabel}>
+                      {t("domains.campaign.recruitList.recruitCountLabel")}
+                    </label>
                     <div className={styles.snsCountRow}>
                       <input
                         type="text"
@@ -654,7 +682,7 @@ export function RecruitList({
                           })
                         }
                       />
-                      <span className={styles.snsSuffix}>명</span>
+                      <span className={styles.snsSuffix}>{t("domains.campaign.recruitList.personSuffix")}</span>
                     </div>
                     {errors?.recruitCount && (
                       <div className={styles.error}>{errors.recruitCount}</div>
@@ -662,13 +690,15 @@ export function RecruitList({
                   </div>
                   {renderRewardField(index, row, errors)}
                   <div className={styles.snsField}>
-                    <label className={styles.subLabel}>상품 가격 (JPY)</label>
+                    <label className={styles.subLabel}>
+                      {t("domains.campaign.recruitList.productPriceLabel")}
+                    </label>
                     <div className={styles.snsCountRow}>
                       <input
                         type="text"
                         inputMode="numeric"
                         className={styles.input}
-                        placeholder="예시: 1980"
+                        placeholder={t("domains.campaign.recruitList.productPricePlaceholder")}
                         value={
                           typeof row.productPriceJpy === "number" &&
                           Number.isFinite(row.productPriceJpy)
@@ -692,7 +722,9 @@ export function RecruitList({
                     )}
                   </div>
                   <div className={styles.snsField} style={{ gridColumn: "1 / -1" }}>
-                    <label className={styles.subLabel}>상품 URL</label>
+                    <label className={styles.subLabel}>
+                      {t("domains.campaign.recruitList.productUrlLabel")}
+                    </label>
                     <input
                       type="url"
                       className={styles.input}
@@ -709,7 +741,9 @@ export function RecruitList({
                   </div>
                   {subType === "QOO10" && (
                     <div className={styles.snsField} style={{ gridColumn: "1 / -1" }}>
-                      <label className={styles.subLabel}>리뷰 채널 (선택)</label>
+                      <label className={styles.subLabel}>
+                        {t("domains.campaign.recruitList.reviewChannelLabel")}
+                      </label>
                       <div className={styles.snsCountRow}>
                         {QOO10_REVIEW_CHANNEL_OPTIONS.map((channel) => (
                           <label

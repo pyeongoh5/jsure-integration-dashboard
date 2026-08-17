@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { translate } from "@i18n/admin";
 import type { CampaignForm as Values, CampaignResponse } from "@jsure/shared";
+import { getStoredLanguage } from "@/lib/i18n";
 import { getCampaign } from "./api";
 import { EMPTY_CAMPAIGN_FORM } from "./components/CampaignForm";
 
@@ -16,7 +18,6 @@ export type CampaignFormInitialState =
   | { kind: "error"; message: string };
 
 const TITLE_MAX_LENGTH = 100;
-const COPY_TITLE_SUFFIX = " (복사)";
 
 function toFormValues(campaign: CampaignResponse): Values {
   return {
@@ -43,7 +44,10 @@ function toFormValues(campaign: CampaignResponse): Values {
 function toCopyValues(campaign: CampaignResponse): Values {
   return {
     ...toFormValues(campaign),
-    title: `${campaign.title}${COPY_TITLE_SUFFIX}`.slice(0, TITLE_MAX_LENGTH),
+    title: `${campaign.title}${translate("domains.campaign.copySuffix", getStoredLanguage())}`.slice(
+      0,
+      TITLE_MAX_LENGTH,
+    ),
     recruitStartDate: "",
     recruitEndDate: "",
   };
@@ -73,7 +77,10 @@ export function useCampaignFormInitial(
       return;
     }
     if (!sourceId) {
-      setState({ kind: "error", message: "잘못된 경로입니다." });
+      setState({
+        kind: "error",
+        message: translate("domains.campaign.errors.invalidPath", getStoredLanguage()),
+      });
       return;
     }
     let cancelled = false;
@@ -95,7 +102,9 @@ export function useCampaignFormInitial(
         setState({
           kind: "error",
           message:
-            err instanceof Error ? err.message : "캠페인을 불러올 수 없습니다.",
+            err instanceof Error
+              ? err.message
+              : translate("domains.campaign.errors.loadFailed", getStoredLanguage()),
         });
       });
     return () => {

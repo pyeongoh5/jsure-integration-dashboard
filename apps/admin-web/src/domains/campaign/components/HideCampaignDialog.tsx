@@ -1,3 +1,5 @@
+import type { AdminTranslationKey } from "@i18n/admin";
+import { useT } from "@/lib/i18n";
 import type { CampaignStatus } from "../types";
 import { hideCampaign } from "../api";
 import {
@@ -6,27 +8,30 @@ import {
 } from "./CampaignActionDialog";
 
 /** 비공개 메뉴는 항상 열리고, 조건이 안 맞으면 이유를 안내한다. */
-const NOT_ALLOWED_MESSAGE: Record<CampaignStatus, string | null> = {
-  recruit: "모집중인 캠페인은 비공개로 전환할 수 없습니다. 먼저 캠페인을 종료해 주세요.",
+const NOT_ALLOWED_MESSAGE_KEY: Record<CampaignStatus, AdminTranslationKey | null> = {
+  recruit: "domains.campaign.dialogs.hide.notAllowedRecruit",
   full: null,
   done: null,
-  draft: "임시저장 캠페인은 아직 인플루언서에게 노출되지 않습니다.",
+  draft: "domains.campaign.dialogs.hide.notAllowedDraft",
   hidden: null,
 };
 
 type Props = CampaignActionDialogProps & { status: CampaignStatus };
 
 export function HideCampaignDialog({ status, ...props }: Props) {
-  const notAllowed = NOT_ALLOWED_MESSAGE[status];
+  const t = useT();
+  const notAllowedKey = NOT_ALLOWED_MESSAGE_KEY[status];
   return (
     <CampaignActionDialog
       {...props}
-      title="캠페인 비공개"
-      description={notAllowed ?? "비공개하면 캠페인이 더 이상 보이지 않습니다."}
-      confirmLabel="비공개"
-      busyLabel="처리 중…"
-      confirmDisabled={notAllowed !== null}
-      failureMessage="비공개 전환에 실패했습니다."
+      title={t("domains.campaign.dialogs.hide.title")}
+      description={
+        notAllowedKey ? t(notAllowedKey) : t("domains.campaign.dialogs.hide.description")
+      }
+      confirmLabel={t("domains.campaign.dialogs.hide.confirm")}
+      busyLabel={t("domains.campaign.dialogs.processing")}
+      confirmDisabled={notAllowedKey !== null}
+      failureMessage={t("domains.campaign.dialogs.hide.failure")}
       run={hideCampaign}
     />
   );

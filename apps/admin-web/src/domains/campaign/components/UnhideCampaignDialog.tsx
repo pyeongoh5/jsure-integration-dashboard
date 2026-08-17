@@ -1,3 +1,4 @@
+import { useT } from "@/lib/i18n";
 import { unhideCampaign } from "../api";
 import {
   CampaignActionDialog,
@@ -5,15 +6,16 @@ import {
 } from "./CampaignActionDialog";
 
 export function UnhideCampaignDialog(props: CampaignActionDialogProps) {
+  const t = useT();
   return (
     <CampaignActionDialog
       {...props}
-      title="캠페인 공개"
-      description="공개하면 인플루언서 화면에 다시 노출됩니다."
-      confirmLabel="공개"
-      busyLabel="처리 중…"
+      title={t("domains.campaign.dialogs.unhide.title")}
+      description={t("domains.campaign.dialogs.unhide.description")}
+      confirmLabel={t("domains.campaign.dialogs.unhide.confirm")}
+      busyLabel={t("domains.campaign.dialogs.processing")}
       tone="primary"
-      failureMessage="공개 전환에 실패했습니다."
+      failureMessage={t("domains.campaign.dialogs.unhide.failure")}
       run={unhideCampaign}
     />
   );

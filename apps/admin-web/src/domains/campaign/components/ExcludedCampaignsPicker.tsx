@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CampaignResponse } from "@jsure/shared";
+import { useT } from "@/lib/i18n";
 import styles from "./ExcludedCampaignsPicker.module.css";
 
 type Props = {
@@ -18,6 +19,7 @@ export function ExcludedCampaignsPicker({
   onChange,
   disabled,
 }: Props) {
+  const t = useT();
   const [query, setQuery] = useState("");
 
   const candidates = useMemo(() => {
@@ -49,17 +51,17 @@ export function ExcludedCampaignsPicker({
   };
 
   if (allCampaigns === null) {
-    return <div className={styles.hint}>캠페인 목록 불러오는 중…</div>;
+    return <div className={styles.hint}>{t("domains.campaign.excludedPicker.loading")}</div>;
   }
   if (candidates.length === 0) {
-    return <div className={styles.hint}>선택 가능한 기존 캠페인이 없습니다.</div>;
+    return <div className={styles.hint}>{t("domains.campaign.excludedPicker.noCandidates")}</div>;
   }
 
   return (
     <div className={styles.root}>
       <div className={styles.selected}>
         {selectedRows.length === 0 ? (
-          <div className={styles.empty}>선택된 캠페인이 없습니다.</div>
+          <div className={styles.empty}>{t("domains.campaign.excludedPicker.noneSelected")}</div>
         ) : (
           selectedRows.map((campaign) => (
             <span key={campaign.id} className={styles.chip}>
@@ -69,7 +71,7 @@ export function ExcludedCampaignsPicker({
                 className={styles.chipRemove}
                 onClick={() => toggle(campaign.id)}
                 disabled={disabled}
-                aria-label="제거"
+                aria-label={t("domains.campaign.excludedPicker.removeAria")}
               >
                 ✕
               </button>
@@ -81,7 +83,7 @@ export function ExcludedCampaignsPicker({
       <input
         type="text"
         className={styles.search}
-        placeholder="제목으로 검색..."
+        placeholder={t("domains.campaign.excludedPicker.searchPlaceholder")}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         disabled={disabled}
@@ -89,7 +91,9 @@ export function ExcludedCampaignsPicker({
 
       <div className={styles.list}>
         {filtered.length === 0 ? (
-          <div className={styles.empty}>검색 결과가 없습니다.</div>
+          <div className={styles.empty}>
+            {t("domains.application.applicants.campaignFilter.noSearchResults")}
+          </div>
         ) : (
           filtered.map((campaign) => {
             const checked = valueSet.has(campaign.id);

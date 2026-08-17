@@ -6,6 +6,7 @@ export const adminMessages = {
     loading: { ko: "불러오는 중…", en: "Loading…", ja: "読み込み中…" },
     itemCount: { ko: "{count}건", en: "{count} items", ja: "{count}件" },
     apply: { ko: "적용", en: "Apply", ja: "適用" },
+    retry: { ko: "다시 시도", en: "Retry", ja: "再試行" },
     roles: {
       guest: { ko: "게스트", en: "Guest", ja: "ゲスト" },
       admin: { ko: "Admin", en: "Admin", ja: "Admin" },
@@ -558,6 +559,426 @@ export const adminMessages = {
         },
       },
     },
+    campaign: {
+      status: {
+        recruit: { ko: "모집중", en: "Recruiting", ja: "募集中" },
+        full: { ko: "모집 완료", en: "Recruitment full", ja: "募集完了" },
+        done: { ko: "모집 종료", en: "Recruitment closed", ja: "募集終了" },
+        draft: { ko: "임시저장", en: "Draft", ja: "下書き" },
+        hidden: { ko: "비공개", en: "Hidden", ja: "非公開" },
+      },
+      followerLabel: {
+        follower: { ko: "팔로워", en: "Followers", ja: "フォロワー" },
+        subscriber: { ko: "구독자", en: "Subscribers", ja: "登録者" },
+      },
+      instagramPostType: {
+        feed: { ko: "피드", en: "Feed", ja: "フィード" },
+        reels: { ko: "릴스", en: "Reels", ja: "リール" },
+      },
+      snsName: {
+        instagram: { ko: "인스타그램", en: "Instagram", ja: "Instagram" },
+        tiktok: { ko: "틱톡", en: "TikTok", ja: "TikTok" },
+        x: { ko: "X", en: "X", ja: "X" },
+        youtube: { ko: "유튜브", en: "YouTube", ja: "YouTube" },
+      },
+      copySuffix: { ko: " (복사)", en: " (copy)", ja: "（コピー）" },
+      errors: {
+        invalidPath: {
+          ko: "잘못된 경로입니다.",
+          en: "Invalid path.",
+          ja: "不正なパスです。",
+        },
+        loadFailed: {
+          ko: "캠페인을 불러올 수 없습니다.",
+          en: "Failed to load the campaign.",
+          ja: "キャンペーンを読み込めませんでした。",
+        },
+      },
+      card: {
+        footer: {
+          ko: "모집 {approved}/{capacity}명 ({ratio}%) · 응모 {applied}명",
+          en: "Approved {approved}/{capacity} ({ratio}%) · {applied} applied",
+          ja: "採用 {approved}/{capacity}名（{ratio}%）・応募 {applied}名",
+        },
+        minFollowers: {
+          ko: "{label} {count}명 이상",
+          en: "{label} {count} or more",
+          ja: "{label} {count}人以上",
+        },
+        noFollowerLimit: {
+          ko: "{label} 제한 없음",
+          en: "{label}: no limit",
+          ja: "{label}制限なし",
+        },
+      },
+      actionsMenu: {
+        edit: { ko: "캠페인 수정", en: "Edit campaign", ja: "キャンペーン修正" },
+        copy: { ko: "캠페인 복사", en: "Copy campaign", ja: "キャンペーンコピー" },
+        bump: {
+          ko: "캠페인 끌어올리기",
+          en: "Bump campaign",
+          ja: "キャンペーン引き上げ",
+        },
+        unhide: { ko: "캠페인 공개", en: "Unhide campaign", ja: "キャンペーン公開" },
+        hide: { ko: "캠페인 비공개", en: "Hide campaign", ja: "キャンペーン非公開" },
+        close: { ko: "캠페인 종료", en: "Close campaign", ja: "キャンペーン終了" },
+        delete: { ko: "캠페인 삭제", en: "Delete campaign", ja: "キャンペーン削除" },
+      },
+      dialogs: {
+        processing: { ko: "처리 중…", en: "Processing…", ja: "処理中…" },
+        close: {
+          title: { ko: "캠페인 종료", en: "Close campaign", ja: "キャンペーン終了" },
+          description: {
+            ko: "진행중인 캠페인이 즉시 종료됩니다.",
+            en: "The ongoing campaign will be closed immediately.",
+            ja: "進行中のキャンペーンが直ちに終了されます。",
+          },
+          confirm: { ko: "종료", en: "Close", ja: "終了" },
+          busy: { ko: "종료 중…", en: "Closing…", ja: "終了中…" },
+          failure: {
+            ko: "종료에 실패했습니다.",
+            en: "Failed to close the campaign.",
+            ja: "終了に失敗しました。",
+          },
+          notAllowedDone: {
+            ko: "이미 종료된 캠페인입니다.",
+            en: "This campaign is already closed.",
+            ja: "すでに終了したキャンペーンです。",
+          },
+          notAllowedDraft: {
+            ko: "임시저장 캠페인은 종료할 수 없습니다.",
+            en: "A draft campaign cannot be closed.",
+            ja: "下書きキャンペーンは終了できません。",
+          },
+          notAllowedHidden: {
+            ko: "비공개 캠페인입니다. 공개로 전환한 뒤 종료해 주세요.",
+            en: "This campaign is hidden. Unhide it before closing.",
+            ja: "非公開のキャンペーンです。公開に切り替えてから終了してください。",
+          },
+        },
+        hide: {
+          title: { ko: "캠페인 비공개", en: "Hide campaign", ja: "キャンペーン非公開" },
+          description: {
+            ko: "비공개하면 캠페인이 더 이상 보이지 않습니다.",
+            en: "Once hidden, the campaign will no longer be visible.",
+            ja: "非公開にすると、キャンペーンは表示されなくなります。",
+          },
+          confirm: { ko: "비공개", en: "Hide", ja: "非公開" },
+          failure: {
+            ko: "비공개 전환에 실패했습니다.",
+            en: "Failed to hide the campaign.",
+            ja: "非公開への切り替えに失敗しました。",
+          },
+          notAllowedRecruit: {
+            ko: "모집중인 캠페인은 비공개로 전환할 수 없습니다. 먼저 캠페인을 종료해 주세요.",
+            en: "A recruiting campaign cannot be hidden. Close the campaign first.",
+            ja: "募集中のキャンペーンは非公開に切り替えられません。まずキャンペーンを終了してください。",
+          },
+          notAllowedDraft: {
+            ko: "임시저장 캠페인은 아직 인플루언서에게 노출되지 않습니다.",
+            en: "A draft campaign is not yet visible to influencers.",
+            ja: "下書きキャンペーンはまだインフルエンサーに公開されていません。",
+          },
+        },
+        unhide: {
+          title: { ko: "캠페인 공개", en: "Unhide campaign", ja: "キャンペーン公開" },
+          description: {
+            ko: "공개하면 인플루언서 화면에 다시 노출됩니다.",
+            en: "Once unhidden, it will appear to influencers again.",
+            ja: "公開すると、インフルエンサーの画面に再び表示されます。",
+          },
+          confirm: { ko: "공개", en: "Unhide", ja: "公開" },
+          failure: {
+            ko: "공개 전환에 실패했습니다.",
+            en: "Failed to unhide the campaign.",
+            ja: "公開への切り替えに失敗しました。",
+          },
+        },
+        delete: {
+          title: { ko: "캠페인 삭제", en: "Delete campaign", ja: "キャンペーン削除" },
+          description: {
+            ko: "진행중인 캠페인이 종료와 함께 삭제되며, 다시 되돌릴 수 없어요.",
+            en: "The ongoing campaign will be closed and deleted. This cannot be undone.",
+            ja: "進行中のキャンペーンは終了とともに削除され、元に戻すことはできません。",
+          },
+          confirm: { ko: "삭제", en: "Delete", ja: "削除" },
+          busy: { ko: "삭제 중…", en: "Deleting…", ja: "削除中…" },
+          failure: {
+            ko: "삭제에 실패했습니다.",
+            en: "Failed to delete the campaign.",
+            ja: "削除に失敗しました。",
+          },
+        },
+        bump: {
+          title: {
+            ko: "캠페인 끌어올리기",
+            en: "Bump campaign",
+            ja: "キャンペーン引き上げ",
+          },
+          description: {
+            ko: "인플루언서 캠페인 목록에서 같은 상태 그룹 내 최상단으로 올립니다. 이후 새 캠페인이 생기면 자연스럽게 다시 밀려납니다.",
+            en: "Moves the campaign to the top of its status group in the influencer campaign list. It will naturally move down again as new campaigns are added.",
+            ja: "インフルエンサーのキャンペーン一覧で、同じステータスグループ内の最上位に引き上げます。その後、新しいキャンペーンが追加されると自然に順位が下がります。",
+          },
+          confirm: { ko: "끌어올리기", en: "Bump", ja: "引き上げ" },
+          failure: {
+            ko: "끌어올리기에 실패했습니다.",
+            en: "Failed to bump the campaign.",
+            ja: "引き上げに失敗しました。",
+          },
+        },
+      },
+      form: {
+        uploadFailed: {
+          ko: "업로드에 실패했습니다",
+          en: "Upload failed",
+          ja: "アップロードに失敗しました",
+        },
+        draftSaveFailed: {
+          ko: "임시저장에 실패했습니다.",
+          en: "Failed to save the draft.",
+          ja: "下書き保存に失敗しました。",
+        },
+        imagesUploading: {
+          ko: "이미지 업로드가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.",
+          en: "Image upload has not finished yet. Please try again shortly.",
+          ja: "画像のアップロードがまだ完了していません。しばらくしてからもう一度お試しください。",
+        },
+        saveError: {
+          ko: "저장 중 오류가 발생했습니다.",
+          en: "An error occurred while saving.",
+          ja: "保存中にエラーが発生しました。",
+        },
+        sectionBasic: { ko: "기본 정보", en: "Basic information", ja: "基本情報" },
+        categoryLockedHint: {
+          ko: "카테고리는 생성 후 변경할 수 없습니다.",
+          en: "The category cannot be changed after creation.",
+          ja: "カテゴリーは作成後に変更できません。",
+        },
+        titleLabel: { ko: "캠페인 제목", en: "Campaign title", ja: "キャンペーンタイトル" },
+        rewardTypeLabel: { ko: "보수 체계", en: "Reward structure", ja: "報酬体系" },
+        rewardUnified: {
+          ko: "통합 보수 (참여 SNS 수와 무관하게 고정)",
+          en: "Unified reward (fixed regardless of the number of participating SNS)",
+          ja: "統合報酬（参加SNS数に関係なく固定）",
+        },
+        rewardPerSubType: {
+          ko: "개별 보수 (참여 서브타입별 금액 합산)",
+          en: "Per-sub-type reward (sum of amounts per participating sub-type)",
+          ja: "個別報酬（参加サブタイプごとの金額を合算）",
+        },
+        rewardAmountLabel: { ko: "보수 금액", en: "Reward amount", ja: "報酬金額" },
+        recruitStartLabel: {
+          ko: "모집 시작일",
+          en: "Recruitment start date",
+          ja: "募集開始日",
+        },
+        recruitEndLabel: {
+          ko: "모집 종료일",
+          en: "Recruitment end date",
+          ja: "募集終了日",
+        },
+        postingPeriodLabel: {
+          ko: "게시 기간 (수령 후 N일)",
+          en: "Posting period (N days after receipt)",
+          ja: "掲載期間（受取後N日）",
+        },
+        postingPeriodPlaceholder: { ko: "예시: 14", en: "e.g. 14", ja: "例: 14" },
+        orderPeriodLabel: {
+          ko: "주문 마감 기한 (승인 후 N일)",
+          en: "Order deadline (N days after approval)",
+          ja: "注文締切期限（承認後N日）",
+        },
+        orderPeriodPlaceholder: {
+          ko: "비워두면 주문 마감 없음",
+          en: "Leave blank for no order deadline",
+          ja: "空欄の場合は注文締切なし",
+        },
+        orderPeriodHint: {
+          ko: "기한까지 주문하지 않으면 마감 다음날 응모가 자동 취소됩니다.",
+          en: "If no order is placed by the deadline, the application is automatically cancelled the day after.",
+          ja: "期限までに注文しない場合、締切翌日に応募が自動キャンセルされます。",
+        },
+        thumbnailLabel: {
+          ko: "썸네일 이미지 (인플루언서 앱 표시용)",
+          en: "Thumbnail image (shown in the influencer app)",
+          ja: "サムネイル画像（インフルエンサーアプリ表示用）",
+        },
+        thumbnailAlt: { ko: "썸네일", en: "Thumbnail", ja: "サムネイル" },
+        removeThumbnail: { ko: "제거", en: "Remove", ja: "削除" },
+        thumbnailHint: {
+          ko: "PNG · JPEG · WebP, 5MB 이하",
+          en: "PNG · JPEG · WebP, up to 5MB",
+          ja: "PNG・JPEG・WebP、5MB以下",
+        },
+        uploading: { ko: "업로드 중...", en: "Uploading...", ja: "アップロード中..." },
+        sectionRecruitsFake: {
+          ko: "가구매 채널별 모집",
+          en: "Recruitment by fake-purchase channel",
+          ja: "仮購入チャネル別募集",
+        },
+        sectionRecruitsSimpleReview: {
+          ko: "단순 리뷰 채널별 모집",
+          en: "Recruitment by simple-review channel",
+          ja: "簡易レビューチャネル別募集",
+        },
+        sectionRecruitsSns: {
+          ko: "SNS별 모집",
+          en: "Recruitment by SNS",
+          ja: "SNS別募集",
+        },
+        recruitsHintFake: {
+          ko: "가구매를 진행할 채널을 선택하고, 채널별 모집 인원과 상품 정보를 입력하세요.",
+          en: "Select the channels for fake purchases and enter the recruitment count and product information for each channel.",
+          ja: "仮購入を行うチャネルを選択し、チャネルごとの募集人数と商品情報を入力してください。",
+        },
+        recruitsHintSimpleReview: {
+          ko: "리뷰를 받을 채널(LIPS/@cosme)을 선택하세요. 선택한 채널은 모두 필수 응모이며, 모집 인원은 캠페인 단위로 하나만 입력합니다.",
+          en: "Select the channels (LIPS/@cosme) to receive reviews. All selected channels require participation, and the recruitment count is entered once per campaign.",
+          ja: "レビューを受け取るチャネル（LIPS/@cosme）を選択してください。選択したチャネルはすべて必須応募となり、募集人数はキャンペーン単位で一つだけ入力します。",
+        },
+        recruitsHintSns: {
+          ko: "사용할 SNS를 선택하고, 각 SNS에 적용할 조건과 모집 인원을 입력하세요.",
+          en: "Select the SNS to use and enter the conditions and recruitment count for each.",
+          ja: "使用するSNSを選択し、各SNSに適用する条件と募集人数を入力してください。",
+        },
+        bulkRewardLabel: { ko: "보수 일괄 입력", en: "Bulk reward input", ja: "報酬一括入力" },
+        bulkRewardPlaceholder: {
+          ko: "모든 서브타입에 적용할 금액",
+          en: "Amount to apply to all sub-types",
+          ja: "すべてのサブタイプに適用する金額",
+        },
+        bulkRewardApply: { ko: "일괄 적용", en: "Apply to all", ja: "一括適用" },
+        bulkRewardHint: {
+          ko: "선택된 모든 서브타입의 보수 금액을 같은 값으로 채웁니다.",
+          en: "Fills the reward amount of every selected sub-type with the same value.",
+          ja: "選択したすべてのサブタイプの報酬金額を同じ値で埋めます。",
+        },
+        sectionProduct: { ko: "상품", en: "Product", ja: "商品" },
+        productSummaryLabel: { ko: "상품 개요", en: "Product summary", ja: "商品概要" },
+        productDetailUrlLabel: {
+          ko: "상품 상세 URL (qoo10)",
+          en: "Product detail URL (qoo10)",
+          ja: "商品詳細URL（qoo10）",
+        },
+        sectionGuideline: { ko: "가이드라인", en: "Guidelines", ja: "ガイドライン" },
+        guidelineLabel: {
+          ko: "안건 개요 (투고 가이드라인)",
+          en: "Project overview (posting guidelines)",
+          ja: "案件概要（投稿ガイドライン）",
+        },
+        referenceMediaLabel: {
+          ko: "투고 참고 영상/사진 URL",
+          en: "Reference video/photo URLs for posting",
+          ja: "投稿参考動画・写真URL",
+        },
+        cautionsLabel: { ko: "주의 사항", en: "Cautions", ja: "注意事項" },
+        sectionExcluded: {
+          ko: "참여 제외 캠페인",
+          en: "Excluded campaigns",
+          ja: "参加除外キャンペーン",
+        },
+        excludedHint: {
+          ko: "여기서 선택한 캠페인에 참여 완료(제출물 승인)한 인플루언서는 이 캠페인에 응모할 수 없습니다. 응모만 하고 완료하지 않은 경우는 응모할 수 있습니다.",
+          en: "Influencers who have completed participation (submission approved) in the campaigns selected here cannot apply to this campaign. Those who only applied without completing can still apply.",
+          ja: "ここで選択したキャンペーンに参加完了（提出物承認）したインフルエンサーは、このキャンペーンに応募できません。応募のみで完了していない場合は応募できます。",
+        },
+        saving: { ko: "저장 중…", en: "Saving…", ja: "保存中…" },
+        saveDraft: { ko: "임시저장", en: "Save draft", ja: "下書き保存" },
+      },
+      recruitList: {
+        rewardAmountJpyLabel: {
+          ko: "보수 금액 (JPY)",
+          en: "Reward amount (JPY)",
+          ja: "報酬金額（JPY）",
+        },
+        rewardPlaceholder: { ko: "예시: 5000", en: "e.g. 5000", ja: "例: 5000" },
+        sharedRecruitCountLabel: {
+          ko: "모집 인원 (선택한 채널 공통)",
+          en: "Recruitment count (shared across selected channels)",
+          ja: "募集人数（選択したチャネル共通）",
+        },
+        personSuffix: { ko: "명", en: "people", ja: "名" },
+        minFollowersLabel: { ko: "최소 {label}", en: "Minimum {label}", ja: "最低{label}" },
+        recruitCountLabel: { ko: "모집 인원", en: "Recruitment count", ja: "募集人数" },
+        recruitCountSumSuffix: {
+          ko: " (타입별 합계)",
+          en: " (sum per type)",
+          ja: "（タイプ別合計）",
+        },
+        postTypesLabel: {
+          ko: "모집 포스트 타입",
+          en: "Post types to recruit",
+          ja: "募集投稿タイプ",
+        },
+        postTypeDetailLabel: {
+          ko: "포스트 타입별 세부 설정",
+          en: "Detailed settings per post type",
+          ja: "投稿タイプ別詳細設定",
+        },
+        perTypeCount: { ko: "타입별 인원", en: "Count per type", ja: "タイプ別人数" },
+        perTypeReward: { ko: "타입별 보수", en: "Reward per type", ja: "タイプ別報酬" },
+        countPlaceholder: { ko: "인원", en: "Count", ja: "人数" },
+        rewardShortPlaceholder: { ko: "보수", en: "Reward", ja: "報酬" },
+        insightRequired: {
+          ko: "인사이트 제출 필수",
+          en: "Insight submission required",
+          ja: "インサイト提出必須",
+        },
+        applyRequired: { ko: "응모 필수", en: "Required to apply", ja: "応募必須" },
+        productPriceLabel: {
+          ko: "상품 가격 (JPY)",
+          en: "Product price (JPY)",
+          ja: "商品価格（JPY）",
+        },
+        productPricePlaceholder: { ko: "예시: 1980", en: "e.g. 1980", ja: "例: 1980" },
+        productUrlLabel: { ko: "상품 URL", en: "Product URL", ja: "商品URL" },
+        reviewChannelLabel: {
+          ko: "리뷰 채널 (선택)",
+          en: "Review channels (optional)",
+          ja: "レビューチャネル（任意）",
+        },
+      },
+      referenceUrlList: {
+        removeItemAria: {
+          ko: "항목 {index} 삭제",
+          en: "Delete item {index}",
+          ja: "項目{index}を削除",
+        },
+        remove: { ko: "삭제", en: "Delete", ja: "削除" },
+        addUrl: {
+          ko: "URL 추가 ({count}/{max})",
+          en: "Add URL ({count}/{max})",
+          ja: "URL追加（{count}/{max}）",
+        },
+      },
+      snsTypeChips: {
+        groupAria: { ko: "SNS 종류", en: "SNS types", ja: "SNS種類" },
+      },
+      excludedPicker: {
+        loading: {
+          ko: "캠페인 목록 불러오는 중…",
+          en: "Loading campaign list…",
+          ja: "キャンペーン一覧を読み込み中…",
+        },
+        noCandidates: {
+          ko: "선택 가능한 기존 캠페인이 없습니다.",
+          en: "There are no existing campaigns to select.",
+          ja: "選択可能な既存キャンペーンはありません。",
+        },
+        noneSelected: {
+          ko: "선택된 캠페인이 없습니다.",
+          en: "No campaigns selected.",
+          ja: "選択されたキャンペーンはありません。",
+        },
+        removeAria: { ko: "제거", en: "Remove", ja: "削除" },
+        searchPlaceholder: {
+          ko: "제목으로 검색...",
+          en: "Search by title...",
+          ja: "タイトルで検索...",
+        },
+      },
+    },
     auth: {
       checkEmailAndPassword: {
         ko: "이메일 형식과 비밀번호(8자 이상)를 확인해주세요.",
@@ -625,6 +1046,66 @@ export const adminMessages = {
     },
     drafts: {
       title: { ko: "검토", en: "Reviews", ja: "レビュー" },
+    },
+    campaigns: {
+      subtitle: {
+        ko: "전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요.",
+        en: "See the status and progress of all campaigns at a glance.",
+        ja: "すべてのキャンペーンの状態と進行状況を一目で確認できます。",
+      },
+      statusFilterTitle: { ko: "상태 선택", en: "Select status", ja: "ステータス選択" },
+      searchPlaceholder: {
+        ko: "브랜드 또는 캠페인 이름 검색",
+        en: "Search by brand or campaign name",
+        ja: "ブランドまたはキャンペーン名で検索",
+      },
+      newCampaign: { ko: "+ 새 캠페인", en: "+ New campaign", ja: "+ 新規キャンペーン" },
+      emptyFiltered: {
+        ko: "조건에 맞는 캠페인이 없습니다.",
+        en: "No campaigns match the criteria.",
+        ja: "条件に一致するキャンペーンはありません。",
+      },
+      lastModified: {
+        ko: "최종 수정 {date}",
+        en: "Last modified {date}",
+        ja: "最終更新 {date}",
+      },
+      create: { ko: "생성", en: "Create", ja: "作成" },
+      edit: {
+        draftTitle: { ko: "임시저장 캠페인", en: "Draft campaign", ja: "下書きキャンペーン" },
+        draftSubtitle: {
+          ko: "이어서 작성한 뒤 생성하거나 임시저장으로 남겨두세요.",
+          en: "Continue editing, then create it or keep it as a draft.",
+          ja: "続きを作成してから作成するか、下書きのままにしておいてください。",
+        },
+        subtitle: {
+          ko: "캠페인 정보를 수정하세요.",
+          en: "Edit the campaign information.",
+          ja: "キャンペーン情報を修正してください。",
+        },
+        submitSave: { ko: "수정 저장", en: "Save changes", ja: "修正を保存" },
+      },
+      new: {
+        title: { ko: "캠페인 만들기", en: "Create campaign", ja: "キャンペーン作成" },
+        copySubtitle: {
+          ko: "복사한 내용을 확인하고 모집 기간을 입력하세요.",
+          en: "Review the copied content and enter the recruitment period.",
+          ja: "コピーした内容を確認し、募集期間を入力してください。",
+        },
+        subtitle: {
+          ko: "새 캠페인 정보를 입력하세요.",
+          en: "Enter the new campaign information.",
+          ja: "新しいキャンペーン情報を入力してください。",
+        },
+      },
+    },
+    brands: {
+      title: { ko: "광고주(브랜드)", en: "Advertisers (brands)", ja: "広告主（ブランド）" },
+      subtitle: {
+        ko: "준비 중인 페이지입니다.",
+        en: "This page is under construction.",
+        ja: "準備中のページです。",
+      },
     },
     login: {
       title: { ko: "로그인", en: "Log in", ja: "ログイン" },

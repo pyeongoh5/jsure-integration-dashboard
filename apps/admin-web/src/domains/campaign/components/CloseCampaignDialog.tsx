@@ -1,3 +1,5 @@
+import type { AdminTranslationKey } from "@i18n/admin";
+import { useT } from "@/lib/i18n";
 import type { CampaignStatus } from "../types";
 import { closeCampaign } from "../api";
 import {
@@ -6,27 +8,30 @@ import {
 } from "./CampaignActionDialog";
 
 /** 종료 메뉴는 항상 열리고, 조건이 안 맞으면 이유를 안내한다. */
-const NOT_ALLOWED_MESSAGE: Record<CampaignStatus, string | null> = {
+const NOT_ALLOWED_MESSAGE_KEY: Record<CampaignStatus, AdminTranslationKey | null> = {
   recruit: null,
   full: null,
-  done: "이미 종료된 캠페인입니다.",
-  draft: "임시저장 캠페인은 종료할 수 없습니다.",
-  hidden: "비공개 캠페인입니다. 공개로 전환한 뒤 종료해 주세요.",
+  done: "domains.campaign.dialogs.close.notAllowedDone",
+  draft: "domains.campaign.dialogs.close.notAllowedDraft",
+  hidden: "domains.campaign.dialogs.close.notAllowedHidden",
 };
 
 type Props = CampaignActionDialogProps & { status: CampaignStatus };
 
 export function CloseCampaignDialog({ status, ...props }: Props) {
-  const notAllowed = NOT_ALLOWED_MESSAGE[status];
+  const t = useT();
+  const notAllowedKey = NOT_ALLOWED_MESSAGE_KEY[status];
   return (
     <CampaignActionDialog
       {...props}
-      title="캠페인 종료"
-      description={notAllowed ?? "진행중인 캠페인이 즉시 종료됩니다."}
-      confirmLabel="종료"
-      busyLabel="종료 중…"
-      confirmDisabled={notAllowed !== null}
-      failureMessage="종료에 실패했습니다."
+      title={t("domains.campaign.dialogs.close.title")}
+      description={
+        notAllowedKey ? t(notAllowedKey) : t("domains.campaign.dialogs.close.description")
+      }
+      confirmLabel={t("domains.campaign.dialogs.close.confirm")}
+      busyLabel={t("domains.campaign.dialogs.close.busy")}
+      confirmDisabled={notAllowedKey !== null}
+      failureMessage={t("domains.campaign.dialogs.close.failure")}
       run={closeCampaign}
     />
   );

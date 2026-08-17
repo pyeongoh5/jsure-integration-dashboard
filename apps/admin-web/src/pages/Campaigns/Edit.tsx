@@ -10,9 +10,11 @@ import {
   updateCampaignDraft,
   useCampaignFormInitial,
 } from "@/domains/campaign";
+import { useT } from "@/lib/i18n";
 import styles from "./Campaigns.module.css";
 
 export function CampaignEdit() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [reloadKey, setReloadKey] = useState(0);
@@ -24,14 +26,14 @@ export function CampaignEdit() {
   if (!id) {
     return (
       <div className={styles.root}>
-        <div className={styles.empty}>잘못된 경로입니다.</div>
+        <div className={styles.empty}>{t("domains.campaign.errors.invalidPath")}</div>
       </div>
     );
   }
   if (state.kind === "loading") {
     return (
       <div className={styles.root}>
-        <div className={styles.empty}>불러오는 중…</div>
+        <div className={styles.empty}>{t("common.loading")}</div>
       </div>
     );
   }
@@ -45,7 +47,7 @@ export function CampaignEdit() {
             className={`${campaignFormStyles.btn} ${campaignFormStyles.btnGhost}`}
             onClick={() => setReloadKey((k) => k + 1)}
           >
-            다시 시도
+            {t("common.retry")}
           </button>
         </div>
       </div>
@@ -71,12 +73,14 @@ export function CampaignEdit() {
       <div className={`${styles.header} ${styles.headerRow}`}>
         <div>
           <h1 className={styles.title}>
-            {isDraft ? "임시저장 캠페인" : "캠페인 수정"}
+            {isDraft
+              ? t("pages.campaigns.edit.draftTitle")
+              : t("domains.campaign.actionsMenu.edit")}
           </h1>
           <p className={styles.subtitle}>
             {isDraft
-              ? "이어서 작성한 뒤 생성하거나 임시저장으로 남겨두세요."
-              : "캠페인 정보를 수정하세요."}
+              ? t("pages.campaigns.edit.draftSubtitle")
+              : t("pages.campaigns.edit.subtitle")}
           </p>
         </div>
         {/* 같은 내용으로 새 캠페인을 만들 때 — 이 캠페인은 그대로 남는다. */}
@@ -87,12 +91,14 @@ export function CampaignEdit() {
             navigate(`/campaigns/new?copyFrom=${encodeURIComponent(id)}`)
           }
         >
-          캠페인 복사
+          {t("domains.campaign.actionsMenu.copy")}
         </Button>
       </div>
       <CampaignForm
         initialValue={state.initial}
-        submitLabel={isDraft ? "생성" : "수정 저장"}
+        submitLabel={
+          isDraft ? t("pages.campaigns.create") : t("pages.campaigns.edit.submitSave")
+        }
         onSubmit={handleSubmit}
         onSaveDraft={isDraft ? handleSaveDraft : undefined}
         onCancel={() => navigate("/campaigns")}

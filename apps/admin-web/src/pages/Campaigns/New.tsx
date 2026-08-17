@@ -8,9 +8,11 @@ import {
   createCampaignDraft,
   useCampaignFormInitial,
 } from "@/domains/campaign";
+import { useT } from "@/lib/i18n";
 import styles from "./Campaigns.module.css";
 
 export function CampaignNew() {
+  const t = useT();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [reloadKey, setReloadKey] = useState(0);
@@ -33,7 +35,7 @@ export function CampaignNew() {
   if (state.kind === "loading") {
     return (
       <div className={styles.root}>
-        <div className={styles.empty}>불러오는 중…</div>
+        <div className={styles.empty}>{t("common.loading")}</div>
       </div>
     );
   }
@@ -47,7 +49,7 @@ export function CampaignNew() {
             className={`${campaignFormStyles.btn} ${campaignFormStyles.btnGhost}`}
             onClick={() => setReloadKey((k) => k + 1)}
           >
-            다시 시도
+            {t("common.retry")}
           </button>
         </div>
       </div>
@@ -66,16 +68,16 @@ export function CampaignNew() {
   return (
     <div className="cmp">
       <div className="cmp__header">
-        <h1 className="cmp__title">캠페인 만들기</h1>
+        <h1 className="cmp__title">{t("pages.campaigns.new.title")}</h1>
         <p className="cmp__subtitle">
           {copyFrom
-            ? "복사한 내용을 확인하고 모집 기간을 입력하세요."
-            : "새 캠페인 정보를 입력하세요."}
+            ? t("pages.campaigns.new.copySubtitle")
+            : t("pages.campaigns.new.subtitle")}
         </p>
       </div>
       <CampaignForm
         initialValue={state.initial}
-        submitLabel="생성"
+        submitLabel={t("pages.campaigns.create")}
         onSubmit={handleSubmit}
         onSaveDraft={handleSaveDraft}
         initialThumbnail={copiedThumbnail}

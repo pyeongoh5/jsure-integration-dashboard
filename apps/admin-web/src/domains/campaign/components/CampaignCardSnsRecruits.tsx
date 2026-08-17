@@ -1,4 +1,5 @@
 import styles from "@/pages/Campaigns/Campaigns.module.css";
+import { useT } from "@/lib/i18n";
 import {
   INSTAGRAM_POST_TYPE_LABEL,
   SNS_FOLLOWER_LABEL,
@@ -24,6 +25,7 @@ const CHIP_CLASS: Record<CampaignSubType, string | undefined> = {
 const INSTAGRAM_POST_TYPES: readonly InstagramPostType[] = ["FEED", "REELS"];
 
 export function CampaignCardSnsRecruits({ recruits }: Props) {
+  const t = useT();
   if (recruits.length === 0) return null;
   return (
     <div className={styles.cardSns}>
@@ -37,7 +39,7 @@ export function CampaignCardSnsRecruits({ recruits }: Props) {
         const instagramTypes =
           instagramPostTypes.length > 0
             ? instagramPostTypes
-                .map((postType) => INSTAGRAM_POST_TYPE_LABEL[postType])
+                .map((postType) => t(INSTAGRAM_POST_TYPE_LABEL[postType]))
                 .join("·")
             : null;
         return (
@@ -45,8 +47,13 @@ export function CampaignCardSnsRecruits({ recruits }: Props) {
             <i className={SNS_ICON_CLASS[r.subType]} aria-hidden="true" />
             <span className={styles.cardSnsCond}>
               {r.minFollowers > 0
-                ? `${SNS_FOLLOWER_LABEL[r.subType]} ${r.minFollowers.toLocaleString()}명 이상`
-                : `${SNS_FOLLOWER_LABEL[r.subType]} 제한 없음`}
+                ? t("domains.campaign.card.minFollowers", {
+                    label: t(SNS_FOLLOWER_LABEL[r.subType]),
+                    count: r.minFollowers.toLocaleString(),
+                  })
+                : t("domains.campaign.card.noFollowerLimit", {
+                    label: t(SNS_FOLLOWER_LABEL[r.subType]),
+                  })}
               {instagramTypes ? ` · ${instagramTypes}` : ""}
             </span>
           </span>

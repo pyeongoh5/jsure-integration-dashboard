@@ -1,3 +1,4 @@
+import type { AdminTranslationKey } from "@i18n/admin";
 import type {
   CampaignCategory,
   CampaignForm,
@@ -29,9 +30,10 @@ export type CampaignCardRecruit = {
   subTypeOptions: string[];
 };
 
-export const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
-  FEED: "피드",
-  REELS: "릴스",
+// 값은 i18n 키 — 표시 시점에 컴포넌트에서 t(...) 로 번역한다.
+export const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, AdminTranslationKey> = {
+  FEED: "domains.campaign.instagramPostType.feed",
+  REELS: "domains.campaign.instagramPostType.reels",
 };
 
 export type Campaign = {
@@ -63,20 +65,20 @@ export const SNS_ICON_CLASS: Record<CampaignSubType, string> = {
   ATCOSME: "fa-solid fa-star",
 };
 
-export const SNS_FOLLOWER_LABEL: Record<CampaignSubType, string> = {
-  INSTAGRAM: "팔로워",
-  TIKTOK: "팔로워",
-  X: "팔로워",
-  YOUTUBE: "구독자",
-  QOO10: "팔로워",
-  LIPS: "팔로워",
-  ATCOSME: "팔로워",
+export const SNS_FOLLOWER_LABEL: Record<CampaignSubType, AdminTranslationKey> = {
+  INSTAGRAM: "domains.campaign.followerLabel.follower",
+  TIKTOK: "domains.campaign.followerLabel.follower",
+  X: "domains.campaign.followerLabel.follower",
+  YOUTUBE: "domains.campaign.followerLabel.subscriber",
+  QOO10: "domains.campaign.followerLabel.follower",
+  LIPS: "domains.campaign.followerLabel.follower",
+  ATCOSME: "domains.campaign.followerLabel.follower",
 };
 
-export const STATUS_LABEL: Record<CampaignStatus, string> = {
-  recruit: "모집중",
-  full: "모집 완료",
-  done: "모집 종료",
-  draft: "임시저장",
-  hidden: "비공개",
+export const STATUS_LABEL: Record<CampaignStatus, AdminTranslationKey> = {
+  recruit: "domains.campaign.status.recruit",
+  full: "domains.campaign.status.full",
+  done: "domains.campaign.status.done",
+  draft: "domains.campaign.status.draft",
+  hidden: "domains.campaign.status.hidden",
 };

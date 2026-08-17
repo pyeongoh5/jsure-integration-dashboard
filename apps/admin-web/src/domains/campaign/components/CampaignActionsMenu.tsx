@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useT } from "@/lib/i18n";
 import type { CampaignStatus } from "../types";
 import styles from "./CampaignActionsMenu.module.css";
 
@@ -36,6 +37,7 @@ export function CampaignActionsMenu({
   onDelete,
   onDismiss,
 }: Props) {
+  const t = useT();
   const ref = useRef<HTMLDivElement | null>(null);
   const submenuRef = useRef<HTMLDivElement | null>(null);
   // 임시저장 캠페인은 응모/승인 항목이 없어 캠페인 관리 하위만 쓴다 → 처음부터 펼친다.
@@ -113,7 +115,7 @@ export function CampaignActionsMenu({
             className={styles.item}
             onClick={onApplicants}
           >
-            응모자 관리
+            {t("nav.items.applicants")}
           </button>
           <button
             type="button"
@@ -121,7 +123,7 @@ export function CampaignActionsMenu({
             className={styles.item}
             onClick={onViewApproved}
           >
-            승인자 명단 보기
+            {t("pages.applicants.viewApprovedList")}
           </button>
         </>
       )}
@@ -138,7 +140,7 @@ export function CampaignActionsMenu({
           className={`${styles.item} ${styles.itemToggle}`}
           onClick={() => setManageOpen((open) => !open)}
         >
-          캠페인 관리
+          {t("nav.items.campaigns")}
           <i className={`fa-solid fa-chevron-right ${styles.chevron}`} />
         </button>
         {manageOpen && (
@@ -153,7 +155,7 @@ export function CampaignActionsMenu({
               className={styles.item}
               onClick={onEdit}
             >
-              캠페인 수정
+              {t("domains.campaign.actionsMenu.edit")}
             </button>
             <button
               type="button"
@@ -161,7 +163,7 @@ export function CampaignActionsMenu({
               className={styles.item}
               onClick={onCopy}
             >
-              캠페인 복사
+              {t("domains.campaign.actionsMenu.copy")}
             </button>
             {!isDraft && (
               <button
@@ -170,7 +172,7 @@ export function CampaignActionsMenu({
                 className={styles.item}
                 onClick={onBump}
               >
-                캠페인 끌어올리기
+                {t("domains.campaign.actionsMenu.bump")}
               </button>
             )}
             {!isDraft &&
@@ -181,7 +183,7 @@ export function CampaignActionsMenu({
                   className={styles.item}
                   onClick={onUnhide}
                 >
-                  캠페인 공개
+                  {t("domains.campaign.actionsMenu.unhide")}
                 </button>
               ) : (
                 <button
@@ -190,7 +192,7 @@ export function CampaignActionsMenu({
                   className={styles.item}
                   onClick={onHide}
                 >
-                  캠페인 비공개
+                  {t("domains.campaign.actionsMenu.hide")}
                 </button>
               ))}
             {!isDraft && (
@@ -200,7 +202,7 @@ export function CampaignActionsMenu({
                 className={`${styles.item} ${styles.itemDanger}`}
                 onClick={onClose}
               >
-                캠페인 종료
+                {t("domains.campaign.actionsMenu.close")}
               </button>
             )}
             <button
@@ -209,7 +211,7 @@ export function CampaignActionsMenu({
               className={`${styles.item} ${styles.itemDanger}`}
               onClick={onDelete}
             >
-              캠페인 삭제
+              {t("domains.campaign.actionsMenu.delete")}
             </button>
           </div>
         )}

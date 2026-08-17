@@ -1,11 +1,13 @@
+import type { AdminTranslationKey } from "@i18n/admin";
 import { isEnabledSnsType, type SnsAccountSubType } from "@jsure/shared";
+import { useT } from "@/lib/i18n";
 import styles from "./CampaignForm.module.css";
 
-const OPTIONS: readonly { value: SnsAccountSubType; label: string }[] = [
-  { value: "INSTAGRAM", label: "인스타그램" },
-  { value: "TIKTOK", label: "틱톡" },
-  { value: "X", label: "X" },
-  { value: "YOUTUBE", label: "유튜브" },
+const OPTIONS: readonly { value: SnsAccountSubType; label: AdminTranslationKey }[] = [
+  { value: "INSTAGRAM", label: "domains.campaign.snsName.instagram" },
+  { value: "TIKTOK", label: "domains.campaign.snsName.tiktok" },
+  { value: "X", label: "domains.campaign.snsName.x" },
+  { value: "YOUTUBE", label: "domains.campaign.snsName.youtube" },
 ];
 
 const VISIBLE_OPTIONS = OPTIONS.filter((opt) => isEnabledSnsType(opt.value));
@@ -17,12 +19,13 @@ type Props = {
 };
 
 export function SnsTypeChips({ value, onChange, disabled }: Props) {
+  const t = useT();
   const toggle = (target: SnsAccountSubType) => {
     if (value.includes(target)) onChange(value.filter((current) => current !== target));
     else onChange([...value, target]);
   };
   return (
-    <div className={styles.chips} role="group" aria-label="SNS 종류">
+    <div className={styles.chips} role="group" aria-label={t("domains.campaign.snsTypeChips.groupAria")}>
       {VISIBLE_OPTIONS.map((opt) => {
         const selected = value.includes(opt.value);
         return (
@@ -34,7 +37,7 @@ export function SnsTypeChips({ value, onChange, disabled }: Props) {
             disabled={disabled}
             onClick={() => toggle(opt.value)}
           >
-            {opt.label}
+            {t(opt.label)}
           </button>
         );
       })}

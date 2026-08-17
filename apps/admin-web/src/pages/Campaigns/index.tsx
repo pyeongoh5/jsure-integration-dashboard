@@ -22,18 +22,23 @@ import {
 } from "@/domains/campaign";
 import type { Campaign, CampaignCategory, CampaignStatus } from "@/domains/campaign";
 import { CATEGORY_FILTER_OPTIONS } from "@/domains/application";
+import { translate, type AdminTranslationKey } from "@i18n/admin";
+import { getStoredLanguage, useT } from "@/lib/i18n";
 import { ApprovedApplicantsDialog } from "../Applicants/ApprovedApplicantsDialog";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import styles from "./Campaigns.module.css";
 
 type StatusFilterKey = "all" | CampaignStatus;
 
-const STATUS_FILTER_CHIP_OPTIONS: readonly { key: CampaignStatus; label: string }[] = [
-  { key: "recruit", label: "모집중" },
-  { key: "full", label: "모집 완료" },
-  { key: "done", label: "모집 종료" },
-  { key: "draft", label: "임시저장" },
-  { key: "hidden", label: "비공개" },
+const STATUS_FILTER_CHIP_OPTIONS: readonly {
+  key: CampaignStatus;
+  label: AdminTranslationKey;
+}[] = [
+  { key: "recruit", label: "domains.campaign.status.recruit" },
+  { key: "full", label: "domains.campaign.status.full" },
+  { key: "done", label: "domains.campaign.status.done" },
+  { key: "draft", label: "domains.campaign.status.draft" },
+  { key: "hidden", label: "domains.campaign.status.hidden" },
 ];
 
 const STATUS_PARAM = "status";
@@ -124,6 +129,7 @@ type LoadState =
   | { kind: "error"; message: string };
 
 export function Campaigns() {
+  const t = useT();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [openMenu, setOpenMenu] = useState<{ id: string; x: number; y: number } | null>(null);
@@ -147,7 +153,10 @@ export function Campaigns() {
         if (cancelled) return;
         setState({
           kind: "error",
-          message: err instanceof Error ? err.message : "캠페인을 불러올 수 없습니다.",
+          message:
+            err instanceof Error
+              ? err.message
+              : translate("domains.campaign.errors.loadFailed", getStoredLanguage()),
         });
       });
     return () => {
@@ -197,25 +206,31 @@ export function Campaigns() {
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <h1 className={styles.title}>캠페인 관리</h1>
-        <p className={styles.subtitle}>전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요.</p>
+        <h1 className={styles.title}>{t("nav.items.campaigns")}</h1>
+        <p className={styles.subtitle}>{t("pages.campaigns.subtitle")}</p>
       </div>
 
       <div className={styles.toolbar}>
         <FilterChipBar>
           <SingleSelectFilterChip
-            emptyLabel="+ 카테고리"
-            labelPrefix="카테고리"
-            popoverTitle="카테고리 선택"
-            options={CATEGORY_FILTER_OPTIONS}
+            emptyLabel={t("domains.application.applicants.categoryFilter.chipEmpty")}
+            labelPrefix={t("domains.application.applicants.categoryFilter.prefix")}
+            popoverTitle={t("domains.application.applicants.categoryFilter.title")}
+            options={CATEGORY_FILTER_OPTIONS.map((option) => ({
+              key: option.key,
+              label: t(option.label),
+            }))}
             value={categoryFilter}
             onChange={setCategoryFilter}
           />
           <SingleSelectFilterChip
-            emptyLabel="+ 상태"
-            labelPrefix="상태"
-            popoverTitle="상태 선택"
-            options={STATUS_FILTER_CHIP_OPTIONS}
+            emptyLabel={t("domains.application.applicants.statusFilter.chipEmpty")}
+            labelPrefix={t("domains.application.applicants.statusFilter.prefix")}
+            popoverTitle={t("pages.campaigns.statusFilterTitle")}
+            options={STATUS_FILTER_CHIP_OPTIONS.map((option) => ({
+              key: option.key,
+              label: t(option.label),
+            }))}
             value={statusFilter === "all" ? null : statusFilter}
             onChange={(value) => setStatusFilter(value ?? "all")}
           />
@@ -223,7 +238,7 @@ export function Campaigns() {
         <div className={styles.search}>
           <i className="fa-solid fa-magnifying-glass" />
           <input
-            placeholder="브랜드 또는 캠페인 이름 검색"
+            placeholder={t("pages.campaigns.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -234,12 +249,12 @@ export function Campaigns() {
           onClick={() => navigate("/campaigns/new")}
           className={styles.newBtn}
         >
-          + 새 캠페인
+          {t("pages.campaigns.newCampaign")}
         </Button>
       </div>
 
       {state.kind === "loading" ? (
-        <div className={styles.empty}>불러오는 중…</div>
+        <div className={styles.empty}>{t("common.loading")}</div>
       ) : state.kind === "error" ? (
         <div className={styles.empty}>
           {state.message}{" "}
@@ -248,11 +263,11 @@ export function Campaigns() {
             className={`${campaignFormStyles.btn} ${campaignFormStyles.btnGhost}`}
             onClick={() => setReloadKey((k) => k + 1)}
           >
-            다시 시도
+            {t("common.retry")}
           </button>
         </div>
       ) : filtered.length === 0 ? (
-        <div className={styles.empty}>조건에 맞는 캠페인이 없습니다.</div>
+        <div className={styles.empty}>{t("pages.campaigns.emptyFiltered")}</div>
       ) : (
         <div className={styles.list}>
           {filtered.map((c) => (
@@ -283,7 +298,9 @@ export function Campaigns() {
                 bottomAffix={
                   c.status === "draft" ? (
                     <div className={styles.cardDraftMeta}>
-                      최종 수정 {formatUpdatedAt(c.updatedAt)}
+                      {t("pages.campaigns.lastModified", {
+                        date: formatUpdatedAt(c.updatedAt),
+                      })}
                     </div>
                   ) : (
                     <CampaignCardFooter

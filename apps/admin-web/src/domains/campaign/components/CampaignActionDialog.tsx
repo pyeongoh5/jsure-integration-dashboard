@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import { useT } from "@/lib/i18n";
 
 export type CampaignActionDialogProps = {
   /** null 이면 닫힌 상태. 대상 캠페인 id 가 곧 open 조건이다. */
@@ -38,6 +39,7 @@ export function CampaignActionDialog({
   failureMessage,
   run,
 }: Props) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,7 +54,7 @@ export function CampaignActionDialog({
       title={title}
       subtitle={error ?? description}
       confirmLabel={busy ? busyLabel : confirmLabel}
-      cancelLabel="취소"
+      cancelLabel={t("common.cancel")}
       tone={tone}
       busy={busy}
       confirmDisabled={confirmDisabled}

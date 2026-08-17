@@ -14,6 +14,7 @@ import { listCampaigns } from "../api";
 import { RichTextEditor } from "@/components/composites/RichTextEditor/RichTextEditor";
 import { Button } from "@/components/ui";
 import { serializeRichTextHtml } from "@/lib/richTextImages";
+import { useT } from "@/lib/i18n";
 import styles from "./CampaignForm.module.css";
 
 const CAMPAIGN_IMAGE_ENDPOINT = "/uploads/admin/campaign-image/presign";
@@ -88,6 +89,7 @@ export function CampaignForm({
   onCancel,
   selfCampaignId,
 }: Props) {
+  const t = useT();
   const methods = useForm<Values>({
     resolver: zodResolver(CampaignFormSchema) as unknown as Resolver<Values>,
     defaultValues: initialValue,
@@ -136,7 +138,9 @@ export function CampaignForm({
       setThumbnailDraft({ kind: "new", objectKey, viewUrl });
     } catch (uploadError) {
       setThumbnailError(
-        uploadError instanceof UploadError ? uploadError.message : "업로드에 실패했습니다",
+        uploadError instanceof UploadError
+          ? uploadError.message
+          : t("domains.campaign.form.uploadFailed"),
       );
     } finally {
       setUploadingThumbnail(false);
@@ -188,7 +192,7 @@ export function CampaignForm({
     try {
       await onSaveDraft(withMediaFields(methods.getValues()));
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "임시저장에 실패했습니다.");
+      setBanner(err instanceof Error ? err.message : t("domains.campaign.form.draftSaveFailed"));
     } finally {
       setSavingDraft(false);
     }
@@ -202,7 +206,7 @@ export function CampaignForm({
     // 업로드가 끝나지 않은 이미지 (data-r2-key 없는 img) 차단
     const pending = [values.productSummary, values.guideline, values.cautions];
     if (pending.some((html) => /<img\b(?![^>]*\bdata-r2-key=)[^>]*>/.test(html))) {
-      setBanner("이미지 업로드가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.");
+      setBanner(t("domains.campaign.form.imagesUploading"));
       return;
     }
     try {
@@ -270,7 +274,7 @@ export function CampaignForm({
       };
       await onSubmit(withMediaFields(finalValues));
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "저장 중 오류가 발생했습니다.");
+      setBanner(err instanceof Error ? err.message : t("domains.campaign.form.saveError"));
     }
   }
 
@@ -351,10 +355,12 @@ export function CampaignForm({
         {banner && <div className={styles.banner}>{banner}</div>}
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>기본 정보</h2>
+          <h2 className={styles.sectionTitle}>{t("domains.campaign.form.sectionBasic")}</h2>
 
           <div className={styles.field}>
-            <label className={styles.label}>카테고리</label>
+            <label className={styles.label}>
+              {t("domains.application.applicants.categoryFilter.prefix")}
+            </label>
             <Controller
               control={methods.control}
               name="category"
@@ -395,7 +401,7 @@ export function CampaignForm({
                             });
                           }}
                         />
-                        가구매
+                        {t("domains.application.category.fakePurchase")}
                       </label>
                       <label className={styles.radioOption}>
                         <input
@@ -412,11 +418,11 @@ export function CampaignForm({
                             });
                           }}
                         />
-                        단순 리뷰
+                        {t("domains.application.category.simpleReview")}
                       </label>
                     </div>
                     {isEditMode && (
-                      <p className={styles.hint}>카테고리는 생성 후 변경할 수 없습니다.</p>
+                      <p className={styles.hint}>{t("domains.campaign.form.categoryLockedHint")}</p>
                     )}
                   </>
                 );
@@ -427,7 +433,7 @@ export function CampaignForm({
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="cf-title">
-              캠페인 제목
+              {t("domains.campaign.form.titleLabel")}
             </label>
             <input
               id="cf-title"
@@ -439,7 +445,7 @@ export function CampaignForm({
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>보수 체계</label>
+            <label className={styles.label}>{t("domains.campaign.form.rewardTypeLabel")}</label>
             <Controller
               control={methods.control}
               name="rewardType"
@@ -476,7 +482,7 @@ export function CampaignForm({
                         );
                       }}
                     />
-                    통합 보수 (참여 SNS 수와 무관하게 고정)
+                    {t("domains.campaign.form.rewardUnified")}
                   </label>
                   <label className={styles.radioOption}>
                     <input
@@ -494,7 +500,7 @@ export function CampaignForm({
                         });
                       }}
                     />
-                    개별 보수 (참여 서브타입별 금액 합산)
+                    {t("domains.campaign.form.rewardPerSubType")}
                   </label>
                 </div>
               )}
@@ -507,7 +513,7 @@ export function CampaignForm({
           {methods.watch("rewardType") === "UNIFIED" && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="cf-reward">
-                보수 금액
+                {t("domains.campaign.form.rewardAmountLabel")}
               </label>
               <Controller
                 control={methods.control}
@@ -537,7 +543,7 @@ export function CampaignForm({
           <div className={styles.row2}>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="cf-start">
-                모집 시작일
+                {t("domains.campaign.form.recruitStartLabel")}
               </label>
               <input
                 id="cf-start"
@@ -552,7 +558,7 @@ export function CampaignForm({
             </div>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="cf-end">
-                모집 종료일
+                {t("domains.campaign.form.recruitEndLabel")}
               </label>
               <input
                 id="cf-end"
@@ -569,7 +575,7 @@ export function CampaignForm({
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="cf-posting-period">
-              게시 기간 (수령 후 N일)
+              {t("domains.campaign.form.postingPeriodLabel")}
             </label>
             <Controller
               control={methods.control}
@@ -579,7 +585,7 @@ export function CampaignForm({
                   id="cf-posting-period"
                   className={styles.input}
                   inputMode="numeric"
-                  placeholder="예시: 14"
+                  placeholder={t("domains.campaign.form.postingPeriodPlaceholder")}
                   value={Number.isFinite(field.value) ? String(field.value) : ""}
                   onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
                   onBlur={field.onBlur}
@@ -595,7 +601,7 @@ export function CampaignForm({
           {methods.watch("category") === "FAKE_PURCHASE" && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="cf-order-period">
-                주문 마감 기한 (승인 후 N일)
+                {t("domains.campaign.form.orderPeriodLabel")}
               </label>
               <Controller
                 control={methods.control}
@@ -605,7 +611,7 @@ export function CampaignForm({
                     id="cf-order-period"
                     className={styles.input}
                     inputMode="numeric"
-                    placeholder="비워두면 주문 마감 없음"
+                    placeholder={t("domains.campaign.form.orderPeriodPlaceholder")}
                     value={field.value == null ? "" : String(field.value)}
                     onChange={(event) => {
                       const parsed = parseIntegerInput(event.target.value);
@@ -616,9 +622,7 @@ export function CampaignForm({
                   />
                 )}
               />
-              <div className={styles.hint}>
-                기한까지 주문하지 않으면 마감 다음날 응모가 자동 취소됩니다.
-              </div>
+              <div className={styles.hint}>{t("domains.campaign.form.orderPeriodHint")}</div>
               {rootError("orderPeriodDays") && (
                 <div className={styles.error}>{rootError("orderPeriodDays")}</div>
               )}
@@ -627,19 +631,19 @@ export function CampaignForm({
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="cf-thumbnail">
-              썸네일 이미지 (인플루언서 앱 표시용)
+              {t("domains.campaign.form.thumbnailLabel")}
             </label>
             <div className={styles.thumbnail}>
               {thumbnailPreviewSrc && (
                 <div className={styles.thumbnailPreview}>
-                  <img src={thumbnailPreviewSrc} alt="썸네일" />
+                  <img src={thumbnailPreviewSrc} alt={t("domains.campaign.form.thumbnailAlt")} />
                   <button
                     type="button"
                     className={styles.thumbnailRemove}
                     onClick={removeThumbnail}
                     disabled={submitting || uploadingThumbnail}
                   >
-                    제거
+                    {t("domains.campaign.form.removeThumbnail")}
                   </button>
                 </div>
               )}
@@ -655,8 +659,10 @@ export function CampaignForm({
                   void handleThumbnailFile(file);
                 }}
               />
-              <p className={styles.hint}>PNG · JPEG · WebP, 5MB 이하</p>
-              {uploadingThumbnail && <div className={styles.hint}>업로드 중...</div>}
+              <p className={styles.hint}>{t("domains.campaign.form.thumbnailHint")}</p>
+              {uploadingThumbnail && (
+                <div className={styles.hint}>{t("domains.campaign.form.uploading")}</div>
+              )}
               {thumbnailError && <div className={styles.error}>{thumbnailError}</div>}
             </div>
             {rootError("thumbnailUrl") && (
@@ -668,22 +674,22 @@ export function CampaignForm({
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>
             {methods.watch("category") === "FAKE_PURCHASE"
-              ? "가구매 채널별 모집"
+              ? t("domains.campaign.form.sectionRecruitsFake")
               : methods.watch("category") === "SIMPLE_REVIEW"
-                ? "단순 리뷰 채널별 모집"
-                : "SNS별 모집"}
+                ? t("domains.campaign.form.sectionRecruitsSimpleReview")
+                : t("domains.campaign.form.sectionRecruitsSns")}
           </h2>
           <p className={styles.subLabel}>
             {methods.watch("category") === "FAKE_PURCHASE"
-              ? "가구매를 진행할 채널을 선택하고, 채널별 모집 인원과 상품 정보를 입력하세요."
+              ? t("domains.campaign.form.recruitsHintFake")
               : methods.watch("category") === "SIMPLE_REVIEW"
-                ? "리뷰를 받을 채널(LIPS/@cosme)을 선택하세요. 선택한 채널은 모두 필수 응모이며, 모집 인원은 캠페인 단위로 하나만 입력합니다."
-                : "사용할 SNS를 선택하고, 각 SNS에 적용할 조건과 모집 인원을 입력하세요."}
+                ? t("domains.campaign.form.recruitsHintSimpleReview")
+                : t("domains.campaign.form.recruitsHintSns")}
           </p>
           {methods.watch("rewardType") === "PER_SUBTYPE" && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="cf-bulk-reward">
-                보수 일괄 입력
+                {t("domains.campaign.form.bulkRewardLabel")}
               </label>
               <div className={styles.currency}>
                 <div style={{ position: "relative", flex: 1 }}>
@@ -692,7 +698,7 @@ export function CampaignForm({
                     id="cf-bulk-reward"
                     className={styles.input}
                     inputMode="numeric"
-                    placeholder="모든 서브타입에 적용할 금액"
+                    placeholder={t("domains.campaign.form.bulkRewardPlaceholder")}
                     value={Number.isFinite(bulkRewardJpy) ? String(bulkRewardJpy) : ""}
                     onChange={(event) => setBulkRewardJpy(parseIntegerInput(event.target.value))}
                     disabled={submitting}
@@ -721,12 +727,10 @@ export function CampaignForm({
                     );
                   }}
                 >
-                  일괄 적용
+                  {t("domains.campaign.form.bulkRewardApply")}
                 </Button>
               </div>
-              <p className={styles.hint}>
-                선택된 모든 서브타입의 보수 금액을 같은 값으로 채웁니다.
-              </p>
+              <p className={styles.hint}>{t("domains.campaign.form.bulkRewardHint")}</p>
             </div>
           )}
           <Controller
@@ -747,10 +751,10 @@ export function CampaignForm({
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>상품</h2>
+          <h2 className={styles.sectionTitle}>{t("domains.campaign.form.sectionProduct")}</h2>
 
           <div className={styles.field}>
-            <label className={styles.label}>상품 개요</label>
+            <label className={styles.label}>{t("domains.campaign.form.productSummaryLabel")}</label>
             <Controller
               control={methods.control}
               name="productSummary"
@@ -770,7 +774,9 @@ export function CampaignForm({
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>상품 상세 URL (qoo10)</label>
+            <label className={styles.label}>
+              {t("domains.campaign.form.productDetailUrlLabel")}
+            </label>
             <Controller
               control={methods.control}
               name="productDetailUrls"
@@ -791,10 +797,10 @@ export function CampaignForm({
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>가이드라인</h2>
+          <h2 className={styles.sectionTitle}>{t("domains.campaign.form.sectionGuideline")}</h2>
 
           <div className={styles.field}>
-            <label className={styles.label}>안건 개요 (투고 가이드라인)</label>
+            <label className={styles.label}>{t("domains.campaign.form.guidelineLabel")}</label>
             <Controller
               control={methods.control}
               name="guideline"
@@ -812,7 +818,9 @@ export function CampaignForm({
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>투고 참고 영상/사진 URL</label>
+            <label className={styles.label}>
+              {t("domains.campaign.form.referenceMediaLabel")}
+            </label>
             <Controller
               control={methods.control}
               name="referenceMediaUrls"
@@ -831,7 +839,7 @@ export function CampaignForm({
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>주의 사항</label>
+            <label className={styles.label}>{t("domains.campaign.form.cautionsLabel")}</label>
             <Controller
               control={methods.control}
               name="cautions"
@@ -850,11 +858,8 @@ export function CampaignForm({
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>참여 제외 캠페인</h2>
-          <p className={styles.subLabel}>
-            여기서 선택한 캠페인에 참여 완료(제출물 승인)한 인플루언서는 이 캠페인에
-            응모할 수 없습니다. 응모만 하고 완료하지 않은 경우는 응모할 수 있습니다.
-          </p>
+          <h2 className={styles.sectionTitle}>{t("domains.campaign.form.sectionExcluded")}</h2>
+          <p className={styles.subLabel}>{t("domains.campaign.form.excludedHint")}</p>
           <Controller
             control={methods.control}
             name="excludedCampaignIds"
@@ -872,7 +877,7 @@ export function CampaignForm({
 
         <div className={styles.actions}>
           <Button variant="ghost" size="md" onClick={onCancel} disabled={submitting}>
-            취소
+            {t("common.cancel")}
           </Button>
           {onSaveDraft && (
             <Button
@@ -882,7 +887,9 @@ export function CampaignForm({
               disabled={submitting || savingDraft || draftTitle.trim() === ""}
               loading={savingDraft}
             >
-              {savingDraft ? "저장 중…" : "임시저장"}
+              {savingDraft
+                ? t("domains.campaign.form.saving")
+                : t("domains.campaign.form.saveDraft")}
             </Button>
           )}
           <Button
@@ -892,7 +899,7 @@ export function CampaignForm({
             disabled={submitting}
             loading={submitting}
           >
-            {submitting ? "저장 중…" : submitLabel}
+            {submitting ? t("domains.campaign.form.saving") : submitLabel}
           </Button>
         </div>
       </form>

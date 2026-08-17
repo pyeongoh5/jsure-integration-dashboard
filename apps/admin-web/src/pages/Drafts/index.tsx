@@ -19,9 +19,11 @@ import {
   type HistoryTarget,
 } from "@/domains/application";
 import { InfluencerNotesDialog } from "@/domains/influencer";
+import { useT } from "@/lib/i18n";
 import styles from "./Drafts.module.css";
 
 export function Drafts() {
+  const t = useT();
   const qc = useQueryClient();
   const [params, setParams] = useSearchParams();
   const campaignId = params.get("campaignId");
@@ -76,12 +78,12 @@ export function Drafts() {
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <h1 className={styles.title}>검토</h1>
+        <h1 className={styles.title}>{t("pages.drafts.title")}</h1>
         <p className={styles.subtitle}>
           {state.kind === "ready"
-            ? `${visible.length}건`
+            ? t("common.itemCount", { count: visible.length })
             : state.kind === "loading"
-              ? "불러오는 중..."
+              ? t("common.loading")
               : ""}
         </p>
       </div>
@@ -105,7 +107,7 @@ export function Drafts() {
 
       {state.kind === "loading" ? (
         <div className={styles.card}>
-          <div className={styles.empty}>불러오는 중…</div>
+          <div className={styles.empty}>{t("common.loading")}</div>
         </div>
       ) : state.kind === "error" ? (
         <div className={styles.card}>
@@ -131,7 +133,7 @@ export function Drafts() {
               applicationId: draft.id,
               campaignTitle: draft.campaignTitle,
               influencerName: draft.influencerName,
-              statusLabel: DRAFT_STATUS_LABEL[draft.status],
+              statusLabel: t(DRAFT_STATUS_LABEL[draft.status]),
             })
           }
         />

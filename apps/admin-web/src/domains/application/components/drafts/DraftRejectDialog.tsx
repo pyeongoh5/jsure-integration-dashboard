@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import { useT } from "@/lib/i18n";
 import type { DraftReview } from "./types";
 import styles from "@/pages/Drafts/Drafts.module.css";
 
@@ -18,12 +19,13 @@ export function DraftRejectDialog({
   onConfirm,
   onCancel,
 }: Props) {
+  const t = useT();
   const [comment, setComment] = useState("");
 
   return (
     <ConfirmDialog
       open
-      title="초안을 반려할까요?"
+      title={t("domains.application.drafts.rejectDialog.title")}
       subtitle={
         <>
           <div>
@@ -33,7 +35,7 @@ export function DraftRejectDialog({
           </div>
           <textarea
             className={styles.rejectComment}
-            placeholder="반려 사유를 입력하세요 (재제출시 인플루언서에게 전달됩니다)"
+            placeholder={t("domains.application.drafts.rejectDialog.reasonPlaceholder")}
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             disabled={mutating}
@@ -42,8 +44,12 @@ export function DraftRejectDialog({
           {error && <div className={styles.mutationError}>{error}</div>}
         </>
       }
-      confirmLabel={mutating ? "처리 중…" : "반려"}
-      cancelLabel="취소"
+      confirmLabel={
+        mutating
+          ? t("components.confirmDialog.processing")
+          : t("domains.application.applicants.actions.reject")
+      }
+      cancelLabel={t("common.cancel")}
       tone="danger"
       busy={mutating}
       onConfirm={() => onConfirm(comment)}

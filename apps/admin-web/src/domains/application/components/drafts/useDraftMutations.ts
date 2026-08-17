@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { translate } from "@i18n/admin";
+import { getStoredLanguage } from "@/lib/i18n";
 import {
   approveSubmission,
   rejectSubmission,
@@ -56,7 +58,12 @@ export function useDraftMutations(
         case "reject": {
           const comment = (input ?? "").trim();
           if (comment === "") {
-            setError("반려 사유를 입력하세요.");
+            setError(
+              translate(
+                "domains.application.drafts.rejectDialog.reasonRequired",
+                getStoredLanguage(),
+              ),
+            );
             return false;
           }
           await rejectSubmission(applicationId, comment);
@@ -73,7 +80,10 @@ export function useDraftMutations(
       setError(
         mutationError instanceof Error
           ? mutationError.message
-          : "처리에 실패했습니다.",
+          : translate(
+              "domains.application.applicants.errors.mutationFailed",
+              getStoredLanguage(),
+            ),
       );
       return false;
     } finally {
@@ -93,8 +103,15 @@ export function useDraftMutations(
         await settleSubmission(draft.id);
         onMutated();
         return true;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "처리에 실패했습니다.");
+      } catch (settleError) {
+        setError(
+          settleError instanceof Error
+            ? settleError.message
+            : translate(
+                "domains.application.applicants.errors.mutationFailed",
+                getStoredLanguage(),
+              ),
+        );
         return false;
       }
     },

@@ -1,6 +1,8 @@
 import { Fragment } from "react";
+import type { AdminTranslationKey } from "@i18n/admin";
 import { ScrollTable, SubTypePill } from "@/components/composites";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import { CATEGORY_LABEL_KO } from "../applicants/types";
 import { SUB_TYPE_LABEL, SUB_TYPE_OPTION_LABEL } from "@jsure/shared";
 import {
@@ -54,6 +56,8 @@ function pickAvatarColor(seed: string): string {
   return AVATAR_PALETTE[hash % AVATAR_PALETTE.length] ?? "#6b7280";
 }
 
+type TranslateFunction = ReturnType<typeof useT>;
+
 type ActionHandlers = {
   onApprove: (draft: DraftReview) => void;
   onReject: (draft: DraftReview) => void;
@@ -65,23 +69,29 @@ type ActionHandlers = {
   onHistory: (draft: DraftReview) => void;
 };
 
+function submissionButtonKey(draft: DraftReview): AdminTranslationKey {
+  if (draft.category !== "SNS") return "domains.application.drafts.table.viewResult";
+  if (draft.insightSubmitted) return "domains.application.drafts.table.viewInsight";
+  return "domains.application.drafts.table.viewSubmission";
+}
+
 function formatJpy(amount: number): string {
   return `¥${amount.toLocaleString()}`;
 }
 
-function renderCategoryCell(draft: DraftReview) {
+function renderCategoryCell(draft: DraftReview, t: TranslateFunction) {
   const badgeClass = draft.category === "SNS" ? shared.categoryBadgeSns : shared.categoryBadgeFake;
   return (
     <span className={`${shared.categoryBadge} ${badgeClass}`}>
-      {CATEGORY_LABEL_KO[draft.category]}
+      {t(CATEGORY_LABEL_KO[draft.category])}
     </span>
   );
 }
 
-function renderStatusCell(draft: DraftReview) {
+function renderStatusCell(draft: DraftReview, t: TranslateFunction) {
   const badge = (
     <span className={`${styles.statusBadge} ${STATUS_BADGE_CLASS[draft.status]}`}>
-      {DRAFT_STATUS_LABEL[draft.status]}
+      {t(DRAFT_STATUS_LABEL[draft.status])}
     </span>
   );
   const amount =
@@ -96,15 +106,19 @@ function renderStatusCell(draft: DraftReview) {
   );
 }
 
-function renderActions(draft: DraftReview, handlers: ActionHandlers) {
+function renderActions(
+  draft: DraftReview,
+  handlers: ActionHandlers,
+  t: TranslateFunction,
+) {
   const memoButton = (
     <Button variant="secondary" size="sm" onClick={() => handlers.onMemo(draft)}>
-      메모
+      {t("domains.application.applicants.actions.memo")}
     </Button>
   );
   const historyButton = (
     <Button variant="secondary" size="sm" onClick={() => handlers.onHistory(draft)}>
-      이력
+      {t("domains.application.applicants.actions.history")}
     </Button>
   );
 
@@ -112,10 +126,10 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
     return (
       <div className={styles.actions}>
         <Button variant="primary" size="sm" onClick={() => handlers.onApprove(draft)}>
-          승인
+          {t("domains.application.applicants.actions.approve")}
         </Button>
         <Button variant="danger" size="sm" onClick={() => handlers.onReject(draft)}>
-          반려
+          {t("domains.application.applicants.actions.reject")}
         </Button>
         {memoButton}
         {historyButton}
@@ -127,10 +141,10 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
     return (
       <div className={styles.actions}>
         <Button variant="primary" size="sm" onClick={() => handlers.onSettle(draft)}>
-          정산하기
+          {t("domains.application.drafts.actions.settle")}
         </Button>
         <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(draft)}>
-          되돌리기
+          {t("domains.application.applicants.actions.undo")}
         </Button>
         {memoButton}
         {historyButton}
@@ -142,7 +156,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
     return (
       <div className={styles.actions}>
         <Button variant="primary" size="sm" onClick={() => handlers.onSettle(draft)}>
-          정산하기
+          {t("domains.application.drafts.actions.settle")}
         </Button>
         {memoButton}
         {historyButton}
@@ -154,7 +168,7 @@ function renderActions(draft: DraftReview, handlers: ActionHandlers) {
     return (
       <div className={styles.actions}>
         <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(draft)}>
-          되돌리기
+          {t("domains.application.applicants.actions.undo")}
         </Button>
         {memoButton}
         {historyButton}
@@ -195,10 +209,12 @@ export function DraftTable({
   onMemo,
   onHistory,
 }: Props) {
+  const t = useT();
+
   if (items.length === 0) {
     return (
       <div className={styles.card}>
-        <div className={styles.empty}>검토할 내용이 없습니다.</div>
+        <div className={styles.empty}>{t("domains.application.drafts.table.empty")}</div>
       </div>
     );
   }
@@ -209,14 +225,24 @@ export function DraftTable({
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>인플루언서</th>
-              <th>캠페인</th>
-              <th style={{ width: 120 }}>카테고리</th>
-              <th style={{ width: 90 }}>서브타입</th>
-              <th>제출물</th>
-              <th style={{ width: 90 }}>제출 시각</th>
-              <th style={{ width: 160 }}>상태</th>
-              <th style={{ width: 200 }}>액션</th>
+              <th>{t("domains.application.applicants.table.influencer")}</th>
+              <th>{t("domains.application.applicants.table.campaign")}</th>
+              <th style={{ width: 120 }}>
+                {t("domains.application.applicants.table.category")}
+              </th>
+              <th style={{ width: 90 }}>
+                {t("domains.application.applicants.table.subType")}
+              </th>
+              <th>{t("domains.application.drafts.table.submissions")}</th>
+              <th style={{ width: 90 }}>
+                {t("domains.application.drafts.table.submittedAt")}
+              </th>
+              <th style={{ width: 160 }}>
+                {t("domains.application.applicants.table.status")}
+              </th>
+              <th style={{ width: 200 }}>
+                {t("domains.application.applicants.table.actions")}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -237,22 +263,30 @@ export function DraftTable({
                           <div className={shared.infName}>
                             {draft.influencerName}
                             {draft.influencerFlagged && (
-                              <span className={shared.flaggedBadge}>대상외</span>
+                              <span className={shared.flaggedBadge}>
+                                {t("domains.application.applicants.table.flagged")}
+                              </span>
                             )}
                           </div>
                           {draft.influencerHandle ? (
                             <div className={shared.infHandle}>@{draft.influencerHandle}</div>
                           ) : draft.representativeSns ? (
                             <div className={shared.infHandle}>
-                              대표 SNS: {SUB_TYPE_LABEL[draft.representativeSns.snsType]} - @
-                              {draft.representativeSns.handle}
+                              {t(
+                                "domains.application.applicants.table.representativeSns",
+                                {
+                                  snsType:
+                                    SUB_TYPE_LABEL[draft.representativeSns.snsType],
+                                  handle: draft.representativeSns.handle,
+                                },
+                              )}
                             </div>
                           ) : null}
                         </div>
                       </div>
                     </td>
                     <td>{draft.campaignTitle}</td>
-                    <td>{renderCategoryCell(draft)}</td>
+                    <td>{renderCategoryCell(draft, t)}</td>
                     <td>
                       {draft.category === "FAKE_PURCHASE" ||
                       draft.category === "SIMPLE_REVIEW" ? (
@@ -297,25 +331,25 @@ export function DraftTable({
                         className={styles.insightLink}
                         onClick={() => onViewInsight(draft)}
                       >
-                        {draft.category === "SNS"
-                          ? draft.insightSubmitted
-                            ? "인사이트 보기"
-                            : "제출 보기"
-                          : "제출 결과 보기"}
+                        {t(submissionButtonKey(draft))}
                       </button>
                     </td>
                     <td className={styles.time}>{draft.submittedAt}</td>
-                    <td>{renderStatusCell(draft)}</td>
+                    <td>{renderStatusCell(draft, t)}</td>
                     <td>
-                      {renderActions(draft, {
-                        onApprove,
-                        onReject,
-                        onUndo,
-                        onSettle,
-                        onViewInsight,
-                        onMemo,
-                        onHistory,
-                      })}
+                      {renderActions(
+                        draft,
+                        {
+                          onApprove,
+                          onReject,
+                          onUndo,
+                          onSettle,
+                          onViewInsight,
+                          onMemo,
+                          onHistory,
+                        },
+                        t,
+                      )}
                     </td>
                   </tr>
                   {showHistory && hasHistory && (
@@ -323,7 +357,9 @@ export function DraftTable({
                       <td colSpan={8}>
                         <div className={styles.history}>
                           <div className={styles.historyTitle}>
-                            이전 반려 사유 ({draft.rejectionHistory.length})
+                            {t("domains.application.drafts.table.rejectionHistoryTitle", {
+                              count: draft.rejectionHistory.length,
+                            })}
                           </div>
                           <ul className={styles.historyList}>
                             {draft.rejectionHistory.map((rejection) => (

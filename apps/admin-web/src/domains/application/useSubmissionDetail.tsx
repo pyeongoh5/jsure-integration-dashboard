@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from "react";
+import { translate } from "@i18n/admin";
+import { getStoredLanguage, useLanguage } from "@/lib/i18n";
 import { fetchSubmission } from "./draftsApi";
 import { toDraftReview } from "./components/drafts/draftTransform";
 import { InsightDetailDialog } from "./components/drafts/InsightDetailDialog";
@@ -19,6 +21,7 @@ type SubmissionDetail = {
  * 버튼 문구는 화면마다 규칙이 달라 호출부에 남긴다.
  */
 export function useSubmissionDetail(): SubmissionDetail {
+  const { language } = useLanguage();
   const [draft, setDraft] = useState<DraftReview | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -27,10 +30,15 @@ export function useSubmissionDetail(): SubmissionDetail {
     setLoadingId(applicationId);
     try {
       const submission = await fetchSubmission(applicationId);
-      setDraft(toDraftReview(submission, new Date()));
+      setDraft(toDraftReview(submission, new Date(), language));
     } catch (error) {
       window.alert(
-        error instanceof Error ? error.message : "제출물을 불러올 수 없습니다.",
+        error instanceof Error
+          ? error.message
+          : translate(
+              "domains.application.drafts.errors.submissionLoadFailed",
+              getStoredLanguage(),
+            ),
       );
     } finally {
       setLoadingId(null);

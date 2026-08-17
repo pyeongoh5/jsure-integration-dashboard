@@ -4,18 +4,20 @@ import {
   type ApprovedApplicantExportResponse,
   type ApprovedApplicantExportRow,
 } from "@jsure/shared";
+import { translate, type AdminTranslationKey } from "@i18n/admin";
+import { getStoredLanguage } from "@/lib/i18n";
 
-const HEADERS = [
-  "이름(한자)",
-  "이름(카타카나)",
-  "SNS",
-  "SNS ID",
-  "프로필 URL",
-  "전화번호",
-  "우편번호",
-  "주소",
-  "캠페인 신청날짜",
-] as const;
+export const APPROVED_APPLICANT_EXPORT_HEADER_KEYS = [
+  "domains.application.export.nameKanji",
+  "domains.application.export.nameKana",
+  "domains.application.export.sns",
+  "domains.application.export.snsId",
+  "domains.application.export.profileUrl",
+  "domains.application.export.phone",
+  "domains.application.export.postalCode",
+  "domains.application.export.address",
+  "domains.application.export.appliedDate",
+] as const satisfies readonly AdminTranslationKey[];
 
 /** SNS 컬럼 표기 — 옵션이 있으면 "Instagram(피드)" 형태. */
 export function approvedApplicantChannelLabel(
@@ -65,7 +67,10 @@ export function formatAppliedAtJst(iso: string): string {
 export function buildApprovedApplicantsCsv(
   response: ApprovedApplicantExportResponse,
 ): string {
-  const header = HEADERS.map(escapeCsvCell).join(",");
+  const language = getStoredLanguage();
+  const header = APPROVED_APPLICANT_EXPORT_HEADER_KEYS.map((headerKey) =>
+    escapeCsvCell(translate(headerKey, language)),
+  ).join(",");
   const body = response.rows
     .map((row) => formatRow(row).map(escapeCsvCell).join(","))
     .join("\r\n");

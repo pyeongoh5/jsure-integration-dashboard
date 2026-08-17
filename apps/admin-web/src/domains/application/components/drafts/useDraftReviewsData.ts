@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AdminSubmission } from "@jsure/shared";
+import { translate } from "@i18n/admin";
+import { getStoredLanguage, useLanguage } from "@/lib/i18n";
 import { listSubmissions } from "../draftsApi";
 import { toDraftReview } from "./draftTransform";
 import type { DraftReview } from "./types";
@@ -16,6 +18,7 @@ export type UseDraftReviewsDataResult = {
 };
 
 export function useDraftReviewsData(): UseDraftReviewsDataResult {
+  const { language } = useLanguage();
   const [state, setState] = useState<DraftReviewsLoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -33,7 +36,10 @@ export function useDraftReviewsData(): UseDraftReviewsDataResult {
           message:
             error instanceof Error
               ? error.message
-              : "초안 목록을 불러올 수 없습니다.",
+              : translate(
+                  "domains.application.drafts.errors.loadFailed",
+                  getStoredLanguage(),
+                ),
         });
       });
     return () => {
@@ -45,8 +51,8 @@ export function useDraftReviewsData(): UseDraftReviewsDataResult {
 
   const drafts = useMemo<DraftReview[]>(() => {
     if (state.kind !== "ready") return [];
-    return state.rows.map((submission) => toDraftReview(submission, now));
-  }, [state, now]);
+    return state.rows.map((submission) => toDraftReview(submission, now, language));
+  }, [state, now, language]);
 
   return {
     state,

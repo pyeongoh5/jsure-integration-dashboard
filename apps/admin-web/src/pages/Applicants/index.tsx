@@ -19,11 +19,13 @@ import {
 } from "@/domains/application";
 import { InfluencerNotesDialog } from "@/domains/influencer";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import { ApplicantDetailDialog } from "./ApplicantDetailDialog";
 import { ApprovedApplicantsDialog } from "./ApprovedApplicantsDialog";
 import styles from "./Applicants.module.css";
 
 export function Applicants() {
+  const t = useT();
   const [searchParams, setSearchParams] = useSearchParams();
   const campaignId = searchParams.get("campaignId");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -87,11 +89,11 @@ export function Applicants() {
     <div className={styles.root}>
       <div className={styles.header}>
         <div className={styles.headerMain}>
-          <h1 className={styles.title}>응모자 관리</h1>
+          <h1 className={styles.title}>{t("pages.applicants.title")}</h1>
           <p className={styles.subtitle}>
             {state.kind === "ready"
-              ? `${visible.length}건`
-              : "불러오는 중..."}
+              ? t("common.itemCount", { count: visible.length })
+              : t("common.loading")}
           </p>
         </div>
         <Button
@@ -100,7 +102,7 @@ export function Applicants() {
           onClick={() => setDownloadOpen(true)}
           iconLeft={<i className="fa-solid fa-list" aria-hidden="true" />}
         >
-          승인자 명단 보기
+          {t("pages.applicants.viewApprovedList")}
         </Button>
       </div>
 
@@ -126,7 +128,7 @@ export function Applicants() {
           <i className="fa-solid fa-magnifying-glass" />
           <input
             type="text"
-            placeholder="이름·SNS 핸들·ID 검색"
+            placeholder={t("pages.applicants.searchPlaceholder")}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -135,7 +137,7 @@ export function Applicants() {
 
       {state.kind === "loading" ? (
         <div className={styles.card}>
-          <div className={styles.empty}>불러오는 중…</div>
+          <div className={styles.empty}>{t("common.loading")}</div>
         </div>
       ) : state.kind === "error" ? (
         <div className={styles.card}>
@@ -172,7 +174,7 @@ export function Applicants() {
               applicationId: applicant.id,
               campaignTitle: applicant.campaign,
               influencerName: applicant.name,
-              statusLabel: APPLICANT_STATUS_LABEL[applicant.status],
+              statusLabel: t(APPLICANT_STATUS_LABEL[applicant.status]),
             })
           }
         />

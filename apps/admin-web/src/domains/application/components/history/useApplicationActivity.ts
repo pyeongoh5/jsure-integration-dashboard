@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AdminActivityLog } from "@jsure/shared";
+import { translate } from "@i18n/admin";
+import { getStoredLanguage } from "@/lib/i18n";
 import { fetchApplicationActivity } from "../../activityApi";
 
 export type ActivityState =
@@ -26,7 +28,10 @@ export function useApplicationActivity(applicationId: string): {
           message:
             error instanceof Error
               ? error.message
-              : "작업 이력을 불러올 수 없습니다.",
+              : translate(
+                  "domains.application.history.loadFailed",
+                  getStoredLanguage(),
+                ),
         });
       });
     return () => {

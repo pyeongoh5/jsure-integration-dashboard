@@ -2,6 +2,7 @@ import {
   FilterChipBar,
   MultiSelectFilterChip,
 } from "@/components/composites/FilterChip";
+import { useT } from "@/lib/i18n";
 import { DRAFT_STATUS_OPTIONS, type DraftStatus } from "./types";
 
 type Props = {
@@ -10,13 +11,19 @@ type Props = {
 };
 
 export function DraftStatusFilter({ value, onChange }: Props) {
+  const t = useT();
+  const options = DRAFT_STATUS_OPTIONS.map((option) => ({
+    key: option.key,
+    label: t(option.label),
+  }));
+
   return (
     <FilterChipBar>
       <MultiSelectFilterChip
-        emptyLabel="+ 상태"
-        labelPrefix="상태"
-        popoverTitle="상태 선택 (복수 가능)"
-        options={DRAFT_STATUS_OPTIONS}
+        emptyLabel={t("domains.application.applicants.statusFilter.chipEmpty")}
+        labelPrefix={t("domains.application.applicants.statusFilter.prefix")}
+        popoverTitle={t("domains.application.applicants.statusFilter.title")}
+        options={options}
         value={value}
         onChange={onChange}
       />

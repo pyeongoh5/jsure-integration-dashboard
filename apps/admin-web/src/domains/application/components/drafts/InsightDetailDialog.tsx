@@ -6,7 +6,9 @@ import {
   type Attachment,
   type AttachmentKind,
 } from "@jsure/shared";
+import { translate, type AdminTranslationKey } from "@i18n/admin";
 import { SegmentedTabs } from "@/components/composites";
+import { getStoredLanguage, useT } from "@/lib/i18n";
 import { fetchApplicationAttachments } from "@/domains/application/draftsApi";
 import type { DraftReview, InsightMetrics } from "./types";
 import styles from "./InsightDetailDialog.module.css";
@@ -16,14 +18,14 @@ type AttachmentsState =
   | { kind: "ready"; items: Attachment[] }
   | { kind: "error"; message: string };
 
-const METRICS: { key: keyof InsightMetrics; label: string }[] = [
-  { key: "likes", label: "いいね数" },
-  { key: "comments", label: "コメント数" },
-  { key: "shares", label: "シェア数" },
-  { key: "reposts", label: "リポスト数" },
-  { key: "saves", label: "保存数" },
-  { key: "views", label: "閲覧数" },
-  { key: "reach", label: "リーチ数" },
+const METRICS: { key: keyof InsightMetrics; label: AdminTranslationKey }[] = [
+  { key: "likes", label: "domains.application.drafts.insightDialog.metrics.likes" },
+  { key: "comments", label: "domains.application.drafts.insightDialog.metrics.comments" },
+  { key: "shares", label: "domains.application.drafts.insightDialog.metrics.shares" },
+  { key: "reposts", label: "domains.application.drafts.insightDialog.metrics.reposts" },
+  { key: "saves", label: "domains.application.drafts.insightDialog.metrics.saves" },
+  { key: "views", label: "domains.application.drafts.insightDialog.metrics.views" },
+  { key: "reach", label: "domains.application.drafts.insightDialog.metrics.reach" },
 ];
 
 type Props = {
@@ -36,6 +38,7 @@ function fmtNumber(n: number | null): string {
 }
 
 export function InsightDetailDialog({ draft, onClose }: Props) {
+  const t = useT();
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [attachmentsState, setAttachmentsState] = useState<AttachmentsState>({
     kind: "loading",
@@ -58,12 +61,18 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
       ? [activePost]
       : [];
   const dialogTitle = isReviewCategory
-    ? `${draft.influencerName} 리뷰`
-    : `${draft.influencerName} 인사이트`;
+    ? t("domains.application.drafts.insightDialog.reviewTitle", {
+        name: draft.influencerName,
+      })
+    : t("domains.application.drafts.insightDialog.insightTitle", {
+        name: draft.influencerName,
+      });
   const emptyLabel = isReviewCategory
-    ? "리뷰가 아직 제출되지 않았습니다."
-    : "인사이트가 아직 제출되지 않았습니다.";
-  const screenshotTitle = isReviewCategory ? "리뷰 스크린샷" : "스크린샷";
+    ? t("domains.application.drafts.insightDialog.reviewNotSubmitted")
+    : t("domains.application.drafts.insightDialog.insightNotSubmitted");
+  const screenshotTitle = isReviewCategory
+    ? t("domains.application.drafts.insightDialog.reviewScreenshots")
+    : t("domains.application.drafts.insightDialog.screenshots");
   const attachmentKind: AttachmentKind = isReviewCategory
     ? "REVIEW_SCREENSHOT"
     : "INSIGHT_SCREENSHOT";
@@ -101,7 +110,10 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
           message:
             error instanceof Error
               ? error.message
-              : "첨부 이미지를 불러올 수 없습니다.",
+              : translate(
+                  "domains.application.drafts.insightDialog.attachmentsLoadFailed",
+                  getStoredLanguage(),
+                ),
         });
       });
     return () => {
@@ -132,7 +144,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
               type="button"
               className={styles.close}
               onClick={onClose}
-              aria-label="닫기"
+              aria-label={t("common.close")}
             >
               ×
             </button>
@@ -145,9 +157,13 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
               {isFakePurchase && (
                 <>
                   <section className={styles.section}>
-                    <h3 className={styles.sectionTitle}>주문 정보</h3>
+                    <h3 className={styles.sectionTitle}>
+                      {t("domains.application.drafts.insightDialog.orderInfo")}
+                    </h3>
                     <div className={styles.fields}>
-                      <div className={styles.fieldLabel}>주문번호</div>
+                      <div className={styles.fieldLabel}>
+                        {t("domains.application.drafts.insightDialog.orderNumber")}
+                      </div>
                       <div className={styles.fieldValue}>
                         {draft.orderNumber ?? "—"}
                       </div>
@@ -156,7 +172,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
 
                   <section className={styles.section}>
                     <h3 className={styles.sectionTitle}>
-                      주문 명세서
+                      {t("domains.application.drafts.insightDialog.orderReceipt")}
                       {orderReceipts.length > 0 && (
                         <span className={styles.count}>
                           {orderReceipts.length}
@@ -164,10 +180,12 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                       )}
                     </h3>
                     {attachmentsState.kind === "loading" ? (
-                      <div className={styles.empty}>불러오는 중…</div>
+                      <div className={styles.empty}>{t("common.loading")}</div>
                     ) : orderReceipts.length === 0 ? (
                       <div className={styles.empty}>
-                        명세서가 아직 제출되지 않았습니다.
+                        {t(
+                          "domains.application.drafts.insightDialog.receiptNotSubmitted",
+                        )}
                       </div>
                     ) : (
                       <div className={styles.grid}>
@@ -209,21 +227,25 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                 visiblePosts.map((post) => (
                   <section key={post.id} className={styles.section}>
                     <h3 className={styles.sectionTitle}>
-                      {SUB_TYPE_LABEL[post.subType]} 수치
+                      {t("domains.application.drafts.insightDialog.metricsTitle", {
+                        subType: SUB_TYPE_LABEL[post.subType],
+                      })}
                     </h3>
                     {post.insightSubmitted ? (
                       <div className={styles.metrics}>
-                        {METRICS.map((m) => (
-                          <div key={m.key} className={styles.metric}>
-                            <div className={styles.metricLabel}>{m.label}</div>
+                        {METRICS.map((metric) => (
+                          <div key={metric.key} className={styles.metric}>
+                            <div className={styles.metricLabel}>{t(metric.label)}</div>
                             <div className={styles.metricValue}>
-                              {fmtNumber(post.insight[m.key] as number | null)}
+                              {fmtNumber(post.insight[metric.key] as number | null)}
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className={styles.empty}>인사이트 미제출</div>
+                      <div className={styles.empty}>
+                        {t("domains.application.drafts.insightDialog.insightMissing")}
+                      </div>
                     )}
                   </section>
                 ))}
@@ -236,11 +258,13 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                   )}
                 </h3>
                 {attachmentsState.kind === "loading" ? (
-                  <div className={styles.empty}>불러오는 중…</div>
+                  <div className={styles.empty}>{t("common.loading")}</div>
                 ) : attachmentsState.kind === "error" ? (
                   <div className={styles.empty}>{attachmentsState.message}</div>
                 ) : filteredAttachments.length === 0 ? (
-                  <div className={styles.empty}>첨부 이미지 없음</div>
+                  <div className={styles.empty}>
+                    {t("domains.application.drafts.insightDialog.noAttachments")}
+                  </div>
                 ) : (
                   <div className={styles.grid}>
                     {filteredAttachments.map((attachment) => (
@@ -262,7 +286,9 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
 
               {submittedUrls.length > 0 && (
                 <section className={styles.section}>
-                  <h3 className={styles.sectionTitle}>제출 URL</h3>
+                  <h3 className={styles.sectionTitle}>
+                    {t("domains.application.drafts.insightDialog.submittedUrls")}
+                  </h3>
                   {submittedUrls.map((post) => (
                     <div key={post.id}>
                       <span className={styles.reviewChannelLabel}>
@@ -285,7 +311,9 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                 (Object.keys(draft.reviewUrls) as ("LIPS" | "ATCOSME")[])
                   .length > 0 && (
                   <section className={styles.section}>
-                    <h3 className={styles.sectionTitle}>추가 리뷰 URL</h3>
+                    <h3 className={styles.sectionTitle}>
+                      {t("domains.application.drafts.insightDialog.extraReviewUrls")}
+                    </h3>
                     {(Object.keys(draft.reviewUrls) as ("LIPS" | "ATCOSME")[])
                       .map((channel) => {
                         const reviewUrl = draft.reviewUrls[channel];
@@ -311,7 +339,9 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
 
               {draft.crossPosts.length > 0 && (
                 <section className={styles.section}>
-                  <h3 className={styles.sectionTitle}>추가 공유</h3>
+                  <h3 className={styles.sectionTitle}>
+                    {t("domains.application.drafts.insightDialog.extraShares")}
+                  </h3>
                   {draft.crossPosts.map((crossPost) => (
                     <div key={crossPost.id}>
                       <span className={styles.reviewChannelLabel}>

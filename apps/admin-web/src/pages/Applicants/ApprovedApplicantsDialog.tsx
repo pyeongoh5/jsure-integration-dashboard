@@ -4,6 +4,7 @@ import type {
   CampaignResponse,
 } from "@jsure/shared";
 import {
+  APPROVED_APPLICANT_EXPORT_HEADER_KEYS,
   approvedApplicantChannelLabel,
   approvedApplicantsCsvFilename,
   buildApprovedApplicantsCsv,
@@ -14,6 +15,8 @@ import {
 } from "@/domains/application";
 import { getCampaign } from "@/domains/campaign";
 import { Button } from "@/components/ui";
+import { translate } from "@i18n/admin";
+import { getStoredLanguage, useT } from "@/lib/i18n";
 import { buildCapacityChips } from "./buildCapacityChips";
 import styles from "./ApprovedApplicantsDialog.module.css";
 
@@ -23,6 +26,7 @@ type Props = {
 };
 
 export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose }: Props) {
+  const t = useT();
   const showCampaignSelector = !fixedCampaignId;
   // 승인자 내보내기는 진행중 캠페인만 대상 — 종료 캠페인은 셀렉트에서 제외.
   const { campaignOptions: allCampaignOptions, loaded: campaignsLoaded } =
@@ -61,7 +65,10 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
         setError(
           cause instanceof Error
             ? cause.message
-            : "명단을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+            : translate(
+                "pages.applicants.approvedDialog.loadFailed",
+                getStoredLanguage(),
+              ),
         );
         setData(null);
       })
@@ -74,7 +81,7 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
   }, [selectedCampaignId]);
 
   const capacityChips =
-    data && campaign ? buildCapacityChips(campaign, data.rows) : [];
+    data && campaign ? buildCapacityChips(campaign, data.rows, t) : [];
 
   function handleDownload() {
     if (!data) return;
@@ -92,18 +99,21 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
       >
         <div className={styles.header}>
           <div>
-            <h2 className={styles.title}>승인자 명단 보기</h2>
+            <h2 className={styles.title}>{t("pages.applicants.viewApprovedList")}</h2>
             <p className={styles.sub}>
               {data
-                ? `${data.campaignTitle} · ${data.rows.length}명 (신청일 최신순)`
-                : "선택한 캠페인의 승인된 응모자 명단을 조회합니다."}
+                ? t("pages.applicants.approvedDialog.subLoaded", {
+                    campaignTitle: data.campaignTitle,
+                    count: data.rows.length,
+                  })
+                : t("pages.applicants.approvedDialog.subEmpty")}
             </p>
           </div>
           <button
             type="button"
             className={styles.close}
             onClick={onClose}
-            aria-label="닫기"
+            aria-label={t("common.close")}
           >
             ×
           </button>
@@ -112,7 +122,7 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
         {showCampaignSelector && (
           <div className={styles.field}>
             <label className={styles.label} htmlFor="campaign-select">
-              캠페인
+              {t("domains.application.applicants.table.campaign")}
             </label>
             <select
               id="campaign-select"
@@ -122,7 +132,9 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
               disabled={!campaignsLoaded || loading}
             >
               <option value="">
-                {campaignsLoaded ? "캠페인을 선택하세요" : "불러오는 중…"}
+                {campaignsLoaded
+                  ? t("pages.applicants.approvedDialog.selectCampaign")
+                  : t("common.loading")}
               </option>
               {campaignOptions.map((campaign) => (
                 <option key={campaign.id} value={campaign.id}>
@@ -150,24 +162,22 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
 
         <div className={styles.tableWrap}>
           {loading ? (
-            <div className={styles.empty}>불러오는 중…</div>
+            <div className={styles.empty}>{t("common.loading")}</div>
           ) : !selectedCampaignId ? (
-            <div className={styles.empty}>캠페인을 먼저 선택해 주세요.</div>
+            <div className={styles.empty}>
+              {t("pages.applicants.approvedDialog.selectCampaignFirst")}
+            </div>
           ) : !data || data.rows.length === 0 ? (
-            <div className={styles.empty}>승인된 응모자가 없습니다.</div>
+            <div className={styles.empty}>
+              {t("pages.applicants.approvedDialog.noApproved")}
+            </div>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>이름(한자)</th>
-                  <th>이름(카타카나)</th>
-                  <th>SNS</th>
-                  <th>SNS ID</th>
-                  <th>프로필 URL</th>
-                  <th>전화번호</th>
-                  <th>우편번호</th>
-                  <th>주소</th>
-                  <th>캠페인 신청날짜</th>
+                  {APPROVED_APPLICANT_EXPORT_HEADER_KEYS.map((headerKey) => (
+                    <th key={headerKey}>{t(headerKey)}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -204,7 +214,7 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
 
         <div className={styles.actions}>
           <Button variant="secondary" size="md" onClick={onClose}>
-            닫기
+            {t("common.close")}
           </Button>
           <Button
             variant="success"
@@ -213,7 +223,7 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
             disabled={!data || data.rows.length === 0 || loading}
             iconLeft={<i className="fa-solid fa-file-excel" aria-hidden="true" />}
           >
-            CSV 다운로드
+            {t("pages.applicants.approvedDialog.csvDownload")}
           </Button>
         </div>
       </div>

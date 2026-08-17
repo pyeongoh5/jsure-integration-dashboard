@@ -1,4 +1,6 @@
 import { pickRepresentativeSnsAccount, type AdminSubmission } from "@jsure/shared";
+import type { AdminLanguage } from "@i18n/admin";
+import { formatRelative } from "../applicants/applicantTransform";
 import { SNS_TO_MEDIA, type DraftReview, type DraftStatus } from "./types";
 
 function deriveStatus(
@@ -33,28 +35,10 @@ function extractReviewUrls(
   return result;
 }
 
-const RELATIVE_TIME = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
-
-function formatRelative(iso: string, now: Date): string {
-  const then = new Date(iso);
-  const diffMs = now.getTime() - then.getTime();
-  const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return "방금";
-  if (minutes < 60) return RELATIVE_TIME.format(-minutes, "minute");
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return RELATIVE_TIME.format(-hours, "hour");
-  const days = Math.floor(hours / 24);
-  if (days < 7) return RELATIVE_TIME.format(-days, "day");
-  return then.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-}
-
 export function toDraftReview(
   submission: AdminSubmission,
   now: Date,
+  language: AdminLanguage,
 ): DraftReview {
   const matchingAccount = submission.influencer.snsAccounts.find((account) =>
     submission.subTypes.includes(account.snsType),
@@ -108,7 +92,7 @@ export function toDraftReview(
     })),
     reviewUrls: extractReviewUrls(qooPost?.submissionData ?? null),
     crossPosts: submission.crossPosts,
-    submittedAt: formatRelative(latestSubmittedAt, now),
+    submittedAt: formatRelative(latestSubmittedAt, now, language),
     insightSubmitted,
     reviewStatus: submission.submissionReviewStatus,
     applicationStatus: submission.status,
@@ -120,7 +104,7 @@ export function toDraftReview(
     rejectionHistory: submission.rejectionHistory.map((rejection) => ({
       id: rejection.id,
       comment: rejection.comment,
-      rejectedAt: formatRelative(rejection.rejectedAt, now),
+      rejectedAt: formatRelative(rejection.rejectedAt, now, language),
     })),
     settlement: submission.settlement
       ? {

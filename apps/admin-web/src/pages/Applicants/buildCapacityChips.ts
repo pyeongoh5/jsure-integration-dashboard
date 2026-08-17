@@ -5,6 +5,7 @@ import {
   type ApprovedApplicantExportRow,
   type CampaignResponse,
 } from "@jsure/shared";
+import type { AdminTranslationKey } from "@i18n/admin";
 
 export type CapacityChip = {
   key: string;
@@ -12,6 +13,8 @@ export type CapacityChip = {
   approved: number;
   total: number;
 };
+
+type TranslateFunction = (key: AdminTranslationKey) => string;
 
 /**
  * 승인자 명단 모달의 정원 칩 목록.
@@ -21,11 +24,13 @@ export type CapacityChip = {
 export function buildCapacityChips(
   campaign: CampaignResponse,
   rows: ApprovedApplicantExportRow[],
+  translateLabel: TranslateFunction,
 ): CapacityChip[] {
+  const capacityLabel = translateLabel("pages.applicants.approvedDialog.capacity");
   // 단순 리뷰는 모집 인원이 캠페인 공통 — 칩 하나로 충분.
   if (campaign.category === "SIMPLE_REVIEW") {
     const total = campaign.recruits[0]?.recruitCount ?? 0;
-    return [{ key: "all", label: "정원", approved: rows.length, total }];
+    return [{ key: "all", label: capacityLabel, approved: rows.length, total }];
   }
   const channels = rows.flatMap((row) => row.channels);
   const units = campaign.recruits.flatMap((recruit): CapacityChip[] =>
@@ -53,14 +58,19 @@ export function buildCapacityChips(
         ],
   );
   if (units.length <= 1) {
-    return units.map((unit) => ({ ...unit, label: "정원" }));
+    return units.map((unit) => ({ ...unit, label: capacityLabel }));
   }
   const totalCapacity = campaign.recruits.reduce(
     (sum, recruit) => sum + recruit.recruitCount,
     0,
   );
   return [
-    { key: "total", label: "전체", approved: rows.length, total: totalCapacity },
+    {
+      key: "total",
+      label: translateLabel("pages.applicants.approvedDialog.total"),
+      approved: rows.length,
+      total: totalCapacity,
+    },
     ...units,
   ];
 }

@@ -4,6 +4,7 @@ export * from "./draftsApi";
 export * from "./exportApi";
 export * from "./activityApi";
 export {
+  APPROVED_APPLICANT_EXPORT_HEADER_KEYS,
   buildApprovedApplicantsCsv,
   approvedApplicantsCsvFilename,
   approvedApplicantChannelLabel,

@@ -1,3 +1,4 @@
+import { useT } from "@/lib/i18n";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { useApplicationActivity } from "./useApplicationActivity";
 import styles from "./ApplicationHistoryDialog.module.css";
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export function ApplicationHistoryDialog({ target, onClose }: Props) {
+  const t = useT();
   const { state } = useApplicationActivity(target.applicationId);
 
   return (
@@ -35,7 +37,9 @@ export function ApplicationHistoryDialog({ target, onClose }: Props) {
             <h2 className={styles.title}>{target.campaignTitle}</h2>
             <div className={styles.sub}>
               {/* 담당자 컬럼과 같은 이름이 나올 수 있어 무엇의 이름인지 밝힌다. */}
-              <span className={styles.subLabel}>인플루언서</span>
+              <span className={styles.subLabel}>
+                {t("domains.application.applicants.table.influencer")}
+              </span>
               {target.influencerName}
               <span className={styles.statusBadge}>{target.statusLabel}</span>
             </div>
@@ -44,7 +48,7 @@ export function ApplicationHistoryDialog({ target, onClose }: Props) {
             type="button"
             className={styles.close}
             onClick={onClose}
-            aria-label="닫기"
+            aria-label={t("common.close")}
           >
             ×
           </button>

@@ -1,3 +1,4 @@
+import type { AdminTranslationKey } from "@i18n/admin";
 import type {
   ApplicationOption,
   ApplicationStatus,
@@ -109,18 +110,22 @@ export const SNS_TO_MEDIA: Record<CampaignSubType, Media> = {
   ATCOSME: "atcosme",
 };
 
-export const DRAFT_STATUS_LABEL: Record<DraftStatus, string> = {
-  REVIEW_PENDING: "검토 대기",
-  AWAITING_INSIGHT: "인사이트 대기",
-  INSIGHT_SUBMITTED: "인사이트 제출",
-  SETTLEMENT_PENDING: "정산 대기",
-  SETTLED: "정산 완료",
-  REJECTED: "반려",
-  REJECTED_LOCKED: "반려·인사이트 제출",
+// 값은 i18n 키 — 표시 시점에 컴포넌트에서 t(...) 로 번역한다.
+export const DRAFT_STATUS_LABEL: Record<DraftStatus, AdminTranslationKey> = {
+  REVIEW_PENDING: "domains.application.drafts.status.reviewPending",
+  AWAITING_INSIGHT: "domains.application.drafts.status.awaitingInsight",
+  INSIGHT_SUBMITTED: "domains.application.drafts.status.insightSubmitted",
+  SETTLEMENT_PENDING: "domains.application.drafts.status.settlementPending",
+  SETTLED: "domains.application.drafts.status.settled",
+  REJECTED: "domains.application.drafts.status.rejected",
+  REJECTED_LOCKED: "domains.application.drafts.status.rejectedLocked",
 };
 
 // 검토 페이지에 노출되는 상태만. SETTLEMENT_PENDING/SETTLED 는 정산 관리 페이지에서 처리.
-export const DRAFT_STATUS_OPTIONS: { key: DraftStatus; label: string }[] = [
+export const DRAFT_STATUS_OPTIONS: {
+  key: DraftStatus;
+  label: AdminTranslationKey;
+}[] = [
   { key: "REVIEW_PENDING", label: DRAFT_STATUS_LABEL.REVIEW_PENDING },
   { key: "AWAITING_INSIGHT", label: DRAFT_STATUS_LABEL.AWAITING_INSIGHT },
   { key: "INSIGHT_SUBMITTED", label: DRAFT_STATUS_LABEL.INSIGHT_SUBMITTED },

@@ -6,6 +6,8 @@ import {
   type Applicant,
 } from "@/domains/application";
 import { CATEGORY_LABEL_KO } from "@/domains/application";
+import { translate } from "@i18n/admin";
+import { getStoredLanguage, useT } from "@/lib/i18n";
 import styles from "./ApplicantDetailDialog.module.css";
 
 type AttachmentsState =
@@ -19,6 +21,7 @@ type Props = {
 };
 
 export function ApplicantDetailDialog({ applicant, onClose }: Props) {
+  const t = useT();
   const [attachmentsState, setAttachmentsState] = useState<AttachmentsState>({
     kind: "loading",
   });
@@ -38,7 +41,10 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
           message:
             error instanceof Error
               ? error.message
-              : "첨부 이미지를 불러올 수 없습니다.",
+              : translate(
+                  "domains.application.drafts.insightDialog.attachmentsLoadFailed",
+                  getStoredLanguage(),
+                ),
         });
       });
     return () => {
@@ -69,9 +75,11 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
         >
           <header className={styles.header}>
             <div>
-              <div className={styles.title}>{applicant.name} 상세</div>
+              <div className={styles.title}>
+                {t("pages.applicants.detailDialog.title", { name: applicant.name })}
+              </div>
               <div className={styles.sub}>
-                {applicant.campaign} · {CATEGORY_LABEL_KO[applicant.category]} ·{" "}
+                {applicant.campaign} · {t(CATEGORY_LABEL_KO[applicant.category])} ·{" "}
                 {applicant.subTypes
                   .map((subType) => SUB_TYPE_LABEL[subType])
                   .join(" · ")}
@@ -81,7 +89,7 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
               type="button"
               className={styles.close}
               onClick={onClose}
-              aria-label="닫기"
+              aria-label={t("common.close")}
             >
               ×
             </button>
@@ -90,9 +98,13 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
           {isFakePurchase ? (
             <>
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>주문 정보</h3>
+                <h3 className={styles.sectionTitle}>
+                  {t("domains.application.drafts.insightDialog.orderInfo")}
+                </h3>
                 <div className={styles.fields}>
-                  <div className={styles.fieldLabel}>주문번호</div>
+                  <div className={styles.fieldLabel}>
+                    {t("domains.application.drafts.insightDialog.orderNumber")}
+                  </div>
                   <div className={styles.fieldValue}>
                     {applicant.orderNumber ?? "—"}
                   </div>
@@ -101,7 +113,7 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
 
               <section className={styles.section}>
                 <h3 className={styles.sectionTitle}>
-                  주문 명세서
+                  {t("domains.application.drafts.insightDialog.orderReceipt")}
                   {orderReceipts.length > 0 && (
                     <span className={styles.count}>{orderReceipts.length}</span>
                   )}
@@ -110,13 +122,14 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
                   attachmentsState,
                   orderReceipts,
                   setLightboxUrl,
-                  "명세서가 아직 제출되지 않았습니다.",
+                  t("domains.application.drafts.insightDialog.receiptNotSubmitted"),
+                  t,
                 )}
               </section>
 
               <section className={styles.section}>
                 <h3 className={styles.sectionTitle}>
-                  리뷰 스크린샷
+                  {t("domains.application.drafts.insightDialog.reviewScreenshots")}
                   {reviewScreenshots.length > 0 && (
                     <span className={styles.count}>
                       {reviewScreenshots.length}
@@ -127,14 +140,15 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
                   attachmentsState,
                   reviewScreenshots,
                   setLightboxUrl,
-                  "리뷰가 아직 제출되지 않았습니다.",
+                  t("domains.application.drafts.insightDialog.reviewNotSubmitted"),
+                  t,
                 )}
               </section>
             </>
           ) : (
             <section className={styles.section}>
               <div className={styles.empty}>
-                SNS 응모는 상세 정보가 없습니다.
+                {t("pages.applicants.detailDialog.snsNoDetail")}
               </div>
             </section>
           )}
@@ -159,9 +173,10 @@ function renderAttachmentGrid(
   items: Attachment[],
   onOpen: (url: string) => void,
   emptyMessage: string,
+  t: ReturnType<typeof useT>,
 ) {
   if (state.kind === "loading") {
-    return <div className={styles.empty}>불러오는 중…</div>;
+    return <div className={styles.empty}>{t("common.loading")}</div>;
   }
   if (state.kind === "error") {
     return <div className={styles.empty}>{state.message}</div>;

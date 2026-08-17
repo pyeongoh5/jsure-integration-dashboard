@@ -13,7 +13,8 @@ import {
   useCampaignOptions,
   useDraftMutations,
   useDraftReviewsData,
-  type ApplicantMedia as Media,
+  matchesMediaFilter,
+  type MediaFilterKey,
   type DraftReview,
   type DraftStatus,
   type HistoryTarget,
@@ -33,7 +34,9 @@ export function Drafts() {
       return next;
     });
   };
-  const [mediaFilter, setMediaFilter] = useState<Set<Media>>(() => new Set());
+  const [mediaFilter, setMediaFilter] = useState<Set<MediaFilterKey>>(
+    () => new Set(),
+  );
   const [statusFilter, setStatusFilter] = useState<Set<DraftStatus>>(
     () => new Set(),
   );
@@ -61,10 +64,7 @@ export function Drafts() {
           return false;
         }
         if (campaignId && draft.campaignId !== campaignId) return false;
-        if (
-          mediaFilter.size > 0 &&
-          !draft.media.some((mediaKey) => mediaFilter.has(mediaKey))
-        )
+        if (!matchesMediaFilter(draft.media, draft.selectedOptions, mediaFilter))
           return false;
         if (statusFilter.size > 0 && !statusFilter.has(draft.status)) return false;
         if (categoryFilter !== null && draft.category !== categoryFilter) return false;

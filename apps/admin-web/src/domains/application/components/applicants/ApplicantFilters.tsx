@@ -11,13 +11,19 @@ import {
   MEDIA_META,
   type CampaignOption,
   type Media,
+  type MediaFilterKey,
 } from "./types";
 
-const MEDIA_OPTIONS = (Object.keys(MEDIA_META) as Media[]).map((media) => ({
-  key: media,
-  label: MEDIA_META[media].label,
-  icon: MEDIA_META[media].icon,
-}));
+// 인스타그램은 응모 옵션(피드/릴스) 단위로 필터링할 수 있게 두 항목으로 나눈다.
+const MEDIA_OPTIONS = (Object.keys(MEDIA_META) as Media[]).flatMap(
+  (media): { key: MediaFilterKey; label: string; icon: string }[] =>
+    media === "ig"
+      ? [
+          { key: "ig-feed", label: `${MEDIA_META.ig.label} 피드`, icon: MEDIA_META.ig.icon },
+          { key: "ig-reels", label: `${MEDIA_META.ig.label} 릴스`, icon: MEDIA_META.ig.icon },
+        ]
+      : [{ key: media, label: MEDIA_META[media].label, icon: MEDIA_META[media].icon }],
+);
 
 type Props = {
   campaignId: string | null;
@@ -26,8 +32,8 @@ type Props = {
   campaignOptions: CampaignOption[]; // 전체 캠페인 (closed 포함, 세그먼트로 구분)
   onCampaignChange: (id: string | null) => void;
 
-  mediaFilter: Set<Media>;
-  onMediaChange: (next: Set<Media>) => void;
+  mediaFilter: Set<MediaFilterKey>;
+  onMediaChange: (next: Set<MediaFilterKey>) => void;
 
   // 팔로워 필터는 응모 관리 페이지 전용 — props 를 생략하면 칩이 사라진다.
   minFollowers?: number | null;

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BroadcastJob } from "@jsure/shared";
+import type { AdminTranslationKey } from "@i18n/admin";
 import { listBroadcastJobs } from "../api";
 import { subscribeToBroadcastStarted } from "../broadcastEvents";
+import { useT } from "@/lib/i18n";
 import styles from "./BroadcastProgressDock.module.css";
 
 const ACTIVE_POLL_MS = 1000;
@@ -13,6 +15,7 @@ const ACTIVE_POLL_MS = 1000;
  * - 완료/실패 항목은 사용자가 닫기 전까지 패널에 남음.
  */
 export function BroadcastProgressDock() {
+  const t = useT();
   const [jobs, setJobs] = useState<BroadcastJob[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [collapsed, setCollapsed] = useState(false);
@@ -83,8 +86,10 @@ export function BroadcastProgressDock() {
         onClick={() => setCollapsed((v) => !v)}
       >
         <span>
-          발송 작업 {visible.length}건
-          {activeCount > 0 ? ` · 진행 ${activeCount}` : ""}
+          {t("domains.broadcast.dock.jobs", { count: visible.length })}
+          {activeCount > 0
+            ? ` · ${t("domains.broadcast.dock.active", { count: activeCount })}`
+            : ""}
         </span>
         <span className={styles.toggle}>{collapsed ? "▴" : "▾"}</span>
       </button>
@@ -112,16 +117,16 @@ function BroadcastDockItem({
   job: BroadcastJob;
   onDismiss: () => void;
 }) {
+  const t = useT();
   const done = job.sent + job.failed + job.skipped;
   const pct = job.total > 0 ? Math.min(100, (done / job.total) * 100) : 0;
-  const label =
-    job.status === "QUEUED"
-      ? "대기"
-      : job.status === "RUNNING"
-        ? "발송 중"
-        : job.status === "COMPLETED"
-          ? "완료"
-          : "실패";
+  const statusLabelKey: Record<BroadcastJob["status"], AdminTranslationKey> = {
+    QUEUED: "domains.broadcast.dock.statusQueued",
+    RUNNING: "domains.broadcast.dock.statusRunning",
+    COMPLETED: "domains.broadcast.dock.statusCompleted",
+    FAILED: "domains.broadcast.dock.statusFailed",
+  };
+  const label = t(statusLabelKey[job.status]);
   const isDone = job.status === "COMPLETED" || job.status === "FAILED";
   const statusClass = {
     QUEUED: styles.statusQueued,
@@ -144,7 +149,7 @@ function BroadcastDockItem({
             type="button"
             className={styles.close}
             onClick={onDismiss}
-            aria-label="알림 닫기"
+            aria-label={t("domains.broadcast.dock.dismissAria")}
           >
             ✕
           </button>
@@ -154,7 +159,11 @@ function BroadcastDockItem({
         <div className={styles.fill} style={{ width: `${pct}%` }} />
       </div>
       <div className={styles.sub}>
-        성공 {job.sent} · 실패 {job.failed} · 미연동 {job.skipped}
+        {t("domains.broadcast.dock.summary", {
+          sent: job.sent,
+          failed: job.failed,
+          skipped: job.skipped,
+        })}
       </div>
       {job.errorMessage && (
         <div className={styles.error}>{job.errorMessage}</div>

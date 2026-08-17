@@ -9,6 +9,7 @@ import {
 import { sendBroadcastMessage } from "../api";
 import { notifyBroadcastStarted } from "../broadcastEvents";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import styles from "./BroadcastDialog.module.css";
 // SNS 칩 스타일은 인플루언서 페이지의 것을 그대로 재사용
 import influencersStyles from "@/pages/Influencers/Influencers.module.css";
@@ -48,6 +49,7 @@ type HeroImage =
   | { kind: "error"; previewUrl: string; message: string };
 
 export function BroadcastDialog({ open, candidates, onClose }: Props) {
+  const t = useT();
   const [contentHtml, setContentHtml] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sending, setSending] = useState(false);
@@ -64,7 +66,7 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
       const message =
         caught instanceof RichTextImageUploadError
           ? caught.message
-          : "이미지 업로드에 실패했습니다";
+          : t("components.richTextEditor.imageUploadFailed");
       window.alert(message);
       return;
     }
@@ -82,7 +84,7 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
         const message =
           caught instanceof RichTextImageUploadError
             ? caught.message
-            : "이미지 업로드에 실패했습니다";
+            : t("components.richTextEditor.imageUploadFailed");
         setHero({ kind: "error", previewUrl, message });
       });
   };
@@ -135,24 +137,24 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
     setError(null);
     setDone(null);
     if (!contentHtml.trim() || contentHtml === "<p></p>") {
-      setError("내용을 입력해 주세요");
+      setError(t("domains.broadcast.dialog.contentRequired"));
       return;
     }
     if (visibleSelected.length === 0) {
-      setError("수신자를 1명 이상 선택해 주세요");
+      setError(t("domains.broadcast.dialog.recipientsRequired"));
       return;
     }
     if (hero.kind === "uploading") {
-      setError("이미지 업로드가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요");
+      setError(t("domains.broadcast.dialog.imageUploading"));
       return;
     }
     if (hero.kind === "error") {
-      setError("이미지 업로드 실패 상태입니다. 이미지를 다시 선택하거나 제거해 주세요");
+      setError(t("domains.broadcast.dialog.imageUploadErrorState"));
       return;
     }
     if (
       !window.confirm(
-        `${visibleSelected.length}명에게 메시지를 발송할까요? 발송 후에는 되돌릴 수 없습니다.`,
+        t("domains.broadcast.dialog.confirmSend", { count: visibleSelected.length }),
       )
     ) {
       return;
@@ -170,7 +172,9 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
       close();
       return;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "발송 중 오류가 발생했습니다.");
+      setError(
+        err instanceof Error ? err.message : t("domains.broadcast.dialog.sendFailed"),
+      );
       setSending(false);
     }
   };
@@ -181,13 +185,13 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
     <div className={styles.overlay} onClick={close}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHead}>
-          <h2>메시지 발송</h2>
+          <h2>{t("domains.broadcast.dialog.title")}</h2>
           <button
             type="button"
             className={styles.modalClose}
             onClick={close}
             disabled={sending}
-            aria-label="닫기"
+            aria-label={t("common.close")}
           >
             ✕
           </button>
@@ -195,20 +199,18 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
 
         <div className={styles.modalBody}>
           <section className={styles.section}>
-            <label className={styles.label}>메시지 내용</label>
+            <label className={styles.label}>{t("domains.broadcast.dialog.contentLabel")}</label>
             <RichTextEditor
               value={contentHtml}
               onChange={setContentHtml}
               minHeight={200}
               disabled={sending}
             />
-            <p className={styles.hint}>
-              LINE Flex 메시지로 발송되며 인라인 굵기/색은 단순화될 수 있습니다.
-            </p>
+            <p className={styles.hint}>{t("domains.broadcast.dialog.flexHint")}</p>
           </section>
 
           <section className={styles.section}>
-            <label className={styles.label}>상단 이미지 (선택, 1장)</label>
+            <label className={styles.label}>{t("domains.broadcast.dialog.heroLabel")}</label>
             {hero.kind === "none" ? (
               <Button
                 variant="secondary"
@@ -216,17 +218,21 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
                 onClick={() => heroFileRef.current?.click()}
                 disabled={sending}
               >
-                이미지 선택
+                {t("domains.broadcast.dialog.selectImage")}
               </Button>
             ) : (
               <div className={styles.hero}>
                 <img src={hero.previewUrl} alt="" className={styles.heroPreview} />
                 <div className={styles.heroMeta}>
                   {hero.kind === "uploading" && (
-                    <span className={styles.heroStatus}>업로드 중…</span>
+                    <span className={styles.heroStatus}>
+                      {t("domains.broadcast.dialog.uploading")}
+                    </span>
                   )}
                   {hero.kind === "ready" && (
-                    <span className={`${styles.heroStatus} ${styles.isReady}`}>업로드 완료</span>
+                    <span className={`${styles.heroStatus} ${styles.isReady}`}>
+                      {t("domains.broadcast.dialog.uploadDone")}
+                    </span>
                   )}
                   {hero.kind === "error" && (
                     <span className={`${styles.heroStatus} ${styles.isError}`}>{hero.message}</span>
@@ -237,7 +243,7 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
                     onClick={removeHero}
                     disabled={sending}
                   >
-                    제거
+                    {t("domains.broadcast.dialog.removeImage")}
                   </Button>
                 </div>
               </div>
@@ -258,7 +264,10 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
           <section className={styles.section}>
             <div className={styles.recipientsHead}>
               <label className={styles.label}>
-                수신자 ({visibleSelected.length}/{candidates.length}명 선택)
+                {t("domains.broadcast.dialog.recipientsLabel", {
+                  selected: visibleSelected.length,
+                  total: candidates.length,
+                })}
               </label>
               <Button
                 variant="ghost"
@@ -266,12 +275,16 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
                 onClick={toggleAll}
                 disabled={sending || candidates.length === 0}
               >
-                {allSelected ? "전체 해제" : "전체 선택"}
+                {allSelected
+                  ? t("domains.broadcast.dialog.deselectAll")
+                  : t("domains.broadcast.dialog.selectAll")}
               </Button>
             </div>
             <div className={styles.recipientsList}>
               {candidates.length === 0 ? (
-                <div className={styles.empty}>표시할 인플루언서가 없습니다.</div>
+                <div className={styles.empty}>
+                  {t("domains.broadcast.dialog.emptyCandidates")}
+                </div>
               ) : (
                 candidates.map((c) => {
                   const checked = selected.has(c.id);
@@ -312,7 +325,7 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
 
         <div className={styles.modalFoot}>
           <Button variant="secondary" size="md" onClick={close} disabled={sending}>
-            닫기
+            {t("common.close")}
           </Button>
           <Button
             variant="primary"
@@ -321,7 +334,9 @@ export function BroadcastDialog({ open, candidates, onClose }: Props) {
             disabled={sending}
             loading={sending}
           >
-            {sending ? "발송 중…" : "발송"}
+            {sending
+              ? t("domains.broadcast.dialog.sending")
+              : t("domains.broadcast.dialog.send")}
           </Button>
         </div>
       </div>

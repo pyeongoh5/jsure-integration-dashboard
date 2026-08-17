@@ -12,6 +12,7 @@ import {
   type LineTriggerKey,
 } from "@/domains/messageTemplate";
 import { Button, Dialog, Textarea } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import styles from "./MessageTemplates.module.css";
 
 const VAR_PATTERN = /\{\{\s*(\w+)\s*\}\}/g;
@@ -32,6 +33,7 @@ function findUnknownVariables(body: string, allowed: string[]): string[] {
 }
 
 export function MessageTemplateEdit(): JSX.Element {
+  const t = useT();
   const params = useParams<{
     category: CampaignCategory;
     triggerKey: LineTriggerKey;
@@ -40,6 +42,7 @@ export function MessageTemplateEdit(): JSX.Element {
   const category = params.category!;
   const triggerKey = params.triggerKey!;
   const listPath = `/message-templates?category=${encodeURIComponent(category)}`;
+  const descriptionKey = TRIGGER_DESCRIPTIONS[triggerKey];
 
   const [detail, setDetail] = useState<LineMessageTemplateDetailResponse | null>(null);
   const [body, setBody] = useState("");
@@ -58,7 +61,7 @@ export function MessageTemplateEdit(): JSX.Element {
   if (!detail) {
     return (
       <div className={styles.edit}>
-        <div className={styles.state}>불러오는 중…</div>
+        <div className={styles.state}>{t("common.loading")}</div>
       </div>
     );
   }
@@ -67,12 +70,16 @@ export function MessageTemplateEdit(): JSX.Element {
     body,
     detail.variables.map((v) => v.key),
   );
-  const validationError =
-    body.length > 5000
-      ? "본문이 5,000자를 초과했습니다"
-      : unknownVars.length > 0
-        ? `알 수 없는 변수: ${unknownVars.map((k) => `{{${k}}}`).join(", ")}`
-        : null;
+  const buildValidationError = (): string | null => {
+    if (body.length > 5000) return t("pages.messageTemplates.bodyOverLimit");
+    if (unknownVars.length > 0) {
+      return t("pages.messageTemplates.unknownVariables", {
+        variables: unknownVars.map((variableKey) => `{{${variableKey}}}`).join(", "),
+      });
+    }
+    return null;
+  };
+  const validationError = buildValidationError();
 
   const insertVariable = (key: string): void => {
     const textarea = textareaRef.current;
@@ -96,7 +103,7 @@ export function MessageTemplateEdit(): JSX.Element {
       await updateTemplate(category, triggerKey, { body });
       navigate(listPath);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "저장 실패");
+      setError(err instanceof Error ? err.message : t("pages.messageTemplates.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -108,7 +115,7 @@ export function MessageTemplateEdit(): JSX.Element {
       const res = await previewTemplate(category, triggerKey, body);
       setPreview(res.renderedBody);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "미리보기 실패");
+      setError(err instanceof Error ? err.message : t("pages.messageTemplates.previewFailed"));
     }
   };
 
@@ -119,15 +126,13 @@ export function MessageTemplateEdit(): JSX.Element {
         className={styles.backLink}
         onClick={() => navigate(listPath)}
       >
-        ← 목록으로
+        {t("pages.messageTemplates.backToList")}
       </button>
 
       <div className={styles.editHeader}>
-        <div className={styles.editTitle}>{TRIGGER_LABELS[triggerKey]}</div>
-        {TRIGGER_DESCRIPTIONS[triggerKey] && (
-          <div className={styles.triggerDescription}>
-            {TRIGGER_DESCRIPTIONS[triggerKey]}
-          </div>
+        <div className={styles.editTitle}>{t(TRIGGER_LABELS[triggerKey])}</div>
+        {descriptionKey && (
+          <div className={styles.triggerDescription}>{t(descriptionKey)}</div>
         )}
       </div>
 
@@ -138,9 +143,11 @@ export function MessageTemplateEdit(): JSX.Element {
             value={body}
             onChange={setBody}
             rows={20}
-            placeholder="LINE으로 발송할 메시지 본문을 입력하세요"
+            placeholder={t("pages.messageTemplates.bodyPlaceholder")}
           />
-          <div className={styles.counter}>{body.length.toLocaleString()} / 5,000 자</div>
+          <div className={styles.counter}>
+            {t("pages.messageTemplates.charCount", { count: body.length.toLocaleString() })}
+          </div>
           {validationError && <div className={styles.error}>{validationError}</div>}
           {error && <div className={styles.error}>{error}</div>}
         </div>
@@ -152,24 +159,24 @@ export function MessageTemplateEdit(): JSX.Element {
 
       <div className={styles.actions}>
         <Button variant="secondary" onClick={() => navigate(listPath)}>
-          취소
+          {t("common.cancel")}
         </Button>
         <Button variant="secondary" onClick={doPreview} disabled={!!validationError}>
-          미리보기
+          {t("pages.messageTemplates.preview")}
         </Button>
         <Button variant="primary" onClick={doSave} disabled={!!validationError || saving}>
-          {saving ? "저장 중…" : "저장"}
+          {saving ? t("pages.messageTemplates.saving") : t("pages.messageTemplates.save")}
         </Button>
       </div>
 
       <Dialog
         open={preview !== null}
         onClose={() => setPreview(null)}
-        title="미리보기"
+        title={t("pages.messageTemplates.preview")}
         className={styles.previewDialog}
         footer={
           <Button variant="secondary" onClick={() => setPreview(null)}>
-            닫기
+            {t("common.close")}
           </Button>
         }
       >

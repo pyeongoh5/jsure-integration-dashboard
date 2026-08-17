@@ -10,12 +10,14 @@ import {
 } from "@/domains/messageTemplate";
 import { Switch } from "@/components/ui";
 import { ScrollTable, SegmentedTabs } from "@/components/composites";
+import { useLanguage, useT } from "@/lib/i18n";
+import type { AdminTranslationKey } from "@i18n/admin";
 import styles from "./MessageTemplates.module.css";
 
-const CATEGORIES: { key: CampaignCategory; label: string }[] = [
-  { key: "SNS", label: "SNS 캠페인" },
-  { key: "FAKE_PURCHASE", label: "가구매 캠페인" },
-  { key: "SIMPLE_REVIEW", label: "단순 리뷰 캠페인" },
+const CATEGORIES: { key: CampaignCategory; labelKey: AdminTranslationKey }[] = [
+  { key: "SNS", labelKey: "pages.messageTemplates.categorySns" },
+  { key: "FAKE_PURCHASE", labelKey: "pages.messageTemplates.categoryFakePurchase" },
+  { key: "SIMPLE_REVIEW", labelKey: "pages.messageTemplates.categorySimpleReview" },
 ];
 
 const CATEGORY_KEYS = CATEGORIES.map((entry) => entry.key);
@@ -27,6 +29,8 @@ function parseCategory(raw: string | null): CampaignCategory {
 }
 
 export function MessageTemplates(): JSX.Element {
+  const t = useT();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const category = parseCategory(searchParams.get("category"));
@@ -81,7 +85,8 @@ export function MessageTemplates(): JSX.Element {
           entry.triggerKey === key ? { ...entry, enabled: !next } : entry,
         ),
       );
-      const message = err instanceof Error ? err.message : "상태 변경 실패";
+      const message =
+        err instanceof Error ? err.message : t("pages.messageTemplates.toggleFailed");
       alert(message);
     } finally {
       setPendingKey(null);
@@ -91,57 +96,66 @@ export function MessageTemplates(): JSX.Element {
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <div className={styles.title}>메시지 템플릿</div>
+        <div className={styles.title}>{t("nav.items.messageTemplates")}</div>
       </div>
 
       <div className={styles.filters}>
-        <SegmentedTabs items={CATEGORIES} value={category} onChange={setCategory} />
+        <SegmentedTabs
+          items={CATEGORIES.map((entry) => ({ key: entry.key, label: t(entry.labelKey) }))}
+          value={category}
+          onChange={setCategory}
+        />
       </div>
 
       <div className={styles.card}>
         {loading ? (
-          <div className={styles.state}>불러오는 중…</div>
+          <div className={styles.state}>{t("common.loading")}</div>
         ) : (
           <ScrollTable>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>트리거</th>
-                  <th style={{ width: 100 }}>상태</th>
-                  <th style={{ width: 180 }}>수정일</th>
-                  <th style={{ width: 140 }}>수정자</th>
+                  <th>{t("pages.messageTemplates.headerTrigger")}</th>
+                  <th style={{ width: 100 }}>{t("pages.messageTemplates.headerStatus")}</th>
+                  <th style={{ width: 180 }}>{t("pages.messageTemplates.headerUpdatedAt")}</th>
+                  <th style={{ width: 140 }}>{t("pages.messageTemplates.headerUpdatedBy")}</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr
-                    key={item.triggerKey}
-                    onClick={() =>
-                      navigate(`/message-templates/${category}/${item.triggerKey}`)
-                    }
-                  >
-                    <td>
-                      <span className={styles.triggerCell}>{TRIGGER_LABELS[item.triggerKey]}</span>
-                      {TRIGGER_DESCRIPTIONS[item.triggerKey] && (
-                        <div className={styles.triggerDescription}>
-                          {TRIGGER_DESCRIPTIONS[item.triggerKey]}
-                        </div>
-                      )}
-                    </td>
-                    <td onClick={(event) => event.stopPropagation()}>
-                      <Switch
-                        checked={item.enabled}
-                        onChange={(next) => void handleToggle(item, next)}
-                        disabled={pendingKey === item.triggerKey}
-                        ariaLabel={`${TRIGGER_LABELS[item.triggerKey]} 활성화 토글`}
-                      />
-                    </td>
-                    <td className={styles.mutedCell}>
-                      {item.updatedAt ? new Date(item.updatedAt).toLocaleString("ja-JP") : "-"}
-                    </td>
-                    <td className={styles.mutedCell}>{item.updatedByName ?? "-"}</td>
-                  </tr>
-                ))}
+                {items.map((item) => {
+                  const descriptionKey = TRIGGER_DESCRIPTIONS[item.triggerKey];
+                  return (
+                    <tr
+                      key={item.triggerKey}
+                      onClick={() =>
+                        navigate(`/message-templates/${category}/${item.triggerKey}`)
+                      }
+                    >
+                      <td>
+                        <span className={styles.triggerCell}>
+                          {t(TRIGGER_LABELS[item.triggerKey])}
+                        </span>
+                        {descriptionKey && (
+                          <div className={styles.triggerDescription}>{t(descriptionKey)}</div>
+                        )}
+                      </td>
+                      <td onClick={(event) => event.stopPropagation()}>
+                        <Switch
+                          checked={item.enabled}
+                          onChange={(next) => void handleToggle(item, next)}
+                          disabled={pendingKey === item.triggerKey}
+                          ariaLabel={t("pages.messageTemplates.toggleAria", {
+                            label: t(TRIGGER_LABELS[item.triggerKey]),
+                          })}
+                        />
+                      </td>
+                      <td className={styles.mutedCell}>
+                        {item.updatedAt ? new Date(item.updatedAt).toLocaleString(language) : "-"}
+                      </td>
+                      <td className={styles.mutedCell}>{item.updatedByName ?? "-"}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </ScrollTable>

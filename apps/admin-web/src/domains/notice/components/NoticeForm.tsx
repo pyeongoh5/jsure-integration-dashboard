@@ -5,6 +5,7 @@ import {
 } from "./noticeTransform";
 import { NoticeEditor } from "./NoticeEditor";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import styles from "./NoticeForm.module.css";
 
 export type NoticeFormValue = {
@@ -60,6 +61,7 @@ export function NoticeForm({
   onSubmit,
   onCancel,
 }: Props) {
+  const t = useT();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [contentHtml, setContentHtml] = useState(initial?.contentHtml ?? "");
   const [startAt, setStartAt] = useState(initial?.startAt ?? defaultStartAt());
@@ -67,20 +69,20 @@ export function NoticeForm({
 
   function handleSubmit() {
     if (!title.trim()) {
-      window.alert("제목을 입력해 주세요");
+      window.alert(t("domains.notice.form.titleRequired"));
       return;
     }
     if (!contentHtml.trim() || contentHtml === "<p></p>") {
-      window.alert("내용을 입력해 주세요");
+      window.alert(t("domains.notice.form.contentRequired"));
       return;
     }
     if (new Date(startAt) >= new Date(endAt)) {
-      window.alert("종료일은 시작일 이후여야 합니다");
+      window.alert(t("domains.notice.form.endAfterStart"));
       return;
     }
     // 업로드가 끝나지 않은 이미지 (data-r2-key 없음) 가 있으면 차단
     if (/<img\b(?![^>]*\bdata-r2-key=)[^>]*>/.test(contentHtml)) {
-      window.alert("이미지 업로드가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요");
+      window.alert(t("domains.notice.form.imageUploadIncomplete"));
       return;
     }
     onSubmit({
@@ -95,7 +97,7 @@ export function NoticeForm({
     <div className={styles.root}>
       <div className={styles.row}>
         <label className={styles.label} htmlFor="notice-title">
-          제목
+          {t("domains.notice.form.titleLabel")}
         </label>
         <input
           id="notice-title"
@@ -103,7 +105,7 @@ export function NoticeForm({
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           maxLength={200}
-          placeholder="공지사항 제목"
+          placeholder={t("domains.notice.form.titlePlaceholder")}
           disabled={busy}
         />
       </div>
@@ -111,7 +113,7 @@ export function NoticeForm({
       <div className={`${styles.row} ${styles.rowInline}`}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="notice-start-at">
-            게시 시작일
+            {t("domains.notice.form.startAtLabel")}
           </label>
           <input
             id="notice-start-at"
@@ -126,7 +128,7 @@ export function NoticeForm({
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="notice-end-at">
-            게시 종료일
+            {t("domains.notice.form.endAtLabel")}
           </label>
           <input
             id="notice-end-at"
@@ -142,7 +144,7 @@ export function NoticeForm({
       </div>
 
       <div className={styles.row}>
-        <span className={styles.label}>내용</span>
+        <span className={styles.label}>{t("domains.notice.form.contentLabel")}</span>
         <NoticeEditor value={contentHtml} onChange={setContentHtml} />
       </div>
 
@@ -150,7 +152,7 @@ export function NoticeForm({
 
       <div className={styles.actions}>
         <Button variant="secondary" size="md" onClick={onCancel} disabled={busy}>
-          취소
+          {t("common.cancel")}
         </Button>
         <Button
           variant="primary"

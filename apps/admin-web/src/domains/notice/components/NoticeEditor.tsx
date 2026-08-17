@@ -14,6 +14,7 @@ import FontFamily from "@tiptap/extension-font-family";
 import TextAlign from "@tiptap/extension-text-align";
 import { startNoticeImageUpload, NoticeImageUploadError } from "../api";
 import { ResizableImageView } from "@/components/composites/RichTextEditor/ResizableImageView";
+import { useT } from "@/lib/i18n";
 import styles from "@/components/composites/RichTextEditor/NoticeEditor.module.css";
 
 const ImageWithR2Key = Image.extend({
@@ -49,7 +50,6 @@ type Props = {
 };
 
 const FONT_FAMILIES = [
-  { label: "기본", value: "" },
   { label: "Sans", value: "sans-serif" },
   { label: "Serif", value: "serif" },
   { label: "Monospace", value: "monospace" },
@@ -95,6 +95,7 @@ export function NoticeEditor({ value, onChange }: Props) {
 }
 
 function Toolbar({ editor }: { editor: Editor }) {
+  const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImage = useCallback(
@@ -106,7 +107,7 @@ function Toolbar({ editor }: { editor: Editor }) {
         const message =
           caught instanceof NoticeImageUploadError
             ? caught.message
-            : "이미지 업로드에 실패했습니다";
+            : t("components.richTextEditor.imageUploadFailed");
         window.alert(message);
         return;
       }
@@ -156,7 +157,7 @@ function Toolbar({ editor }: { editor: Editor }) {
           const message =
             caught instanceof NoticeImageUploadError
               ? caught.message
-              : "이미지 업로드에 실패했습니다";
+              : t("components.richTextEditor.imageUploadFailed");
           window.alert(message);
           // 실패한 이미지 노드는 제거
           const tr = editor.state.tr;
@@ -177,7 +178,7 @@ function Toolbar({ editor }: { editor: Editor }) {
           URL.revokeObjectURL(previewUrl);
         });
     },
-    [editor],
+    [editor, t],
   );
 
   const onPickFile = useCallback(
@@ -191,14 +192,17 @@ function Toolbar({ editor }: { editor: Editor }) {
 
   const onSetLink = useCallback(() => {
     const previous = editor.getAttributes("link").href as string | undefined;
-    const url = window.prompt("링크 URL", previous ?? "https://");
+    const url = window.prompt(
+      t("components.richTextEditor.linkUrlPrompt"),
+      previous ?? "https://",
+    );
     if (url === null) return;
     if (url === "") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
-  }, [editor]);
+  }, [editor, t]);
 
   return (
     <div className={styles.toolbar}>
@@ -206,19 +210,19 @@ function Toolbar({ editor }: { editor: Editor }) {
         editor={editor}
         action={() => editor.chain().focus().toggleBold().run()}
         active={editor.isActive("bold")}
-        label="굵게"
+        label={t("components.richTextEditor.bold")}
       />
       <ToolbarButton
         editor={editor}
         action={() => editor.chain().focus().toggleItalic().run()}
         active={editor.isActive("italic")}
-        label="기울임"
+        label={t("components.richTextEditor.italic")}
       />
       <ToolbarButton
         editor={editor}
         action={() => editor.chain().focus().toggleStrike().run()}
         active={editor.isActive("strike")}
-        label="취소선"
+        label={t("components.richTextEditor.strikethrough")}
       />
       <span className={styles.divider} />
       <ToolbarButton
@@ -237,19 +241,19 @@ function Toolbar({ editor }: { editor: Editor }) {
         editor={editor}
         action={() => editor.chain().focus().toggleBulletList().run()}
         active={editor.isActive("bulletList")}
-        label="• 목록"
+        label={t("components.richTextEditor.bulletList")}
       />
       <ToolbarButton
         editor={editor}
         action={() => editor.chain().focus().toggleOrderedList().run()}
         active={editor.isActive("orderedList")}
-        label="1. 목록"
+        label={t("components.richTextEditor.orderedList")}
       />
       <ToolbarButton
         editor={editor}
         action={() => editor.chain().focus().toggleBlockquote().run()}
         active={editor.isActive("blockquote")}
-        label="인용"
+        label={t("components.richTextEditor.blockquote")}
       />
       <span className={styles.divider} />
       <select
@@ -264,6 +268,7 @@ function Toolbar({ editor }: { editor: Editor }) {
           }
         }}
       >
+        <option value="">{t("components.richTextEditor.fontDefault")}</option>
         {FONT_FAMILIES.map((font) => (
           <option key={font.value} value={font.value}>
             {font.label}
@@ -273,7 +278,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       <input
         type="color"
         className={styles.color}
-        title="글자 색"
+        title={t("components.richTextEditor.textColor")}
         value={(editor.getAttributes("textStyle").color as string) ?? "#000000"}
         onChange={(event) => {
           editor.chain().focus().setColor(event.target.value).run();
@@ -284,19 +289,19 @@ function Toolbar({ editor }: { editor: Editor }) {
         editor={editor}
         action={() => editor.chain().focus().setTextAlign("left").run()}
         active={editor.isActive({ textAlign: "left" })}
-        label="좌"
+        label={t("components.richTextEditor.alignLeft")}
       />
       <ToolbarButton
         editor={editor}
         action={() => editor.chain().focus().setTextAlign("center").run()}
         active={editor.isActive({ textAlign: "center" })}
-        label="중"
+        label={t("components.richTextEditor.alignCenter")}
       />
       <ToolbarButton
         editor={editor}
         action={() => editor.chain().focus().setTextAlign("right").run()}
         active={editor.isActive({ textAlign: "right" })}
-        label="우"
+        label={t("components.richTextEditor.alignRight")}
       />
       <span className={styles.divider} />
       <button
@@ -304,14 +309,14 @@ function Toolbar({ editor }: { editor: Editor }) {
         className={styles.button}
         onClick={onSetLink}
       >
-        링크
+        {t("components.richTextEditor.link")}
       </button>
       <button
         type="button"
         className={styles.button}
         onClick={() => fileRef.current?.click()}
       >
-        이미지
+        {t("components.richTextEditor.image")}
       </button>
       <input
         ref={fileRef}
@@ -329,6 +334,7 @@ function Toolbar({ editor }: { editor: Editor }) {
 }
 
 function ImageSizeControls({ editor }: { editor: Editor }) {
+  const t = useT();
   const currentWidth = editor.getAttributes("image").width as string | null;
 
   // 프리셋/원본 버튼: 처리 후 에디터에 포커스 복귀
@@ -351,7 +357,7 @@ function ImageSizeControls({ editor }: { editor: Editor }) {
     <>
       <span className={styles.divider} />
       <span style={{ fontSize: 11, color: "#6b7280", alignSelf: "center" }}>
-        이미지
+        {t("components.richTextEditor.image")}
       </span>
       {["25%", "50%", "75%", "100%"].map((preset) => (
         <button
@@ -366,13 +372,13 @@ function ImageSizeControls({ editor }: { editor: Editor }) {
       <input
         type="text"
         className={styles.sizeInput}
-        placeholder="예: 300"
+        placeholder={t("components.richTextEditor.widthPlaceholder")}
         value={pxValue}
         onChange={(event) => {
           const raw = event.target.value.replace(/[^\d]/g, "");
           updateWidthOnly(raw ? `${raw}px` : null);
         }}
-        title="픽셀(px) 단위 너비"
+        title={t("components.richTextEditor.widthInPixelsTitle")}
       />
       <span style={{ fontSize: 11, color: "#6b7280", alignSelf: "center" }}>
         px
@@ -381,9 +387,9 @@ function ImageSizeControls({ editor }: { editor: Editor }) {
         type="button"
         className={styles.button}
         onClick={() => setWidthWithFocus(null)}
-        title="원본 크기"
+        title={t("components.richTextEditor.originalSizeTitle")}
       >
-        원본
+        {t("components.richTextEditor.originalSize")}
       </button>
     </>
   );

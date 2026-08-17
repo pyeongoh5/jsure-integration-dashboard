@@ -11,7 +11,9 @@ import {
   type UpdateNoticeRequest,
   type UploadContentType,
 } from "@jsure/shared";
+import { translate } from "@i18n/admin";
 import { api } from "@/lib/api";
+import { getStoredLanguage } from "@/lib/i18n";
 
 export async function listNotices(): Promise<AdminNoticeListResponse> {
   const res = await api.get("/admin/notices");
@@ -77,12 +79,14 @@ export type NoticeImageUploadHandle = {
 export function startNoticeImageUpload(file: File): NoticeImageUploadHandle {
   if (!UPLOAD_ALLOWED_CONTENT_TYPES.includes(file.type as UploadContentType)) {
     throw new NoticeImageUploadError(
-      "PNG, JPEG, WebP 형식만 업로드할 수 있습니다",
+      translate("domains.notice.upload.invalidType", getStoredLanguage()),
     );
   }
   if (file.size > UPLOAD_MAX_BYTES) {
     throw new NoticeImageUploadError(
-      `파일 크기가 너무 큽니다 (${(UPLOAD_MAX_BYTES / 1024 / 1024).toFixed(0)}MB 이하)`,
+      translate("domains.notice.upload.fileTooLarge", getStoredLanguage(), {
+        limit: (UPLOAD_MAX_BYTES / 1024 / 1024).toFixed(0),
+      }),
     );
   }
   const contentType = file.type as UploadContentType;
@@ -103,7 +107,9 @@ export function startNoticeImageUpload(file: File): NoticeImageUploadHandle {
     });
     if (!putRes.ok) {
       throw new NoticeImageUploadError(
-        `업로드에 실패했습니다 (HTTP ${putRes.status})`,
+        translate("domains.notice.upload.putFailed", getStoredLanguage(), {
+          status: putRes.status,
+        }),
       );
     }
     return { objectKey: presign.objectKey, viewUrl: presign.viewUrl };

@@ -1,6 +1,8 @@
+import type { AdminTranslationKey } from "@i18n/admin";
 import type { NoticeRow } from "./noticeTransform";
 import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import styles from "./NoticeTable.module.css";
 
 type Props = {
@@ -16,21 +18,28 @@ const STATUS_CLASS: Record<NoticeRow["status"], string | undefined> = {
   expired: styles.statusExpired,
 };
 
+const STATUS_LABEL: Record<NoticeRow["status"], AdminTranslationKey> = {
+  active: "domains.notice.table.statusActive",
+  scheduled: "domains.notice.table.statusScheduled",
+  expired: "domains.notice.table.statusExpired",
+};
+
 export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
+  const t = useT();
   if (rows.length === 0) {
-    return <div className={styles.empty}>등록된 공지사항이 없습니다</div>;
+    return <div className={styles.empty}>{t("domains.notice.table.empty")}</div>;
   }
   return (
     <ScrollTable>
       <table className={styles.root}>
         <thead>
         <tr>
-          <th>제목</th>
-          <th style={{ width: 120 }}>상태</th>
-          <th style={{ width: 170 }}>게시 시작일</th>
-          <th style={{ width: 170 }}>게시 종료일</th>
-          <th style={{ width: 120 }}>작성자</th>
-          <th style={{ width: 160 }} aria-label="작업" />
+          <th>{t("domains.notice.table.headerTitle")}</th>
+          <th style={{ width: 120 }}>{t("domains.notice.table.headerStatus")}</th>
+          <th style={{ width: 170 }}>{t("domains.notice.table.headerStartAt")}</th>
+          <th style={{ width: 170 }}>{t("domains.notice.table.headerEndAt")}</th>
+          <th style={{ width: 120 }}>{t("domains.notice.table.headerAuthor")}</th>
+          <th style={{ width: 160 }} aria-label={t("domains.notice.table.actionsAria")} />
         </tr>
       </thead>
       <tbody>
@@ -41,11 +50,7 @@ export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
               <span
                 className={`${styles.status} ${STATUS_CLASS[notice.status] ?? ""}`}
               >
-                {notice.status === "scheduled"
-                  ? "예약"
-                  : notice.status === "expired"
-                    ? "종료"
-                    : "게시 중"}
+                {t(STATUS_LABEL[notice.status])}
               </span>
             </td>
             <td>{notice.startAtLabel}</td>
@@ -57,7 +62,7 @@ export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
                 onClick={(event) => event.stopPropagation()}
               >
                 <Button variant="secondary" size="sm" onClick={() => onEdit(notice.id)}>
-                  편집
+                  {t("domains.notice.table.edit")}
                 </Button>
                 <Button
                   variant="danger"
@@ -65,7 +70,7 @@ export function NoticeTable({ rows, pendingId, onEdit, onDelete }: Props) {
                   disabled={pendingId === notice.id}
                   onClick={() => onDelete(notice.id)}
                 >
-                  삭제
+                  {t("domains.notice.table.delete")}
                 </Button>
               </div>
             </td>

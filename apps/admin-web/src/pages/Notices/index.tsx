@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { NoticeTable, NoticeDeleteDialog, useNoticesData, useNoticeMutations, toNoticeRow } from "@/domains/notice";
 import { buttonClassNames } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import styles from "./Notices.module.css";
 
 export function Notices() {
+  const t = useT();
   const navigate = useNavigate();
   const { notices, loading, error, reload } = useNoticesData();
   const { remove, pendingId } = useNoticeMutations({ onMutated: reload });
@@ -27,18 +29,18 @@ export function Notices() {
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <div className={styles.title}>공지사항</div>
+        <div className={styles.title}>{t("nav.items.notices")}</div>
         <Link
           to="/notices/new"
           className={buttonClassNames({ variant: "primary", size: "md" })}
         >
-          새 공지 작성
+          {t("pages.notices.newNotice")}
         </Link>
       </div>
 
       <div className={styles.card}>
         {loading ? (
-          <div className={styles.state}>불러오는 중…</div>
+          <div className={styles.state}>{t("common.loading")}</div>
         ) : error ? (
           <div className={styles.state}>{error}</div>
         ) : (

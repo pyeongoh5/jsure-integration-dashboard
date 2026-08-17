@@ -5,12 +5,14 @@ import type {
   UpdateNoticeRequest,
 } from "@jsure/shared";
 import { createNotice, deleteNotice, updateNotice } from "../api";
+import { useT } from "@/lib/i18n";
 
 type Options = {
   onMutated?: () => void | Promise<void>;
 };
 
 export function useNoticeMutations({ onMutated }: Options = {}) {
+  const t = useT();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,14 +26,16 @@ export function useNoticeMutations({ onMutated }: Options = {}) {
         return result;
       } catch (caught) {
         setError(
-          caught instanceof Error ? caught.message : "저장에 실패했습니다",
+          caught instanceof Error
+            ? caught.message
+            : t("domains.notice.errors.saveFailed"),
         );
         return null;
       } finally {
         setPendingId(null);
       }
     },
-    [onMutated],
+    [onMutated, t],
   );
 
   const update = useCallback(
@@ -47,14 +51,16 @@ export function useNoticeMutations({ onMutated }: Options = {}) {
         return result;
       } catch (caught) {
         setError(
-          caught instanceof Error ? caught.message : "저장에 실패했습니다",
+          caught instanceof Error
+            ? caught.message
+            : t("domains.notice.errors.saveFailed"),
         );
         return null;
       } finally {
         setPendingId(null);
       }
     },
-    [onMutated],
+    [onMutated, t],
   );
 
   const remove = useCallback(
@@ -67,14 +73,16 @@ export function useNoticeMutations({ onMutated }: Options = {}) {
         return true;
       } catch (caught) {
         setError(
-          caught instanceof Error ? caught.message : "삭제에 실패했습니다",
+          caught instanceof Error
+            ? caught.message
+            : t("domains.notice.errors.deleteFailed"),
         );
         return false;
       } finally {
         setPendingId(null);
       }
     },
-    [onMutated],
+    [onMutated, t],
   );
 
   return { create, update, remove, pendingId, error };

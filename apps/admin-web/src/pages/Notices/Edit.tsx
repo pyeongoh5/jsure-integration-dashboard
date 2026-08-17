@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { NoticeForm, type NoticeFormValue, useNoticeMutations, getNotice } from "@/domains/notice";
+import { useT } from "@/lib/i18n";
 import styles from "./Notices.module.css";
 
 type Mode = "create" | "edit";
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function NoticeEdit({ mode }: Props) {
+  const t = useT();
   const navigate = useNavigate();
   const params = useParams<{ id?: string }>();
   const noticeId = params.id;
@@ -47,14 +49,16 @@ export function NoticeEdit({ mode }: Props) {
       } catch (caught) {
         if (cancelled) return;
         setLoadError(
-          caught instanceof Error ? caught.message : "공지를 불러올 수 없습니다",
+          caught instanceof Error
+            ? caught.message
+            : t("domains.notice.errors.loadFailed"),
         );
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [mode, noticeId]);
+  }, [mode, noticeId, t]);
 
   async function handleSubmit(value: NoticeFormValue) {
     if (mode === "create") {
@@ -70,7 +74,7 @@ export function NoticeEdit({ mode }: Props) {
     return (
       <div className={styles.edit}>
         <div className={styles.editTitle}>
-          {mode === "create" ? "공지 작성" : "공지 편집"}
+          {mode === "create" ? t("pages.notices.createTitle") : t("pages.notices.editTitle")}
         </div>
         <div>{loadError}</div>
       </div>
@@ -80,7 +84,7 @@ export function NoticeEdit({ mode }: Props) {
   if (!initial) {
     return (
       <div className={styles.edit}>
-        <div className={styles.editTitle}>불러오는 중…</div>
+        <div className={styles.editTitle}>{t("common.loading")}</div>
       </div>
     );
   }
@@ -88,13 +92,15 @@ export function NoticeEdit({ mode }: Props) {
   return (
     <div className={styles.edit}>
       <div className={styles.editTitle}>
-        {mode === "create" ? "공지 작성" : "공지 편집"}
+        {mode === "create" ? t("pages.notices.createTitle") : t("pages.notices.editTitle")}
       </div>
       <NoticeForm
         initial={initial}
         busy={pendingId !== null}
         error={error}
-        submitLabel={mode === "create" ? "게시" : "저장"}
+        submitLabel={
+          mode === "create" ? t("pages.notices.submitPublish") : t("pages.notices.submitSave")
+        }
         onSubmit={handleSubmit}
         onCancel={() => navigate("/notices")}
       />

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { NoticeResponse } from "@jsure/shared";
 import { listNotices } from "../api";
+import { useT } from "@/lib/i18n";
 
 type State = {
   notices: NoticeResponse[];
@@ -9,6 +10,7 @@ type State = {
 };
 
 export function useNoticesData() {
+  const t = useT();
   const [state, setState] = useState<State>({
     notices: [],
     loading: true,
@@ -25,10 +27,12 @@ export function useNoticesData() {
         notices: [],
         loading: false,
         error:
-          error instanceof Error ? error.message : "공지사항을 불러올 수 없습니다",
+          error instanceof Error
+            ? error.message
+            : t("domains.notice.errors.listLoadFailed"),
       });
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void reload();

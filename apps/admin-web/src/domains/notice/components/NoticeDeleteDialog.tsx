@@ -1,4 +1,5 @@
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import { useT } from "@/lib/i18n";
 
 type Props = {
   open: boolean;
@@ -15,13 +16,14 @@ export function NoticeDeleteDialog({
   onConfirm,
   onCancel,
 }: Props) {
+  const t = useT();
   return (
     <ConfirmDialog
       open={open}
-      title="공지사항을 삭제하시겠습니까?"
+      title={t("domains.notice.deleteDialog.title")}
       subtitle={title}
-      confirmLabel="삭제"
-      cancelLabel="취소"
+      confirmLabel={t("domains.notice.deleteDialog.confirm")}
+      cancelLabel={t("common.cancel")}
       tone="danger"
       busy={busy}
       onConfirm={onConfirm}

@@ -68,6 +68,7 @@ export const adminMessages = {
       },
       originalSizeTitle: { ko: "원본 크기", en: "Original size", ja: "元のサイズ" },
       originalSize: { ko: "원본", en: "Original", ja: "元のサイズ" },
+      fontDefault: { ko: "기본", en: "Default", ja: "標準" },
     },
   },
   domains: {
@@ -986,6 +987,476 @@ export const adminMessages = {
         ja: "メールアドレスの形式とパスワード（8文字以上）をご確認ください。",
       },
     },
+    notice: {
+      upload: {
+        invalidType: {
+          ko: "PNG, JPEG, WebP 형식만 업로드할 수 있습니다",
+          en: "Only PNG, JPEG, and WebP formats can be uploaded",
+          ja: "PNG、JPEG、WebP形式のみアップロードできます",
+        },
+        fileTooLarge: {
+          ko: "파일 크기가 너무 큽니다 ({limit}MB 이하)",
+          en: "The file is too large (up to {limit}MB)",
+          ja: "ファイルサイズが大きすぎます（{limit}MB以下）",
+        },
+        putFailed: {
+          ko: "업로드에 실패했습니다 (HTTP {status})",
+          en: "Upload failed (HTTP {status})",
+          ja: "アップロードに失敗しました（HTTP {status}）",
+        },
+      },
+      table: {
+        empty: {
+          ko: "등록된 공지사항이 없습니다",
+          en: "No notices have been posted",
+          ja: "登録されたお知らせはありません",
+        },
+        headerTitle: { ko: "제목", en: "Title", ja: "タイトル" },
+        headerStatus: { ko: "상태", en: "Status", ja: "ステータス" },
+        headerStartAt: { ko: "게시 시작일", en: "Publish start", ja: "掲載開始日" },
+        headerEndAt: { ko: "게시 종료일", en: "Publish end", ja: "掲載終了日" },
+        headerAuthor: { ko: "작성자", en: "Author", ja: "作成者" },
+        actionsAria: { ko: "작업", en: "Actions", ja: "操作" },
+        statusScheduled: { ko: "예약", en: "Scheduled", ja: "予約" },
+        statusExpired: { ko: "종료", en: "Ended", ja: "終了" },
+        statusActive: { ko: "게시 중", en: "Published", ja: "掲載中" },
+        edit: { ko: "편집", en: "Edit", ja: "編集" },
+        delete: { ko: "삭제", en: "Delete", ja: "削除" },
+      },
+      form: {
+        titleLabel: { ko: "제목", en: "Title", ja: "タイトル" },
+        titlePlaceholder: {
+          ko: "공지사항 제목",
+          en: "Notice title",
+          ja: "お知らせタイトル",
+        },
+        startAtLabel: { ko: "게시 시작일", en: "Publish start", ja: "掲載開始日" },
+        endAtLabel: { ko: "게시 종료일", en: "Publish end", ja: "掲載終了日" },
+        contentLabel: { ko: "내용", en: "Content", ja: "内容" },
+        titleRequired: {
+          ko: "제목을 입력해 주세요",
+          en: "Please enter a title",
+          ja: "タイトルを入力してください",
+        },
+        contentRequired: {
+          ko: "내용을 입력해 주세요",
+          en: "Please enter the content",
+          ja: "内容を入力してください",
+        },
+        endAfterStart: {
+          ko: "종료일은 시작일 이후여야 합니다",
+          en: "The end date must be after the start date",
+          ja: "終了日は開始日より後にしてください",
+        },
+        imageUploadIncomplete: {
+          ko: "이미지 업로드가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요",
+          en: "Image upload has not finished yet. Please try again shortly",
+          ja: "画像のアップロードがまだ完了していません。しばらくしてからもう一度お試しください",
+        },
+      },
+      deleteDialog: {
+        title: {
+          ko: "공지사항을 삭제하시겠습니까?",
+          en: "Delete this notice?",
+          ja: "お知らせを削除しますか？",
+        },
+        confirm: { ko: "삭제", en: "Delete", ja: "削除" },
+      },
+      errors: {
+        listLoadFailed: {
+          ko: "공지사항을 불러올 수 없습니다",
+          en: "Unable to load notices",
+          ja: "お知らせを読み込めません",
+        },
+        loadFailed: {
+          ko: "공지를 불러올 수 없습니다",
+          en: "Unable to load the notice",
+          ja: "お知らせを読み込めません",
+        },
+        saveFailed: {
+          ko: "저장에 실패했습니다",
+          en: "Failed to save",
+          ja: "保存に失敗しました",
+        },
+        deleteFailed: {
+          ko: "삭제에 실패했습니다",
+          en: "Failed to delete",
+          ja: "削除に失敗しました",
+        },
+      },
+    },
+    broadcast: {
+      dialog: {
+        title: { ko: "메시지 발송", en: "Send message", ja: "メッセージ送信" },
+        contentLabel: { ko: "메시지 내용", en: "Message content", ja: "メッセージ内容" },
+        flexHint: {
+          ko: "LINE Flex 메시지로 발송되며 인라인 굵기/색은 단순화될 수 있습니다.",
+          en: "Sent as a LINE Flex message; inline bold/colors may be simplified.",
+          ja: "LINE Flexメッセージとして送信され、インラインの太字・色は簡略化される場合があります。",
+        },
+        heroLabel: {
+          ko: "상단 이미지 (선택, 1장)",
+          en: "Top image (optional, 1)",
+          ja: "上部画像（任意・1枚）",
+        },
+        selectImage: { ko: "이미지 선택", en: "Select image", ja: "画像を選択" },
+        uploading: { ko: "업로드 중…", en: "Uploading…", ja: "アップロード中…" },
+        uploadDone: { ko: "업로드 완료", en: "Upload complete", ja: "アップロード完了" },
+        removeImage: { ko: "제거", en: "Remove", ja: "削除" },
+        recipientsLabel: {
+          ko: "수신자 ({selected}/{total}명 선택)",
+          en: "Recipients ({selected}/{total} selected)",
+          ja: "受信者（{selected}/{total}名選択）",
+        },
+        selectAll: { ko: "전체 선택", en: "Select all", ja: "すべて選択" },
+        deselectAll: { ko: "전체 해제", en: "Deselect all", ja: "すべて解除" },
+        emptyCandidates: {
+          ko: "표시할 인플루언서가 없습니다.",
+          en: "There are no influencers to display.",
+          ja: "表示するインフルエンサーがいません。",
+        },
+        send: { ko: "발송", en: "Send", ja: "送信" },
+        sending: { ko: "발송 중…", en: "Sending…", ja: "送信中…" },
+        contentRequired: {
+          ko: "내용을 입력해 주세요",
+          en: "Please enter the content",
+          ja: "内容を入力してください",
+        },
+        recipientsRequired: {
+          ko: "수신자를 1명 이상 선택해 주세요",
+          en: "Please select at least one recipient",
+          ja: "受信者を1名以上選択してください",
+        },
+        imageUploading: {
+          ko: "이미지 업로드가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요",
+          en: "Image upload has not finished yet. Please try again shortly",
+          ja: "画像のアップロードがまだ完了していません。しばらくしてからもう一度お試しください",
+        },
+        imageUploadErrorState: {
+          ko: "이미지 업로드 실패 상태입니다. 이미지를 다시 선택하거나 제거해 주세요",
+          en: "The image upload failed. Please reselect or remove the image",
+          ja: "画像のアップロードに失敗した状態です。画像を選び直すか削除してください",
+        },
+        confirmSend: {
+          ko: "{count}명에게 메시지를 발송할까요? 발송 후에는 되돌릴 수 없습니다.",
+          en: "Send the message to {count} people? This cannot be undone after sending.",
+          ja: "{count}名にメッセージを送信しますか？送信後は取り消せません。",
+        },
+        sendFailed: {
+          ko: "발송 중 오류가 발생했습니다.",
+          en: "An error occurred while sending.",
+          ja: "送信中にエラーが発生しました。",
+        },
+      },
+      dock: {
+        jobs: { ko: "발송 작업 {count}건", en: "{count} send jobs", ja: "送信ジョブ{count}件" },
+        active: { ko: "진행 {count}", en: "{count} in progress", ja: "進行中{count}" },
+        statusQueued: { ko: "대기", en: "Queued", ja: "待機" },
+        statusRunning: { ko: "발송 중", en: "Sending", ja: "送信中" },
+        statusCompleted: { ko: "완료", en: "Completed", ja: "完了" },
+        statusFailed: { ko: "실패", en: "Failed", ja: "失敗" },
+        dismissAria: { ko: "알림 닫기", en: "Dismiss notification", ja: "通知を閉じる" },
+        summary: {
+          ko: "성공 {sent} · 실패 {failed} · 미연동 {skipped}",
+          en: "Sent {sent} · Failed {failed} · Not linked {skipped}",
+          ja: "成功{sent}・失敗{failed}・未連携{skipped}",
+        },
+      },
+    },
+    messageTemplate: {
+      variablesPanel: {
+        title: { ko: "사용 가능한 변수", en: "Available variables", ja: "使用可能な変数" },
+        hint: {
+          ko: "태그를 클릭하면 본문 커서 위치에 삽입됩니다.",
+          en: "Click a tag to insert it at the cursor position in the body.",
+          ja: "タグをクリックすると本文のカーソル位置に挿入されます。",
+        },
+      },
+      triggerLabels: {
+        snsApplicationApplied: {
+          ko: "1. 신청 접수",
+          en: "1. Application received",
+          ja: "1. 応募受付",
+        },
+        snsApplicationApproved: {
+          ko: "2-a. 신청 승인",
+          en: "2-a. Application approved",
+          ja: "2-a. 応募承認",
+        },
+        snsApplicationRejected: {
+          ko: "2-b. 신청 반려",
+          en: "2-b. Application rejected",
+          ja: "2-b. 応募却下",
+        },
+        snsApplicationShipped: {
+          ko: "3. 상품 발송",
+          en: "3. Product shipped",
+          ja: "3. 商品発送",
+        },
+        snsApplicationDelivered: {
+          ko: "4. 배송 완료",
+          en: "4. Delivered",
+          ja: "4. 配送完了",
+        },
+        snsApplicationDeliveryReminder: {
+          ko: "4-r. 배송완료 리마인더",
+          en: "4-r. Delivery reminder",
+          ja: "4-r. 配送完了リマインダー",
+        },
+        snsApplicationReceiptConfirmed: {
+          ko: "5. 수령 확인",
+          en: "5. Receipt confirmed",
+          ja: "5. 受取確認",
+        },
+        snsPostSubmitted: {
+          ko: "6. 게시물 제출",
+          en: "6. Post submitted",
+          ja: "6. 投稿提出",
+        },
+        snsPostDeadlineReminder: {
+          ko: "6-R. 게시 마감 리마인더",
+          en: "6-R. Post deadline reminder",
+          ja: "6-R. 投稿締切リマインダー",
+        },
+        snsPostOverdueReminder: {
+          ko: "6-r. 게시 마감 다음날 독촉",
+          en: "6-r. Day-after post deadline follow-up",
+          ja: "6-r. 投稿締切翌日の催促",
+        },
+        snsPostApproved: {
+          ko: "7-a. 게시물 승인",
+          en: "7-a. Post approved",
+          ja: "7-a. 投稿承認",
+        },
+        snsPostRejected: {
+          ko: "7-b. 게시물 반려",
+          en: "7-b. Post rejected",
+          ja: "7-b. 投稿却下",
+        },
+        snsPostRejectionReminder: {
+          ko: "7-R. 반려 재제출 리마인더",
+          en: "7-R. Resubmission reminder after rejection",
+          ja: "7-R. 却下再提出リマインダー",
+        },
+        snsInsightReminder: {
+          ko: "8. 인사이트 제출 당일 리마인더",
+          en: "8. Insight submission day reminder",
+          ja: "8. インサイト提出当日リマインダー",
+        },
+        snsInsightSubmitted: {
+          ko: "8-a. 인사이트 제출 완료",
+          en: "8-a. Insight submitted",
+          ja: "8-a. インサイト提出完了",
+        },
+        snsInsightOverdueReminder: {
+          ko: "8-r. 인사이트 제출 다음날 독촉",
+          en: "8-r. Day-after insight follow-up",
+          ja: "8-r. インサイト提出翌日の催促",
+        },
+        snsSettlementCompleted: {
+          ko: "9. 정산 완료",
+          en: "9. Settlement completed",
+          ja: "9. 精算完了",
+        },
+        snsCampaignCompleted: {
+          ko: "10. 무보수 캠페인 종료 안내",
+          en: "10. Unpaid campaign completion notice",
+          ja: "10. 無報酬キャンペーン終了のご案内",
+        },
+        fakePurchaseApplicationApplied: {
+          ko: "1. 신청 접수",
+          en: "1. Application received",
+          ja: "1. 応募受付",
+        },
+        fakePurchaseApplicationApproved: {
+          ko: "2-a. 신청 승인",
+          en: "2-a. Application approved",
+          ja: "2-a. 応募承認",
+        },
+        fakePurchaseApplicationRejected: {
+          ko: "2-b. 신청 반려",
+          en: "2-b. Application rejected",
+          ja: "2-b. 応募却下",
+        },
+        fakePurchaseOrderDeadlineReminder: {
+          ko: "2-r. 주문 리마인더",
+          en: "2-r. Order reminder",
+          ja: "2-r. 注文リマインダー",
+        },
+        fakePurchaseOrderExpired: {
+          ko: "2-x. 주문 기한 초과 취소 안내",
+          en: "2-x. Order-expired cancellation notice",
+          ja: "2-x. 注文期限超過キャンセルのご案内",
+        },
+        fakePurchaseOrderSubmitted: {
+          ko: "3. 주문 제출",
+          en: "3. Order submitted",
+          ja: "3. 注文提出",
+        },
+        fakePurchaseReviewSubmitted: {
+          ko: "4. 리뷰 제출",
+          en: "4. Review submitted",
+          ja: "4. レビュー提出",
+        },
+        fakePurchaseReviewApproved: {
+          ko: "5-a. 리뷰 승인",
+          en: "5-a. Review approved",
+          ja: "5-a. レビュー承認",
+        },
+        fakePurchaseReviewRejected: {
+          ko: "5-b. 리뷰 반려",
+          en: "5-b. Review rejected",
+          ja: "5-b. レビュー却下",
+        },
+        fakePurchaseReviewDeadlineReminder: {
+          ko: "5-R. 리뷰 마감 리마인더",
+          en: "5-R. Review deadline reminder",
+          ja: "5-R. レビュー締切リマインダー",
+        },
+        fakePurchaseReviewOverdueReminder: {
+          ko: "5-r. 리뷰 마감 다음날 독촉",
+          en: "5-r. Day-after review deadline follow-up",
+          ja: "5-r. レビュー締切翌日の催促",
+        },
+        fakePurchaseSettlementCompleted: {
+          ko: "6. 정산 완료",
+          en: "6. Settlement completed",
+          ja: "6. 精算完了",
+        },
+        simpleReviewApplicationApplied: {
+          ko: "1. 신청 접수",
+          en: "1. Application received",
+          ja: "1. 応募受付",
+        },
+        simpleReviewApplicationApproved: {
+          ko: "2-a. 신청 승인",
+          en: "2-a. Application approved",
+          ja: "2-a. 応募承認",
+        },
+        simpleReviewApplicationRejected: {
+          ko: "2-b. 신청 반려",
+          en: "2-b. Application rejected",
+          ja: "2-b. 応募却下",
+        },
+        simpleReviewApplicationShipped: {
+          ko: "3. 상품 발송",
+          en: "3. Product shipped",
+          ja: "3. 商品発送",
+        },
+        simpleReviewApplicationDelivered: {
+          ko: "4. 배송 완료",
+          en: "4. Delivered",
+          ja: "4. 配送完了",
+        },
+        simpleReviewApplicationDeliveryReminder: {
+          ko: "4-r. 배송완료 리마인더",
+          en: "4-r. Delivery reminder",
+          ja: "4-r. 配送完了リマインダー",
+        },
+        simpleReviewApplicationReceiptConfirmed: {
+          ko: "5. 수령 확인",
+          en: "5. Receipt confirmed",
+          ja: "5. 受取確認",
+        },
+        simpleReviewSubmitted: {
+          ko: "6. 리뷰 제출",
+          en: "6. Review submitted",
+          ja: "6. レビュー提出",
+        },
+        simpleReviewDeadlineReminder: {
+          ko: "6-R. 리뷰 마감 리마인더",
+          en: "6-R. Review deadline reminder",
+          ja: "6-R. レビュー締切リマインダー",
+        },
+        simpleReviewOverdueReminder: {
+          ko: "6-r. 리뷰 마감 다음날 독촉",
+          en: "6-r. Day-after review deadline follow-up",
+          ja: "6-r. レビュー締切翌日の催促",
+        },
+        simpleReviewApproved: {
+          ko: "7-a. 리뷰 승인",
+          en: "7-a. Review approved",
+          ja: "7-a. レビュー承認",
+        },
+        simpleReviewRejected: {
+          ko: "7-b. 리뷰 반려",
+          en: "7-b. Review rejected",
+          ja: "7-b. レビュー却下",
+        },
+        simpleReviewRejectionReminder: {
+          ko: "7-R. 반려 재제출 리마인더",
+          en: "7-R. Resubmission reminder after rejection",
+          ja: "7-R. 却下再提出リマインダー",
+        },
+        simpleReviewSettlementCompleted: {
+          ko: "8. 정산 완료",
+          en: "8. Settlement completed",
+          ja: "8. 精算完了",
+        },
+        simpleReviewCampaignCompleted: {
+          ko: "9. 무보수 캠페인 종료 안내",
+          en: "9. Unpaid campaign completion notice",
+          ja: "9. 無報酬キャンペーン終了のご案内",
+        },
+      },
+      triggerDescriptions: {
+        deliveryReminder: {
+          ko: "배송완료 다음날 발송 (수령확인 미완료자)",
+          en: "Sent the day after delivery (recipients who have not confirmed receipt)",
+          ja: "配送完了翌日に送信（受取確認未完了者）",
+        },
+        postDeadlineReminder: {
+          ko: "게시 마감 3일 전·1일 전 발송",
+          en: "Sent 3 days and 1 day before the post deadline",
+          ja: "投稿締切3日前・1日前に送信",
+        },
+        postOverdueReminder: {
+          ko: "게시 마감 다음날 발송 (미제출자 독촉)",
+          en: "Sent the day after the post deadline (follow-up for non-submitters)",
+          ja: "投稿締切翌日に送信（未提出者への催促）",
+        },
+        postRejectionReminder: {
+          ko: "게시물 반려 3일 후 발송 (재제출 독려)",
+          en: "Sent 3 days after post rejection (encouraging resubmission)",
+          ja: "投稿却下3日後に送信（再提出のお願い）",
+        },
+        insightReminder: {
+          ko: "게시물 제출 7일 후 발송",
+          en: "Sent 7 days after post submission",
+          ja: "投稿提出7日後に送信",
+        },
+        insightOverdueReminder: {
+          ko: "게시물 제출 8일 후 발송 (미제출자 독촉)",
+          en: "Sent 8 days after post submission (follow-up for non-submitters)",
+          ja: "投稿提出8日後に送信（未提出者への催促）",
+        },
+        orderDeadlineReminder: {
+          ko: "주문 마감 3일 전·당일 발송",
+          en: "Sent 3 days before and on the order deadline",
+          ja: "注文締切3日前・当日に送信",
+        },
+        orderExpired: {
+          ko: "주문 마감 다음날 자동 취소 시 발송",
+          en: "Sent when automatically cancelled the day after the order deadline",
+          ja: "注文締切翌日の自動キャンセル時に送信",
+        },
+        reviewDeadlineReminder: {
+          ko: "리뷰 마감 3일 전·1일 전 발송",
+          en: "Sent 3 days and 1 day before the review deadline",
+          ja: "レビュー締切3日前・1日前に送信",
+        },
+        reviewOverdueReminder: {
+          ko: "리뷰 마감 다음날 발송 (미제출자 독촉)",
+          en: "Sent the day after the review deadline (follow-up for non-submitters)",
+          ja: "レビュー締切翌日に送信（未提出者への催促）",
+        },
+        reviewRejectionReminder: {
+          ko: "리뷰 반려 3일 후 발송 (재제출 독려)",
+          en: "Sent 3 days after review rejection (encouraging resubmission)",
+          ja: "レビュー却下3日後に送信（再提出のお願い）",
+        },
+      },
+    },
   },
   pages: {
     applicants: {
@@ -1215,6 +1686,70 @@ export const adminMessages = {
         ja: "ご指定のアドレスは変更されたか、存在しません。",
       },
       goHome: { ko: "홈으로", en: "Go home", ja: "ホームへ" },
+    },
+    notices: {
+      newNotice: { ko: "새 공지 작성", en: "Write new notice", ja: "新規お知らせ作成" },
+      createTitle: { ko: "공지 작성", en: "Write notice", ja: "お知らせ作成" },
+      editTitle: { ko: "공지 편집", en: "Edit notice", ja: "お知らせ編集" },
+      submitPublish: { ko: "게시", en: "Publish", ja: "掲載" },
+      submitSave: { ko: "저장", en: "Save", ja: "保存" },
+    },
+    messageTemplates: {
+      categorySns: { ko: "SNS 캠페인", en: "SNS campaigns", ja: "SNSキャンペーン" },
+      categoryFakePurchase: {
+        ko: "가구매 캠페인",
+        en: "Fake purchase campaigns",
+        ja: "仮購入キャンペーン",
+      },
+      categorySimpleReview: {
+        ko: "단순 리뷰 캠페인",
+        en: "Simple review campaigns",
+        ja: "簡易レビューキャンペーン",
+      },
+      toggleFailed: {
+        ko: "상태 변경 실패",
+        en: "Failed to change status",
+        ja: "ステータス変更に失敗しました",
+      },
+      headerTrigger: { ko: "트리거", en: "Trigger", ja: "トリガー" },
+      headerStatus: { ko: "상태", en: "Status", ja: "ステータス" },
+      headerUpdatedAt: { ko: "수정일", en: "Updated", ja: "更新日" },
+      headerUpdatedBy: { ko: "수정자", en: "Updated by", ja: "更新者" },
+      toggleAria: {
+        ko: "{label} 활성화 토글",
+        en: "Toggle {label}",
+        ja: "{label}の有効化トグル",
+      },
+      backToList: { ko: "← 목록으로", en: "← Back to list", ja: "← 一覧へ戻る" },
+      bodyPlaceholder: {
+        ko: "LINE으로 발송할 메시지 본문을 입력하세요",
+        en: "Enter the message body to send via LINE",
+        ja: "LINEで送信するメッセージ本文を入力してください",
+      },
+      charCount: {
+        ko: "{count} / 5,000 자",
+        en: "{count} / 5,000 characters",
+        ja: "{count} / 5,000文字",
+      },
+      bodyOverLimit: {
+        ko: "본문이 5,000자를 초과했습니다",
+        en: "The body exceeds 5,000 characters",
+        ja: "本文が5,000文字を超えています",
+      },
+      unknownVariables: {
+        ko: "알 수 없는 변수: {variables}",
+        en: "Unknown variables: {variables}",
+        ja: "不明な変数: {variables}",
+      },
+      saveFailed: { ko: "저장 실패", en: "Save failed", ja: "保存に失敗しました" },
+      previewFailed: {
+        ko: "미리보기 실패",
+        en: "Preview failed",
+        ja: "プレビューに失敗しました",
+      },
+      preview: { ko: "미리보기", en: "Preview", ja: "プレビュー" },
+      save: { ko: "저장", en: "Save", ja: "保存" },
+      saving: { ko: "저장 중…", en: "Saving…", ja: "保存中…" },
     },
   },
   sidebar: {

@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import type { ApprovedApplicantExportResponse } from "@jsure/shared";
+import type {
+  ApprovedApplicantExportResponse,
+  CampaignResponse,
+} from "@jsure/shared";
 import {
   approvedApplicantChannelLabel,
   approvedApplicantsCsvFilename,
@@ -9,7 +12,9 @@ import {
   triggerCsvDownload,
   useCampaignOptions,
 } from "@/domains/application";
+import { getCampaign } from "@/domains/campaign";
 import { Button } from "@/components/ui";
+import { buildCapacityChips } from "./buildCapacityChips";
 import styles from "./ApprovedApplicantsDialog.module.css";
 
 type Props = {
@@ -19,20 +24,34 @@ type Props = {
 
 export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose }: Props) {
   const showCampaignSelector = !fixedCampaignId;
-  const { campaignOptions, loaded: campaignsLoaded } = useCampaignOptions();
+  // 승인자 내보내기는 진행중 캠페인만 대상 — 종료 캠페인은 셀렉트에서 제외.
+  const { campaignOptions: allCampaignOptions, loaded: campaignsLoaded } =
+    useCampaignOptions();
+  const campaignOptions = allCampaignOptions.filter(
+    (campaign) => !campaign.closed,
+  );
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(fixedCampaignId ?? "");
   const [data, setData] = useState<ApprovedApplicantExportResponse | null>(null);
+  const [campaign, setCampaign] = useState<CampaignResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedCampaignId) {
       setData(null);
+      setCampaign(null);
       return;
     }
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setCampaign(null);
+    // 정원 표시는 부가 정보 — 캠페인 조회가 실패해도 명단은 그대로 보여준다.
+    getCampaign(selectedCampaignId)
+      .then((response) => {
+        if (!cancelled) setCampaign(response);
+      })
+      .catch(() => {});
     exportApprovedApplicants(selectedCampaignId)
       .then((response) => {
         if (!cancelled) setData(response);
@@ -53,6 +72,9 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
       cancelled = true;
     };
   }, [selectedCampaignId]);
+
+  const capacityChips =
+    data && campaign ? buildCapacityChips(campaign, data.rows) : [];
 
   function handleDownload() {
     if (!data) return;
@@ -112,6 +134,19 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
         )}
 
         {error && <div className={styles.error}>{error}</div>}
+
+        {!loading && capacityChips.length > 0 && (
+          <div className={styles.capacityRow}>
+            {capacityChips.map((chip) => (
+              <span key={chip.key} className={styles.capacityChip}>
+                {chip.label}{" "}
+                <strong>
+                  {chip.approved}/{chip.total}
+                </strong>
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className={styles.tableWrap}>
           {loading ? (

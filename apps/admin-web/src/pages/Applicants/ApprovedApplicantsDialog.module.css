@@ -70,6 +70,25 @@
   font-size: 14px;
   background: #fff;
 }
+.capacityRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.capacityChip {
+  font-size: 13px;
+  color: #374151;
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.capacityChip strong {
+  font-weight: 700;
+}
+
 .error {
   font-size: 13px;
   color: #b91c1c;

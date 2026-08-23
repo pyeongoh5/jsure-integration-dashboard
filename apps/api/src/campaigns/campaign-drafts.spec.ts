@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { BadRequestException } from "@nestjs/common";
+import { CampaignDraftRequestSchema } from "@jsure/shared";
 import { CampaignsService } from "./campaigns.service";
 
 const TEST_ACTOR = { id: "admin-1", name: "테스트 어드민" };
@@ -251,5 +252,41 @@ describe("campaign 조회 지점의 DRAFT 필터", () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("CampaignDraftRequestSchema 기간 필드", () => {
+  it("0 은 거부한다 — 저장되면 그 캠페인 행이 목록 응답 파싱에서 탈락한다", () => {
+    expect(
+      CampaignDraftRequestSchema.safeParse({ title: "제목", postingPeriodDays: 0 })
+        .success,
+    ).toBe(false);
+    expect(
+      CampaignDraftRequestSchema.safeParse({ title: "제목", orderPeriodDays: 0 })
+        .success,
+    ).toBe(false);
+  });
+
+  it("미입력(null·생략)은 허용한다 — 임시저장은 미완성을 담아야 한다", () => {
+    expect(
+      CampaignDraftRequestSchema.safeParse({
+        title: "제목",
+        postingPeriodDays: null,
+        orderPeriodDays: null,
+      }).success,
+    ).toBe(true);
+    expect(CampaignDraftRequestSchema.safeParse({ title: "제목" }).success).toBe(
+      true,
+    );
+  });
+
+  it("생성 스키마가 받는 범위는 임시저장도 받는다", () => {
+    expect(
+      CampaignDraftRequestSchema.safeParse({
+        title: "제목",
+        postingPeriodDays: 1,
+        orderPeriodDays: 365,
+      }).success,
+    ).toBe(true);
   });
 });

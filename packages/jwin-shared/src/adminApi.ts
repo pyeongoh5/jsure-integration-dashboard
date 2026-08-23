@@ -164,6 +164,30 @@ export const AdminPostTemplateListSchema = z.object({
 });
 export type AdminPostTemplateList = z.infer<typeof AdminPostTemplateListSchema>;
 
+/** POST /admin/prizes (요청) — 서버 admin.ts prizeSchema 와 같은 모양 (F-1.3, F-7.3) */
+export const AdminPrizeCreateSchema = z.object({
+  campaignId: z.string(),
+  type: PrizeTypeSchema,
+  name: z.string().min(1),
+  tier: z.number().int().min(1),
+  totalQty: z.number().int().positive(),
+  winProbability: z.number().gt(0).lt(1),
+  /** CODE 경품: 엑셀 붙여넣기 원문(개행/탭/쉼표 구분). 코드 개수는 totalQty 와 같아야 한다 */
+  codesText: z.string().optional(),
+});
+export type AdminPrizeCreate = z.infer<typeof AdminPrizeCreateSchema>;
+
+/** POST /admin/post-templates (요청) — 날짜는 ISO 문자열 (F-1.2) */
+export const AdminPostTemplateCreateSchema = z.object({
+  campaignId: z.string(),
+  label: z.string().min(1),
+  bodyText: z.string().min(1).max(500),
+  mediaUrl: z.string().url().optional(),
+  activeFrom: z.string(),
+  activeTo: z.string(),
+});
+export type AdminPostTemplateCreate = z.infer<typeof AdminPostTemplateCreateSchema>;
+
 /** 당첨자 목록 항목 — 배송지 평문/암호문 없이 유무(hasShipping)만 노출 */
 export const AdminWinnerSchema = z.object({
   id: z.string(),

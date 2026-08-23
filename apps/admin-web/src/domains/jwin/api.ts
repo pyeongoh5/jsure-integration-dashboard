@@ -22,6 +22,8 @@ import {
   type AdminShipping,
   type AdminPrize,
   type AdminPrizePatch,
+  type AdminPrizeCreate,
+  type AdminPostTemplateCreate,
   type AdminWinner,
   type AdminFulfillmentPatch,
 } from "./types";
@@ -94,4 +96,25 @@ export async function fetchBrandAccounts(): Promise<AdminBrandAccountList> {
 export async function createBrandAccount(label: string): Promise<AdminBrandAccount> {
   const response = await jwinApi.post(`/admin/brand-accounts`, { label });
   return AdminBrandAccountSchema.parse(response.data);
+}
+
+/**
+ * 경품 등록 (코드 동시 등록 — F-1.3, F-7.3).
+ * 서버가 Prisma 모델을 그대로 돌려주므로(AdminPrizeSchema 모양이 아님) 응답을 파싱하지 않는다.
+ * 호출부는 성공 후 `fetchPrizes` 로 목록을 다시 불러온다.
+ */
+export async function createPrize(body: AdminPrizeCreate): Promise<void> {
+  await jwinApi.post(`/admin/prizes`, body);
+}
+
+/** CODE 재고 보충. 본문은 붙여넣기 원문 그대로(jwin-api 가 text/plain 파서를 등록해 둔다). */
+export async function appendPrizeCodes(prizeId: string, codesText: string): Promise<void> {
+  await jwinApi.post(`/admin/prizes/${prizeId}/codes`, codesText, {
+    headers: { "Content-Type": "text/plain" },
+  });
+}
+
+/** 소재 등록. 서버 응답이 Prisma 모델이라 파싱하지 않는다 — 호출부가 목록을 다시 불러온다. */
+export async function createPostTemplate(body: AdminPostTemplateCreate): Promise<void> {
+  await jwinApi.post(`/admin/post-templates`, body);
 }

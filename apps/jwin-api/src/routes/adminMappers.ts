@@ -1,4 +1,5 @@
 import type {
+  AdminBrandAccount,
   AdminCampaignDetail,
   AdminCampaignListItem,
   AdminPrize,
@@ -38,11 +39,9 @@ export function toCampaignDetail(
     winMediaUrl: string | null;
     loseMediaUrl: string | null;
     dmTemplate: string | null;
-    xUserId: string | null;
-    xUsername: string | null;
-    credential?: { refreshFailedAt: Date | null } | null;
+    brandAccountId: string | null;
   },
-  connectUrl: string,
+  brandAccount: AdminBrandAccount | null,
 ): AdminCampaignDetail {
   return {
     id: campaign.id,
@@ -57,10 +56,8 @@ export function toCampaignDetail(
     winMediaUrl: campaign.winMediaUrl,
     loseMediaUrl: campaign.loseMediaUrl,
     dmTemplate: campaign.dmTemplate,
-    xUserId: campaign.xUserId,
-    xUsername: campaign.xUsername,
-    needsReconnect: !!campaign.credential?.refreshFailedAt,
-    connectUrl,
+    brandAccountId: campaign.brandAccountId,
+    brandAccount,
   };
 }
 
@@ -71,9 +68,7 @@ export function toCampaignListItem(campaign: {
   status: string;
   startsAt: Date;
   endsAt: Date;
-  xUserId: string | null;
-  xUsername: string | null;
-  credential?: { refreshFailedAt: Date | null } | null;
+  brandAccount?: { xUserId: string | null; xUsername: string | null; refreshFailedAt: Date | null } | null;
   _count: { entries: number };
   posts: unknown[];
 }): AdminCampaignListItem {
@@ -84,11 +79,52 @@ export function toCampaignListItem(campaign: {
     status: campaign.status as AdminCampaignListItem['status'],
     startsAt: campaign.startsAt.toISOString(),
     endsAt: campaign.endsAt.toISOString(),
-    xUserId: campaign.xUserId,
-    xUsername: campaign.xUsername,
-    needsReconnect: !!campaign.credential?.refreshFailedAt,
+    xUserId: campaign.brandAccount?.xUserId ?? null,
+    xUsername: campaign.brandAccount?.xUsername ?? null,
+    needsReconnect: !!campaign.brandAccount?.refreshFailedAt,
     entryCount: campaign._count.entries,
     failedPostCount: campaign.posts.length,
+  };
+}
+
+type BrandAccountRow = {
+  id: string;
+  label: string;
+  xUserId: string | null;
+  xUsername: string | null;
+  encryptedAccessToken: string | null;
+  accessTokenExpiresAt: Date | null;
+  refreshFailedAt: Date | null;
+  refreshFailCount: number;
+};
+
+/** 브랜드 X 계정의 연동 상태를 판정하는 순수 함수. */
+export function brandAccountStatus(
+  account: Pick<BrandAccountRow, 'xUserId' | 'encryptedAccessToken' | 'refreshFailedAt'>,
+): AdminBrandAccount['status'] {
+  if (account.refreshFailedAt) return 'NEEDS_RECONNECT';
+  if (account.xUserId && account.encryptedAccessToken) return 'CONNECTED';
+  return 'PENDING';
+}
+
+/** 브랜드 X 계정을 응답 DTO로 변환. 토큰/암호문 필드는 절대 포함하지 않는다. */
+export function toBrandAccount(
+  account: BrandAccountRow,
+  campaignCount: number,
+  connectUrl: string,
+): AdminBrandAccount {
+  return {
+    id: account.id,
+    label: account.label,
+    xUserId: account.xUserId,
+    xUsername: account.xUsername,
+    status: brandAccountStatus(account),
+    refreshFailCount: account.refreshFailCount,
+    accessTokenExpiresAt: account.accessTokenExpiresAt
+      ? account.accessTokenExpiresAt.toISOString()
+      : null,
+    campaignCount,
+    connectUrl,
   };
 }
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { brandAccountStatus, toBrandAccount } from './adminMappers';
 
 process.env.TOKEN_ENCRYPTION_KEY = 'a'.repeat(64);
 process.env.SESSION_SECRET = 'test-secret-test-secret';
@@ -58,8 +59,8 @@ describe('canTransitionFulfillment', () => {
 });
 
 describe('toCampaignDetail', () => {
-  it('needsReconnect를 credential.refreshFailedAt로 판정하고 connectUrl을 담는다', async () => {
-    const { toCampaignDetail } = await import('./adminMappers');
+  it('brandAccountId와 brandAccount(연동된 계정 DTO)를 그대로 담는다', async () => {
+    const { toCampaignDetail, toBrandAccount } = await import('./adminMappers');
     const campaign = {
       id: 'c1',
       brandName: 'B',
@@ -73,13 +74,67 @@ describe('toCampaignDetail', () => {
       winMediaUrl: null,
       loseMediaUrl: null,
       dmTemplate: null,
-      xUserId: 'x123',
-      xUsername: 'brandx',
-      credential: { refreshFailedAt: new Date() },
+      brandAccountId: 'a1',
     };
-    const mapped = toCampaignDetail(campaign as never, 'https://api/oauth/brand/start?campaignId=c1');
-    expect(mapped.needsReconnect).toBe(true);
-    expect(mapped.connectUrl).toContain('campaignId=c1');
+    const brandAccount = toBrandAccount(
+      {
+        id: 'a1', label: 'L', xUserId: 'x123', xUsername: 'brandx',
+        encryptedAccessToken: 'secret', accessTokenExpiresAt: null,
+        refreshFailedAt: new Date(), refreshFailCount: 1,
+      },
+      1,
+      'https://api/oauth/brand/start?accountId=a1',
+    );
+    const mapped = toCampaignDetail(campaign as never, brandAccount);
+    expect(mapped.brandAccountId).toBe('a1');
+    expect(mapped.brandAccount?.status).toBe('NEEDS_RECONNECT');
     expect(mapped.startsAt).toBe('2026-08-01T00:00:00.000Z');
+  });
+
+  it('brandAccount가 없으면 null을 그대로 담는다', async () => {
+    const { toCampaignDetail } = await import('./adminMappers');
+    const campaign = {
+      id: 'c2',
+      brandName: 'B',
+      slug: 'b-slug-2',
+      status: 'DRAFT',
+      startsAt: new Date('2026-08-01T00:00:00Z'),
+      endsAt: new Date('2026-08-10T00:00:00Z'),
+      dailyPostTime: '11:00',
+      dailyWinCap: null,
+      prUrl: null,
+      winMediaUrl: null,
+      loseMediaUrl: null,
+      dmTemplate: null,
+      brandAccountId: null,
+    };
+    const mapped = toCampaignDetail(campaign as never, null);
+    expect(mapped.brandAccountId).toBeNull();
+    expect(mapped.brandAccount).toBeNull();
+  });
+});
+
+describe('brandAccountStatus', () => {
+  const base = {
+    id: 'a', label: 'L', xUserId: null, xUsername: null,
+    encryptedAccessToken: null, encryptedRefreshToken: null,
+    accessTokenExpiresAt: null, scopes: null,
+    refreshFailedAt: null, refreshFailCount: 0,
+    createdAt: new Date(), updatedAt: new Date(),
+  };
+  it('xUserId 없으면 PENDING', () => {
+    expect(brandAccountStatus(base)).toBe('PENDING');
+  });
+  it('연동됐고 refresh 정상이면 CONNECTED', () => {
+    expect(brandAccountStatus({ ...base, xUserId: '1', encryptedAccessToken: 'x' })).toBe('CONNECTED');
+  });
+  it('refreshFailedAt 있으면 NEEDS_RECONNECT', () => {
+    expect(brandAccountStatus({ ...base, xUserId: '1', encryptedAccessToken: 'x', refreshFailedAt: new Date() })).toBe('NEEDS_RECONNECT');
+  });
+  it('toBrandAccount는 토큰 암호문을 노출하지 않는다', () => {
+    const dto = toBrandAccount({ ...base, xUserId: '1', xUsername: 'u', encryptedAccessToken: 'secret', accessTokenExpiresAt: new Date('2026-09-01') }, 2, 'http://x/start?accountId=a');
+    expect(dto).not.toHaveProperty('encryptedAccessToken');
+    expect(dto.campaignCount).toBe(2);
+    expect(dto.status).toBe('CONNECTED');
   });
 });

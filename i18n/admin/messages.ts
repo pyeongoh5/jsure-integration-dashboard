@@ -542,6 +542,101 @@ export const adminMessages = {
         },
       },
     },
+    postTemplate: {
+      title: { ko: "소재", en: "Post content", ja: "投稿素材" },
+      add: { ko: "소재 추가", en: "Add content", ja: "素材を追加" },
+      empty: {
+        ko: "등록된 소재가 없습니다. 소재가 없으면 매일 게시가 통째로 건너뜁니다.",
+        en: "No post content yet. Without it every daily post is skipped.",
+        ja: "登録された素材がありません。素材がないと毎日の投稿がすべてスキップされます。",
+      },
+      loadFailed: {
+        ko: "소재 목록을 불러올 수 없습니다.",
+        en: "Could not load post content.",
+        ja: "素材一覧を読み込めませんでした。",
+      },
+      coverageWarning: {
+        ko: "⚠ 소재가 없는 날: {gaps} (이 날은 게시가 건너뜁니다)",
+        en: "⚠ Days without post content: {gaps} (posting is skipped on these days)",
+        ja: "⚠ 素材のない日: {gaps}（この日は投稿がスキップされます）",
+      },
+      columns: {
+        label: { ko: "이름", en: "Name", ja: "名前" },
+        body: { ko: "본문", en: "Body", ja: "本文" },
+        period: { ko: "유효 기간 (JST)", en: "Active period (JST)", ja: "有効期間 (JST)" },
+        media: { ko: "미디어", en: "Media", ja: "メディア" },
+      },
+      mediaPresent: { ko: "있음", en: "Yes", ja: "あり" },
+      deleteBlocked: {
+        ko: "이미 게시에 사용된 소재는 삭제할 수 없습니다",
+        en: "Content already used in a post cannot be deleted",
+        ja: "既に投稿に使用された素材は削除できません",
+      },
+      field: {
+        label: { ko: "소재 이름", en: "Content name", ja: "素材名" },
+        body: { ko: "본문", en: "Body", ja: "本文" },
+        activeFrom: { ko: "유효 시작 (JST)", en: "Active from (JST)", ja: "有効開始 (JST)" },
+        activeTo: { ko: "유효 종료 (JST)", en: "Active until (JST)", ja: "有効終了 (JST)" },
+      },
+      placeholder: {
+        label: { ko: "예: 1주차", en: "e.g. Week 1", ja: "例: 1週目" },
+        body: {
+          ko: "매일 게시될 트윗 본문입니다. {{LP_URL}} 자리에 응모 링크가 들어갑니다.",
+          en: "The tweet body posted each day. {{LP_URL}} is replaced with the entry link.",
+          ja: "毎日投稿されるツイート本文です。{{LP_URL}} の位置に応募リンクが入ります。",
+        },
+      },
+      hint: {
+        label: {
+          ko: "운영자 식별용입니다. 트윗에는 나가지 않습니다.",
+          en: "For your own reference only — never posted.",
+          ja: "運用者の識別用です。ツイートには表示されません。",
+        },
+        lpUrlMissing: {
+          ko: "본문에 {{LP_URL}}이 없습니다. 응모 링크가 본문 끝에 자동으로 붙습니다.",
+          en: "The body has no {{LP_URL}}. The entry link will be appended at the end automatically.",
+          ja: "本文に {{LP_URL}} がありません。応募リンクは本文末尾に自動で追加されます。",
+        },
+        materializeTime: {
+          ko: "게시 여부는 매일 00:05 JST 시점에 판정합니다. 시작을 그날 낮으로 잡으면 그날은 게시되지 않습니다.",
+          en: "Each day's post is decided at 00:05 JST. If the start is set to midday, that day is skipped.",
+          ja: "投稿の可否は毎日00:05 JST時点で判定します。開始をその日の日中にすると、その日は投稿されません。",
+        },
+      },
+      error: {
+        labelRequired: {
+          ko: "소재 이름을 입력하세요.",
+          en: "Enter a content name.",
+          ja: "素材名を入力してください。",
+        },
+        bodyRequired: { ko: "본문을 입력하세요.", en: "Enter a body.", ja: "本文を入力してください。" },
+        bodyTooLong: {
+          ko: "본문은 {max}자 이하여야 합니다.",
+          en: "The body must be {max} characters or fewer.",
+          ja: "本文は{max}文字以下にしてください。",
+        },
+        periodRequired: {
+          ko: "유효 기간을 입력하세요.",
+          en: "Enter the active period.",
+          ja: "有効期間を入力してください。",
+        },
+        periodOrder: {
+          ko: "종료일시는 시작일시 이후여야 합니다.",
+          en: "The end must come after the start.",
+          ja: "終了日時は開始日時より後にしてください。",
+        },
+        addFailed: {
+          ko: "소재 등록에 실패했습니다.",
+          en: "Could not register the content.",
+          ja: "素材の登録に失敗しました。",
+        },
+        deleteFailed: {
+          ko: "소재 삭제에 실패했습니다.",
+          en: "Could not delete the content.",
+          ja: "素材の削除に失敗しました。",
+        },
+      },
+    },
   },
   components: {
     spinner: {

@@ -10,3 +10,8 @@ export { JwinMediaUpload } from "./JwinMediaUpload";
 export { useJwinPrizes } from "./useJwinPrizes";
 export type { UseJwinPrizesResult } from "./useJwinPrizes";
 export { PrizeTab } from "./PrizeTab";
+export { useJwinPostTemplates } from "./useJwinPostTemplates";
+export type { UseJwinPostTemplatesResult } from "./useJwinPostTemplates";
+export { PostTemplateTab } from "./PostTemplateTab";
+export { postTemplateCoverage, formatCoverageGaps } from "./postTemplateCoverage";
+export type { PostTemplateCoverage, CoverageGap } from "./postTemplateCoverage";

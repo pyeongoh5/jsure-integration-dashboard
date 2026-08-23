@@ -37,6 +37,18 @@ function errorMessage(error: unknown, language: AdminLanguage): string {
   );
 }
 
+function toLoadState(
+  isPending: boolean,
+  isError: boolean,
+  error: unknown,
+): ApplicantsLoadState {
+  if (isPending) return { kind: "loading" };
+  if (isError) {
+    return { kind: "error", message: errorMessage(error, getStoredLanguage()) };
+  }
+  return { kind: "ready" };
+}
+
 /** 응모자 목록 — 필터는 서버가 적용하고, 여기서는 커서로 이어붙이기만 한다. */
 export function useApplicantsData(
   filter: ApplicantFilter,
@@ -60,14 +72,7 @@ export function useApplicantsData(
       .filter((applicant): applicant is Applicant => applicant !== null);
   }, [query.data, language]);
 
-  const state: ApplicantsLoadState = query.isPending
-    ? { kind: "loading" }
-    : query.isError
-      ? {
-          kind: "error",
-          message: errorMessage(query.error, getStoredLanguage()),
-        }
-      : { kind: "ready" };
+  const state = toLoadState(query.isPending, query.isError, query.error);
 
   // IntersectionObserver 가 매 렌더마다 재등록되지 않도록 안정적인 참조로 넘긴다.
   const { hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;

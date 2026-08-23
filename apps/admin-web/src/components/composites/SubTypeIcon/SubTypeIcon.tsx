@@ -2,7 +2,7 @@ import { SUB_TYPE_LABEL, type CampaignSubType } from "@jsure/shared";
 import styles from "./SubTypeIcon.module.css";
 
 /** Font Awesome 클래스. 응모자 관리·검토 테이블에서 쓰던 아이콘 그대로. */
-export const SUB_TYPE_ICON_CLASS: Record<CampaignSubType, string> = {
+const SUB_TYPE_ICON_CLASS: Record<CampaignSubType, string> = {
   INSTAGRAM: "fa-brands fa-instagram",
   TIKTOK: "fa-brands fa-tiktok",
   X: "fa-brands fa-x-twitter",

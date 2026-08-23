@@ -274,19 +274,19 @@
 }
 
 .snsRowOn .snsIconInstagram {
-  color: #e1306c;
+  color: var(--color-sns-instagram);
 }
 
 .snsRowOn .snsIconTiktok {
-  color: #111827;
+  color: var(--color-sns-tiktok);
 }
 
 .snsRowOn .snsIconX {
-  color: #111827;
+  color: var(--color-sns-x);
 }
 
 .snsRowOn .snsIconYoutube {
-  color: #ff0000;
+  color: var(--color-sns-youtube);
 }
 
 .snsToggleLabel {

@@ -85,7 +85,7 @@ export type Applicant = {
 export type CampaignOption = {
   id: string;
   title: string;
-  // 종료 여부(closedAt 존재). 상태 세그먼트를 쓰지 않는 화면은 생략 가능.
+  // 모집 종료 여부(수동 종료 또는 모집 마감일 경과). 상태 세그먼트를 쓰지 않는 화면은 생략 가능.
   closed?: boolean;
 };
 

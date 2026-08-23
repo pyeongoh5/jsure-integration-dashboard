@@ -6,3 +6,4 @@ export type {
 } from "./useJwinCampaignForm";
 export { BasicTab } from "./BasicTab";
 export { ConnectTab } from "./ConnectTab";
+export { JwinMediaUpload } from "./JwinMediaUpload";

@@ -358,6 +358,39 @@ export const adminMessages = {
         ja: "ギフトコード景品がある場合、DM文面に {{CODE}} が必要です。ないと当選者にコードが届きません。",
       },
     },
+    upload: {
+      select: { ko: "파일 선택", en: "Choose file", ja: "ファイルを選択" },
+      uploading: { ko: "업로드 중…", en: "Uploading…", ja: "アップロード中…" },
+      remove: { ko: "제거", en: "Remove", ja: "削除" },
+      hint: {
+        ko: "PNG·JPEG·WebP·MP4 / 100MB 이하",
+        en: "PNG, JPEG, WebP or MP4 / up to 100MB",
+        ja: "PNG・JPEG・WebP・MP4 / 100MB以下",
+      },
+      invalidType: {
+        ko: "PNG·JPEG·WebP 이미지 또는 MP4 동영상만 올릴 수 있습니다.",
+        en: "Only PNG, JPEG or WebP images and MP4 video can be uploaded.",
+        ja: "PNG・JPEG・WebP画像またはMP4動画のみアップロードできます。",
+      },
+      tooLarge: {
+        ko: "파일이 너무 큽니다. {maxMb}MB 이하만 올릴 수 있습니다.",
+        en: "File is too large. The limit is {maxMb}MB.",
+        ja: "ファイルが大きすぎます。{maxMb}MB以下にしてください。",
+      },
+      failedHttp: {
+        ko: "업로드에 실패했습니다 (HTTP {status}).",
+        en: "Upload failed (HTTP {status}).",
+        ja: "アップロードに失敗しました (HTTP {status})。",
+      },
+      failed: {
+        ko: "업로드에 실패했습니다. 잠시 후 다시 시도하세요.",
+        en: "Upload failed. Please try again in a moment.",
+        ja: "アップロードに失敗しました。しばらくしてから再度お試しください。",
+      },
+      winMedia: { ko: "당첨 화면", en: "Win screen", ja: "当選画面" },
+      loseMedia: { ko: "낙첨 화면", en: "Lose screen", ja: "落選画面" },
+      postMedia: { ko: "미디어 (선택)", en: "Media (optional)", ja: "メディア（任意）" },
+    },
   },
   components: {
     spinner: {

@@ -1,0 +1,159 @@
+/* ── 미디어 업로드 (소재·결과화면 공용) ── */
+.upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.uploadRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.uploadLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #4b5563);
+}
+
+.uploadHint {
+  font-size: 12px;
+  color: var(--text-tertiary, #6b7280);
+}
+
+.uploadError {
+  font-size: 12px;
+  color: var(--danger, #dc2626);
+}
+
+.preview {
+  max-width: 240px;
+  max-height: 160px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #e5e7eb);
+  object-fit: contain;
+}
+
+.fileInput {
+  display: none;
+}
+
+/* ── 탭 공용 ── */
+.tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tabHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tabTitle {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-tertiary, #6b7280);
+  font-size: 13px;
+}
+
+.warning {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--warning-bg, #fef3c7);
+  color: var(--warning-text, #92400e);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.errorText {
+  font-size: 12px;
+  color: var(--danger, #dc2626);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table th {
+  font-weight: 600;
+  color: var(--text-secondary, #4b5563);
+}
+
+.num {
+  text-align: right;
+}
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* ── 다이얼로그 폼 ── */
+.dialogBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 420px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #4b5563);
+}
+
+.fieldHint {
+  font-size: 12px;
+  color: var(--text-tertiary, #6b7280);
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.typeChoice {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.counter {
+  font-size: 12px;
+  color: var(--text-tertiary, #6b7280);
+  text-align: right;
+}
+
+.counterOver {
+  color: var(--danger, #dc2626);
+}

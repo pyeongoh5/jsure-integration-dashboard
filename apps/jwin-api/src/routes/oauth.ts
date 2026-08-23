@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { getPrisma } from '@jsure/jwin-db';
+import { getPrisma, Prisma } from '@jsure/jwin-db';
 import { config } from '../config';
 import { encrypt } from '../lib/crypto';
 import { setUserSession } from '../lib/auth';
@@ -60,19 +60,30 @@ export async function oauthRoutes(app: FastifyInstance) {
       if (duplicate) {
         return reply.redirect(`${config().WEB_BASE_URL}/connect/failed?reason=duplicate`);
       }
-      await prisma.brandXAccount.update({
-        where: { id: saved.accountId },
-        data: {
-          xUserId: me.data.id,
-          xUsername: me.data.username,
-          encryptedAccessToken: encrypt(tokens.accessToken),
-          encryptedRefreshToken: encrypt(tokens.refreshToken),
-          accessTokenExpiresAt: tokens.expiresAt,
-          scopes: tokens.scopes,
-          refreshFailedAt: null,
-          refreshFailCount: 0,
-        },
-      });
+      try {
+        await prisma.brandXAccount.update({
+          where: { id: saved.accountId },
+          data: {
+            xUserId: me.data.id,
+            xUsername: me.data.username,
+            encryptedAccessToken: encrypt(tokens.accessToken),
+            encryptedRefreshToken: encrypt(tokens.refreshToken),
+            accessTokenExpiresAt: tokens.expiresAt,
+            scopes: tokens.scopes,
+            refreshFailedAt: null,
+            refreshFailCount: 0,
+          },
+        });
+      } catch (updateError) {
+        // 콜백 진입 이후 계정 row가 삭제된 경우(P2025) 등은 500 대신 실패 페이지로
+        if (
+          updateError instanceof Prisma.PrismaClientKnownRequestError &&
+          updateError.code === 'P2025'
+        ) {
+          return reply.redirect(`${config().WEB_BASE_URL}/connect/failed`);
+        }
+        throw updateError;
+      }
       return reply.redirect(`${config().WEB_BASE_URL}/connect/done?account=${me.data.username}`);
     },
   );

@@ -30,9 +30,6 @@ model BrandCampaign {
   startsAt      DateTime // JST 기준 입력, UTC 저장
   endsAt        DateTime // 종료 시점 = 배송지 입력 마감 (F-6.3)
   status        CampaignStatus @default(SETUP)
-  // 연동된 X 계정 (OAuth 완료 후 채워짐)
-  xUserId       String? // X 계정의 numeric id
-  xUsername     String? // @handle (표시용, 변경될 수 있으므로 xUserId가 기준)
   // 게시 스케줄: 매일 1회, JST 시각 "HH:mm"
   dailyPostTime String         @default("11:00")
   // 추첨 설정
@@ -46,7 +43,8 @@ model BrandCampaign {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  credential    BrandXCredential?
+  brandAccountId String?
+  brandAccount   BrandXAccount? @relation(fields: [brandAccountId], references: [id])
   postTemplates PostTemplate[]
   posts         CampaignPost[]
   prizes        Prize[]
@@ -55,21 +53,22 @@ model BrandCampaign {
   @@index([status, startsAt, endsAt])
 }
 
-// 브랜드 X 계정 OAuth2 토큰. access/refresh 토큰은 AES-256-GCM 암호화 저장.
-model BrandXCredential {
-  id                    String        @id @default(cuid())
-  campaignId            String        @unique
-  campaign              BrandCampaign @relation(fields: [campaignId], references: [id])
-  xUserId               String
-  encryptedAccessToken  String
-  encryptedRefreshToken String
-  accessTokenExpiresAt  DateTime
-  scopes                String // space-separated
-  // 리프레시 실패(브랜드가 앱 연동 해제/비번 변경 등) 감지 → 어드민 알림
+// 브랜드 X 계정: 캠페인과 독립·재사용 가능한 엔티티. OAuth2 토큰은 AES-256-GCM 암호화 저장.
+model BrandXAccount {
+  id                    String    @id @default(cuid())
+  label                 String    // 운영자 식별용 메모 (예: "코카콜라 재팬 공식")
+  xUserId               String?   @unique // 브랜드 승인 후 채워짐 (계정 정체성)
+  xUsername             String?
+  encryptedAccessToken  String?
+  encryptedRefreshToken String?
+  accessTokenExpiresAt  DateTime?
+  scopes                String?
   refreshFailedAt       DateTime?
-  refreshFailCount      Int           @default(0)
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  refreshFailCount      Int       @default(0)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  campaigns BrandCampaign[]
 }
 
 // ── 포스트 소재 · 게시 이력 ──────────────────────────

@@ -15,6 +15,8 @@
 | D-11 | 어드민 API 계약 | **jwin-shared 공유 zod.** `packages/jwin-shared`에 어드민 응답/요청 zod 스키마를 두고 jwin-api가 그 모양으로 매핑 반환, admin-web은 `.parse()`. `winners` 응답에서 `encryptedShipping` 제거, 배송지는 전용 엔드포인트로 분리(열람 감사) | 대시보드 `@jsure/shared` 관례·CODE_RULES §2와 일치. 서버·프론트 단일 계약 소스로 드리프트 차단. jwin-api는 이미 zod 사용 중이라 도입 부담 낮음 | 2026-07-26 |
 | D-12 | 미디어 업로드 | **대시보드 R2 재사용.** `apps/api`에 J-WIN용 presign 엔드포인트 1개 추가, `R2_PUBLIC_BASE_URL`로 만료 없는 공개 URL 발급. admin-web이 업로드 후 최종 공개 URL만 `mediaUrl`로 저장 → jwin-api는 R2 미접촉 | 대시보드 R2 presign/publicUrl 인프라 기존재. jwin-api가 게시 시각마다 fetch하므로 만료 URL이면 후반 게시가 조용히 실패 — 공개 URL 필수. 새 스토리지 운영 회피 | 2026-07-26 |
 
+| D-13 | 브랜드 X 계정 모델 | **캠페인과 독립된 1급 엔티티로 승격.** `BrandXCredential`(campaignId @unique, 캠페인 1:1)을 폐기하고 `BrandXAccount`(계정 1 : 캠페인 N) 신설. 캠페인은 `brandAccountId`로 참조하고 `xUserId`/`xUsername`은 계정에서 파생. 연동 링크는 `?campaignId=` → `?accountId=`, 재연동은 같은 accountId 링크 재전달로 처리. 어드민에 `/jwin/accounts` 페이지(목록·헬스·계정 추가·재연동 링크) 신설, 캠페인 연동 탭은 연동된 계정을 고르는 드롭다운으로 전환 | 계정 연동은 캠페인의 **전제조건**이지 1:1 대응이 아니다. 한 브랜드가 캠페인을 반복 집행할 때마다 재연동하는 것은 실제 운영과 어긋나고, 토큰 refresh 실패 복구도 캠페인마다 따로 해야 했다. 계정 단위로 올리면 한 번의 재연동이 그 계정을 쓰는 모든 캠페인을 복구한다. `xUserId` unique로 동일 계정 중복 등록을 차단(중복 시 `/connect/failed?reason=duplicate`). **트레이드오프**: 토큰 필드가 nullable이 되어(승인 전 '대기' 계정) 게시·DM 경로마다 토큰 존재 가드가 필요하다 | 2026-08-23 |
+
 ## 열린 항목 (v1 확정 전 결정 필요)
 
 - 배송지 개인정보 보존 기간·삭제 배치 (일본 APPI 검토와 함께)

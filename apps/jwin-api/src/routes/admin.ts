@@ -96,6 +96,27 @@ export async function adminRoutes(app: FastifyInstance) {
     return toBrandAccount(account, 0, accountConnectUrl(account.id));
   });
 
+  /**
+   * brandAccountId가 명시적으로(null이 아닌 값으로) 주어졌을 때만 실존 여부를 확인한다.
+   * 없거나(undefined) 연결 해제(null)인 경우는 검증 없이 통과 — 존재하지 않는 계정을
+   * 그대로 저장하면 Prisma가 FK 제약 위반(P2003)으로 500을 던지므로 여기서 400으로 막는다.
+   */
+  async function ensureBrandAccountExists(
+    brandAccountId: string | null | undefined,
+    reply: FastifyReply,
+  ): Promise<boolean> {
+    if (brandAccountId === undefined || brandAccountId === null) return true;
+    const account = await prisma.brandXAccount.findUnique({
+      where: { id: brandAccountId },
+      select: { id: true },
+    });
+    if (!account) {
+      reply.code(400).send({ error: '존재하지 않는 브랜드 계정입니다' });
+      return false;
+    }
+    return true;
+  }
+
   // ── 브랜드 캠페인 (F-1.1, F-1.5 — 기간 단위) ──
   const campaignSchema = z.object({
     brandName: z.string().min(1),
@@ -119,6 +140,7 @@ export async function adminRoutes(app: FastifyInstance) {
     if (parsed.data.endsAt <= parsed.data.startsAt) {
       return reply.code(400).send({ error: '종료일은 시작일 이후여야 합니다' });
     }
+    if (!(await ensureBrandAccountExists(parsed.data.brandAccountId, reply))) return;
     const campaign = await prisma.brandCampaign.create({ data: parsed.data });
     await audit(admin, 'campaign.create', campaign.id, parsed.data);
     // 신규 캠페인은 계정 미지정 상태로 생성됨
@@ -201,6 +223,7 @@ export async function adminRoutes(app: FastifyInstance) {
       .extend({ status: z.enum(['SETUP', 'ACTIVE', 'PAUSED', 'ENDED']).optional() })
       .safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+    if (!(await ensureBrandAccountExists(parsed.data.brandAccountId, reply))) return;
     const campaign = await prisma.brandCampaign.update({
       where: { id: req.params.id },
       data: parsed.data,

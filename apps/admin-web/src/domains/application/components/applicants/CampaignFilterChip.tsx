@@ -3,6 +3,7 @@ import type { AdminTranslationKey } from "@i18n/admin";
 import { useT } from "@/lib/i18n";
 import { foldForSearch } from "@/lib/searchText";
 import { FilterChip } from "@/components/composites/FilterChip";
+import { TagChip } from "@/components/composites";
 import styles from "@/components/composites/FilterChip/FilterChip.module.css";
 import type { CampaignOption } from "./types";
 
@@ -29,6 +30,15 @@ const STATUS_SCOPE_META: Record<
 
 /** 세그먼트 노출 순서. 넓은 범위에서 좁혀가는 순서로 읽히도록 전체를 앞에 둔다. */
 const STATUS_SCOPES: CampaignStatusScope[] = ["all", "ongoing", "closed"];
+
+/**
+ * 검색 대상 문자열. 태그는 배지로 그리지만 검색어로는 계속 잡혀야 한다
+ * — 전에는 제목이 "[태그] 제목" 이라 태그 이름으로도 찾을 수 있었다.
+ */
+function searchHaystack(campaign: CampaignOption): string {
+  const tags = campaign.tags ?? [];
+  return tags.length > 0 ? `${tags.join(" ")} ${campaign.title}` : campaign.title;
+}
 
 function matchesStatusScope(
   campaign: CampaignOption,
@@ -132,7 +142,7 @@ function CampaignPopover({
   const normalized = foldForSearch(query.trim());
   const filtered = normalized
     ? scoped.filter((campaign) =>
-        foldForSearch(campaign.title).includes(normalized),
+        foldForSearch(searchHaystack(campaign)).includes(normalized),
       )
     : scoped;
   const resolvedEmptyMessage = showStatusSegments
@@ -182,6 +192,9 @@ function CampaignPopover({
                 className={`${styles.popoverOption}${selected ? ` ${styles.popoverOptionOn}` : ""}`}
                 onClick={() => onSelect(campaign.id)}
               >
+                {campaign.tags?.map((tag) => (
+                  <TagChip key={tag} tag={tag} />
+                ))}
                 <span className={styles.popoverOptionLabel}>{campaign.title}</span>
                 {selected && (
                   <i className={`fa-solid fa-check ${styles.popoverOptionCheck}`} />

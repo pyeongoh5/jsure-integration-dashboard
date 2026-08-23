@@ -83,6 +83,9 @@ export type Applicant = {
 export type CampaignOption = {
   id: string;
   title: string;
+  // 어드민 전용 관리 태그. 필터 목록에서 제목 앞의 배지로 표시한다.
+  // 정산처럼 태그를 모르는 화면은 생략 가능.
+  tags?: string[];
   // 모집 종료 여부(수동 종료 또는 모집 마감일 경과). 상태 세그먼트를 쓰지 않는 화면은 생략 가능.
   closed?: boolean;
 };

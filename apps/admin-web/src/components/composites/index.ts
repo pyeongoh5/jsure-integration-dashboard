@@ -4,3 +4,4 @@ export { SegmentedTabs } from "./SegmentedTabs";
 export { SnsProfileLink } from "./SnsProfileLink";
 export { SubTypeIcon } from "./SubTypeIcon";
 export { SubTypePill } from "./SubTypePill";
+export { TagChip } from "./TagChip";

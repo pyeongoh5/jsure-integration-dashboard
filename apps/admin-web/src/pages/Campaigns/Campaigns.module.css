@@ -331,15 +331,3 @@
   border-radius: var(--r-lg);
 }
 
-/* 어드민 전용 캠페인 관리 태그 배지 (날짜 옆) */
-.cardTag {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  line-height: 1;
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-  border-radius: 5px;
-  padding: 3px 8px;
-}

@@ -1,4 +1,5 @@
 export { FormField } from "./FormField";
+export { JwinAccountStatusBadge } from "./JwinAccountStatusBadge";
 export { JwinStatusBadge } from "./JwinStatusBadge";
 export { ScrollTable } from "./ScrollTable";
 export { SegmentedTabs } from "./SegmentedTabs";

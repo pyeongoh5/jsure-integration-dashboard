@@ -2,6 +2,8 @@ import { jwinApi } from "@/lib/api";
 import {
   AdminCampaignListSchema,
   AdminCampaignDetailSchema,
+  AdminBrandAccountListSchema,
+  AdminBrandAccountSchema,
   AdminPrizeListSchema,
   AdminPostTemplateListSchema,
   AdminWinnerListSchema,
@@ -12,6 +14,8 @@ import {
   type AdminCampaignDetail,
   type AdminCampaignCreate,
   type AdminCampaignPatch,
+  type AdminBrandAccountList,
+  type AdminBrandAccount,
   type AdminPrizeList,
   type AdminPostTemplateList,
   type AdminWinnerList,
@@ -80,4 +84,14 @@ export async function updatePrize(prizeId: string, body: AdminPrizePatch): Promi
 
 export async function deletePostTemplate(templateId: string): Promise<void> {
   await jwinApi.delete(`/admin/post-templates/${templateId}`);
+}
+
+export async function fetchBrandAccounts(): Promise<AdminBrandAccountList> {
+  const response = await jwinApi.get(`/admin/brand-accounts`);
+  return AdminBrandAccountListSchema.parse(response.data);
+}
+
+export async function createBrandAccount(label: string): Promise<AdminBrandAccount> {
+  const response = await jwinApi.post(`/admin/brand-accounts`, { label });
+  return AdminBrandAccountSchema.parse(response.data);
 }

@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { Select } from "@/components/ui";
 import { JwinAccountStatusBadge } from "@/components/composites";
 import type { AdminCampaignDetail, AdminBrandAccount } from "@/domains/jwin";
 import styles from "./JwinCampaignForm.module.css";
@@ -9,24 +8,29 @@ type Props = {
   accounts: AdminBrandAccount[];
   onSelectAccount: (brandAccountId: string) => void;
   selectError: string | null;
+  accountsError: string | null;
 };
 
-export function ConnectTab({ detail, accounts, onSelectAccount, selectError }: Props) {
+export function ConnectTab({ detail, accounts, onSelectAccount, selectError, accountsError }: Props) {
   const connectable = accounts.filter((account) => account.status !== "PENDING");
 
   return (
     <div className={styles.connect}>
       <div className={styles.field}>
         <span className={styles.label}>브랜드 계정</span>
-        <Select
+        <select
+          className={styles.accountSelect}
           value={detail.brandAccountId ?? ""}
-          onChange={(value) => value && onSelectAccount(value)}
-          placeholder="계정 선택"
-          options={connectable.map((account) => ({
-            value: account.id,
-            label: account.xUsername ? `@${account.xUsername} (${account.label})` : account.label,
-          }))}
-        />
+          onChange={(event) => event.target.value && onSelectAccount(event.target.value)}
+        >
+          <option value="">계정 선택</option>
+          {connectable.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.xUsername ? `@${account.xUsername} (${account.label})` : account.label}
+            </option>
+          ))}
+        </select>
+        {accountsError && <span className={styles.error}>{accountsError}</span>}
         {selectError && <span className={styles.error}>{selectError}</span>}
       </div>
       {detail.brandAccount && (

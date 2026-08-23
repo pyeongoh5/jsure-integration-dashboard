@@ -75,6 +75,7 @@ export type UseJwinCampaignFormResult = {
   reload: () => void;
   /** 연동 탭에서 고를 수 있는 브랜드 계정 목록 (편집 모드에서만 로드) */
   accounts: AdminBrandAccount[];
+  accountsError: string | null;
   selectError: string | null;
   /** 캠페인에 브랜드 계정을 연결. 실패 시 selectError에 메시지가 채워진다. */
   selectAccount: (brandAccountId: string) => Promise<void>;
@@ -91,6 +92,7 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
   const [saveError, setSaveError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [accounts, setAccounts] = useState<AdminBrandAccount[]>([]);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
   const [selectError, setSelectError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -119,13 +121,15 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
   useEffect(() => {
     if (mode !== "edit") return;
     let cancelled = false;
+    setAccountsError(null);
     fetchBrandAccounts()
       .then((result) => {
         if (cancelled) return;
         setAccounts(result.accounts);
       })
-      .catch(() => {
-        // 목록 로드 실패는 드롭다운이 비는 것으로 드러나므로 별도 에러 상태 없이 무시한다.
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setAccountsError(error instanceof Error ? error.message : "계정 목록을 불러오지 못했습니다.");
       });
     return () => {
       cancelled = true;
@@ -193,6 +197,7 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
     save,
     reload: () => setReloadKey((current) => current + 1),
     accounts,
+    accountsError,
     selectError,
     selectAccount,
   };

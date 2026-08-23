@@ -95,6 +95,7 @@ export function JwinCampaignEdit() {
             accounts={form.accounts}
             onSelectAccount={form.selectAccount}
             selectError={form.selectError}
+            accountsError={form.accountsError}
           />
         )}
       </div>

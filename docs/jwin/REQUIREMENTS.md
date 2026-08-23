@@ -83,7 +83,7 @@
 ### 3.2 엔티티
 
 - **BrandCampaign**: brandName, slug(고유), startsAt/endsAt, status(CampaignStatus), X 계정(xUserId/xUsername), 매일 포스팅 시각(dailyPostTime, "HH:mm" JST), 일일 당첨 상한(dailyWinCap, null=무제한), **prUrl**(PR 전환 URL), **winMediaUrl / loseMediaUrl**(결과 화면 미디어), **dmTemplate**(당첨 DM 문구 — 플레이스홀더 `{{CODE}}` `{{PRIZE_NAME}}` `{{USERNAME}}` `{{BRAND_NAME}}`)
-- **BrandXCredential**: 캠페인별 브랜드 토큰(AES-256-GCM 암호화), refresh 실패 추적(재연동 알림용)
+- **BrandXAccount**: 독립 엔티티(계정 1 : 캠페인 N, D-13). 브랜드 토큰(AES-256-GCM 암호화), refresh 실패 추적(재연동 알림용). 캠페인은 `brandAccountId`로 참조
 - **PostTemplate**: 주 단위 교체 가능(activeFrom/activeTo), 본문(`{{LP_URL}}` 치환), **mediaUrl(이미지/동영상) — 발행 시 X media upload 후 첨부**
 - **CampaignPost**: 캠페인 × 날짜(JST) 유니크. 상태(SCHEDULED/POSTED/FAILED/SKIPPED — SKIPPED는 게시 시점에 캠페인이 비활성이거나 기간 밖인 경우), xPostId, 시도 횟수
 - **Prize / PrizeCode**: 유형(PHYSICAL/CODE), 티어, 총수량/잔여수량, 당첨 확률. **CODE 경품은 캠페인 생성 시 수량과 함께 코드를 직접 입력 (엑셀 열 복사 붙여넣기 지원 — 줄바꿈/탭 구분 파싱, 입력 개수 = 수량 자동 검증)**. 코드는 암호화 보관, 상태(AVAILABLE/ASSIGNED/SENT/REVOKED), 끝 4자리만 평문(codeLast4)
@@ -144,7 +144,7 @@
 ### F-7. 어드민
 
 - F-7.1 어드민 인증: **J-WIN 자체 로그인 없음 (D-10)**. 운영자는 대시보드(`@jsure/admin-web`)에서 로그인하고, 발급된 access token을 `Authorization: Bearer`로 jwin-api에 전달한다. jwin-api는 대시보드와 동일한 `JWT_SECRET`으로 서명만 검증한다
-- F-7.2 캠페인 CRUD (생성 시 connectUrl 반환), 포스트 템플릿, 경품/확률/재고 관리
+- F-7.2 캠페인 CRUD (연동할 브랜드 계정은 `brandAccountId`로 지정. 계정 추가·연동은 `/jwin/accounts` 페이지에서 별도 관리), 포스트 템플릿, 경품/확률/재고 관리
 - F-7.3 기프트코드 등록: 캠페인 생성(경품 등록) 시 수량과 함께 코드를 직접 입력. **엑셀에서 열을 복사해 붙여넣는 멀티라인 텍스트를 그대로 수용** (줄바꿈/탭/쉼표 구분 파싱, 공백 줄 무시, 중복 검출, 입력 개수와 수량 불일치 시 에러). 암호화 저장, 끝 4자리만 평문 노출
 - F-7.4 캠페인 통계 (응모/당첨/재고/DM 현황, 재연동 필요 여부), 당첨자 목록·배송지 열람
 - F-7.5 모든 변경 조작은 AuditLog 기록

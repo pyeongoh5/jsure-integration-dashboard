@@ -121,9 +121,9 @@ Atatter의 5-step 위저드(`docs/jwin/reference/Atatter - 캠페인 만들기.p
 
 #### 탭 2 — 브랜드 연동
 
-연동 상태(`xUsername`, `needsReconnect`)를 보여주고, **연동 URL을 복사할 수 있게 한다.** 현재 이 URL은 생성 API 응답에만 담겨 있어 화면을 새로고침하면 사라진다. §4-①로 조회 API를 보강한다.
+브랜드 X 계정은 캠페인과 독립된 엔티티(`BrandXAccount`, 계정 1 : 캠페인 N, D-13)다. 이 탭은 **연동된 계정을 고르는 드롭다운**이며, 계정 자체의 추가·재연동은 어드민 `/jwin/accounts` 페이지에서 한다. 선택한 계정의 연동 상태(`xUsername`, `needsReconnect`)를 함께 보여준다.
 
-연동 URL 형식은 `{API_BASE_URL}/oauth/brand/start?campaignId={id}` 로 고정이므로, 서버가 내려주는 값을 그대로 복사 버튼에 걸면 된다.
+연동 URL 형식은 `{API_BASE_URL}/oauth/brand/start?accountId={계정id}` 로 고정이며, `/jwin/accounts` 화면에서 계정별로 복사할 수 있다.
 
 #### 탭 3 — 경품
 
@@ -258,7 +258,7 @@ Phase 1 시작 전에 둘 중 하나를 정하고 `DECISIONS.md`에 D-11로 기�
 
 | # | 엔드포인트 | 용도 | 비고 |
 |---|-----------|------|------|
-| ① | `GET /admin/campaigns/:id` | S2 편집 폼 초기값 | `connectUrl`, 연동 상태 포함. 지금은 목록에서 find해야 함 |
+| ① | `GET /admin/campaigns/:id` | S2 편집 폼 초기값 | `brandAccountId`·연동된 계정 정보(`brandAccount`) 포함. 지금은 목록에서 find해야 함 |
 | ② | `GET /admin/campaigns/:id/prizes` | 탭 3 목록 | `stats`에는 name/total/remaining만 있어 id·확률·유형이 없다 |
 | ③ | `PATCH /admin/prizes/:id` | 확률·수량 정정 | 잘못 등록 시 되돌릴 방법이 현재 전무 |
 | ④ | `GET /admin/campaigns/:id/post-templates` | 탭 4 목록·커버리지 검사 | |
@@ -306,7 +306,7 @@ Phase 3 시작 전에 결정할 것.
 1. `useJwinCampaignsData` + `JwinCampaignTable` + 경고 판정 순수 함수
 2. `JwinStatusBadge` composite
 3. S2 기본 탭 (생성 → 편집 이동까지)
-4. S2 연동 탭 (connectUrl 복사, 연동 상태)
+4. S2 연동 탭 (연동된 브랜드 계정을 고르는 드롭다운, 연동 상태 표시)
 5. 완료 기준: **화면만으로 캠페인을 만들고 브랜드 연동 링크를 뽑을 수 있다** (전 과정 1~2단계)
 
 ### Phase 4 — S2 경품·소재·결과화면 탭 + 상태 전환

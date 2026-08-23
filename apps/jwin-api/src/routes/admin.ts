@@ -6,6 +6,7 @@ import { config } from '../config';
 import { encrypt } from '../lib/crypto';
 import { AdminIdentity, getAdminIdentity } from '../lib/auth';
 import {
+  toBrandAccount,
   toCampaignDetail,
   toCampaignListItem,
   toPrize,
@@ -68,6 +69,33 @@ export async function adminRoutes(app: FastifyInstance) {
     return { adminId: admin.adminId, email: admin.email, role: admin.role };
   });
 
+  const accountConnectUrl = (accountId: string) =>
+    `${config().API_BASE_URL}/oauth/brand/start?accountId=${accountId}`;
+
+  // ── 브랜드 X 계정 (독립 엔티티 — 캠페인과 다대일) ──
+  app.get('/admin/brand-accounts', async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const accounts = await prisma.brandXAccount.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { campaigns: true } } },
+    });
+    return {
+      accounts: accounts.map((account) =>
+        toBrandAccount(account, account._count.campaigns, accountConnectUrl(account.id)),
+      ),
+    };
+  });
+
+  app.post('/admin/brand-accounts', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const parsed = z.object({ label: z.string().min(1) }).safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+    const account = await prisma.brandXAccount.create({ data: { label: parsed.data.label } });
+    await audit(admin, 'brandAccount.create', account.id, parsed.data);
+    return toBrandAccount(account, 0, accountConnectUrl(account.id));
+  });
+
   // ── 브랜드 캠페인 (F-1.1, F-1.5 — 기간 단위) ──
   const campaignSchema = z.object({
     brandName: z.string().min(1),
@@ -80,6 +108,7 @@ export async function adminRoutes(app: FastifyInstance) {
     winMediaUrl: z.string().url().nullable().optional(),
     loseMediaUrl: z.string().url().nullable().optional(),
     dmTemplate: z.string().max(1000).nullable().optional(),
+    brandAccountId: z.string().nullable().optional(),
   });
 
   app.post('/admin/campaigns', async (req, reply) => {
@@ -92,9 +121,8 @@ export async function adminRoutes(app: FastifyInstance) {
     }
     const campaign = await prisma.brandCampaign.create({ data: parsed.data });
     await audit(admin, 'campaign.create', campaign.id, parsed.data);
-    // 브랜드 담당자에게 전달할 X 연동 링크
-    const connectUrl = `${config().API_BASE_URL}/oauth/brand/start?campaignId=${campaign.id}`;
-    return toCampaignDetail(campaign, connectUrl);
+    // 신규 캠페인은 계정 미지정 상태로 생성됨
+    return toCampaignDetail(campaign, null);
   });
 
   app.get('/admin/campaigns', async (req, reply) => {
@@ -103,7 +131,7 @@ export async function adminRoutes(app: FastifyInstance) {
       orderBy: { startsAt: 'desc' },
       include: {
         _count: { select: { entries: true } },
-        credential: { select: { refreshFailedAt: true } },
+        brandAccount: { select: { xUserId: true, xUsername: true, refreshFailedAt: true } },
         posts: { where: { status: 'FAILED' }, select: { id: true } },
       },
     });
@@ -115,11 +143,17 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!requireAdmin(req, reply)) return;
     const campaign = await prisma.brandCampaign.findUnique({
       where: { id: req.params.id },
-      include: { credential: { select: { refreshFailedAt: true } } },
+      include: { brandAccount: true },
     });
     if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
-    const connectUrl = `${config().API_BASE_URL}/oauth/brand/start?campaignId=${campaign.id}`;
-    return toCampaignDetail(campaign, connectUrl);
+    const brandAccount = campaign.brandAccount
+      ? toBrandAccount(
+          campaign.brandAccount,
+          await prisma.brandCampaign.count({ where: { brandAccountId: campaign.brandAccount.id } }),
+          accountConnectUrl(campaign.brandAccount.id),
+        )
+      : null;
+    return toCampaignDetail(campaign, brandAccount);
   });
 
   // ② 경품 목록 — id·확률·유형·코드 재고 포함
@@ -170,11 +204,17 @@ export async function adminRoutes(app: FastifyInstance) {
     const campaign = await prisma.brandCampaign.update({
       where: { id: req.params.id },
       data: parsed.data,
-      include: { credential: { select: { refreshFailedAt: true } } },
+      include: { brandAccount: true },
     });
     await audit(admin, 'campaign.update', campaign.id, parsed.data);
-    const connectUrl = `${config().API_BASE_URL}/oauth/brand/start?campaignId=${campaign.id}`;
-    return toCampaignDetail(campaign, connectUrl);
+    const brandAccount = campaign.brandAccount
+      ? toBrandAccount(
+          campaign.brandAccount,
+          await prisma.brandCampaign.count({ where: { brandAccountId: campaign.brandAccount.id } }),
+          accountConnectUrl(campaign.brandAccount.id),
+        )
+      : null;
+    return toCampaignDetail(campaign, brandAccount);
   });
 
   // ── 포스트 소재 (F-1.2 주 단위 교체, mediaUrl 첨부 F-2.3) ──
@@ -345,7 +385,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const campaign = await prisma.brandCampaign.findUnique({
       where: { id: req.params.id },
       include: {
-        credential: { select: { refreshFailedAt: true, refreshFailCount: true } },
+        brandAccount: { select: { xUsername: true, refreshFailedAt: true } },
         prizes: true,
         posts: { where: { status: 'FAILED' } },
         _count: { select: { entries: true } },
@@ -369,7 +409,7 @@ export async function adminRoutes(app: FastifyInstance) {
       campaignId: campaign.id,
       brandName: campaign.brandName,
       slug: campaign.slug,
-      xUsername: campaign.xUsername,
+      xUsername: campaign.brandAccount?.xUsername ?? null,
       status: campaign.status,
       startsAt: campaign.startsAt,
       endsAt: campaign.endsAt,
@@ -383,7 +423,7 @@ export async function adminRoutes(app: FastifyInstance) {
         remaining: prize.remainingQty,
       })),
       failedPosts: campaign.posts.length,
-      needsReconnect: !!campaign.credential?.refreshFailedAt, // 브랜드 재연동 필요 알림
+      needsReconnect: !!campaign.brandAccount?.refreshFailedAt, // 브랜드 재연동 필요 알림
     };
   });
 

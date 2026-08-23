@@ -1,7 +1,11 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import type { CampaignCategory } from "@jsure/shared";
+import {
+  APPLICANT_EXPORT_MAX_ROWS,
+  type ApplicantFilter,
+  type CampaignCategory,
+} from "@jsure/shared";
 import {
   ApplicantFilters,
   ApplicantStatusFilter,
@@ -9,10 +13,13 @@ import {
   ApplicantDialogs,
   ApplicationHistoryDialog,
   APPLICANT_STATUS_LABEL,
+  applicantsCsvFilename,
+  buildApplicantsCsv,
+  exportApplicants,
+  triggerCsvDownload,
   useApplicantsData,
   useCampaignOptions,
   useApplicantMutations,
-  matchesMediaFilter,
   type Applicant,
   type ApplicantStatus,
   type MediaFilterKey,
@@ -21,6 +28,7 @@ import {
 import { InfluencerNotesDialog } from "@/domains/influencer";
 import { Button } from "@/components/ui";
 import { useT } from "@/lib/i18n";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
 import { ApplicantDetailDialog } from "./ApplicantDetailDialog";
 import { ApprovedApplicantsDialog } from "./ApprovedApplicantsDialog";
 import styles from "./Applicants.module.css";
@@ -44,9 +52,35 @@ export function Applicants() {
   const [detailTarget, setDetailTarget] = useState<Applicant | null>(null);
   const [query, setQuery] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
+  const [csvPending, setCsvPending] = useState(false);
+  const [csvMessage, setCsvMessage] = useState<string | null>(null);
 
   const qc = useQueryClient();
-  const { state, applicants, reload } = useApplicantsData(campaignId);
+  const debouncedQuery = useDebouncedValue(query, 300);
+
+  // 서버 필터 조건. 목록과 CSV 가 같은 값을 쓰므로 둘의 결과가 어긋날 수 없다.
+  // Set 은 정렬해서 담는다 — 선택 순서가 달라도 같은 쿼리로 취급하기 위해.
+  const filter = useMemo<ApplicantFilter>(
+    () => ({
+      campaignId,
+      mediaKeys: [...mediaFilter].sort(),
+      viewStatuses: [...statusFilter].sort(),
+      category: categoryFilter,
+      minFollowers,
+      query: debouncedQuery.trim(),
+    }),
+    [
+      campaignId,
+      mediaFilter,
+      statusFilter,
+      categoryFilter,
+      minFollowers,
+      debouncedQuery,
+    ],
+  );
+
+  const { state, applicants, total, hasMore, loadingMore, loadMore, reload } =
+    useApplicantsData(filter);
   const {
     campaignOptions,
     campaignTitleById,
@@ -64,32 +98,52 @@ export function Applicants() {
     setSearchParams(next);
   };
 
-  const visible = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    return applicants.filter((applicant) => {
-      if (
-        !matchesMediaFilter(
-          applicant.media,
-          applicant.selectedOptions,
-          mediaFilter,
-        )
-      ) {
-        return false;
+  // 목록 끝 감시자가 보이면 다음 페이지를 이어 붙인다.
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMore();
+      },
+      { rootMargin: "300px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  const handleCsvDownload = useCallback(async () => {
+    setCsvPending(true);
+    setCsvMessage(null);
+    try {
+      // 화면에 불러온 페이지가 아니라 필터에 걸린 응모 전체를 받아온다.
+      const response = await exportApplicants(filter);
+      if (response.rows.length === 0) {
+        setCsvMessage(t("pages.applicants.csvEmpty"));
+        return;
       }
-      if (minFollowers !== null && applicant.followers < minFollowers)
-        return false;
-      if (statusFilter.size > 0 && !statusFilter.has(applicant.status))
-        return false;
-      if (categoryFilter !== null && applicant.category !== categoryFilter)
-        return false;
-      if (normalizedQuery) {
-        const haystack =
-          `${applicant.name} ${applicant.influencerId} ${applicant.allHandles.join(" ")}`.toLowerCase();
-        if (!haystack.includes(normalizedQuery)) return false;
+      triggerCsvDownload(
+        applicantsCsvFilename(),
+        buildApplicantsCsv(response.rows),
+      );
+      if (response.truncated) {
+        setCsvMessage(
+          t("pages.applicants.csvTruncated", {
+            count: APPLICANT_EXPORT_MAX_ROWS,
+          }),
+        );
       }
-      return true;
-    });
-  }, [applicants, mediaFilter, minFollowers, statusFilter, categoryFilter, query]);
+    } catch (cause) {
+      setCsvMessage(
+        cause instanceof Error
+          ? cause.message
+          : t("pages.applicants.csvFailed"),
+      );
+    } finally {
+      setCsvPending(false);
+    }
+  }, [filter, t]);
 
   return (
     <div className={styles.root}>
@@ -98,19 +152,34 @@ export function Applicants() {
           <h1 className={styles.title}>{t("pages.applicants.title")}</h1>
           <p className={styles.subtitle}>
             {state.kind === "ready"
-              ? t("common.itemCount", { count: visible.length })
+              ? t("common.itemCount", { count: total })
               : t("common.loading")}
           </p>
         </div>
-        <Button
-          variant="success"
-          size="md"
-          onClick={() => setDownloadOpen(true)}
-          iconLeft={<i className="fa-solid fa-list" aria-hidden="true" />}
-        >
-          {t("pages.applicants.viewApprovedList")}
-        </Button>
+        <div className={styles.headerActions}>
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={handleCsvDownload}
+            disabled={csvPending || state.kind !== "ready" || total === 0}
+            iconLeft={<i className="fa-solid fa-file-csv" aria-hidden="true" />}
+          >
+            {csvPending
+              ? t("pages.applicants.csvDownloading")
+              : t("pages.applicants.csvDownload")}
+          </Button>
+          <Button
+            variant="success"
+            size="md"
+            onClick={() => setDownloadOpen(true)}
+            iconLeft={<i className="fa-solid fa-list" aria-hidden="true" />}
+          >
+            {t("pages.applicants.viewApprovedList")}
+          </Button>
+        </div>
       </div>
+
+      {csvMessage && <div className={styles.mutationError}>{csvMessage}</div>}
 
       <div className={styles.filterBar}>
         <ApplicantFilters
@@ -150,40 +219,47 @@ export function Applicants() {
           <div className={styles.empty}>{state.message}</div>
         </div>
       ) : (
-        <ApplicantTable
-          items={visible}
-          selected={selected}
-          onToggleAll={(checked) =>
-            setSelected(
-              checked
-                ? new Set(visible.map((applicant) => applicant.id))
-                : new Set(),
-            )
-          }
-          onToggleOne={(id) =>
-            setSelected((prev) => {
-              const next = new Set(prev);
-              if (next.has(id)) next.delete(id);
-              else next.add(id);
-              return next;
-            })
-          }
-          onApprove={mutations.openApprove}
-          onReject={mutations.openReject}
-          onUndo={mutations.openUndo}
-          onShip={mutations.openShip}
-          onDeliver={mutations.openDeliver}
-          onMemo={setNotesTarget}
-          onDetail={setDetailTarget}
-          onHistory={(applicant) =>
-            setHistoryTarget({
-              applicationId: applicant.id,
-              campaignTitle: applicant.campaign,
-              influencerName: applicant.name,
-              statusLabel: t(APPLICANT_STATUS_LABEL[applicant.status]),
-            })
-          }
-        />
+        <>
+          <ApplicantTable
+            items={applicants}
+            selected={selected}
+            onToggleAll={(checked) =>
+              setSelected(
+                checked
+                  ? new Set(applicants.map((applicant) => applicant.id))
+                  : new Set(),
+              )
+            }
+            onToggleOne={(id) =>
+              setSelected((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+              })
+            }
+            onApprove={mutations.openApprove}
+            onReject={mutations.openReject}
+            onUndo={mutations.openUndo}
+            onShip={mutations.openShip}
+            onDeliver={mutations.openDeliver}
+            onMemo={setNotesTarget}
+            onDetail={setDetailTarget}
+            onHistory={(applicant) =>
+              setHistoryTarget({
+                applicationId: applicant.id,
+                campaignTitle: applicant.campaign,
+                influencerName: applicant.name,
+                statusLabel: t(APPLICANT_STATUS_LABEL[applicant.status]),
+              })
+            }
+          />
+          {hasMore && (
+            <div ref={sentinelRef} className={styles.loadMore}>
+              {loadingMore ? t("pages.applicants.loadingMore") : ""}
+            </div>
+          )}
+        </>
       )}
 
       <ApplicantDialogs

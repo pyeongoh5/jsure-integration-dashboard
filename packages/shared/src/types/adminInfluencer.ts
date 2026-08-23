@@ -107,6 +107,19 @@ export type AdminApplicationListResponse = z.infer<
   typeof AdminApplicationListResponseSchema
 >;
 
+/**
+ * 응모자 관리 목록 한 페이지. nextCursor 가 null 이면 마지막 페이지.
+ * total 은 커서와 무관하게 필터 전체에 걸린 건수.
+ */
+export const AdminApplicantPageResponseSchema = z.object({
+  applications: z.array(AdminApplicationSchema),
+  nextCursor: z.string().nullable(),
+  total: z.number().int().nonnegative(),
+});
+export type AdminApplicantPageResponse = z.infer<
+  typeof AdminApplicantPageResponseSchema
+>;
+
 export const AdminApplicationCountsResponseSchema = z.object({
   counts: z.record(ApplicationStatusSchema, z.number().int().nonnegative()),
 });

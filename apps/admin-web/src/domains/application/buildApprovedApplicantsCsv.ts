@@ -28,7 +28,7 @@ export function approvedApplicantChannelLabel(
   return `${snsLabel}(${SUB_TYPE_OPTION_LABEL[channel.option] ?? channel.option})`;
 }
 
-function escapeCsvCell(value: string): string {
+export function escapeCsvCell(value: string): string {
   if (value === "") return "";
   if (/[",\r\n]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;

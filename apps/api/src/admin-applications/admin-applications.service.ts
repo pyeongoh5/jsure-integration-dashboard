@@ -1,19 +1,30 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import {
+  APPLICANT_EXPORT_MAX_ROWS,
   SLOT_CONSUMING_STATUSES,
   SUB_TYPE_OPTION_LABEL,
   buildSnsProfileUrl,
   type AddressCountry,
   type AdminActivityLog,
+  type AdminApplicantPageResponse,
   type AdminApplication,
   type AdminSettlement,
   type AdminSubmission,
+  type ApplicantExportResponse,
+  type ApplicantExportRow,
+  type ApplicantFilter,
   type ApplicationStatus,
   type ApprovedApplicantExportResponse,
   type CampaignCategory,
   type CampaignSubType,
   type CrossPostPlatform,
 } from "@jsure/shared";
+import {
+  APPLICANT_FROM_SQL,
+  applicantCursorSql,
+  buildApplicantWhereSql,
+} from "./applicant-filter.sql";
 import { PrismaService } from "../prisma/prisma.service";
 import { toActivityLog } from "../audit/application-activity";
 import { influencerActivityEntries } from "../audit/influencer-activity";
@@ -1086,39 +1097,228 @@ export class AdminApplicationsService {
         influencerId: row.influencer.id,
         name: row.influencer.name,
         nameKana: row.influencer.nameKana,
-        channels: row.subTypes.map((subType) => {
-          const snsAccount = row.influencer.snsAccounts.find(
-            (account) => account.snsType === subType,
-          );
-          const handle = snsAccount?.handle ?? "";
-          // SNS 계열 (INSTAGRAM/TIKTOK/X/YOUTUBE) 만 프로필 URL 을 만든다.
-          const profileUrl =
-            handle &&
-            (subType === "INSTAGRAM" ||
-              subType === "TIKTOK" ||
-              subType === "X" ||
-              subType === "YOUTUBE")
-              ? buildSnsProfileUrl(subType, handle)
-              : "";
-          const selectedOption =
-            row.options.find((entry) => entry.subType === subType)?.option ??
-            null;
-          return { subType, option: selectedOption, snsHandle: handle, profileUrl };
-        }),
+        channels: buildExportChannels(row),
         phone: row.influencer.phone,
         postalCode: row.influencer.postalCode,
-        address: [
-          row.influencer.prefecture,
-          row.influencer.city,
-          row.influencer.addressLine1,
-          row.influencer.addressLine2,
-        ]
-          .filter((part) => part && part.length > 0)
-          .join(" "),
+        address: joinAddress(row.influencer),
         appliedAt: row.appliedAt.toISOString(),
       })),
     };
   }
+
+  /**
+   * 응모자 관리 목록 한 페이지.
+   * 화면의 모든 필터를 SQL 에서 처리하고 appliedAt 내림차순 커서로 페이징한다.
+   * 팔로워 합계 조건은 Prisma where 로 표현할 수 없어 id 선별만 raw SQL 로 하고,
+   * 상세 로딩은 기존 include 를 그대로 재사용한다.
+   */
+  async listApplicantsPage(
+    filter: ApplicantFilter,
+    cursor: string | null,
+    limit: number,
+  ): Promise<AdminApplicantPageResponse> {
+    const where = buildApplicantWhereSql(filter);
+    const cursorCondition = cursor
+      ? Prisma.sql`AND ${applicantCursorSql(cursor)}`
+      : Prisma.empty;
+
+    const [idRows, countRows] = await Promise.all([
+      this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT a.id ${APPLICANT_FROM_SQL}
+        WHERE ${where} ${cursorCondition}
+        ORDER BY a."appliedAt" DESC, a.id DESC
+        LIMIT ${limit + 1}
+      `,
+      this.prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(*)::bigint AS count ${APPLICANT_FROM_SQL}
+        WHERE ${where}
+      `,
+    ]);
+
+    const hasMore = idRows.length > limit;
+    const pageIds = idRows.slice(0, limit).map((row) => row.id);
+    const rows = await this.prisma.campaignApplication.findMany({
+      where: { id: { in: pageIds } },
+      include: APPLICATION_INCLUDE,
+    });
+    const byId = new Map(rows.map((row) => [row.id, row]));
+
+    return {
+      applications: pageIds.flatMap((id) => {
+        const row = byId.get(id);
+        return row ? [toResponse(row)] : [];
+      }),
+      nextCursor: hasMore ? (pageIds[pageIds.length - 1] ?? null) : null,
+      total: Number(countRows[0]?.count ?? 0),
+    };
+  }
+
+  /**
+   * 응모자 관리 CSV 내보내기 — 목록과 완전히 같은 필터를 쓰되 페이지가 아니라 전체를 반환한다.
+   * phone/주소 등 PII 를 포함하므로 목록 응답과 분리해 둔다.
+   */
+  async exportApplicants(
+    filter: ApplicantFilter,
+  ): Promise<ApplicantExportResponse> {
+    const where = buildApplicantWhereSql(filter);
+    const idRows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT a.id ${APPLICANT_FROM_SQL}
+      WHERE ${where}
+      ORDER BY a."appliedAt" DESC, a.id DESC
+      LIMIT ${APPLICANT_EXPORT_MAX_ROWS + 1}
+    `;
+    const truncated = idRows.length > APPLICANT_EXPORT_MAX_ROWS;
+    const ids = idRows
+      .slice(0, APPLICANT_EXPORT_MAX_ROWS)
+      .map((row) => row.id);
+
+    const rows = await this.prisma.campaignApplication.findMany({
+      where: { id: { in: ids } },
+      select: APPLICANT_EXPORT_SELECT,
+    });
+    const byId = new Map(rows.map((row) => [row.id, row]));
+
+    return {
+      rows: ids.flatMap((id) => {
+        const row = byId.get(id);
+        return row ? [toApplicantExportRow(row)] : [];
+      }),
+      truncated,
+    };
+  }
+}
+
+type ExportChannelRow = {
+  subTypes: CampaignSubType[];
+  options: { subType: CampaignSubType; option: string }[];
+  influencer: { snsAccounts: { snsType: string; handle: string }[] };
+};
+
+/** 참여 서브타입별 SNS 정보. 응모가 고른 옵션(피드/릴스)까지 함께 담는다. */
+function buildExportChannels(row: ExportChannelRow) {
+  return row.subTypes.map((subType) => {
+    const snsAccount = row.influencer.snsAccounts.find(
+      (account) => account.snsType === subType,
+    );
+    const handle = snsAccount?.handle ?? "";
+    // SNS 계열 (INSTAGRAM/TIKTOK/X/YOUTUBE) 만 프로필 URL 을 만든다.
+    const profileUrl =
+      handle &&
+      (subType === "INSTAGRAM" ||
+        subType === "TIKTOK" ||
+        subType === "X" ||
+        subType === "YOUTUBE")
+        ? buildSnsProfileUrl(subType, handle)
+        : "";
+    const selectedOption =
+      row.options.find((entry) => entry.subType === subType)?.option ?? null;
+    return { subType, option: selectedOption, snsHandle: handle, profileUrl };
+  });
+}
+
+function joinAddress(influencer: {
+  prefecture: string;
+  city: string;
+  addressLine1: string;
+  addressLine2: string;
+}): string {
+  return [
+    influencer.prefecture,
+    influencer.city,
+    influencer.addressLine1,
+    influencer.addressLine2,
+  ]
+    .filter((part) => part && part.length > 0)
+    .join(" ");
+}
+
+const APPLICANT_EXPORT_SELECT = {
+  id: true,
+  subTypes: true,
+  options: { select: { subType: true, option: true } },
+  appliedAt: true,
+  status: true,
+  receivedAt: true,
+  rejectReason: true,
+  campaign: { select: { id: true, title: true, category: true } },
+  influencer: {
+    select: {
+      id: true,
+      name: true,
+      nameKana: true,
+      phone: true,
+      postalCode: true,
+      prefecture: true,
+      city: true,
+      addressLine1: true,
+      addressLine2: true,
+      memo: true,
+      snsAccounts: {
+        select: { snsType: true, handle: true, followerCount: true },
+      },
+      memos: {
+        orderBy: { createdAt: "desc" as const },
+        select: { comment: true },
+      },
+    },
+  },
+} as const;
+
+type ApplicantExportPrismaRow = {
+  id: string;
+  subTypes: CampaignSubType[];
+  options: { subType: CampaignSubType; option: string }[];
+  appliedAt: Date;
+  status: ApplicationStatus;
+  receivedAt: Date | null;
+  rejectReason: string | null;
+  campaign: { id: string; title: string; category: CampaignCategory };
+  influencer: {
+    id: string;
+    name: string;
+    nameKana: string | null;
+    phone: string;
+    postalCode: string;
+    prefecture: string;
+    city: string;
+    addressLine1: string;
+    addressLine2: string;
+    memo: string | null;
+    snsAccounts: { snsType: string; handle: string; followerCount: number }[];
+    memos: { comment: string }[];
+  };
+};
+
+function toApplicantExportRow(
+  row: ApplicantExportPrismaRow,
+): ApplicantExportRow {
+  // 담당자 메모는 최신순으로 이어붙인다. 구 단일 memo 필드는 목록이 비었을 때만 폴백.
+  const memos = row.influencer.memos.map((entry) => entry.comment);
+  const memo =
+    memos.length > 0 ? memos.join(" | ") : (row.influencer.memo ?? "");
+  return {
+    applicationId: row.id,
+    influencerId: row.influencer.id,
+    name: row.influencer.name,
+    nameKana: row.influencer.nameKana,
+    channels: buildExportChannels(row),
+    phone: row.influencer.phone,
+    postalCode: row.influencer.postalCode,
+    address: joinAddress(row.influencer),
+    appliedAt: row.appliedAt.toISOString(),
+    campaignId: row.campaign.id,
+    campaignTitle: row.campaign.title,
+    campaignCategory: row.campaign.category,
+    status: row.status,
+    receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null,
+    followers: row.influencer.snsAccounts
+      .filter((account) =>
+        row.subTypes.includes(account.snsType as CampaignSubType),
+      )
+      .reduce((sum, account) => sum + account.followerCount, 0),
+    memo,
+    rejectReason: row.rejectReason,
+  };
 }
 
 const SUBMISSION_INCLUDE = {

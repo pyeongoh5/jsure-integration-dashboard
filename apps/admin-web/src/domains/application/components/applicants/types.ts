@@ -1,5 +1,7 @@
 import type { AdminTranslationKey } from "@i18n/admin";
 import type {
+  ApplicantMediaFilterKey,
+  ApplicantViewStatus,
   ApplicationOption,
   ApplicationStatus,
   CampaignCategory,
@@ -7,23 +9,14 @@ import type {
   SnsAccountSubType,
 } from "@jsure/shared";
 
-// 검토/정산 단계로 넘어가지 않은 응모만 응모 관리에 노출한다.
-// 검토 단계 = SubmittedPost 존재(application.hasSubmittedPost=true).
-// 정산 단계 = ApplicationStatus.COMPLETED.
-export type ApplicantStatus =
-  | "APPLIED"
-  | "PRE_SHIP"
-  | "SHIPPING"
-  | "DELIVERED"
-  | "POST_DUE"
-  | "AWAITING_ORDER"
-  | "AWAITING_REVIEW"
-  | "REJECTED";
+// 화면 노출 상태와 서브타입 필터 키는 서버 필터(SQL)와 같은 규칙을 써야 하므로
+// shared 의 정의를 그대로 쓴다. 규칙 표는 shared/types/applicantFilter.ts.
+export type ApplicantStatus = ApplicantViewStatus;
 
 export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
 
 /** 서브타입 필터 전용 키 — 인스타그램은 응모 옵션(FEED/REELS) 기준으로 세분화한다. */
-export type MediaFilterKey = Exclude<Media, "ig"> | "ig-feed" | "ig-reels";
+export type MediaFilterKey = ApplicantMediaFilterKey;
 
 const INSTAGRAM_OPTION_BY_FILTER_KEY: Partial<Record<MediaFilterKey, string>> = {
   "ig-feed": "FEED",
@@ -31,8 +24,8 @@ const INSTAGRAM_OPTION_BY_FILTER_KEY: Partial<Record<MediaFilterKey, string>> = 
 };
 
 /**
- * 서브타입 필터 매칭. 인스타그램 키는 참여 여부가 아니라 응모가 선택한
- * FEED/REELS 옵션으로 판정한다 (INSTAGRAM 응모는 옵션 선택이 필수라 누락 없음).
+ * 서브타입 필터 매칭(클라이언트 판정). 응모자 관리는 같은 규칙을 서버에서 처리하므로
+ * 아직 클라이언트에서 거르는 검토(Drafts) 화면 전용이다.
  */
 export function matchesMediaFilter(
   media: Media[],

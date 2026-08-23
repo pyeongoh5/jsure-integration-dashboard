@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import {
@@ -43,10 +44,28 @@ function extOf(contentType: string): string {
 
 @Injectable()
 export class UploadsService {
+  private readonly logger = new Logger(UploadsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly r2: R2Service,
   ) {}
+
+  /**
+   * 표시용 URL 변환은 목록 응답 조립 도중에 일어난다. R2 미설정·일시 장애로
+   * presign 이 실패하면 캠페인 목록 전체가 500 이 되므로, 이 경로에서는 실패를
+   * 삼키고 null 을 돌려준다 — 썸네일 하나가 앱의 캠페인 조회를 막으면 안 된다.
+   */
+  private async presignForViewOrNull(objectKey: string): Promise<string | null> {
+    try {
+      return await this.r2.presignGet(objectKey, PUBLIC_FALLBACK_EXPIRES_SEC);
+    } catch (cause) {
+      this.logger.warn(
+        `표시용 URL 변환 실패 — 키를 건너뜁니다: ${objectKey} (${String(cause)})`,
+      );
+      return null;
+    }
+  }
 
   async presignInsightUpload(
     influencerId: string,
@@ -224,10 +243,18 @@ export class UploadsService {
     const entries = await Promise.all(
       keys.map(
         async (key) =>
-          [key, this.r2.publicUrl(key) ?? (await this.r2.presignGet(key, PUBLIC_FALLBACK_EXPIRES_SEC))] as const,
+          [
+            key,
+            this.r2.publicUrl(key) ?? (await this.presignForViewOrNull(key)),
+          ] as const,
       ),
     );
-    const map = new Map(entries);
+    // 변환 실패한 키는 map 에 담지 않아 원문 r2: 토큰이 그대로 남는다.
+    const map = new Map(
+      entries.filter((entry): entry is readonly [string, string] =>
+        entry[1] !== null,
+      ),
+    );
 
     // 1) <img src="r2:KEY" ...> → <img src="<presigned>" data-r2-key="KEY" ...>
     let out = html.replace(
@@ -255,7 +282,7 @@ export class UploadsService {
   ): Promise<string | null> {
     if (!raw) return null;
     if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
-    return this.r2.publicUrl(raw) ?? this.r2.presignGet(raw, PUBLIC_FALLBACK_EXPIRES_SEC);
+    return this.r2.publicUrl(raw) ?? (await this.presignForViewOrNull(raw));
   }
 
   /**

@@ -14,6 +14,7 @@ import {
   toWinner,
   decryptShipping,
   canTransitionFulfillment,
+  BrandAccountRow,
 } from './adminMappers';
 
 /**
@@ -117,6 +118,15 @@ export async function adminRoutes(app: FastifyInstance) {
     return true;
   }
 
+  /** 캠페인 응답에 실을 brandAccount DTO 조립 (연동된 계정이 없으면 null) */
+  async function buildBrandAccountDto(brandAccount: BrandAccountRow | null) {
+    if (!brandAccount) return null;
+    const campaignCount = await prisma.brandCampaign.count({
+      where: { brandAccountId: brandAccount.id },
+    });
+    return toBrandAccount(brandAccount, campaignCount, accountConnectUrl(brandAccount.id));
+  }
+
   // ── 브랜드 캠페인 (F-1.1, F-1.5 — 기간 단위) ──
   const campaignSchema = z.object({
     brandName: z.string().min(1),
@@ -141,10 +151,12 @@ export async function adminRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: '종료일은 시작일 이후여야 합니다' });
     }
     if (!(await ensureBrandAccountExists(parsed.data.brandAccountId, reply))) return;
-    const campaign = await prisma.brandCampaign.create({ data: parsed.data });
+    const campaign = await prisma.brandCampaign.create({
+      data: parsed.data,
+      include: { brandAccount: true },
+    });
     await audit(admin, 'campaign.create', campaign.id, parsed.data);
-    // 신규 캠페인은 계정 미지정 상태로 생성됨
-    return toCampaignDetail(campaign, null);
+    return toCampaignDetail(campaign, await buildBrandAccountDto(campaign.brandAccount));
   });
 
   app.get('/admin/campaigns', async (req, reply) => {
@@ -160,7 +172,7 @@ export async function adminRoutes(app: FastifyInstance) {
     return { campaigns: campaigns.map(toCampaignListItem) };
   });
 
-  // ① 편집 폼 초기값 — 연동 상태·connectUrl 포함
+  // ① 편집 폼 초기값 — brandAccountId·연동된 계정 정보(brandAccount) 포함
   app.get<{ Params: { id: string } }>('/admin/campaigns/:id', async (req, reply) => {
     if (!requireAdmin(req, reply)) return;
     const campaign = await prisma.brandCampaign.findUnique({
@@ -168,14 +180,7 @@ export async function adminRoutes(app: FastifyInstance) {
       include: { brandAccount: true },
     });
     if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
-    const brandAccount = campaign.brandAccount
-      ? toBrandAccount(
-          campaign.brandAccount,
-          await prisma.brandCampaign.count({ where: { brandAccountId: campaign.brandAccount.id } }),
-          accountConnectUrl(campaign.brandAccount.id),
-        )
-      : null;
-    return toCampaignDetail(campaign, brandAccount);
+    return toCampaignDetail(campaign, await buildBrandAccountDto(campaign.brandAccount));
   });
 
   // ② 경품 목록 — id·확률·유형·코드 재고 포함
@@ -230,14 +235,7 @@ export async function adminRoutes(app: FastifyInstance) {
       include: { brandAccount: true },
     });
     await audit(admin, 'campaign.update', campaign.id, parsed.data);
-    const brandAccount = campaign.brandAccount
-      ? toBrandAccount(
-          campaign.brandAccount,
-          await prisma.brandCampaign.count({ where: { brandAccountId: campaign.brandAccount.id } }),
-          accountConnectUrl(campaign.brandAccount.id),
-        )
-      : null;
-    return toCampaignDetail(campaign, brandAccount);
+    return toCampaignDetail(campaign, await buildBrandAccountDto(campaign.brandAccount));
   });
 
   // ── 포스트 소재 (F-1.2 주 단위 교체, mediaUrl 첨부 F-2.3) ──

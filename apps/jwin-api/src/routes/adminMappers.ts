@@ -87,7 +87,7 @@ export function toCampaignListItem(campaign: {
   };
 }
 
-type BrandAccountRow = {
+export type BrandAccountRow = {
   id: string;
   label: string;
   xUserId: string | null;

@@ -41,10 +41,13 @@ export function useCampaignOptions(): UseCampaignOptionsResult {
           ),
         );
         const now = Date.now();
+        // 필터 목록은 태그를 배지로 그리므로 제목과 태그를 따로 넘긴다.
+        // campaignTitleById 는 칩의 선택 라벨(문자열)이라 합친 표기를 유지한다.
         setCampaignOptions(
           rows.map((campaign) => ({
             id: campaign.id,
-            title: formatTitleWithTags(campaign.tags, campaign.title),
+            title: campaign.title,
+            tags: campaign.tags,
             closed: isRecruitClosed(campaign, now),
           })),
         );

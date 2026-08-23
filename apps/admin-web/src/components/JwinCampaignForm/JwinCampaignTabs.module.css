@@ -211,3 +211,56 @@
   font-size: 13px;
   color: var(--success, #16a34a);
 }
+
+/* ── 상태 전환 ── */
+.transition {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.transitionButtons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #e5e7eb);
+  background: var(--surface-muted, #f9fafb);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  text-align: left;
+  min-width: 320px;
+}
+
+.checkItem {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.checkMark {
+  flex-shrink: 0;
+}
+
+.checkOk {
+  color: var(--success, #16a34a);
+}
+
+.checkFail {
+  color: var(--danger, #dc2626);
+}
+
+.checkReason {
+  display: block;
+  color: var(--text-tertiary, #6b7280);
+  margin-top: 2px;
+}

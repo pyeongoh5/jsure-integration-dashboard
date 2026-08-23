@@ -6,6 +6,12 @@ import path from "node:path";
 export default defineConfig({
   build: {
     sourcemap: true,
+    commonjsOptions: {
+      // @jsure/jwin-shared 는 pnpm 워크스페이스 심링크라 실경로가 node_modules 밖
+      // (packages/jwin-shared/dist) 이라 Rollup 기본 commonjs 처리 대상에서 빠진다.
+      // 포함시키지 않으면 프로덕션 빌드에서 re-export 된 named export 를 못 잡는다.
+      include: [/node_modules/, /packages\/jwin-shared/],
+    },
   },
   plugins: [
     react(),

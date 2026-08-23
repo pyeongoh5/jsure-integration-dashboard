@@ -86,3 +86,10 @@
 .tabContent {
   padding-top: 4px;
 }
+
+/* 상태 전환 영역 — 탭 내용 위에 붙는다 */
+.statusRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}

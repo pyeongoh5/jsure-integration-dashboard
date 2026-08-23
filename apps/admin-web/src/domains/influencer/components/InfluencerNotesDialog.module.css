@@ -92,8 +92,14 @@
   color: #374151;
 }
 
+/* 다이얼로그 안이라 목록 페이지용 기본 탭 크기는 너무 크다. */
 .mainTabs {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.mainTabs button {
+  padding: 4px var(--space-3);
+  font-size: var(--font-size-sm);
 }
 
 .section {

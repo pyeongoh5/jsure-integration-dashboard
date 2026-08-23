@@ -1,5 +1,11 @@
+/* 다이얼로그 안이라 목록 페이지용 기본 크기는 너무 크다 — 세부 필터는 더 줄인다. */
 .filterTabs {
   margin-bottom: var(--space-3);
+}
+
+.filterTabs button {
+  padding: 3px var(--space-2);
+  font-size: var(--font-size-xs);
 }
 
 .list {

@@ -23,14 +23,16 @@ export async function oauthRoutes(app: FastifyInstance) {
   const userRedirect = `${config().API_BASE_URL}/oauth/user/callback`;
 
   // ── 브랜드 연동 시작 (어드민이 브랜드에 전달하는 링크) ──
-  app.get<{ Querystring: { campaignId: string } }>('/oauth/brand/start', async (req, reply) => {
-    const { campaignId } = req.query;
-    const campaign = await prisma.brandCampaign.findUnique({ where: { id: campaignId } });
-    if (!campaign) return reply.code(404).send({ error: 'campaign not found' });
+  // state 저장은 OAuthState.campaignId 컬럼을 그대로 재사용한다 (user 플로우의
+  // redirectTo와 마찬가지로 kind별로 다른 의미의 값을 담아 쓰는 기존 방식).
+  app.get<{ Querystring: { accountId: string } }>('/oauth/brand/start', async (req, reply) => {
+    const { accountId } = req.query;
+    const brandAccount = await prisma.brandXAccount.findUnique({ where: { id: accountId } });
+    if (!brandAccount) return reply.code(404).send({ error: 'account not found' });
 
     const { codeVerifier, codeChallenge, state } = generatePkce();
     await prisma.oAuthState.create({
-      data: { state, kind: 'brand', codeVerifier, campaignId },
+      data: { state, kind: 'brand', codeVerifier, campaignId: accountId },
     });
     return reply.redirect(
       buildAuthorizeUrl({ redirectUri: brandRedirect, scopes: BRAND_SCOPES, state, codeChallenge }),
@@ -42,40 +44,35 @@ export async function oauthRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const { code, state, error } = req.query;
       if (error || !code || !state) return reply.redirect(`${config().WEB_BASE_URL}/connect/failed`);
-      const saved = await prisma.oAuthState.delete({ where: { state } }).catch(() => null);
-      if (!saved || saved.kind !== 'brand' || !saved.campaignId) {
+      const savedState = await prisma.oAuthState.delete({ where: { state } }).catch(() => null);
+      if (!savedState || savedState.kind !== 'brand' || !savedState.campaignId) {
         return reply.redirect(`${config().WEB_BASE_URL}/connect/failed`);
       }
+      const saved = { accountId: savedState.campaignId, codeVerifier: savedState.codeVerifier };
 
       const tokens = await exchangeCode(code, brandRedirect, saved.codeVerifier);
       const me = await getMe(tokens.accessToken);
 
-      await prisma.$transaction([
-        prisma.brandXCredential.upsert({
-          where: { campaignId: saved.campaignId },
-          create: {
-            campaignId: saved.campaignId,
-            xUserId: me.data.id,
-            encryptedAccessToken: encrypt(tokens.accessToken),
-            encryptedRefreshToken: encrypt(tokens.refreshToken),
-            accessTokenExpiresAt: tokens.expiresAt,
-            scopes: tokens.scopes,
-          },
-          update: {
-            xUserId: me.data.id,
-            encryptedAccessToken: encrypt(tokens.accessToken),
-            encryptedRefreshToken: encrypt(tokens.refreshToken),
-            accessTokenExpiresAt: tokens.expiresAt,
-            scopes: tokens.scopes,
-            refreshFailedAt: null,
-            refreshFailCount: 0,
-          },
-        }),
-        prisma.brandCampaign.update({
-          where: { id: saved.campaignId },
-          data: { xUserId: me.data.id, xUsername: me.data.username },
-        }),
-      ]);
+      // 동일 X 계정(xUserId)이 다른 계정 row에 이미 연동돼 있으면 중복
+      const duplicate = await prisma.brandXAccount.findFirst({
+        where: { xUserId: me.data.id, id: { not: saved.accountId } },
+      });
+      if (duplicate) {
+        return reply.redirect(`${config().WEB_BASE_URL}/connect/failed?reason=duplicate`);
+      }
+      await prisma.brandXAccount.update({
+        where: { id: saved.accountId },
+        data: {
+          xUserId: me.data.id,
+          xUsername: me.data.username,
+          encryptedAccessToken: encrypt(tokens.accessToken),
+          encryptedRefreshToken: encrypt(tokens.refreshToken),
+          accessTokenExpiresAt: tokens.expiresAt,
+          scopes: tokens.scopes,
+          refreshFailedAt: null,
+          refreshFailCount: 0,
+        },
+      });
       return reply.redirect(`${config().WEB_BASE_URL}/connect/done?account=${me.data.username}`);
     },
   );

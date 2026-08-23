@@ -391,6 +391,157 @@ export const adminMessages = {
       loseMedia: { ko: "낙첨 화면", en: "Lose screen", ja: "落選画面" },
       postMedia: { ko: "미디어 (선택)", en: "Media (optional)", ja: "メディア（任意）" },
     },
+    prize: {
+      title: { ko: "경품", en: "Prizes", ja: "景品" },
+      add: { ko: "경품 추가", en: "Add prize", ja: "景品を追加" },
+      editTitle: { ko: "경품 정정", en: "Edit prize", ja: "景品を修正" },
+      empty: {
+        ko: "등록된 경품이 없습니다. 경품을 1건 이상 등록해야 캠페인을 시작할 수 있습니다.",
+        en: "No prizes yet. At least one prize is required before the campaign can start.",
+        ja: "登録された景品がありません。キャンペーン開始には景品が1件以上必要です。",
+      },
+      loadFailed: {
+        ko: "경품 목록을 불러올 수 없습니다.",
+        en: "Could not load prizes.",
+        ja: "景品一覧を読み込めませんでした。",
+      },
+      probabilityOverflow: {
+        ko: "확률 합계가 {sum}로 1을 넘습니다. 티어 순서대로 판정하므로 동작은 하지만, 뒤쪽 티어 경품은 의도한 확률보다 적게 나갑니다.",
+        en: "Probabilities add up to {sum}, over 1. Draws still work because tiers are evaluated in order, but lower tiers will win less often than intended.",
+        ja: "確率の合計が {sum} で1を超えています。ティア順に判定するため動作はしますが、後ろのティアの景品は想定より当たりにくくなります。",
+      },
+      columns: {
+        name: { ko: "이름", en: "Name", ja: "名前" },
+        type: { ko: "유형", en: "Type", ja: "種別" },
+        tier: { ko: "티어", en: "Tier", ja: "ティア" },
+        quantity: { ko: "수량 (잔여/전체)", en: "Qty (left/total)", ja: "数量（残り/全体）" },
+        probability: { ko: "확률", en: "Probability", ja: "確率" },
+        codeStock: { ko: "코드 재고", en: "Code stock", ja: "コード在庫" },
+      },
+      type: {
+        physical: { ko: "현물", en: "Physical", ja: "現物" },
+        code: { ko: "기프트코드", en: "Gift code", ja: "ギフトコード" },
+        physicalOption: {
+          ko: "현물 (배송지 수집)",
+          en: "Physical (collect shipping address)",
+          ja: "現物（配送先を収集）",
+        },
+        codeOption: {
+          ko: "기프트코드 (DM 자동 발송)",
+          en: "Gift code (auto-sent by DM)",
+          ja: "ギフトコード（DMで自動送信）",
+        },
+      },
+      field: {
+        type: { ko: "유형", en: "Type", ja: "種別" },
+        name: { ko: "이름", en: "Name", ja: "名前" },
+        tier: { ko: "티어", en: "Tier", ja: "ティア" },
+        quantity: { ko: "수량", en: "Quantity", ja: "数量" },
+        probability: { ko: "당첨 확률", en: "Win probability", ja: "当選確率" },
+        codes: { ko: "기프트코드", en: "Gift codes", ja: "ギフトコード" },
+        codesAppend: {
+          ko: "추가할 기프트코드",
+          en: "Gift codes to add",
+          ja: "追加するギフトコード",
+        },
+      },
+      placeholder: {
+        name: {
+          ko: "예: スターバックスカード 500円",
+          en: "e.g. Starbucks Card 500 JPY",
+          ja: "例: スターバックスカード 500円",
+        },
+        codes: {
+          ko: "엑셀에서 코드 열을 그대로 복사해 붙여넣으세요.",
+          en: "Paste the code column straight from your spreadsheet.",
+          ja: "Excelのコード列をそのままコピーして貼り付けてください。",
+        },
+      },
+      hint: {
+        tier: {
+          ko: "숫자가 작을수록 먼저 판정합니다.",
+          en: "Lower numbers are evaluated first.",
+          ja: "数字が小さいほど先に判定します。",
+        },
+        probability: { ko: "0 초과 1 미만. 0.05 = 5%", en: "Between 0 and 1. 0.05 = 5%", ja: "0より大きく1未満。0.05 = 5%" },
+        codeCount: {
+          ko: "입력 {count}건 / 수량 {quantity} — 개수가 같아야 등록됩니다.",
+          en: "{count} entered / quantity {quantity} — the counts must match to register.",
+          ja: "入力 {count}件 / 数量 {quantity} — 件数が一致しないと登録できません。",
+        },
+        appendCount: {
+          ko: "입력 {count}건 — 등록한 만큼 수량과 잔여가 함께 늘어납니다.",
+          en: "{count} entered — quantity and remaining stock both increase by this amount.",
+          ja: "入力 {count}件 — 登録した分だけ数量と残数が増えます。",
+        },
+        codeQtyLocked: {
+          ko: "기프트코드 경품의 수량은 코드를 추가 등록해야 늘어납니다.",
+          en: "Quantity for gift-code prizes changes only by registering more codes.",
+          ja: "ギフトコード景品の数量は、コードを追加登録することでのみ増えます。",
+        },
+      },
+      action: {
+        register: { ko: "등록", en: "Register", ja: "登録" },
+        registering: { ko: "등록 중…", en: "Registering…", ja: "登録中…" },
+        edit: { ko: "정정", en: "Edit", ja: "修正" },
+        appendCodes: { ko: "코드 추가", en: "Add codes", ja: "コード追加" },
+        appendTitle: { ko: "코드 추가 — {name}", en: "Add codes — {name}", ja: "コード追加 — {name}" },
+        appendSubmit: { ko: "{count}건 등록", en: "Register {count}", ja: "{count}件を登録" },
+      },
+      error: {
+        nameRequired: {
+          ko: "경품 이름을 입력하세요.",
+          en: "Enter a prize name.",
+          ja: "景品名を入力してください。",
+        },
+        quantityInvalid: {
+          ko: "수량은 1 이상의 정수여야 합니다.",
+          en: "Quantity must be a whole number of 1 or more.",
+          ja: "数量は1以上の整数にしてください。",
+        },
+        tierInvalid: {
+          ko: "티어는 1 이상의 정수여야 합니다.",
+          en: "Tier must be a whole number of 1 or more.",
+          ja: "ティアは1以上の整数にしてください。",
+        },
+        probabilityInvalid: {
+          ko: "확률은 0보다 크고 1보다 작아야 합니다.",
+          en: "Probability must be greater than 0 and less than 1.",
+          ja: "確率は0より大きく1未満にしてください。",
+        },
+        duplicateCodes: {
+          ko: "중복된 코드가 있습니다: {codes}",
+          en: "Duplicate codes found: {codes}",
+          ja: "重複したコードがあります: {codes}",
+        },
+        duplicateCount: {
+          ko: "중복 {count}건: {codes}",
+          en: "{count} duplicates: {codes}",
+          ja: "重複 {count}件: {codes}",
+        },
+        countMismatch: {
+          ko: "코드 수({count})가 수량({quantity})과 일치하지 않습니다.",
+          en: "Code count ({count}) does not match the quantity ({quantity}).",
+          ja: "コード数（{count}）が数量（{quantity}）と一致しません。",
+        },
+        codesRequired: { ko: "코드를 입력하세요.", en: "Enter at least one code.", ja: "コードを入力してください。" },
+        addFailed: {
+          ko: "경품 등록에 실패했습니다.",
+          en: "Could not register the prize.",
+          ja: "景品の登録に失敗しました。",
+        },
+        editFailed: {
+          ko: "경품 정정에 실패했습니다.",
+          en: "Could not update the prize.",
+          ja: "景品の修正に失敗しました。",
+        },
+        appendFailed: {
+          ko: "코드 등록에 실패했습니다.",
+          en: "Could not register the codes.",
+          ja: "コードの登録に失敗しました。",
+        },
+      },
+    },
   },
   components: {
     spinner: {

@@ -190,20 +190,6 @@
   color: var(--color-text-muted);
 }
 
-.progressBar {
-  height: var(--space-1);
-  background: var(--color-border);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-
-.progressFill {
-  height: 100%;
-  background: var(--color-primary-hover);
-  border-radius: var(--radius-full);
-  transition: width 0.2s;
-}
-
 .dday {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);

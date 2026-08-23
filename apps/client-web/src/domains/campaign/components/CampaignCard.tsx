@@ -216,9 +216,6 @@ function SnsChipList({ recruits }: { recruits: CampaignRecruit[] }) {
 }
 
 export function CampaignCard({ card, onSelect }: Props) {
-  const ratio = card.recruitCount
-    ? Math.min(100, Math.round((card.approvedCount / card.recruitCount) * 100))
-    : 0;
   const dday = daysUntil(card.recruitEndAt, new Date());
   // 정원 마감(모집 완료). 상세 열람은 허용하되 뱃지·라벨로 표시. (ended 는 util 상 우선하므로 제외됨)
   const full = campaignRecruitClosure(card).reason === "full";
@@ -270,14 +267,14 @@ export function CampaignCard({ card, onSelect }: Props) {
         </div>
 
         <div className={styles.affix}>
+          {/* 인기 척도 노출 방지: 응모 인원·달성률·진행 바 대신 총 모집정원만 표기 */}
           <div className={styles.progress}>
-            <div className={styles.progressText}>
-              {t("campaign.card.recruitPrefix")} {card.approvedCount}/{card.recruitCount}
-              {t("campaign.card.peopleSuffix")} ({ratio}%)
-            </div>
-            <div className={styles.progressBar}>
-              <div className={styles.progressFill} style={{ width: `${ratio}%` }} />
-            </div>
+            {card.recruitCount > 0 && (
+              <div className={styles.progressText}>
+                {t("campaign.card.capacityLabel")} {card.recruitCount}
+                {t("campaign.card.peopleSuffix")}
+              </div>
+            )}
           </div>
           {card.isEnded ? (
             <span className={`${styles.dday} ${styles.ddayEnded}`}>{t("campaign.card.ended")}</span>

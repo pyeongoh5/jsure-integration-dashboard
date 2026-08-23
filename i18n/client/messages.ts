@@ -56,6 +56,7 @@ export const messages = {
       yenSuffix: { jp: "円", kr: "엔" },
       recruitPrefix: { jp: "募集", kr: "모집" },
       peopleSuffix: { jp: "名", kr: "명" },
+      capacityLabel: { jp: "募集定員", kr: "모집 정원" }, // new
     },
     category: {
       sns: { jp: "SNS", kr: "SNS" },

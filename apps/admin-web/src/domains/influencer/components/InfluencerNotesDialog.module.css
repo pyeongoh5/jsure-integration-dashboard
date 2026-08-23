@@ -92,6 +92,10 @@
   color: #374151;
 }
 
+.mainTabs {
+  margin-bottom: var(--space-4);
+}
+
 .section {
   margin-top: 18px;
 }
@@ -165,16 +169,6 @@
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
 }
-
-.entryChip {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-full);
-}
-.entryChipMemo { background: #dbeafe; color: #1e40af; }
-.entryChipApp { background: #fee2e2; color: #991b1b; }
-.entryChipPost { background: #ffedd5; color: #9a3412; }
 
 .entryCampaign {
   font-weight: var(--font-weight-semibold);

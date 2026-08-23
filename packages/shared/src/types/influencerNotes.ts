@@ -43,6 +43,11 @@ export type InfluencerPostRejectionEntry = z.infer<
 
 export const InfluencerNotesResponseSchema = z.object({
   memos: z.array(InfluencerMemoEntrySchema),
+  /**
+   * 반려 이력은 GET /influencers/:id/activity 로 옮겼다. 서버는 빈 배열만
+   * 응답하며, 이 두 필드는 배포 갭 동안 구버전 admin-web 의 파싱을 위해서만
+   * 남아 있다 — 다음 배포에서 관련 엔트리 스키마와 함께 제거한다.
+   */
   applicationRejections: z.array(InfluencerApplicationRejectionEntrySchema),
   postRejections: z.array(InfluencerPostRejectionEntrySchema),
   flaggedAt: z.string().datetime().nullable(),

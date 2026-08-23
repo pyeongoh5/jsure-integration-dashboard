@@ -7,6 +7,7 @@ export * from "./types/application.js";
 export * from "./types/adminInfluencer.js";
 export * from "./types/applicantFilter.js";
 export * from "./types/influencerNotes.js";
+export * from "./types/influencerActivity.js";
 export * from "./types/applicationExport.js";
 export * from "./types/uploads.js";
 export * from "./types/jpBank.js";

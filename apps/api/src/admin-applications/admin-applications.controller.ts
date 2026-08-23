@@ -12,11 +12,14 @@ import {
 } from "@nestjs/common";
 import {
   ApplicationStatusSchema,
+  parseApplicantFilterParams,
   RejectApplicationRequestSchema,
   RejectSubmissionRequestSchema,
   ShipApplicationRequestSchema,
+  type AdminApplicantPageResponse,
   type AdminApplication,
   type AdminApplicationCountsResponse,
+  type ApplicantExportResponse,
   type ApplicationActivityResponse,
   type AdminApplicationListResponse,
   type AdminSubmission,
@@ -69,6 +72,30 @@ export class AdminApplicationsController {
   @Get("submissions/pending-count")
   pendingReviewCount(): Promise<{ count: number }> {
     return this.svc.pendingReviewCount();
+  }
+
+  /**
+   * 응모자 관리 목록 — 화면 필터를 그대로 서버에서 적용하고 커서로 페이징한다.
+   * 필터 없는 전체 목록(@Get())은 대시보드 통계가 쓰고 있어 그대로 둔다.
+   */
+  @Get("applicants")
+  listApplicants(
+    @Query() query: Record<string, string>,
+  ): Promise<AdminApplicantPageResponse> {
+    const limit = Number(query.limit);
+    return this.svc.listApplicantsPage(
+      parseApplicantFilterParams(query),
+      query.cursor?.trim() || null,
+      Number.isFinite(limit) ? Math.min(Math.max(Math.floor(limit), 1), 100) : 30,
+    );
+  }
+
+  /** 응모자 관리 CSV — 목록과 같은 필터에 걸린 응모 전체(현재 페이지가 아니라). */
+  @Get("applicants/export")
+  exportApplicants(
+    @Query() query: Record<string, string>,
+  ): Promise<ApplicantExportResponse> {
+    return this.svc.exportApplicants(parseApplicantFilterParams(query));
   }
 
   @Get("export/approved")

@@ -11,6 +11,11 @@ export {
   triggerCsvDownload,
   formatAppliedAtJst,
 } from "./buildApprovedApplicantsCsv";
+export {
+  buildApplicantsCsv,
+  applicantsCsvFilename,
+  formatAppliedAtJstDateTime,
+} from "./buildApplicantsCsv";
 
 // shared types (from @jsure/shared)
 export type * from "./types";

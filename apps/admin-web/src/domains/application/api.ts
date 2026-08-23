@@ -1,11 +1,28 @@
 import {
+  AdminApplicantPageResponseSchema,
   AdminApplicationCountsResponseSchema,
   AdminApplicationListResponseSchema,
   AdminApplicationSchema,
+  applicantFilterToParams,
+  type AdminApplicantPageResponse,
   type AdminApplication,
+  type ApplicantFilter,
   type ApplicationStatus,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
+
+/** 응모자 관리 한 페이지. 필터는 전부 서버에서 적용된다. */
+export async function listApplicantsPage(
+  filter: ApplicantFilter,
+  cursor: string | null,
+  limit: number,
+): Promise<AdminApplicantPageResponse> {
+  const search = new URLSearchParams(applicantFilterToParams(filter));
+  if (cursor) search.set("cursor", cursor);
+  search.set("limit", String(limit));
+  const res = await api.get(`/campaign-applications/applicants?${search}`);
+  return AdminApplicantPageResponseSchema.parse(res.data);
+}
 
 export type ListApplicationsParams = {
   campaignId?: string;

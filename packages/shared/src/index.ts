@@ -5,6 +5,7 @@ export * from "./types/influencer.js";
 export * from "./types/influencerAuth.js";
 export * from "./types/application.js";
 export * from "./types/adminInfluencer.js";
+export * from "./types/applicantFilter.js";
 export * from "./types/influencerNotes.js";
 export * from "./types/applicationExport.js";
 export * from "./types/uploads.js";

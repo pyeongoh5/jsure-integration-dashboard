@@ -29,7 +29,7 @@ export function approvedApplicantChannelLabel(
   return `${snsLabel}(${subTypeOptionLabel(channel.option, translateLabel)})`;
 }
 
-function escapeCsvCell(value: string): string {
+export function escapeCsvCell(value: string): string {
   if (value === "") return "";
   if (/[",\r\n]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;

@@ -17,6 +17,21 @@
   flex: 1;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 무한 스크롤 감시 영역 — 화면에 들어오면 다음 페이지를 불러온다. */
+.loadMore {
+  padding: 16px;
+  text-align: center;
+  color: var(--c-muted);
+  font-size: 13px;
+  min-height: 32px;
+}
+
 .title {
   font-size: 26px;
   font-weight: 700;

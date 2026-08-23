@@ -1,4 +1,5 @@
 import {
+  deriveApplicantViewStatus,
   pickRepresentativeSnsAccount,
   type AdminApplication,
   type AdminInfluencerSnsAccount,
@@ -55,27 +56,15 @@ export function formatRelative(
 
 /**
  * 응모 관리 페이지에 노출되는 단일 status 로 변환.
- * - 검토 단계(제출 완료=REVIEW_SUBMITTED) 진입 후 또는 정산 완료(COMPLETED) 또는 CANCELLED 인 경우 null 반환 → 페이지에서 숨김.
+ * 판정 규칙은 서버 목록 필터(SQL)와 공유하는 shared 의 규칙 표를 따른다.
+ * null 이면 응모자 관리에서 숨기는 응모(검토 제출·정산 완료·취소).
  */
 function deriveStatus(application: AdminApplication): ApplicantStatus | null {
-  if (application.status === "CANCELLED") return null;
-  if (application.status === "COMPLETED") return null;
-  if (application.status === "REVIEW_SUBMITTED") return null;
-  if (application.status === "APPLIED") return "APPLIED";
-  if (application.status === "REJECTED") return "REJECTED";
-
-  const isFakePurchase = application.campaign.category === "FAKE_PURCHASE";
-  if (isFakePurchase) {
-    if (application.status === "APPROVED") return "AWAITING_ORDER";
-    if (application.status === "ORDER_SUBMITTED") return "AWAITING_REVIEW";
-    return null;
-  }
-
-  if (application.receivedAt) return "POST_DUE";
-  if (application.status === "DELIVERED") return "DELIVERED";
-  if (application.status === "SHIPPED") return "SHIPPING";
-  if (application.status === "APPROVED") return "PRE_SHIP";
-  return null;
+  return deriveApplicantViewStatus({
+    status: application.status,
+    category: application.campaign.category,
+    receivedAt: application.receivedAt,
+  });
 }
 
 export function toApplicant(

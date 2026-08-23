@@ -594,6 +594,15 @@ export const adminMessages = {
           en: "Application date",
           ja: "キャンペーン応募日",
         },
+        campaignId: { ko: "캠페인 ID", en: "Campaign ID", ja: "キャンペーンID" },
+        campaignTitle: { ko: "캠페인명", en: "Campaign", ja: "キャンペーン名" },
+        influencerId: {
+          ko: "인플루언서 ID",
+          en: "Influencer ID",
+          ja: "インフルエンサーID",
+        },
+        memo: { ko: "담당자 메모", en: "Manager memo", ja: "担当者メモ" },
+        rejectReason: { ko: "반려 사유", en: "Reject reason", ja: "却下理由" },
       },
     },
     campaign: {
@@ -1599,6 +1608,24 @@ export const adminMessages = {
         en: "View approved list",
         ja: "承認者リストを見る",
       },
+      csvDownload: { ko: "CSV 다운로드", en: "Download CSV", ja: "CSVダウンロード" },
+      csvDownloading: { ko: "준비 중...", en: "Preparing...", ja: "準備中..." },
+      csvFailed: {
+        ko: "CSV 다운로드에 실패했습니다.",
+        en: "Failed to download the CSV.",
+        ja: "CSVのダウンロードに失敗しました。",
+      },
+      csvEmpty: {
+        ko: "다운로드할 응모자가 없습니다.",
+        en: "No applicants to download.",
+        ja: "ダウンロードする応募者がいません。",
+      },
+      csvTruncated: {
+        ko: "행 수 상한({count}건)까지만 내보냈습니다. 필터를 좁혀 주세요.",
+        en: "Exported only up to the row limit ({count}). Narrow the filters.",
+        ja: "上限（{count}件）までのみ出力しました。フィルターを絞ってください。",
+      },
+      loadingMore: { ko: "불러오는 중...", en: "Loading more...", ja: "読み込み中..." },
       searchPlaceholder: {
         ko: "이름·SNS 핸들·ID 검색",
         en: "Search by name, SNS handle, or ID",

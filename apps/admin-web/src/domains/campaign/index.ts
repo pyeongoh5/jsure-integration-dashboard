@@ -23,7 +23,6 @@ export type { CampaignFormSource } from "./useCampaignFormInitial";
 export type * from "./types";
 export {
   INSTAGRAM_POST_TYPE_LABEL,
-  SNS_ICON_CLASS,
   SNS_FOLLOWER_LABEL,
   STATUS_LABEL,
 } from "./types";

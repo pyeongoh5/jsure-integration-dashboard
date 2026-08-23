@@ -23,7 +23,7 @@
 }
 
 .brandYoutube {
-  background: #ff0000;
+  background: var(--color-sns-youtube);
 }
 
 .brandTiktok {

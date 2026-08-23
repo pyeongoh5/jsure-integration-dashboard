@@ -622,8 +622,22 @@ export const CampaignDraftRequestSchema = z.object({
   rewardJpy: z.number().int().nonnegative().nullable().optional(),
   recruitStartDate: z.union([DateOnly, z.literal("")]).optional(),
   recruitEndDate: z.union([DateOnly, z.literal("")]).optional(),
-  postingPeriodDays: z.number().int().nonnegative().nullable().optional(),
-  orderPeriodDays: z.number().int().nonnegative().nullable().optional(),
+  // 기간은 미입력(null)만 허용하고 0 은 막는다 — 응답 스키마가 min(1) 이라
+  // 0 이 저장되면 그 캠페인 행이 목록 응답 파싱에서 탈락한다.
+  postingPeriodDays: z
+    .number()
+    .int()
+    .min(1, "1 이상의 일수여야 합니다")
+    .max(365, "365 이하의 일수여야 합니다")
+    .nullable()
+    .optional(),
+  orderPeriodDays: z
+    .number()
+    .int()
+    .min(1, "1 이상의 일수여야 합니다")
+    .max(365, "365 이하의 일수여야 합니다")
+    .nullable()
+    .optional(),
   recruits: z.array(CampaignRecruitDraftSchema).max(10).optional(),
   productSummary: z.string().max(50000).optional(),
   productDetailUrls: z.array(z.string().max(2000)).max(10).optional(),

@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import {
   SLOT_CONSUMING_STATUSES,
   SUB_TYPE_OPTION_LABEL,
-  buildSnsProfileUrl,
+  snsProfileUrlOrNull,
   type AddressCountry,
   type AdminActivityLog,
   type AdminApplication,
@@ -1092,14 +1092,7 @@ export class AdminApplicationsService {
           );
           const handle = snsAccount?.handle ?? "";
           // SNS 계열 (INSTAGRAM/TIKTOK/X/YOUTUBE) 만 프로필 URL 을 만든다.
-          const profileUrl =
-            handle &&
-            (subType === "INSTAGRAM" ||
-              subType === "TIKTOK" ||
-              subType === "X" ||
-              subType === "YOUTUBE")
-              ? buildSnsProfileUrl(subType, handle)
-              : "";
+          const profileUrl = snsProfileUrlOrNull(subType, handle) ?? "";
           const selectedOption =
             row.options.find((entry) => entry.subType === subType)?.option ??
             null;

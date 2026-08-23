@@ -9,7 +9,7 @@ import {
 } from "@/domains/influencer";
 import { triggerCsvDownload } from "@/domains/application";
 import { BroadcastDialog } from "@/domains/broadcast";
-import { ScrollTable } from "@/components/composites";
+import { ScrollTable, SnsProfileLink } from "@/components/composites";
 import {
   FilterChipBar,
   MultiSelectFilterChip,
@@ -243,17 +243,22 @@ export function Influencers() {
                       ) : (
                         <div className={styles.snsList}>
                           {r.snsAccounts.map((s) => (
-                            <span
+                            <SnsProfileLink
                               key={s.snsType}
-                              className={`${styles.sns} ${SNS_CLASS[s.snsType]}`}
-                              title={`@${s.handle}`}
+                              subType={s.snsType}
+                              handle={s.handle}
                             >
-                              <i className={SNS_ICON[s.snsType]} />
-                              <span className={styles.snsHandle}>@{s.handle}</span>
-                              <span className={styles.snsCount}>
-                                {formatFollowers(s.followerCount)}
+                              <span
+                                className={`${styles.sns} ${SNS_CLASS[s.snsType]}`}
+                                title={`@${s.handle}`}
+                              >
+                                <i className={SNS_ICON[s.snsType]} />
+                                <span className={styles.snsHandle}>@{s.handle}</span>
+                                <span className={styles.snsCount}>
+                                  {formatFollowers(s.followerCount)}
+                                </span>
                               </span>
-                            </span>
+                            </SnsProfileLink>
                           ))}
                         </div>
                       )}

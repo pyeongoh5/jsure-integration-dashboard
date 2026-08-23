@@ -1,0 +1,1 @@
+export { SnsProfileLink } from "./SnsProfileLink";

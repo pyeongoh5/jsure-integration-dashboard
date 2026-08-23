@@ -1,5 +1,6 @@
 import { pickRepresentativeSnsAccount, type AdminSubmission } from "@jsure/shared";
 import type { AdminLanguage } from "@i18n/admin";
+import { toHandleBySubType } from "@/domains/influencer/handleBySubType";
 import { formatRelative } from "../applicants/applicantTransform";
 import { SNS_TO_MEDIA, type DraftReview, type DraftStatus } from "./types";
 
@@ -60,6 +61,8 @@ export function toDraftReview(
     influencerId: submission.influencer.id,
     influencerName: submission.influencer.name,
     influencerHandle: matchingAccount?.handle ?? "",
+    influencerHandleSnsType: matchingAccount?.snsType ?? null,
+    handleBySubType: toHandleBySubType(submission.influencer.snsAccounts),
     representativeSns: representative
       ? { snsType: representative.snsType, handle: representative.handle }
       : null,

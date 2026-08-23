@@ -1,11 +1,11 @@
 import {
   SUB_TYPE_LABEL,
-  SUB_TYPE_OPTION_LABEL,
   type ApprovedApplicantExportResponse,
   type ApprovedApplicantExportRow,
 } from "@jsure/shared";
 import { translate, type AdminTranslationKey } from "@i18n/admin";
 import { getStoredLanguage } from "@/lib/i18n";
+import { subTypeOptionLabel } from "./subTypeOptionLabel";
 
 export const APPROVED_APPLICANT_EXPORT_HEADER_KEYS = [
   "domains.application.export.nameKanji",
@@ -22,10 +22,11 @@ export const APPROVED_APPLICANT_EXPORT_HEADER_KEYS = [
 /** SNS 컬럼 표기 — 옵션이 있으면 "Instagram(피드)" 형태. */
 export function approvedApplicantChannelLabel(
   channel: ApprovedApplicantExportRow["channels"][number],
+  translateLabel: (key: AdminTranslationKey) => string,
 ): string {
   const snsLabel = SUB_TYPE_LABEL[channel.subType];
   if (!channel.option) return snsLabel;
-  return `${snsLabel}(${SUB_TYPE_OPTION_LABEL[channel.option] ?? channel.option})`;
+  return `${snsLabel}(${subTypeOptionLabel(channel.option, translateLabel)})`;
 }
 
 function escapeCsvCell(value: string): string {
@@ -36,11 +37,16 @@ function escapeCsvCell(value: string): string {
   return value;
 }
 
-function formatRow(row: ApprovedApplicantExportRow): string[] {
+function formatRow(
+  row: ApprovedApplicantExportRow,
+  translateLabel: (key: AdminTranslationKey) => string,
+): string[] {
   return [
     row.name,
     row.nameKana ?? "",
-    row.channels.map(approvedApplicantChannelLabel).join(" / "),
+    row.channels
+      .map((channel) => approvedApplicantChannelLabel(channel, translateLabel))
+      .join(" / "),
     row.channels.map((channel) => channel.snsHandle).join(" / "),
     row.channels
       .map((channel) => channel.profileUrl)
@@ -68,11 +74,12 @@ export function buildApprovedApplicantsCsv(
   response: ApprovedApplicantExportResponse,
 ): string {
   const language = getStoredLanguage();
+  const translateLabel = (key: AdminTranslationKey) => translate(key, language);
   const header = APPROVED_APPLICANT_EXPORT_HEADER_KEYS.map((headerKey) =>
-    escapeCsvCell(translate(headerKey, language)),
+    escapeCsvCell(translateLabel(headerKey)),
   ).join(",");
   const body = response.rows
-    .map((row) => formatRow(row).map(escapeCsvCell).join(","))
+    .map((row) => formatRow(row, translateLabel).map(escapeCsvCell).join(","))
     .join("\r\n");
   return body ? `${header}\r\n${body}` : header;
 }

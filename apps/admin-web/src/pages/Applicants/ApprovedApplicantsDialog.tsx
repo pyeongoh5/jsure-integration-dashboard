@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import type {
   ApprovedApplicantExportResponse,
   CampaignResponse,
@@ -15,6 +15,7 @@ import {
 } from "@/domains/application";
 import { getCampaign } from "@/domains/campaign";
 import { Button } from "@/components/ui";
+import { SnsProfileLink } from "@/components/composites";
 import { translate } from "@i18n/admin";
 import { getStoredLanguage, useT } from "@/lib/i18n";
 import { buildCapacityChips } from "./buildCapacityChips";
@@ -187,13 +188,21 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
                     <td>{row.nameKana ?? ""}</td>
                     <td>
                       {row.channels
-                        .map(approvedApplicantChannelLabel)
+                        .map((channel) => approvedApplicantChannelLabel(channel, t))
                         .join(" / ")}
                     </td>
                     <td>
-                      {row.channels
-                        .map((channel) => channel.snsHandle)
-                        .join(" / ")}
+                      {row.channels.map((channel, index) => (
+                        <Fragment key={`${channel.subType}-${index}`}>
+                          {index > 0 && " / "}
+                          <SnsProfileLink
+                            subType={channel.subType}
+                            handle={channel.snsHandle}
+                          >
+                            {channel.snsHandle}
+                          </SnsProfileLink>
+                        </Fragment>
+                      ))}
                     </td>
                     <td>
                       {row.channels

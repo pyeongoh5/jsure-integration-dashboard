@@ -1,12 +1,12 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import ExcelJS from "exceljs";
 import {
-  SUB_TYPE_OPTION_LABEL,
   type CampaignCategory,
   type CampaignReportParticipant,
 } from "@jsure/shared";
+import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
 import { translate, type AdminTranslationKey } from "@i18n/admin";
-import { ScrollTable } from "@/components/composites";
+import { ScrollTable, SnsProfileLink } from "@/components/composites";
 import { FilterChipBar, MultiSelectFilterChip } from "@/components/composites/FilterChip";
 import { CATEGORY_FILTER_OPTIONS, useSubmissionDetail } from "@/domains/application";
 import { Button } from "@/components/ui";
@@ -644,6 +644,11 @@ type ParticipantColumn = {
   /** xlsx 열 너비. 생략하면 numeric 여부로 정한다. */
   width?: number;
   format: (participant: CampaignReportParticipant, translateLabel: Translator) => string;
+  /** 화면 표시를 커스텀할 때만 사용(링크 등). 없으면 `format` 결과를 그대로 렌더링한다. */
+  render?: (
+    participant: CampaignReportParticipant,
+    translateLabel: Translator,
+  ) => ReactNode;
   excelValue: (
     participant: CampaignReportParticipant,
     translateLabel: Translator,
@@ -662,14 +667,22 @@ const PARTICIPANT_COLUMNS: ParticipantColumn[] = [
     key: "sns",
     labelKey: "domains.application.export.sns",
     numeric: false,
-    format: (participant) => formatSns(participant),
-    excelValue: (participant) => formatSns(participant),
+    format: (participant, translateLabel) => formatSns(participant, translateLabel),
+    excelValue: (participant, translateLabel) => formatSns(participant, translateLabel),
   },
   {
     key: "handle",
     labelKey: "domains.application.export.snsId",
     numeric: false,
     format: (participant) => (participant.handle ? `@${participant.handle}` : "-"),
+    render: (participant) =>
+      participant.handle ? (
+        <SnsProfileLink subType={participant.subType} handle={participant.handle}>
+          @{participant.handle}
+        </SnsProfileLink>
+      ) : (
+        "-"
+      ),
     excelValue: (participant) => (participant.handle ? `@${participant.handle}` : ""),
   },
   {
@@ -786,10 +799,13 @@ function participantStatusLabelKey(
   return PARTICIPANT_STATUS_LABEL_KEY[participant.status];
 }
 
-function formatSns(participant: CampaignReportParticipant): string {
+function formatSns(
+  participant: CampaignReportParticipant,
+  translateLabel: Translator,
+): string {
   const snsLabel = SNS_LABEL[participant.subType];
   return participant.option
-    ? `${snsLabel}(${SUB_TYPE_OPTION_LABEL[participant.option] ?? participant.option})`
+    ? `${snsLabel}(${subTypeOptionLabel(participant.option, translateLabel)})`
     : snsLabel;
 }
 
@@ -894,7 +910,7 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
                 >
                   {PARTICIPANT_COLUMNS.map((column) => (
                     <td key={column.key} className={column.numeric ? styles.numeric : undefined}>
-                      {column.format(participant, t)}
+                      {column.render ? column.render(participant, t) : column.format(participant, t)}
                     </td>
                   ))}
                   <td>

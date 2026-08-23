@@ -9,6 +9,7 @@ import type {
   Attachment,
   SnsAccountSubType,
 } from "@jsure/shared";
+import type { HandleBySubType } from "@/domains/influencer/handleBySubType";
 
 export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
 
@@ -56,6 +57,10 @@ export type DraftReview = {
   influencerId: string;
   influencerName: string;
   influencerHandle: string;
+  /** `influencerHandle` 이 속한 SNS 채널 — 프로필 아웃링크 조합용. 핸들이 없으면 null. */
+  influencerHandleSnsType: SnsAccountSubType | null;
+  /** SNS 채널별 핸들 — 채널 아이콘 프로필 아웃링크용. */
+  handleBySubType: HandleBySubType;
   /** 응모 SNS 핸들이 없을 때(가구매·단순리뷰) 표기할 대표 SNS. 우선순위 Instagram→X→TikTok. */
   representativeSns: { snsType: SnsAccountSubType; handle: string } | null;
   influencerFlagged: boolean;

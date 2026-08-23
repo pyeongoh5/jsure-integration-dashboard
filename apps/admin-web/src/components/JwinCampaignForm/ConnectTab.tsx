@@ -9,23 +9,33 @@ type Props = {
 
 export function ConnectTab({ detail }: Props) {
   const [copied, setCopied] = useState(false);
+  const brandAccount = detail.brandAccount;
 
   const copy = async () => {
-    await navigator.clipboard.writeText(detail.connectUrl);
+    if (!brandAccount) return;
+    await navigator.clipboard.writeText(brandAccount.connectUrl);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
   };
+
+  if (!brandAccount) {
+    return (
+      <div className={styles.connect}>
+        <p>브랜드 계정이 없습니다.</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.connect}>
       <div className={styles.statusRow}>
         <span className={styles.label}>연동 상태</span>
-        {detail.needsReconnect ? (
+        {brandAccount.status === 'NEEDS_RECONNECT' ? (
           <span className={styles.reconnect}>
             <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" /> 재연동 필요
           </span>
-        ) : detail.xUsername ? (
-          <span className={styles.connected}>@{detail.xUsername} 연동됨</span>
+        ) : brandAccount.xUsername ? (
+          <span className={styles.connected}>@{brandAccount.xUsername} 연동됨</span>
         ) : (
           <span>미연동</span>
         )}
@@ -34,7 +44,7 @@ export function ConnectTab({ detail }: Props) {
       <div className={styles.field}>
         <span className={styles.label}>브랜드 연동 링크</span>
         <div className={styles.urlBox}>
-          <Input className={styles.urlInput} value={detail.connectUrl} readOnly />
+          <Input className={styles.urlInput} value={brandAccount.connectUrl} readOnly />
           <Button
             variant="secondary"
             size="md"

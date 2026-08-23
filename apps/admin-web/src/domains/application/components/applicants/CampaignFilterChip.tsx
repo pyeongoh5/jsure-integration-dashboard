@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { useT } from "@/lib/i18n";
+import { foldForSearch } from "@/lib/searchText";
 import { FilterChip } from "@/components/composites/FilterChip";
 import styles from "@/components/composites/FilterChip/FilterChip.module.css";
 import type { CampaignOption } from "./types";
@@ -26,7 +27,8 @@ const STATUS_SCOPE_META: Record<
   },
 };
 
-const STATUS_SCOPES = Object.keys(STATUS_SCOPE_META) as CampaignStatusScope[];
+/** 세그먼트 노출 순서. 넓은 범위에서 좁혀가는 순서로 읽히도록 전체를 앞에 둔다. */
+const STATUS_SCOPES: CampaignStatusScope[] = ["all", "ongoing", "closed"];
 
 function matchesStatusScope(
   campaign: CampaignOption,
@@ -127,10 +129,10 @@ function CampaignPopover({
         matchesStatusScope(campaign, statusScope),
       )
     : campaignOptions;
-  const normalized = query.trim().toLowerCase();
+  const normalized = foldForSearch(query.trim());
   const filtered = normalized
     ? scoped.filter((campaign) =>
-        campaign.title.toLowerCase().includes(normalized),
+        foldForSearch(campaign.title).includes(normalized),
       )
     : scoped;
   const resolvedEmptyMessage = showStatusSegments

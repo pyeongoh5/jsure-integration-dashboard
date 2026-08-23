@@ -101,6 +101,11 @@ const JWIN_PRODUCT: Product = {
       title: "nav.groups.operations",
       items: [
         { to: "/jwin/campaigns", label: "nav.items.campaigns", icon: "fa-solid fa-bullhorn" },
+        {
+          to: "/jwin/accounts",
+          label: "nav.items.brandAccounts",
+          icon: "fa-solid fa-at",
+        },
         { to: "/jwin/winners", label: "nav.items.jwinWinners", icon: "fa-solid fa-trophy" },
       ],
     },

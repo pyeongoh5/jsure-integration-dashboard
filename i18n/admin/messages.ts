@@ -44,6 +44,7 @@ export const adminMessages = {
       messageTemplates: { ko: "메시지 템플릿", en: "Message Templates", ja: "メッセージテンプレート" },
       team: { ko: "팀원/권한", en: "Team & Roles", ja: "チーム・権限" },
       brands: { ko: "광고주(브랜드)", en: "Advertisers (Brands)", ja: "広告主（ブランド）" },
+      brandAccounts: { ko: "브랜드 계정", en: "Brand Accounts", ja: "ブランドアカウント" },
       jwinWinners: { ko: "당첨자 관리", en: "Winners", ja: "当選者管理" },
       jwinPrizes: { ko: "경품·기프트코드", en: "Prizes & Gift Codes", ja: "景品・ギフトコード" },
       jwinStats: { ko: "통계", en: "Statistics", ja: "統計" },

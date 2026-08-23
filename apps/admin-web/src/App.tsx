@@ -19,6 +19,7 @@ import { MessageTemplates } from "./pages/MessageTemplates";
 import { MessageTemplateEdit } from "./pages/MessageTemplates/Edit";
 import { JwinCampaigns } from "./pages/Jwin/Campaigns";
 import { JwinCampaignEdit } from "./pages/Jwin/CampaignEdit";
+import { JwinBrandAccounts } from "./pages/Jwin/BrandAccounts";
 import { JwinWinners } from "./pages/Jwin/Winners";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
@@ -63,6 +64,7 @@ export function App() {
           <Route path="/jwin/campaigns" element={<JwinCampaigns />} />
           <Route path="/jwin/campaigns/new" element={<JwinCampaignEdit />} />
           <Route path="/jwin/campaigns/:id" element={<JwinCampaignEdit />} />
+          <Route path="/jwin/accounts" element={<JwinBrandAccounts />} />
           <Route path="/jwin/winners" element={<JwinWinners />} />
         </Route>
         <Route path="/*" element={<NotFound />} />

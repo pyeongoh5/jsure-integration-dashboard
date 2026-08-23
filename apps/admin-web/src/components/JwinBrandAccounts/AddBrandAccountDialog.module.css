@@ -1,0 +1,32 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.description {
+  margin: 0;
+  font-size: 13px;
+  color: var(--c-muted);
+  line-height: 1.5;
+}
+
+.linkRow {
+  display: flex;
+  gap: 8px;
+}
+
+.linkRow > *:first-child {
+  flex: 1;
+}
+
+.error {
+  font-size: 13px;
+  color: #dc2626;
+}

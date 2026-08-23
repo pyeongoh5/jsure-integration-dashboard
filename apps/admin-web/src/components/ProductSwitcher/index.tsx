@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { PRODUCTS, findProductByPath } from "@/lib/navigation";
+import { useT } from "@/lib/i18n";
 import styles from "./ProductSwitcher.module.css";
 
 /**
@@ -7,6 +8,7 @@ import styles from "./ProductSwitcher.module.css";
  * 현재 제품은 URL 로만 판단하므로 별도 전역 상태가 없다.
  */
 export const ProductSwitcher = () => {
+  const t = useT();
   const { pathname } = useLocation();
   const activeProduct = findProductByPath(pathname);
 
@@ -31,8 +33,10 @@ export const ProductSwitcher = () => {
                 <i className={product.icon} />
               </span>
               <span className={styles.tabText}>
-                <span className={styles.tabLabel}>{product.label}</span>
-                <span className={styles.tabDescription}>{product.description}</span>
+                <span className={styles.tabLabel}>{t(product.label)}</span>
+                <span className={styles.tabDescription}>
+                  {product.description ? t(product.description) : null}
+                </span>
               </span>
             </Link>
           );

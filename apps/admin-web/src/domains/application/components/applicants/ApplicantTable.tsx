@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { SUB_TYPE_LABEL } from "@jsure/shared";
 import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
 import {
@@ -208,6 +209,8 @@ type Props = {
   onMemo: (applicant: Applicant) => void;
   onDetail: (applicant: Applicant) => void;
   onHistory: (applicant: Applicant) => void;
+  /** 목록 끝에 붙일 영역. 무한 스크롤 감시자는 스크롤 컨테이너 안에 있어야 한다. */
+  footer?: ReactNode;
 };
 
 export function ApplicantTable({
@@ -223,6 +226,7 @@ export function ApplicantTable({
   onMemo,
   onDetail,
   onHistory,
+  footer,
 }: Props) {
   const t = useT();
 
@@ -381,6 +385,7 @@ export function ApplicantTable({
             ))}
           </tbody>
         </table>
+        {footer}
       </ScrollTable>
     </div>
   );

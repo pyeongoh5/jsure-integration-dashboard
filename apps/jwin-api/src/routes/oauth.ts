@@ -53,12 +53,24 @@ export async function oauthRoutes(app: FastifyInstance) {
       const tokens = await exchangeCode(code, brandRedirect, saved.codeVerifier);
       const me = await getMe(tokens.accessToken);
 
+      const targetAccount = await prisma.brandXAccount.findUnique({
+        where: { id: saved.accountId },
+      });
+      if (!targetAccount) {
+        return reply.redirect(`${config().WEB_BASE_URL}/connect/failed`);
+      }
+
       // 동일 X 계정(xUserId)이 다른 계정 row에 이미 연동돼 있으면 중복
       const duplicate = await prisma.brandXAccount.findFirst({
         where: { xUserId: me.data.id, id: { not: saved.accountId } },
       });
       if (duplicate) {
         return reply.redirect(`${config().WEB_BASE_URL}/connect/failed?reason=duplicate`);
+      }
+      // 이미 다른 X 계정으로 연동된 적이 있는 row인데 이번에 승인한 X 계정이 다르면
+      // 계정 정체성이 조용히 바뀌는 것을 막는다 (재연동은 xUserId가 같을 때만 허용).
+      if (targetAccount.xUserId && targetAccount.xUserId !== me.data.id) {
+        return reply.redirect(`${config().WEB_BASE_URL}/connect/failed?reason=mismatch`);
       }
       try {
         await prisma.brandXAccount.update({

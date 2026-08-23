@@ -23,6 +23,37 @@ export const FulfillmentStatusSchema = z.enum([
   'FAILED',
 ]);
 
+export const AdminBrandAccountStatusSchema = z.enum([
+  'PENDING',         // xUserId 없음 (브랜드 승인 전)
+  'CONNECTED',       // 연동됨, refresh 정상
+  'NEEDS_RECONNECT', // refresh 실패 — 재연동 필요
+]);
+
+export const AdminBrandAccountSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  xUserId: z.string().nullable(),
+  xUsername: z.string().nullable(),
+  status: AdminBrandAccountStatusSchema,
+  refreshFailCount: z.number().int(),
+  accessTokenExpiresAt: z.string().nullable(),
+  /** 이 계정을 참조하는 캠페인 수 */
+  campaignCount: z.number().int(),
+  /** 브랜드에게 전달할(추가·재연동 공용) 연동 링크 */
+  connectUrl: z.string(),
+});
+export type AdminBrandAccount = z.infer<typeof AdminBrandAccountSchema>;
+
+export const AdminBrandAccountListSchema = z.object({
+  accounts: z.array(AdminBrandAccountSchema),
+});
+export type AdminBrandAccountList = z.infer<typeof AdminBrandAccountListSchema>;
+
+export const AdminBrandAccountCreateSchema = z.object({
+  label: z.string().min(1),
+});
+export type AdminBrandAccountCreate = z.infer<typeof AdminBrandAccountCreateSchema>;
+
 /** GET /admin/campaigns — 목록 항목 (S1). 경고 판정에 필요한 필드만 포함 */
 export const AdminCampaignListItemSchema = z.object({
   id: z.string(),
@@ -56,6 +87,7 @@ export const AdminCampaignCreateSchema = z.object({
     .regex(/^\d{2}:\d{2}$/)
     .default('11:00'),
   dailyWinCap: z.number().int().positive().nullable().optional(),
+  brandAccountId: z.string().nullable().optional(),
 });
 export type AdminCampaignCreate = z.infer<typeof AdminCampaignCreateSchema>;
 
@@ -83,12 +115,8 @@ export const AdminCampaignDetailSchema = z.object({
   winMediaUrl: z.string().nullable(),
   loseMediaUrl: z.string().nullable(),
   dmTemplate: z.string().nullable(),
-  xUserId: z.string().nullable(),
-  xUsername: z.string().nullable(),
-  /** 브랜드가 앱 연동을 끊어 재연동이 필요한 상태 */
-  needsReconnect: z.boolean(),
-  /** 브랜드에게 전달할 X 연동 링크 */
-  connectUrl: z.string(),
+  brandAccountId: z.string().nullable(),
+  brandAccount: AdminBrandAccountSchema.nullable(),
 });
 export type AdminCampaignDetail = z.infer<typeof AdminCampaignDetailSchema>;
 

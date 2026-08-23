@@ -15,3 +15,10 @@ export type { UseJwinPostTemplatesResult } from "./useJwinPostTemplates";
 export { PostTemplateTab } from "./PostTemplateTab";
 export { postTemplateCoverage, formatCoverageGaps } from "./postTemplateCoverage";
 export type { PostTemplateCoverage, CoverageGap } from "./postTemplateCoverage";
+export { ResultTab } from "./ResultTab";
+export {
+  renderDmPreview,
+  dmTemplateMissingCode,
+  DEFAULT_DM_TEMPLATE,
+  DM_PREVIEW_SAMPLE,
+} from "./dmTemplatePreview";

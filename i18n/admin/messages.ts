@@ -542,6 +542,41 @@ export const adminMessages = {
         },
       },
     },
+    result: {
+      title: { ko: "결과화면 / DM", en: "Result screen / DM", ja: "結果画面 / DM" },
+      prUrl: { ko: "브랜드 사이트 URL", en: "Brand site URL", ja: "ブランドサイトURL" },
+      prUrlHint: {
+        ko: "결과 화면의 유도 버튼에 씁니다. 비우면 버튼이 나오지 않습니다.",
+        en: "Used for the call-to-action button on the result screen. Leave empty to hide the button.",
+        ja: "結果画面の誘導ボタンに使います。空欄にするとボタンは表示されません。",
+      },
+      dmTemplate: { ko: "당첨 DM 문구", en: "Winner DM text", ja: "当選DM文面" },
+      dmTemplatePlaceholder: {
+        ko: "비워두면 기본 문구(일본어)가 발송됩니다.",
+        en: "Leave empty to send the default Japanese text.",
+        ja: "空欄にすると既定の文面が送信されます。",
+      },
+      preview: { ko: "발송 미리보기", en: "Send preview", ja: "送信プレビュー" },
+      previewHint: {
+        ko: "실제 발송 시 코드·경품명·당첨자는 당첨 건마다 다른 값으로 바뀝니다.",
+        en: "On the real send, the code, prize name and winner differ for every win.",
+        ja: "実際の送信時は、コード・景品名・当選者が当選ごとに異なる値に置き換わります。",
+      },
+      placeholderCode: { ko: "{{CODE}} 기프트코드", en: "{{CODE}} gift code", ja: "{{CODE}} ギフトコード" },
+      placeholderPrizeName: { ko: "{{PRIZE_NAME}} 경품명", en: "{{PRIZE_NAME}} prize name", ja: "{{PRIZE_NAME}} 景品名" },
+      placeholderUsername: { ko: "{{USERNAME}} 당첨자", en: "{{USERNAME}} winner", ja: "{{USERNAME}} 当選者" },
+      placeholderBrandName: { ko: "{{BRAND_NAME}} 브랜드명", en: "{{BRAND_NAME}} brand name", ja: "{{BRAND_NAME}} ブランド名" },
+      blockedMissingCode: {
+        ko: "기프트코드 경품이 있으면 DM 문구에 {{CODE}}가 있어야 합니다. 없으면 당첨자가 코드를 받지 못합니다.",
+        en: "When a gift-code prize exists the DM text must contain {{CODE}}, otherwise winners never receive their code.",
+        ja: "ギフトコード景品がある場合、DM文面に {{CODE}} が必要です。ないと当選者にコードが届きません。",
+      },
+      blockedTooLong: {
+        ko: "DM 문구는 {max}자 이하여야 합니다.",
+        en: "The DM text must be {max} characters or fewer.",
+        ja: "DM文面は{max}文字以下にしてください。",
+      },
+    },
     postTemplate: {
       title: { ko: "소재", en: "Post content", ja: "投稿素材" },
       add: { ko: "소재 추가", en: "Add content", ja: "素材を追加" },

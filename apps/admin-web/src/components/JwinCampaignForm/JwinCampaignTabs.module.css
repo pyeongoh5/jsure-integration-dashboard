@@ -167,3 +167,47 @@
   line-height: 1.5;
   color: var(--text-secondary, #4b5563);
 }
+
+/* ── 결과화면 탭 ── */
+.resultForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 640px;
+}
+
+.mediaRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.dmPreview {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--surface-muted, #f9fafb);
+  border: 1px solid var(--border, #e5e7eb);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.placeholderList {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-tertiary, #6b7280);
+}
+
+.saveRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.savedText {
+  font-size: 13px;
+  color: var(--success, #16a34a);
+}

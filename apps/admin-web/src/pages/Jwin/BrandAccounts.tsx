@@ -8,6 +8,16 @@ import {
 } from "@/components/JwinBrandAccounts";
 import styles from "./Jwin.module.css";
 
+/** 클립보드 복사. 비보안 컨텍스트/권한 거부로 실패할 수 있어 성공 여부를 반환한다. */
+async function copyToClipboard(url: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function JwinBrandAccounts() {
   const { state, accounts, reload } = useJwinBrandAccountsData();
   const { create } = useJwinBrandAccountMutations(reload);
@@ -38,10 +48,7 @@ export function JwinBrandAccounts() {
         ) : state.kind === "error" ? (
           <div className={styles.empty}>{state.message}</div>
         ) : (
-          <JwinBrandAccountTable
-            accounts={accounts}
-            onCopyLink={(url) => void navigator.clipboard.writeText(url)}
-          />
+          <JwinBrandAccountTable accounts={accounts} onCopyLink={copyToClipboard} />
         )}
       </div>
 

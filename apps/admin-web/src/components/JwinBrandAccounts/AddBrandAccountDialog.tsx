@@ -15,14 +15,14 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<AdminBrandAccount | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
   const handleClose = () => {
     setLabel("");
     setCreating(false);
     setError(null);
     setCreated(null);
-    setCopied(false);
+    setCopyState("idle");
     onClose();
   };
 
@@ -39,11 +39,15 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
     }
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!created) return;
-    void navigator.clipboard.writeText(created.connectUrl);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(created.connectUrl);
+      setCopyState("copied");
+      window.setTimeout(() => setCopyState("idle"), 1500);
+    } catch {
+      setCopyState("failed");
+    }
   };
 
   return (
@@ -82,9 +86,14 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
           <div className={styles.linkRow}>
             <Input value={created.connectUrl} readOnly />
             <Button variant="secondary" size="md" onClick={handleCopy}>
-              {copied ? "복사됨" : "복사"}
+              {copyState === "copied" ? "복사됨" : "복사"}
             </Button>
           </div>
+          {copyState === "failed" && (
+            <div className={styles.error}>
+              복사 실패 — 위 입력창의 링크를 직접 선택해 복사하세요
+            </div>
+          )}
         </div>
       ) : (
         <div className={styles.body}>

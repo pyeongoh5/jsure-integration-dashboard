@@ -7,7 +7,8 @@ import styles from "./JwinBrandAccountTable.module.css";
 
 type Props = {
   accounts: JwinBrandAccountRow[];
-  onCopyLink: (url: string) => void;
+  /** 클립보드 복사 성공 여부를 반환한다(실패 시 false). */
+  onCopyLink: (url: string) => Promise<boolean>;
 };
 
 export function JwinBrandAccountTable({ accounts, onCopyLink }: Props) {
@@ -37,19 +38,21 @@ export function JwinBrandAccountTable({ accounts, onCopyLink }: Props) {
   );
 }
 
+type CopyState = "idle" | "copied" | "failed";
+
 function CopyLinkRow({
   account,
   onCopyLink,
 }: {
   account: JwinBrandAccountRow;
-  onCopyLink: (url: string) => void;
+  onCopyLink: (url: string) => Promise<boolean>;
 }) {
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<CopyState>("idle");
 
-  const handleCopy = () => {
-    onCopyLink(account.connectUrl);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+  const handleCopy = async () => {
+    const succeeded = await onCopyLink(account.connectUrl);
+    setCopyState(succeeded ? "copied" : "failed");
+    if (succeeded) window.setTimeout(() => setCopyState("idle"), 1500);
   };
 
   return (
@@ -63,14 +66,22 @@ function CopyLinkRow({
       </td>
       <td className={styles.num}>{account.campaignCount}</td>
       <td>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleCopy}
-          iconLeft={<i className="fa-solid fa-link" aria-hidden="true" />}
-        >
-          {copied ? "복사됨" : "링크 복사"}
-        </Button>
+        <div className={styles.copyCell}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleCopy}
+            iconLeft={<i className="fa-solid fa-link" aria-hidden="true" />}
+          >
+            {copyState === "copied" ? "복사됨" : "링크 복사"}
+          </Button>
+          {copyState === "failed" && (
+            <div className={styles.copyError}>
+              복사 실패 — 아래 링크를 직접 선택해 복사하세요
+              <div className={styles.linkText}>{account.connectUrl}</div>
+            </div>
+          )}
+        </div>
       </td>
     </tr>
   );

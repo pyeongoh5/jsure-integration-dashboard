@@ -48,6 +48,26 @@
   color: var(--c-muted);
 }
 
+.copyCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.copyError {
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.linkText {
+  margin-top: 2px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  user-select: all;
+  word-break: break-all;
+}
+
 .empty {
   padding: 60px 20px;
   text-align: center;

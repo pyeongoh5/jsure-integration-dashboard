@@ -87,17 +87,15 @@ export type CampaignOption = {
   closed?: boolean;
 };
 
-export const MEDIA_META: Record<
-  Media,
-  { label: string; icon: string; cls: string }
-> = {
-  ig: { label: "Instagram", icon: "fa-brands fa-instagram", cls: "mediaIg" },
-  yt: { label: "YouTube", icon: "fa-brands fa-youtube", cls: "mediaYt" },
-  tt: { label: "TikTok", icon: "fa-brands fa-tiktok", cls: "mediaTt" },
-  x: { label: "X", icon: "fa-brands fa-x-twitter", cls: "mediaX" },
-  qoo10: { label: "Qoo10", icon: "fa-solid fa-bag-shopping", cls: "mediaQoo10" },
-  lips: { label: "LIPS", icon: "fa-solid fa-heart", cls: "mediaQoo10" },
-  atcosme: { label: "@cosme", icon: "fa-solid fa-star", cls: "mediaQoo10" },
+/** 미디어 필터 칩 표기용. 테이블의 SNS 배지는 composites/SubTypeIcon 이 담당한다. */
+export const MEDIA_META: Record<Media, { label: string; icon: string }> = {
+  ig: { label: "Instagram", icon: "fa-brands fa-instagram" },
+  yt: { label: "YouTube", icon: "fa-brands fa-youtube" },
+  tt: { label: "TikTok", icon: "fa-brands fa-tiktok" },
+  x: { label: "X", icon: "fa-brands fa-x-twitter" },
+  qoo10: { label: "Qoo10", icon: "fa-solid fa-bag-shopping" },
+  lips: { label: "LIPS", icon: "fa-solid fa-heart" },
+  atcosme: { label: "@cosme", icon: "fa-solid fa-star" },
 };
 
 // 값은 i18n 키 — 표시 시점에 컴포넌트에서 t(...) 로 번역한다.

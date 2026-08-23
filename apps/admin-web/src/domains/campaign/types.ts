@@ -5,6 +5,7 @@ import type {
   CampaignSubType,
   InstagramPostType,
 } from "@jsure/shared";
+import { SUB_TYPE_ICON_CLASS } from "@/components/composites";
 
 export type {
   CampaignCategory,
@@ -57,15 +58,8 @@ export type Campaign = {
   recruits: CampaignCardRecruit[];
 };
 
-export const SNS_ICON_CLASS: Record<CampaignSubType, string> = {
-  INSTAGRAM: "fa-brands fa-instagram",
-  TIKTOK: "fa-brands fa-tiktok",
-  X: "fa-brands fa-x-twitter",
-  YOUTUBE: "fa-brands fa-youtube",
-  QOO10: "fa-solid fa-bag-shopping",
-  LIPS: "fa-solid fa-heart",
-  ATCOSME: "fa-solid fa-star",
-};
+/** 캠페인 카드는 칩 안에 아이콘만 쓴다 — 클래스 표는 SubTypeIcon 과 공유한다. */
+export const SNS_ICON_CLASS = SUB_TYPE_ICON_CLASS;
 
 export const SNS_FOLLOWER_LABEL: Record<CampaignSubType, AdminTranslationKey> = {
   INSTAGRAM: "domains.campaign.followerLabel.follower",

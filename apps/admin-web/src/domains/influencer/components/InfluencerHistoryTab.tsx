@@ -8,7 +8,7 @@ import {
   type InfluencerHistoryTab as HistoryStatusTab,
 } from "@jsure/shared";
 import type { AdminTranslationKey } from "@i18n/admin";
-import { SegmentedTabs, SubTypePill } from "@/components/composites";
+import { SegmentedTabs, SubTypeIcon } from "@/components/composites";
 import { ACTIVITY_ACTION_LABEL } from "@/domains/application";
 import { useT } from "@/lib/i18n";
 import { fetchInfluencerActivity } from "../api";
@@ -205,7 +205,7 @@ function HistoryEntry({ row }: { row: HistoryRow }) {
         <span className={styles.campaign}>{row.campaignTitle}</span>
         <span className={styles.subTypes}>
           {row.subTypes.map((subType) => (
-            <SubTypePill key={subType} subType={subType} />
+            <SubTypeIcon key={subType} subType={subType} size="sm" />
           ))}
         </span>
       </div>

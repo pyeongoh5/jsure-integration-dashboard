@@ -47,19 +47,7 @@
   vertical-align: middle;
 }
 
-/* Media icons */
-.media {
-  display: inline-flex;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 14px;
-  line-height: 1;
-}
-
+/* Media icons — 배지 본체와 브랜드 색은 composites/SubTypeIcon 으로 옮겼다. */
 .mediaItem {
   display: inline-flex;
   flex-direction: column;
@@ -72,28 +60,6 @@
   line-height: 1;
   font-weight: 600;
   color: var(--color-text-muted);
-}
-
-.mediaIg {
-  background: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
-}
-
-.mediaYt {
-  background: #ff0000;
-}
-
-.mediaTt {
-  background: #000;
-}
-
-.mediaTt i {
-  text-shadow:
-    -1.2px -1.2px 0 #ff0050,
-    1.2px 1.2px 0 #00f2ea;
-}
-
-.mediaX {
-  background: #000;
 }
 
 /* Category badges */

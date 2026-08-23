@@ -73,7 +73,7 @@ export async function publishDuePosts(): Promise<void> {
   const now = new Date();
   const due = await prisma.campaignPost.findMany({
     where: { status: 'SCHEDULED', scheduledAt: { lte: now } },
-    include: { template: true, campaign: { include: { credential: true } } },
+    include: { template: true, campaign: { include: { brandAccount: true } } },
     take: 20,
   });
 
@@ -84,16 +84,20 @@ export async function publishDuePosts(): Promise<void> {
       await prisma.campaignPost.update({ where: { id: post.id }, data: { status: 'SKIPPED' } });
       continue;
     }
-    const credential = campaign.credential;
-    if (!credential || !post.template) {
+    const brandAccount = campaign.brandAccount;
+    if (!brandAccount || !brandAccount.encryptedAccessToken || !post.template) {
       await prisma.campaignPost.update({
         where: { id: post.id },
-        data: { status: 'FAILED', lastError: credential ? 'no template' : 'brand not connected' },
+        data: {
+          status: 'FAILED',
+          lastError:
+            brandAccount && brandAccount.encryptedAccessToken ? 'no template' : 'brand not connected',
+        },
       });
       continue;
     }
     try {
-      const token = await getBrandAccessToken(credential);
+      const token = await getBrandAccessToken(brandAccount);
       const lpUrl = `${config().WEB_BASE_URL}/c/${campaign.slug}`;
       const text = post.template.bodyText.includes('{{LP_URL}}')
         ? post.template.bodyText.replaceAll('{{LP_URL}}', lpUrl)

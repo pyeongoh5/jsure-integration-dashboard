@@ -37,7 +37,7 @@ export async function assignCodeAndSendDm(winnerId: string): Promise<void> {
     include: {
       prize: true,
       code: true,
-      entry: { include: { user: true, campaign: { include: { credential: true } } } },
+      entry: { include: { user: true, campaign: { include: { brandAccount: true } } } },
     },
   });
   if (!winner || winner.verification !== 'PASSED' || winner.prize.type !== 'CODE') return;
@@ -67,8 +67,8 @@ export async function assignCodeAndSendDm(winnerId: string): Promise<void> {
   }
 
   const campaign = winner.entry.campaign;
-  const credential = campaign.credential;
-  if (!credential) {
+  const brandAccount = campaign.brandAccount;
+  if (!brandAccount || !brandAccount.encryptedAccessToken) {
     await prisma.winner.update({
       where: { id: winnerId },
       data: { fulfillment: 'FAILED', dmError: 'brand not connected' },
@@ -77,7 +77,7 @@ export async function assignCodeAndSendDm(winnerId: string): Promise<void> {
   }
 
   try {
-    const token = await getBrandAccessToken(credential);
+    const token = await getBrandAccessToken(brandAccount);
     const text = renderDmText(campaign.dmTemplate, {
       code: decrypt(code.encryptedCode),
       prizeName: winner.prize.name,

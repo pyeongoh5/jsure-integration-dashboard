@@ -1,4 +1,4 @@
-import { getPrisma, BrandXCredential, User } from '@jsure/jwin-db';
+import { getPrisma, BrandXAccount, User } from '@jsure/jwin-db';
 import { decrypt, encrypt } from './crypto';
 import { refreshTokens, XApiError } from './x-api';
 
@@ -11,18 +11,23 @@ import { refreshTokens, XApiError } from './x-api';
 
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
 
-export async function getBrandAccessToken(cred: BrandXCredential): Promise<string> {
-  if (cred.accessTokenExpiresAt.getTime() - Date.now() > REFRESH_MARGIN_MS) {
-    return decrypt(cred.encryptedAccessToken);
+export async function getBrandAccessToken(account: BrandXAccount): Promise<string> {
+  if (!account.encryptedAccessToken || !account.encryptedRefreshToken || !account.accessTokenExpiresAt) {
+    throw new Error('브랜드 계정이 연동되지 않았습니다');
+  }
+  if (account.accessTokenExpiresAt.getTime() - Date.now() > REFRESH_MARGIN_MS) {
+    return decrypt(account.encryptedAccessToken);
   }
   const prisma = getPrisma();
   try {
-    const next = await refreshTokens(decrypt(cred.encryptedRefreshToken));
-    await prisma.brandXCredential.update({
-      where: { id: cred.id },
+    const next = await refreshTokens(decrypt(account.encryptedRefreshToken));
+    await prisma.brandXAccount.update({
+      where: { id: account.id },
       data: {
         encryptedAccessToken: encrypt(next.accessToken),
-        encryptedRefreshToken: encrypt(next.refreshToken || decrypt(cred.encryptedRefreshToken)),
+        encryptedRefreshToken: encrypt(
+          next.refreshToken || decrypt(account.encryptedRefreshToken),
+        ),
         accessTokenExpiresAt: next.expiresAt,
         refreshFailedAt: null,
         refreshFailCount: 0,
@@ -31,8 +36,8 @@ export async function getBrandAccessToken(cred: BrandXCredential): Promise<strin
     return next.accessToken;
   } catch (e) {
     if (e instanceof XApiError && e.isAuthError) {
-      await prisma.brandXCredential.update({
-        where: { id: cred.id },
+      await prisma.brandXAccount.update({
+        where: { id: account.id },
         data: { refreshFailedAt: new Date(), refreshFailCount: { increment: 1 } },
       });
     }

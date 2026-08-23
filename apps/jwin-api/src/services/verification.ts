@@ -23,7 +23,7 @@ export async function verifyWinner(winnerId: string, userId: string): Promise<Ve
     where: { id: winnerId, entry: { userId } },
     include: {
       prize: true,
-      entry: { include: { user: true, post: true, campaign: true } },
+      entry: { include: { user: true, post: true, campaign: { include: { brandAccount: true } } } },
     },
   });
   if (!winner) return { ok: false, reason: 'not_found' };
@@ -34,9 +34,10 @@ export async function verifyWinner(winnerId: string, userId: string): Promise<Ve
   const { user, post, campaign } = winner.entry;
   const token = await getUserAccessToken(user);
   if (!token) return { ok: false, reason: 'token' };
-  if (!campaign.xUserId || !post.xPostId) return { ok: false, reason: 'not_found' };
+  const brandXUserId = campaign.brandAccount?.xUserId;
+  if (!brandXUserId || !post.xPostId) return { ok: false, reason: 'not_found' };
 
-  const follows = await checkFollows(token, campaign.xUserId);
+  const follows = await checkFollows(token, brandXUserId);
   if (!follows) {
     await prisma.winner.update({
       where: { id: winner.id },

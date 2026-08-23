@@ -29,13 +29,16 @@ export async function publicRoutes(app: FastifyInstance) {
     const now = new Date();
     const campaigns = await prisma.brandCampaign.findMany({
       where: { status: 'ACTIVE', startsAt: { lte: now }, endsAt: { gte: now } },
-      include: { prizes: { orderBy: { tier: 'asc' } } },
+      include: {
+        prizes: { orderBy: { tier: 'asc' } },
+        brandAccount: { select: { xUsername: true } },
+      },
       orderBy: { endsAt: 'asc' },
     });
     return campaigns.map((campaign) => ({
       slug: campaign.slug,
       brandName: campaign.brandName,
-      xUsername: campaign.xUsername,
+      xUsername: campaign.brandAccount?.xUsername ?? null,
       endsAt: campaign.endsAt.toISOString(),
       prizeSummary: campaign.prizes.map((prize) => `${prize.name}×${prize.totalQty}`).join(' / '),
     }));
@@ -48,21 +51,23 @@ export async function publicRoutes(app: FastifyInstance) {
       include: {
         prizes: { orderBy: { tier: 'asc' } },
         posts: { where: { dateJst: dateJst(), status: 'POSTED' } },
+        brandAccount: { select: { xUsername: true } },
       },
     });
     if (!campaign) return reply.code(404).send({ error: 'キャンペーンが見つかりません' });
 
     const todayPost = campaign.posts[0];
+    const brandXUsername = campaign.brandAccount?.xUsername ?? null;
     const lp: CampaignLp = {
       campaignId: campaign.id,
       slug: campaign.slug,
       brandName: campaign.brandName,
-      xUsername: campaign.xUsername,
+      xUsername: brandXUsername,
       startsAt: campaign.startsAt.toISOString(),
       endsAt: campaign.endsAt.toISOString(),
       todayPostUrl:
-        todayPost?.xPostId && campaign.xUsername
-          ? `https://x.com/${campaign.xUsername}/status/${todayPost.xPostId}`
+        todayPost?.xPostId && brandXUsername
+          ? `https://x.com/${brandXUsername}/status/${todayPost.xPostId}`
           : null,
       prizeSummary: campaign.prizes.map((prize) => `${prize.name}×${prize.totalQty}`).join(' / '),
       prUrl: campaign.prUrl,

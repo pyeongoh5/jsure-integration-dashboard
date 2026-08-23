@@ -336,6 +336,7 @@ type CampaignRow = {
   id: string;
   category: CampaignCategory;
   title: string;
+  tags: string[];
   publishState: CampaignPublishState;
   rewardType: RewardType;
   rewardJpy: number;
@@ -370,6 +371,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     id: row.id,
     category: row.category,
     title: row.title,
+    tags: row.tags,
     publishState: row.publishState,
     status: deriveCampaignStatus({
       publishState: row.publishState,
@@ -458,6 +460,7 @@ function toDraftCampaignData(input: CampaignDraftRequest, now: Date) {
   return {
     category: input.category ?? "SNS",
     title: input.title,
+    tags: input.tags ?? [],
     rewardType: input.rewardType ?? "UNIFIED",
     rewardJpy: input.rewardJpy ?? 0,
     recruitStartAt: input.recruitStartDate
@@ -594,6 +597,7 @@ export class CampaignsService {
       data: {
         category: input.category,
         title: input.title,
+        tags: input.tags,
         rewardType: input.rewardType,
         rewardJpy: input.rewardJpy,
         recruitStartAt: jstDayStartUtc(input.recruitStartDate),
@@ -804,6 +808,7 @@ export class CampaignsService {
     const data: Record<string, unknown> = {};
     if (input.category !== undefined) data.category = input.category;
     if (input.title !== undefined) data.title = input.title;
+    if (input.tags !== undefined) data.tags = input.tags;
     if (input.rewardType !== undefined) data.rewardType = input.rewardType;
     if (input.rewardJpy !== undefined) data.rewardJpy = input.rewardJpy;
     if (input.recruitStartDate !== undefined) {

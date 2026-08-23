@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatTitleWithTags } from "@jsure/shared";
 import { listCampaigns } from "@/domains/campaign";
 import type { CampaignOption } from "./types";
 
@@ -32,13 +33,18 @@ export function useCampaignOptions(): UseCampaignOptionsResult {
       .then((rows) => {
         if (cancelled) return;
         setCampaignTitleById(
-          new Map(rows.map((campaign) => [campaign.id, campaign.title])),
+          new Map(
+            rows.map((campaign) => [
+              campaign.id,
+              formatTitleWithTags(campaign.tags, campaign.title),
+            ]),
+          ),
         );
         const now = Date.now();
         setCampaignOptions(
           rows.map((campaign) => ({
             id: campaign.id,
-            title: campaign.title,
+            title: formatTitleWithTags(campaign.tags, campaign.title),
             closed: isRecruitClosed(campaign, now),
           })),
         );

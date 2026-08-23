@@ -122,6 +122,9 @@ model Campaign {
   id                 String           @id @default(cuid())
   category           CampaignCategory @default(SNS)
   title              String
+  /// 어드민 전용 관리 태그(차수 등: "1차", "추가모집"). 어드민 화면에서만 노출하고
+  /// 인플루언서 응답에는 절대 포함하지 않는다.
+  tags          String[] @default([])
   publishState       CampaignPublishState @default(PUBLISHED)
   rewardType         RewardType       @default(UNIFIED)
   /// UNIFIED 캠페인의 보수 금액. PER_SUBTYPE 캠페인에서는 사용하지 않는다.

@@ -9,6 +9,7 @@ import {
 import { RecruitList } from "./RecruitList";
 import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
 import { ExcludedCampaignsPicker } from "./ExcludedCampaignsPicker";
+import { CampaignTagsInput } from "./CampaignTagsInput";
 import { uploadCampaignThumbnail, UploadError } from "@/lib/uploads";
 import { listCampaigns } from "../api";
 import { RichTextEditor } from "@/components/composites/RichTextEditor/RichTextEditor";
@@ -22,6 +23,7 @@ const CAMPAIGN_IMAGE_ENDPOINT = "/uploads/admin/campaign-image/presign";
 export const EMPTY_CAMPAIGN_FORM: Values = {
   category: "SNS",
   title: "",
+  tags: [],
   rewardType: "UNIFIED",
   rewardJpy: 0,
   recruitStartDate: "",
@@ -442,6 +444,26 @@ export function CampaignForm({
               disabled={submitting}
             />
             {rootError("title") && <div className={styles.error}>{rootError("title")}</div>}
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>
+              {t("domains.campaign.form.tagsLabel")}
+            </label>
+            <Controller
+              control={methods.control}
+              name="tags"
+              render={({ field }) => (
+                <CampaignTagsInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={submitting}
+                />
+              )}
+            />
+            {rootError("tags") && (
+              <div className={styles.error}>{rootError("tags")}</div>
+            )}
           </div>
 
           <div className={styles.field}>

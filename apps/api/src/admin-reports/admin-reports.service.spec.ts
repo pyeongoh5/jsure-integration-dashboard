@@ -29,6 +29,7 @@ function makeService(applications: StubApplication[]) {
         {
           id: "c1",
           title: "캠페인",
+          tags: [],
           category: "SNS",
           recruitStartAt: new Date("2026-06-30T15:00:00Z"), // JST 2026-07-01 00:00
           recruitEndAt: new Date("2026-07-31T14:59:59Z"), // JST 2026-07-31 23:59

@@ -6,6 +6,8 @@ type Props = {
   thumbIcon: string;
   thumbnailUrl?: string | null;
   name: string;
+  /** 어드민 전용 관리 태그 — 날짜 옆 배지로 표시. 인플루언서 화면에는 없는 개념. */
+  tags: string[];
   description: string;
   period: string;
   reward: string;
@@ -16,6 +18,7 @@ export function CampaignCardBody({
   thumbIcon,
   thumbnailUrl,
   name,
+  tags,
   description,
   period,
   reward,
@@ -44,6 +47,11 @@ export function CampaignCardBody({
         <div className={styles.cardMetaRow}>
           <i className="fa-regular fa-calendar" />
           <span>{period}</span>
+          {tags.map((tag) => (
+            <span key={tag} className={styles.cardTag}>
+              {tag}
+            </span>
+          ))}
         </div>
         <div className={styles.cardMetaRow}>
           <i className="fa-solid fa-coins" />

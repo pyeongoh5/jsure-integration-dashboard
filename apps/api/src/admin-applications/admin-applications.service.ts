@@ -5,6 +5,7 @@ import {
   buildSnsProfileUrl,
   type AddressCountry,
   type AdminActivityLog,
+  formatTitleWithTags,
   type AdminApplication,
   type AdminSettlement,
   type AdminSubmission,
@@ -901,7 +902,7 @@ export class AdminApplicationsService {
               },
               orderBy: { subType: "asc" as const },
             },
-            campaign: { select: { id: true, title: true, category: true } },
+            campaign: { select: { id: true, title: true, category: true, tags: true } },
             influencer: {
               select: {
                 id: true,
@@ -1383,7 +1384,12 @@ type SettlementRow = {
       insightViews: number | null;
       insightReach: number | null;
     }[];
-    campaign: { id: string; title: string; category: CampaignCategory };
+    campaign: {
+      id: string;
+      title: string;
+      category: CampaignCategory;
+      tags: string[];
+    };
     influencer: {
       id: string;
       name: string;
@@ -1439,7 +1445,11 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
     campaign: {
       id: row.application.campaign.id,
       category: row.application.campaign.category,
-      title: row.application.campaign.title,
+      // 어드민 정산 화면·CSV 전용 응답이므로 제목 앞에 어드민 태그를 붙여 내려준다.
+      title: formatTitleWithTags(
+        row.application.campaign.tags,
+        row.application.campaign.title,
+      ),
     },
     posts: row.application.posts.map((post) => ({
       id: post.id,

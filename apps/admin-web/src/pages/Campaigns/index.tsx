@@ -103,6 +103,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     id: c.id,
     brand: "",
     name: c.title,
+    tags: c.tags,
     description: stripHtml(c.productSummary),
     category: c.category,
     status,
@@ -289,6 +290,7 @@ export function Campaigns() {
                     thumbIcon={c.thumbIcon}
                     thumbnailUrl={c.thumbnailUrl}
                     name={c.name}
+                    tags={c.tags}
                     description={c.description}
                     period={c.period}
                     reward={c.reward}

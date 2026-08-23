@@ -2,6 +2,7 @@ import { useState } from "react";
 import { JwinAccountStatusBadge } from "@/components/composites";
 import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import type { JwinBrandAccountRow } from "./jwinBrandAccountTransform";
 import styles from "./JwinBrandAccountTable.module.css";
 
@@ -12,8 +13,10 @@ type Props = {
 };
 
 export function JwinBrandAccountTable({ accounts, onCopyLink }: Props) {
+  const t = useT();
+
   if (accounts.length === 0) {
-    return <div className={styles.empty}>등록된 브랜드 계정이 없습니다.</div>;
+    return <div className={styles.empty}>{t("jwin.account.empty")}</div>;
   }
 
   return (
@@ -21,11 +24,11 @@ export function JwinBrandAccountTable({ accounts, onCopyLink }: Props) {
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>라벨</th>
-            <th>계정</th>
-            <th>상태</th>
-            <th className={styles.num}>사용 캠페인</th>
-            <th>연동 링크</th>
+            <th>{t("jwin.account.columns.label")}</th>
+            <th>{t("jwin.account.columns.account")}</th>
+            <th>{t("jwin.account.columns.status")}</th>
+            <th className={styles.num}>{t("jwin.account.columns.campaignCount")}</th>
+            <th>{t("jwin.account.columns.connectLink")}</th>
           </tr>
         </thead>
         <tbody>
@@ -47,6 +50,7 @@ function CopyLinkRow({
   account: JwinBrandAccountRow;
   onCopyLink: (url: string) => Promise<boolean>;
 }) {
+  const t = useT();
   const [copyState, setCopyState] = useState<CopyState>("idle");
 
   const handleCopy = async () => {
@@ -58,8 +62,8 @@ function CopyLinkRow({
   return (
     <tr className={styles.row}>
       <td className={styles.label}>{account.label}</td>
-      <td className={account.handle === "미승인" ? styles.muted : styles.mono}>
-        {account.handle}
+      <td className={account.xUsername ? styles.mono : styles.muted}>
+        {account.xUsername ? `@${account.xUsername}` : t("jwin.account.notApproved")}
       </td>
       <td>
         <JwinAccountStatusBadge status={account.status} />
@@ -73,11 +77,11 @@ function CopyLinkRow({
             onClick={handleCopy}
             iconLeft={<i className="fa-solid fa-link" aria-hidden="true" />}
           >
-            {copyState === "copied" ? "복사됨" : "링크 복사"}
+            {copyState === "copied" ? t("jwin.common.copied") : t("jwin.account.copyLink")}
           </Button>
           {copyState === "failed" && (
             <div className={styles.copyError}>
-              복사 실패 — 아래 링크를 직접 선택해 복사하세요
+              {t("jwin.account.copyFailedBelow")}
               <div className={styles.linkText}>{account.connectUrl}</div>
             </div>
           )}

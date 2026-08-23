@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui";
 import { useJwinCampaignsData, JwinCampaignTable } from "@/components/JwinCampaigns";
+import { useT } from "@/lib/i18n";
 import styles from "./Jwin.module.css";
 
 export function JwinCampaigns() {
+  const t = useT();
   const navigate = useNavigate();
   const { state, rows } = useJwinCampaignsData();
 
@@ -11,9 +13,11 @@ export function JwinCampaigns() {
     <div className={styles.root}>
       <div className={styles.header}>
         <div className={styles.headerMain}>
-          <h1 className={styles.title}>캠페인 관리</h1>
+          <h1 className={styles.title}>{t("jwin.campaign.listTitle")}</h1>
           <p className={styles.subtitle}>
-            {state.kind === "ready" ? `${rows.length}건` : "불러오는 중…"}
+            {state.kind === "ready"
+              ? t("jwin.common.countItems", { count: rows.length })
+              : t("jwin.common.loading")}
           </p>
         </div>
         <Button
@@ -22,13 +26,13 @@ export function JwinCampaigns() {
           onClick={() => navigate("/jwin/campaigns/new")}
           iconLeft={<i className="fa-solid fa-plus" aria-hidden="true" />}
         >
-          캠페인 생성
+          {t("jwin.campaign.create")}
         </Button>
       </div>
 
       <div className={styles.card}>
         {state.kind === "loading" ? (
-          <div className={styles.empty}>불러오는 중…</div>
+          <div className={styles.empty}>{t("jwin.common.loading")}</div>
         ) : state.kind === "error" ? (
           <div className={styles.empty}>{state.message}</div>
         ) : (

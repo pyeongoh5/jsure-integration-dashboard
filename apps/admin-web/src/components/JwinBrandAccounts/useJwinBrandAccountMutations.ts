@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { createBrandAccount, type AdminBrandAccount } from "@/domains/jwin";
+import { createBrandAccount, jwinErrorMessage, type AdminBrandAccount } from "@/domains/jwin";
+import { useT } from "@/lib/i18n";
 
 export function useJwinBrandAccountMutations(onMutated: () => void) {
+  const t = useT();
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,7 +15,7 @@ export function useJwinBrandAccountMutations(onMutated: () => void) {
       onMutated();
       return account;
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : "계정 생성에 실패했습니다.");
+      setError(jwinErrorMessage(caught, t("jwin.account.createFailed")));
       return null;
     } finally {
       setCreating(false);

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchBrandAccounts, type AdminBrandAccount } from "@/domains/jwin";
+import { fetchBrandAccounts, jwinErrorMessage, type AdminBrandAccount } from "@/domains/jwin";
+import { useT } from "@/lib/i18n";
 import { toJwinBrandAccountRow, type JwinBrandAccountRow } from "./jwinBrandAccountTransform";
 
 export type JwinBrandAccountsLoadState =
@@ -14,6 +15,7 @@ export type UseJwinBrandAccountsDataResult = {
 };
 
 export function useJwinBrandAccountsData(): UseJwinBrandAccountsDataResult {
+  const t = useT();
   const [state, setState] = useState<JwinBrandAccountsLoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -28,13 +30,13 @@ export function useJwinBrandAccountsData(): UseJwinBrandAccountsDataResult {
         if (cancelled) return;
         setState({
           kind: "error",
-          message: error instanceof Error ? error.message : "계정 목록을 불러올 수 없습니다.",
+          message: jwinErrorMessage(error, t("jwin.account.loadFailed")),
         });
       });
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, t]);
 
   const accounts = useMemo<JwinBrandAccountRow[]>(() => {
     if (state.kind !== "ready") return [];

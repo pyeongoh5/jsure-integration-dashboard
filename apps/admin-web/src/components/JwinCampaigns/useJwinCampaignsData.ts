@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchCampaigns, type AdminCampaignListItem } from "@/domains/jwin";
+import { fetchCampaigns, jwinErrorMessage, type AdminCampaignListItem } from "@/domains/jwin";
+import { useT } from "@/lib/i18n";
 import { toJwinCampaignRow, type JwinCampaignRow } from "./jwinCampaignTransform";
 
 export type JwinCampaignsLoadState =
@@ -14,6 +15,7 @@ export type UseJwinCampaignsDataResult = {
 };
 
 export function useJwinCampaignsData(): UseJwinCampaignsDataResult {
+  const t = useT();
   const [state, setState] = useState<JwinCampaignsLoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -28,13 +30,13 @@ export function useJwinCampaignsData(): UseJwinCampaignsDataResult {
         if (cancelled) return;
         setState({
           kind: "error",
-          message: error instanceof Error ? error.message : "캠페인 목록을 불러올 수 없습니다.",
+          message: jwinErrorMessage(error, t("jwin.campaign.loadFailed")),
         });
       });
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, t]);
 
   const rows = useMemo<JwinCampaignRow[]>(() => {
     if (state.kind !== "ready") return [];

@@ -1,5 +1,6 @@
 import { JwinStatusBadge } from "@/components/composites/JwinStatusBadge";
 import { ScrollTable } from "@/components/composites";
+import { useT } from "@/lib/i18n";
 import type { JwinCampaignRow } from "./jwinCampaignTransform";
 import styles from "./JwinCampaignTable.module.css";
 
@@ -9,8 +10,10 @@ type Props = {
 };
 
 export function JwinCampaignTable({ rows, onRowClick }: Props) {
+  const t = useT();
+
   if (rows.length === 0) {
-    return <div className={styles.empty}>등록된 캠페인이 없습니다.</div>;
+    return <div className={styles.empty}>{t("jwin.campaign.empty")}</div>;
   }
 
   return (
@@ -18,13 +21,13 @@ export function JwinCampaignTable({ rows, onRowClick }: Props) {
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>브랜드</th>
-            <th>slug</th>
-            <th>상태</th>
-            <th>기간 (JST)</th>
-            <th>연동 계정</th>
-            <th className={styles.num}>응모</th>
-            <th>경고</th>
+            <th>{t("jwin.campaign.columns.brand")}</th>
+            <th>{t("jwin.campaign.columns.slug")}</th>
+            <th>{t("jwin.campaign.columns.status")}</th>
+            <th>{t("jwin.campaign.columns.period")}</th>
+            <th>{t("jwin.campaign.columns.account")}</th>
+            <th className={styles.num}>{t("jwin.campaign.columns.entries")}</th>
+            <th>{t("jwin.campaign.columns.warnings")}</th>
           </tr>
         </thead>
         <tbody>
@@ -36,19 +39,19 @@ export function JwinCampaignTable({ rows, onRowClick }: Props) {
                 <JwinStatusBadge status={row.status} />
               </td>
               <td className={styles.mono}>{row.period}</td>
-              <td className={row.account === "미연동" ? styles.muted : styles.mono}>
-                {row.account}
+              <td className={row.xUsername ? styles.mono : styles.muted}>
+                {row.xUsername ? `@${row.xUsername}` : t("jwin.campaign.notConnected")}
               </td>
               <td className={styles.num}>{row.entryCount}</td>
               <td>
                 {row.warnings.length === 0 ? (
-                  <span className={styles.muted}>—</span>
+                  <span className={styles.muted}>{t("jwin.common.dash")}</span>
                 ) : (
                   <div className={styles.warnings}>
                     {row.warnings.map((warning) => (
                       <span key={warning.kind} className={styles.warning}>
                         <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
-                        {warning.label}
+                        {t(warning.labelKey, warning.labelParams)}
                       </span>
                     ))}
                   </div>

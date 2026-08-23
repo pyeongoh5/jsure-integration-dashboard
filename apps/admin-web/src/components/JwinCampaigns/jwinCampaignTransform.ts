@@ -1,8 +1,10 @@
+import type { AdminTranslationKey } from "@i18n/admin";
 import type { AdminCampaignListItem } from "@/domains/jwin";
 
 export type JwinCampaignWarning = {
   kind: "reconnect" | "unconnected" | "failedPosts";
-  label: string;
+  labelKey: AdminTranslationKey;
+  labelParams?: Record<string, string | number>;
 };
 
 export type JwinCampaignRow = {
@@ -12,8 +14,8 @@ export type JwinCampaignRow = {
   status: AdminCampaignListItem["status"];
   /** "YYYY.MM.DD ~ YYYY.MM.DD" (JST) */
   period: string;
-  /** "@handle" 또는 "미연동" */
-  account: string;
+  /** 원본 값. 표시 문구·스타일은 렌더하는 컴포넌트가 결정한다 */
+  xUsername: string | null;
   entryCount: number;
   warnings: JwinCampaignWarning[];
 };
@@ -34,13 +36,17 @@ function formatJstDate(iso: string): string {
 export function toJwinCampaignRow(campaign: AdminCampaignListItem): JwinCampaignRow {
   const warnings: JwinCampaignWarning[] = [];
   if (campaign.needsReconnect) {
-    warnings.push({ kind: "reconnect", label: "브랜드 재연동 필요" });
+    warnings.push({ kind: "reconnect", labelKey: "jwin.campaign.warning.reconnect" });
   }
   if (campaign.status === "ACTIVE" && campaign.xUserId === null) {
-    warnings.push({ kind: "unconnected", label: "계정 미연동" });
+    warnings.push({ kind: "unconnected", labelKey: "jwin.campaign.warning.unconnected" });
   }
   if (campaign.failedPostCount > 0) {
-    warnings.push({ kind: "failedPosts", label: `게시 실패 ${campaign.failedPostCount}건` });
+    warnings.push({
+      kind: "failedPosts",
+      labelKey: "jwin.campaign.warning.failedPosts",
+      labelParams: { count: campaign.failedPostCount },
+    });
   }
 
   return {
@@ -49,7 +55,7 @@ export function toJwinCampaignRow(campaign: AdminCampaignListItem): JwinCampaign
     slug: campaign.slug,
     status: campaign.status,
     period: `${formatJstDate(campaign.startsAt)} ~ ${formatJstDate(campaign.endsAt)}`,
-    account: campaign.xUsername ? `@${campaign.xUsername}` : "미연동",
+    xUsername: campaign.xUsername,
     entryCount: campaign.entryCount,
     warnings,
   };

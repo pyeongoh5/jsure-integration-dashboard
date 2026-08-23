@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
+import type { AdminTranslationKey } from "@i18n/admin";
 import {
   fetchCampaign,
   createCampaign,
   updateCampaign,
   fetchBrandAccounts,
+  jwinErrorMessage,
   type AdminCampaignDetail,
   type AdminBrandAccount,
 } from "@/domains/jwin";
+import { useT } from "@/lib/i18n";
 import { utcIsoToJstLocal, jstLocalToUtcIso } from "./jwinDateTime";
 
 export type JwinCampaignFormValues = {
@@ -22,6 +25,8 @@ export type JwinCampaignFormValues = {
 };
 
 export type JwinCampaignFormErrors = Partial<Record<keyof JwinCampaignFormValues, string>>;
+
+type JwinCampaignFormErrorKeys = Partial<Record<keyof JwinCampaignFormValues, AdminTranslationKey>>;
 
 const EMPTY: JwinCampaignFormValues = {
   brandName: "",
@@ -43,21 +48,21 @@ function toFormValues(detail: AdminCampaignDetail): JwinCampaignFormValues {
   };
 }
 
-function validate(values: JwinCampaignFormValues): JwinCampaignFormErrors {
-  const errors: JwinCampaignFormErrors = {};
-  if (!values.brandName.trim()) errors.brandName = "브랜드명을 입력하세요.";
-  if (!values.slug.trim()) errors.slug = "slug를 입력하세요.";
-  else if (!/^[a-z0-9-]+$/.test(values.slug)) errors.slug = "영소문자·숫자·하이픈만 사용할 수 있습니다.";
-  if (!values.startsAt) errors.startsAt = "시작일시를 입력하세요.";
-  if (!values.endsAt) errors.endsAt = "종료일시를 입력하세요.";
+function validate(values: JwinCampaignFormValues): JwinCampaignFormErrorKeys {
+  const errorKeys: JwinCampaignFormErrorKeys = {};
+  if (!values.brandName.trim()) errorKeys.brandName = "jwin.basic.error.brandNameRequired";
+  if (!values.slug.trim()) errorKeys.slug = "jwin.basic.error.slugRequired";
+  else if (!/^[a-z0-9-]+$/.test(values.slug)) errorKeys.slug = "jwin.basic.error.slugFormat";
+  if (!values.startsAt) errorKeys.startsAt = "jwin.basic.error.startsAtRequired";
+  if (!values.endsAt) errorKeys.endsAt = "jwin.basic.error.endsAtRequired";
   if (values.startsAt && values.endsAt && values.endsAt <= values.startsAt) {
-    errors.endsAt = "종료일시는 시작일시 이후여야 합니다.";
+    errorKeys.endsAt = "jwin.basic.error.endsAtOrder";
   }
   if (values.dailyWinCap.trim() !== "") {
     const cap = Number(values.dailyWinCap);
-    if (!Number.isInteger(cap) || cap <= 0) errors.dailyWinCap = "1 이상의 정수를 입력하세요.";
+    if (!Number.isInteger(cap) || cap <= 0) errorKeys.dailyWinCap = "jwin.basic.error.dailyWinCapInvalid";
   }
-  return errors;
+  return errorKeys;
 }
 
 export type UseJwinCampaignFormResult = {
@@ -82,6 +87,7 @@ export type UseJwinCampaignFormResult = {
 };
 
 export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCampaignFormResult {
+  const t = useT();
   const mode = campaignId ? "edit" : "new";
   const [values, setValues] = useState<JwinCampaignFormValues>(EMPTY);
   const [detail, setDetail] = useState<AdminCampaignDetail | null>(null);
@@ -108,7 +114,7 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
       })
       .catch((error: unknown) => {
         if (cancelled) return;
-        setLoadError(error instanceof Error ? error.message : "캠페인을 불러올 수 없습니다.");
+        setLoadError(jwinErrorMessage(error, t("jwin.campaign.detailLoadFailed")));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -116,7 +122,7 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
     return () => {
       cancelled = true;
     };
-  }, [campaignId, reloadKey]);
+  }, [campaignId, reloadKey, t]);
 
   useEffect(() => {
     if (mode !== "edit") return;
@@ -129,12 +135,12 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
       })
       .catch((error: unknown) => {
         if (cancelled) return;
-        setAccountsError(error instanceof Error ? error.message : "계정 목록을 불러오지 못했습니다.");
+        setAccountsError(jwinErrorMessage(error, t("jwin.connect.accountsLoadFailed")));
       });
     return () => {
       cancelled = true;
     };
-  }, [mode]);
+  }, [mode, t]);
 
   const selectAccount = useCallback(
     async (brandAccountId: string) => {
@@ -144,10 +150,10 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
         const result = await updateCampaign(campaignId, { brandAccountId });
         setDetail(result);
       } catch (error: unknown) {
-        setSelectError(error instanceof Error ? error.message : "계정 연결에 실패했습니다.");
+        setSelectError(jwinErrorMessage(error, t("jwin.connect.selectFailed")));
       }
     },
-    [campaignId],
+    [campaignId, t],
   );
 
   const setField = useCallback((field: keyof JwinCampaignFormValues, value: string) => {
@@ -155,9 +161,13 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
   }, []);
 
   const save = useCallback(async (): Promise<AdminCampaignDetail | null> => {
-    const nextErrors = validate(values);
+    const nextErrorKeys = validate(values);
+    const nextErrors: JwinCampaignFormErrors = {};
+    for (const [field, key] of Object.entries(nextErrorKeys)) {
+      nextErrors[field as keyof JwinCampaignFormValues] = t(key as AdminTranslationKey);
+    }
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return null;
+    if (Object.keys(nextErrorKeys).length > 0) return null;
 
     const body = {
       brandName: values.brandName.trim(),
@@ -177,12 +187,12 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
       setDetail(result);
       return result;
     } catch (error: unknown) {
-      setSaveError(error instanceof Error ? error.message : "저장에 실패했습니다.");
+      setSaveError(jwinErrorMessage(error, t("jwin.common.saveFailed")));
       return null;
     } finally {
       setSaving(false);
     }
-  }, [campaignId, values]);
+  }, [campaignId, values, t]);
 
   return {
     mode,

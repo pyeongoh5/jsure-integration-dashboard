@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, Dialog, Input } from "@/components/ui";
 import type { AdminBrandAccount } from "@/domains/jwin";
+import { useT } from "@/lib/i18n";
 import styles from "./AddBrandAccountDialog.module.css";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 
 /** 계정 추가 다이얼로그. 입력 상태는 여기서만 보관한다(§7 — 부모로 끌어올리지 않음). */
 export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
+  const t = useT();
   const [label, setLabel] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
     if (account) {
       setCreated(account);
     } else {
-      setError("계정 생성에 실패했습니다.");
+      setError(t("jwin.account.createFailed"));
     }
   };
 
@@ -54,16 +56,16 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
     <Dialog
       open={open}
       onClose={handleClose}
-      title={created ? "연동 링크" : "계정 추가"}
+      title={created ? t("jwin.account.linkTitle") : t("jwin.account.add")}
       footer={
         created ? (
           <Button variant="primary" size="md" onClick={handleClose}>
-            닫기
+            {t("jwin.common.close")}
           </Button>
         ) : (
           <>
             <Button variant="secondary" size="md" onClick={handleClose}>
-              취소
+              {t("jwin.common.cancel")}
             </Button>
             <Button
               variant="primary"
@@ -71,7 +73,7 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
               onClick={handleCreate}
               disabled={!label.trim() || creating}
             >
-              {creating ? "생성 중…" : "생성"}
+              {creating ? t("jwin.account.creating") : t("jwin.account.create")}
             </Button>
           </>
         )
@@ -79,32 +81,27 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
     >
       {created ? (
         <div className={styles.body}>
-          <p className={styles.description}>
-            아래 링크를 브랜드 담당자에게 전달하세요. 브랜드가 자기 X 계정으로 승인하면 연동이
-            완료됩니다.
-          </p>
+          <p className={styles.description}>{t("jwin.account.handoffNote")}</p>
           <div className={styles.linkRow}>
             <Input value={created.connectUrl} readOnly />
             <Button variant="secondary" size="md" onClick={handleCopy}>
-              {copyState === "copied" ? "복사됨" : "복사"}
+              {copyState === "copied" ? t("jwin.common.copied") : t("jwin.common.copy")}
             </Button>
           </div>
           {copyState === "failed" && (
-            <div className={styles.error}>
-              복사 실패 — 위 입력창의 링크를 직접 선택해 복사하세요
-            </div>
+            <div className={styles.error}>{t("jwin.account.copyFailedAbove")}</div>
           )}
         </div>
       ) : (
         <div className={styles.body}>
           <label className={styles.label} htmlFor="brand-account-label">
-            라벨
+            {t("jwin.account.label")}
           </label>
           <Input
             id="brand-account-label"
             value={label}
             onChange={setLabel}
-            placeholder="예: 코카콜라 재팬 공식"
+            placeholder={t("jwin.account.labelPlaceholder")}
             disabled={creating}
             autoFocus
           />

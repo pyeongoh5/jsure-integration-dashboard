@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import type { JwinCampaignFormValues, JwinCampaignFormErrors } from "./useJwinCampaignForm";
 import styles from "./JwinCampaignForm.module.css";
 
@@ -11,39 +12,41 @@ type Props = {
 };
 
 export function BasicTab({ values, errors, setField, slugLocked }: Props) {
+  const t = useT();
+
   return (
     <div className={styles.form}>
       <label className={styles.field}>
         <span className={styles.label}>
-          브랜드명<span className={styles.required}>*</span>
+          {t("jwin.basic.brandName")}
+          <span className={styles.required}>*</span>
         </span>
         <Input
           value={values.brandName}
           onChange={(value) => setField("brandName", value)}
           error={!!errors.brandName}
-          placeholder="브랜드명"
+          placeholder={t("jwin.basic.brandName")}
         />
         {errors.brandName && <span className={styles.error}>{errors.brandName}</span>}
       </label>
 
       <label className={styles.field}>
         <span className={styles.label}>
-          slug<span className={styles.required}>*</span>
+          {t("jwin.basic.slug")}
+          <span className={styles.required}>*</span>
         </span>
         <Input
           value={values.slug}
           onChange={(value) => setField("slug", value)}
           error={!!errors.slug}
-          placeholder="brand-campaign-2026"
+          placeholder={t("jwin.basic.slugPlaceholder")}
           disabled={slugLocked}
         />
         {errors.slug ? (
           <span className={styles.error}>{errors.slug}</span>
         ) : (
           <span className={styles.hint}>
-            {slugLocked
-              ? "ACTIVE 전환 후에는 게시된 링크 보호를 위해 수정할 수 없습니다."
-              : "LP 링크에 사용됩니다. 영소문자·숫자·하이픈만."}
+            {slugLocked ? t("jwin.basic.slugLockedHint") : t("jwin.basic.slugHint")}
           </span>
         )}
       </label>
@@ -51,7 +54,8 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
       <div className={styles.row2}>
         <label className={styles.field}>
           <span className={styles.label}>
-            시작일시 (JST)<span className={styles.required}>*</span>
+            {t("jwin.basic.startsAt")}
+            <span className={styles.required}>*</span>
           </span>
           <Input
             type="datetime-local"
@@ -64,7 +68,8 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
 
         <label className={styles.field}>
           <span className={styles.label}>
-            종료일시 (JST)<span className={styles.required}>*</span>
+            {t("jwin.basic.endsAt")}
+            <span className={styles.required}>*</span>
           </span>
           <Input
             type="datetime-local"
@@ -79,25 +84,26 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
       <div className={styles.row2}>
         <label className={styles.field}>
           <span className={styles.label}>
-            매일 게시 시각<span className={styles.required}>*</span>
+            {t("jwin.basic.dailyPostTime")}
+            <span className={styles.required}>*</span>
           </span>
           <Input
             type="time"
             value={values.dailyPostTime}
             onChange={(value) => setField("dailyPostTime", value)}
           />
-          <span className={styles.hint}>JST 기준</span>
+          <span className={styles.hint}>{t("jwin.basic.dailyPostTimeHint")}</span>
         </label>
 
         <label className={styles.field}>
-          <span className={styles.label}>일일 당첨 상한</span>
+          <span className={styles.label}>{t("jwin.basic.dailyWinCap")}</span>
           <Input
             type="number"
             min={1}
             value={values.dailyWinCap}
             onChange={(value) => setField("dailyWinCap", value)}
             error={!!errors.dailyWinCap}
-            placeholder="비우면 무제한"
+            placeholder={t("jwin.basic.dailyWinCapPlaceholder")}
           />
           {errors.dailyWinCap && <span className={styles.error}>{errors.dailyWinCap}</span>}
         </label>

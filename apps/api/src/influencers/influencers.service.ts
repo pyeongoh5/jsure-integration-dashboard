@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import type {
   AddressCountry,
   AdminInfluencer,
+  InfluencerActivityResponse,
   InfluencerNotesResponse,
   InfluencerMemoEntry,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import type { AuditActor } from "../audit/audit.service";
+import { influencerHistoryGroups } from "../audit/influencer-history";
 
 const ADMIN_INFLUENCER_INCLUDE = {
   snsAccounts: {
@@ -127,49 +129,17 @@ export class InfluencersService {
     });
     if (!influencer) throw new NotFoundException("Influencer not found");
 
-    const [memoRows, applicationRows, postRejectionRows] = await Promise.all([
-      this.prisma.influencerMemo.findMany({
-        where: { influencerId },
-        orderBy: { createdAt: "desc" },
-        include: { campaign: { select: { id: true, title: true } } },
-      }),
-      this.prisma.campaignApplication.findMany({
-        where: { influencerId, rejectReason: { not: null } },
-        orderBy: { reviewedAt: "desc" },
-        select: {
-          id: true,
-          rejectReason: true,
-          reviewedAt: true,
-          // undo 가 rejectReason 과 reviewedById 를 함께 비우므로, 이 쿼리에
-          // 걸린 행의 검토자는 항상 그 거절을 수행한 어드민이다.
-          reviewedById: true,
-          campaign: { select: { title: true } },
-        },
-      }),
-      this.prisma.submissionRejection.findMany({
-        where: { application: { influencerId } },
-        orderBy: { rejectedAt: "desc" },
-        select: {
-          id: true,
-          applicationId: true,
-          comment: true,
-          rejectedAt: true,
-          rejectedById: true,
-          application: {
-            select: { campaign: { select: { title: true } } },
-          },
-        },
-      }),
-    ]);
+    const memoRows = await this.prisma.influencerMemo.findMany({
+      where: { influencerId },
+      orderBy: { createdAt: "desc" },
+      include: { campaign: { select: { id: true, title: true } } },
+    });
 
-    // 메모 작성자·응모 거절자·제출물 반려자를 한 번에 조회한다.
     const adminIds = Array.from(
       new Set(
-        [
-          ...memoRows.map((memo) => memo.createdById),
-          ...applicationRows.map((application) => application.reviewedById),
-          ...postRejectionRows.map((rejection) => rejection.rejectedById),
-        ].filter((id): id is string => id !== null),
+        memoRows
+          .map((memo) => memo.createdById)
+          .filter((id): id is string => id !== null),
       ),
     );
     const admins = adminIds.length
@@ -191,25 +161,63 @@ export class InfluencersService {
         campaignId: memo.campaign?.id ?? null,
         campaignTitle: memo.campaign?.title ?? null,
       })),
-      applicationRejections: applicationRows.map((application) => ({
-        applicationId: application.id,
-        comment: application.rejectReason ?? "",
-        rejectedAt: application.reviewedAt
-          ? application.reviewedAt.toISOString()
-          : null,
-        campaignTitle: application.campaign.title,
-        rejectedBy: toActor(application.reviewedById),
-      })),
-      postRejections: postRejectionRows.map((rejection) => ({
-        id: rejection.id,
-        applicationId: rejection.applicationId,
-        comment: rejection.comment,
-        rejectedAt: rejection.rejectedAt.toISOString(),
-        campaignTitle: rejection.application.campaign.title,
-        rejectedBy: toActor(rejection.rejectedById),
-      })),
+      // 반려 이력은 GET :id/activity 로 옮겼다. 배포 갭 동안 구버전 admin-web 이
+      // 이 필드를 필수로 파싱하므로 빈 배열로 응답하고, 스키마에서 필드를
+      // 제거하는 것은 다음 배포로 미룬다.
+      applicationRejections: [],
+      postRejections: [],
       flaggedAt: influencer.flaggedAt ? influencer.flaggedAt.toISOString() : null,
     };
+  }
+
+  /**
+   * 인플루언서의 모든 캠페인 활동 이력. 응모 1건 = 그룹, 그 안의 이벤트 = 행.
+   * 감사 로그(어드민 처리) + 응모 타임스탬프에서 합성한 인플루언서 액션을 합친다.
+   */
+  async getActivity(influencerId: string): Promise<InfluencerActivityResponse> {
+    const influencer = await this.prisma.influencer.findUnique({
+      where: { id: influencerId },
+      select: { id: true },
+    });
+    if (!influencer) throw new NotFoundException("인플루언서를 찾을 수 없습니다");
+
+    const applications = await this.prisma.campaignApplication.findMany({
+      where: { influencerId },
+      select: {
+        id: true,
+        status: true,
+        rejectReason: true,
+        subTypes: true,
+        appliedAt: true,
+        orderSubmittedAt: true,
+        receivedAt: true,
+        campaign: { select: { id: true, title: true } },
+        posts: {
+          select: {
+            subType: true,
+            submittedAt: true,
+            insightSubmittedAt: true,
+          },
+        },
+      },
+    });
+    if (applications.length === 0) return { groups: [] };
+
+    const logs = await this.prisma.adminActivityLog.findMany({
+      where: { applicationId: { in: applications.map(({ id }) => id) } },
+      select: {
+        id: true,
+        applicationId: true,
+        action: true,
+        origin: true,
+        actorId: true,
+        actorName: true,
+        metadata: true,
+        createdAt: true,
+      },
+    });
+
+    return { groups: influencerHistoryGroups(applications, logs) };
   }
 
   async createMemo(

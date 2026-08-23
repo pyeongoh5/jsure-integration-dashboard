@@ -1,8 +1,10 @@
 import {
   AdminInfluencerListResponseSchema,
+  InfluencerActivityResponseSchema,
   InfluencerMemoEntrySchema,
   InfluencerNotesResponseSchema,
   type AdminInfluencer,
+  type InfluencerActivityGroup,
   type InfluencerMemoEntry,
   type InfluencerNotesResponse,
 } from "@jsure/shared";
@@ -20,6 +22,15 @@ export async function fetchInfluencerNotes(
     `/influencers/${encodeURIComponent(influencerId)}/notes`,
   );
   return InfluencerNotesResponseSchema.parse(res.data);
+}
+
+export async function fetchInfluencerActivity(
+  influencerId: string,
+): Promise<InfluencerActivityGroup[]> {
+  const res = await api.get(
+    `/influencers/${encodeURIComponent(influencerId)}/activity`,
+  );
+  return InfluencerActivityResponseSchema.parse(res.data).groups;
 }
 
 export async function createInfluencerMemo(

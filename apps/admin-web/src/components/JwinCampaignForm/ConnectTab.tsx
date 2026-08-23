@@ -1,64 +1,44 @@
-import { useState } from "react";
-import { Button, Input } from "@/components/ui";
-import type { AdminCampaignDetail } from "@/domains/jwin";
+import { Link } from "react-router-dom";
+import { Select } from "@/components/ui";
+import { JwinAccountStatusBadge } from "@/components/composites";
+import type { AdminCampaignDetail, AdminBrandAccount } from "@/domains/jwin";
 import styles from "./JwinCampaignForm.module.css";
 
 type Props = {
   detail: AdminCampaignDetail;
+  accounts: AdminBrandAccount[];
+  onSelectAccount: (brandAccountId: string) => void;
+  selectError: string | null;
 };
 
-export function ConnectTab({ detail }: Props) {
-  const [copied, setCopied] = useState(false);
-  const brandAccount = detail.brandAccount;
-
-  const copy = async () => {
-    if (!brandAccount) return;
-    await navigator.clipboard.writeText(brandAccount.connectUrl);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
-  };
-
-  if (!brandAccount) {
-    return (
-      <div className={styles.connect}>
-        <p>브랜드 계정이 없습니다.</p>
-      </div>
-    );
-  }
+export function ConnectTab({ detail, accounts, onSelectAccount, selectError }: Props) {
+  const connectable = accounts.filter((account) => account.status !== "PENDING");
 
   return (
     <div className={styles.connect}>
-      <div className={styles.statusRow}>
-        <span className={styles.label}>연동 상태</span>
-        {brandAccount.status === 'NEEDS_RECONNECT' ? (
-          <span className={styles.reconnect}>
-            <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" /> 재연동 필요
-          </span>
-        ) : brandAccount.xUsername ? (
-          <span className={styles.connected}>@{brandAccount.xUsername} 연동됨</span>
-        ) : (
-          <span>미연동</span>
-        )}
-      </div>
-
       <div className={styles.field}>
-        <span className={styles.label}>브랜드 연동 링크</span>
-        <div className={styles.urlBox}>
-          <Input className={styles.urlInput} value={brandAccount.connectUrl} readOnly />
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={copy}
-            iconLeft={<i className="fa-solid fa-copy" aria-hidden="true" />}
-          >
-            {copied ? "복사됨" : "복사"}
-          </Button>
-        </div>
-        <p className={styles.note}>
-          이 링크를 브랜드 담당자에게 전달하면 브랜드가 직접 X 계정을 연동합니다. 연동이 완료되면 위
-          연동 상태에 계정이 표시됩니다.
-        </p>
+        <span className={styles.label}>브랜드 계정</span>
+        <Select
+          value={detail.brandAccountId ?? ""}
+          onChange={(value) => value && onSelectAccount(value)}
+          placeholder="계정 선택"
+          options={connectable.map((account) => ({
+            value: account.id,
+            label: account.xUsername ? `@${account.xUsername} (${account.label})` : account.label,
+          }))}
+        />
+        {selectError && <span className={styles.error}>{selectError}</span>}
       </div>
+      {detail.brandAccount && (
+        <div className={styles.statusRow}>
+          <span className={styles.label}>상태</span>
+          <JwinAccountStatusBadge status={detail.brandAccount.status} />
+          {detail.brandAccount.xUsername && <span>@{detail.brandAccount.xUsername}</span>}
+        </div>
+      )}
+      <p className={styles.note}>
+        계정 추가·재연동은 <Link to="/jwin/accounts">브랜드 계정</Link> 페이지에서 합니다.
+      </p>
     </div>
   );
 }

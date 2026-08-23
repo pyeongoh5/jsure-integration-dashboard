@@ -89,7 +89,14 @@ export function JwinCampaignEdit() {
             slugLocked={form.detail?.status === "ACTIVE"}
           />
         )}
-        {tab === "connect" && form.detail && <ConnectTab detail={form.detail} />}
+        {tab === "connect" && form.detail && (
+          <ConnectTab
+            detail={form.detail}
+            accounts={form.accounts}
+            onSelectAccount={form.selectAccount}
+            selectError={form.selectError}
+          />
+        )}
       </div>
     </div>
   );

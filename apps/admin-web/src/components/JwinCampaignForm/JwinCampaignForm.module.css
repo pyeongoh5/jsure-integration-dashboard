@@ -53,26 +53,6 @@
   font-size: 14px;
 }
 
-.connected {
-  font-weight: 700;
-}
-
-.reconnect {
-  color: #b45309;
-  font-weight: 700;
-}
-
-.urlBox {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.urlInput {
-  flex: 1;
-  min-width: 0;
-}
-
 .note {
   font-size: 12px;
   color: var(--c-muted);

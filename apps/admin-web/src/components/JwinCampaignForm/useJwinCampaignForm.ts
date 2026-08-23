@@ -3,7 +3,9 @@ import {
   fetchCampaign,
   createCampaign,
   updateCampaign,
+  fetchBrandAccounts,
   type AdminCampaignDetail,
+  type AdminBrandAccount,
 } from "@/domains/jwin";
 import { utcIsoToJstLocal, jstLocalToUtcIso } from "./jwinDateTime";
 
@@ -71,6 +73,11 @@ export type UseJwinCampaignFormResult = {
   /** 저장 성공 시 캠페인 상세 반환 (생성이면 새 id 포함), 실패 시 null */
   save: () => Promise<AdminCampaignDetail | null>;
   reload: () => void;
+  /** 연동 탭에서 고를 수 있는 브랜드 계정 목록 (편집 모드에서만 로드) */
+  accounts: AdminBrandAccount[];
+  selectError: string | null;
+  /** 캠페인에 브랜드 계정을 연결. 실패 시 selectError에 메시지가 채워진다. */
+  selectAccount: (brandAccountId: string) => Promise<void>;
 };
 
 export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCampaignFormResult {
@@ -83,6 +90,8 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [accounts, setAccounts] = useState<AdminBrandAccount[]>([]);
+  const [selectError, setSelectError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!campaignId) return;
@@ -106,6 +115,36 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
       cancelled = true;
     };
   }, [campaignId, reloadKey]);
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+    let cancelled = false;
+    fetchBrandAccounts()
+      .then((result) => {
+        if (cancelled) return;
+        setAccounts(result.accounts);
+      })
+      .catch(() => {
+        // 목록 로드 실패는 드롭다운이 비는 것으로 드러나므로 별도 에러 상태 없이 무시한다.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
+
+  const selectAccount = useCallback(
+    async (brandAccountId: string) => {
+      if (!campaignId) return;
+      setSelectError(null);
+      try {
+        const result = await updateCampaign(campaignId, { brandAccountId });
+        setDetail(result);
+      } catch (error: unknown) {
+        setSelectError(error instanceof Error ? error.message : "계정 연결에 실패했습니다.");
+      }
+    },
+    [campaignId],
+  );
 
   const setField = useCallback((field: keyof JwinCampaignFormValues, value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -153,5 +192,8 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
     saveError,
     save,
     reload: () => setReloadKey((current) => current + 1),
+    accounts,
+    selectError,
+    selectAccount,
   };
 }

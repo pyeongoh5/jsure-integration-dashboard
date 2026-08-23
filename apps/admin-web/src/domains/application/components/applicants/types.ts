@@ -6,6 +6,7 @@ import type {
   CampaignSubType,
   SnsAccountSubType,
 } from "@jsure/shared";
+import type { HandleBySubType } from "@/domains/influencer/handleBySubType";
 
 // 검토/정산 단계로 넘어가지 않은 응모만 응모 관리에 노출한다.
 // 검토 단계 = SubmittedPost 존재(application.hasSubmittedPost=true).
@@ -58,6 +59,10 @@ export type Applicant = {
   influencerId: string;
   name: string;
   handle: string;
+  /** `handle` 이 속한 SNS 채널 — 프로필 아웃링크 조합용. 핸들이 없으면 null. */
+  handleSnsType: SnsAccountSubType | null;
+  /** SNS 채널별 핸들 — 채널 아이콘 프로필 아웃링크용. */
+  handleBySubType: HandleBySubType;
   /** 응모 SNS 핸들이 없을 때(가구매·단순리뷰) 표기할 대표 SNS. 우선순위 Instagram→X→TikTok. */
   representativeSns: { snsType: SnsAccountSubType; handle: string } | null;
   flagged: boolean;

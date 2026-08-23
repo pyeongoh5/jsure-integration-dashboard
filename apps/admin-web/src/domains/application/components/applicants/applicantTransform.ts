@@ -5,6 +5,7 @@ import {
   type CampaignSubType,
 } from "@jsure/shared";
 import { translate, type AdminLanguage } from "@i18n/admin";
+import { toHandleBySubType } from "@/domains/influencer/handleBySubType";
 import type { Applicant, ApplicantStatus, Media } from "./types";
 
 export const SNS_TO_MEDIA: Record<CampaignSubType, Media> = {
@@ -96,6 +97,8 @@ export function toApplicant(
     influencerId: application.influencer.id,
     name: application.influencer.name,
     handle: appliedAccounts[0]?.handle ?? "",
+    handleSnsType: appliedAccounts[0]?.snsType ?? null,
+    handleBySubType: toHandleBySubType(application.influencer.snsAccounts),
     representativeSns: representative
       ? { snsType: representative.snsType, handle: representative.handle }
       : null,

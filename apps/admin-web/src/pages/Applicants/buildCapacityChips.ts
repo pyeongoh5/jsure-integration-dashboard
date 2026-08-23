@@ -1,10 +1,10 @@
 import {
   SUB_TYPE_LABEL,
-  SUB_TYPE_OPTION_LABEL,
   usesOptionCountSplit,
   type ApprovedApplicantExportRow,
   type CampaignResponse,
 } from "@jsure/shared";
+import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
 import type { AdminTranslationKey } from "@i18n/admin";
 
 export type CapacityChip = {
@@ -37,8 +37,7 @@ export function buildCapacityChips(
     usesOptionCountSplit(recruit)
       ? recruit.options.map((optionConfig) => ({
           key: `${recruit.subType}:${optionConfig.option}`,
-          label:
-            SUB_TYPE_OPTION_LABEL[optionConfig.option] ?? optionConfig.option,
+          label: subTypeOptionLabel(optionConfig.option, translateLabel),
           approved: channels.filter(
             (channel) =>
               channel.subType === recruit.subType &&

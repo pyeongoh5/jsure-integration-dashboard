@@ -1,10 +1,11 @@
 import { Fragment } from "react";
 import type { AdminTranslationKey } from "@i18n/admin";
-import { ScrollTable, SubTypePill } from "@/components/composites";
+import { ScrollTable, SnsProfileLink, SubTypePill } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 import { CATEGORY_LABEL_KO } from "../applicants/types";
-import { SUB_TYPE_LABEL, SUB_TYPE_OPTION_LABEL } from "@jsure/shared";
+import { SUB_TYPE_LABEL } from "@jsure/shared";
+import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
 import {
   DRAFT_STATUS_LABEL,
   MEDIA_META,
@@ -269,17 +270,29 @@ export function DraftTable({
                             )}
                           </div>
                           {draft.influencerHandle ? (
-                            <div className={shared.infHandle}>@{draft.influencerHandle}</div>
+                            <div className={shared.infHandle}>
+                              <SnsProfileLink
+                                subType={draft.influencerHandleSnsType}
+                                handle={draft.influencerHandle}
+                              >
+                                @{draft.influencerHandle}
+                              </SnsProfileLink>
+                            </div>
                           ) : draft.representativeSns ? (
                             <div className={shared.infHandle}>
-                              {t(
-                                "domains.application.applicants.table.representativeSns",
-                                {
-                                  snsType:
-                                    SUB_TYPE_LABEL[draft.representativeSns.snsType],
-                                  handle: draft.representativeSns.handle,
-                                },
-                              )}
+                              <SnsProfileLink
+                                subType={draft.representativeSns.snsType}
+                                handle={draft.representativeSns.handle}
+                              >
+                                {t(
+                                  "domains.application.applicants.table.representativeSns",
+                                  {
+                                    snsType:
+                                      SUB_TYPE_LABEL[draft.representativeSns.snsType],
+                                    handle: draft.representativeSns.handle,
+                                  },
+                                )}
+                              </SnsProfileLink>
                             </div>
                           ) : null}
                         </div>
@@ -305,17 +318,21 @@ export function DraftTable({
                             );
                             return (
                               <Fragment key={subType}>
-                                <span
-                                  className={`${shared.media} ${MEDIA_CLASS[SNS_TO_MEDIA[subType]]}`}
-                                  title={media.label}
-                                  aria-label={media.label}
+                                <SnsProfileLink
+                                  subType={subType}
+                                  handle={draft.handleBySubType[subType]}
                                 >
-                                  <i className={media.icon} />
-                                </span>
+                                  <span
+                                    className={`${shared.media} ${MEDIA_CLASS[SNS_TO_MEDIA[subType]]}`}
+                                    title={media.label}
+                                    aria-label={media.label}
+                                  >
+                                    <i className={media.icon} />
+                                  </span>
+                                </SnsProfileLink>
                                 {selected && (
                                   <span className={shared.mediaLabel}>
-                                    {SUB_TYPE_OPTION_LABEL[selected.option] ??
-                                      selected.option}
+                                    {subTypeOptionLabel(selected.option, t)}
                                   </span>
                                 )}
                               </Fragment>

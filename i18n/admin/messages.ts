@@ -118,6 +118,10 @@ export const adminMessages = {
         fakePurchase: { ko: "가구매", en: "Fake purchase", ja: "仮購入" },
         simpleReview: { ko: "단순 리뷰", en: "Simple review", ja: "簡易レビュー" },
       },
+      subTypeOption: {
+        feed: { ko: "피드", en: "Feed", ja: "フィード" },
+        reels: { ko: "릴스", en: "Reels", ja: "リール" },
+      },
       applicants: {
         time: {
           justNow: { ko: "방금", en: "Just now", ja: "たった今" },

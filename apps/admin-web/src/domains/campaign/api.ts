@@ -1,5 +1,5 @@
+import { z } from "zod";
 import {
-  CampaignListResponseSchema,
   CampaignResponseSchema,
   type CampaignDraftRequest,
   type CampaignResponse,
@@ -8,9 +8,24 @@ import {
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
+/** 행 단위 검증을 위해 배열 요소는 여기서 파싱하지 않는다. */
+const CampaignListEnvelopeSchema = z.object({
+  campaigns: z.array(z.unknown()),
+});
+
+/** 스키마에 어긋난 행을 로그에서 특정하기 위한 최소 식별 정보. */
+const CampaignRowIdentitySchema = z.object({
+  id: z.string().optional(),
+  title: z.string().optional(),
+});
+
 /**
  * 캠페인 목록. 기본은 발행된 캠페인만 — 임시저장은 캠페인 관리 화면에서만
  * includeDrafts 로 받아온다.
+ *
+ * 검증은 행 단위다. 배열 통째로 parse 하면 캠페인 한 건이 스키마에 어긋나는
+ * 순간 목록이 빈 배열이 되어 앱 전체의 캠페인 선택 UI 가 동시에 죽는다.
+ * 어긋난 행은 콘솔에 id 와 위반 필드를 남기고 건너뛴다.
  */
 export async function listCampaigns(options?: {
   includeDrafts?: boolean;
@@ -18,7 +33,21 @@ export async function listCampaigns(options?: {
   const res = await api.get("/campaigns", {
     params: options?.includeDrafts ? { includeDrafts: 1 } : undefined,
   });
-  return CampaignListResponseSchema.parse(res.data).campaigns;
+  const rows = CampaignListEnvelopeSchema.parse(res.data).campaigns;
+  const campaigns: CampaignResponse[] = [];
+  for (const row of rows) {
+    const parsed = CampaignResponseSchema.safeParse(row);
+    if (parsed.success) {
+      campaigns.push(parsed.data);
+      continue;
+    }
+    const identity = CampaignRowIdentitySchema.safeParse(row);
+    console.error("캠페인 응답이 스키마에 어긋나 목록에서 제외했습니다", {
+      campaign: identity.success ? identity.data : null,
+      issues: parsed.error.issues,
+    });
+  }
+  return campaigns;
 }
 
 export async function getCampaign(id: string): Promise<CampaignResponse> {

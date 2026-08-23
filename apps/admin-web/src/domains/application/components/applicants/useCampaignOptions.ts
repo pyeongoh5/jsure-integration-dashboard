@@ -49,8 +49,10 @@ export function useCampaignOptions(): UseCampaignOptionsResult {
           })),
         );
       })
-      .catch(() => {
-        // chip falls back to raw id
+      .catch((cause: unknown) => {
+        // 조용히 비우면 필터가 "캠페인이 없습니다" 로 보여 원인을 알 수 없다.
+        // 응답 스키마 위반은 목록 전체를 날리므로 콘솔에 남긴다.
+        console.error("캠페인 목록을 불러오지 못했습니다", cause);
       })
       .finally(() => {
         if (!cancelled) setLoaded(true);

@@ -60,6 +60,12 @@ export function useApplicantsData(
       listApplicantsPage(filter, pageParam, APPLICANTS_PAGE_SIZE),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+    // 무한 쿼리의 refetch 는 이미 불러온 페이지를 전부 다시 호출한다. 전역 기본값
+    // (staleTime 0 + 창 포커스마다 refetch)을 그대로 쓰면 10페이지까지 스크롤한
+    // 뒤 탭을 한 번 오갈 때마다 요청이 10건 나간다. 목록 갱신은 승인·반려 후
+    // reload() 로 명시적으로 하므로 포커스 refetch 는 끈다.
+    refetchOnWindowFocus: false,
+    staleTime: 30_000,
   });
 
   // 상대시각 표기는 렌더 시점 기준. 페이지가 늘어날 때만 다시 계산한다.

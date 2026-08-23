@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import {
   SLOT_CONSUMING_STATUSES,
+  formatTitleWithTags,
   type CampaignParticipantsResponse,
   type CampaignReportParticipant,
   type CampaignReportResponse,
@@ -97,7 +98,8 @@ export class AdminReportsService {
 
       return {
         campaignId: campaign.id,
-        campaignTitle: campaign.title,
+        // 어드민 리포트 전용 응답이므로 제목 앞에 어드민 태그를 붙여 내려준다.
+        campaignTitle: formatTitleWithTags(campaign.tags, campaign.title),
         category: campaign.category,
         recruitStartDate: utcToJstDateStr(campaign.recruitStartAt),
         recruitEndDate: utcToJstDateStr(campaign.recruitEndAt),

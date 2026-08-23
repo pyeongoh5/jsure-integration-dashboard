@@ -496,6 +496,11 @@ export const CampaignFormSchema = z
   .object({
     category: CampaignCategorySchema.default("SNS"),
     title: z.string().min(1, "필수 입력").max(100),
+    /** 어드민 전용 관리 태그(차수 등). 인플루언서 화면에는 노출하지 않는다. */
+    tags: z
+      .array(z.string().min(1).max(20, "태그는 20자 이하로 입력해주세요"))
+      .max(10, "태그는 10개까지 입력할 수 있습니다")
+      .default([]),
     rewardType: RewardTypeSchema.default("UNIFIED"),
     rewardJpy: z
       .number({ invalid_type_error: "숫자를 입력해주세요" })
@@ -549,6 +554,7 @@ export const UpdateCampaignRequestSchema = z
   .object({
     category: CampaignCategorySchema.optional(),
     title: z.string().min(1).max(100).optional(),
+    tags: z.array(z.string().min(1).max(20)).max(10).optional(),
     rewardType: RewardTypeSchema.optional(),
     rewardJpy: z.number().int().nonnegative().optional(),
     recruitStartDate: DateOnly.optional(),
@@ -610,6 +616,7 @@ const CampaignRecruitDraftSchema = z.object({
  */
 export const CampaignDraftRequestSchema = z.object({
   title: z.string().min(1, "제목을 입력해주세요").max(100),
+  tags: z.array(z.string().min(1).max(20)).max(10).optional(),
   category: CampaignCategorySchema.optional(),
   rewardType: RewardTypeSchema.optional(),
   rewardJpy: z.number().int().nonnegative().nullable().optional(),
@@ -657,6 +664,8 @@ export const CampaignResponseSchema = z.object({
   id: z.string(),
   category: CampaignCategorySchema,
   title: z.string(),
+  /** 어드민 전용 관리 태그. 인플루언서 응답 스키마에는 절대 추가하지 않는다. */
+  tags: z.array(z.string()),
   rewardType: RewardTypeSchema,
   rewardJpy: z.number().int().nonnegative(),
   publishState: CampaignPublishStateSchema,
@@ -748,3 +757,15 @@ export const InfluencerCampaignListResponseSchema = z.object({
 export type InfluencerCampaignListResponse = z.infer<
   typeof InfluencerCampaignListResponseSchema
 >;
+
+/**
+ * 어드민 화면 전용 — 캠페인 제목 앞에 어드민 태그를 붙인다. (예: "[1차][긴급] 제목")
+ * 인플루언서 화면에서는 절대 사용하지 않는다.
+ */
+export function formatTitleWithTags(
+  tags: string[],
+  title: string,
+): string {
+  if (tags.length === 0) return title;
+  return `${tags.map((tag) => `[${tag}]`).join("")} ${title}`;
+}

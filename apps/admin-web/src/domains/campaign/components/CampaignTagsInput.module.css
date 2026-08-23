@@ -1,0 +1,52 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input {
+  height: 34px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.chipRemove {
+  background: transparent;
+  border: none;
+  color: #1d4ed8;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.chipRemove:hover {
+  color: #1e40af;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+}

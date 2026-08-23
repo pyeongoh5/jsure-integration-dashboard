@@ -23,6 +23,7 @@ function toFormValues(campaign: CampaignResponse): Values {
   return {
     category: campaign.category,
     title: campaign.title,
+    tags: campaign.tags,
     rewardType: campaign.rewardType,
     rewardJpy: campaign.rewardJpy,
     recruitStartDate: campaign.recruitStartDate,

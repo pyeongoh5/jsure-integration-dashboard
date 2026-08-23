@@ -793,6 +793,26 @@ export const adminMessages = {
           ja: "カテゴリーは作成後に変更できません。",
         },
         titleLabel: { ko: "캠페인 제목", en: "Campaign title", ja: "キャンペーンタイトル" },
+        tagsLabel: {
+          ko: "어드민 전용 태그",
+          en: "Admin-only tags",
+          ja: "管理者専用タグ",
+        },
+        tagsPlaceholder: {
+          ko: "예시: 1차, 추가모집 — 엔터/스페이스/콤마로 추가",
+          en: "e.g. 1st, extra recruit — press Enter/Space/Comma to add",
+          ja: "例: 1次, 追加募集 — Enter/スペース/カンマで追加",
+        },
+        tagsHint: {
+          ko: "어드민 화면에서만 캠페인 제목 앞에 표시됩니다. 인플루언서에게는 노출되지 않습니다.",
+          en: "Shown before the campaign title only in the admin screens. Never visible to influencers.",
+          ja: "管理者画面でのみキャンペーンタイトルの前に表示されます。インフルエンサーには表示されません。",
+        },
+        tagsRemoveAria: {
+          ko: "태그 삭제",
+          en: "Remove tag",
+          ja: "タグを削除",
+        },
         rewardTypeLabel: { ko: "보수 체계", en: "Reward structure", ja: "報酬体系" },
         rewardUnified: {
           ko: "통합 보수 (참여 SNS 수와 무관하게 고정)",

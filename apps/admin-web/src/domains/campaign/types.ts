@@ -40,6 +40,8 @@ export type Campaign = {
   id: string;
   brand: string;
   name: string;
+  /** 어드민 전용 관리 태그 — 카드에서 배지로만 표시한다. */
+  tags: string[];
   description: string;
   category: CampaignCategory;
   status: CampaignStatus;

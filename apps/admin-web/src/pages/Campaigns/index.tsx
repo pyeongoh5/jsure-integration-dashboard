@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import type { CampaignResponse } from "@jsure/shared";
+import { formatRewardRange, type CampaignResponse } from "@jsure/shared";
 import { Card } from "@/components/composites/Card";
 import {
   FilterChipBar,
@@ -81,10 +81,6 @@ function formatUpdatedAt(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function formatReward(jpy: number): string {
-  return `¥${jpy.toLocaleString()}円`;
-}
-
 function stripHtml(html: string): string {
   return html
     .replace(/<[^>]+>/g, " ")
@@ -111,7 +107,8 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     thumbIcon: "📋",
     thumbnailUrl: c.thumbnailUrl,
     period: formatDateRange(c.recruitStartDate, c.recruitEndDate),
-    reward: formatReward(c.rewardJpy),
+    // 개별보수(PER_SUBTYPE)는 c.rewardJpy 가 0 이고 실제 보수가 recruit/옵션에 있다.
+    reward: formatRewardRange(c),
     approved: c.approvedCount,
     applied: c.appliedCount,
     capacity,

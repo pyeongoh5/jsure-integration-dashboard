@@ -43,7 +43,7 @@ export const adminMessages = {
       notices: { ko: "공지사항", en: "Notices", ja: "お知らせ" },
       messageTemplates: { ko: "메시지 템플릿", en: "Message Templates", ja: "メッセージテンプレート" },
       team: { ko: "팀원/권한", en: "Team & Roles", ja: "チーム・権限" },
-      brands: { ko: "광고주(브랜드)", en: "Advertisers (Brands)", ja: "広告主（ブランド）" },
+      brands: { ko: "광고주(브랜드)", en: "Brands", ja: "ブランド" },
     },
   },
   components: {
@@ -59,7 +59,7 @@ export const adminMessages = {
       italic: { ko: "기울임", en: "Italic", ja: "斜体" },
       strikethrough: { ko: "취소선", en: "Strikethrough", ja: "取り消し線" },
       bulletList: { ko: "• 목록", en: "• List", ja: "• リスト" },
-      orderedList: { ko: "1. 목록", en: "1. List", ja: "1. リスト" },
+      orderedList: { ko: "1. 목록", en: "1. OrderedList", ja: "1. 注文リスト" },
       blockquote: { ko: "인용", en: "Quote", ja: "引用" },
       textColor: { ko: "글자 색", en: "Text color", ja: "文字色" },
       alignLeft: { ko: "좌", en: "Left", ja: "左" },
@@ -115,8 +115,8 @@ export const adminMessages = {
       },
       category: {
         sns: { ko: "SNS", en: "SNS", ja: "SNS" },
-        fakePurchase: { ko: "가구매", en: "Fake purchase", ja: "仮購入" },
-        simpleReview: { ko: "단순 리뷰", en: "Simple review", ja: "簡易レビュー" },
+        pendingPurchase: { ko: "가구매", en: "Pending purchase", ja: "仮購入" },
+        quickReview: { ko: "단순 리뷰", en: "Quick review", ja: "簡易レビュー" },
       },
       subTypeOption: {
         feed: { ko: "피드", en: "Feed", ja: "フィード" },
@@ -155,7 +155,7 @@ export const adminMessages = {
           empty: {
             ko: "해당 상태의 응모자가 없습니다.",
             en: "No applicants in this status.",
-            ja: "この状態の応募者はいません。",
+            ja: "このステータスの応募者はいません。",
           },
           flagged: { ko: "대상외", en: "Excluded", ja: "対象外" },
           representativeSns: {
@@ -197,7 +197,7 @@ export const adminMessages = {
           title: {
             ko: "심사를 되돌릴까요?",
             en: "Undo the review?",
-            ja: "審査を元に戻しますか？",
+            ja: "審査をやり直しますか？",
           },
           hint: {
             ko: "대기 상태로 되돌립니다.",
@@ -416,7 +416,7 @@ export const adminMessages = {
           reviewScreenshots: {
             ko: "리뷰 스크린샷",
             en: "Review screenshots",
-            ja: "レビュースクリーンショット",
+            ja: "スクリーンショットを確認する",
           },
           screenshots: { ko: "스크린샷", en: "Screenshots", ja: "スクリーンショット" },
           orderInfo: { ko: "주문 정보", en: "Order information", ja: "注文情報" },
@@ -494,7 +494,7 @@ export const adminMessages = {
             en: "Application review undone",
             ja: "応募審査取り消し",
           },
-          applicationShip: { ko: "택배 발송", en: "Package shipped", ja: "発送" },
+          applicationShip: { ko: "택배 발송", en: "Package shipped", ja: "発送済み" },
           applicationDeliver: { ko: "배송 완료", en: "Delivered", ja: "配送完了" },
           submissionApprove: { ko: "제출물 승인", en: "Submission approved", ja: "提出物承認" },
           submissionReject: {
@@ -571,7 +571,7 @@ export const adminMessages = {
           changedFields: { ko: "변경 필드", en: "Changed fields", ja: "変更フィールド" },
           title: { ko: "제목", en: "Title", ja: "タイトル" },
           publishState: { ko: "발행 상태", en: "Publish state", ja: "公開状態" },
-          hardDeleted: { ko: "물리 삭제", en: "Hard deleted", ja: "物理削除" },
+          hardDeleted: { ko: "물리 삭제", en: "Hard deleted", ja: "完全削除" },
           memoId: { ko: "메모 ID", en: "Memo ID", ja: "メモID" },
           previousFlaggedById: {
             ko: "이전 설정자",
@@ -658,8 +658,8 @@ export const adminMessages = {
         },
       },
       actionsMenu: {
-        edit: { ko: "캠페인 수정", en: "Edit campaign", ja: "キャンペーン修正" },
-        copy: { ko: "캠페인 복사", en: "Copy campaign", ja: "キャンペーンコピー" },
+        edit: { ko: "캠페인 수정", en: "Edit campaign", ja: "キャンペーンを編集" },
+        copy: { ko: "캠페인 복사", en: "Copy campaign", ja: "キャンペーンをコピー" },
         bump: {
           ko: "캠페인 끌어올리기",
           en: "Bump campaign",
@@ -878,14 +878,14 @@ export const adminMessages = {
           ja: "PNG・JPEG・WebP、5MB以下",
         },
         uploading: { ko: "업로드 중...", en: "Uploading...", ja: "アップロード中..." },
-        sectionRecruitsFake: {
+        sectionRecruitsPending: {
           ko: "가구매 채널별 모집",
-          en: "Recruitment by fake-purchase channel",
+          en: "Recruitment by pending-purchase channel",
           ja: "仮購入チャネル別募集",
         },
-        sectionRecruitsSimpleReview: {
+        sectionRecruitsQuickReview: {
           ko: "단순 리뷰 채널별 모집",
-          en: "Recruitment by simple-review channel",
+          en: "Recruitment by quick-review channel",
           ja: "簡易レビューチャネル別募集",
         },
         sectionRecruitsSns: {
@@ -895,10 +895,10 @@ export const adminMessages = {
         },
         recruitsHintFake: {
           ko: "가구매를 진행할 채널을 선택하고, 채널별 모집 인원과 상품 정보를 입력하세요.",
-          en: "Select the channels for fake purchases and enter the recruitment count and product information for each channel.",
+          en: "Select the channels for pending purchases and enter the recruitment count and product information for each channel.",
           ja: "仮購入を行うチャネルを選択し、チャネルごとの募集人数と商品情報を入力してください。",
         },
-        recruitsHintSimpleReview: {
+        recruitsHintQuickReview: {
           ko: "리뷰를 받을 채널(LIPS/@cosme)을 선택하세요. 선택한 채널은 모두 필수 응모이며, 모집 인원은 캠페인 단위로 하나만 입력합니다.",
           en: "Select the channels (LIPS/@cosme) to receive reviews. All selected channels require participation, and the recruitment count is entered once per campaign.",
           ja: "レビューを受け取るチャネル（LIPS/@cosme）を選択してください。選択したチャネルはすべて必須応募となり、募集人数はキャンペーン単位で一つだけ入力します。",

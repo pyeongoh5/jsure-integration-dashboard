@@ -403,7 +403,7 @@ export function CampaignForm({
                             });
                           }}
                         />
-                        {t("domains.application.category.pendingPurchase")}
+                        {t("domains.application.category.fakePurchase")}
                       </label>
                       <label className={styles.radioOption}>
                         <input
@@ -420,7 +420,7 @@ export function CampaignForm({
                             });
                           }}
                         />
-                        {t("domains.application.category.quickReview")}
+                        {t("domains.application.category.simpleReview")}
                       </label>
                     </div>
                     {isEditMode && (
@@ -696,16 +696,16 @@ export function CampaignForm({
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>
             {methods.watch("category") === "FAKE_PURCHASE"
-              ? t("domains.campaign.form.sectionRecruitsPending")
+              ? t("domains.campaign.form.sectionRecruitsFake")
               : methods.watch("category") === "SIMPLE_REVIEW"
-                ? t("domains.campaign.form.sectionRecruitsQuickReview")
+                ? t("domains.campaign.form.sectionRecruitsSimpleReview")
                 : t("domains.campaign.form.sectionRecruitsSns")}
           </h2>
           <p className={styles.subLabel}>
             {methods.watch("category") === "FAKE_PURCHASE"
               ? t("domains.campaign.form.recruitsHintFake")
               : methods.watch("category") === "SIMPLE_REVIEW"
-                ? t("domains.campaign.form.recruitsHintQuickReview")
+                ? t("domains.campaign.form.recruitsHintSimpleReview")
                 : t("domains.campaign.form.recruitsHintSns")}
           </p>
           {methods.watch("rewardType") === "PER_SUBTYPE" && (

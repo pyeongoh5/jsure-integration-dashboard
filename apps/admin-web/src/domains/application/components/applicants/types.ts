@@ -115,8 +115,8 @@ export const APPLICANT_STATUS_LABEL: Record<ApplicantStatus, AdminTranslationKey
 
 export const CATEGORY_LABEL_KO: Record<CampaignCategory, AdminTranslationKey> = {
   SNS: "domains.application.category.sns",
-  FAKE_PURCHASE: "domains.application.category.pendingPurchase",
-  SIMPLE_REVIEW: "domains.application.category.quickReview",
+  FAKE_PURCHASE: "domains.application.category.fakePurchase",
+  SIMPLE_REVIEW: "domains.application.category.simpleReview",
 };
 
 export const CATEGORY_FILTER_OPTIONS: {

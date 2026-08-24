@@ -115,8 +115,8 @@ export const adminMessages = {
       },
       category: {
         sns: { ko: "SNS", en: "SNS", ja: "SNS" },
-        pendingPurchase: { ko: "가구매", en: "Pending purchase", ja: "仮購入" },
-        quickReview: { ko: "단순 리뷰", en: "Quick review", ja: "簡易レビュー" },
+        fakePurchase: { ko: "가구매", en: "Pending purchase", ja: "仮購入" },
+        simpleReview: { ko: "단순 리뷰", en: "Quick review", ja: "簡易レビュー" },
       },
       subTypeOption: {
         feed: { ko: "피드", en: "Feed", ja: "フィード" },
@@ -878,12 +878,12 @@ export const adminMessages = {
           ja: "PNG・JPEG・WebP、5MB以下",
         },
         uploading: { ko: "업로드 중...", en: "Uploading...", ja: "アップロード中..." },
-        sectionRecruitsPending: {
+        sectionRecruitsFake: {
           ko: "가구매 채널별 모집",
           en: "Recruitment by pending-purchase channel",
           ja: "仮購入チャネル別募集",
         },
-        sectionRecruitsQuickReview: {
+        sectionRecruitsSimpleReview: {
           ko: "단순 리뷰 채널별 모집",
           en: "Recruitment by quick-review channel",
           ja: "簡易レビューチャネル別募集",
@@ -898,7 +898,7 @@ export const adminMessages = {
           en: "Select the channels for pending purchases and enter the recruitment count and product information for each channel.",
           ja: "仮購入を行うチャネルを選択し、チャネルごとの募集人数と商品情報を入力してください。",
         },
-        recruitsHintQuickReview: {
+        recruitsHintSimpleReview: {
           ko: "리뷰를 받을 채널(LIPS/@cosme)을 선택하세요. 선택한 채널은 모두 필수 응모이며, 모집 인원은 캠페인 단위로 하나만 입력합니다.",
           en: "Select the channels (LIPS/@cosme) to receive reviews. All selected channels require participation, and the recruitment count is entered once per campaign.",
           ja: "レビューを受け取るチャネル（LIPS/@cosme）を選択してください。選択したチャネルはすべて必須応募となり、募集人数はキャンペーン単位で一つだけ入力します。",

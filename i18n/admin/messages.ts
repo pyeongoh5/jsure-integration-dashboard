@@ -1049,7 +1049,7 @@ export const adminMessages = {
       checkEmailAndPassword: {
         ko: "이메일 형식과 비밀번호(8자 이상)를 확인해주세요.",
         en: "Please check the email format and password (at least 8 characters).",
-        ja: "メールアドレスの形式とパスワード（8文字以上）をご確認ください。",
+        ja: "メールアドレスとパスワード（8文字以上）をご確認ください。",
       },
     },
     notice: {
@@ -1157,7 +1157,7 @@ export const adminMessages = {
         flexHint: {
           ko: "LINE Flex 메시지로 발송되며 인라인 굵기/색은 단순화될 수 있습니다.",
           en: "Sent as a LINE Flex message; inline bold/colors may be simplified.",
-          ja: "LINE Flexメッセージとして送信され、インラインの太字・色は簡略化される場合があります。",
+          ja: "LINE Flexメッセージとして送信されます。太字・文字色は簡略化される場合があります。",
         },
         heroLabel: {
           ko: "상단 이미지 (선택, 1장)",
@@ -1171,7 +1171,7 @@ export const adminMessages = {
         recipientsLabel: {
           ko: "수신자 ({selected}/{total}명 선택)",
           en: "Recipients ({selected}/{total} selected)",
-          ja: "受信者（{selected}/{total}名選択）",
+          ja: "受信者（{selected}/{total}選択）",
         },
         selectAll: { ko: "전체 선택", en: "Select all", ja: "すべて選択" },
         deselectAll: { ko: "전체 해제", en: "Deselect all", ja: "すべて解除" },
@@ -1200,7 +1200,7 @@ export const adminMessages = {
         imageUploadErrorState: {
           ko: "이미지 업로드 실패 상태입니다. 이미지를 다시 선택하거나 제거해 주세요",
           en: "The image upload failed. Please reselect or remove the image",
-          ja: "画像のアップロードに失敗した状態です。画像を選び直すか削除してください",
+          ja: "画像のアップロードに失敗しました。画像を選び直すか削除してください",
         },
         confirmSend: {
           ko: "{count}명에게 메시지를 발송할까요? 발송 후에는 되돌릴 수 없습니다.",
@@ -1286,7 +1286,7 @@ export const adminMessages = {
         snsPostOverdueReminder: {
           ko: "6-r. 게시 마감 다음날 독촉",
           en: "6-r. Day-after post deadline follow-up",
-          ja: "6-r. 投稿締切翌日の催促",
+          ja: "6-r. 投稿締切翌日のフォローアップ",
         },
         snsPostApproved: {
           ko: "7-a. 게시물 승인",
@@ -1381,7 +1381,7 @@ export const adminMessages = {
         fakePurchaseReviewOverdueReminder: {
           ko: "5-r. 리뷰 마감 다음날 독촉",
           en: "5-r. Day-after review deadline follow-up",
-          ja: "5-r. レビュー締切翌日の催促",
+          ja: "5-r. レビュー締切翌日のフォローアップ",
         },
         fakePurchaseSettlementCompleted: {
           ko: "6. 정산 완료",
@@ -1478,7 +1478,7 @@ export const adminMessages = {
         postOverdueReminder: {
           ko: "게시 마감 다음날 발송 (미제출자 독촉)",
           en: "Sent the day after the post deadline (follow-up for non-submitters)",
-          ja: "投稿締切翌日に送信（未提出者への催促）",
+          ja: "投稿締切翌日に送信（未提出者へのフォローアップ）",
         },
         postRejectionReminder: {
           ko: "게시물 반려 3일 후 발송 (재제출 독려)",
@@ -1493,7 +1493,7 @@ export const adminMessages = {
         insightOverdueReminder: {
           ko: "게시물 제출 8일 후 발송 (미제출자 독촉)",
           en: "Sent 8 days after post submission (follow-up for non-submitters)",
-          ja: "投稿提出8日後に送信（未提出者への催促）",
+          ja: "投稿提出8日後に送信（未提出者へのフォローアップ）",
         },
         orderDeadlineReminder: {
           ko: "주문 마감 3일 전·당일 발송",
@@ -1513,7 +1513,7 @@ export const adminMessages = {
         reviewOverdueReminder: {
           ko: "리뷰 마감 다음날 발송 (미제출자 독촉)",
           en: "Sent the day after the review deadline (follow-up for non-submitters)",
-          ja: "レビュー締切翌日に送信（未提出者への催促）",
+          ja: "レビュー締切翌日に送信（未提出者へのフォローアップ）",
         },
         reviewRejectionReminder: {
           ko: "리뷰 반려 3일 후 발송 (재제출 독려)",
@@ -1525,7 +1525,7 @@ export const adminMessages = {
     influencer: {
       csv: {
         nameKana: { ko: "이름(카나)", en: "Name (kana)", ja: "名前（カナ）" },
-        phone: { ko: "연락처", en: "Phone", ja: "連絡先" },
+        phone: { ko: "연락처", en: "Phone", ja: "電話番号" },
         accountColumn: { ko: "{sns} 계정", en: "{sns} account", ja: "{sns}アカウント" },
         followerColumn: { ko: "{sns} 팔로워", en: "{sns} followers", ja: "{sns}フォロワー" },
         country: { ko: "주소 국가", en: "Country", ja: "住所の国" },
@@ -1578,10 +1578,10 @@ export const adminMessages = {
         saving: { ko: "저장 중…", en: "Saving…", ja: "保存中…" },
         tabMemo: { ko: "메모", en: "Memo", ja: "メモ" },
         tabHistory: { ko: "히스토리", en: "History", ja: "履歴" },
-        memoListTitle: { ko: "작성된 메모", en: "Memos", ja: "作成されたメモ" },
+        memoListTitle: { ko: "작성된 메모", en: "Memos", ja: "メモ" },
         memoEmpty: {
           ko: "작성된 메모가 없습니다.",
-          en: "No memos yet.",
+          en: "No memos have been created.",
           ja: "作成されたメモはありません。",
         },
         history: {
@@ -1597,7 +1597,7 @@ export const adminMessages = {
           },
           tabAll: { ko: "전체", en: "All", ja: "すべて" },
           tabApplied: { ko: "응모", en: "Applied", ja: "応募" },
-          tabCompleted: { ko: "참가완료", en: "Completed", ja: "参加完了" },
+          tabCompleted: { ko: "참가완료", en: "Completed", ja: "完了" },
           tabRejected: { ko: "반려", en: "Rejected", ja: "却下" },
           columnCampaign: { ko: "캠페인", en: "Campaign", ja: "キャンペーン" },
           columnAction: { ko: "활동", en: "Activity", ja: "活動" },
@@ -1609,9 +1609,9 @@ export const adminMessages = {
             approved: { ko: "승인", en: "Approved", ja: "承認済み" },
             shipped: { ko: "배송중", en: "Shipping", ja: "配送中" },
             delivered: { ko: "수령 확인 대기", en: "Awaiting receipt", ja: "受取確認待ち" },
-            orderSubmitted: { ko: "주문번호 제출", en: "Order submitted", ja: "注文番号提出" },
-            reviewSubmitted: { ko: "제출물 검토중", en: "Under review", ja: "提出物審査中" },
-            completed: { ko: "참가완료", en: "Completed", ja: "参加完了" },
+            orderSubmitted: { ko: "주문번호 제출", en: "Order submitted", ja: "注文提出" },
+            reviewSubmitted: { ko: "제출물 검토중", en: "Under review", ja: "審査中" },
+            completed: { ko: "참가완료", en: "Completed", ja: "完了" },
             rejected: { ko: "반려", en: "Rejected", ja: "却下" },
             cancelled: { ko: "취소", en: "Cancelled", ja: "キャンセル" },
           },
@@ -1703,7 +1703,7 @@ export const adminMessages = {
         },
         csvDownload: { ko: "CSV 다운로드", en: "Download CSV", ja: "CSVダウンロード" },
         capacity: { ko: "정원", en: "Capacity", ja: "定員" },
-        total: { ko: "전체", en: "Total", ja: "全体" },
+        total: { ko: "전체", en: "Total", ja: "合計" },
       },
     },
     drafts: {
@@ -1738,14 +1738,14 @@ export const adminMessages = {
         draftSubtitle: {
           ko: "이어서 작성한 뒤 생성하거나 임시저장으로 남겨두세요.",
           en: "Continue editing, then create it or keep it as a draft.",
-          ja: "続きを作成してから作成するか、下書きのままにしておいてください。",
+          ja: "続きを編集してから作成するか、下書きのままにしておいてください。",
         },
         subtitle: {
           ko: "캠페인 정보를 수정하세요.",
           en: "Edit the campaign information.",
           ja: "キャンペーン情報を修正してください。",
         },
-        submitSave: { ko: "수정 저장", en: "Save changes", ja: "修正を保存" },
+        submitSave: { ko: "수정 저장", en: "Save changes", ja: "編集を保存" },
       },
       new: {
         title: { ko: "캠페인 만들기", en: "Create campaign", ja: "キャンペーン作成" },
@@ -1889,12 +1889,12 @@ export const adminMessages = {
       categorySns: { ko: "SNS 캠페인", en: "SNS campaigns", ja: "SNSキャンペーン" },
       categoryFakePurchase: {
         ko: "가구매 캠페인",
-        en: "Fake purchase campaigns",
+        en: "Pending purchase campaigns",
         ja: "仮購入キャンペーン",
       },
       categorySimpleReview: {
         ko: "단순 리뷰 캠페인",
-        en: "Simple review campaigns",
+        en: "Quick review campaigns",
         ja: "簡易レビューキャンペーン",
       },
       toggleFailed: {
@@ -1904,7 +1904,7 @@ export const adminMessages = {
       },
       headerTrigger: { ko: "트리거", en: "Trigger", ja: "トリガー" },
       headerStatus: { ko: "상태", en: "Status", ja: "ステータス" },
-      headerUpdatedAt: { ko: "수정일", en: "Updated", ja: "更新日" },
+      headerUpdatedAt: { ko: "수정일", en: "Updated at", ja: "更新日" },
       headerUpdatedBy: { ko: "수정자", en: "Updated by", ja: "更新者" },
       toggleAria: {
         ko: "{label} 활성화 토글",
@@ -1961,8 +1961,8 @@ export const adminMessages = {
       },
       searchPlaceholder: {
         ko: "이름, 이메일, 핸들 검색",
-        en: "Search by name, email, or handle",
-        ja: "名前・メール・ハンドルで検索",
+        en: "Search by name, email, or handle name",
+        ja: "名前・メール・ハンドル名で検索",
       },
       csvDownload: { ko: "CSV 다운로드", en: "Download CSV", ja: "CSVダウンロード" },
       sendMessage: { ko: "메시지 발송", en: "Send message", ja: "メッセージ送信" },

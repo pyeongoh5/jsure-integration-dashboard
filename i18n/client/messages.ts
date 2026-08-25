@@ -543,7 +543,7 @@ export const messages = {
         jp: "投稿7日後にインサイトを提出します",
         kr: "게시 후 7일 뒤 인사이트 제출",
       },
-      confirmYakkiho: { jp: "薬機法の遵守します", kr: "약기법 준수" },
+      confirmYakkiho: { jp: "薬事法の遵守", kr: "약기법 준수" },
       confirmGuideline: { jp: "ガイドラインを確認し、遵守します", kr: "가이드라인 확인·준수" },
       snsFollower: { jp: "フォロワー", kr: "팔로워" },
       snsSubscriber: { jp: "登録者", kr: "구독자" },

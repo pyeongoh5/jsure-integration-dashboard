@@ -18,17 +18,17 @@ export const messages = {
       backAriaLabel: { jp: "戻る", kr: "뒤로" },
     },
     toast: {
-      closeAriaLabel: { jp: "閉じる", kr: "닫기" }, // new
+      closeAriaLabel: { jp: "閉じる", kr: "닫기" },
     },
   },
   upload: {
     invalidType: {
       jp: "PNG, JPEG, WebP 形式のみアップロードできます",
       kr: "PNG, JPEG, WebP 형식만 업로드할 수 있습니다",
-    }, // new
-    oversizedPrefix: { jp: "ファイルサイズが大きすぎます (", kr: "파일 크기가 너무 큽니다 (" }, // new
-    oversizedSuffix: { jp: "MB以下)", kr: "MB 이하)" }, // new
-    failed: { jp: "アップロードに失敗しました", kr: "업로드에 실패했습니다" }, // new
+    },
+    oversizedPrefix: { jp: "ファイルサイズが大きすぎます (", kr: "파일 크기가 너무 큽니다 (" },
+    oversizedSuffix: { jp: "MB以下)", kr: "MB 이하)" },
+    failed: { jp: "アップロードに失敗しました", kr: "업로드에 실패했습니다" },
   },
   auth: {
     terms: {
@@ -44,7 +44,7 @@ export const messages = {
   campaign: {
     card: {
       ended: { jp: "終了", kr: "종료" },
-      full: { jp: "募集終了", kr: "모집 완료" }, 
+      full: { jp: "募集終了", kr: "모집 완료" },
       upcoming: { jp: "開始前", kr: "시작 전" },
       upcomingStart: { jp: "開始予定", kr: "시작 예정" },
       followerLabel: { jp: "フォロワー", kr: "팔로워" },
@@ -56,12 +56,12 @@ export const messages = {
       yenSuffix: { jp: "円", kr: "엔" },
       recruitPrefix: { jp: "募集", kr: "모집" },
       peopleSuffix: { jp: "名", kr: "명" },
-      capacityLabel: { jp: "募集定員", kr: "모집 정원" }, // new
+      capacityLabel: { jp: "募集定員", kr: "모집 정원" },
     },
     category: {
       sns: { jp: "SNS", kr: "SNS" },
       fakePurchase: { jp: "Qoo10 購入型レビュー", kr: "Qoo10 구입형 리뷰" },
-      simpleReview: { jp: "LIPS / @cosme", kr: "립스/앳코스메" }, // new
+      simpleReview: { jp: "LIPS / @cosme", kr: "립스/앳코스메" },
     },
     subType: {
       qoo10: { jp: "Qoo10", kr: "Qoo10" },
@@ -106,7 +106,6 @@ export const messages = {
       addressLine2Placeholder: { jp: "ABCビル 502号室", kr: "ABC빌딩 502호" },
     },
     country: {
-      // new
       label: { jp: "国", kr: "국가" },
       // 키 이름을 jp/kr 로 두면 로케일 키와 겹쳐 검증기가 leaf 로 오인한다.
       japan: { jp: "日本", kr: "일본" },
@@ -131,7 +130,6 @@ export const messages = {
       },
     },
     addressKr: {
-      // new
       postalCodeLabel: { jp: "郵便番号", kr: "우편번호" },
       postalCodeError: { jp: "郵便番号は5桁", kr: "우편번호는 5자리 숫자" },
       postalCodePlaceholder: { jp: "住所検索から入力", kr: "주소 검색으로 입력" },
@@ -166,7 +164,6 @@ export const messages = {
       addressLine2Placeholder: { jp: "4階 401号", kr: "4층 401호" },
     },
     bankKr: {
-      // new
       searchPlaceholder: { jp: "銀行名 / 3桁コード", kr: "은행명 / 3자리 코드" },
       bankLabel: { jp: "銀行", kr: "은행" },
       bankError: { jp: "銀行を選択してください", kr: "은행을 선택해 주세요" },
@@ -198,8 +195,8 @@ export const messages = {
       POST_REJECTED: { jp: "投稿差し戻し", kr: "게시 반려" },
       INSIGHT_DUE: { jp: "インサイト提出", kr: "인사이트 제출" },
       REVIEWING: { jp: "確認中", kr: "검수 중" },
-      COMPLETED: { jp: "精算待ち", kr: "정산 대기" }, // new
-      SETTLED: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
+      COMPLETED: { jp: "精算待ち", kr: "정산 대기" },
+      SETTLED: { jp: "キャンペーン終了", kr: "캠페인 종료" },
       REJECTED: { jp: "未選定", kr: "미선정" },
       CANCELLED: { jp: "キャンセル", kr: "취소" },
     },
@@ -220,20 +217,19 @@ export const messages = {
       step4: { jp: "受取", kr: "수령" },
       step5: { jp: "投稿", kr: "게시" },
       step6: { jp: "確認", kr: "검수" },
-      step7: { jp: "精算待ち", kr: "정산 대기" }, // new
-      step8: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
+      step7: { jp: "精算待ち", kr: "정산 대기" },
+      step8: { jp: "キャンペーン終了", kr: "캠페인 종료" },
       terminalRejected: { jp: "未選定", kr: "미선정" },
       terminalCancelled: { jp: "キャンセル", kr: "취소" },
       simpleReview: {
-        // new
         step1: { jp: "応募", kr: "응모" },
         step2: { jp: "承認", kr: "승인" },
-        step3: { jp: "発送", kr: "발송" }, // new
-        step4: { jp: "受領確認", kr: "수령확인" }, // new
-        step5: { jp: "レビュー提出", kr: "리뷰 제출" }, // new
-        step6: { jp: "確認", kr: "검수" }, // new
-        step7: { jp: "精算待ち", kr: "정산 대기" }, // new
-        step8: { jp: "キャンペーン終了", kr: "캠페인 종료" }, // new
+        step3: { jp: "発送", kr: "발송" },
+        step4: { jp: "受領確認", kr: "수령확인" },
+        step5: { jp: "レビュー提出", kr: "리뷰 제출" },
+        step6: { jp: "確認", kr: "검수" },
+        step7: { jp: "精算待ち", kr: "정산 대기" },
+        step8: { jp: "キャンペーン終了", kr: "캠페인 종료" },
       },
     },
     filters: {
@@ -242,12 +238,12 @@ export const messages = {
       statusInProgress: { jp: "進行中", kr: "진행 중" },
       statusEnded: { jp: "終了", kr: "종료" },
       statusCancelled: { jp: "キャンセル", kr: "취소" },
-      categoryChipPrefix: { jp: "カテゴリ", kr: "카테고리" }, // new
-      categoryChipEmpty: { jp: "+ カテゴリ", kr: "+ 카테고리" }, // new
+      categoryChipPrefix: { jp: "カテゴリ", kr: "카테고리" },
+      categoryChipEmpty: { jp: "+ カテゴリ", kr: "+ 카테고리" },
       statusChipPrefix: { jp: "状態", kr: "상태" },
       statusChipEmpty: { jp: "+ 状態", kr: "+ 상태" },
       popoverStatusTitle: { jp: "状態を選択", kr: "상태 선택" },
-      popoverCategoryTitle: { jp: "カテゴリを選択（複数可）", kr: "카테고리 선택 (복수 가능)" }, // new
+      popoverCategoryTitle: { jp: "カテゴリを選択（複数可）", kr: "카테고리 선택 (복수 가능)" },
       popoverClose: { jp: "閉じる", kr: "닫기" },
     },
     cancelConfirm: {
@@ -313,22 +309,18 @@ export const messages = {
       },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       deadlineDaysPrefix: {
-        // new
         jp: "注文期限まであと ",
         kr: "주문 기한까지 ",
       },
       deadlineDaysSuffix: {
-        // new
         jp: " 日です",
         kr: "일 남았습니다",
       },
       deadlineToday: {
-        // new
         jp: "本日が注文期限です",
         kr: "오늘이 주문 기한입니다",
       },
       deadlinePassed: {
-        // new
         jp: "注文期限を過ぎています。ご応募が取り消される場合があります",
         kr: "주문 기한이 지났습니다. 응모가 취소될 수 있습니다",
       },
@@ -340,12 +332,11 @@ export const messages = {
         kr: "올바른 URL을 입력해 주세요",
       },
       screenshotsRequiredPrefix: {
-        // new — 필수 매수가 채널 수에 따라 2~4장 가변
+        // — 필수 매수가 채널 수에 따라 2~4장 가변
         jp: "レビューのスクリーンショットを",
         kr: "리뷰 스크린샷을 ",
       },
       screenshotsRequiredSuffix: {
-        // new
         jp: "枚以上ご提出ください",
         kr: "장 이상 제출해 주세요",
       },
@@ -398,8 +389,8 @@ export const messages = {
       removeAriaLabel: { jp: "削除", kr: "삭제" },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       submit: { jp: "インサイトを提出", kr: "인사이트 제출" },
-      nextStep: { jp: "次へ", kr: "다음" }, // new — 서브타입 퍼널 이동
-      prevStep: { jp: "戻る", kr: "이전" }, // new
+      nextStep: { jp: "次へ", kr: "다음" }, // — 서브타입 퍼널 이동
+      prevStep: { jp: "戻る", kr: "이전" },
     },
     postForm: {
       urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
@@ -414,7 +405,7 @@ export const messages = {
       deadlineLabelPrefix: { jp: "投稿締切日: ", kr: "게시 마감일: " },
     },
     crossPost: {
-      // new — 응모하지 않은 플랫폼에 함께 공유한 기록(선택 입력)
+      // — 응모하지 않은 플랫폼에 함께 공유한 기록(선택 입력)
       title: {
         jp: "他のプラットフォームにも共有しましたか？（任意）",
         kr: "다른 플랫폼에도 공유하셨나요? (선택)",
@@ -438,16 +429,14 @@ export const messages = {
       removeAriaLabel: { jp: "削除", kr: "삭제" },
     },
     simpleReviewForm: {
-      // new
       urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
       labelSuffix: { jp: "レビューURL", kr: "리뷰 URL" },
       screenshotsLabelSuffix: {
-        // new — 단순리뷰는 리뷰 대신 즐겨찾기(お気に入り) 등록 스크린샷 제출
+        //— 단순리뷰는 리뷰 대신 즐겨찾기(お気に入り) 등록 스크린샷 제출
         jp: "お気に入り登録のスクリーンショット提出",
         kr: "즐겨찾기 등록 스크린샷 제출",
       },
       screenshotsRequired: {
-        // new
         jp: "レビューのスクリーンショットを1枚以上ご提出ください",
         kr: "리뷰 스크린샷을 1장 이상 제출해 주세요",
       },
@@ -476,30 +465,26 @@ export const messages = {
           jp: "各プラットフォームでレビューを投稿後、URLとスクリーンショットをご提出ください",
           kr: "각 플랫폼에 리뷰를 게시한 뒤 URL과 스크린샷을 제출해 주세요",
         },
-        submitItemsTitle: { jp: "提出項目", kr: "제출 항목" }, // new — 가구매 전용 제출 항목 안내
+        submitItemsTitle: { jp: "提出項目", kr: "제출 항목" }, // — 가구매 전용 제출 항목 안내
         submitItemsQoo10: {
-          // new
           jp: "：お気に入り登録・レビューのスクリーンショット",
           kr: " : 좋아요, 리뷰 스크린샷",
         },
         submitItemsLips: {
-          // new
           jp: "：お気に入り登録のスクリーンショット・レビューURL",
           kr: " : 좋아요 스크린샷, 리뷰 URL",
         },
         submitItemsCosme: {
-          // new
           jp: "：お気に入り登録のスクリーンショット・レビューURL",
           kr: " : 좋아요 스크린샷, 리뷰 URL",
         },
         urlLabel: { jp: "レビューURL", kr: "리뷰 URL" },
         screenshotsLabelPrefix: {
-          // new — 필수 매수 가변 표기 (Qoo10 2장 + 채널당 1장)
+          // — 필수 매수 가변 표기 (Qoo10 2장 + 채널당 1장)
           jp: "レビューのスクリーンショット (",
           kr: "리뷰 스크린샷 제출 (",
         },
         screenshotsLabelSuffix: {
-          // new
           jp: "枚以上)",
           kr: "장 이상)",
         },
@@ -533,12 +518,12 @@ export const messages = {
         kr: "게시물 처음에 「#PR」 또는 「브랜드에서 제공」 표기",
       },
       confirmNaturalReview: {
-        // new — 가구매 전용: PR 표기 없이 자연스러운 리뷰
+        // — 가구매 전용: PR 표기 없이 자연스러운 리뷰
         jp: "ハッシュタグやブランドアンバサダー等の表記はせず、自然なレビューとして投稿いたします。",
         kr: "해시태그나 브랜드 앰배서더 등의 표기 없이 자연스러운 리뷰로 게시합니다",
       },
-      confirmDeadlinePrefix: { jp: "受取後", kr: "수령 후 " }, // new
-      confirmDeadlineSuffix: { jp: "日以内に投稿します", kr: "일 이내에 게시" }, // new
+      confirmDeadlinePrefix: { jp: "受取後", kr: "수령 후 " },
+      confirmDeadlineSuffix: { jp: "日以内に投稿します", kr: "일 이내에 게시" },
       confirmInsights: {
         jp: "投稿7日後にインサイトを提出します",
         kr: "게시 후 7일 뒤 인사이트 제출",
@@ -559,20 +544,18 @@ export const messages = {
         jp: "応募条件を満たすSNSアカウントがありません",
         kr: "응모 조건을 충족하는 SNS 계정이 없습니다",
       },
-      requiredBadge: { jp: "必須", kr: "필수" }, 
-      fullTag: { jp: "募集終了", kr: "모집 완료" }, 
+      requiredBadge: { jp: "必須", kr: "필수" },
+      fullTag: { jp: "募集終了", kr: "모집 완료" },
       requiredNotQualifiedPrefix: {
-        // new
         jp: "このキャンペーンは ",
         kr: "이 캠페인은 ",
       },
       requiredNotQualifiedSuffix: {
-        // new
         jp: " の応募が必須ですが、応募条件を満たすアカウントがありません",
         kr: " 응모가 필수이지만 자격 조건을 만족하는 계정이 없습니다",
       },
       alreadyAppliedNotice: {
-        // new — 캠페인 단위 응모 이력이 있으면 재응모 불가
+        // — 캠페인 단위 응모 이력이 있으면 재응모 불가
         jp: "この案件はすでに応募済みのため、再応募できません",
         kr: "이미 응모한 캠페인입니다. 다시 응모할 수 없습니다",
       },
@@ -606,7 +589,7 @@ export const messages = {
       registerAddress: { jp: "住所を登録する", kr: "주소 등록" },
       confirmSectionTitle: { jp: "応募にあたっての再確認", kr: "응모 전 재확인" },
       ctaClosed: { jp: "募集終了", kr: "모집 종료" },
-      ctaFull: { jp: "募集終了", kr: "모집 완료" }, 
+      ctaFull: { jp: "募集終了", kr: "모집 완료" },
       ctaSubmitting: { jp: "送信中…", kr: "전송 중…" },
       ctaSubmit: { jp: "応募を送信", kr: "응모 제출" },
     },
@@ -614,7 +597,7 @@ export const messages = {
       bank: {
         branchNameRequired: { jp: "支店名は必須", kr: "지점명은 필수" },
         branchCodeInvalid: { jp: "支店コードは3桁", kr: "지점 코드는 3자리" },
-        accountNumberInvalid: { jp: "口座番号は7桁", kr: "계좌번호는 7자리" }, // new
+        accountNumberInvalid: { jp: "口座番号は7桁", kr: "계좌번호는 7자리" },
         kanaInvalid: { jp: "カナで入力してください", kr: "가타카나로 입력해 주세요" },
         bankRequired: { jp: "銀行を選択してください", kr: "은행을 선택해 주세요" },
         reviewInputs: { jp: "入力内容を再度ご確認ください", kr: "입력 내용을 다시 확인해 주세요" },
@@ -627,15 +610,15 @@ export const messages = {
         branchNameLabel: { jp: "支店名", kr: "지점명" },
         branchNamePlaceholder: { jp: "渋谷支店", kr: "시부야 지점" },
         branchCodeLabel: { jp: "支店コード (3桁)", kr: "지점 코드 (3자리)" },
-        accountNumberLabel: { jp: "口座番号 (7桁)", kr: "계좌번호 (7자리)" }, // new
+        accountNumberLabel: { jp: "口座番号 (7桁)", kr: "계좌번호 (7자리)" },
         accountHolderLabel: { jp: "口座名義 (カナ)", kr: "예금주명 (가타카나)" },
         kanaHint: { jp: "例: ヤマダ ハナコ", kr: "예: ヤマダ ハナコ" },
-        invoiceNumberLabel: { jp: "適格請求書登録番号 (任意)", kr: "적격청구서 등록번호 (선택)" }, // new
-        invoiceNumberHint: { jp: "例: T1234567890123", kr: "예: T1234567890123" }, // new
+        invoiceNumberLabel: { jp: "適格請求書登録番号 (任意)", kr: "적격청구서 등록번호 (선택)" },
+        invoiceNumberHint: { jp: "例: T1234567890123", kr: "예: T1234567890123" },
         invoiceNumberInvalid: {
           jp: "T + 13桁の数字で入力してください",
           kr: "T + 13자리 숫자로 입력해 주세요",
-        }, // new
+        },
         submit: { jp: "登録完了", kr: "가입 완료" },
       },
       profile: {
@@ -660,11 +643,11 @@ export const messages = {
         handleUrl: {
           jp: "URLではなくID（ユーザー名）のみ入力してください",
           kr: "URL이 아니라 ID(사용자명)만 입력해 주세요",
-        }, // new
+        },
         handleTooLong: {
           jp: "IDは64文字以内で入力してください",
           kr: "ID는 64자 이내로 입력해 주세요",
-        }, // new
+        },
         followerCountInvalid: { jp: "フォロワー数は数字のみ", kr: "팔로워 수는 숫자만" },
         heading: { jp: "SNSアカウント", kr: "SNS 계정" },
         hint: {
@@ -741,7 +724,7 @@ export const messages = {
         rejectPrefix: {
           jp: "ご希望に添えず申し訳ございません。また次のキャンペーンでお待ちしております！",
           kr: "미선정되었습니다. 기대에 부응하지 못해. 죄송합니다. 다음 캠페인에서 또 기다리고 있겠습니다!",
-        }, // new
+        },
         cancelledNotice: {
           jp: "キャンセル済（同じキャンペーンに再応募はできません）",
           kr: "취소됨 (동일 캠페인에 재응모할 수 없습니다)",
@@ -762,16 +745,16 @@ export const messages = {
       noLimit: { jp: "制限なし", kr: "제한 없음" },
       sectionProduct: { jp: "商品", kr: "상품" },
       productLinkText: { jp: "商品ページを見る →", kr: "상품 페이지 보기 →" },
-      productLinkNumberedPrefix: { jp: "商品ページを見る ", kr: "상품 페이지 보기 " }, // new — URL 2개 이상일 때 번호 표기
-      productLinkNumberedSuffix: { jp: " →", kr: " →" }, // new
+      productLinkNumberedPrefix: { jp: "商品ページを見る ", kr: "상품 페이지 보기 " }, // — URL 2개 이상일 때 번호 표기
+      productLinkNumberedSuffix: { jp: " →", kr: " →" },
       sectionGuideline: { jp: "ガイドライン", kr: "가이드라인" },
       sectionCautions: { jp: "注意事項", kr: "주의사항" },
       viewApplications: { jp: "応募履歴を見る", kr: "응모 내역 보기" },
       ctaClosed: { jp: "募集終了", kr: "모집 종료" },
-      ctaFull: { jp: "募集終了", kr: "모집 완료" }, 
+      ctaFull: { jp: "募集終了", kr: "모집 완료" },
       ctaApply: { jp: "応募する", kr: "응모하기" },
       cancelledNotice: {
-        // new — 취소한 캠페인은 재응모 불가
+        // — 취소한 캠페인은 재응모 불가
         jp: "この案件はキャンセル済みのため、再応募できません",
         kr: "취소한 캠페인은 다시 응모할 수 없습니다",
       },
@@ -787,7 +770,7 @@ export const messages = {
         address: { jp: "配送先住所", kr: "배송지 주소" },
         login: { jp: "ログイン", kr: "로그인" },
         logout: { jp: "ログアウト", kr: "로그아웃" },
-        terms: { jp: "利用規約", kr: "이용약관" }, // new
+        terms: { jp: "利用規約", kr: "이용약관" },
       },
       profile: {
         required: { jp: "必須", kr: "필수" },
@@ -805,7 +788,7 @@ export const messages = {
       bank: {
         required: { jp: "必須", kr: "필수" },
         branchCodeError: { jp: "3桁", kr: "3자리" },
-        accountNumberError: { jp: "7桁", kr: "7자리" }, // new
+        accountNumberError: { jp: "7桁", kr: "7자리" },
         kanaError: { jp: "カナで入力", kr: "가타카나로 입력" },
         bankRequired: { jp: "銀行を選択", kr: "은행을 선택해 주세요" },
         saveFailed: { jp: "保存に失敗しました", kr: "저장에 실패했습니다" },
@@ -819,9 +802,9 @@ export const messages = {
         branchCode: { jp: "支店コード (3桁)", kr: "지점 코드 (3자리)" },
         accountNumber: { jp: "口座番号", kr: "계좌번호" },
         accountHolder: { jp: "口座名義 (カナ)", kr: "예금주명 (가타카나)" },
-        invoiceNumber: { jp: "適格請求書登録番号 (任意)", kr: "적격청구서 등록번호 (선택)" }, // new
-        invoiceNumberHint: { jp: "例: T1234567890123", kr: "예: T1234567890123" }, // new
-        invoiceNumberError: { jp: "T + 13桁の数字", kr: "T + 13자리 숫자" }, // new
+        invoiceNumber: { jp: "適格請求書登録番号 (任意)", kr: "적격청구서 등록번호 (선택)" },
+        invoiceNumberHint: { jp: "例: T1234567890123", kr: "예: T1234567890123" },
+        invoiceNumberError: { jp: "T + 13桁の数字", kr: "T + 13자리 숫자" },
         saving: { jp: "保存中…", kr: "저장 중…" },
         save: { jp: "保存", kr: "저장" },
       },
@@ -867,13 +850,13 @@ export const messages = {
     },
     notices: {
       title: { jp: "お知らせ", kr: "알림" },
-      loading: { jp: "読み込み中…", kr: "불러오는 중…" }, // new
-      empty: { jp: "現在、お知らせはありません。", kr: "공지사항이 없습니다" }, // new
-      newBadge: { jp: "新着", kr: "신규" }, // new
-      loadError: { jp: "お知らせを取得できませんでした", kr: "공지사항을 불러올 수 없습니다" }, // new
-      detailNotFound: { jp: "お知らせが見つかりませんでした", kr: "공지를 찾을 수 없습니다" }, // new
-      detailLoadError: { jp: "お知らせを取得できませんでした", kr: "공지를 불러올 수 없습니다" }, // new
-      invalidAccess: { jp: "不正なアクセスです", kr: "잘못된 접근입니다" }, // new
+      loading: { jp: "読み込み中…", kr: "불러오는 중…" },
+      empty: { jp: "現在、お知らせはありません。", kr: "공지사항이 없습니다" },
+      newBadge: { jp: "新着", kr: "신규" },
+      loadError: { jp: "お知らせを取得できませんでした", kr: "공지사항을 불러올 수 없습니다" },
+      detailNotFound: { jp: "お知らせが見つかりませんでした", kr: "공지를 찾을 수 없습니다" },
+      detailLoadError: { jp: "お知らせを取得できませんでした", kr: "공지를 불러올 수 없습니다" },
+      invalidAccess: { jp: "不正なアクセスです", kr: "잘못된 접근입니다" },
     },
     notFound: {
       heading: { jp: "ページが見つかりません", kr: "페이지를 찾을 수 없습니다" },

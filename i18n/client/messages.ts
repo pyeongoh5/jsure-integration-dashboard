@@ -204,6 +204,18 @@ export const messages = {
       monthSuffix: { jp: "月", kr: "월" },
       daySuffix: { jp: "日", kr: "일" },
     },
+    publishWindow: {
+      periodLabel: { jp: "投稿期間", kr: "게시 기간" }, // new
+      rangeSeparator: { jp: "〜", kr: "~" }, // new
+      beforePrefix: { jp: "", kr: "" }, // new
+      beforeSuffix: { jp: "から提出できます", kr: "부터 제출할 수 있습니다" }, // new
+      untilSuffix: { jp: "までに投稿してください", kr: "까지 게시해주세요" }, // new
+      afterNotice: {
+        jp: "投稿期間が終了しました。遅れても提出をお願いします。",
+        kr: "게시 기간이 종료되었습니다. 늦었지만 제출해주세요.",
+      }, // new
+      applyConfirmMiddle: { jp: "の間に投稿します", kr: " 사이에 게시합니다" }, // new
+    },
     card: {
       actionAwaitingReceipt: { jp: "受領を確認", kr: "수령 확인" },
       actionPosting: { jp: "投稿URLを提出", kr: "게시 URL 제출" },

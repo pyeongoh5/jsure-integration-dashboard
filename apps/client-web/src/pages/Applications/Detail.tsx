@@ -18,6 +18,7 @@ import {
   StageBadge,
   cancelApplication,
   confirmReceipt,
+  publishWindowText,
   submitInsights,
   submitOrder,
   submitSubmission,
@@ -154,6 +155,12 @@ export function ApplicationDetail() {
   const appliedAtMs = new Date(data.appliedAt).getTime();
   const withinCancelWindow = Date.now() - appliedAtMs <= CANCEL_WINDOW_MS;
   const canCancel = data.status === "APPLIED" && withinCancelWindow;
+  const publishWindow = publishWindowText({
+    publishStartAt: data.publishStartAt,
+    publishEndAt: data.publishEndAt,
+    anchorAt: data.orderSubmittedAt ?? data.receivedAt,
+    postingPeriodDays: data.postingPeriodDays,
+  });
 
   return (
     <div>
@@ -212,11 +219,20 @@ export function ApplicationDetail() {
                 {data.trackingNumber ?? "—"}
               </div>
             </div>
-            <p className={styles.msg}>
-              {t("pages.applications.detail.awaitingReceiptPrefix")}
-              {data.postingPeriodDays}
-              {t("pages.applications.detail.awaitingReceiptSuffix")}
-            </p>
+            {publishWindow.state === "NONE" ? (
+              <p className={styles.msg}>
+                {t("pages.applications.detail.awaitingReceiptPrefix")}
+                {data.postingPeriodDays}
+                {t("pages.applications.detail.awaitingReceiptSuffix")}
+              </p>
+            ) : (
+              <p className={styles.msg}>
+                {t("application.publishWindow.periodLabel")}{" "}
+                {publishWindow.startText}{" "}
+                {t("application.publishWindow.rangeSeparator")}{" "}
+                {publishWindow.endText}
+              </p>
+            )}
             <PrimaryButton onClick={() => setShowReceiptDialog(true)} disabled={receive.isPending}>
               {t("pages.applications.detail.actionConfirmReceipt")}
             </PrimaryButton>
@@ -237,6 +253,7 @@ export function ApplicationDetail() {
             }}
             submitting={post.isPending}
             postingDeadlineAt={data.postingDeadlineAt}
+            publishWindow={publishWindow}
           />
         )}
 
@@ -283,6 +300,7 @@ export function ApplicationDetail() {
               }}
               submitting={post.isPending}
               postingDeadlineAt={data.postingDeadlineAt}
+              publishWindow={publishWindow}
             />
           </div>
         )}
@@ -337,18 +355,18 @@ export function ApplicationDetail() {
             }}
             submitting={simpleReview.isPending}
             reviewDeadlineAt={null}
+            publishWindow={publishWindow}
           />
         )}
         {stage === "AWAITING_REVIEW" && data.campaignCategory !== "SIMPLE_REVIEW" && (
           <ReviewSubmitForm
             applicationId={data.id}
-            orderSubmittedAt={data.orderSubmittedAt ?? data.appliedAt}
-            postingPeriodDays={data.postingPeriodDays}
             subTypeOptions={reviewSubTypeOptions}
             onSubmit={async (screenshots, reviewUrls) => {
               await review.mutateAsync({ screenshots, reviewUrls });
             }}
             submitting={review.isPending}
+            publishWindow={publishWindow}
           />
         )}
 
@@ -415,17 +433,17 @@ export function ApplicationDetail() {
                 }}
                 submitting={simpleReview.isPending}
                 reviewDeadlineAt={null}
+                publishWindow={publishWindow}
               />
             ) : (
               <ReviewSubmitForm
                 applicationId={data.id}
-                orderSubmittedAt={data.orderSubmittedAt ?? data.appliedAt}
-                postingPeriodDays={data.postingPeriodDays}
                 subTypeOptions={reviewSubTypeOptions}
                 onSubmit={async (screenshots, reviewUrls) => {
                   await review.mutateAsync({ screenshots, reviewUrls });
                 }}
                 submitting={review.isPending}
+                publishWindow={publishWindow}
               />
             )}
           </div>
@@ -487,6 +505,7 @@ export function ApplicationDetail() {
       {showReceiptDialog && (
         <ReceiptConfirmDialog
           postingPeriodDays={data.postingPeriodDays}
+          publishWindow={publishWindow}
           submitting={receive.isPending}
           onConfirm={() => receive.mutate()}
           onCancel={() => setShowReceiptDialog(false)}

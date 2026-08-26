@@ -13,6 +13,8 @@ import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import { t } from "@i18n";
 import { useAttachmentUpload } from "../hooks/useAttachmentUpload";
+import { PublishWindowNotice } from "./PublishWindowNotice";
+import type { PublishWindowText } from "../publishWindowText";
 import styles from "./ReviewSubmitForm.module.css";
 
 
@@ -40,6 +42,7 @@ interface Props {
   ) => Promise<void>;
   submitting: boolean;
   reviewDeadlineAt: string | null;
+  publishWindow: PublishWindowText;
 }
 
 function formatDeadline(iso: string): string {
@@ -55,6 +58,7 @@ export function SimpleReviewSubmitForm({
   onSubmit,
   submitting,
   reviewDeadlineAt,
+  publishWindow,
 }: Props) {
   const schema = z.object(
     Object.fromEntries(subTypes.map((subType) => [subType, urlSchema])),
@@ -233,7 +237,10 @@ export function SimpleReviewSubmitForm({
 
         {submitError && <div className={styles.error}>{submitError}</div>}
 
-        <PrimaryButton type="submit" disabled={busy}>
+        <PrimaryButton
+          type="submit"
+          disabled={busy || publishWindow.state === "BEFORE"}
+        >
           {submitting
             ? t("application.simpleReviewForm.submitting")
             : upload.uploading
@@ -242,6 +249,7 @@ export function SimpleReviewSubmitForm({
                 ? t("application.simpleReviewForm.update")
                 : t("application.simpleReviewForm.submit")}
         </PrimaryButton>
+        <PublishWindowNotice window={publishWindow} />
         {reviewDeadlineAt && (
           <p
             style={{

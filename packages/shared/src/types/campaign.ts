@@ -681,6 +681,30 @@ export const UpdateCampaignRequestSchema = z
       d.recruitEndDate === undefined ||
       d.recruitStartDate <= d.recruitEndDate,
     { path: ["recruitEndDate"], message: "종료일은 시작일 이후여야 합니다" },
+  )
+  .refine(
+    (d) =>
+      (d.publishStartDateTime === undefined &&
+        d.publishEndDateTime === undefined) ||
+      (d.publishStartDateTime !== undefined &&
+        d.publishEndDateTime !== undefined &&
+        (d.publishStartDateTime === null) === (d.publishEndDateTime === null)),
+    {
+      path: ["publishEndDateTime"],
+      message: "게시 기간은 시작과 종료를 함께 입력해주세요",
+    },
+  )
+  .refine(
+    (d) =>
+      d.publishStartDateTime === undefined ||
+      d.publishEndDateTime === undefined ||
+      d.publishStartDateTime === null ||
+      d.publishEndDateTime === null ||
+      d.publishStartDateTime < d.publishEndDateTime,
+    {
+      path: ["publishEndDateTime"],
+      message: "게시 종료는 시작 이후여야 합니다",
+    },
   );
 export type UpdateCampaignRequest = z.infer<typeof UpdateCampaignRequestSchema>;
 

@@ -1,5 +1,5 @@
 import { BadRequestException } from "@nestjs/common";
-import { CreateCampaignRequestSchema } from "@jsure/shared";
+import { CreateCampaignRequestSchema, UpdateCampaignRequestSchema } from "@jsure/shared";
 import {
   jstDayStartUtc,
   jstDayEndUtc,
@@ -331,5 +331,45 @@ describe("CreateCampaignRequestSchema 게시 기간", () => {
       publishEndDateTime: "2026-09-10T23:59",
     });
     expect(parsed.publishStartDateTime).toBe("2026-09-01T10:00");
+  });
+});
+
+describe("UpdateCampaignRequestSchema 게시 기간", () => {
+  it("시작만 보내면 거부한다", () => {
+    const result = UpdateCampaignRequestSchema.safeParse({
+      publishStartDateTime: "2026-09-01T10:00",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("역전된 값이면 거부한다", () => {
+    const result = UpdateCampaignRequestSchema.safeParse({
+      publishStartDateTime: "2026-09-10T10:00",
+      publishEndDateTime: "2026-09-01T10:00",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("둘 다 null 이면 통과한다 (게시 기간 해제)", () => {
+    const result = UpdateCampaignRequestSchema.safeParse({
+      publishStartDateTime: null,
+      publishEndDateTime: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("둘 다 미포함이면 통과한다 (미변경)", () => {
+    const result = UpdateCampaignRequestSchema.safeParse({
+      title: "제목만 수정",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("정상 쌍은 통과한다", () => {
+    const result = UpdateCampaignRequestSchema.safeParse({
+      publishStartDateTime: "2026-09-01T10:00",
+      publishEndDateTime: "2026-09-10T23:59",
+    });
+    expect(result.success).toBe(true);
   });
 });

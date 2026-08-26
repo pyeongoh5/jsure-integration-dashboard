@@ -844,6 +844,22 @@ export const adminMessages = {
           en: "Recruitment end date",
           ja: "募集終了日",
         },
+        publishStartLabel: {
+          ko: "게시 시작",
+          en: "Publish start",
+          ja: "投稿開始",
+        },
+        publishEndLabel: { ko: "게시 종료", en: "Publish end", ja: "投稿終了" },
+        publishPeriodHint: {
+          ko: "선택 사항. 설정하면 시작 시각 이전에는 인플루언서가 투고 URL 을 제출할 수 없습니다.",
+          en: "Optional. When set, influencers cannot submit post URLs before the start time.",
+          ja: "任意。設定すると開始時刻より前は投稿URLを提出できません。",
+        },
+        postingPeriodDaysIgnored: {
+          ko: "게시 기간이 설정되어 이 값은 사용되지 않습니다.",
+          en: "Ignored because a publish period is set.",
+          ja: "投稿期間が設定されているため、この値は使用されません。",
+        },
         postingPeriodLabel: {
           ko: "게시 기간 (수령 후 N일)",
           en: "Posting period (N days after receipt)",

@@ -160,6 +160,11 @@ export function CampaignForm({
   // 임시저장 버튼 활성 조건 — 제목 1자 이상.
   const draftTitle = methods.watch("title");
   const fieldErrors = methods.formState.errors;
+  const publishStartDateTime = methods.watch("publishStartDateTime");
+  const publishEndDateTime = methods.watch("publishEndDateTime");
+  // 게시 기간이 설정되면 게시 기간(일수) 입력은 사용되지 않는다 — 값은 지우지 않고 비활성화만 한다.
+  const postingPeriodIgnored =
+    publishStartDateTime !== null && publishEndDateTime !== null;
 
   function rootError(name: keyof Values): string | undefined {
     const issue = fieldErrors[name];
@@ -598,6 +603,43 @@ export function CampaignForm({
           </div>
 
           <div className={styles.field}>
+            <label className={styles.label} htmlFor="cf-publish-start">
+              {t("domains.campaign.form.publishStartLabel")}
+            </label>
+            <input
+              id="cf-publish-start"
+              type="datetime-local"
+              className={styles.input}
+              {...methods.register("publishStartDateTime", {
+                setValueAs: (value: string) => (value === "" ? null : value),
+              })}
+              disabled={submitting}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="cf-publish-end">
+              {t("domains.campaign.form.publishEndLabel")}
+            </label>
+            <input
+              id="cf-publish-end"
+              type="datetime-local"
+              className={styles.input}
+              {...methods.register("publishEndDateTime", {
+                setValueAs: (value: string) => (value === "" ? null : value),
+              })}
+              disabled={submitting}
+            />
+            {rootError("publishEndDateTime") && (
+              <div className={styles.error}>
+                {rootError("publishEndDateTime")}
+              </div>
+            )}
+            <div className={styles.hint}>
+              {t("domains.campaign.form.publishPeriodHint")}
+            </div>
+          </div>
+
+          <div className={styles.field}>
             <label className={styles.label} htmlFor="cf-posting-period">
               {t("domains.campaign.form.postingPeriodLabel")}
             </label>
@@ -613,10 +655,15 @@ export function CampaignForm({
                   value={Number.isFinite(field.value) ? String(field.value) : ""}
                   onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
                   onBlur={field.onBlur}
-                  disabled={submitting}
+                  disabled={submitting || postingPeriodIgnored}
                 />
               )}
             />
+            {postingPeriodIgnored && (
+              <div className={styles.hint}>
+                {t("domains.campaign.form.postingPeriodDaysIgnored")}
+              </div>
+            )}
             {rootError("postingPeriodDays") && (
               <div className={styles.error}>{rootError("postingPeriodDays")}</div>
             )}

@@ -161,6 +161,13 @@ export function ApplicationDetail() {
     anchorAt: data.orderSubmittedAt ?? data.receivedAt,
     postingPeriodDays: data.postingPeriodDays,
   });
+  // ReviewSubmitForm(SNS·가구매)만 앵커가 다르다 — 기존부터 appliedAt 을 fallback 으로 써 왔다.
+  const reviewPublishWindow = publishWindowText({
+    publishStartAt: data.publishStartAt,
+    publishEndAt: data.publishEndAt,
+    anchorAt: data.orderSubmittedAt ?? data.appliedAt,
+    postingPeriodDays: data.postingPeriodDays,
+  });
 
   return (
     <div>
@@ -366,7 +373,7 @@ export function ApplicationDetail() {
               await review.mutateAsync({ screenshots, reviewUrls });
             }}
             submitting={review.isPending}
-            publishWindow={publishWindow}
+            publishWindow={reviewPublishWindow}
           />
         )}
 
@@ -443,7 +450,7 @@ export function ApplicationDetail() {
                   await review.mutateAsync({ screenshots, reviewUrls });
                 }}
                 submitting={review.isPending}
-                publishWindow={publishWindow}
+                publishWindow={reviewPublishWindow}
               />
             )}
           </div>

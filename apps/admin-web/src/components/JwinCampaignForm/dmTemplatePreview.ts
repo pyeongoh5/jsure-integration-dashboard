@@ -5,6 +5,8 @@
  * 기본 문구가 일본어인 것은 최종 수신자가 일본 유저이기 때문이다. 어드민 화면 문구가
  * 아니라 실제 발송되는 데이터라서 i18n 대상이 아니다(서버 원문 그대로).
  */
+import { dmTemplateMissingCode } from "@jsure/jwin-shared";
+
 export const DEFAULT_DM_TEMPLATE = [
   "【{{BRAND_NAME}}】ご当選おめでとうございます！",
   "賞品: {{PRIZE_NAME}}",
@@ -37,10 +39,6 @@ export function renderDmPreview(template: string, values: DmPreviewValues): stri
 }
 
 /**
- * 코드 자리가 빠졌는지 판정.
- * 빈 문구는 서버 기본 문구(= {{CODE}} 포함)가 쓰이므로 누락이 아니다.
+ * 코드 자리가 빠졌는지 판정 — `@jsure/jwin-shared` 의 것을 그대로 쓴다(서버와 같은 함수).
  */
-export function dmTemplateMissingCode(template: string | null): boolean {
-  if (template === null || template.trim().length === 0) return false;
-  return !template.includes("{{CODE}}");
-}
+export { dmTemplateMissingCode };

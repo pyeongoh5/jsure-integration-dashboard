@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { getPrisma } from '@jsure/jwin-db';
-import { dateJst } from '@jsure/jwin-shared';
+import { dateJst, parseCodesInput } from '@jsure/jwin-shared';
 import { config } from '../config';
 import { encrypt } from '../lib/crypto';
 import { AdminIdentity, getAdminIdentity } from '../lib/auth';
@@ -25,14 +25,6 @@ import {
  * 인증 (D-10): 로그인 엔드포인트가 없다. 대시보드(@jsure/api)에서 로그인해 받은
  * access token을 Authorization: Bearer 로 실어 보내면 서명만 검증한다.
  */
-
-/** 엑셀 붙여넣기 대응: 개행/탭/쉼표로 분리, 공백 제거 (F-7.3) */
-export function parseCodesInput(raw: string): string[] {
-  return raw
-    .split(/[\r\n\t,]+/)
-    .map((code) => code.trim())
-    .filter((code) => code.length > 0);
-}
 
 export async function adminRoutes(app: FastifyInstance) {
   const prisma = getPrisma();

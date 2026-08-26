@@ -166,7 +166,7 @@ export function PostSubmitForm({
         >
           {t("application.postForm.prHint")}
         </p>
-        <PublishWindowNotice window={publishWindow} />
+        <PublishWindowNotice publishWindow={publishWindow} />
         {publishWindow.state === "NONE" && postingDeadlineAt && (
           <p
             style={{

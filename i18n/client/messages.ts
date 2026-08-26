@@ -207,7 +207,6 @@ export const messages = {
     publishWindow: {
       periodLabel: { jp: "投稿期間", kr: "게시 기간" }, // new
       rangeSeparator: { jp: "〜", kr: "~" }, // new
-      beforePrefix: { jp: "", kr: "" }, // new
       beforeSuffix: { jp: "から提出できます", kr: "부터 제출할 수 있습니다" }, // new
       untilSuffix: { jp: "までに投稿してください", kr: "까지 게시해주세요" }, // new
       afterNotice: {

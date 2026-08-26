@@ -291,7 +291,7 @@ export function ReviewSubmitForm({
               ? t("application.attachmentUpload.uploading")
               : t("application.stage.awaitingReview.submit")}
         </PrimaryButton>
-        <PublishWindowNotice window={publishWindow} />
+        <PublishWindowNotice publishWindow={publishWindow} />
       </form>
     </FormProvider>
   );

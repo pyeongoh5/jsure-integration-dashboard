@@ -162,7 +162,7 @@ export function CampaignForm({
   const fieldErrors = methods.formState.errors;
   const publishStartDateTime = methods.watch("publishStartDateTime");
   const publishEndDateTime = methods.watch("publishEndDateTime");
-  // 게시 기간이 설정되면 게시 기간(일수) 입력은 사용되지 않는다 — 값은 지우지 않고 비활성화만 한다.
+  // 게시 기간이 설정되면 게시 기간(일수) 입력은 서버에서 무시된다 — 힌트만 보여주고 입력은 막지 않는다.
   const postingPeriodIgnored =
     publishStartDateTime !== null && publishEndDateTime !== null;
 
@@ -615,6 +615,11 @@ export function CampaignForm({
               })}
               disabled={submitting}
             />
+            {rootError("publishStartDateTime") && (
+              <div className={styles.error}>
+                {rootError("publishStartDateTime")}
+              </div>
+            )}
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="cf-publish-end">
@@ -655,7 +660,7 @@ export function CampaignForm({
                   value={Number.isFinite(field.value) ? String(field.value) : ""}
                   onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
                   onBlur={field.onBlur}
-                  disabled={submitting || postingPeriodIgnored}
+                  disabled={submitting}
                 />
               )}
             />

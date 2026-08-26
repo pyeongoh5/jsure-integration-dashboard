@@ -154,7 +154,8 @@ const campaignRewardJpy: TriggerVariableWithResolver = {
 const campaignPostingPeriodDays: TriggerVariableWithResolver = {
   key: "campaignPostingPeriodDays",
   label: "게시 기간(일)",
-  description: "상품 수령 후 게시까지 허용 일수",
+  description:
+    "상품 수령 후 게시까지 허용 일수. 게시 기간이 설정된 캠페인에서는 실제 마감(게시 종료일)과 다를 수 있음 — 이 경우 postingDeadline 을 쓸 것",
   sample: "7",
   resolver: (ctx) => String(ctx.application.campaign.postingPeriodDays),
 };

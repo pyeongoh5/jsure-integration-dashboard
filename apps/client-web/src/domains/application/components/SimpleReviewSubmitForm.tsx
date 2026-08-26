@@ -249,7 +249,7 @@ export function SimpleReviewSubmitForm({
                 ? t("application.simpleReviewForm.update")
                 : t("application.simpleReviewForm.submit")}
         </PrimaryButton>
-        <PublishWindowNotice window={publishWindow} />
+        <PublishWindowNotice publishWindow={publishWindow} />
         {reviewDeadlineAt && (
           <p
             style={{

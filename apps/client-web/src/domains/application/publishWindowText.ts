@@ -13,7 +13,13 @@ export interface PublishWindowText {
 }
 
 function formatMonthDay(date: Date): string {
-  return `${date.getMonth() + 1}${t("application.dateFormat.monthSuffix")}${date.getDate()}${t("application.dateFormat.daySuffix")}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(date);
+  const part = (type: string) => Number(parts.find((entry) => entry.type === type)?.value ?? "0");
+  return `${part("month")}${t("application.dateFormat.monthSuffix")}${part("day")}${t("application.dateFormat.daySuffix")}`;
 }
 
 /**

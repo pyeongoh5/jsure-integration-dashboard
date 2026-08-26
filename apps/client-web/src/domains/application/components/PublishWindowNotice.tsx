@@ -2,7 +2,7 @@ import { t } from "@i18n";
 import type { PublishWindowText } from "../publishWindowText";
 
 interface Props {
-  window: PublishWindowText;
+  publishWindow: PublishWindowText;
 }
 
 const NOTICE_STYLE = {
@@ -12,18 +12,17 @@ const NOTICE_STYLE = {
   fontWeight: 600,
 } as const;
 
-export function PublishWindowNotice({ window }: Props) {
-  if (window.state === "NONE") return null;
-  if (window.state === "BEFORE") {
+export function PublishWindowNotice({ publishWindow }: Props) {
+  if (publishWindow.state === "NONE") return null;
+  if (publishWindow.state === "BEFORE") {
     return (
       <p style={{ ...NOTICE_STYLE, color: "#dc2626" }}>
-        {t("application.publishWindow.beforePrefix")}
-        {window.startText}
+        {publishWindow.startText}
         {t("application.publishWindow.beforeSuffix")}
       </p>
     );
   }
-  if (window.state === "AFTER") {
+  if (publishWindow.state === "AFTER") {
     return (
       <p style={{ ...NOTICE_STYLE, color: "#dc2626" }}>
         {t("application.publishWindow.afterNotice")}
@@ -32,7 +31,7 @@ export function PublishWindowNotice({ window }: Props) {
   }
   return (
     <p style={{ ...NOTICE_STYLE, color: "#6b7280" }}>
-      {window.endText}
+      {publishWindow.endText}
       {t("application.publishWindow.untilSuffix")}
     </p>
   );

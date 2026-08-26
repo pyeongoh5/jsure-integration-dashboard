@@ -178,14 +178,20 @@ export const AdminPrizeCreateSchema = z.object({
 export type AdminPrizeCreate = z.infer<typeof AdminPrizeCreateSchema>;
 
 /** POST /admin/post-templates (요청) — 날짜는 ISO 문자열 (F-1.2) */
-export const AdminPostTemplateCreateSchema = z.object({
-  campaignId: z.string(),
-  label: z.string().min(1),
-  bodyText: z.string().min(1).max(500),
-  mediaUrl: z.string().url().optional(),
-  activeFrom: z.string(),
-  activeTo: z.string(),
-});
+export const AdminPostTemplateCreateSchema = z
+  .object({
+    campaignId: z.string(),
+    label: z.string().min(1),
+    bodyText: z.string().min(1).max(500),
+    mediaUrl: z.string().url().optional(),
+    activeFrom: z.string(),
+    activeTo: z.string(),
+  })
+  // 역전 구간은 어떤 날에도 선택되지 않아 조용히 게시가 빠진다
+  .refine((value) => new Date(value.activeTo) > new Date(value.activeFrom), {
+    message: '유효 종료는 유효 시작 이후여야 합니다',
+    path: ['activeTo'],
+  });
 export type AdminPostTemplateCreate = z.infer<typeof AdminPostTemplateCreateSchema>;
 
 /** 당첨자 목록 항목 — 배송지 평문/암호문 없이 유무(hasShipping)만 노출 */

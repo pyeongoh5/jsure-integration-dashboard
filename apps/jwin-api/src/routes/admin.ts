@@ -281,14 +281,20 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   // ── 포스트 소재 (F-1.2 주 단위 교체, mediaUrl 첨부 F-2.3) ──
-  const templateSchema = z.object({
-    campaignId: z.string(),
-    label: z.string().min(1),
-    bodyText: z.string().min(1).max(500),
-    mediaUrl: z.string().url().optional(),
-    activeFrom: z.coerce.date(),
-    activeTo: z.coerce.date(),
-  });
+  const templateSchema = z
+    .object({
+      campaignId: z.string(),
+      label: z.string().min(1),
+      bodyText: z.string().min(1).max(500),
+      mediaUrl: z.string().url().optional(),
+      activeFrom: z.coerce.date(),
+      activeTo: z.coerce.date(),
+    })
+    // 역전 구간은 어떤 날에도 선택되지 않아 조용히 게시가 빠진다
+    .refine((value) => value.activeTo > value.activeFrom, {
+      message: '유효 종료는 유효 시작 이후여야 합니다',
+      path: ['activeTo'],
+    });
 
   app.post('/admin/post-templates', async (req, reply) => {
     const admin = requireAdmin(req, reply);

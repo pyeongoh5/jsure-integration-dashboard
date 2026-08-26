@@ -5,6 +5,7 @@ import {
   AdminFulfillmentPatchSchema,
   AdminBrandAccountSchema,
   AdminBrandAccountCreateSchema,
+  AdminPostTemplateCreateSchema,
 } from './adminApi';
 
 describe('어드민 응답 스키마', () => {
@@ -73,5 +74,40 @@ describe('AdminBrandAccount 계약', () => {
     });
     expect(detail.brandAccountId).toBeNull();
     expect('connectUrl' in detail).toBe(false);
+  });
+});
+
+describe('소재 유효기간', () => {
+  const base = {
+    campaignId: 'camp-1',
+    label: '1주차',
+    bodyText: '본문 {{LP_URL}}',
+  };
+
+  it('종료가 시작 이후면 통과한다', () => {
+    const result = AdminPostTemplateCreateSchema.safeParse({
+      ...base,
+      activeFrom: '2026-09-01T00:00:00.000Z',
+      activeTo: '2026-09-05T00:00:00.000Z',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('종료가 시작보다 앞서면 거부한다 — 역전 구간은 어떤 날에도 선택되지 않는다', () => {
+    const result = AdminPostTemplateCreateSchema.safeParse({
+      ...base,
+      activeFrom: '2026-09-05T00:00:00.000Z',
+      activeTo: '2026-09-01T00:00:00.000Z',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('종료와 시작이 같아도 거부한다', () => {
+    const result = AdminPostTemplateCreateSchema.safeParse({
+      ...base,
+      activeFrom: '2026-09-01T00:00:00.000Z',
+      activeTo: '2026-09-01T00:00:00.000Z',
+    });
+    expect(result.success).toBe(false);
   });
 });

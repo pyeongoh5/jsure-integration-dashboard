@@ -324,6 +324,12 @@ Phase 3 시작 전에 결정할 것.
 - **admin-web에 vitest 신설.** 조용한 운영 사고로 이어지는 순수 함수 4종을 테스트한다(커버리지·체크리스트·코드 파싱·확률 합계). UI 컴포넌트 테스트는 도입하지 않았다.
 - **jwin-api 에러 메시지 노출.** 서버가 주는 한국어 메시지(`코드 수(3)가 수량(5)과 일치하지 않습니다` 등)가 화면에 닿도록 `jwinErrorMessage`를 도입했다. 이전에는 axios의 `Request failed with status code 400`에 묻혀 있었다.
 
+**발행 전 검증 서버 이관 (D-14, 2026-08-26)**
+
+화면 체크리스트만으로는 화면 버그나 API 직접 호출로 미비된 캠페인이 `ACTIVE`가 될 수 있었다. 이제 `PATCH /admin/campaigns/:id`가 `SETUP → ACTIVE` 전환을 서버에서 다시 검증한다(`apps/jwin-api/src/routes/campaignActivation.ts`) — 계정 연동 · 경품 1건 이상 · 소재가 기간 전체를 덮는지 · CODE 경품이 있을 때 `{{CODE}}` 포함 여부, 네 가지를 모두 통과해야 하고 실패하면 400과 한국어 미충족 사유를 돌려준다. `PAUSED → ACTIVE` 재개는 의도적으로 재검증하지 않는다. 판정에 쓰는 소재 커버리지·`{{CODE}}` 판정 함수는 `packages/jwin-shared/src/campaignReadiness.ts`로 옮겨 화면(`activationChecklist.ts`)과 서버가 **같은 함수**를 쓰도록 통합했다. 화면 체크리스트는 그대로 남아 있다 — 이건 UX 이고 서버가 최종 방어선이다.
+
+**아직 통합 안 된 중복**: DM 문구 렌더링(`renderDmText`, `DEFAULT_DM_TEMPLATE`)은 이번에 합치지 않았다. `apps/jwin-api/src/services/fulfillment.ts`(실제 DM 발송 경로)와 `apps/admin-web/src/components/JwinCampaignForm/dmTemplatePreview.ts`(화면 미리보기)에 각각 남아 있다. 발송 경로는 위험도가 높아 이번 판정 함수 통합 범위에서 의도적으로 제외했다 — 후속 작업 대상.
+
 **배포 전 필요한 환경 설정**
 
 - `R2_PUBLIC_BASE_URL` — 없으면 J-WIN 미디어 presign이 500으로 거부된다(D-12: 만료 URL을 저장하면 캠페인 후반 게시가 조용히 실패하므로 의도된 가드). 로컬 dev에 미설정이라 미디어 업로드는 라이브 e2e로 검증하지 못했다.

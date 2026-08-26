@@ -7,6 +7,7 @@ import {
 import {
   OPTION_SELECTABLE_SUB_TYPES,
   publishWindowState,
+  resolvePostingDeadline,
   SLOT_CONSUMING_STATUSES,
   SUB_TYPE_LABEL,
   SUB_TYPE_OPTION_LABEL,
@@ -104,6 +105,8 @@ type ApplicationRow = {
     rewardJpy: number;
     postingPeriodDays: number;
     orderPeriodDays: number | null;
+    publishStartAt: Date | null;
+    publishEndAt: Date | null;
     recruits: {
       subType: CampaignSubType;
       insightRequired: boolean;
@@ -152,10 +155,11 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     row.campaign.category === "FAKE_PURCHASE"
       ? row.orderSubmittedAt
       : row.receivedAt;
-  const deadline = deadlineFrom(
-    deadlineAnchor,
-    row.campaign.postingPeriodDays,
-  );
+  const deadline = resolvePostingDeadline({
+    publishEndAt: row.campaign.publishEndAt,
+    anchorAt: deadlineAnchor,
+    postingPeriodDays: row.campaign.postingPeriodDays,
+  });
   // 가구매 주문 마감 — 승인일 + 캠페인 orderPeriodDays. 마감 미설정이면 null.
   const orderDeadline = deadlineFrom(row.reviewedAt, row.campaign.orderPeriodDays);
   const settlement = row.settlement
@@ -212,6 +216,12 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     crossPosts: row.crossPosts.map(toCrossPost),
     postingPeriodDays: row.campaign.postingPeriodDays,
     postingDeadlineAt: deadline ? deadline.toISOString() : null,
+    publishStartAt: row.campaign.publishStartAt
+      ? row.campaign.publishStartAt.toISOString()
+      : null,
+    publishEndAt: row.campaign.publishEndAt
+      ? row.campaign.publishEndAt.toISOString()
+      : null,
     settlement,
     orderNumber: row.orderNumber,
     orderSubmittedAt: row.orderSubmittedAt ? row.orderSubmittedAt.toISOString() : null,
@@ -246,6 +256,8 @@ const INCLUDE = {
       rewardJpy: true,
       orderPeriodDays: true,
       postingPeriodDays: true,
+      publishStartAt: true,
+      publishEndAt: true,
       recruits: {
         select: {
           subType: true,

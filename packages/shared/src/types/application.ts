@@ -313,6 +313,9 @@ export const InfluencerApplicationSchema = z.object({
   crossPosts: z.array(CrossPostSchema).default([]),
   postingPeriodDays: z.number().int().min(1),
   postingDeadlineAt: z.string().datetime().nullable(),
+  /** 캠페인 게시(투고) 기간. null 이면 제출 시점 제약이 없다. */
+  publishStartAt: z.string().datetime().nullable().default(null),
+  publishEndAt: z.string().datetime().nullable().default(null),
   settlement: InfluencerApplicationSettlementSchema.nullable(),
   /** 가구매 캠페인용: 주문 번호(인플루언서가 제출). SNS 캠페인은 null. */
   orderNumber: z.string().nullable(),

@@ -1,4 +1,9 @@
-import type { CampaignCategory, LineTriggerKey, TriggerVariable } from "@jsure/shared";
+import {
+  resolvePostingDeadline,
+  type CampaignCategory,
+  type LineTriggerKey,
+  type TriggerVariable,
+} from "@jsure/shared";
 import type {
   CampaignApplication,
   Campaign,
@@ -24,6 +29,8 @@ export type ApplicationWithRels = CampaignApplication & {
     | "productSummary"
     | "category"
     | "orderPeriodDays"
+    | "publishStartAt"
+    | "publishEndAt"
   > & {
     recruits: (Pick<
       CampaignRecruit,
@@ -74,6 +81,8 @@ export const DISPATCH_APPLICATION_INCLUDE = {
       productSummary: true,
       category: true,
       orderPeriodDays: true,
+      publishStartAt: true,
+      publishEndAt: true,
       recruits: {
         select: {
           subType: true,
@@ -204,14 +213,16 @@ const applicationReceivedDate: TriggerVariableWithResolver = {
 const postingDeadline: TriggerVariableWithResolver = {
   key: "postingDeadline",
   label: "게시 마감일",
-  description: "수령일로부터 계산된 게시 마감일 (JST)",
+  description:
+    "게시 마감일 (JST). 캠페인에 게시 기간이 설정되면 그 종료일, 없으면 수령일 + postingPeriodDays",
   sample: "7月20日",
   resolver: (ctx) => {
-    if (!ctx.application.receivedAt) return "";
-    const deadline = new Date(
-      ctx.application.receivedAt.getTime() + ctx.application.campaign.postingPeriodDays * DAY_MS,
-    );
-    return formatJstMonthDay(deadline);
+    const deadline = resolvePostingDeadline({
+      publishEndAt: ctx.application.campaign.publishEndAt,
+      anchorAt: ctx.application.receivedAt,
+      postingPeriodDays: ctx.application.campaign.postingPeriodDays,
+    });
+    return deadline ? formatJstMonthDay(deadline) : "";
   },
 };
 
@@ -387,15 +398,16 @@ const orderSubmittedDate: TriggerVariableWithResolver = {
 const reviewDeadline: TriggerVariableWithResolver = {
   key: "reviewDeadline",
   label: "리뷰 마감일",
-  description: "レビュー提出期限 (orderSubmittedAt + postingPeriodDays)",
+  description:
+    "レビュー提出期限 (JST). 게시 기간이 설정되면 그 종료일, 없으면 orderSubmittedAt + postingPeriodDays",
   sample: "7月17日",
   resolver: (ctx) => {
-    if (!ctx.application.orderSubmittedAt) return "";
-    const deadline = new Date(
-      ctx.application.orderSubmittedAt.getTime() +
-        ctx.application.campaign.postingPeriodDays * DAY_MS,
-    );
-    return formatJstMonthDay(deadline);
+    const deadline = resolvePostingDeadline({
+      publishEndAt: ctx.application.campaign.publishEndAt,
+      anchorAt: ctx.application.orderSubmittedAt,
+      postingPeriodDays: ctx.application.campaign.postingPeriodDays,
+    });
+    return deadline ? formatJstMonthDay(deadline) : "";
   },
 };
 

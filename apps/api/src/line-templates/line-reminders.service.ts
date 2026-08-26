@@ -1,6 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
-import type { CampaignCategory, LineTriggerKey } from "@jsure/shared";
+import {
+  resolvePostingDeadline,
+  type CampaignCategory,
+  type LineTriggerKey,
+} from "@jsure/shared";
 import type { ApplicationStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { linePushAllowed } from "../common/line-push-allowed";
@@ -263,9 +267,13 @@ export class LineRemindersService {
       // 이미 제출이 들어왔으면 마감 리마인더는 더 이상 보내지 않음.
       if (application.posts.length > 0) continue;
 
-      const deadlineMs =
-        anchorAt.getTime() + application.campaign.postingPeriodDays * DAY_MS;
-      const deadlineDayStart = startOfJstDay(new Date(deadlineMs));
+      const deadline = resolvePostingDeadline({
+        publishEndAt: application.campaign.publishEndAt,
+        anchorAt,
+        postingPeriodDays: application.campaign.postingPeriodDays,
+      });
+      if (!deadline) continue;
+      const deadlineDayStart = startOfJstDay(deadline);
       const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);
 
       const triggerKey = reminderTriggerKeyFor(remainingDays, config);

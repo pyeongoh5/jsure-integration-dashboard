@@ -16,6 +16,7 @@ import {
   canTransitionFulfillment,
   BrandAccountRow,
 } from './adminMappers';
+import { activationBlockers } from './campaignActivation';
 
 /**
  * 어드민 API (v1: J-sure 운영자 단일 테넌트 — 브로커형)
@@ -221,6 +222,38 @@ export async function adminRoutes(app: FastifyInstance) {
       .safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
     if (!(await ensureBrandAccountExists(parsed.data.brandAccountId, reply))) return;
+
+    // SETUP → ACTIVE 는 서버가 최종 검증한다. 미비된 채로 올라가면 매일 게시가 조용히 실패한다.
+    if (parsed.data.status === 'ACTIVE') {
+      const current = await prisma.brandCampaign.findUnique({
+        where: { id: req.params.id },
+        include: { brandAccount: true, prizes: true, postTemplates: true },
+      });
+      if (!current) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
+
+      if (current.status === 'SETUP') {
+        const blockers = activationBlockers({
+          campaign: {
+            // 같은 요청에서 기간·DM 문구를 함께 바꾸는 경우가 있으므로 새 값을 우선한다
+            startsAt: parsed.data.startsAt ?? current.startsAt,
+            endsAt: parsed.data.endsAt ?? current.endsAt,
+            dmTemplate:
+              parsed.data.dmTemplate === undefined
+                ? current.dmTemplate
+                : parsed.data.dmTemplate,
+          },
+          brandAccount: current.brandAccount,
+          prizes: current.prizes,
+          postTemplates: current.postTemplates,
+        });
+        if (blockers.length > 0) {
+          return reply
+            .code(400)
+            .send({ error: `캠페인을 시작할 수 없습니다 — ${blockers.join(' / ')}` });
+        }
+      }
+    }
+
     const campaign = await prisma.brandCampaign.update({
       where: { id: req.params.id },
       data: parsed.data,

@@ -94,6 +94,11 @@ export function JwinCampaignEdit() {
         <div className={styles.saveRow}>
           {saved && <span className={styles.saved}>{t("jwin.common.saved")}</span>}
           {form.saveError && <span className={styles.saveError}>{form.saveError}</span>}
+          {/* detail 이 있는 상태에서의 loadError 는 백그라운드 재조회 실패이므로
+              전체화면 대신 여기서 인라인으로 보여준다 (실패를 조용히 삼키지 않기 위함) */}
+          {form.loadError && form.detail && (
+            <span className={styles.saveError}>{form.loadError}</span>
+          )}
           <Button variant="primary" size="md" onClick={handleSave} loading={form.saving}>
             {form.mode === "new" ? t("jwin.account.create") : t("jwin.common.save")}
           </Button>

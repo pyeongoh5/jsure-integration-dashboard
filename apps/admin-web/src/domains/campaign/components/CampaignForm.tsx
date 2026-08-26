@@ -637,41 +637,46 @@ export function CampaignForm({
               <span>{t("domains.campaign.form.publishPeriodEnableLabel")}</span>
             </label>
             {publishPeriodEnabled && (
-              <>
-                <div className={styles.rangeRow}>
+              <div className={styles.row2}>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="cf-publish-start">
+                    {t("domains.campaign.form.publishStartLabel")}
+                  </label>
                   <input
+                    id="cf-publish-start"
                     type="datetime-local"
                     className={styles.input}
-                    aria-label={t("domains.campaign.form.publishStartLabel")}
                     {...methods.register("publishStartDateTime", {
                       setValueAs: (value: string) => (value === "" ? null : value),
                     })}
                     disabled={submitting}
                   />
-                  <span className={styles.rangeSeparator}>
-                    {t("domains.campaign.form.publishPeriodSeparator")}
-                  </span>
+                  {rootError("publishStartDateTime") && (
+                    <div className={styles.error}>
+                      {rootError("publishStartDateTime")}
+                    </div>
+                  )}
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="cf-publish-end">
+                    {t("domains.campaign.form.publishEndLabel")}
+                  </label>
                   <input
+                    id="cf-publish-end"
                     type="datetime-local"
                     className={styles.input}
-                    aria-label={t("domains.campaign.form.publishEndLabel")}
                     {...methods.register("publishEndDateTime", {
                       setValueAs: (value: string) => (value === "" ? null : value),
                     })}
                     disabled={submitting}
                   />
+                  {rootError("publishEndDateTime") && (
+                    <div className={styles.error}>
+                      {rootError("publishEndDateTime")}
+                    </div>
+                  )}
                 </div>
-                {rootError("publishStartDateTime") && (
-                  <div className={styles.error}>
-                    {rootError("publishStartDateTime")}
-                  </div>
-                )}
-                {rootError("publishEndDateTime") && (
-                  <div className={styles.error}>
-                    {rootError("publishEndDateTime")}
-                  </div>
-                )}
-              </>
+              </div>
             )}
             <div className={styles.hint}>
               {t("domains.campaign.form.publishPeriodHint")}

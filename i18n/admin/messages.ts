@@ -855,7 +855,6 @@ export const adminMessages = {
           en: "Set a publish period",
           ja: "投稿期間を設定する",
         },
-        publishPeriodSeparator: { ko: "~", en: "–", ja: "〜" },
         publishPeriodRequired: {
           ko: "게시 기간의 시작과 종료를 입력하거나, 설정을 해제해주세요.",
           en: "Enter both the start and end of the publish period, or turn it off.",

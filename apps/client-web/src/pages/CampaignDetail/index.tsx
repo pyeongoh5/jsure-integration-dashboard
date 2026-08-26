@@ -59,6 +59,13 @@ function formatJpy(value: number): string {
   return `¥${value.toLocaleString("ja-JP")}`;
 }
 
+function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${formatDate(iso)} ${hours}:${minutes}`;
+}
+
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
   FEED: t("pages.campaignDetail.instagramFeed"),
   REELS: t("pages.campaignDetail.instagramReels"),
@@ -120,6 +127,13 @@ export function CampaignDetail() {
           {t("pages.campaignDetail.recruitLabel")} {formatDate(data.recruitStartAt)} 〜{" "}
           {formatDate(data.recruitEndAt)}
         </div>
+        {data.publishStartAt && data.publishEndAt && (
+          <div className={styles.period}>
+            {t("pages.campaignDetail.publishLabel")}{" "}
+            {formatDateTime(data.publishStartAt)} 〜{" "}
+            {formatDateTime(data.publishEndAt)}
+          </div>
+        )}
 
         <ul className={styles.sns}>
           {data.recruits.map((r: CampaignRecruit) => {

@@ -896,6 +896,9 @@ export const InfluencerCampaignDetailSchema =
       .array(z.object({ subType: CampaignSubTypeSchema, option: z.string() }))
       // 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
       .default([]),
+    /** 게시(투고) 기간. null 이면 투고 시점 제약이 없다. */
+    publishStartAt: z.string().datetime().nullable().default(null),
+    publishEndAt: z.string().datetime().nullable().default(null),
   });
 export type InfluencerCampaignDetail = z.infer<
   typeof InfluencerCampaignDetailSchema

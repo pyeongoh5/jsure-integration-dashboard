@@ -301,6 +301,8 @@ export class InfluencerCampaignsService {
       excludedSubTypes: excludedCampaignSubTypes,
       fullSubTypes,
       fullOptions,
+      publishStartAt: row.publishStartAt ? row.publishStartAt.toISOString() : null,
+      publishEndAt: row.publishEndAt ? row.publishEndAt.toISOString() : null,
     };
   }
 }

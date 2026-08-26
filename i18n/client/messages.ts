@@ -738,6 +738,7 @@ export const messages = {
       instagramFeed: { jp: "フィード", kr: "피드" },
       instagramReels: { jp: "リール", kr: "릴스" },
       recruitLabel: { jp: "募集", kr: "모집" },
+      publishLabel: { jp: "投稿期間", kr: "게시 기간" }, // new
       recruitCountSuffix: { jp: "名", kr: "명" },
       condLabel: { jp: "条件: ", kr: "조건: " },
       condFollower: { jp: "フォロワー数", kr: "팔로워 수" },

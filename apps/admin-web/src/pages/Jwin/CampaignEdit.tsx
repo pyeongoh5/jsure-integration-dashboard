@@ -55,7 +55,8 @@ export function JwinCampaignEdit() {
     window.setTimeout(() => setSaved(false), 2000);
   };
 
-  if (form.mode === "edit" && form.loading) {
+  // detail 이 이미 있으면 백그라운드 재조회일 뿐이므로 전체 화면 로딩/에러로 덮지 않는다.
+  if (form.mode === "edit" && form.loading && !form.detail) {
     return (
       <div className={styles.root}>
         <div className={styles.empty}>{t("jwin.common.loading")}</div>
@@ -63,7 +64,7 @@ export function JwinCampaignEdit() {
     );
   }
 
-  if (form.mode === "edit" && form.loadError) {
+  if (form.mode === "edit" && form.loadError && !form.detail) {
     return (
       <div className={styles.root}>
         <div className={styles.empty}>{form.loadError}</div>
@@ -170,6 +171,7 @@ function CampaignEditBody({
           detail={detail}
           checks={checks}
           changing={transition.changing}
+          checksStale={prizes.loading || postTemplates.loading}
           error={transition.error}
           onChange={transition.change}
         />

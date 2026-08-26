@@ -14,6 +14,9 @@ type Props = {
   detail: AdminCampaignDetail;
   checks: ActivationCheck[];
   changing: boolean;
+  // 체크리스트가 참조하는 경품·소재 데이터가 재조회 중이면 ACTIVE 버튼을 잠가
+  // 삭제 직후 stale 데이터로 체크리스트가 통과된 것처럼 보이는 창을 막는다.
+  checksStale: boolean;
   error: string | null;
   onChange: (status: JwinCampaignStatus) => void;
 };
@@ -45,7 +48,7 @@ function ChecklistView({ checks }: { checks: ActivationCheck[] }) {
  * 상태 배지 + 전환 버튼. SETUP 에서는 발행 전 체크리스트를 함께 보여주고,
  * 4항목을 전부 충족해야 ACTIVE 전환 버튼이 열린다.
  */
-export function StatusTransition({ detail, checks, changing, error, onChange }: Props) {
+export function StatusTransition({ detail, checks, changing, checksStale, error, onChange }: Props) {
   const t = useT();
   const [pauseOpen, setPauseOpen] = useState(false);
   const [resumeOpen, setResumeOpen] = useState(false);
@@ -66,7 +69,7 @@ export function StatusTransition({ detail, checks, changing, error, onChange }: 
             variant="primary"
             size="md"
             onClick={() => onChange("ACTIVE")}
-            disabled={changing || !canActivate(checks)}
+            disabled={changing || checksStale || !canActivate(checks)}
           >
             {changing ? t("jwin.status.changing") : t("jwin.status.start")}
           </Button>

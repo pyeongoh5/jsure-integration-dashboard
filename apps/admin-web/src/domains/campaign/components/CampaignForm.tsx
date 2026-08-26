@@ -626,7 +626,11 @@ export function CampaignForm({
             </div>
           </div>
 
-          <div className={styles.field}>
+          <div
+            className={`${styles.optionCard} ${
+              publishPeriodEnabled ? styles.optionCardOn : ""
+            }`}
+          >
             <label className={styles.checkToggle}>
               <input
                 type="checkbox"

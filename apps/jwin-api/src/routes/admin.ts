@@ -16,7 +16,7 @@ import {
   canTransitionFulfillment,
   BrandAccountRow,
 } from './adminMappers';
-import { activationBlockers } from './campaignActivation';
+import { activationBlockers, resolveAccountForActivationCheck } from './campaignActivation';
 
 /**
  * 어드민 API (v1: J-sure 운영자 단일 테넌트 — 브로커형)
@@ -232,6 +232,23 @@ export async function adminRoutes(app: FastifyInstance) {
       if (!current) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
 
       if (current.status === 'SETUP') {
+        // 같은 요청에서 계정 연결을 함께 바꾸는 경우가 있으므로 새 값을 우선한다.
+        // 새 id 가 이미 가진 값과 다르면만 조회 — resolveAccountForActivationCheck 가 최종 판단.
+        const needsAccountLookup =
+          parsed.data.brandAccountId !== undefined &&
+          parsed.data.brandAccountId !== null &&
+          parsed.data.brandAccountId !== current.brandAccountId;
+        const fetchedAccount = needsAccountLookup
+          ? await prisma.brandXAccount.findUnique({
+              where: { id: parsed.data.brandAccountId as string },
+            })
+          : null;
+        const brandAccountForCheck = resolveAccountForActivationCheck(
+          parsed.data.brandAccountId,
+          current,
+          fetchedAccount,
+        );
+
         const blockers = activationBlockers({
           campaign: {
             // 같은 요청에서 기간·DM 문구를 함께 바꾸는 경우가 있으므로 새 값을 우선한다
@@ -242,7 +259,7 @@ export async function adminRoutes(app: FastifyInstance) {
                 ? current.dmTemplate
                 : parsed.data.dmTemplate,
           },
-          brandAccount: current.brandAccount,
+          brandAccount: brandAccountForCheck,
           prizes: current.prizes,
           postTemplates: current.postTemplates,
         });

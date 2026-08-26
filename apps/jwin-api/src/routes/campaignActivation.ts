@@ -68,3 +68,23 @@ export function activationBlockers(input: ActivationInput): string[] {
 
   return blockers;
 }
+
+/**
+ * 같은 PATCH 요청이 `brandAccountId` 와 `status: 'ACTIVE'` 를 함께 보낼 수 있으므로,
+ * 검증에 쓸 계정은 저장된 값이 아니라 요청이 의도하는 값이어야 한다.
+ *
+ * - 필드 자체가 없으면(undefined) 저장된 계정을 그대로 쓴다.
+ * - 명시적 null 이면 "연결 해제" 의도이므로 계정 없음으로 취급한다.
+ * - 저장된 계정과 같은 id 면 이미 가진 값을 재사용한다(중복 조회 방지).
+ * - 그 외에는 새로 조회한 계정(`fetchedAccount`)을 쓴다 — 호출부가 미리 조회해서 넘긴다.
+ */
+export function resolveAccountForActivationCheck<Account>(
+  incomingBrandAccountId: string | null | undefined,
+  current: { brandAccountId: string | null; brandAccount: Account | null },
+  fetchedAccount: Account | null,
+): Account | null {
+  if (incomingBrandAccountId === undefined) return current.brandAccount;
+  if (incomingBrandAccountId === null) return null;
+  if (incomingBrandAccountId === current.brandAccountId) return current.brandAccount;
+  return fetchedAccount;
+}

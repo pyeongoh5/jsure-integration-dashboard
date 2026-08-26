@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activationBlockers } from './campaignActivation';
+import { activationBlockers, resolveAccountForActivationCheck } from './campaignActivation';
 
 /** 2026-09-01 00:00 JST ~ 2026-09-05 23:59 JST */
 const CAMPAIGN = {
@@ -141,5 +141,43 @@ describe('activationBlockers', () => {
       postTemplates: [],
     });
     expect(blockers.length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('resolveAccountForActivationCheck', () => {
+  it('요청에 brandAccountId 가 없으면 저장된 계정을 그대로 쓴다', () => {
+    const resolved = resolveAccountForActivationCheck(
+      undefined,
+      { brandAccountId: 'account-1', brandAccount: CONNECTED_ACCOUNT },
+      null,
+    );
+    expect(resolved).toBe(CONNECTED_ACCOUNT);
+  });
+
+  it('요청이 연동된 계정을 새로 지정하면, 저장된 계정이 없어도 새 계정으로 검증한다', () => {
+    const resolved = resolveAccountForActivationCheck(
+      'account-new',
+      { brandAccountId: null, brandAccount: null },
+      CONNECTED_ACCOUNT,
+    );
+    expect(resolved).toBe(CONNECTED_ACCOUNT);
+  });
+
+  it('요청이 명시적으로 null(연결 해제)이면, 저장된 계정이 연동돼 있어도 계정 없음으로 취급한다', () => {
+    const resolved = resolveAccountForActivationCheck(
+      null,
+      { brandAccountId: 'account-1', brandAccount: CONNECTED_ACCOUNT },
+      null,
+    );
+    expect(resolved).toBeNull();
+  });
+
+  it('요청의 id 가 저장된 id 와 같으면 새로 조회한 값 대신 저장된 값을 쓴다', () => {
+    const resolved = resolveAccountForActivationCheck(
+      'account-1',
+      { brandAccountId: 'account-1', brandAccount: CONNECTED_ACCOUNT },
+      null,
+    );
+    expect(resolved).toBe(CONNECTED_ACCOUNT);
   });
 });

@@ -290,3 +290,15 @@ describe("CampaignDraftRequestSchema 기간 필드", () => {
     ).toBe(true);
   });
 });
+
+describe("CampaignDraftRequestSchema 게시 기간", () => {
+  it("빈 문자열과 null 을 모두 허용한다", () => {
+    const parsed = CampaignDraftRequestSchema.parse({
+      title: "작성 중",
+      publishStartDateTime: "",
+      publishEndDateTime: null,
+    });
+    expect(parsed.publishStartDateTime).toBe("");
+    expect(parsed.publishEndDateTime).toBeNull();
+  });
+});

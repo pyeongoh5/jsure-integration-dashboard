@@ -29,6 +29,8 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   recruitStartDate: "",
   recruitEndDate: "",
   postingPeriodDays: Number.NaN,
+  publishStartDateTime: null,
+  publishEndDateTime: null,
   orderPeriodDays: null,
   recruits: [],
   productSummary: "",

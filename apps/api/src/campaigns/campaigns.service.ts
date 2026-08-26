@@ -42,6 +42,17 @@ export function utcToJstDateStr(d: Date): string {
   return shifted.toISOString().slice(0, 10);
 }
 
+/** 어드민 폼의 JST 로컬 문자열("2026-09-01T10:00") → UTC Date. */
+export function jstDateTimeToUtc(dateTimeStr: string): Date {
+  return new Date(`${dateTimeStr}:00+09:00`);
+}
+
+/** UTC Date → 어드민 폼용 JST 로컬 문자열("2026-09-01T10:00"). */
+export function utcToJstDateTimeStr(date: Date): string {
+  const shifted = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  return shifted.toISOString().slice(0, 16);
+}
+
 const SNS_SUB_TYPES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
 const FAKE_PURCHASE_SUB_TYPES = ["QOO10"] as const;
 const SIMPLE_REVIEW_SUB_TYPES = ["LIPS", "ATCOSME"] as const;
@@ -345,6 +356,8 @@ type CampaignRow = {
   closedAt: Date | null;
   hiddenAt: Date | null;
   postingPeriodDays: number;
+  publishStartAt: Date | null;
+  publishEndAt: Date | null;
   orderPeriodDays: number | null;
   productSummary: string;
   productDetailUrls: string[];
@@ -408,6 +421,12 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     closedAt: row.closedAt ? row.closedAt.toISOString() : null,
     hiddenAt: row.hiddenAt ? row.hiddenAt.toISOString() : null,
     postingPeriodDays: row.postingPeriodDays,
+    publishStartDateTime: row.publishStartAt
+      ? utcToJstDateTimeStr(row.publishStartAt)
+      : null,
+    publishEndDateTime: row.publishEndAt
+      ? utcToJstDateTimeStr(row.publishEndAt)
+      : null,
     orderPeriodDays: row.orderPeriodDays,
     productSummary: row.productSummary,
     productDetailUrls: row.productDetailUrls,
@@ -470,6 +489,12 @@ function toDraftCampaignData(input: CampaignDraftRequest, now: Date) {
       ? jstDayEndUtc(input.recruitEndDate)
       : now,
     postingPeriodDays: input.postingPeriodDays || DEFAULT_POSTING_PERIOD_DAYS,
+    publishStartAt: input.publishStartDateTime
+      ? jstDateTimeToUtc(input.publishStartDateTime)
+      : null,
+    publishEndAt: input.publishEndDateTime
+      ? jstDateTimeToUtc(input.publishEndDateTime)
+      : null,
     orderPeriodDays: input.orderPeriodDays ?? null,
     productSummary: input.productSummary ?? "",
     productDetailUrls: input.productDetailUrls ?? [],
@@ -603,6 +628,12 @@ export class CampaignsService {
         recruitStartAt: jstDayStartUtc(input.recruitStartDate),
         recruitEndAt: jstDayEndUtc(input.recruitEndDate),
         postingPeriodDays: input.postingPeriodDays,
+        publishStartAt: input.publishStartDateTime
+          ? jstDateTimeToUtc(input.publishStartDateTime)
+          : null,
+        publishEndAt: input.publishEndDateTime
+          ? jstDateTimeToUtc(input.publishEndDateTime)
+          : null,
         orderPeriodDays: input.orderPeriodDays ?? null,
         productSummary: input.productSummary,
         productDetailUrls: input.productDetailUrls,
@@ -819,6 +850,16 @@ export class CampaignsService {
     }
     if (input.postingPeriodDays !== undefined) {
       data.postingPeriodDays = input.postingPeriodDays;
+    }
+    if (input.publishStartDateTime !== undefined) {
+      data.publishStartAt = input.publishStartDateTime
+        ? jstDateTimeToUtc(input.publishStartDateTime)
+        : null;
+    }
+    if (input.publishEndDateTime !== undefined) {
+      data.publishEndAt = input.publishEndDateTime
+        ? jstDateTimeToUtc(input.publishEndDateTime)
+        : null;
     }
     if (input.orderPeriodDays !== undefined) {
       data.orderPeriodDays = input.orderPeriodDays;

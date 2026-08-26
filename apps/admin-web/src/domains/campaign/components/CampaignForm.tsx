@@ -20,6 +20,12 @@ import styles from "./CampaignForm.module.css";
 
 const CAMPAIGN_IMAGE_ENDPOINT = "/uploads/admin/campaign-image/presign";
 
+/** 게시 마감을 정하는 두 방식. 서버는 게시 기간이 있으면 일수를 쓰지 않는다. */
+type DeadlineMode = "DAYS" | "RANGE";
+
+/** apps/api 의 DEFAULT_POSTING_PERIOD_DAYS 와 같은 값. */
+const DEFAULT_POSTING_PERIOD_DAYS = 14;
+
 export const EMPTY_CAMPAIGN_FORM: Values = {
   category: "SNS",
   title: "",
@@ -108,9 +114,11 @@ export function CampaignForm({
       ? { kind: "new", ...initialThumbnail }
       : { kind: "unchanged" },
   );
-  const [publishPeriodEnabled, setPublishPeriodEnabled] = useState(
+  const [deadlineMode, setDeadlineMode] = useState<DeadlineMode>(
     initialValue.publishStartDateTime !== null ||
-      initialValue.publishEndDateTime !== null,
+      initialValue.publishEndDateTime !== null
+      ? "RANGE"
+      : "DAYS",
   );
   const [perItemErrors, setPerItemErrors] = useState<PerItemErrors>({});
   const [bulkRewardJpy, setBulkRewardJpy] = useState<number>(Number.NaN);
@@ -164,18 +172,21 @@ export function CampaignForm({
   // 임시저장 버튼 활성 조건 — 제목 1자 이상.
   const draftTitle = methods.watch("title");
   const fieldErrors = methods.formState.errors;
-  const publishStartDateTime = methods.watch("publishStartDateTime");
-  const publishEndDateTime = methods.watch("publishEndDateTime");
-  // 게시 기간이 설정되면 게시 기간(일수) 입력은 서버에서 무시된다 — 힌트만 보여주고 입력은 막지 않는다.
-  const postingPeriodIgnored =
-    publishStartDateTime !== null && publishEndDateTime !== null;
-
-  /** 게시 기간을 쓸지 말지. 끄면 두 값을 비워 서버가 제약 없는 캠페인으로 저장한다. */
-  function togglePublishPeriod(enabled: boolean) {
-    setPublishPeriodEnabled(enabled);
-    if (enabled) return;
-    methods.setValue("publishStartDateTime", null, { shouldValidate: true });
-    methods.setValue("publishEndDateTime", null, { shouldValidate: true });
+  /**
+   * 게시 마감 방식 전환. DAYS 로 가면 게시 기간을 비워 기존 상대 마감으로 돌리고,
+   * RANGE 로 가면 서버 스키마가 요구하는 postingPeriodDays 를 기본값으로 채운다
+   * (게시 기간이 있으면 서버가 이 값을 쓰지 않지만 필수 필드다).
+   */
+  function selectDeadlineMode(mode: DeadlineMode) {
+    setDeadlineMode(mode);
+    if (mode === "DAYS") {
+      methods.setValue("publishStartDateTime", null, { shouldValidate: true });
+      methods.setValue("publishEndDateTime", null, { shouldValidate: true });
+      return;
+    }
+    if (!Number.isFinite(methods.getValues("postingPeriodDays"))) {
+      methods.setValue("postingPeriodDays", DEFAULT_POSTING_PERIOD_DAYS);
+    }
   }
 
   function rootError(name: keyof Values): string | undefined {
@@ -224,10 +235,10 @@ export function CampaignForm({
     // RHF가 검증을 통과시킨 시점이므로 perItemErrors도 초기화
     setPerItemErrors({});
 
-    // 게시 기간을 켜 두고 비워서 저장하면 제약 없는 캠페인이 조용히 만들어진다.
-    // 체크박스는 스키마 밖의 UI 상태라 zod 가 못 잡으므로 여기서 막는다.
+    // 기간 지정 방식을 골라 놓고 비워서 저장하면 제약 없는 캠페인이 조용히 만들어진다.
+    // 방식 선택은 스키마 밖의 UI 상태라 zod 가 못 잡으므로 여기서 막는다.
     if (
-      publishPeriodEnabled &&
+      deadlineMode === "RANGE" &&
       (values.publishStartDateTime === null || values.publishEndDateTime === null)
     ) {
       methods.setError("publishEndDateTime", {
@@ -626,95 +637,116 @@ export function CampaignForm({
             </div>
           </div>
 
-          <div
-            className={`${styles.optionCard} ${
-              publishPeriodEnabled ? styles.optionCardOn : ""
-            }`}
-          >
-            <label className={styles.checkToggle}>
-              <input
-                type="checkbox"
-                checked={publishPeriodEnabled}
-                onChange={(event) => togglePublishPeriod(event.target.checked)}
-                disabled={submitting}
-              />
-              <span>{t("domains.campaign.form.publishPeriodEnableLabel")}</span>
-            </label>
-            {publishPeriodEnabled && (
-              <div className={styles.row2}>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="cf-publish-start">
-                    {t("domains.campaign.form.publishStartLabel")}
-                  </label>
-                  <input
-                    id="cf-publish-start"
-                    type="datetime-local"
-                    className={styles.input}
-                    {...methods.register("publishStartDateTime", {
-                      setValueAs: (value: string) => (value === "" ? null : value),
-                    })}
-                    disabled={submitting}
-                  />
-                  {rootError("publishStartDateTime") && (
-                    <div className={styles.error}>
-                      {rootError("publishStartDateTime")}
-                    </div>
-                  )}
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="cf-publish-end">
-                    {t("domains.campaign.form.publishEndLabel")}
-                  </label>
-                  <input
-                    id="cf-publish-end"
-                    type="datetime-local"
-                    className={styles.input}
-                    {...methods.register("publishEndDateTime", {
-                      setValueAs: (value: string) => (value === "" ? null : value),
-                    })}
-                    disabled={submitting}
-                  />
-                  {rootError("publishEndDateTime") && (
-                    <div className={styles.error}>
-                      {rootError("publishEndDateTime")}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            <div className={styles.hint}>
-              {t("domains.campaign.form.publishPeriodHint")}
-            </div>
-          </div>
-
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="cf-posting-period">
-              {t("domains.campaign.form.postingPeriodLabel")}
+            <label className={styles.label}>
+              {t("domains.campaign.form.deadlineModeLabel")}
             </label>
-            <Controller
-              control={methods.control}
-              name="postingPeriodDays"
-              render={({ field }) => (
+            <div
+              className={`${styles.optionCard} ${
+                deadlineMode === "DAYS" ? styles.optionCardOn : ""
+              }`}
+            >
+              <label className={styles.checkToggle}>
                 <input
-                  id="cf-posting-period"
-                  className={styles.input}
-                  inputMode="numeric"
-                  placeholder={t("domains.campaign.form.postingPeriodPlaceholder")}
-                  value={Number.isFinite(field.value) ? String(field.value) : ""}
-                  onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
-                  onBlur={field.onBlur}
+                  type="radio"
+                  name="cf-deadline-mode"
+                  checked={deadlineMode === "DAYS"}
+                  onChange={() => selectDeadlineMode("DAYS")}
                   disabled={submitting}
                 />
+                <span>{t("domains.campaign.form.deadlineModeDaysLabel")}</span>
+              </label>
+              {deadlineMode === "DAYS" && (
+                <>
+                  <Controller
+                    control={methods.control}
+                    name="postingPeriodDays"
+                    render={({ field }) => (
+                      <input
+                        id="cf-posting-period"
+                        className={styles.input}
+                        inputMode="numeric"
+                        aria-label={t("domains.campaign.form.deadlineModeDaysLabel")}
+                        placeholder={t("domains.campaign.form.postingPeriodPlaceholder")}
+                        value={Number.isFinite(field.value) ? String(field.value) : ""}
+                        onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
+                        onBlur={field.onBlur}
+                        disabled={submitting}
+                      />
+                    )}
+                  />
+                  <div className={styles.hint}>
+                    {t("domains.campaign.form.deadlineModeDaysHint")}
+                  </div>
+                  {rootError("postingPeriodDays") && (
+                    <div className={styles.error}>{rootError("postingPeriodDays")}</div>
+                  )}
+                </>
               )}
-            />
-            {postingPeriodIgnored && (
-              <div className={styles.hint}>
-                {t("domains.campaign.form.postingPeriodDaysIgnored")}
-              </div>
-            )}
-            {rootError("postingPeriodDays") && (
-              <div className={styles.error}>{rootError("postingPeriodDays")}</div>
-            )}
+            </div>
+            <div
+              className={`${styles.optionCard} ${
+                deadlineMode === "RANGE" ? styles.optionCardOn : ""
+              }`}
+            >
+              <label className={styles.checkToggle}>
+                <input
+                  type="radio"
+                  name="cf-deadline-mode"
+                  checked={deadlineMode === "RANGE"}
+                  onChange={() => selectDeadlineMode("RANGE")}
+                  disabled={submitting}
+                />
+                <span>{t("domains.campaign.form.deadlineModeRangeLabel")}</span>
+              </label>
+              {deadlineMode === "RANGE" && (
+                <>
+                  <div className={styles.row2}>
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="cf-publish-start">
+                        {t("domains.campaign.form.publishStartLabel")}
+                      </label>
+                      <input
+                        id="cf-publish-start"
+                        type="datetime-local"
+                        className={styles.input}
+                        {...methods.register("publishStartDateTime", {
+                          setValueAs: (value: string) => (value === "" ? null : value),
+                        })}
+                        disabled={submitting}
+                      />
+                      {rootError("publishStartDateTime") && (
+                        <div className={styles.error}>
+                          {rootError("publishStartDateTime")}
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="cf-publish-end">
+                        {t("domains.campaign.form.publishEndLabel")}
+                      </label>
+                      <input
+                        id="cf-publish-end"
+                        type="datetime-local"
+                        className={styles.input}
+                        {...methods.register("publishEndDateTime", {
+                          setValueAs: (value: string) => (value === "" ? null : value),
+                        })}
+                        disabled={submitting}
+                      />
+                      {rootError("publishEndDateTime") && (
+                        <div className={styles.error}>
+                          {rootError("publishEndDateTime")}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className={styles.hint}>
+                    {t("domains.campaign.form.publishPeriodHint")}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {methods.watch("category") === "FAKE_PURCHASE" && (

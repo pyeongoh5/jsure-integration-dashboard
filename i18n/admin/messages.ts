@@ -850,10 +850,25 @@ export const adminMessages = {
           ja: "投稿開始",
         },
         publishEndLabel: { ko: "게시 종료", en: "Publish end", ja: "投稿終了" },
-        publishPeriodEnableLabel: {
-          ko: "게시 기간 설정",
-          en: "Set a publish period",
-          ja: "投稿期間を設定する",
+        deadlineModeLabel: {
+          ko: "게시 마감 방식",
+          en: "Posting deadline",
+          ja: "掲載期限の方式",
+        },
+        deadlineModeDaysLabel: {
+          ko: "수령 후 N일 이내",
+          en: "Within N days after receipt",
+          ja: "受取後N日以内",
+        },
+        deadlineModeDaysHint: {
+          ko: "수령일이 인플루언서마다 달라 마감일도 각자 다릅니다.",
+          en: "Each influencer gets their own deadline, counted from their receipt date.",
+          ja: "受取日が人によって異なるため、締切も個別になります。",
+        },
+        deadlineModeRangeLabel: {
+          ko: "기간 지정 (엠바고)",
+          en: "Fixed period (embargo)",
+          ja: "期間指定（エンバーゴ）",
         },
         publishPeriodRequired: {
           ko: "게시 기간의 시작과 종료를 입력하거나, 설정을 해제해주세요.",
@@ -861,19 +876,9 @@ export const adminMessages = {
           ja: "投稿期間の開始と終了を入力するか、設定を解除してください。",
         },
         publishPeriodHint: {
-          ko: "선택 사항. 설정하면 시작 시각 이전에는 인플루언서가 투고 URL 을 제출할 수 없습니다.",
-          en: "Optional. When set, influencers cannot submit post URLs before the start time.",
-          ja: "任意。設定すると開始時刻より前は投稿URLを提出できません。",
-        },
-        postingPeriodDaysIgnored: {
-          ko: "게시 기간이 설정되어 이 값은 사용되지 않습니다.",
-          en: "Ignored because a publish period is set.",
-          ja: "投稿期間が設定されているため、この値は使用されません。",
-        },
-        postingPeriodLabel: {
-          ko: "게시 기간 (수령 후 N일)",
-          en: "Posting period (N days after receipt)",
-          ja: "掲載期間（受取後N日）",
+          ko: "모든 인플루언서가 같은 기간에 게시합니다. 시작 시각 이전에는 투고 URL 을 제출할 수 없습니다.",
+          en: "Every influencer posts within the same window. Post URLs cannot be submitted before the start time.",
+          ja: "全員が同じ期間に投稿します。開始時刻より前は投稿URLを提出できません。",
         },
         postingPeriodPlaceholder: { ko: "예시: 14", en: "e.g. 14", ja: "例: 14" },
         orderPeriodLabel: {

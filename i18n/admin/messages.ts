@@ -850,6 +850,17 @@ export const adminMessages = {
           ja: "投稿開始",
         },
         publishEndLabel: { ko: "게시 종료", en: "Publish end", ja: "投稿終了" },
+        publishPeriodEnableLabel: {
+          ko: "게시 기간 설정",
+          en: "Set a publish period",
+          ja: "投稿期間を設定する",
+        },
+        publishPeriodSeparator: { ko: "~", en: "–", ja: "〜" },
+        publishPeriodRequired: {
+          ko: "게시 기간의 시작과 종료를 입력하거나, 설정을 해제해주세요.",
+          en: "Enter both the start and end of the publish period, or turn it off.",
+          ja: "投稿期間の開始と終了を入力するか、設定を解除してください。",
+        },
         publishPeriodHint: {
           ko: "선택 사항. 설정하면 시작 시각 이전에는 인플루언서가 투고 URL 을 제출할 수 없습니다.",
           en: "Optional. When set, influencers cannot submit post URLs before the start time.",

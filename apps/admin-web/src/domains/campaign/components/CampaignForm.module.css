@@ -212,6 +212,35 @@
   gap: 12px;
 }
 
+/* 시작 ~ 종료를 한 줄에 놓는 기간 입력. */
+.rangeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rangeSeparator {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.checkToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkToggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
 .urls {
   display: flex;
   flex-direction: column;

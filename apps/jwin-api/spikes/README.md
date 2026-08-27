@@ -4,9 +4,19 @@
 
 ## 사전 준비
 
-1. https://developer.x.com Developer Console에서 앱 생성, OAuth2 설정 (redirect: http://localhost:8787/callback)
+1. https://developer.x.com Developer Console에서 앱 생성, OAuth2 설정
+   - 콜백 URI에 `http://localhost:8787/callback` 추가 (스파이크 스크립트 전용 임시 서버)
+   - 앱 본체가 쓰는 `http://localhost:8080/oauth/brand/callback`, `.../user/callback` 은 그대로 둔다
 2. `.env`에 X_CLIENT_ID / X_CLIENT_SECRET 설정
-3. `npx tsx spikes/get-tokens.ts` — 브라우저가 열리고 로그인하면 토큰이 출력됨 (테스트용 개인 계정 + 브랜드 테스트 계정 각각 1회)
+3. 토큰 발급 — 브라우저에서 출력된 URL을 열고 승인하면 토큰이 콘솔에 찍힌다
+   (테스트용 개인 계정 + 브랜드 테스트 계정 각각 1회)
+
+   ```bash
+   cd apps/jwin-api
+   npx tsx --env-file=.env spikes/get-tokens.ts
+   ```
+
+   스크립트는 `.env`를 자동으로 읽지 않으므로 `--env-file` 없이 실행하면 인가 URL이 깨진다.
 
 ## 실측 항목과 판정 기준
 
@@ -19,4 +29,20 @@
 | 5 | `spike-media-upload.ts` | v2 chunked 미디어 업로드 + 첨부 게시 (F-2.3) | initialize/append/finalize 성공 + 업로드 무과금 확인 |
 | 6 | (수동) | Developer Console 크레딧 차감 내역 | 1·2번 호출이 owned read($0.001)로 잡히는지 |
 
+## 실행 예시
+
+2번에서 받은 토큰을 앞에 붙여 실행한다 (`.env`가 아니라 인라인 환경변수).
+
+```bash
+cd apps/jwin-api
+
+USER_TOKEN=... TARGET_USER_ID=... npx tsx spikes/spike-connection-status.ts
+USER_TOKEN=... USER_ID=... TARGET_POST_ID=... npx tsx spikes/spike-repost-check.ts
+BRAND_TOKEN=... RECIPIENT_ID=... npx tsx spikes/spike-dm.ts
+BRAND_TOKEN=... npx tsx spikes/spike-post.ts
+BRAND_TOKEN=... MEDIA_URL=... POST_TEXT=... npx tsx spikes/spike-media-upload.ts
+```
+
 모든 항목 통과 시 G0 게이트 통과로 기록하고 §부록 B 결정 로그에 반영한다.
+
+3번(DM 발송)이 막히면 D-4(기프트코드 DM 자동 발송)를 재설계해야 하므로 가장 먼저 확인한다.

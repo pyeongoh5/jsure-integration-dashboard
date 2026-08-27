@@ -13,10 +13,14 @@
 
    ```bash
    cd apps/jwin-api
-   npx tsx --env-file=.env spikes/get-tokens.ts
+   npx tsx spikes/get-tokens.ts
    ```
 
-   스크립트는 `.env`를 자동으로 읽지 않으므로 `--env-file` 없이 실행하면 인가 URL이 깨진다.
+   승인 화면에서 거부되면 `SCOPES`를 줄여 앱 권한 부족인지 가려낸다.
+   (예: `SCOPES='tweet.read users.read follows.read offline.access'`)
+
+   스파이크 1·2는 **참여자 역할 개인 계정**, 3·4·5는 **브랜드 계정**의 토큰이 필요하다.
+   토큰 주인과 조회 대상이 같으면 `connection_status`가 반환되지 않으니 반드시 다른 계정으로 받는다.
 
 ## 실측 항목과 판정 기준
 
@@ -31,16 +35,33 @@
 
 ## 실행 예시
 
-2번에서 받은 토큰을 앞에 붙여 실행한다 (`.env`가 아니라 인라인 환경변수).
+스크립트가 `apps/jwin-api/.env`를 자동으로 읽으므로, 2번에서 받은 값을 `.env`에 넣어두면 된다.
+
+```
+USER_TOKEN=<개인 계정 access_token>
+BRAND_TOKEN=<브랜드 계정 access_token>
+TARGET_USER_ID=<브랜드 계정 numeric id>
+USER_ID=<개인 계정 numeric id>
+TARGET_POST_ID=<검증 대상 포스트 id>
+RECIPIENT_ID=<DM 수신 유저 id>
+MEDIA_URL=<업로드할 이미지 URL>
+```
 
 ```bash
 cd apps/jwin-api
 
-USER_TOKEN=... TARGET_USER_ID=... npx tsx spikes/spike-connection-status.ts
-USER_TOKEN=... USER_ID=... TARGET_POST_ID=... npx tsx spikes/spike-repost-check.ts
-BRAND_TOKEN=... RECIPIENT_ID=... npx tsx spikes/spike-dm.ts
-BRAND_TOKEN=... npx tsx spikes/spike-post.ts
-BRAND_TOKEN=... MEDIA_URL=... POST_TEXT=... npx tsx spikes/spike-media-upload.ts
+npx tsx spikes/spike-connection-status.ts
+npx tsx spikes/spike-repost-check.ts
+npx tsx spikes/spike-dm.ts
+npx tsx spikes/spike-post.ts
+POST_TEXT='테스트' npx tsx spikes/spike-media-upload.ts
+```
+
+셸에 직접 준 값이 `.env`보다 우선하므로 `USER_TOKEN=... npx tsx ...` 로 덮어쓸 수도 있다.
+numeric id는 아래로 확인한다.
+
+```bash
+curl -H "Authorization: Bearer $USER_TOKEN" https://api.x.com/2/users/by/username/<핸들>
 ```
 
 모든 항목 통과 시 G0 게이트 통과로 기록하고 §부록 B 결정 로그에 반영한다.

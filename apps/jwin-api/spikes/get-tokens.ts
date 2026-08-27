@@ -4,8 +4,10 @@
 import { createServer } from 'http';
 import { randomBytes, createHash } from 'crypto';
 
-const CLIENT_ID = process.env.X_CLIENT_ID!;
-const CLIENT_SECRET = process.env.X_CLIENT_SECRET!;
+import { requireEnv } from './env';
+
+const CLIENT_ID = requireEnv('X_CLIENT_ID');
+const CLIENT_SECRET = requireEnv('X_CLIENT_SECRET');
 const REDIRECT = 'http://localhost:8787/callback';
 // 승인 화면이 거부되면 SCOPES를 줄여 원인(앱 권한 부족)을 가려낼 수 있다.
 // 예: SCOPES='tweet.read users.read follows.read offline.access' npx tsx spikes/get-tokens.ts

@@ -1,5 +1,14 @@
-// 스파이크 스크립트용 필수 환경변수 읽기.
-// 값이 없으면 'Bearer undefined'로 401을 맞는 대신 즉시 원인을 알려준다.
+// 스파이크 스크립트용 환경변수 로더.
+// apps/jwin-api/.env를 자동으로 읽으므로 --env-file 없이 실행해도 된다.
+// 이미 셸에 설정된 값이 .env보다 우선한다(인라인 오버라이드 가능).
+import { existsSync } from "fs";
+import { resolve } from "path";
+
+const envFile = resolve(import.meta.dirname, "../.env");
+if (existsSync(envFile)) {
+  process.loadEnvFile(envFile);
+}
+
 export function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {

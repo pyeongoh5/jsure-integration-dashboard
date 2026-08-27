@@ -1,8 +1,10 @@
 // 스파이크 5: 미디어 업로드 (v2 chunked upload) + 미디어 첨부 포스트 게시
 // 사용법: BRAND_TOKEN=... MEDIA_URL=https://.../test.png npx tsx spikes/spike-media-upload.ts
 // POST_TEXT를 주면 업로드한 미디어를 첨부해 실제 게시까지 수행 ($0.20 과금 주의)
-const token = process.env.BRAND_TOKEN!;
-const mediaUrl = process.env.MEDIA_URL!;
+import { requireEnv } from './env';
+
+const token = requireEnv('BRAND_TOKEN');
+const mediaUrl = requireEnv('MEDIA_URL');
 const postText = process.env.POST_TEXT;
 
 const API = 'https://api.x.com/2';

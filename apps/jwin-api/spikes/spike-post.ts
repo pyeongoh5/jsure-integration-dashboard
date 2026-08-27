@@ -1,6 +1,8 @@
 // 스파이크 4: URL 포함 포스트 게시 ($0.20/건 확인)
 // 사용법: BRAND_TOKEN=... npx tsx spikes/spike-post.ts
-const token = process.env.BRAND_TOKEN!;
+import { requireEnv } from './env';
+
+const token = requireEnv('BRAND_TOKEN');
 
 async function main() {
   const res = await fetch('https://api.x.com/2/tweets', {

@@ -1,8 +1,10 @@
 // 스파이크 2: 유저 자신의 tweets(owned read)에서 특정 포스트의 리트윗 검출
 // 사용법: USER_TOKEN=... USER_ID=<본인id> TARGET_POST_ID=<검증대상포스트> npx tsx spikes/spike-repost-check.ts
-const token = process.env.USER_TOKEN!;
-const userId = process.env.USER_ID!;
-const targetPostId = process.env.TARGET_POST_ID!;
+import { requireEnv } from './env';
+
+const token = requireEnv('USER_TOKEN');
+const userId = requireEnv('USER_ID');
+const targetPostId = requireEnv('TARGET_POST_ID');
 
 async function main() {
   const res = await fetch(

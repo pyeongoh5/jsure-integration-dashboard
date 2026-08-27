@@ -1,7 +1,9 @@
 // 스파이크 1: connection_status로 팔로우 여부 1콜 판정이 가능한가
 // 사용법: USER_TOKEN=... TARGET_USER_ID=<브랜드계정id> npx tsx spikes/spike-connection-status.ts
-const token = process.env.USER_TOKEN!;
-const target = process.env.TARGET_USER_ID!;
+import { requireEnv } from './env';
+
+const token = requireEnv('USER_TOKEN');
+const target = requireEnv('TARGET_USER_ID');
 
 async function main() {
   const res = await fetch(

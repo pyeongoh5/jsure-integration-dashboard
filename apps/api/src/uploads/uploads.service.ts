@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   UPLOAD_MAX_BYTES,
   JWIN_MEDIA_MAX_BYTES,
@@ -52,6 +53,7 @@ export class UploadsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly r2: R2Service,
+    private readonly config: ConfigService,
   ) {}
 
   async presignInsightUpload(
@@ -222,19 +224,25 @@ export class UploadsService {
     if (body.sizeBytes > JWIN_MEDIA_MAX_BYTES) {
       throw new BadRequestException("파일 크기 한도를 초과했습니다");
     }
-    const objectKey = `jwin/media/${randomUUID()}.${extOf(body.contentType)}`;
+    const basename = `${randomUUID()}.${extOf(body.contentType)}`;
+    const objectKey = `jwin/media/${basename}`;
     const uploadUrl = await this.r2.presignPut(
       { objectKey, contentType: body.contentType, contentLength: body.sizeBytes },
       PRESIGN_EXPIRES_SEC,
     );
     // J-WIN 미디어는 jwin-api가 게시 시각마다 fetch하므로 만료 URL을 쓰면 후반 게시가 실패한다.
-    // 만료 없는 공개 URL이 아니면 발급 자체를 막는다 (R2_PUBLIC_BASE_URL 필수).
-    const viewUrl = this.r2.publicUrl(objectKey);
-    if (!viewUrl) {
+    // 버킷을 공개로 돌리는 대신, 이 API 자신의 영구 URL(/uploads/jwin-media/:objectName)을
+    // viewUrl로 내려주고, 실제 요청이 올 때마다 짧은 유효시간의 presigned GET으로 302 리다이렉트한다.
+    // API_PUBLIC_BASE_URL이 없으면 이 영구 URL 자체를 만들 수 없으므로 발급을 막는다.
+    const publicBaseUrl = this.config
+      .get<string>("API_PUBLIC_BASE_URL")
+      ?.replace(/\/+$/, "");
+    if (!publicBaseUrl) {
       throw new InternalServerErrorException(
-        "R2_PUBLIC_BASE_URL이 설정되지 않아 J-WIN 미디어용 공개 URL을 발급할 수 없습니다",
+        "API_PUBLIC_BASE_URL이 설정되지 않아 J-WIN 미디어용 공개 URL을 발급할 수 없습니다",
       );
     }
+    const viewUrl = `${publicBaseUrl}/uploads/jwin-media/${basename}`;
     return { objectKey, uploadUrl, viewUrl, expiresInSec: PRESIGN_EXPIRES_SEC };
   }
 

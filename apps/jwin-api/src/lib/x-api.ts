@@ -22,6 +22,7 @@ export const BRAND_SCOPES = [
   'tweet.write',
   'users.read',
   'dm.write',
+  'media.write', // /media/upload/* 필수 — 없으면 소재 첨부 게시가 403
   'offline.access',
 ].join(' ');
 

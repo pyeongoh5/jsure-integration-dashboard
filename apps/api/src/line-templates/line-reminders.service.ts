@@ -8,6 +8,7 @@ import {
 import type { ApplicationStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { linePushAllowed } from "../common/line-push-allowed";
+import { insightMissingForSettlement } from "../settlements/ensure-settlement";
 import { POST_REJECTION_RESUBMIT_DAYS } from "../common/resubmit-deadline";
 import { LineDispatcherService } from "./line-dispatcher.service";
 import { DISPATCH_APPLICATION_INCLUDE } from "./trigger-meta";
@@ -338,11 +339,17 @@ export class LineRemindersService {
         posts: { some: { insightSubmittedAt: null } },
         campaign: activeCampaign("SNS"),
       },
-      include: DISPATCH_APPLICATION_INCLUDE,
+      include: {
+        ...DISPATCH_APPLICATION_INCLUDE,
+        posts: { select: { subType: true, insightSubmittedAt: true } },
+      },
     });
 
     return applications.filter((application) => {
       if (!application.reviewSubmittedAt) return false;
+      // 정산을 막고 있는 사유가 인사이트일 때만 독촉한다. insightRequired 가
+      // 꺼진 서브타입이나 이미 정산이 생성된 응모에는 보내지 않는다.
+      if (!insightMissingForSettlement(application)) return false;
       const submittedDayStart = startOfJstDay(application.reviewSubmittedAt);
       const elapsedDays = Math.round((todayStart - submittedDayStart) / DAY_MS);
       return elapsedDays === elapsedTarget;

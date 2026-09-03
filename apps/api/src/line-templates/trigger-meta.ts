@@ -86,6 +86,7 @@ export const DISPATCH_APPLICATION_INCLUDE = {
       recruits: {
         select: {
           subType: true,
+          insightRequired: true,
           rewardJpy: true,
           productPriceJpy: true,
           productUrl: true,

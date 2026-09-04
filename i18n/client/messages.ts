@@ -384,8 +384,8 @@ export const messages = {
       },
       dueLabelPrefix: { jp: "インサイト提出日: ", kr: "인사이트 제출일: " },
       reachHint: {
-        jp: "リーチ数が表示されない場合は、「0」とご入力いただくようお願いいたします。",
-        kr: "도달 수가 표시되지 않는 경우 「0」으로 입력해 주세요.",
+        jp: "表示されない項目につきましては、「0」とご入力いただきますようお願いいたします。",
+        kr: "표시되지 않는 항목에 대해서는 「0」으로 입력해 주세요.",
       },
       screenshotTitle: { jp: "インサイトのスクリーンショット", kr: "인사이트 스크린샷" },
       screenshotHintPrefix: { jp: "PNG / JPEG / WebP · 最大", kr: "PNG / JPEG / WebP · 최대 " },

@@ -199,7 +199,26 @@ https://jsure-instance-win-production.up.railway.app/oauth/user/callback    ← 
 1. 기존 프로젝트 → `New Service` → `GitHub Repo` → 같은 리포 선택
 2. **Settings → Config File Path** 에 `apps/jwin-api/railway.json` 입력
 
-   이걸 지정해야 J-WIN 전용 Dockerfile로 빌드된다. 안 하면 루트 `railway.json`을 읽어 **기존 대시보드 API가 빌드된다.**
+   이걸 지정해야 J-WIN 전용 Dockerfile 로 빌드된다. 안 하면 루트 `railway.json` 을 읽어 **기존 대시보드 API 가 빌드되고**, 아래처럼 실패한다.
+
+   ```
+   Error: Prisma schema validation - (get-config wasm)
+   Error code: P1012
+   error: Environment variable not found: DIRECT_URL.
+     -->  prisma/schema.prisma:8
+   ```
+
+   `DIRECT_URL` 은 대시보드 스키마(`apps/api/prisma/schema.prisma`)가 쓰는 이름이다. J-WIN 은 `DIRECT_DATABASE_URL` 을 쓰므로, **이 에러가 나면 잘못된 Dockerfile 로 빌드되고 있다는 신호**다. 환경변수를 추가하지 말고 Config File Path 를 고칠 것.
+
+   빌드 로그로 구분한다.
+
+   | | 잘못된 경우 | 올바른 경우 |
+   |---|---|---|
+   | Dockerfile | `apps/api/Dockerfile` | `apps/jwin-api/Dockerfile` |
+   | Prisma 변수 | `DIRECT_URL` | `DIRECT_DATABASE_URL` |
+   | healthcheck | `/api/health` | `/health` |
+
+   Config File Path 항목을 못 찾으면 Settings → Build 의 **Dockerfile Path** 를 `apps/jwin-api/Dockerfile` 로, Deploy 의 **Healthcheck Path** 를 `/health` 로 각각 지정해도 된다 (`railway.json` 을 쓰면 한 번에 잡힌다).
 
 ### 5-2. Watch Paths — 놓치면 사고 난다
 
@@ -436,4 +455,5 @@ curl -i https://jsure-instance.com/campaigns
 | 게시가 하루 통째로 안 나감 | 그날을 덮는 소재(`PostTemplate`)가 없음. 소재 탭에서 확인 |
 | 같은 포스트가 두 번 올라감 | replica가 2 이상 |
 | 컨테이너 기동 실패 | `TOKEN_ENCRYPTION_KEY`가 64자 hex가 아니거나, 마이그레이션 디렉터리가 비어 있음 |
+| 빌드 중 `Environment variable not found: DIRECT_URL` | Railway Config File Path 미지정 → 대시보드 API 가 빌드되고 있음 (§5-1) |
 | 게시된 포스트의 링크가 잘못됨 | `WEB_BASE_URL`이 임시 도메인인 채로 캠페인을 시작함. **지나간 포스트는 복구 불가** |

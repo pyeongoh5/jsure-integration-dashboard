@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import {
   SLOT_CONSUMING_STATUSES,
   type CampaignCategory,
@@ -93,10 +93,32 @@ function listSortRank(card: InfluencerCampaignCard): number {
 
 @Injectable()
 export class InfluencerCampaignsService {
+  private readonly logger = new Logger(InfluencerCampaignsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly uploads: UploadsService,
   ) {}
+
+  /**
+   * 캠페인 상세 열람 기록. (캠페인, 인플루언서) 복합 PK 라 재조회는 무시되고
+   * 조회 인원(UV)만 남는다. 기록 실패가 상세 조회를 막아서는 안 되므로 삼킨다.
+   */
+  private async recordView(
+    campaignId: string,
+    influencerId: string,
+  ): Promise<void> {
+    try {
+      await this.prisma.campaignView.createMany({
+        data: [{ campaignId, influencerId }],
+        skipDuplicates: true,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `캠페인 조회 기록 실패 (campaignId=${campaignId}, influencerId=${influencerId}): ${String(error)}`,
+      );
+    }
+  }
 
   private async resolveCard(card: InfluencerCampaignCard): Promise<InfluencerCampaignCard> {
     const [thumbnailUrl, productSummary] = await Promise.all([
@@ -193,6 +215,8 @@ export class InfluencerCampaignsService {
       },
     });
     if (!row) throw new NotFoundException("Campaign not found");
+
+    await this.recordView(row.id, args.influencerId);
 
     const approvedCount = await this.prisma.campaignApplication.count({
       where: {

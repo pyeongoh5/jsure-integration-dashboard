@@ -70,6 +70,9 @@ function makeService(overrides: {
       groupBy: async () => [],
       count: async () => 0,
     },
+    campaignView: {
+      groupBy: async () => [],
+    },
   } as never;
   const uploads = {
     resolveCampaignThumbnailUrl: async (value: string | null) => value,

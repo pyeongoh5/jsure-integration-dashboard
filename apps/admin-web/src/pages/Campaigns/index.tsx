@@ -111,6 +111,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     reward: formatRewardRange(c),
     approved: c.approvedCount,
     applied: c.appliedCount,
+    viewers: c.viewerCount,
     capacity,
     dday: daysUntil(c.recruitEndAt, now),
     updatedAt: c.updatedAt,
@@ -307,6 +308,7 @@ export function Campaigns() {
                       approved={c.approved}
                       applied={c.applied}
                       capacity={c.capacity}
+                      viewers={c.viewers}
                     />
                   )
                 }

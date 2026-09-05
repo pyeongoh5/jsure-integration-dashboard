@@ -646,6 +646,11 @@ export const adminMessages = {
           en: "Approved {approved}/{capacity} ({ratio}%) · {applied} applied",
           ja: "採用 {approved}/{capacity}名（{ratio}%）・応募 {applied}名",
         },
+        viewerCount: {
+          ko: "조회 {count}명",
+          en: "{count} viewers",
+          ja: "閲覧 {count}名",
+        },
         minFollowers: {
           ko: "{label} {count}명 이상",
           en: "{label} {count} or more",
@@ -2143,6 +2148,7 @@ export const adminMessages = {
         en: "Failed to load.",
         ja: "読み込みに失敗しました。",
       },
+      summarySheetName: { ko: "캠페인 요약", en: "Campaign summary", ja: "キャンペーン概要" },
       columns: {
         influencerCount: { ko: "인플루언서 수", en: "Influencers", ja: "インフルエンサー数" },
         totalFollowers: { ko: "총 팔로워", en: "Total followers", ja: "総フォロワー" },
@@ -2150,6 +2156,8 @@ export const adminMessages = {
         totalRewardJpy: { ko: "총 광고비(¥)", en: "Total ad spend (¥)", ja: "総広告費(¥)" },
         erByViews: { ko: "ER(조회%)", en: "ER (views %)", ja: "ER(表示%)" },
         erByFollowers: { ko: "ER(팔로워%)", en: "ER (followers %)", ja: "ER(フォロワー%)" },
+        viewerCount: { ko: "조회 인원", en: "Viewers", ja: "閲覧人数" },
+        applicationRate: { ko: "응모율(%)", en: "Application rate (%)", ja: "応募率(%)" },
         postUrl: { ko: "게시물 URL", en: "Post URL", ja: "投稿URL" },
         submittedAt: { ko: "제출일", en: "Submitted on", ja: "提出日" },
       },

@@ -5,7 +5,7 @@ import {
   type CampaignReportParticipant,
 } from "@jsure/shared";
 import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
-import { translate, type AdminTranslationKey } from "@i18n/admin";
+import { translate, type AdminLanguage, type AdminTranslationKey } from "@i18n/admin";
 import { ScrollTable, SnsProfileLink } from "@/components/composites";
 import { FilterChipBar, MultiSelectFilterChip } from "@/components/composites/FilterChip";
 import { CATEGORY_FILTER_OPTIONS, useSubmissionDetail } from "@/domains/application";
@@ -45,6 +45,18 @@ const COLUMNS: ColumnDef[] = [
     numeric: false,
     format: (row) => row.campaignTitle,
     cellClass: "titleCell",
+  },
+  {
+    key: "viewerCount",
+    labelKey: "pages.reports.columns.viewerCount",
+    numeric: true,
+    format: (row) => formatInteger(row.viewerCount),
+  },
+  {
+    key: "applicationRate",
+    labelKey: "pages.reports.columns.applicationRate",
+    numeric: true,
+    format: (row) => formatPercent(row.applicationRate),
   },
   {
     key: "influencerCount",
@@ -131,6 +143,50 @@ const COLUMNS: ColumnDef[] = [
     format: (row) => formatPercent(row.erByFollowers),
   },
 ];
+
+/**
+ * 캠페인 간 비교용 요약 시트. 화면 테이블과 같은 컬럼 구성을 쓰므로
+ * 화면에 컬럼이 늘면 시트에도 그대로 따라 늘어난다.
+ */
+function addSummarySheet(
+  workbook: ExcelJS.Workbook,
+  targets: CampaignReportRow[],
+  language: AdminLanguage,
+  usedSheetNames: Set<string>,
+): void {
+  const sheetName = translate("pages.reports.summarySheetName", language);
+  usedSheetNames.add(sheetName);
+  const sheet = workbook.addWorksheet(sheetName);
+  const periodColumns = [
+    { key: "recruitStartDate", labelKey: "pages.reports.recruitStartDate" },
+    { key: "recruitEndDate", labelKey: "pages.reports.recruitEndDate" },
+  ] as const;
+  sheet.columns = [
+    ...COLUMNS.map((column) => ({
+      header: translate(column.labelKey, language),
+      key: column.key,
+      width: column.numeric ? 14 : 30,
+      style: column.numeric ? { alignment: { horizontal: "right" as const } } : undefined,
+    })),
+    ...periodColumns.map((column) => ({
+      header: translate(column.labelKey, language),
+      key: column.key,
+      width: 14,
+    })),
+  ];
+  sheet.getRow(1).font = { bold: true };
+  for (const target of targets) {
+    const row: Record<string, string | number> = {};
+    for (const column of COLUMNS) {
+      // 엑셀에서 정렬·계산이 가능하도록 숫자는 원본 값 그대로 쓴다.
+      row[column.key] = target[column.key] ?? "";
+    }
+    for (const column of periodColumns) {
+      row[column.key] = target[column.key];
+    }
+    sheet.addRow(row);
+  }
+}
 
 function formatInteger(value: number): string {
   return value.toLocaleString("ja-JP");
@@ -422,6 +478,7 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
       const language = getStoredLanguage();
       const workbook = new ExcelJS.Workbook();
       const usedSheetNames = new Set<string>();
+      addSummarySheet(workbook, targets, language, usedSheetNames);
       for (const target of targets) {
         // 다운로드 시점에 백엔드에서 전체 참여자 일괄 조회.
         const participants = await fetchAllParticipants(target.campaignId);

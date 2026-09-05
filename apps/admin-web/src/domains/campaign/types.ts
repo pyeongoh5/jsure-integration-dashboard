@@ -51,6 +51,7 @@ export type Campaign = {
   reward: string;
   approved: number;
   applied: number;
+  viewers: number;
   capacity: number;
   dday: number;
   updatedAt: string;

@@ -61,6 +61,10 @@ export const CampaignReportRowSchema = z.object({
   erByFollowers: z.number().nullable(),
   /** 참여자 수(명) — 응모가 승인된 이후 단계인 인플루언서. */
   participantCount: z.number().int(),
+  /** 캠페인 상세를 열람한 인플루언서 수(명). 같은 사람이 여러 번 봐도 1. */
+  viewerCount: z.number().int(),
+  /** 응모율(%) — 전체 응모 건수 / 조회 인원. 조회 인원이 0 이면 null. */
+  applicationRate: z.number().nullable(),
 });
 
 export const CampaignParticipantsResponseSchema = z.object({
@@ -88,6 +92,8 @@ export const CampaignReportSortKeySchema = z.enum([
   "totalEngagement",
   "erByViews",
   "erByFollowers",
+  "viewerCount",
+  "applicationRate",
 ]);
 export type CampaignReportSortKey = z.infer<typeof CampaignReportSortKeySchema>;
 

@@ -371,9 +371,17 @@ type CampaignRow = {
   exclusionsAsExcluding: { excludedCampaignId: string }[];
 };
 
-type CampaignCounts = { approvedCount: number; appliedCount: number };
+type CampaignCounts = {
+  approvedCount: number;
+  appliedCount: number;
+  viewerCount: number;
+};
 
-const EMPTY_COUNTS: CampaignCounts = { approvedCount: 0, appliedCount: 0 };
+const EMPTY_COUNTS: CampaignCounts = {
+  approvedCount: 0,
+  appliedCount: 0,
+  viewerCount: 0,
+};
 
 // "응모한 인원"은 아직 검토 전(APPLIED)만 카운트.
 // "모집된 인원" 계산은 shared 의 SLOT_CONSUMING_STATUSES 를 사용
@@ -437,6 +445,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     thumbnailObjectKey: row.thumbnailUrl,
     approvedCount: counts.approvedCount,
     appliedCount: counts.appliedCount,
+    viewerCount: counts.viewerCount,
     excludedCampaignIds: row.exclusionsAsExcluding.map((e) => e.excludedCampaignId),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -582,13 +591,25 @@ export class CampaignsService {
     const map = new Map<string, CampaignCounts>();
     if (campaignIds.length === 0) return map;
     for (const id of campaignIds) {
-      map.set(id, { approvedCount: 0, appliedCount: 0 });
+      map.set(id, { approvedCount: 0, appliedCount: 0, viewerCount: 0 });
     }
-    const grouped = await this.prisma.campaignApplication.groupBy({
-      by: ["campaignId", "status"],
-      where: { campaignId: { in: campaignIds } },
-      _count: { _all: true },
-    });
+    const [grouped, viewGrouped] = await Promise.all([
+      this.prisma.campaignApplication.groupBy({
+        by: ["campaignId", "status"],
+        where: { campaignId: { in: campaignIds } },
+        _count: { _all: true },
+      }),
+      this.prisma.campaignView.groupBy({
+        by: ["campaignId"],
+        where: { campaignId: { in: campaignIds } },
+        _count: { _all: true },
+      }),
+    ]);
+    for (const view of viewGrouped) {
+      const entry = map.get(view.campaignId);
+      if (!entry) continue;
+      entry.viewerCount = view._count._all;
+    }
     for (const g of grouped) {
       const entry = map.get(g.campaignId);
       if (!entry) continue;

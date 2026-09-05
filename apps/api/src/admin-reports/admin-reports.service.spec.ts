@@ -22,7 +22,7 @@ type StubApplication = {
 
 const SUBMITTED_AT = new Date("2026-07-20T02:00:00Z");
 
-function makeService(applications: StubApplication[]) {
+function makeService(applications: StubApplication[], viewerCount = 0) {
   const prisma = {
     campaign: {
       findMany: async () => [
@@ -37,6 +37,12 @@ function makeService(applications: StubApplication[]) {
         },
       ],
       findFirst: async () => ({ id: "c1" }),
+    },
+    campaignView: {
+      groupBy: async () =>
+        viewerCount > 0
+          ? [{ campaignId: "c1", _count: { _all: viewerCount } }]
+          : [],
     },
     campaignApplication: {
       findMany: async () =>
@@ -201,6 +207,27 @@ describe("참여자 목록", () => {
     // 제출한 서브타입만 검수 상태가 붙는다.
     expect(participants[0]!.submissionReviewStatus).toBe("PENDING");
     expect(participants[1]!.submissionReviewStatus).toBeNull();
+  });
+
+  it("campaignReports 는 조회 인원과 응모율(전체 응모 기준)을 내려준다", async () => {
+    const service = makeService(
+      [
+        application({ influencerId: "i1", status: "APPROVED" }),
+        application({ influencerId: "i2", status: "REJECTED" }),
+      ],
+      20,
+    );
+    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    expect(rows[0]!.viewerCount).toBe(20);
+    // 탈락 응모도 분자에 포함 — 2 / 20 = 10%.
+    expect(rows[0]!.applicationRate).toBe(10);
+  });
+
+  it("campaignReports 는 조회 인원이 0 이면 응모율을 null 로 내려준다", async () => {
+    const service = makeService([application({ influencerId: "i1" })]);
+    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    expect(rows[0]!.viewerCount).toBe(0);
+    expect(rows[0]!.applicationRate).toBeNull();
   });
 
   it("campaignReports 는 카테고리와 JST 모집기간을 내려준다", async () => {

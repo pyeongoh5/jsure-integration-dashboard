@@ -841,6 +841,8 @@ export const CampaignResponseSchema = z.object({
   thumbnailObjectKey: z.string().nullable(),
   approvedCount: z.number().int().nonnegative(),
   appliedCount: z.number().int().nonnegative(),
+  /** 캠페인 상세를 열람한 인플루언서 수(명). 같은 사람이 여러 번 봐도 1. */
+  viewerCount: z.number().int().nonnegative(),
   excludedCampaignIds: z.array(z.string()),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

@@ -160,6 +160,7 @@ model Campaign {
   recruits     CampaignRecruit[]
   applications CampaignApplication[]
   influencerMemos InfluencerMemo[]
+  views        CampaignView[]
 
   // 이 캠페인이 "제외 대상" 으로 지정한 다른 캠페인들 (E → A,B)
   exclusionsAsExcluding CampaignExclusion[] @relation("excludingCampaign")
@@ -168,6 +169,20 @@ model Campaign {
 
   @@index([recruitStartAt])
   @@map("campaigns")
+}
+
+// 인플루언서의 캠페인 상세 열람 기록. 복합 PK 가 곧 중복 제거 장치라
+// 같은 인플루언서가 몇 번을 다시 봐도 1행이며, 조회 인원(UV)만 집계한다.
+model CampaignView {
+  campaignId   String
+  influencerId String
+
+  campaign   Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, influencerId])
+  @@index([campaignId])
+  @@map("campaign_views")
 }
 
 // 캠페인 응모 시 제외(exclusion) 관계.
@@ -261,6 +276,7 @@ model Influencer {
   bankAccount  InfluencerBankAccount?
   sessions     InfluencerSession[]
   memos        InfluencerMemo[]
+  campaignViews CampaignView[]
 
   @@map("influencers")
 }

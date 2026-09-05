@@ -1661,7 +1661,7 @@ export const adminMessages = {
         shares: { ko: "공유", en: "Shares", ja: "シェア" },
         reposts: { ko: "리포스트", en: "Reposts", ja: "リポスト" },
         saves: { ko: "저장", en: "Saves", ja: "保存" },
-        views: { ko: "조회", en: "Views", ja: "表示回数" },
+        views: { ko: "게시물 조회", en: "Post views", ja: "投稿表示回数" },
         reach: { ko: "도달", en: "Reach", ja: "リーチ" },
         engagement: { ko: "인게이지먼트", en: "Engagement", ja: "エンゲージメント" },
       },

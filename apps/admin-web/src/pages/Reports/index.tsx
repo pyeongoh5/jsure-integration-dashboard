@@ -393,7 +393,7 @@ export function Reports() {
                           return (
                             <td key={column.key} className={cellClassNames || undefined}>
                               {columnIndex === 0 ? (
-                                <>
+                                <div className={styles.titleCellInner}>
                                   <span
                                     className={`${styles.expandIcon} ${isExpanded ? styles.expandIconOpen : ""}`}
                                     aria-hidden="true"
@@ -405,7 +405,7 @@ export function Reports() {
                                     🗓️{" "}
                                     {formatRecruitPeriod(row.recruitStartDate, row.recruitEndDate)}
                                   </span>
-                                </>
+                                </div>
                               ) : (
                                 column.format(row)
                               )}

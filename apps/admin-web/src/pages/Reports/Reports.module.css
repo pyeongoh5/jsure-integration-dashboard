@@ -115,9 +115,14 @@
 
 .titleCell {
   min-width: 200px;
-  max-width: 320px;
   white-space: normal;
   word-break: break-word;
+}
+
+/* table-layout 이 auto 라 td 의 max-width 가 무시된다. 내부 블록으로 폭을 잡아
+   긴 캠페인명이 옆 컬럼을 침범하지 않게 한다. */
+.titleCellInner {
+  max-width: 320px;
 }
 
 .empty {

@@ -15,9 +15,21 @@ export type UseJwinWinnersDataResult = {
   hasMore: boolean;
   loadMore: () => void;
   reload: () => void;
-  /** 이행 처리 후 해당 행만 교체 — 목록 전체를 다시 읽지 않는다 */
-  replaceWinner: (updated: AdminWinner) => void;
+  /**
+   * 이행 처리 결과를 목록에 반영한다. 목록 전체를 다시 읽지 않되,
+   * 바뀐 값이 활성 필터에 더 이상 맞지 않으면 행을 뺀다 — 남겨두면 화면 목록이
+   * 필터·CSV와 어긋난다.
+   */
+  applyWinnerUpdate: (updated: AdminWinner) => void;
 };
+
+/** 서버 필터와 같은 조건을 클라이언트에서도 판정한다 (값 비교뿐이라 규칙이 갈리지 않는다). */
+function matchesFilter(winner: AdminWinner, filter: AdminWinnerFilter): boolean {
+  if (filter.verification && winner.verification !== filter.verification) return false;
+  if (filter.fulfillment && winner.fulfillment !== filter.fulfillment) return false;
+  if (filter.prizeType && winner.prizeType !== filter.prizeType) return false;
+  return true;
+}
 
 /**
  * 당첨자 목록. 필터는 서버가 걸고 커서로 이어 받는다.
@@ -86,11 +98,17 @@ export function useJwinWinnersData(
 
   const reload = useCallback(() => setReloadKey((current) => current + 1), []);
 
-  const replaceWinner = useCallback((updated: AdminWinner) => {
-    setWinners((current) =>
-      current.map((winner) => (winner.id === updated.id ? updated : winner)),
-    );
-  }, []);
+  const applyWinnerUpdate = useCallback(
+    (updated: AdminWinner) => {
+      const filterValue = JSON.parse(filterKey) as AdminWinnerFilter;
+      setWinners((current) =>
+        matchesFilter(updated, filterValue)
+          ? current.map((winner) => (winner.id === updated.id ? updated : winner))
+          : current.filter((winner) => winner.id !== updated.id),
+      );
+    },
+    [filterKey],
+  );
 
   return {
     loading,
@@ -100,6 +118,6 @@ export function useJwinWinnersData(
     hasMore: nextCursor !== null,
     loadMore,
     reload,
-    replaceWinner,
+    applyWinnerUpdate,
   };
 }

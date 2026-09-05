@@ -70,7 +70,7 @@ export function JwinWinners() {
       setShipError(result);
       return;
     }
-    winners.replaceWinner(result);
+    winners.applyWinnerUpdate(result);
     setShipTarget(null);
   };
 

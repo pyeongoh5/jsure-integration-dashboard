@@ -16,6 +16,9 @@ export { PostTemplateTab } from "./PostTemplateTab";
 export { postTemplateCoverage, formatCoverageGaps } from "./postTemplateCoverage";
 export type { PostTemplateCoverage, CoverageGap } from "./postTemplateCoverage";
 export { ResultTab } from "./ResultTab";
+export { StatsTab } from "./StatsTab";
+export { useJwinCampaignStats } from "./useJwinCampaignStats";
+export type { UseJwinCampaignStatsResult } from "./useJwinCampaignStats";
 export {
   renderDmPreview,
   dmTemplateMissingCode,

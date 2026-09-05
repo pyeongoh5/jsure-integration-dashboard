@@ -7,6 +7,8 @@ import {
   AdminPrizeListSchema,
   AdminPostTemplateListSchema,
   AdminWinnerListSchema,
+  AdminWinnerExportSchema,
+  AdminCampaignStatsSchema,
   AdminShippingSchema,
   AdminPrizeSchema,
   AdminWinnerSchema,
@@ -19,6 +21,9 @@ import {
   type AdminPrizeList,
   type AdminPostTemplateList,
   type AdminWinnerList,
+  type AdminWinnerFilter,
+  type AdminWinnerExport,
+  type AdminCampaignStats,
   type AdminShipping,
   type AdminPrize,
   type AdminPrizePatch,
@@ -61,9 +66,42 @@ export async function fetchPostTemplates(campaignId: string): Promise<AdminPostT
   return AdminPostTemplateListSchema.parse(response.data);
 }
 
-export async function fetchWinners(campaignId: string): Promise<AdminWinnerList> {
-  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/winners`);
+/** 필터를 쿼리스트링으로 옮긴다. 빈 값은 보내지 않아 서버가 "전체"로 읽게 한다. */
+function winnerFilterParams(filter: AdminWinnerFilter): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(filter).filter(([, value]) => typeof value === "string" && value.length > 0),
+  ) as Record<string, string>;
+}
+
+/** 당첨자 목록 한 페이지. 필터는 서버가 걸고 커서로 이어 받는다. */
+export async function fetchWinners(
+  campaignId: string,
+  filter: AdminWinnerFilter,
+  cursor?: string,
+): Promise<AdminWinnerList> {
+  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/winners`, {
+    params: { ...winnerFilterParams(filter), ...(cursor ? { cursor } : {}) },
+  });
   return AdminWinnerListSchema.parse(response.data);
+}
+
+/**
+ * CSV용 전체 행. 현재 로드된 페이지가 아니라 **필터에 걸린 전체**를 받는다.
+ * 배송지 평문이 포함되므로 서버가 열람과 동일하게 감사 로그를 남긴다.
+ */
+export async function fetchWinnersForExport(
+  campaignId: string,
+  filter: AdminWinnerFilter,
+): Promise<AdminWinnerExport> {
+  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/winners/export`, {
+    params: winnerFilterParams(filter),
+  });
+  return AdminWinnerExportSchema.parse(response.data);
+}
+
+export async function fetchCampaignStats(campaignId: string): Promise<AdminCampaignStats> {
+  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/stats`);
+  return AdminCampaignStatsSchema.parse(response.data);
 }
 
 export async function fetchShipping(winnerId: string): Promise<AdminShipping> {

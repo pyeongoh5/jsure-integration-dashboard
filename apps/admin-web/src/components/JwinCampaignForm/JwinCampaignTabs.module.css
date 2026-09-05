@@ -264,3 +264,53 @@
   color: var(--text-tertiary, #6b7280);
   margin-top: 2px;
 }
+
+/* 통계 탭 */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-subtle);
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.statValueWarn {
+  color: var(--color-danger);
+}
+
+.statHint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.statPeriod {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.statSectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}

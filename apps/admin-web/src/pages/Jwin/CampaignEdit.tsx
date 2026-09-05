@@ -14,15 +14,16 @@ import {
   PrizeTab,
   PostTemplateTab,
   ResultTab,
+  StatsTab,
   StatusTransition,
 } from "@/components/JwinCampaignForm";
 import type { AdminCampaignDetail } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import styles from "./Jwin.module.css";
 
-type TabKey = "basic" | "connect" | "prize" | "template" | "result";
+type TabKey = "basic" | "connect" | "prize" | "template" | "result" | "stats";
 
-const EDIT_TAB_KEYS: TabKey[] = ["basic", "connect", "prize", "template", "result"];
+const EDIT_TAB_KEYS: TabKey[] = ["basic", "connect", "prize", "template", "result", "stats"];
 const NEW_TAB_KEYS: TabKey[] = ["basic"];
 
 /**
@@ -207,6 +208,8 @@ function CampaignEditBody({
       {tab === "result" && (
         <ResultTab detail={detail} hasCodePrize={hasCodePrize} onSaved={onDetailChanged} />
       )}
+
+      {tab === "stats" && <StatsTab campaignId={detail.id} />}
     </>
   );
 }

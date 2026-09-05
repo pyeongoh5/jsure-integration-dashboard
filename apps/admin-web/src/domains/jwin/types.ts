@@ -17,8 +17,15 @@ export {
   AdminPostTemplateCreateSchema,
   AdminWinnerSchema,
   AdminWinnerListSchema,
+  AdminWinnerFilterSchema,
+  AdminWinnerExportSchema,
   AdminShippingSchema,
+  AdminShippingAddressSchema,
+  AdminCampaignStatsSchema,
   AdminFulfillmentPatchSchema,
+  VerificationStatusSchema,
+  FulfillmentStatusSchema,
+  PrizeTypeSchema,
 } from "@jsure/jwin-shared";
 export type {
   AdminCampaignListItem,
@@ -38,6 +45,11 @@ export type {
   AdminPostTemplateCreate,
   AdminWinner,
   AdminWinnerList,
+  AdminWinnerFilter,
+  AdminWinnerExport,
+  AdminWinnerExportRow,
   AdminShipping,
+  AdminShippingAddress,
+  AdminCampaignStats,
   AdminFulfillmentPatch,
 } from "@jsure/jwin-shared";

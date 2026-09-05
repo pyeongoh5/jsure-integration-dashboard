@@ -89,3 +89,16 @@ api.interceptors.response.use(
     return api.request(original as AxiosRequestConfig);
   },
 );
+
+/** API 에러 응답에서 사용자에게 보여줄 메시지를 뽑아낸다. NestJS 는 message 를 문자열 또는 배열로 내려준다. */
+export function extractApiErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    const message = (error.response?.data as { message?: unknown } | undefined)
+      ?.message;
+    if (typeof message === "string" && message.trim() !== "") return message;
+    if (Array.isArray(message) && typeof message[0] === "string") {
+      return message[0];
+    }
+  }
+  return error instanceof Error ? error.message : fallback;
+}

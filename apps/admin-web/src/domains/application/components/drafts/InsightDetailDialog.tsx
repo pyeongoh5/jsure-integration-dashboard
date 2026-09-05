@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  ADMIN_INSIGHT_METRIC_KEYS,
   CROSS_POST_PLATFORM_LABEL,
   QOO10_REVIEW_CHANNEL_LABEL,
   SUB_TYPE_LABEL,
+  type AdminSubmission,
   type Attachment,
   type AttachmentKind,
 } from "@jsure/shared";
-import { translate, type AdminTranslationKey } from "@i18n/admin";
+import { translate } from "@i18n/admin";
 import { SegmentedTabs } from "@/components/composites";
-import { getStoredLanguage, useT } from "@/lib/i18n";
+import { getStoredLanguage, useLanguage, useT } from "@/lib/i18n";
 import { fetchApplicationAttachments } from "@/domains/application/draftsApi";
-import type { DraftReview, InsightMetrics } from "./types";
+import { toDraftReview } from "./draftTransform";
+import { InsightEditForm, METRIC_LABEL } from "./InsightEditForm";
+import type { DraftReview } from "./types";
 import styles from "./InsightDetailDialog.module.css";
 
 type AttachmentsState =
@@ -18,31 +22,33 @@ type AttachmentsState =
   | { kind: "ready"; items: Attachment[] }
   | { kind: "error"; message: string };
 
-const METRICS: { key: keyof InsightMetrics; label: AdminTranslationKey }[] = [
-  { key: "likes", label: "domains.application.drafts.insightDialog.metrics.likes" },
-  { key: "comments", label: "domains.application.drafts.insightDialog.metrics.comments" },
-  { key: "shares", label: "domains.application.drafts.insightDialog.metrics.shares" },
-  { key: "reposts", label: "domains.application.drafts.insightDialog.metrics.reposts" },
-  { key: "saves", label: "domains.application.drafts.insightDialog.metrics.saves" },
-  { key: "views", label: "domains.application.drafts.insightDialog.metrics.views" },
-  { key: "reach", label: "domains.application.drafts.insightDialog.metrics.reach" },
-];
-
 type Props = {
   draft: DraftReview;
   onClose: () => void;
+  /** 인사이트 보정 저장 후 — 호출부 목록을 갱신한다. */
+  onSaved?: () => void;
 };
 
 function fmtNumber(n: number | null): string {
   return n === null ? "—" : n.toLocaleString();
 }
 
-export function InsightDetailDialog({ draft, onClose }: Props) {
+export function InsightDetailDialog({
+  draft: sourceDraft,
+  onClose,
+  onSaved,
+}: Props) {
   const t = useT();
+  const { language } = useLanguage();
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [attachmentsState, setAttachmentsState] = useState<AttachmentsState>({
     kind: "loading",
   });
+  // 보정 저장 후 서버가 돌려준 최신 제출물 — 모달을 닫지 않고 그 자리에서 갱신한다.
+  const [edited, setEdited] = useState<DraftReview | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [attachmentsReloadKey, setAttachmentsReloadKey] = useState(0);
+  const draft = edited ?? sourceDraft;
   // SNS 다중 서브타입은 탭으로 분리해 한 번에 한 서브타입 결과만 표시.
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const isFakePurchase = draft.category === "FAKE_PURCHASE";
@@ -89,6 +95,8 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
     return kindFiltered.filter((item) => activeAttachmentIds.has(item.id));
   }, [attachmentsState, attachmentKind, isReviewCategory, activePost]);
   const submittedUrls = visiblePosts.filter((post) => post.url !== null);
+  // 보정 대상은 인사이트가 제출된 SNS 게시물뿐 — 리뷰 카테고리·미제출 건은 제외.
+  const canEdit = activePost !== null && activePost.insightSubmitted;
   // 가구매는 주문 명세서(ORDER_RECEIPT)도 같은 첨부 응답에 실려온다.
   const orderReceipts =
     isFakePurchase && attachmentsState.kind === "ready"
@@ -119,7 +127,14 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [draft.id, contentSubmitted]);
+  }, [draft.id, contentSubmitted, attachmentsReloadKey]);
+
+  function handleSaved(submission: AdminSubmission) {
+    setEdited(toDraftReview(submission, new Date(), language));
+    setEditing(false);
+    setAttachmentsReloadKey((current) => current + 1);
+    onSaved?.();
+  }
 
   return (
     <>
@@ -140,14 +155,25 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                   .join(" · ")}
               </div>
             </div>
-            <button
-              type="button"
-              className={styles.close}
-              onClick={onClose}
-              aria-label={t("common.close")}
-            >
-              ×
-            </button>
+            <div className={styles.headerActions}>
+              {canEdit && !editing && (
+                <button
+                  type="button"
+                  className={styles.editButton}
+                  onClick={() => setEditing(true)}
+                >
+                  {t("domains.application.drafts.insightDialog.edit")}
+                </button>
+              )}
+              <button
+                type="button"
+                className={styles.close}
+                onClick={onClose}
+                aria-label={t("common.close")}
+              >
+                ×
+              </button>
+            </div>
           </header>
 
           {!contentSubmitted ? (
@@ -211,7 +237,7 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                 </>
               )}
 
-              {!isReviewCategory && draft.posts.length > 1 && (
+              {!isReviewCategory && !editing && draft.posts.length > 1 && (
                 <SegmentedTabs
                   className={styles.subTypeTabs}
                   items={draft.posts.map((post) => ({
@@ -223,7 +249,18 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                 />
               )}
 
+              {editing && activePost && (
+                <InsightEditForm
+                  applicationId={draft.id}
+                  post={activePost}
+                  attachments={filteredAttachments}
+                  onCancel={() => setEditing(false)}
+                  onSaved={handleSaved}
+                />
+              )}
+
               {!isReviewCategory &&
+                !editing &&
                 visiblePosts.map((post) => (
                   <section key={post.id} className={styles.section}>
                     <h3 className={styles.sectionTitle}>
@@ -233,11 +270,13 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                     </h3>
                     {post.insightSubmitted ? (
                       <div className={styles.metrics}>
-                        {METRICS.map((metric) => (
-                          <div key={metric.key} className={styles.metric}>
-                            <div className={styles.metricLabel}>{t(metric.label)}</div>
+                        {ADMIN_INSIGHT_METRIC_KEYS.map((key) => (
+                          <div key={key} className={styles.metric}>
+                            <div className={styles.metricLabel}>
+                              {t(METRIC_LABEL[key])}
+                            </div>
                             <div className={styles.metricValue}>
-                              {fmtNumber(post.insight[metric.key] as number | null)}
+                              {fmtNumber(post.insight[key])}
                             </div>
                           </div>
                         ))}
@@ -250,41 +289,43 @@ export function InsightDetailDialog({ draft, onClose }: Props) {
                   </section>
                 ))}
 
-              <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>
-                  {screenshotTitle}
-                  {attachmentsState.kind === "ready" && filteredAttachments.length > 0 && (
-                    <span className={styles.count}>{filteredAttachments.length}</span>
+              {!editing && (
+                <section className={styles.section}>
+                  <h3 className={styles.sectionTitle}>
+                    {screenshotTitle}
+                    {attachmentsState.kind === "ready" && filteredAttachments.length > 0 && (
+                      <span className={styles.count}>{filteredAttachments.length}</span>
+                    )}
+                  </h3>
+                  {attachmentsState.kind === "loading" ? (
+                    <div className={styles.empty}>{t("common.loading")}</div>
+                  ) : attachmentsState.kind === "error" ? (
+                    <div className={styles.empty}>{attachmentsState.message}</div>
+                  ) : filteredAttachments.length === 0 ? (
+                    <div className={styles.empty}>
+                      {t("domains.application.drafts.insightDialog.noAttachments")}
+                    </div>
+                  ) : (
+                    <div className={styles.grid}>
+                      {filteredAttachments.map((attachment) => (
+                        <button
+                          type="button"
+                          key={attachment.id}
+                          className={styles.tile}
+                          onClick={() =>
+                            attachment.viewUrl && setLightbox(attachment.viewUrl)
+                          }
+                          disabled={!attachment.viewUrl}
+                        >
+                          {attachment.viewUrl && <img src={attachment.viewUrl} alt="" />}
+                        </button>
+                      ))}
+                    </div>
                   )}
-                </h3>
-                {attachmentsState.kind === "loading" ? (
-                  <div className={styles.empty}>{t("common.loading")}</div>
-                ) : attachmentsState.kind === "error" ? (
-                  <div className={styles.empty}>{attachmentsState.message}</div>
-                ) : filteredAttachments.length === 0 ? (
-                  <div className={styles.empty}>
-                    {t("domains.application.drafts.insightDialog.noAttachments")}
-                  </div>
-                ) : (
-                  <div className={styles.grid}>
-                    {filteredAttachments.map((attachment) => (
-                      <button
-                        type="button"
-                        key={attachment.id}
-                        className={styles.tile}
-                        onClick={() =>
-                          attachment.viewUrl && setLightbox(attachment.viewUrl)
-                        }
-                        disabled={!attachment.viewUrl}
-                      >
-                        {attachment.viewUrl && <img src={attachment.viewUrl} alt="" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </section>
+                </section>
+              )}
 
-              {submittedUrls.length > 0 && (
+              {!editing && submittedUrls.length > 0 && (
                 <section className={styles.section}>
                   <h3 className={styles.sectionTitle}>
                     {t("domains.application.drafts.insightDialog.submittedUrls")}

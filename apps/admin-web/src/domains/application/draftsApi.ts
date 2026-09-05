@@ -5,6 +5,7 @@ import {
   AttachmentListResponseSchema,
   type AdminSettlement,
   type AdminSubmission,
+  type AdminUpdateInsightRequest,
   type Attachment,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
@@ -75,6 +76,18 @@ export async function settleSubmission(
 ): Promise<AdminSubmission> {
   const res = await api.post(
     `/campaign-applications/${encodeURIComponent(applicationId)}/submission/settle`,
+  );
+  return AdminSubmissionSchema.parse(res.data);
+}
+
+/** 인사이트 오기입 보정 — 게시물(서브타입) 단위. 응답은 갱신된 응모 제출물 전체. */
+export async function updateSubmittedPostInsight(
+  postId: string,
+  body: AdminUpdateInsightRequest,
+): Promise<AdminSubmission> {
+  const res = await api.patch(
+    `/campaign-applications/submitted-posts/${encodeURIComponent(postId)}/insight`,
+    body,
   );
   return AdminSubmissionSchema.parse(res.data);
 }

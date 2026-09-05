@@ -1,8 +1,12 @@
 import {
   CampaignThumbnailUploadPresignResponseSchema,
+  InsightUploadPresignResponseSchema,
   UPLOAD_ALLOWED_CONTENT_TYPES,
   UPLOAD_MAX_BYTES,
+  type AdminInsightScreenshotPresignRequest,
   type CampaignThumbnailUploadPresignResponse,
+  type CampaignSubType,
+  type InsightAttachmentInput,
   type UploadContentType,
 } from "@jsure/shared";
 import { translate } from "@i18n/admin";
@@ -76,4 +80,40 @@ export async function uploadCampaignThumbnail(
   }
 
   return { objectKey: presign.objectKey, viewUrl: presign.viewUrl };
+}
+
+/**
+ * 인사이트 스크린샷 업로드(어드민 보정용):
+ *  1) presigned PUT URL 발급 → 2) R2 에 직접 PUT
+ *  3) 인사이트 수정 요청의 `addAttachments` 에 그대로 실어 보낼 메타데이터 반환
+ */
+export async function uploadInsightScreenshot(
+  applicationId: string,
+  subType: CampaignSubType,
+  file: File,
+): Promise<InsightAttachmentInput> {
+  const contentType = assertAllowed(file);
+  const request: AdminInsightScreenshotPresignRequest = {
+    applicationId,
+    subType,
+    contentType,
+    sizeBytes: file.size,
+  };
+  const res = await api.post("/uploads/admin/insight-screenshot/presign", request);
+  const presign = InsightUploadPresignResponseSchema.parse(res.data);
+
+  const putRes = await fetch(presign.uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: file,
+  });
+  if (!putRes.ok) {
+    throw new UploadError(
+      translate("components.uploads.uploadFailedHttp", getStoredLanguage(), {
+        status: putRes.status,
+      }),
+    );
+  }
+
+  return { objectKey: presign.objectKey, contentType, sizeBytes: file.size };
 }

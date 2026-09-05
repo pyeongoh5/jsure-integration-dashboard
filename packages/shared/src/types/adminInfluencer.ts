@@ -11,7 +11,7 @@ import {
   CrossPostSchema,
   PostReviewStatusSchema,
 } from "./application.js";
-import { AttachmentSchema } from "./uploads.js";
+import { AttachmentSchema, InsightAttachmentInputSchema } from "./uploads.js";
 
 export { PostReviewStatusSchema };
 export type { PostReviewStatus } from "./application.js";
@@ -232,6 +232,45 @@ export const RejectSubmissionRequestSchema = z.object({
 });
 export type RejectSubmissionRequest = z.infer<
   typeof RejectSubmissionRequestSchema
+>;
+
+/** 어드민 인사이트 보정에서 다루는 지표 필드. 빈칸(미입력)은 null 로 저장한다. */
+export const ADMIN_INSIGHT_METRIC_KEYS = [
+  "likes",
+  "comments",
+  "shares",
+  "reposts",
+  "saves",
+  "views",
+  "reach",
+] as const;
+export type AdminInsightMetricKey = (typeof ADMIN_INSIGHT_METRIC_KEYS)[number];
+
+const AdminInsightMetricValueSchema = z
+  .number()
+  .int()
+  .nonnegative()
+  .nullable();
+
+/**
+ * 어드민이 인플루언서가 제출한 인사이트를 보정한다 — 오기입·오타 정정용.
+ * 생략한 필드는 건드리지 않는다(PATCH 시맨틱). 첨부는 추가/삭제만 다루며
+ * 교체는 "추가 + 삭제"의 조합으로 표현한다.
+ */
+export const AdminUpdateInsightRequestSchema = z.object({
+  url: z.string().url().nullable().optional(),
+  likes: AdminInsightMetricValueSchema.optional(),
+  comments: AdminInsightMetricValueSchema.optional(),
+  shares: AdminInsightMetricValueSchema.optional(),
+  reposts: AdminInsightMetricValueSchema.optional(),
+  saves: AdminInsightMetricValueSchema.optional(),
+  views: AdminInsightMetricValueSchema.optional(),
+  reach: AdminInsightMetricValueSchema.optional(),
+  addAttachments: z.array(InsightAttachmentInputSchema).max(10).optional(),
+  removeAttachmentIds: z.array(z.string().min(1)).max(50).optional(),
+});
+export type AdminUpdateInsightRequest = z.infer<
+  typeof AdminUpdateInsightRequestSchema
 >;
 
 export const SettlementStatusSchema = z.enum(["PENDING", "COMPLETED"]);

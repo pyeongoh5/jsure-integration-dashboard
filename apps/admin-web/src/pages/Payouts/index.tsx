@@ -250,7 +250,9 @@ export function Payouts() {
   const [query, setQuery] = useState("");
   const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(null);
   // 제출물/인사이트 상세 모달 — 응모 단건 조회 후 검수 화면과 동일한 다이얼로그로 표시.
-  const submissionDetail = useSubmissionDetail();
+  const submissionDetail = useSubmissionDetail(() =>
+    setReloadKey((current) => current + 1),
+  );
 
   useEffect(() => {
     let cancelled = false;

@@ -3,9 +3,10 @@ import { AdminApplicationsController } from "./admin-applications.controller";
 import { AdminApplicationsService } from "./admin-applications.service";
 import { InfluencerAuthModule } from "../influencer-auth/influencer-auth.module";
 import { LineTemplatesModule } from "../line-templates/line-templates.module";
+import { UploadsModule } from "../uploads/uploads.module";
 
 @Module({
-  imports: [InfluencerAuthModule, LineTemplatesModule],
+  imports: [InfluencerAuthModule, LineTemplatesModule, UploadsModule],
   controllers: [AdminApplicationsController],
   providers: [AdminApplicationsService],
 })

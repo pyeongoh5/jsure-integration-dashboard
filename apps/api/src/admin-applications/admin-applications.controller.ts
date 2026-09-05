@@ -5,12 +5,14 @@ import {
   Get,
   HttpCode,
   Param,
+  Patch,
   Post,
   Query,
   Req,
   UseGuards,
 } from "@nestjs/common";
 import {
+  AdminUpdateInsightRequestSchema,
   ApplicationStatusSchema,
   parseApplicantFilterParams,
   RejectApplicationRequestSchema,
@@ -25,6 +27,7 @@ import {
   type AdminSubmission,
   type AdminSettlementListResponse,
   type AdminSubmissionListResponse,
+  type AdminUpdateInsightRequest,
   type ApprovedApplicantExportResponse,
   type AttachmentListResponse,
   type ApplicationStatus,
@@ -136,6 +139,17 @@ export class AdminApplicationsController {
   ): Promise<AttachmentListResponse> {
     const attachments = await this.svc.listSubmittedPostAttachments(postId);
     return { attachments };
+  }
+
+  /** 인사이트 오기입 보정 — 게시물(서브타입) 단위. */
+  @Patch("submitted-posts/:postId/insight")
+  updateInsight(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("postId") postId: string,
+    @Body(new ZodValidationPipe(AdminUpdateInsightRequestSchema))
+    body: AdminUpdateInsightRequest,
+  ): Promise<AdminSubmission> {
+    return this.svc.updateInsight(postId, body, req.user);
   }
 
   @Post(":id/submission/approve")

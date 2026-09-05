@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { EnabledSnsTypeSchema } from "./influencer.js";
+import { CampaignSubTypeSchema, EnabledSnsTypeSchema } from "./influencer.js";
 
 export const UPLOAD_MAX_BYTES = 5 * 1024 * 1024; // 5MB
 export const UPLOAD_ALLOWED_CONTENT_TYPES = [
@@ -33,6 +33,20 @@ export const InsightUploadPresignResponseSchema = z.object({
 });
 export type InsightUploadPresignResponse = z.infer<
   typeof InsightUploadPresignResponseSchema
+>;
+
+/**
+ * 어드민이 인사이트 스크린샷을 교체·추가하기 전에 호출. 과거 제출물 보정이라
+ * SNS 활성 플래그와 무관하게 서브타입을 받는다 (응답은 인플루언서 presign 과 동일).
+ */
+export const AdminInsightScreenshotPresignRequestSchema = z.object({
+  applicationId: z.string().min(1),
+  subType: CampaignSubTypeSchema,
+  contentType: UploadContentTypeSchema,
+  sizeBytes: z.number().int().positive().max(UPLOAD_MAX_BYTES),
+});
+export type AdminInsightScreenshotPresignRequest = z.infer<
+  typeof AdminInsightScreenshotPresignRequestSchema
 >;
 
 /**

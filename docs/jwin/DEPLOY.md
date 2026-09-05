@@ -44,7 +44,26 @@ J-WIN은 기존 대시보드 모노레포 안에 있지만, **배포는 완전�
 - [ ] Railway 계정 + 기존 프로젝트 접근 권한
 - [ ] Vercel 계정 + 기존 프로젝트 접근 권한
 - [ ] X Developer Console 계정 + **결제 수단** (종량제 크레딧 충전용)
-- [ ] 도메인 2개 — 예: `jwin.example.com`(참여자 웹), `api.jwin.example.com`(API)
+- [ ] 도메인 2개 — 아래에서 정한다
+
+### 1-1. 도메인을 먼저 정한다 — 순서 문제 해결
+
+Railway는 Vercel 주소(`WEB_BASE_URL`)를 알아야 하고, Vercel은 Railway 주소(`NEXT_PUBLIC_API_BASE_URL`)를 알아야 한다. **서로를 필요로 해서 어느 쪽도 먼저 못 하는 것처럼 보인다.**
+
+해법은 배포 전에 **쓸 도메인을 먼저 정해두는 것**이다. 커스텀 도메인은 우리가 정하는 값이라 배포를 기다릴 필요가 없다. 아래 표를 채우고 시작한다.
+
+| 용도 | 예시 | 실제 사용할 값 |
+|---|---|---|
+| 참여자 웹 (Vercel) | `https://jwin.example.com` | ⬜ |
+| J-WIN API (Railway) | `https://api.jwin.example.com` | ⬜ |
+| 어드민 (기존 Vercel) | `https://admin.example.com` | ⬜ (이미 있음) |
+| 대시보드 API (기존 Railway) | `https://api.example.com/api` | ⬜ (이미 있음) |
+
+이 값들을 처음부터 환경변수에 넣으면 §5(Railway) → §6(Vercel) 순서로 진행해도 문제가 없다. `WEB_BASE_URL`은 **형식만 검증하고 실제 접속을 시도하지 않으므로**, 아직 Vercel 배포 전이어도 jwin-api는 정상 기동한다. 나중에 도메인만 연결하면 값이 맞아떨어진다.
+
+> **커스텀 도메인을 안 쓸 계획이라면** 순서를 바꾼다: §6(Vercel) 먼저 배포 → 받은 `xxx.vercel.app` 주소를 §5의 `WEB_BASE_URL`에 넣는다. 이때 Vercel의 `NEXT_PUBLIC_API_BASE_URL`은 Railway 배포 후에 채우고 재배포한다.
+>
+> 다만 **`xxx.vercel.app` 임시 주소로 캠페인을 시작하면 안 된다.** 그 URL이 X 포스트에 영구히 박힌다 (§5-3 참조).
 
 ---
 
@@ -125,6 +144,23 @@ openssl rand -hex 32   # ③ JWT_SECRET
 
 먼저 해두면 Railway 환경변수를 한 번에 채울 수 있다.
 
+### 개발용 앱을 그대로 써도 되나 — 된다
+
+X 앱 하나에 콜백 URI를 여러 개 등록할 수 있으므로, **기존 개발용 앱에 운영 콜백 2개만 추가**하면 개발·운영이 한 앱을 공유할 수 있다. 어느 것을 쓸지는 인가 요청의 `redirect_uri`(= `API_BASE_URL`에서 조립)로 갈리고, 토큰은 DB가 분리돼 있어 섞이지 않는다.
+
+```
+http://localhost:8080/oauth/brand/callback          ← 개발
+http://localhost:8080/oauth/user/callback           ← 개발
+https://api.jwin.example.com/oauth/brand/callback   ← 운영
+https://api.jwin.example.com/oauth/user/callback    ← 운영
+```
+
+**다만 크레딧과 레이트리밋이 공유된다.** 개발 중 실수로 게시 한 번이 나가면 운영 크레딧에서 $0.20이 빠진다. 로컬 `.env`의 `SCHEDULER_ENABLED`는 반드시 `false`로 둔다 — `true`면 자동 게시가 실제로 돈다.
+
+캠페인이 실제로 돌기 시작해 크레딧 규모가 커지면 그때 분리를 검토한다. 분리할 때는 **운영용을 새로 만들고 지금 앱을 개발용으로 남긴다** — 반대로 하면 기존 연동을 전부 다시 받아야 한다.
+
+### 새로 만드는 경우
+
 1. https://developer.x.com 에서 앱 생성
 2. **앱이 Project 안에 있어야 한다.** 좌측 트리에서 `Standalone Apps` 아래 있으면 OAuth 2.0이 동작하지 않는다. 프로젝트로 옮기거나 프로젝트 안에 새로 만든다
 3. **User authentication settings**
@@ -133,7 +169,7 @@ openssl rand -hex 32   # ③ JWT_SECRET
    |---|---|
    | App permissions | **`Read and write and Direct message`** |
    | Type of App | `Web App, Automated App or Bot` (Confidential client) |
-   | Callback URI | `https://api.jwin.example.com/oauth/brand/callback`<br>`https://api.jwin.example.com/oauth/user/callback` |
+   | Callback URI | `https://api.jwin.example.com/oauth/brand/callback`<br>`https://api.jwin.example.com/oauth/user/callback`<br>(개발도 같이 쓰면 `http://localhost:8080/...` 2개 추가) |
    | Website URL | 유효한 URL 아무거나 (필수 입력) |
 
    App permissions가 낮으면 브랜드가 승인 화면에서 **"You weren't able to give access to the App"** 을 보게 된다.
@@ -173,6 +209,8 @@ openssl rand -hex 32   # ③ JWT_SECRET
 **기존 서비스에도 설정해야 한다.** 안 하면 J-WIN 커밋마다 대시보드 API가 재배포된다.
 
 ### 5-3. 환경변수
+
+§1-1에서 정한 도메인을 그대로 넣는다. **Vercel 배포가 아직 안 끝났어도 상관없다** — `WEB_BASE_URL`은 형식만 검증하므로 서버는 정상 기동한다.
 
 | 변수 | 값 | 설명 |
 |---|---|---|
@@ -224,6 +262,8 @@ openssl rand -hex 32   # ③ JWT_SECRET
 
 ## 6. Vercel — jwin-web (참여자 웹)
 
+여기서 §5의 Railway 도메인이 필요하다. 앞 절을 끝내고 오면 값이 이미 있다.
+
 1. 같은 리포로 **새 Vercel 프로젝트** 추가
 2. **Root Directory = `apps/jwin-web`**
 3. 환경변수
@@ -232,7 +272,11 @@ openssl rand -hex 32   # ③ JWT_SECRET
    |---|---|
    | `NEXT_PUBLIC_API_BASE_URL` | `https://api.jwin.example.com` (Railway 도메인) |
 
-4. 커스텀 도메인 연결 → **Railway의 `WEB_BASE_URL`을 이 값으로 갱신** (§5-3)
+4. **커스텀 도메인 연결**
+
+   §1-1에서 정한 주소를 연결한다. Railway의 `WEB_BASE_URL`에 이미 같은 값을 넣어뒀다면 여기서 끝이다.
+
+   임시 `xxx.vercel.app` 주소로 §5를 진행했다면, **지금 Railway의 `WEB_BASE_URL`을 커스텀 도메인으로 바꾸고 재배포한다.** 캠페인을 시작하기 전에 반드시 끝내야 한다 — 시작 후에 바꾸면 이미 게시된 포스트의 링크는 되돌릴 수 없다
 
 ---
 

@@ -30,7 +30,7 @@ DATABASE_URL=postgresql://dummy DIRECT_DATABASE_URL=postgresql://dummy \
 3. 환경변수: `apps/jwin-api/.env.example`의 키 전부 (`DATABASE_URL`, `DIRECT_DATABASE_URL`, `SESSION_SECRET`, `JWT_SECRET`, `TOKEN_ENCRYPTION_KEY`, `X_CLIENT_ID/SECRET`, `WEB_BASE_URL`, `ADMIN_WEB_ORIGIN`, `SCHEDULER_ENABLED=true`).
    - **`JWT_SECRET`은 대시보드 API(`@jsure/api`) 서비스의 값과 반드시 동일해야 한다 (D-10).** 어드민 인증이 대시보드 발급 토큰의 서명 검증으로 이뤄지므로, 값이 어긋나면 어드민 API가 전부 401이 된다. 로테이션 시 두 서비스를 함께 배포할 것
    - `ADMIN_WEB_ORIGIN`은 admin-web 운영 도메인. CORS 허용 목록에 들어간다
-   - **`TZ`는 설정하지 않는다** — 스케줄러 크론이 UTC 전제로 작성돼 있어 `TZ=Asia/Tokyo`를 켜면 당일분 생성 잡이 15시간 밀린다
+   - `TZ`는 설정하든 안 하든 무관하다. 당일분 생성 잡이 `timezone: 'Asia/Tokyo'`를 명시하므로 프로세스 TZ에 영향받지 않는다 (2026-09-05 수정). 다만 로그 시각이 헷갈리지 않도록 굳이 바꾸지 않는 쪽을 권한다
 4. 배포 시 `prisma migrate deploy`가 선행됨 (Dockerfile CMD)
 5. **단일 replica 유지** — 스케줄러가 인프로세스라 다중 인스턴스 시 중복 게시 위험 (v2에서 잡 잠금 도입 전까지)
 6. Watch Paths를 `apps/jwin-api/**`, `packages/jwin-*/**`로 좁혀 기존 서비스와 배포 트리거 분리

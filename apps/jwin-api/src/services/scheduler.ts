@@ -25,8 +25,11 @@ const MAX_POST_ATTEMPTS = 3;
 export function startScheduler(): void {
   if (!config().SCHEDULER_ENABLED) return;
 
-  // JST 00:05 = UTC 15:05 (전날)
-  cron.schedule('5 15 * * *', () => void materializeTodayPosts().catch(logError('materialize')));
+  // 프로세스 TZ와 무관하게 JST 00:05에 돌도록 timezone을 명시한다.
+  // (UTC 15:05로 표현하면 Railway에 TZ=Asia/Tokyo가 설정되는 순간 15시간 밀린다)
+  cron.schedule('5 0 * * *', () => void materializeTodayPosts().catch(logError('materialize')), {
+    timezone: 'Asia/Tokyo',
+  });
   cron.schedule('* * * * *', () => void publishDuePosts().catch(logError('publish')));
   cron.schedule('*/5 * * * *', () => void retryFailedDms().catch(logError('dm-retry')));
   cron.schedule('*/10 * * * *', () => void cleanupOAuthStates().catch(logError('oauth-cleanup')));

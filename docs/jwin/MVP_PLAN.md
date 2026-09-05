@@ -354,7 +354,7 @@ G0에서 발견된 `media.write` 스코프 누락은 수정했으나, **기연�
 
 | 심각도 | 항목 | 내용 |
 |--------|------|------|
-| 높음 | 스케줄러 TZ 결합 | `apps/jwin-api/src/services/scheduler.ts:29`의 `cron.schedule('5 15 * * *')`는 프로세스 시간이 UTC라는 전제로 JST 00:05를 표현한 것이다. Railway에 `TZ=Asia/Tokyo`를 설정하면 당일분 생성이 15시간 밀린다. 올바른 형태는 `cron.schedule('5 0 * * *', fn, { timezone: 'Asia/Tokyo' })`. 현재는 "TZ를 설정하지 않는다"는 운영 규칙으로 우회 중이며 `DEPLOY.md` §2-3에 경고가 있다 |
+| ~~높음~~ 해결 | 스케줄러 TZ 결합 | 당일분 생성 크론이 UTC 전제(`'5 15 * * *'`)여서 `TZ=Asia/Tokyo` 설정 시 15시간 밀리는 문제. `cron.schedule('5 0 * * *', fn, { timezone: 'Asia/Tokyo' })`로 교체해 프로세스 TZ와 분리했다 (2026-09-05). `DEPLOY.md` §2-3의 "TZ 설정 금지" 규칙도 함께 해제 |
 | 높음 | `JWT_SECRET` 플레이스홀더 | 두 서비스 모두 로컬이 `replace-me-with-a-long-random-string`. 운영 배포 시 반드시 교체하고 **동시에** 반영 |
 | 중간 | Prisma 모델 직접 반환 | §3.6. `encryptedShipping` 노출 포함 |
 | 중간 | 단일 레플리카 강제 | 인프로세스 스케줄러라 2대 이상 뜨면 중복 게시. v2에서 잡 잠금 도입 전까지 replica 1 고정 |

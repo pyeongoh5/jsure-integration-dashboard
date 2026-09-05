@@ -158,6 +158,7 @@ export function Drafts() {
         <InsightDetailDialog
           draft={insightView}
           onClose={() => setInsightView(null)}
+          onSaved={reload}
         />
       )}
 

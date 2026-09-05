@@ -1,13 +1,16 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import {
+  AdminInsightScreenshotPresignRequestSchema,
   CampaignImageUploadPresignRequestSchema,
   CampaignThumbnailUploadPresignRequestSchema,
   NoticeImageUploadPresignRequestSchema,
   JwinMediaUploadPresignRequestSchema,
+  type AdminInsightScreenshotPresignRequest,
   type CampaignImageUploadPresignRequest,
   type CampaignImageUploadPresignResponse,
   type CampaignThumbnailUploadPresignRequest,
   type CampaignThumbnailUploadPresignResponse,
+  type InsightUploadPresignResponse,
   type NoticeImageUploadPresignRequest,
   type NoticeImageUploadPresignResponse,
   type JwinMediaUploadPresignRequest,
@@ -36,6 +39,15 @@ export class AdminUploadsController {
     body: NoticeImageUploadPresignRequest,
   ): Promise<NoticeImageUploadPresignResponse> {
     return this.svc.presignNoticeImageUpload(body);
+  }
+
+  /** 인사이트 스크린샷 교체·추가 — 인플루언서 업로드와 동일한 objectKey 규칙. */
+  @Post("insight-screenshot/presign")
+  presignInsightScreenshot(
+    @Body(new ZodValidationPipe(AdminInsightScreenshotPresignRequestSchema))
+    body: AdminInsightScreenshotPresignRequest,
+  ): Promise<InsightUploadPresignResponse> {
+    return this.svc.presignAdminInsightUpload(body);
   }
 
   @Post("campaign-image/presign")

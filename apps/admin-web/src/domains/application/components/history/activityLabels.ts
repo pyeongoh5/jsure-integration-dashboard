@@ -19,6 +19,8 @@ export const ACTIVITY_ACTION_LABEL: Record<
   SUBMISSION_REJECT: "domains.application.history.actions.submissionReject",
   SUBMISSION_REVIEW_UNDO:
     "domains.application.history.actions.submissionReviewUndo",
+  SUBMISSION_INSIGHT_UPDATE:
+    "domains.application.history.actions.submissionInsightUpdate",
   SETTLEMENT_CREATE: "domains.application.history.actions.settlementCreate",
   SETTLEMENT_REGISTER: "domains.application.history.actions.settlementRegister",
   SETTLEMENT_COMPLETE: "domains.application.history.actions.settlementComplete",

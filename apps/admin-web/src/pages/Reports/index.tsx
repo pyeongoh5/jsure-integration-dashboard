@@ -231,6 +231,8 @@ export function Reports() {
   const [selectedCategories, setSelectedCategories] = useState<Set<CampaignCategory>>(
     () => new Set(),
   );
+  // 인사이트 보정 저장 시 집계 지표도 다시 받아온다.
+  const [reloadKey, setReloadKey] = useState(0);
 
   const toggleExpand = (campaignId: string) => {
     setExpanded((previous) => {
@@ -262,7 +264,7 @@ export function Reports() {
     return () => {
       cancelled = true;
     };
-  }, [sortKey, sortOrder]);
+  }, [sortKey, sortOrder, reloadKey]);
 
   const handleSortClick = (key: CampaignReportSortKey) => {
     if (key === sortKey) {
@@ -419,6 +421,9 @@ export function Reports() {
                             <ParticipantPanel
                               campaignId={row.campaignId}
                               totalCount={row.participantCount}
+                              onInsightUpdated={() =>
+                                setReloadKey((current) => current + 1)
+                              }
                             />
                           </td>
                         </tr>
@@ -685,6 +690,8 @@ function uniqueSheetName(rawTitle: string, used: Set<string>, fallbackName: stri
 type ParticipantPanelProps = {
   campaignId: string;
   totalCount: number;
+  /** 상세 모달에서 인사이트를 보정했을 때 — 캠페인 집계까지 다시 받아온다. */
+  onInsightUpdated: () => void;
 };
 
 const PARTICIPANTS_PER_PAGE = 20;
@@ -877,9 +884,17 @@ function formatDate(iso: string | null): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
+function ParticipantPanel({
+  campaignId,
+  totalCount,
+  onInsightUpdated,
+}: ParticipantPanelProps) {
   const t = useT();
-  const submissionDetail = useSubmissionDetail();
+  const [participantsReloadKey, setParticipantsReloadKey] = useState(0);
+  const submissionDetail = useSubmissionDetail(() => {
+    setParticipantsReloadKey((current) => current + 1);
+    onInsightUpdated();
+  });
   const [page, setPage] = useState(0);
   const [participants, setParticipants] = useState<CampaignReportParticipant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -919,7 +934,7 @@ function ParticipantPanel({ campaignId, totalCount }: ParticipantPanelProps) {
     return () => {
       cancelled = true;
     };
-  }, [campaignId, safePage, totalCount]);
+  }, [campaignId, safePage, totalCount, participantsReloadKey]);
 
   if (totalCount === 0) {
     return <div className={styles.participantsEmpty}>{t("pages.reports.participants.empty")}</div>;

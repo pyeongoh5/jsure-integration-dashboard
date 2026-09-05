@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { translate } from "@i18n/admin";
+import { extractApiErrorMessage } from "@/lib/api";
 import { getStoredLanguage } from "@/lib/i18n";
 import {
   approveApplication,
@@ -40,22 +40,14 @@ export type ConfirmInput =
   | string
   | { trackingCarrier: string; trackingNumber: string };
 
-/** API 에러 응답에서 사용자에게 보여줄 메시지를 뽑아낸다. NestJS 는 message 를 문자열 또는 배열로 내려준다. */
 function extractErrorMessage(err: unknown): string {
-  if (axios.isAxiosError(err)) {
-    const message = (err.response?.data as { message?: unknown } | undefined)
-      ?.message;
-    if (typeof message === "string" && message.trim() !== "") return message;
-    if (Array.isArray(message) && typeof message[0] === "string") {
-      return message[0];
-    }
-  }
-  return err instanceof Error
-    ? err.message
-    : translate(
-        "domains.application.applicants.errors.mutationFailed",
-        getStoredLanguage(),
-      );
+  return extractApiErrorMessage(
+    err,
+    translate(
+      "domains.application.applicants.errors.mutationFailed",
+      getStoredLanguage(),
+    ),
+  );
 }
 
 export function useApplicantMutations(

@@ -13,6 +13,7 @@ import {
   JWIN_MEDIA_MAX_BYTES,
   type CampaignThumbnailUploadPresignRequest,
   type CampaignThumbnailUploadPresignResponse,
+  type AdminInsightScreenshotPresignRequest,
   type InsightAttachmentInput,
   type InsightUploadPresignRequest,
   type InsightUploadPresignResponse,
@@ -94,6 +95,31 @@ export class UploadsService {
       throw new BadRequestException("응모한 SNS 와 일치하지 않습니다");
     }
 
+    return this.buildInsightPresign(body);
+  }
+
+  /**
+   * 어드민이 인사이트 스크린샷을 교체·추가할 때. 소유권 검사 대신 응모 존재만
+   * 확인한다 — 어드민 인증은 컨트롤러 가드가 이미 보장한다.
+   */
+  async presignAdminInsightUpload(
+    body: AdminInsightScreenshotPresignRequest,
+  ): Promise<InsightUploadPresignResponse> {
+    if (body.sizeBytes > UPLOAD_MAX_BYTES) {
+      throw new BadRequestException("파일 크기 한도를 초과했습니다");
+    }
+    const application = await this.prisma.campaignApplication.findUnique({
+      where: { id: body.applicationId },
+      select: { id: true },
+    });
+    if (!application) throw new NotFoundException("Application not found");
+
+    return this.buildInsightPresign(body);
+  }
+
+  private async buildInsightPresign(
+    body: AdminInsightScreenshotPresignRequest | InsightUploadPresignRequest,
+  ): Promise<InsightUploadPresignResponse> {
     const objectKey =
       `insights/${body.applicationId}/${body.subType}/` +
       `${randomUUID()}.${extOf(body.contentType)}`;

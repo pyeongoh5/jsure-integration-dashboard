@@ -12,6 +12,7 @@ import {
   type AdminApplication,
   type AdminSettlement,
   type AdminSubmission,
+  type AdminUpdateInsightRequest,
   type ApplicantExportResponse,
   type ApplicantExportRow,
   type ApplicantFilter,
@@ -21,6 +22,11 @@ import {
   type CampaignSubType,
   type CrossPostPlatform,
 } from "@jsure/shared";
+import {
+  buildInsightChanges,
+  buildInsightUpdateData,
+  type InsightSnapshot,
+} from "./insight-edit";
 import {
   APPLICANT_FROM_SQL,
   applicantCursorSql,
@@ -43,6 +49,7 @@ import {
   settlementAmounts,
 } from "../settlements/ensure-settlement";
 import { AuditService } from "../audit/audit.service";
+import { UploadsService } from "../uploads/uploads.service";
 import type { AuditActor } from "../audit/audit.service";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -146,6 +153,7 @@ export class AdminApplicationsService {
     private readonly dispatcher: LineDispatcherService,
     private readonly r2: R2Service,
     private readonly audit: AuditService,
+    private readonly uploads: UploadsService,
   ) {}
 
   private async fetch(id: string): Promise<AdminApplication> {
@@ -535,6 +543,89 @@ export class AdminApplicationsService {
         viewUrl: await this.r2.presignGet(row.objectKey, 3600),
       })),
     );
+  }
+
+  /**
+   * 인플루언서가 제출한 인사이트의 오기입 보정 — 수치·게시물 URL·스크린샷.
+   * 검토/정산 상태와 무관하게 허용한다(사후 발견한 오타도 고쳐야 하므로).
+   * 리포트 지표는 조회 시점에 합산되므로 별도 재계산 없이 즉시 반영된다.
+   */
+  async updateInsight(
+    postId: string,
+    body: AdminUpdateInsightRequest,
+    actor: AuditActor,
+  ): Promise<AdminSubmission> {
+    const post = await this.prisma.submittedPost.findUnique({
+      where: { id: postId },
+      select: {
+        id: true,
+        subType: true,
+        applicationId: true,
+        url: true,
+        insightSubmittedAt: true,
+        insightLikes: true,
+        insightComments: true,
+        insightShares: true,
+        insightReposts: true,
+        insightSaves: true,
+        insightViews: true,
+        insightReach: true,
+        application: { select: { campaignId: true } },
+      },
+    });
+    if (!post) throw new NotFoundException("게시물을 찾을 수 없습니다");
+    if (post.insightSubmittedAt === null) {
+      throw new BadRequestException("인사이트가 제출되지 않은 게시물입니다");
+    }
+
+    const before: InsightSnapshot = {
+      url: post.url,
+      insightLikes: post.insightLikes,
+      insightComments: post.insightComments,
+      insightShares: post.insightShares,
+      insightReposts: post.insightReposts,
+      insightSaves: post.insightSaves,
+      insightViews: post.insightViews,
+      insightReach: post.insightReach,
+    };
+    const data = buildInsightUpdateData(before, body);
+    const addAttachments = body.addAttachments ?? [];
+    const removeAttachmentIds = body.removeAttachmentIds ?? [];
+
+    // 첨부 추가를 먼저 — R2 검증에서 실패하면 수치는 손대지 않은 상태로 끝난다.
+    if (addAttachments.length > 0) {
+      await this.uploads.attachInsightUploads(postId, addAttachments);
+    }
+    if (removeAttachmentIds.length > 0) {
+      // ponytail: R2 객체는 남긴다 — 오삭제 복구 여지를 남기는 쪽이 낫다.
+      // 스토리지가 문제되면 objectKey 기준 정리 배치를 붙인다.
+      await this.prisma.attachment.deleteMany({
+        where: { id: { in: removeAttachmentIds }, postId },
+      });
+    }
+    if (Object.keys(data).length > 0) {
+      // insightSubmittedAt 은 인플루언서의 제출 시각이라 보정에서 건드리지 않는다.
+      await this.prisma.submittedPost.update({ where: { id: postId }, data });
+    }
+
+    const changes = buildInsightChanges(before, data);
+    if (addAttachments.length > 0) {
+      changes.push(`스크린샷 추가 ${addAttachments.length}건`);
+    }
+    if (removeAttachmentIds.length > 0) {
+      changes.push(`스크린샷 삭제 ${removeAttachmentIds.length}건`);
+    }
+    if (changes.length > 0) {
+      await this.audit.record({
+        action: "SUBMISSION_INSIGHT_UPDATE",
+        actor,
+        applicationId: post.applicationId,
+        campaignId: post.application.campaignId,
+        metadata: { subType: post.subType, changes },
+      });
+    }
+
+    return this.fetchSubmission(post.applicationId);
   }
 
   /** 제출물 전체 승인 — 응모 단위. */

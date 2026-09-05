@@ -5,8 +5,12 @@ const schema = z.object({
   PORT: z.coerce.number().default(8080),
   API_BASE_URL: z.string().url().default('http://localhost:8080'),
   WEB_BASE_URL: z.string().url().default('http://localhost:3100'),
-  /** 어드민 UI(@jsure/admin-web) origin — CORS 허용 대상 */
-  ADMIN_WEB_ORIGIN: z.string().url().default('http://localhost:5173'),
+  /**
+   * CORS 허용 origin 목록 (쉼표 구분). 대시보드 @jsure/api 와 같은 이름·형식을 쓴다 —
+   * 한 Railway 프로젝트에 두 서비스가 나란히 있어서 이름이 다르면 설정 실수가 난다.
+   * WEB_BASE_URL(응모자 웹)은 항상 허용되므로 여기엔 어드민 UI origin 만 넣으면 된다.
+   */
+  CORS_ORIGIN: z.string().default('http://localhost:5173'),
   /** 응모자 세션 쿠키 서명 키 (J-WIN 자체) */
   SESSION_SECRET: z.string().min(16),
   /**

@@ -27,9 +27,9 @@ DATABASE_URL=postgresql://dummy DIRECT_DATABASE_URL=postgresql://dummy \
 
 1. 기존 Railway 프로젝트에 새 서비스 생성, 같은 리포 연결
 2. 서비스 설정에서 Config File Path = `apps/jwin-api/railway.json` (Dockerfile 빌드)
-3. 환경변수: `apps/jwin-api/.env.example`의 키 전부 (`DATABASE_URL`, `DIRECT_DATABASE_URL`, `SESSION_SECRET`, `JWT_SECRET`, `TOKEN_ENCRYPTION_KEY`, `X_CLIENT_ID/SECRET`, `WEB_BASE_URL`, `ADMIN_WEB_ORIGIN`, `SCHEDULER_ENABLED=true`).
+3. 환경변수: `apps/jwin-api/.env.example`의 키 전부 (`DATABASE_URL`, `DIRECT_DATABASE_URL`, `SESSION_SECRET`, `JWT_SECRET`, `TOKEN_ENCRYPTION_KEY`, `X_CLIENT_ID/SECRET`, `WEB_BASE_URL`, `CORS_ORIGIN`, `SCHEDULER_ENABLED=true`).
    - **`JWT_SECRET`은 대시보드 API(`@jsure/api`) 서비스의 값과 반드시 동일해야 한다 (D-10).** 어드민 인증이 대시보드 발급 토큰의 서명 검증으로 이뤄지므로, 값이 어긋나면 어드민 API가 전부 401이 된다. 로테이션 시 두 서비스를 함께 배포할 것
-   - `ADMIN_WEB_ORIGIN`은 admin-web 운영 도메인. CORS 허용 목록에 들어간다
+   - `CORS_ORIGIN`은 admin-web 운영 도메인 (쉼표로 여러 개 가능). 대시보드 API 의 같은 이름 변수와 형식이 같다. `WEB_BASE_URL`(응모자 웹)은 코드가 항상 허용하므로 여기 다시 넣지 않아도 된다
    - `TZ`는 설정하든 안 하든 무관하다. 당일분 생성 잡이 `timezone: 'Asia/Tokyo'`를 명시하므로 프로세스 TZ에 영향받지 않는다 (2026-09-05 수정). 다만 로그 시각이 헷갈리지 않도록 굳이 바꾸지 않는 쪽을 권한다
 4. 배포 시 `prisma migrate deploy`가 선행됨 (Dockerfile CMD)
 5. **단일 replica 유지** — 스케줄러가 인프로세스라 다중 인스턴스 시 중복 게시 위험 (v2에서 잡 잠금 도입 전까지)
@@ -69,14 +69,14 @@ Round(회차) 기반 `/r/{roundSlug}` 복합 LP는 폐지됐다. 공개 진입�
 | `GET /oauth/brand/*`, `GET /oauth/user/*` | OAuth2 + PKCE 시작·콜백 |
 | `/admin/*` | 캠페인·소재·경품 CRUD, 코드 등록, 통계, 당첨자 목록. **로그인 엔드포인트는 없다 (D-10)** — 대시보드 access token을 `Authorization: Bearer`로 전달. `GET /admin/me`로 토큰 유효성 확인 가능 |
 
-### 어드민 UI (`ADMIN_WEB_ORIGIN`, `@jsure/admin-web`)
+### 어드민 UI (`CORS_ORIGIN`, `@jsure/admin-web`)
 
 J-WIN 어드민 화면은 대시보드 admin-web 안에 들어간다. 로그인·토큰 갱신은 대시보드 API가 담당하고, J-WIN 호출만 jwin-api로 나간다.
 
 | 환경 | J-WIN API 접근 경로 |
 |------|--------------------|
 | 로컬 | vite 프록시 `/jwin-api` → `http://localhost:8080` (CORS 불필요) |
-| 운영 | `VITE_JWIN_API_BASE_URL` = Railway 도메인 (jwin-api의 `ADMIN_WEB_ORIGIN`에 admin-web 도메인 등록 필요) |
+| 운영 | `VITE_JWIN_API_BASE_URL` = Railway 도메인 (jwin-api의 `CORS_ORIGIN`에 admin-web 도메인 등록 필요) |
 
 `WEB_BASE_URL` / `API_BASE_URL`은 커스텀 도메인 연결 후 반드시 갱신한다. 자동 포스트 본문의 LP 링크가 `{WEB_BASE_URL}/c/{slug}`로 만들어지므로, 값이 틀리면 게시된 포스트가 잘못된 URL을 가리킨 채 남는다.
 

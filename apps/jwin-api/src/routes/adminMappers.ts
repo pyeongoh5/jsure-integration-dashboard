@@ -4,9 +4,13 @@ import type {
   AdminCampaignListItem,
   AdminPrize,
   AdminPostTemplate,
+  AdminShippingAddress,
   AdminWinner,
+  AdminWinnerExportRow,
+  AdminWinnerFilter,
   FulfillmentStatusSchema,
 } from '@jsure/jwin-shared';
+import { AdminShippingAddressSchema } from '@jsure/jwin-shared';
 import type { z } from 'zod';
 import { decrypt } from '../lib/crypto';
 
@@ -198,8 +202,46 @@ export function toWinner(winner: {
   };
 }
 
-/** 배송지 복호화. 저장 형식은 암호화된 JSON 문자열. */
-export function decryptShipping(encrypted: string | null): Record<string, unknown> | null {
+/**
+ * 배송지 복호화. 저장 형식은 암호화된 JSON 문자열.
+ * 계약 모양과 어긋나는 데이터는 그대로 흘리지 않고 null로 막는다 — 목록·CSV 전체가
+ * 행 하나 때문에 실패하는 것보다 해당 칸만 비는 편이 운영에 낫다.
+ */
+export function decryptShipping(encrypted: string | null): AdminShippingAddress | null {
   if (!encrypted) return null;
-  return JSON.parse(decrypt(encrypted)) as Record<string, unknown>;
+  const parsed = AdminShippingAddressSchema.safeParse(JSON.parse(decrypt(encrypted)));
+  if (!parsed.success) {
+    console.error('[admin] 배송지 형식이 계약과 다릅니다', parsed.error.flatten());
+    return null;
+  }
+  return parsed.data;
+}
+
+export function toWinnerExportRow(winner: Parameters<typeof toWinner>[0]): AdminWinnerExportRow {
+  return { ...toWinner(winner), shipping: decryptShipping(winner.encryptedShipping) };
+}
+
+/** 당첨자 목록·CSV가 공유하는 조회 필드. 배송지 암호문은 매퍼에서만 쓰고 응답엔 안 나간다. */
+export const WINNER_SELECT = {
+  id: true,
+  verification: true,
+  fulfillment: true,
+  encryptedShipping: true,
+  dmSentAt: true,
+  dmError: true,
+  prize: { select: { name: true, type: true } },
+  entry: { select: { dateJst: true, user: { select: { xUsername: true } } } },
+} as const;
+
+/**
+ * 목록과 CSV가 같은 조건을 보도록 where 생성을 한 곳에 둔다.
+ * 두 곳이 각자 조건을 짜면 CSV가 화면과 다른 집합을 담게 된다.
+ */
+export function winnerFilterWhere(campaignId: string, filter: AdminWinnerFilter) {
+  return {
+    entry: { campaignId },
+    ...(filter.verification ? { verification: filter.verification } : {}),
+    ...(filter.fulfillment ? { fulfillment: filter.fulfillment } : {}),
+    ...(filter.prizeType ? { prize: { type: filter.prizeType } } : {}),
+  };
 }

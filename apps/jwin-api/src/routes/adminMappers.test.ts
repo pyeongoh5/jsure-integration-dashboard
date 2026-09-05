@@ -138,3 +138,70 @@ describe('brandAccountStatus', () => {
     expect(dto.status).toBe('CONNECTED');
   });
 });
+
+describe('winnerFilterWhere', () => {
+  it('필터가 없으면 캠페인 조건만 건다', async () => {
+    const { winnerFilterWhere } = await import('./adminMappers');
+    expect(winnerFilterWhere('c1', {})).toEqual({ entry: { campaignId: 'c1' } });
+  });
+
+  it('경품 유형은 prize 관계 조건으로 내려간다', async () => {
+    const { winnerFilterWhere } = await import('./adminMappers');
+    expect(winnerFilterWhere('c1', { prizeType: 'PHYSICAL' })).toEqual({
+      entry: { campaignId: 'c1' },
+      prize: { type: 'PHYSICAL' },
+    });
+  });
+
+  it('여러 필터는 AND로 함께 걸린다', async () => {
+    const { winnerFilterWhere } = await import('./adminMappers');
+    expect(
+      winnerFilterWhere('c1', { verification: 'PASSED', fulfillment: 'READY', prizeType: 'CODE' }),
+    ).toEqual({
+      entry: { campaignId: 'c1' },
+      verification: 'PASSED',
+      fulfillment: 'READY',
+      prize: { type: 'CODE' },
+    });
+  });
+});
+
+describe('decryptShipping / toWinnerExportRow', () => {
+  const winnerRow = (encryptedShipping: string | null) => ({
+    id: 'w1',
+    verification: 'PASSED',
+    fulfillment: 'READY',
+    encryptedShipping,
+    dmSentAt: null,
+    dmError: null,
+    prize: { name: '경품', type: 'PHYSICAL' },
+    entry: { dateJst: '2026-09-05', user: { xUsername: 'someone' } },
+  });
+
+  it('계약 모양이면 그대로 복호화한다', async () => {
+    const { encrypt } = await import('../lib/crypto');
+    const { toWinnerExportRow } = await import('./adminMappers');
+    const address = {
+      postalCode: '1500001',
+      prefecture: '東京都',
+      address1: '渋谷区1-1',
+      fullName: '山田太郎',
+      phone: '09012345678',
+    };
+    const row = toWinnerExportRow(winnerRow(encrypt(JSON.stringify(address))));
+    expect(row.shipping).toEqual(address);
+    expect(row.hasShipping).toBe(true);
+  });
+
+  it('계약과 어긋난 배송지는 흘리지 않고 null로 막는다', async () => {
+    const { encrypt } = await import('../lib/crypto');
+    const { toWinnerExportRow } = await import('./adminMappers');
+    const row = toWinnerExportRow(winnerRow(encrypt(JSON.stringify({ postalCode: 123 }))));
+    expect(row.shipping).toBeNull();
+  });
+
+  it('배송지 미입력이면 null', async () => {
+    const { toWinnerExportRow } = await import('./adminMappers');
+    expect(toWinnerExportRow(winnerRow(null)).shipping).toBeNull();
+  });
+});

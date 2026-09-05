@@ -209,16 +209,81 @@ export const AdminWinnerSchema = z.object({
 });
 export type AdminWinner = z.infer<typeof AdminWinnerSchema>;
 
-export const AdminWinnerListSchema = z.object({ winners: z.array(AdminWinnerSchema) });
+/**
+ * 목록 필터. 서버(SQL)에서 거르고 커서로 페이징한다 — 화면이 전량 로드 후 거르면
+ * 데이터가 늘었을 때 "보이는 목록 ≠ 실제 전체"가 되고 CSV가 조용히 일부만 담는다.
+ * 값들이 파생 없는 raw enum이라 별도 판정 표는 두지 않는다.
+ */
+export const AdminWinnerFilterSchema = z.object({
+  verification: VerificationStatusSchema.optional(),
+  fulfillment: FulfillmentStatusSchema.optional(),
+  prizeType: PrizeTypeSchema.optional(),
+});
+export type AdminWinnerFilter = z.infer<typeof AdminWinnerFilterSchema>;
+
+export const ADMIN_WINNER_PAGE_SIZE = 50;
+
+export const AdminWinnerListSchema = z.object({
+  winners: z.array(AdminWinnerSchema),
+  /** 다음 페이지 커서(마지막 항목 id). 더 없으면 null */
+  nextCursor: z.string().nullable(),
+});
 export type AdminWinnerList = z.infer<typeof AdminWinnerListSchema>;
+
+/** LP 배송지 입력 폼과 같은 모양 (public.ts shippingSchema) */
+export const AdminShippingAddressSchema = z.object({
+  postalCode: z.string(),
+  prefecture: z.string(),
+  address1: z.string(),
+  address2: z.string().optional(),
+  fullName: z.string(),
+  phone: z.string(),
+});
+export type AdminShippingAddress = z.infer<typeof AdminShippingAddressSchema>;
 
 /** ⑥ GET /admin/winners/:id/shipping — 복호화 배송지 (열람 감사 대상) */
 export const AdminShippingSchema = z.object({
   winnerId: z.string(),
-  shipping: z.record(z.string(), z.unknown()).nullable(),
+  shipping: AdminShippingAddressSchema.nullable(),
   shippingEnteredAt: z.string().nullable(),
 });
 export type AdminShipping = z.infer<typeof AdminShippingSchema>;
+
+/**
+ * CSV 내보내기 행 — 배송지 평문을 포함하므로 목록과 분리된 전용 엔드포인트로만 내려간다.
+ * 필터에 걸린 **전체**를 담는다(현재 로드된 페이지가 아니라).
+ */
+export const AdminWinnerExportRowSchema = AdminWinnerSchema.extend({
+  shipping: AdminShippingAddressSchema.nullable(),
+});
+export type AdminWinnerExportRow = z.infer<typeof AdminWinnerExportRowSchema>;
+
+export const AdminWinnerExportSchema = z.object({
+  rows: z.array(AdminWinnerExportRowSchema),
+});
+export type AdminWinnerExport = z.infer<typeof AdminWinnerExportSchema>;
+
+/** GET /admin/campaigns/:id/stats — 통계 탭 */
+export const AdminCampaignStatsSchema = z.object({
+  campaignId: z.string(),
+  brandName: z.string(),
+  slug: z.string(),
+  xUsername: z.string().nullable(),
+  status: CampaignStatusSchema,
+  startsAt: z.string(),
+  endsAt: z.string(),
+  entries: z.number().int(),
+  winConfirmed: z.number().int(),
+  winPendingToday: z.number().int(),
+  /** 당첨됐지만 당일 내 검증을 못 끝낸 건. 재고는 이미 차감됨 (D-2 개정) */
+  unfulfilledWins: z.number().int(),
+  prizeStock: z.array(
+    z.object({ name: z.string(), total: z.number().int(), remaining: z.number().int() }),
+  ),
+  failedPosts: z.number().int(),
+  needsReconnect: z.boolean(),
+});
+export type AdminCampaignStats = z.infer<typeof AdminCampaignStatsSchema>;
 
 /** ⑦ PATCH /admin/winners/:id/fulfillment (요청) */
 export const AdminFulfillmentPatchSchema = z.object({

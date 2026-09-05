@@ -1,7 +1,13 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { getPrisma } from '@jsure/jwin-db';
-import { dateJst, parseCodesInput } from '@jsure/jwin-shared';
+import {
+  ADMIN_WINNER_PAGE_SIZE,
+  AdminWinnerFilterSchema,
+  dateJst,
+  parseCodesInput,
+  type AdminWinnerFilter,
+} from '@jsure/jwin-shared';
 import { config } from '../config';
 import { encrypt } from '../lib/crypto';
 import { AdminIdentity, getAdminIdentity } from '../lib/auth';
@@ -12,8 +18,11 @@ import {
   toPrize,
   toPostTemplate,
   toWinner,
+  toWinnerExportRow,
   decryptShipping,
   canTransitionFulfillment,
+  winnerFilterWhere,
+  WINNER_SELECT,
   BrandAccountRow,
 } from './adminMappers';
 import { activationBlockers, resolveAccountForActivationCheck } from './campaignActivation';
@@ -480,8 +489,8 @@ export async function adminRoutes(app: FastifyInstance) {
       slug: campaign.slug,
       xUsername: campaign.brandAccount?.xUsername ?? null,
       status: campaign.status,
-      startsAt: campaign.startsAt,
-      endsAt: campaign.endsAt,
+      startsAt: campaign.startsAt.toISOString(),
+      endsAt: campaign.endsAt.toISOString(),
       entries: campaign._count.entries,
       winConfirmed,
       winPendingToday,
@@ -496,25 +505,56 @@ export async function adminRoutes(app: FastifyInstance) {
     };
   });
 
-  // 당첨자 목록 (이행 처리용) — 배송지 평문/암호문 미노출 (D-11)
-  app.get<{ Params: { id: string } }>('/admin/campaigns/:id/winners', async (req, reply) => {
-    if (!requireAdmin(req, reply)) return;
-    const winners = await prisma.winner.findMany({
-      where: { entry: { campaignId: req.params.id } },
-      select: {
-        id: true,
-        verification: true,
-        fulfillment: true,
-        encryptedShipping: true,
-        dmSentAt: true,
-        dmError: true,
-        prize: { select: { name: true, type: true } },
-        entry: { select: { dateJst: true, user: { select: { xUsername: true } } } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    return { winners: winners.map(toWinner) };
-  });
+  // 당첨자 목록 (이행 처리용) — 배송지 평문/암호문 미노출 (D-11).
+  // 필터는 서버에서 걸고 커서로 페이징한다. 화면이 전량 로드 후 거르면 데이터가
+  // 늘었을 때 "보이는 목록 ≠ 실제 전체"가 되고 CSV가 조용히 일부만 담는다.
+  app.get<{ Params: { id: string }; Querystring: Record<string, string | undefined> }>(
+    '/admin/campaigns/:id/winners',
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+      const parsed = AdminWinnerFilterSchema.safeParse(req.query);
+      if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+
+      const cursor = typeof req.query.cursor === 'string' ? req.query.cursor : undefined;
+      const winners = await prisma.winner.findMany({
+        where: winnerFilterWhere(req.params.id, parsed.data),
+        select: WINNER_SELECT,
+        orderBy: { createdAt: 'desc' },
+        take: ADMIN_WINNER_PAGE_SIZE + 1, // 한 건 더 읽어 다음 페이지 유무를 판단
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+
+      const page = winners.slice(0, ADMIN_WINNER_PAGE_SIZE);
+      const hasMore = winners.length > ADMIN_WINNER_PAGE_SIZE;
+      return {
+        winners: page.map(toWinner),
+        nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+      };
+    },
+  );
+
+  // CSV 내보내기 — 필터에 걸린 **전체**를 배송지 평문까지 담아 내려준다.
+  // 목록과 분리한 이유가 이것이고, 개인정보 반출이므로 열람과 동일하게 감사에 남긴다.
+  app.get<{ Params: { id: string }; Querystring: Record<string, string | undefined> }>(
+    '/admin/campaigns/:id/winners/export',
+    async (req, reply) => {
+      const admin = requireAdmin(req, reply);
+      if (!admin) return;
+      const parsed = AdminWinnerFilterSchema.safeParse(req.query);
+      if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+
+      const winners = await prisma.winner.findMany({
+        where: winnerFilterWhere(req.params.id, parsed.data),
+        select: WINNER_SELECT,
+        orderBy: { createdAt: 'desc' },
+      });
+      await audit(admin, 'winner.export', req.params.id, {
+        filter: parsed.data,
+        rows: winners.length,
+      });
+      return { rows: winners.map(toWinnerExportRow) };
+    },
+  );
 
   // ⑥ 배송지 복호화 열람 — 개인정보이므로 열람 자체를 감사 로그에 남긴다
   app.get<{ Params: { id: string } }>('/admin/winners/:id/shipping', async (req, reply) => {
@@ -550,16 +590,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
       const winner = await prisma.winner.findUnique({
         where: { id: req.params.id },
-        select: {
-          id: true,
-          verification: true,
-          fulfillment: true,
-          encryptedShipping: true,
-          dmSentAt: true,
-          dmError: true,
-          prize: { select: { name: true, type: true } },
-          entry: { select: { dateJst: true, user: { select: { xUsername: true } } } },
-        },
+        select: WINNER_SELECT,
       });
       if (!winner) return reply.code(404).send({ error: '당첨자를 찾을 수 없습니다' });
       if (!canTransitionFulfillment(winner.fulfillment, parsed.data.fulfillment)) {

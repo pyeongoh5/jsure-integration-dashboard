@@ -197,9 +197,27 @@ https://jsure-instance-win-production.up.railway.app/oauth/user/callback    ← 
 같은 프로젝트에 두면 요금·사용량이 한 곳에서 보이고 두 서비스 로그를 오가기 편하다(`JWT_SECRET` 불일치 디버깅 등). 클라이언트별 요금 분리나 접근 권한 분리가 필요한 게 아니면 나눌 이유가 없다. 두 API는 서로 네트워크 호출을 하지 않으므로 기술적 제약도 없다.
 
 1. 기존 프로젝트 → `New Service` → `GitHub Repo` → 같은 리포 선택
-2. **Settings → Config File Path** 에 `apps/jwin-api/railway.json` 입력
+2. **Settings 에서 빌드·배포 설정을 직접 입력한다**
 
-   이걸 지정해야 J-WIN 전용 Dockerfile 로 빌드된다. 안 하면 루트 `railway.json` 을 읽어 **기존 대시보드 API 가 빌드되고**, 아래처럼 실패한다.
+   > ⚠️ `apps/jwin-api/railway.json` 은 **쓸 수 없다.** Railway 가 Config-as-Code 를 폐기하면서
+   > **2026-08-28 이후 새로 만든 서비스는 config 파일을 사용할 수 없다**(기존 사용 서비스만
+   > 2026-12-01 까지 유지). 경로를 입력해도 저장되지 않고 지워진다.
+   >
+   > 리포의 `railway.json` 들은 그 이전에 만들어진 것이라 남아 있지만, 신규 서비스는 아래처럼
+   > UI 에서 설정해야 한다.
+
+   | 위치 | 항목 | 값 |
+   |---|---|---|
+   | Build | Builder | `Dockerfile` |
+   | Build | Dockerfile Path | `apps/jwin-api/Dockerfile` |
+   | Build | Root Directory | **비움** — Dockerfile 이 `COPY packages ./packages` 로 레포 루트를 컨텍스트로 쓴다. 여기를 `apps/jwin-api` 로 바꾸면 빌드가 깨진다 |
+   | Deploy | Start Command | **비움** — 값이 있으면 Dockerfile 의 `CMD` 를 덮어써서 마이그레이션이 실행되지 않는다 |
+   | Deploy | Healthcheck Path | `/health` |
+   | Deploy | Healthcheck Timeout | `120` |
+   | Deploy | Restart Policy | `On Failure` |
+   | Deploy | Replicas | `1` |
+
+   **Dockerfile Path 를 지정하지 않으면 루트 `railway.json` 이 적용돼 기존 대시보드 API 가 빌드되고**, 아래처럼 실패한다.
 
    ```
    Error: Prisma schema validation - (get-config wasm)
@@ -208,9 +226,9 @@ https://jsure-instance-win-production.up.railway.app/oauth/user/callback    ← 
      -->  prisma/schema.prisma:8
    ```
 
-   `DIRECT_URL` 은 대시보드 스키마(`apps/api/prisma/schema.prisma`)가 쓰는 이름이다. J-WIN 은 `DIRECT_DATABASE_URL` 을 쓰므로, **이 에러가 나면 잘못된 Dockerfile 로 빌드되고 있다는 신호**다. 환경변수를 추가하지 말고 Config File Path 를 고칠 것.
+   `DIRECT_URL` 은 대시보드 스키마(`apps/api/prisma/schema.prisma`)가 쓰는 이름이다. J-WIN 은 `DIRECT_DATABASE_URL` 을 쓰므로, **이 에러가 나면 잘못된 Dockerfile 로 빌드되고 있다는 신호**다. 환경변수를 추가하지 말고 Dockerfile Path 를 고칠 것.
 
-   빌드 로그로 구분한다.
+   빌드·런타임 로그로 구분한다.
 
    | | 잘못된 경우 | 올바른 경우 |
    |---|---|---|
@@ -218,7 +236,16 @@ https://jsure-instance-win-production.up.railway.app/oauth/user/callback    ← 
    | Prisma 변수 | `DIRECT_URL` | `DIRECT_DATABASE_URL` |
    | healthcheck | `/api/health` | `/health` |
 
-   Config File Path 항목을 못 찾으면 Settings → Build 의 **Dockerfile Path** 를 `apps/jwin-api/Dockerfile` 로, Deploy 의 **Healthcheck Path** 를 `/health` 로 각각 지정해도 된다 (`railway.json` 을 쓰면 한 번에 잡힌다).
+3. **루트 `railway.json` 정리 (권장)**
+
+   Config-as-Code 는 2026-12-01 에 완전히 종료된다. 기존 `jsure-api` 서비스도 언젠가 UI 설정으로 옮겨야 하고, 옮기고 나면 루트 `railway.json` 이 신규 서비스에 끼어드는 문제도 사라진다.
+
+   순서를 지킬 것 — **거꾸로 하면 기존 서비스가 빌더를 잃는다.**
+
+   1. 기존 `jsure-api` 서비스 Settings 에 루트 config 와 같은 값을 입력
+      (`Dockerfile` / `apps/api/Dockerfile` / `/api/health` / `120` / `On Failure`)
+   2. 재배포해서 정상 동작 확인
+   3. 그다음에 리포에서 루트 `railway.json` 삭제
 
 ### 5-2. Watch Paths — 놓치면 사고 난다
 
@@ -455,5 +482,6 @@ curl -i https://jsure-instance.com/campaigns
 | 게시가 하루 통째로 안 나감 | 그날을 덮는 소재(`PostTemplate`)가 없음. 소재 탭에서 확인 |
 | 같은 포스트가 두 번 올라감 | replica가 2 이상 |
 | 컨테이너 기동 실패 | `TOKEN_ENCRYPTION_KEY`가 64자 hex가 아니거나, 마이그레이션 디렉터리가 비어 있음 |
-| 빌드 중 `Environment variable not found: DIRECT_URL` | Railway Config File Path 미지정 → 대시보드 API 가 빌드되고 있음 (§5-1) |
+| 빌드·기동 중 `Environment variable not found: DIRECT_URL` | Railway 서비스에 Dockerfile Path 미지정 → 루트 `railway.json` 이 적용돼 대시보드 API 가 빌드되고 있음 (§5-1) |
+| Railway Settings 의 Config File Path 가 저장 안 되고 사라짐 | Config-as-Code 폐기 — 2026-08-28 이후 신규 서비스는 사용 불가. UI 설정으로 대체 (§5-1) |
 | 게시된 포스트의 링크가 잘못됨 | `WEB_BASE_URL`이 임시 도메인인 채로 캠페인을 시작함. **지나간 포스트는 복구 불가** |

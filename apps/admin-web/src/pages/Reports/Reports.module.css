@@ -115,14 +115,15 @@
 
 .titleCell {
   min-width: 200px;
-  white-space: normal;
-  word-break: break-word;
 }
 
-/* table-layout 이 auto 라 td 의 max-width 가 무시된다. 내부 블록으로 폭을 잡아
-   긴 캠페인명이 옆 컬럼을 침범하지 않게 한다. */
+/* 두 가지를 한 번에 푼다.
+   - td 의 max-width 는 table-layout: auto 에서 무시되므로 내부 블록으로 폭을 잡는다.
+   - `.table tbody td` 의 nowrap 이 특정도로 이기므로 여기서 줄바꿈을 다시 켠다. */
 .titleCellInner {
   max-width: 320px;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .empty {

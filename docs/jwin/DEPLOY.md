@@ -85,13 +85,30 @@ J-WIN 어드민 화면은 대시보드 admin-web 안에 들어간다. 로그인�
 1. 앱 생성 → OAuth 2.0 설정:
    - Callback URLs: `{API_BASE_URL}/oauth/brand/callback`, `{API_BASE_URL}/oauth/user/callback`
    - Type: Web App (confidential client)
+   - **App permissions: `Read and write and Direct message`** — 낮으면 승인 화면에서 "You weren't able to give access to the App" 으로 막힌다
+   - 앱이 **Project 안에** 있어야 한다. Standalone App 은 OAuth 2.0 이 동작하지 않는다
 2. 크레딧 충전 + 지출 한도(spending limit) 설정 — 폭주 방지
 3. `X_CLIENT_ID`, `X_CLIENT_SECRET`을 Railway에 설정
 
-## 6. 운영 체크리스트 (캠페인 시작 전)
+## 6. 배포 체크리스트 (서비스 최초 기동 전)
 
-- [ ] G0 스파이크 5종 통과 기록 (spikes/README.md — 미디어 업로드 포함)
+인프라 쪽. §1~3 을 마친 뒤 아래를 확인한다.
+
+- [x] G0 스파이크 6종 실측 — 2026-08-28 전 항목 통과 (`DECISIONS.md` §G0)
 - [ ] 초기 마이그레이션 적용 확인 (`prisma migrate deploy` 로그)
+- [ ] **`JWT_SECRET` 을 대시보드 API(`@jsure/api`)와 동일한 운영 값으로 교체.** 로컬 플레이스홀더(`replace-me-...`)가 그대로면 어드민이 전부 401 이다. 로테이션 시 두 서비스를 함께 배포 (D-10)
+- [ ] **Railway 커스텀 도메인 연결 후 `API_BASE_URL` 지정.** 서비스가 바뀌어도 도메인이 유지되므로 브랜드에 나간 연동 링크가 깨지지 않는다
+- [ ] **대시보드 API(`@jsure/api`)에 `API_PUBLIC_BASE_URL` 설정** — J-WIN 미디어 프록시(`/uploads/jwin-media/:objectName`)가 만료 없는 공개 URL 을 만들 때 쓴다 (D-12). 미설정이면 presign 이 500 으로 실패한다
+- [ ] **replica 1 고정** — 스케줄러가 인프로세스라 2대 이상이면 같은 포스트가 중복 게시된다
+- [ ] X Developer Console 앱 권한이 `Read and write and Direct message` 인지 확인. 콜백에 `{API_BASE_URL}/oauth/brand/callback`, `.../user/callback` 등록
+- [ ] **기존에 연동해 둔 브랜드 계정이 있으면 재연동.** 2026-08-28 이전 토큰에는 `media.write` 스코프가 없어 소재 이미지가 붙은 게시가 403 으로 실패한다. refresh 로는 스코프가 붙지 않으므로 반드시 연동을 새로 받아야 한다
+
+`TZ` 는 설정 여부와 무관하다 (§2-3 참조).
+
+## 7. 운영 체크리스트 (캠페인 시작 전)
+
+캠페인 1건마다 어드민 화면에서 확인한다.
+
 - [ ] 대시보드 로그인 후 `GET /admin/me` 200 확인 (두 서비스의 `JWT_SECRET` 일치 검증), 캠페인 등록 (slug·`startsAt`/`endsAt`·`dailyPostTime`)
 - [ ] 경품 등록 + 기프트코드 붙여넣기 — 입력 개수와 수량 일치 확인
 - [ ] 포스트 소재(`PostTemplate`) 등록 — 캠페인 기간을 `activeFrom`~`activeTo`가 빈틈없이 덮는지 확인 (유효 소재가 없는 날은 게시가 건너뛰어짐)
@@ -100,3 +117,10 @@ J-WIN 어드민 화면은 대시보드 admin-web 안에 들어간다. 로그인�
 - [ ] 캠페인 상태를 `ACTIVE`로 전환 (`SETUP` 상태면 게시·응모 모두 동작하지 않음)
 - [ ] 테스트 캠페인 1건으로 응모→당첨→DM 발송 E2E 리허설
 - [ ] X 크레딧 잔액·지출 한도 확인
+
+### 캠페인 진행 중·종료 시
+
+- [ ] 통계 탭에서 **게시 실패**와 **미이행 종료**를 주기적으로 확인. 게시 실패가 잡히면 브랜드 재연동부터 의심한다. 미이행 종료는 재고가 이미 빠진 건이라 보충 여부를 판단해야 한다 (D-2)
+- [ ] 현물 경품: 당첨자 화면에서 이행 상태 `발송 준비`로 걸러 배송지 열람 → 발송 후 **발송 완료 처리**. 이걸 해야 현물 프로세스가 닫힌다
+- [ ] 배송 실무용 CSV 는 당첨자 화면의 `CSV 내보내기` 사용. 필터에 걸린 전체가 담기며 **배송지가 포함되고 열람·내보내기 모두 `AuditLog` 에 기록된다** (D-15)
+- [ ] 캠페인 종료(`ENDED`)는 되돌릴 수 없고 **배송지 입력이 즉시 잠긴다.** 미입력 당첨자가 남아 있지 않은지 먼저 확인

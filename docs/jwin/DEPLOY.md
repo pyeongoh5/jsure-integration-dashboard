@@ -356,13 +356,41 @@ J-WIN 소재 이미지는 대시보드의 R2 업로드를 재사용한다 (D-12)
 
 ## 9. 배포 직후 점검
 
-- [ ] `curl https://jsure-instance-win-production.up.railway.app/health` → 200
+위에서 아래 순서로 확인한다. 앞이 실패하면 뒤는 볼 필요가 없다.
+
+**API 가 떴나**
+
+```bash
+curl -i https://jsure-instance-win-production.up.railway.app/health
+```
+
+- [ ] `200` + `{"ok":true}`
 - [ ] Railway 배포 로그에 `prisma migrate deploy` 성공
-- [ ] replica = 1
-- [ ] 대시보드에 로그인한 상태로 admin-web의 `J-WIN → 캠페인 관리` 진입 → 목록이 뜨면 **`JWT_SECRET`이 양쪽 일치**한다는 뜻. 401이면 두 서비스 값을 다시 확인
-- [ ] jwin-web 도메인 접속 → `/campaigns` 200
-- [ ] 어드민에서 소재 이미지 업로드 1회 → 성공하면 `API_PUBLIC_BASE_URL`이 제대로 걸린 것
-- [ ] **기존에 연동해 둔 브랜드 계정이 있으면 재연동.** 2026-08-28 이전에 받은 토큰에는 `media.write` 스코프가 없어 **소재 이미지가 붙은 게시가 403으로 실패**한다. refresh로는 스코프가 붙지 않으므로 연동을 새로 받아야 한다
+- [ ] Railway Settings 에서 **replica = 1**
+
+**참여자 웹이 API 를 부르나**
+
+```bash
+curl -i https://jsure-instance.com/campaigns
+```
+
+- [ ] `200` (진행 중 캠페인이 없으면 빈 목록이 정상)
+- [ ] 브라우저로 열어 개발자도구 Network 에서 `jsure-instance-win-production.up.railway.app` 호출이 **200** 인지 확인. `CORS` 에러면 §11 참조
+
+**어드민이 J-WIN API 를 부르나**
+
+- [ ] 대시보드에 로그인한 상태로 `J-WIN → 캠페인 관리` 진입 → 목록이 뜨면 **`JWT_SECRET` 이 양쪽 일치**한다는 뜻
+  - `401` → 두 서비스의 `JWT_SECRET` 불일치
+  - `CORS` 에러 → jwin-api 의 `CORS_ORIGIN` 에 admin-web 도메인 없음
+  - 화면 자체가 안 뜸 → admin-web 에 `VITE_JWIN_API_BASE_URL` 미설정 또는 설정 후 재배포 안 함
+- [ ] 캠페인을 하나 만들어 **소재 탭에서 이미지 업로드 1회** → 성공하면 대시보드 API 의 `API_PUBLIC_BASE_URL` 이 제대로 걸린 것 (`500` 이면 미설정)
+
+**X 연동이 되나**
+
+- [ ] `/jwin/accounts` 에서 브랜드 계정을 만들고 연동 링크를 **본인 브라우저에서 열어** 승인까지 진행
+  - 승인 후 `https://jsure-instance.com/connect/done` 으로 돌아오면 `API_BASE_URL`·`WEB_BASE_URL`·X 콜백 세 값이 모두 맞다는 뜻
+  - `You weren't able to give access to the App` → §11 참조
+- [ ] **기존에 연동해 둔 브랜드 계정이 있으면 재연동.** 2026-08-28 이전에 받은 토큰에는 `media.write` 스코프가 없어 **소재 이미지가 붙은 게시가 403 으로 실패**한다. refresh 로는 스코프가 붙지 않으므로 연동을 새로 받아야 한다
 - [ ] X 크레딧 잔액·지출 한도 확인
 
 ---

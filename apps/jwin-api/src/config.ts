@@ -1,10 +1,22 @@
 import { z } from 'zod';
 
+/**
+ * 베이스 URL은 항상 `${base}/경로` 로 이어 붙이므로 끝 슬래시를 제거한다.
+ * 남겨두면 LP 링크가 `https://example.com//c/slug` 가 되는데, 그 URL은 이미 게시된
+ * 포스트에 박혀 되돌릴 수 없다. 설정 실수를 여기서 흡수한다.
+ */
+const baseUrl = (fallback: string) =>
+  z
+    .string()
+    .url()
+    .default(fallback)
+    .transform((value) => value.replace(/\/+$/, ''));
+
 const schema = z.object({
   NODE_ENV: z.string().default('development'),
   PORT: z.coerce.number().default(8080),
-  API_BASE_URL: z.string().url().default('http://localhost:8080'),
-  WEB_BASE_URL: z.string().url().default('http://localhost:3100'),
+  API_BASE_URL: baseUrl('http://localhost:8080'),
+  WEB_BASE_URL: baseUrl('http://localhost:3100'),
   /**
    * CORS 허용 origin 목록 (쉼표 구분). 대시보드 @jsure/api 와 같은 이름·형식을 쓴다 —
    * 한 Railway 프로젝트에 두 서비스가 나란히 있어서 이름이 다르면 설정 실수가 난다.

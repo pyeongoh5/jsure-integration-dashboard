@@ -8,6 +8,7 @@ export {
   buildApprovedApplicantsCsv,
   approvedApplicantsCsvFilename,
   approvedApplicantChannelLabel,
+  escapeCsvCell,
   triggerCsvDownload,
   formatAppliedAtJst,
 } from "./buildApprovedApplicantsCsv";

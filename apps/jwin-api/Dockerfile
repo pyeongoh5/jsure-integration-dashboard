@@ -1,4 +1,12 @@
 # J-WIN API — 기존 apps/api/Dockerfile 패턴을 따름
+#
+# Railway 설정은 이 리포가 아니라 서비스 UI 에 있다. Config-as-Code 가 폐기되면서
+# 2026-08-28 이후 만든 서비스는 railway.json 을 쓸 수 없다(경로를 넣어도 저장되지 않는다).
+#   Build  → Dockerfile Path : apps/jwin-api/Dockerfile
+#   Build  → Root Directory  : 비움 (이 Dockerfile 은 레포 루트를 빌드 컨텍스트로 쓴다)
+#   Deploy → Start Command   : 비움 (아래 CMD 가 마이그레이션까지 수행한다)
+#   Deploy → Healthcheck     : /health   Replicas : 1
+# 전체 값은 docs/jwin/DEPLOY.md §5-1 참조.
 FROM node:20-slim AS base
 RUN apt-get update -y \
   && apt-get install -y --no-install-recommends openssl ca-certificates \

@@ -1,16 +1,21 @@
+import type { ReactNode } from "react";
 import { SUB_TYPE_LABEL } from "@jsure/shared";
 import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
-import { ScrollTable, SnsProfileLink, SubTypePill } from "@/components/composites";
+import {
+  ScrollTable,
+  SnsHandleCell,
+  SnsProfileLink,
+  SubTypeIcon,
+  SubTypePill,
+} from "@/components/composites";
 import { Button } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 import {
   APPLICANT_STATUS_LABEL,
   CATEGORY_LABEL_KO,
-  MEDIA_META,
   type Applicant,
   type ApplicantStatus,
 } from "./types";
-import { SNS_TO_MEDIA } from "./applicantTransform";
 import styles from "@/pages/Applicants/Applicants.module.css";
 import shared from "../application.module.css";
 
@@ -205,6 +210,8 @@ type Props = {
   onMemo: (applicant: Applicant) => void;
   onDetail: (applicant: Applicant) => void;
   onHistory: (applicant: Applicant) => void;
+  /** 목록 끝에 붙일 영역. 무한 스크롤 감시자는 스크롤 컨테이너 안에 있어야 한다. */
+  footer?: ReactNode;
 };
 
 export function ApplicantTable({
@@ -220,6 +227,7 @@ export function ApplicantTable({
   onMemo,
   onDetail,
   onHistory,
+  footer,
 }: Props) {
   const t = useT();
 
@@ -279,28 +287,19 @@ export function ApplicantTable({
                         {applicant.name}
                         {applicant.flagged && <span className={shared.flaggedBadge}>{t("domains.application.applicants.table.flagged")}</span>}
                       </div>
-                      {applicant.handle ? (
-                        <div className={shared.infHandle}>
-                          <SnsProfileLink
-                            subType={applicant.handleSnsType}
-                            handle={applicant.handle}
-                          >
-                            @{applicant.handle}
-                          </SnsProfileLink>
-                        </div>
-                      ) : applicant.representativeSns ? (
-                        <div className={shared.infHandle}>
-                          <SnsProfileLink
-                            subType={applicant.representativeSns.snsType}
-                            handle={applicant.representativeSns.handle}
-                          >
-                            {t("domains.application.applicants.table.representativeSns", {
-                              snsType: SUB_TYPE_LABEL[applicant.representativeSns.snsType],
-                              handle: applicant.representativeSns.handle,
-                            })}
-                          </SnsProfileLink>
-                        </div>
-                      ) : null}
+                      <div className={shared.infHandle}>
+                        <SnsHandleCell
+                          applied={
+                            applicant.handle
+                              ? {
+                                  snsType: applicant.handleSnsType,
+                                  handle: applicant.handle,
+                                }
+                              : null
+                          }
+                          representative={applicant.representativeSns}
+                        />
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -317,7 +316,6 @@ export function ApplicantTable({
                       </span>
                     ) : (
                       applicant.subTypes.map((subType) => {
-                        const meta = MEDIA_META[SNS_TO_MEDIA[subType]];
                         // 선택 옵션(피드/릴스 등) 라벨은 해당 아이콘 옆에 표시.
                         const selected = applicant.selectedOptions.find(
                           (entry) => entry.subType === subType,
@@ -328,13 +326,7 @@ export function ApplicantTable({
                               subType={subType}
                               handle={applicant.handleBySubType[subType]}
                             >
-                              <span
-                                className={`${shared.media} ${shared[meta.cls]}`}
-                                title={meta.label}
-                                aria-label={meta.label}
-                              >
-                                <i className={meta.icon} />
-                              </span>
+                              <SubTypeIcon subType={subType} />
                             </SnsProfileLink>
                             {selected && (
                               <span className={shared.mediaLabel}>
@@ -385,6 +377,7 @@ export function ApplicantTable({
             ))}
           </tbody>
         </table>
+        {footer}
       </ScrollTable>
     </div>
   );

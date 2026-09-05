@@ -523,3 +523,71 @@ describe("LineRemindersService - 반려 재제출 리마인더", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 });
+
+describe("LineRemindersService - 게시 기간이 설정된 캠페인", () => {
+  it("수령일이 아니라 publishEndAt 기준으로 마감 3일 전에 보낸다", async () => {
+    const now = Date.now();
+    // 수령은 20일 전 — 기존 규칙(수령 + 14일)이면 마감이 이미 6일 지나
+    // 3일 전 리마인더가 나갈 수 없다. 게시 종료가 3일 뒤이므로 나가야 한다.
+    const withPublishWindow = {
+      id: "pubwin",
+      status: "DELIVERED",
+      reviewedAt: new Date(now - 30 * DAY_MS),
+      receivedAt: new Date(now - 20 * DAY_MS),
+      submissionReviewStatus: "PENDING",
+      submissionReviewedAt: null,
+      posts: [],
+      campaign: {
+        ...campaign,
+        publishStartAt: new Date(now - 10 * DAY_MS),
+        publishEndAt: new Date(now + 3 * DAY_MS),
+      },
+    };
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([withPublishWindow]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).toHaveBeenCalledWith(
+      "SIMPLE_REVIEW_DEADLINE_REMINDER",
+      expect.objectContaining({
+        application: expect.objectContaining({ id: "pubwin" }),
+        extra: { remainingDays: 3 },
+      }),
+    );
+  });
+
+  it("게시 기간이 있으면 수령일 기준 마감 시점에는 보내지 않는다", async () => {
+    const now = Date.now();
+    // 수령 기준으로는 마감 3일 전이지만, 게시 종료는 10일 뒤다.
+    const shifted = {
+      id: "shifted",
+      status: "DELIVERED",
+      reviewedAt: new Date(now - 20 * DAY_MS),
+      receivedAt: anchorForRemainingDays(now, 3),
+      submissionReviewStatus: "PENDING",
+      submissionReviewedAt: null,
+      posts: [],
+      campaign: {
+        ...campaign,
+        publishStartAt: new Date(now - DAY_MS),
+        publishEndAt: new Date(now + 10 * DAY_MS),
+      },
+    };
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const svc = new LineRemindersService(
+      makePrismaMock([shifted]),
+      { dispatch } as unknown as LineDispatcherService,
+    );
+
+    await svc.runNow();
+
+    expect(dispatch).not.toHaveBeenCalledWith(
+      "SIMPLE_REVIEW_DEADLINE_REMINDER",
+      expect.anything(),
+    );
+  });
+});

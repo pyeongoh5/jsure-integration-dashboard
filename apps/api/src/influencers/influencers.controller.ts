@@ -13,6 +13,7 @@ import {
   CreateInfluencerMemoRequestSchema,
   type AdminInfluencerListResponse,
   type CreateInfluencerMemoRequest,
+  type InfluencerActivityResponse,
   type InfluencerMemoEntry,
   type InfluencerNotesResponse,
 } from "@jsure/shared";
@@ -35,6 +36,11 @@ export class InfluencersController {
   @Get(":id/notes")
   notes(@Param("id") id: string): Promise<InfluencerNotesResponse> {
     return this.svc.getNotes(id);
+  }
+
+  @Get(":id/activity")
+  activity(@Param("id") id: string): Promise<InfluencerActivityResponse> {
+    return this.svc.getActivity(id);
   }
 
   @Post(":id/memos")

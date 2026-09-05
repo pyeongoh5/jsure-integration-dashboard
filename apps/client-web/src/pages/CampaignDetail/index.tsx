@@ -59,6 +59,21 @@ function formatJpy(value: number): string {
   return `¥${value.toLocaleString("ja-JP")}`;
 }
 
+/** 게시 기간 전용: 날짜·시각을 항상 JST(UTC+9) 기준 하나로 맞춘다. */
+function formatDateTime(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(iso));
+  const part = (type: string) => parts.find((entry) => entry.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")} ${part("hour")}:${part("minute")}`;
+}
+
 const INSTAGRAM_POST_TYPE_LABEL: Record<InstagramPostType, string> = {
   FEED: t("pages.campaignDetail.instagramFeed"),
   REELS: t("pages.campaignDetail.instagramReels"),
@@ -120,6 +135,13 @@ export function CampaignDetail() {
           {t("pages.campaignDetail.recruitLabel")} {formatDate(data.recruitStartAt)} 〜{" "}
           {formatDate(data.recruitEndAt)}
         </div>
+        {data.publishStartAt && data.publishEndAt && (
+          <div className={styles.period}>
+            {t("pages.campaignDetail.publishLabel")}{" "}
+            {formatDateTime(data.publishStartAt)} 〜{" "}
+            {formatDateTime(data.publishEndAt)}
+          </div>
+        )}
 
         <ul className={styles.sns}>
           {data.recruits.map((r: CampaignRecruit) => {

@@ -232,40 +232,26 @@
   line-height: 1.5;
 }
 
-.cardSns {
+/* SNS 모집 조건 칩. 아이콘은 SubTypeIcon(sm) 이 그리므로 여기엔 색이 없다. */
+.snsRow {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 10px;
 }
-.cardSnsChip {
+.snsChip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 8px;
+  /* 왼쪽은 SubTypeIcon 배지가 채우므로 여백을 줄인다. */
+  padding: 3px 10px 3px 3px;
   border-radius: 999px;
   font-size: 11px;
   background: #f3f4f6;
   color: #374151;
   border: 1px solid #e5e7eb;
 }
-.cardSnsChip i {
-  font-size: 12px;
-  color: #6b7280;
-}
-.cardSnsChipInstagram i {
-  color: #e1306c;
-}
-.cardSnsChipTiktok i {
-  color: #111827;
-}
-.cardSnsChipX i {
-  color: #111827;
-}
-.cardSnsChipYoutube i {
-  color: #ff0000;
-}
-.cardSnsCond {
+.snsCond {
   white-space: nowrap;
 }
 
@@ -345,15 +331,3 @@
   border-radius: var(--r-lg);
 }
 
-/* 어드민 전용 캠페인 관리 태그 배지 (날짜 옆) */
-.cardTag {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  line-height: 1;
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-  border-radius: 999px;
-  padding: 3px 8px;
-}

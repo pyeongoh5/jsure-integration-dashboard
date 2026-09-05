@@ -1,4 +1,7 @@
-import { ensureSettlementForApplication } from "./ensure-settlement";
+import {
+  ensureSettlementForApplication,
+  insightMissingForSettlement,
+} from "./ensure-settlement";
 
 type ApplicationSelect = {
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
@@ -433,5 +436,37 @@ describe("ensureSettlementForApplication — SNS", () => {
     const args = upserts[0] as UpsertArgs;
     expect(args.create.bankCode).toBeNull();
     expect(args.create.accountNumber).toBeNull();
+  });
+});
+
+describe("insightMissingForSettlement", () => {
+  const application = (insightRequired: boolean) => ({
+    subTypes: ["INSTAGRAM"],
+    posts: [{ subType: "INSTAGRAM", insightSubmittedAt: null }],
+    campaign: { recruits: [{ subType: "INSTAGRAM", insightRequired }] },
+  });
+
+  it("insightRequired 인 서브타입의 인사이트가 없으면 막힌 것으로 본다", () => {
+    expect(insightMissingForSettlement(application(true))).toBe(true);
+  });
+
+  // 모집 후 insightRequired 를 해제한 캠페인. 정산은 진행되므로 독촉도 멈춰야 한다.
+  it("insightRequired 를 해제하면 인사이트가 없어도 막지 않는다", () => {
+    expect(insightMissingForSettlement(application(false))).toBe(false);
+  });
+
+  it("참여하지 않은 서브타입의 insightRequired 는 무시한다", () => {
+    expect(
+      insightMissingForSettlement({
+        subTypes: ["INSTAGRAM"],
+        posts: [{ subType: "INSTAGRAM", insightSubmittedAt: new Date() }],
+        campaign: {
+          recruits: [
+            { subType: "INSTAGRAM", insightRequired: true },
+            { subType: "TIKTOK", insightRequired: true },
+          ],
+        },
+      }),
+    ).toBe(false);
   });
 });

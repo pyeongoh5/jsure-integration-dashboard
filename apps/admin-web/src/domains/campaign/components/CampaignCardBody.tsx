@@ -1,4 +1,5 @@
 import styles from "@/pages/Campaigns/Campaigns.module.css";
+import { TagChip } from "@/components/composites";
 import { CampaignCardSnsRecruits } from "./CampaignCardSnsRecruits";
 import type { CampaignCardRecruit } from "../types";
 
@@ -48,9 +49,7 @@ export function CampaignCardBody({
           <i className="fa-regular fa-calendar" />
           <span>{period}</span>
           {tags.map((tag) => (
-            <span key={tag} className={styles.cardTag}>
-              {tag}
-            </span>
+            <TagChip key={tag} tag={tag} />
           ))}
         </div>
         <div className={styles.cardMetaRow}>

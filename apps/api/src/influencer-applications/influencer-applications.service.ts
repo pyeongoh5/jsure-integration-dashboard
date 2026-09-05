@@ -6,6 +6,8 @@ import {
 } from "@nestjs/common";
 import {
   OPTION_SELECTABLE_SUB_TYPES,
+  publishWindowState,
+  resolvePostingDeadline,
   SLOT_CONSUMING_STATUSES,
   SUB_TYPE_LABEL,
   SUB_TYPE_OPTION_LABEL,
@@ -103,6 +105,8 @@ type ApplicationRow = {
     rewardJpy: number;
     postingPeriodDays: number;
     orderPeriodDays: number | null;
+    publishStartAt: Date | null;
+    publishEndAt: Date | null;
     recruits: {
       subType: CampaignSubType;
       insightRequired: boolean;
@@ -151,10 +155,11 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     row.campaign.category === "FAKE_PURCHASE"
       ? row.orderSubmittedAt
       : row.receivedAt;
-  const deadline = deadlineFrom(
-    deadlineAnchor,
-    row.campaign.postingPeriodDays,
-  );
+  const deadline = resolvePostingDeadline({
+    publishEndAt: row.campaign.publishEndAt,
+    anchorAt: deadlineAnchor,
+    postingPeriodDays: row.campaign.postingPeriodDays,
+  });
   // 가구매 주문 마감 — 승인일 + 캠페인 orderPeriodDays. 마감 미설정이면 null.
   const orderDeadline = deadlineFrom(row.reviewedAt, row.campaign.orderPeriodDays);
   const settlement = row.settlement
@@ -211,6 +216,12 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     crossPosts: row.crossPosts.map(toCrossPost),
     postingPeriodDays: row.campaign.postingPeriodDays,
     postingDeadlineAt: deadline ? deadline.toISOString() : null,
+    publishStartAt: row.campaign.publishStartAt
+      ? row.campaign.publishStartAt.toISOString()
+      : null,
+    publishEndAt: row.campaign.publishEndAt
+      ? row.campaign.publishEndAt.toISOString()
+      : null,
     settlement,
     orderNumber: row.orderNumber,
     orderSubmittedAt: row.orderSubmittedAt ? row.orderSubmittedAt.toISOString() : null,
@@ -245,6 +256,8 @@ const INCLUDE = {
       rewardJpy: true,
       orderPeriodDays: true,
       postingPeriodDays: true,
+      publishStartAt: true,
+      publishEndAt: true,
       recruits: {
         select: {
           subType: true,
@@ -725,6 +738,7 @@ export class InfluencerApplicationsService {
         message: "현재 상태에서는 게시물 URL 을 제출할 수 없습니다",
       });
     }
+    this.assertPublishStarted(app.campaign);
 
     const submittedSubTypes = new Set(posts.map((post) => post.subType));
     const participating = new Set(app.subTypes);
@@ -997,6 +1011,8 @@ export class InfluencerApplicationsService {
         campaign: {
           select: {
             category: true,
+            publishStartAt: true,
+            publishEndAt: true,
             recruits: {
               select: { subType: true, subTypeOptions: true },
             },
@@ -1028,6 +1044,7 @@ export class InfluencerApplicationsService {
         message: "현재 상태에서는 리뷰를 제출할 수 없습니다",
       });
     }
+    this.assertPublishStarted(application.campaign);
 
     const qooRecruit = application.campaign.recruits.find(
       (recruit) => recruit.subType === "QOO10",
@@ -1154,7 +1171,9 @@ export class InfluencerApplicationsService {
     const application = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
       include: {
-        campaign: { select: { category: true } },
+        campaign: {
+          select: { category: true, publishStartAt: true, publishEndAt: true },
+        },
         posts: { select: { id: true, subType: true } },
       },
     });
@@ -1186,6 +1205,7 @@ export class InfluencerApplicationsService {
         message: "현재 상태에서는 리뷰를 제출할 수 없습니다",
       });
     }
+    this.assertPublishStarted(application.campaign);
 
     const submittedSubTypes = new Set(reviews.map((review) => review.subType));
     const participating = new Set(application.subTypes);
@@ -1291,10 +1311,35 @@ export class InfluencerApplicationsService {
   ) {
     const application = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
-      include: { campaign: { select: { category: true } } },
+      include: {
+        campaign: {
+          select: { category: true, publishStartAt: true, publishEndAt: true },
+        },
+      },
     });
     if (!application) throw new NotFoundException("Application not found");
     if (application.influencerId !== influencerId) throw new ForbiddenException();
     return application;
+  }
+
+  /**
+   * 게시(투고) 기간 시작 전 제출을 막는다. 종료 후는 막지 않는다 —
+   * 이미 게시된 URL 을 수집하지 못하면 검토·정산이 멈춘다.
+   */
+  private assertPublishStarted(campaign: {
+    publishStartAt: Date | null;
+    publishEndAt: Date | null;
+  }): void {
+    const state = publishWindowState({
+      publishStartAt: campaign.publishStartAt,
+      publishEndAt: campaign.publishEndAt,
+      now: new Date(),
+    });
+    if (state === "BEFORE") {
+      throw new BadRequestException({
+        code: "PUBLISH_NOT_STARTED",
+        message: "게시 기간 시작 전에는 제출할 수 없습니다",
+      });
+    }
   }
 }

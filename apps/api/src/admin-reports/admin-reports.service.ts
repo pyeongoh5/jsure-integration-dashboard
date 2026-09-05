@@ -36,6 +36,16 @@ export class AdminReportsService {
       },
     });
 
+    // 조회 인원(UV) — 캠페인 상세를 연 인플루언서 수.
+    const viewGrouped = await this.prisma.campaignView.groupBy({
+      by: ["campaignId"],
+      where: { campaignId: { in: campaigns.map((campaign) => campaign.id) } },
+      _count: { _all: true },
+    });
+    const viewerCountByCampaign = new Map<string, number>(
+      viewGrouped.map((view) => [view.campaignId, view._count._all]),
+    );
+
     const rows: CampaignReportRow[] = campaigns.map((campaign) => {
       const influencerSet = new Set<string>();
       let totalFollowers = 0;
@@ -92,6 +102,14 @@ export class AdminReportsService {
         }
       }
 
+      // 응모율의 분자는 전체 응모(탈락·취소 포함) — 측정 대상은 인플루언서의
+      // 반응이지 어드민의 선발 결과가 아니다.
+      const viewerCount = viewerCountByCampaign.get(campaign.id) ?? 0;
+      const applicationRate =
+        viewerCount > 0
+          ? (campaign.applications.length / viewerCount) * 100
+          : null;
+
       const totalEngagement = totalLikes + totalComments + totalSaves;
       const erByViews = totalViews > 0 ? (totalEngagement / totalViews) * 100 : null;
       const erByFollowers = totalFollowers > 0 ? (totalEngagement / totalFollowers) * 100 : null;
@@ -118,6 +136,8 @@ export class AdminReportsService {
         erByViews,
         erByFollowers,
         participantCount,
+        viewerCount,
+        applicationRate,
       };
     });
 

@@ -1,9 +1,14 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
-import type { CampaignCategory, LineTriggerKey } from "@jsure/shared";
+import {
+  resolvePostingDeadline,
+  type CampaignCategory,
+  type LineTriggerKey,
+} from "@jsure/shared";
 import type { ApplicationStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { linePushAllowed } from "../common/line-push-allowed";
+import { insightMissingForSettlement } from "../settlements/ensure-settlement";
 import { POST_REJECTION_RESUBMIT_DAYS } from "../common/resubmit-deadline";
 import { LineDispatcherService } from "./line-dispatcher.service";
 import { DISPATCH_APPLICATION_INCLUDE } from "./trigger-meta";
@@ -263,9 +268,13 @@ export class LineRemindersService {
       // 이미 제출이 들어왔으면 마감 리마인더는 더 이상 보내지 않음.
       if (application.posts.length > 0) continue;
 
-      const deadlineMs =
-        anchorAt.getTime() + application.campaign.postingPeriodDays * DAY_MS;
-      const deadlineDayStart = startOfJstDay(new Date(deadlineMs));
+      const deadline = resolvePostingDeadline({
+        publishEndAt: application.campaign.publishEndAt,
+        anchorAt,
+        postingPeriodDays: application.campaign.postingPeriodDays,
+      });
+      if (!deadline) continue;
+      const deadlineDayStart = startOfJstDay(deadline);
       const remainingDays = Math.round((deadlineDayStart - todayStart) / DAY_MS);
 
       const triggerKey = reminderTriggerKeyFor(remainingDays, config);
@@ -330,11 +339,17 @@ export class LineRemindersService {
         posts: { some: { insightSubmittedAt: null } },
         campaign: activeCampaign("SNS"),
       },
-      include: DISPATCH_APPLICATION_INCLUDE,
+      include: {
+        ...DISPATCH_APPLICATION_INCLUDE,
+        posts: { select: { subType: true, insightSubmittedAt: true } },
+      },
     });
 
     return applications.filter((application) => {
       if (!application.reviewSubmittedAt) return false;
+      // 정산을 막고 있는 사유가 인사이트일 때만 독촉한다. insightRequired 가
+      // 꺼진 서브타입이나 이미 정산이 생성된 응모에는 보내지 않는다.
+      if (!insightMissingForSettlement(application)) return false;
       const submittedDayStart = startOfJstDay(application.reviewSubmittedAt);
       const elapsedDays = Math.round((todayStart - submittedDayStart) / DAY_MS);
       return elapsedDays === elapsedTarget;

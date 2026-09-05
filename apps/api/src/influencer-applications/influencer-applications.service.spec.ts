@@ -648,3 +648,113 @@ describe("InfluencerApplicationsService.submitSubmission 추가 공유", () => {
     expect(deleteMany).not.toHaveBeenCalled();
   });
 });
+
+describe("게시 기간 시작 전 제출 차단", () => {
+  const FUTURE_START = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+  const FUTURE_END = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+  const PAST_START = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const PAST_END = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
+
+  const snsPosts = [{ subType: "INSTAGRAM" as const, url: "https://x.test/p/1" }];
+
+  function snsPrisma(
+    publishStartAt: Date | null,
+    publishEndAt: Date | null,
+    subTypes: string[] = ["INSTAGRAM"],
+  ) {
+    return {
+      campaignApplication: {
+        findUnique: jest.fn(async () => ({
+          id: "app-1",
+          influencerId: "inf-1",
+          status: "DELIVERED",
+          subTypes,
+          receivedAt: new Date("2026-08-20T00:00:00Z"),
+          submissionReviewStatus: "PENDING",
+          campaign: { category: "SNS", publishStartAt, publishEndAt },
+        })),
+      },
+    };
+  }
+
+  it("SNS: 게시 시작 전이면 PUBLISH_NOT_STARTED", async () => {
+    const svc = makeService({ prisma: snsPrisma(FUTURE_START, FUTURE_END) });
+    await expect(
+      svc.submitSubmission("inf-1", "app-1", snsPosts, []),
+    ).rejects.toThrow(/PUBLISH_NOT_STARTED|게시 기간 시작 전/);
+  });
+
+  it("SNS: 게시 기간 미설정이면 차단하지 않는다", async () => {
+    // subTypes 를 제출 posts 와 어긋나게 두어, 가드를 통과해야만 도달하는
+    // 뒤쪽 검사(SNS_NOT_SELECTED)에 걸리는지로 "가드 통과"를 증명한다.
+    const svc = makeService({
+      prisma: snsPrisma(null, null, ["INSTAGRAM", "X"]),
+    });
+    await expect(
+      svc.submitSubmission("inf-1", "app-1", snsPosts, []),
+    ).rejects.toMatchObject({ response: { code: "SNS_NOT_SELECTED" } });
+  });
+
+  it("SNS: 게시 종료 후에도 차단하지 않는다", async () => {
+    const svc = makeService({
+      prisma: snsPrisma(PAST_START, PAST_END, ["INSTAGRAM", "X"]),
+    });
+    await expect(
+      svc.submitSubmission("inf-1", "app-1", snsPosts, []),
+    ).rejects.toMatchObject({ response: { code: "SNS_NOT_SELECTED" } });
+  });
+
+  it("가구매 리뷰: 게시 시작 전이면 PUBLISH_NOT_STARTED", async () => {
+    const prisma = {
+      campaignApplication: {
+        findUnique: jest.fn(async () => ({
+          id: "app-1",
+          influencerId: "inf-1",
+          status: "ORDER_SUBMITTED",
+          submissionReviewStatus: "PENDING",
+          orderSubmittedAt: new Date("2026-08-20T00:00:00Z"),
+          posts: [],
+          campaign: {
+            category: "FAKE_PURCHASE",
+            publishStartAt: FUTURE_START,
+            publishEndAt: FUTURE_END,
+            recruits: [{ subType: "QOO10", subTypeOptions: ["LIPS"] }],
+          },
+        })),
+      },
+    };
+    const svc = makeService({ prisma });
+    await expect(
+      svc.submitReview("inf-1", "app-1", [], { LIPS: "https://lips.test/1" }),
+    ).rejects.toThrow(/PUBLISH_NOT_STARTED|게시 기간 시작 전/);
+  });
+
+  it("단순 리뷰: 게시 시작 전이면 PUBLISH_NOT_STARTED", async () => {
+    const prisma = {
+      campaignApplication: {
+        findUnique: jest.fn(async () => ({
+          id: "app-1",
+          influencerId: "inf-1",
+          status: "DELIVERED",
+          receivedAt: new Date("2026-08-20T00:00:00Z"),
+          submissionReviewStatus: "PENDING",
+          posts: [],
+          campaign: {
+            category: "SIMPLE_REVIEW",
+            publishStartAt: FUTURE_START,
+            publishEndAt: FUTURE_END,
+          },
+        })),
+      },
+    };
+    const svc = makeService({ prisma });
+    await expect(
+      svc.submitSimpleReview(
+        "inf-1",
+        "app-1",
+        [{ subType: "LIPS", url: "https://lips.test/1" }],
+        [],
+      ),
+    ).rejects.toThrow(/PUBLISH_NOT_STARTED|게시 기간 시작 전/);
+  });
+});

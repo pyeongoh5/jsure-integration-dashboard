@@ -8,7 +8,11 @@ import {
   selectedRewardJpy,
   campaignRecruitClosure,
 } from "@/domains/campaign";
-import { createApplication } from "@/domains/application";
+import {
+  createApplication,
+  publishWindowText,
+  type PublishWindowText,
+} from "@/domains/application";
 import { fetchMe } from "@/domains/auth";
 import { t } from "@i18n";
 import { PageHeader } from "../../components/composites/PageHeader";
@@ -36,15 +40,22 @@ type ConfirmKey =
   | (typeof CONFIRM_KEYS_FAKE_PURCHASE)[number]
   | (typeof CONFIRM_KEYS_SIMPLE_REVIEW)[number];
 
-// DEADLINE 은 캠페인의 postingPeriodDays 를 삽입해서 동적으로 노출한다.
-function confirmLabel(key: ConfirmKey, postingPeriodDays: number): string {
+// DEADLINE 은 캠페인의 postingPeriodDays 또는 게시 기간을 삽입해서 동적으로 노출한다.
+function confirmLabel(
+  key: ConfirmKey,
+  postingPeriodDays: number,
+  publishWindow: PublishWindowText,
+): string {
   switch (key) {
     case "PR_LABEL":
       return t("pages.apply.confirmPr");
     case "NATURAL_REVIEW":
       return t("pages.apply.confirmNaturalReview");
     case "DEADLINE":
-      return `${t("pages.apply.confirmDeadlinePrefix")}${postingPeriodDays}${t("pages.apply.confirmDeadlineSuffix")}`;
+      if (publishWindow.state === "NONE") {
+        return `${t("pages.apply.confirmDeadlinePrefix")}${postingPeriodDays}${t("pages.apply.confirmDeadlineSuffix")}`;
+      }
+      return `${publishWindow.startText}${t("application.publishWindow.rangeSeparator")}${publishWindow.endText}${t("application.publishWindow.applyConfirmMiddle")}`;
     case "INSIGHTS":
       return t("pages.apply.confirmInsights");
     case "YAKKIHO":
@@ -267,6 +278,12 @@ export function Apply() {
   const followerByMySns = new Map(
     me.data?.snsAccounts.map((a) => [a.snsType, a.followerCount]) ?? [],
   );
+  const publishWindow = publishWindowText({
+    publishStartAt: campaign.data.publishStartAt,
+    publishEndAt: campaign.data.publishEndAt,
+    anchorAt: null,
+    postingPeriodDays: campaign.data.postingPeriodDays,
+  });
 
   return (
     <div className={styles.apply}>
@@ -477,7 +494,7 @@ export function Apply() {
           {activeConfirmKeys.map((k) => (
             <label key={k} className={styles.chk}>
               <input type="checkbox" checked={agreed.has(k)} onChange={() => toggleAgree(k)} />
-              <span>{confirmLabel(k, campaign.data.postingPeriodDays)}</span> {/* new */}
+              <span>{confirmLabel(k, campaign.data.postingPeriodDays, publishWindow)}</span> {/* new */}
             </label>
           ))}
         </section>

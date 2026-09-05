@@ -1,31 +1,23 @@
 import { Fragment } from "react";
 import type { AdminTranslationKey } from "@i18n/admin";
-import { ScrollTable, SnsProfileLink, SubTypePill } from "@/components/composites";
+import {
+  ScrollTable,
+  SnsHandleCell,
+  SnsProfileLink,
+  SubTypeIcon,
+  SubTypePill,
+} from "@/components/composites";
 import { Button } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 import { CATEGORY_LABEL_KO } from "../applicants/types";
-import { SUB_TYPE_LABEL } from "@jsure/shared";
 import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
 import {
   DRAFT_STATUS_LABEL,
-  MEDIA_META,
-  SNS_TO_MEDIA,
   type DraftReview,
   type DraftStatus,
-  type Media,
 } from "./types";
 import styles from "@/pages/Drafts/Drafts.module.css";
 import shared from "../application.module.css";
-
-const MEDIA_CLASS: Record<Media, string | undefined> = {
-  ig: shared.mediaIg,
-  yt: shared.mediaYt,
-  tt: shared.mediaTt,
-  x: shared.mediaX,
-  qoo10: shared.mediaQoo10,
-  lips: shared.mediaQoo10,
-  atcosme: shared.mediaQoo10,
-};
 
 // 상태별 배지 색 클래스. Drafts.module.css 에서 정의.
 const STATUS_BADGE_CLASS: Record<DraftStatus, string | undefined> = {
@@ -269,32 +261,19 @@ export function DraftTable({
                               </span>
                             )}
                           </div>
-                          {draft.influencerHandle ? (
-                            <div className={shared.infHandle}>
-                              <SnsProfileLink
-                                subType={draft.influencerHandleSnsType}
-                                handle={draft.influencerHandle}
-                              >
-                                @{draft.influencerHandle}
-                              </SnsProfileLink>
-                            </div>
-                          ) : draft.representativeSns ? (
-                            <div className={shared.infHandle}>
-                              <SnsProfileLink
-                                subType={draft.representativeSns.snsType}
-                                handle={draft.representativeSns.handle}
-                              >
-                                {t(
-                                  "domains.application.applicants.table.representativeSns",
-                                  {
-                                    snsType:
-                                      SUB_TYPE_LABEL[draft.representativeSns.snsType],
-                                    handle: draft.representativeSns.handle,
-                                  },
-                                )}
-                              </SnsProfileLink>
-                            </div>
-                          ) : null}
+                          <div className={shared.infHandle}>
+                            <SnsHandleCell
+                              applied={
+                                draft.influencerHandle
+                                  ? {
+                                      snsType: draft.influencerHandleSnsType,
+                                      handle: draft.influencerHandle,
+                                    }
+                                  : null
+                              }
+                              representative={draft.representativeSns}
+                            />
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -311,7 +290,6 @@ export function DraftTable({
                       ) : (
                         <span className={shared.mediaItem}>
                           {draft.subTypes.map((subType) => {
-                            const media = MEDIA_META[SNS_TO_MEDIA[subType]];
                             // 선택 옵션(피드/릴스 등) 라벨은 해당 아이콘 바로 옆에 붙인다.
                             const selected = draft.selectedOptions.find(
                               (entry) => entry.subType === subType,
@@ -322,13 +300,7 @@ export function DraftTable({
                                   subType={subType}
                                   handle={draft.handleBySubType[subType]}
                                 >
-                                  <span
-                                    className={`${shared.media} ${MEDIA_CLASS[SNS_TO_MEDIA[subType]]}`}
-                                    title={media.label}
-                                    aria-label={media.label}
-                                  >
-                                    <i className={media.icon} />
-                                  </span>
+                                  <SubTypeIcon subType={subType} />
                                 </SnsProfileLink>
                                 {selected && (
                                   <span className={shared.mediaLabel}>

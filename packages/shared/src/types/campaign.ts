@@ -35,6 +35,14 @@ const DateOnly = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "YYYY-MM-DD 형식이어야 합니다");
 
+/** 어드민 폼의 JST 로컬 날짜·시각. `<input type="datetime-local">` 값 형식. */
+const JstDateTime = z
+  .string()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/,
+    "YYYY-MM-DD HH:mm 형식이어야 합니다",
+  );
+
 export const InstagramPostTypeSchema = z.enum(["FEED", "REELS"]);
 export type InstagramPostType = z.infer<typeof InstagramPostTypeSchema>;
 
@@ -188,13 +196,83 @@ export function usesOptionCountSplit(recruit: {
 }
 
 /** recruit 가 옵션별 보수 분리를 사용하는지 (모든 옵션 행에 rewardJpy 존재). */
-function usesOptionRewardSplit(recruit: {
+export function usesOptionRewardSplit(recruit: {
   options: { rewardJpy: number | null }[];
 }): boolean {
   return (
     recruit.options.length > 0 &&
     recruit.options.every((option) => option.rewardJpy !== null)
   );
+}
+
+/** 보수 범위 계산이 필요로 하는 recruit 최소 형태 — 어드민·인플루언서 응답 모두 만족한다. */
+export type RewardRangeRecruit = {
+  rewardJpy: number | null;
+  isRequired: boolean;
+  options: { rewardJpy: number | null }[];
+};
+
+/** 보수 범위 계산이 필요로 하는 캠페인 최소 형태. */
+export type RewardRangeCampaign = {
+  rewardType: RewardType;
+  rewardJpy: number;
+  recruits: RewardRangeRecruit[];
+};
+
+/**
+ * 서브타입 1개의 보수 기여 구간.
+ * 옵션별 보수 분리 recruit(모든 옵션에 rewardJpy 존재)은 응모가 옵션 1개를 고르므로
+ * [옵션 최소, 옵션 최대], 아니면 고정 recruit.rewardJpy.
+ */
+function recruitRewardBounds(recruit: RewardRangeRecruit): {
+  min: number;
+  max: number;
+} {
+  if (usesOptionRewardSplit(recruit)) {
+    const optionRewards = recruit.options.map((option) => option.rewardJpy ?? 0);
+    return {
+      min: Math.min(...optionRewards),
+      max: Math.max(...optionRewards),
+    };
+  }
+  const fixed = recruit.rewardJpy ?? 0;
+  return { min: fixed, max: fixed };
+}
+
+/**
+ * 캠페인의 보수 범위.
+ * - UNIFIED: min = max = 캠페인 고정 보수(Campaign.rewardJpy).
+ * - PER_SUBTYPE: Campaign.rewardJpy 는 0 이고 실제 보수가 recruit/옵션에 있으므로
+ *   최대 = 전 서브타입 기여 최대 합,
+ *   최소 = 필수 응모 서브타입이 있으면 그 기여 최소 합, 없으면 가장 저렴한 기여.
+ */
+export function rewardRangeJpy(campaign: RewardRangeCampaign): {
+  min: number;
+  max: number;
+} {
+  if (
+    campaign.rewardType !== "PER_SUBTYPE" ||
+    campaign.recruits.length === 0
+  ) {
+    return { min: campaign.rewardJpy, max: campaign.rewardJpy };
+  }
+  const bounds = campaign.recruits.map(recruitRewardBounds);
+  const max = bounds.reduce((sum, bound) => sum + bound.max, 0);
+  const requiredBounds = campaign.recruits
+    .filter((recruit) => recruit.isRequired)
+    .map(recruitRewardBounds);
+  const min =
+    requiredBounds.length > 0
+      ? requiredBounds.reduce((sum, bound) => sum + bound.min, 0)
+      : Math.min(...bounds.map((bound) => bound.min));
+  return { min, max };
+}
+
+/** 보수 표시 문자열 — 개별보수 범위면 "¥1,000〜¥4,000" 형태. */
+export function formatRewardRange(campaign: RewardRangeCampaign): string {
+  const formatYen = (value: number) => `¥${value.toLocaleString("ja-JP")}`;
+  const { min, max } = rewardRangeJpy(campaign);
+  return min === max ? formatYen(min) : `${formatYen(min)}〜${formatYen(max)}`;
 }
 
 function refineRecruitsByRewardType(
@@ -513,6 +591,8 @@ export const CampaignFormSchema = z
       .int("정수만 입력")
       .min(1, "1 이상의 일수여야 합니다")
       .max(365, "365 이하의 일수여야 합니다"),
+    publishStartDateTime: JstDateTime.nullable().default(null),
+    publishEndDateTime: JstDateTime.nullable().default(null),
     /** 가구매 전용 주문 마감 기한(승인일 + N일). null 이면 마감 없음. */
     orderPeriodDays: z
       .number({ invalid_type_error: "숫자를 입력해주세요" })
@@ -539,6 +619,25 @@ export const CampaignFormSchema = z
     path: ["recruitEndDate"],
     message: "종료일은 시작일 이후여야 합니다",
   })
+  .refine(
+    (form) =>
+      (form.publishStartDateTime === null) ===
+      (form.publishEndDateTime === null),
+    {
+      path: ["publishEndDateTime"],
+      message: "게시 기간은 시작과 종료를 함께 입력해주세요",
+    },
+  )
+  .refine(
+    (form) =>
+      form.publishStartDateTime === null ||
+      form.publishEndDateTime === null ||
+      form.publishStartDateTime < form.publishEndDateTime,
+    {
+      path: ["publishEndDateTime"],
+      message: "게시 종료는 시작 이후여야 합니다",
+    },
+  )
   .superRefine((form, ctx) => {
     refineRecruitsByCategory(form.category, form.recruits, ctx);
     refineRecruitsByRewardType(form.rewardType, form.recruits, ctx);
@@ -560,6 +659,8 @@ export const UpdateCampaignRequestSchema = z
     recruitStartDate: DateOnly.optional(),
     recruitEndDate: DateOnly.optional(),
     postingPeriodDays: z.number().int().min(1).max(365).optional(),
+    publishStartDateTime: JstDateTime.nullable().optional(),
+    publishEndDateTime: JstDateTime.nullable().optional(),
     orderPeriodDays: z.number().int().min(1).max(365).nullable().optional(),
     recruits: CampaignRecruitInputArray.optional(),
     productSummary: z.string().max(50000).optional(),
@@ -580,6 +681,30 @@ export const UpdateCampaignRequestSchema = z
       d.recruitEndDate === undefined ||
       d.recruitStartDate <= d.recruitEndDate,
     { path: ["recruitEndDate"], message: "종료일은 시작일 이후여야 합니다" },
+  )
+  .refine(
+    (d) =>
+      (d.publishStartDateTime === undefined &&
+        d.publishEndDateTime === undefined) ||
+      (d.publishStartDateTime !== undefined &&
+        d.publishEndDateTime !== undefined &&
+        (d.publishStartDateTime === null) === (d.publishEndDateTime === null)),
+    {
+      path: ["publishEndDateTime"],
+      message: "게시 기간은 시작과 종료를 함께 입력해주세요",
+    },
+  )
+  .refine(
+    (d) =>
+      d.publishStartDateTime === undefined ||
+      d.publishEndDateTime === undefined ||
+      d.publishStartDateTime === null ||
+      d.publishEndDateTime === null ||
+      d.publishStartDateTime < d.publishEndDateTime,
+    {
+      path: ["publishEndDateTime"],
+      message: "게시 종료는 시작 이후여야 합니다",
+    },
   );
 export type UpdateCampaignRequest = z.infer<typeof UpdateCampaignRequestSchema>;
 
@@ -622,8 +747,30 @@ export const CampaignDraftRequestSchema = z.object({
   rewardJpy: z.number().int().nonnegative().nullable().optional(),
   recruitStartDate: z.union([DateOnly, z.literal("")]).optional(),
   recruitEndDate: z.union([DateOnly, z.literal("")]).optional(),
-  postingPeriodDays: z.number().int().nonnegative().nullable().optional(),
-  orderPeriodDays: z.number().int().nonnegative().nullable().optional(),
+  publishStartDateTime: z
+    .union([JstDateTime, z.literal("")])
+    .nullable()
+    .optional(),
+  publishEndDateTime: z
+    .union([JstDateTime, z.literal("")])
+    .nullable()
+    .optional(),
+  // 기간은 미입력(null)만 허용하고 0 은 막는다 — 응답 스키마가 min(1) 이라
+  // 0 이 저장되면 그 캠페인 행이 목록 응답 파싱에서 탈락한다.
+  postingPeriodDays: z
+    .number()
+    .int()
+    .min(1, "1 이상의 일수여야 합니다")
+    .max(365, "365 이하의 일수여야 합니다")
+    .nullable()
+    .optional(),
+  orderPeriodDays: z
+    .number()
+    .int()
+    .min(1, "1 이상의 일수여야 합니다")
+    .max(365, "365 이하의 일수여야 합니다")
+    .nullable()
+    .optional(),
   recruits: z.array(CampaignRecruitDraftSchema).max(10).optional(),
   productSummary: z.string().max(50000).optional(),
   productDetailUrls: z.array(z.string().max(2000)).max(10).optional(),
@@ -679,6 +826,9 @@ export const CampaignResponseSchema = z.object({
   /** 비공개 전환 시각. null 이면 인플루언서에게 노출된다. */
   hiddenAt: z.string().datetime().nullable(),
   postingPeriodDays: z.number().int().min(1),
+  /** 게시(투고) 기간. JST 로컬 문자열. null 이면 투고 시점 제약 없음. */
+  publishStartDateTime: z.string().nullable().default(null),
+  publishEndDateTime: z.string().nullable().default(null),
   /** 가구매 전용 주문 마감 기한(승인일 + N일). null 이면 마감 없음. */
   orderPeriodDays: z.number().int().min(1).nullable(),
   productSummary: z.string(),
@@ -691,6 +841,8 @@ export const CampaignResponseSchema = z.object({
   thumbnailObjectKey: z.string().nullable(),
   approvedCount: z.number().int().nonnegative(),
   appliedCount: z.number().int().nonnegative(),
+  /** 캠페인 상세를 열람한 인플루언서 수(명). 같은 사람이 여러 번 봐도 1. */
+  viewerCount: z.number().int().nonnegative(),
   excludedCampaignIds: z.array(z.string()),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -746,6 +898,9 @@ export const InfluencerCampaignDetailSchema =
       .array(z.object({ subType: CampaignSubTypeSchema, option: z.string() }))
       // 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
       .default([]),
+    /** 게시(투고) 기간. null 이면 투고 시점 제약이 없다. */
+    publishStartAt: z.string().datetime().nullable().default(null),
+    publishEndAt: z.string().datetime().nullable().default(null),
   });
 export type InfluencerCampaignDetail = z.infer<
   typeof InfluencerCampaignDetailSchema

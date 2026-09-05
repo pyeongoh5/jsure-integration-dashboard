@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { CampaignResponse } from "@jsure/shared";
 import { useT } from "@/lib/i18n";
+import { foldForSearch } from "@/lib/searchText";
 import styles from "./ExcludedCampaignsPicker.module.css";
 
 type Props = {
@@ -30,10 +31,10 @@ export function ExcludedCampaignsPicker({
   const valueSet = useMemo(() => new Set(value), [value]);
 
   const filtered = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+    const normalized = foldForSearch(query.trim());
     if (!normalized) return candidates;
     return candidates.filter((campaign) =>
-      campaign.title.toLowerCase().includes(normalized),
+      foldForSearch(campaign.title).includes(normalized),
     );
   }, [candidates, query]);
 

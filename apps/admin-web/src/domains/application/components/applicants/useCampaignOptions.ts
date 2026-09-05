@@ -41,16 +41,21 @@ export function useCampaignOptions(): UseCampaignOptionsResult {
           ),
         );
         const now = Date.now();
+        // 필터 목록은 태그를 배지로 그리므로 제목과 태그를 따로 넘긴다.
+        // campaignTitleById 는 칩의 선택 라벨(문자열)이라 합친 표기를 유지한다.
         setCampaignOptions(
           rows.map((campaign) => ({
             id: campaign.id,
-            title: formatTitleWithTags(campaign.tags, campaign.title),
+            title: campaign.title,
+            tags: campaign.tags,
             closed: isRecruitClosed(campaign, now),
           })),
         );
       })
-      .catch(() => {
-        // chip falls back to raw id
+      .catch((cause: unknown) => {
+        // 조용히 비우면 필터가 "캠페인이 없습니다" 로 보여 원인을 알 수 없다.
+        // 응답 스키마 위반은 목록 전체를 날리므로 콘솔에 남긴다.
+        console.error("캠페인 목록을 불러오지 못했습니다", cause);
       })
       .finally(() => {
         if (!cancelled) setLoaded(true);

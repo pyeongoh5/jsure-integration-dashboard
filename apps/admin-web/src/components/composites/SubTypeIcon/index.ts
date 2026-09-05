@@ -1,0 +1,1 @@
+export { SubTypeIcon } from "./SubTypeIcon";

@@ -1,0 +1,15 @@
+/* 어드민 전용 캠페인 관리 태그 배지. Campaigns.module.css 의 .cardTag 를 그대로 옮겼다. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  line-height: 1;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 5px;
+  padding: 3px 8px;
+  /* 좁은 팝오버 줄에서 캠페인 제목보다 먼저 줄어들지 않게 한다. */
+  flex-shrink: 0;
+  white-space: nowrap;
+}

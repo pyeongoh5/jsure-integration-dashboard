@@ -250,7 +250,15 @@ export const AdminSettlementSchema = z.object({
   influencer: z.object({
     id: z.string(),
     name: z.string(),
+    /** 응모 서브타입과 일치하는 SNS 계정의 핸들. 일치하는 계정이 없으면 빈 문자열. */
     handle: z.string(),
+    /** 인플루언서가 보유한 SNS 계정 전체 — 정산 화면의 SNS ID 표시·검색용. */
+    snsAccounts: z.array(
+      z.object({
+        snsType: SnsAccountSubTypeSchema,
+        handle: z.string(),
+      }),
+    ),
     bankAccount: z
       .object({
         /** 계좌 형식의 국가. 스냅샷 도입 전 정산 건은 일본으로 간주한다. */

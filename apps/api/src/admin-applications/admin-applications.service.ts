@@ -1435,10 +1435,20 @@ type SubmissionRow = {
   };
 };
 
+/**
+ * 썸네일 표시용 URL. presign 실패(R2 미설정·일시 장애)를 삼켜 null 을 돌려준다 —
+ * 썸네일 하나 때문에 검토 목록 응답 전체가 500 이 되면 안 된다.
+ */
 async function resolveThumbnail(raw: string | null, r2: R2Service): Promise<string | null> {
   if (!raw) return null;
   if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
-  return r2.publicUrl(raw) ?? r2.presignGet(raw, 86400);
+  const publicUrl = r2.publicUrl(raw);
+  if (publicUrl) return publicUrl;
+  try {
+    return await r2.presignGet(raw, 86400);
+  } catch {
+    return null;
+  }
 }
 
 async function toSubmissionResponse(
@@ -1633,6 +1643,11 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
       id: row.application.influencer.id,
       name: row.application.influencer.name,
       handle: matchingAccount?.handle ?? "",
+      snsAccounts: row.application.influencer.snsAccounts.map((account) => ({
+        snsType:
+          account.snsType as AdminSettlement["influencer"]["snsAccounts"][number]["snsType"],
+        handle: account.handle,
+      })),
       bankAccount,
     },
     campaign: {

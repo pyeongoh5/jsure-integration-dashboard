@@ -78,6 +78,29 @@ export function settlementAmounts(
 }
 
 /**
+ * SNS 응모의 정산이 인사이트 미제출로 막혀 있는지. 참여 서브타입 중
+ * insightRequired 인 것의 인사이트가 하나라도 없으면 true.
+ *
+ * 정산 생성 조건과 인사이트 독촉 대상이 항상 같은 기준을 쓰도록 여기서 한 번만
+ * 정의한다. 모집 후 insightRequired 를 해제하면 정산은 바로 생성되는데 독촉만
+ * 계속 나가던 문제가 두 조건이 갈라져 있었기 때문이다.
+ */
+export function insightMissingForSettlement(application: {
+  subTypes: string[];
+  posts: { subType: string; insightSubmittedAt: Date | null }[];
+  campaign: { recruits: { subType: string; insightRequired: boolean }[] };
+}): boolean {
+  return application.campaign.recruits.some((recruit) => {
+    if (!recruit.insightRequired) return false;
+    if (!application.subTypes.includes(recruit.subType)) return false;
+    const post = application.posts.find(
+      (candidate) => candidate.subType === recruit.subType,
+    );
+    return !post || post.insightSubmittedAt === null;
+  });
+}
+
+/**
  * 응모(Application)의 제출물이 승인(APPROVED)되고 정산 가능 상태가 되면
  * Settlement(PENDING) 를 멱등하게 생성한다. 정산은 응모 단위 1건이다.
  *
@@ -153,21 +176,9 @@ export async function ensureSettlementForApplication(
   }
 
   const { campaign } = application;
-  const participatingRecruits = campaign.recruits.filter((recruit) =>
-    application.subTypes.includes(recruit.subType),
-  );
 
-  if (campaign.category === "SNS") {
-    const insightMissing = participatingRecruits.some((recruit) => {
-      if (!recruit.insightRequired) return false;
-      const post = application.posts.find(
-        (candidate) => candidate.subType === recruit.subType,
-      );
-      return !post || post.insightSubmittedAt === null;
-    });
-    if (insightMissing) {
-      return { autoCompleted: false, createdSettlementId: null };
-    }
+  if (campaign.category === "SNS" && insightMissingForSettlement(application)) {
+    return { autoCompleted: false, createdSettlementId: null };
   }
 
   const { rewardAmountJpy, productRefundJpy } = settlementAmounts(

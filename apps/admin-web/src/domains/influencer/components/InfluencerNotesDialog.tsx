@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { InfluencerNotesResponse } from "@jsure/shared";
 import type { AdminTranslationKey } from "@i18n/admin";
+import { SegmentedTabs } from "@/components/composites";
 import {
   createInfluencerMemo,
   fetchInfluencerNotes,
   flagInfluencer,
   unflagInfluencer,
 } from "../api";
+import { formatDateTime } from "../formatDateTime";
 import { useT } from "@/lib/i18n";
+import { InfluencerHistoryTab } from "./InfluencerHistoryTab";
 import styles from "./InfluencerNotesDialog.module.css";
 
 type NotesState =
@@ -15,92 +18,15 @@ type NotesState =
   | { kind: "ready"; data: InfluencerNotesResponse }
   | { kind: "error"; message: string };
 
-type TimelineEntry =
-  | {
-      kind: "memo";
-      id: string;
-      at: string;
-      comment: string;
-      campaignTitle: string | null;
-      /** 메모 작성자 / 반려를 수행한 어드민. 계정 삭제 시 null. */
-      actorName: string | null;
-    }
-  | {
-      kind: "application";
-      id: string;
-      at: string;
-      comment: string;
-      campaignTitle: string;
-      actorName: string | null;
-    }
-  | {
-      kind: "post";
-      id: string;
-      at: string;
-      comment: string;
-      campaignTitle: string;
-      actorName: string | null;
-    };
+/** 수기 메모와 자동 집계 히스토리를 나누는 상단 탭. */
+type DialogTab = "MEMO" | "HISTORY";
 
-function buildTimeline(data: InfluencerNotesResponse): TimelineEntry[] {
-  const entries: TimelineEntry[] = [];
-  for (const memo of data.memos) {
-    entries.push({
-      kind: "memo",
-      id: memo.id,
-      at: memo.createdAt,
-      comment: memo.comment,
-      campaignTitle: memo.campaignTitle,
-      actorName: memo.createdBy?.name ?? null,
-    });
-  }
-  for (const rejection of data.applicationRejections) {
-    if (!rejection.rejectedAt) continue;
-    entries.push({
-      kind: "application",
-      id: rejection.applicationId,
-      at: rejection.rejectedAt,
-      comment: rejection.comment,
-      campaignTitle: rejection.campaignTitle,
-      actorName: rejection.rejectedBy?.name ?? null,
-    });
-  }
-  for (const rejection of data.postRejections) {
-    entries.push({
-      kind: "post",
-      id: rejection.id,
-      at: rejection.rejectedAt,
-      comment: rejection.comment,
-      campaignTitle: rejection.campaignTitle,
-      actorName: rejection.rejectedBy?.name ?? null,
-    });
-  }
-  entries.sort((left, right) => (left.at < right.at ? 1 : -1));
-  return entries;
-}
-
-function formatDateTime(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  const hh = String(date.getHours()).padStart(2, "0");
-  const mi = String(date.getMinutes()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
-}
-
-const ENTRY_CHIP_CLASS: Record<TimelineEntry["kind"], string | undefined> = {
-  memo: styles.entryChipMemo,
-  application: styles.entryChipApp,
-  post: styles.entryChipPost,
+const DIALOG_TAB_LABEL: Record<DialogTab, AdminTranslationKey> = {
+  MEMO: "domains.influencer.notesDialog.tabMemo",
+  HISTORY: "domains.influencer.notesDialog.tabHistory",
 };
 
-const ENTRY_CHIP_LABEL_KEY: Record<TimelineEntry["kind"], AdminTranslationKey> = {
-  memo: "domains.influencer.notesDialog.chipMemo",
-  application: "domains.influencer.notesDialog.chipApplicationRejection",
-  post: "domains.influencer.notesDialog.chipPostRejection",
-};
+const DIALOG_TAB_ORDER: DialogTab[] = ["MEMO", "HISTORY"];
 
 type Props = {
   influencerId: string;
@@ -118,6 +44,7 @@ export function InfluencerNotesDialog({
   onChanged,
 }: Props) {
   const t = useT();
+  const [tab, setTab] = useState<DialogTab>("MEMO");
   const [state, setState] = useState<NotesState>({ kind: "loading" });
   const [memoDraft, setMemoDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -145,11 +72,6 @@ export function InfluencerNotesDialog({
       cancelled = true;
     };
   }, [influencerId]);
-
-  const timeline = useMemo(
-    () => (state.kind === "ready" ? buildTimeline(state.data) : []),
-    [state],
-  );
 
   async function handleSubmitMemo() {
     const trimmed = memoDraft.trim();
@@ -253,103 +175,127 @@ export function InfluencerNotesDialog({
           </button>
         </header>
 
-        {state.kind === "loading" && (
-          <div className={styles.timelineEmpty}>{t("common.loading")}</div>
+        {/* 대상외 지정은 탭과 무관한 인플루언서 단위 조작이라 탭 위에 둔다. */}
+        <div className={styles.toolbar}>
+          <button
+            type="button"
+            className={`${styles.toolbarBtn} ${flagged ? styles.toolbarBtnUnflag : styles.toolbarBtnDanger}`}
+            onClick={handleToggleFlag}
+            disabled={toggling || state.kind !== "ready"}
+          >
+            {flagged
+              ? t("domains.influencer.notesDialog.unflag")
+              : t("domains.influencer.notesDialog.flag")}
+          </button>
+        </div>
+
+        <SegmentedTabs
+          className={styles.mainTabs}
+          items={DIALOG_TAB_ORDER.map((key) => ({
+            key,
+            label: t(DIALOG_TAB_LABEL[key]),
+          }))}
+          value={tab}
+          onChange={setTab}
+        />
+
+        {error && <div className={styles.error}>{error}</div>}
+
+        {tab === "MEMO" && (
+          <MemoTab
+            state={state}
+            memoDraft={memoDraft}
+            submitting={submitting}
+            onMemoDraftChange={setMemoDraft}
+            onSubmitMemo={handleSubmitMemo}
+          />
         )}
 
-        {state.kind === "error" && (
-          <div className={styles.error}>{state.message}</div>
-        )}
-
-        {state.kind === "ready" && (
-          <>
-            <div className={styles.toolbar}>
-              <button
-                type="button"
-                className={`${styles.toolbarBtn} ${flagged ? styles.toolbarBtnUnflag : styles.toolbarBtnDanger}`}
-                onClick={handleToggleFlag}
-                disabled={toggling}
-              >
-                {flagged
-                  ? t("domains.influencer.notesDialog.unflag")
-                  : t("domains.influencer.notesDialog.flag")}
-              </button>
-            </div>
-
-            {error && <div className={styles.error}>{error}</div>}
-
-            <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>
-                {t("domains.influencer.notesDialog.addMemoTitle")}
-              </h3>
-              <div className={styles.memoForm}>
-                <textarea
-                  className={styles.memoTextarea}
-                  value={memoDraft}
-                  onChange={(event) => setMemoDraft(event.target.value)}
-                  placeholder={t("domains.influencer.notesDialog.memoPlaceholder")}
-                  maxLength={2000}
-                />
-                <button
-                  type="button"
-                  className={styles.memoSubmit}
-                  onClick={handleSubmitMemo}
-                  disabled={submitting || memoDraft.trim().length === 0}
-                >
-                  {submitting
-                    ? t("domains.influencer.notesDialog.saving")
-                    : t("domains.influencer.notesDialog.addMemoTitle")}
-                </button>
-              </div>
-            </section>
-
-            <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>
-                {t("domains.influencer.notesDialog.historyTitle")}
-              </h3>
-              {timeline.length === 0 ? (
-                <div className={styles.timelineEmpty}>
-                  {t("domains.influencer.notesDialog.historyEmpty")}
-                </div>
-              ) : (
-                <div className={styles.timeline}>
-                  {timeline.map((entry) => (
-                    <article
-                      key={`${entry.kind}-${entry.id}`}
-                      className={styles.entry}
-                    >
-                      <div className={styles.entryHeader}>
-                        <span
-                          className={`${styles.entryChip} ${ENTRY_CHIP_CLASS[entry.kind]}`}
-                        >
-                          {t(ENTRY_CHIP_LABEL_KEY[entry.kind])}
-                        </span>
-                        {entry.kind !== "memo" && (
-                          <span className={styles.entryCampaign}>
-                            {entry.campaignTitle}
-                          </span>
-                        )}
-                        {entry.kind === "memo" && entry.campaignTitle && (
-                          <span className={styles.entryCampaign}>
-                            {entry.campaignTitle}
-                          </span>
-                        )}
-                        <span>{formatDateTime(entry.at)}</span>
-                        {entry.actorName && (
-                          <span className={styles.entryActor}>
-                            {entry.actorName}
-                          </span>
-                        )}
-                      </div>
-                      <div className={styles.entryBody}>{entry.comment}</div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
-          </>
-        )}
+        {tab === "HISTORY" && <InfluencerHistoryTab influencerId={influencerId} />}
       </div>
     </div>
+  );
+}
+
+function MemoTab({
+  state,
+  memoDraft,
+  submitting,
+  onMemoDraftChange,
+  onSubmitMemo,
+}: {
+  state: NotesState;
+  memoDraft: string;
+  submitting: boolean;
+  onMemoDraftChange: (value: string) => void;
+  onSubmitMemo: () => void;
+}) {
+  const t = useT();
+
+  if (state.kind === "loading") {
+    return <div className={styles.timelineEmpty}>{t("common.loading")}</div>;
+  }
+  if (state.kind === "error") {
+    return <div className={styles.error}>{state.message}</div>;
+  }
+  return (
+    <>
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>
+          {t("domains.influencer.notesDialog.addMemoTitle")}
+        </h3>
+        <div className={styles.memoForm}>
+          <textarea
+            className={styles.memoTextarea}
+            value={memoDraft}
+            onChange={(event) => onMemoDraftChange(event.target.value)}
+            placeholder={t("domains.influencer.notesDialog.memoPlaceholder")}
+            maxLength={2000}
+          />
+          <button
+            type="button"
+            className={styles.memoSubmit}
+            onClick={onSubmitMemo}
+            disabled={submitting || memoDraft.trim().length === 0}
+          >
+            {submitting
+              ? t("domains.influencer.notesDialog.saving")
+              : t("domains.influencer.notesDialog.addMemoTitle")}
+          </button>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>
+          {t("domains.influencer.notesDialog.memoListTitle")}
+        </h3>
+        {state.data.memos.length === 0 ? (
+          <div className={styles.timelineEmpty}>
+            {t("domains.influencer.notesDialog.memoEmpty")}
+          </div>
+        ) : (
+          <div className={styles.timeline}>
+            {state.data.memos.map((memo) => (
+              <article key={memo.id} className={styles.entry}>
+                <div className={styles.entryHeader}>
+                  {memo.campaignTitle && (
+                    <span className={styles.entryCampaign}>
+                      {memo.campaignTitle}
+                    </span>
+                  )}
+                  <span>{formatDateTime(memo.createdAt)}</span>
+                  {memo.createdBy && (
+                    <span className={styles.entryActor}>
+                      {memo.createdBy.name ?? memo.createdBy.id}
+                    </span>
+                  )}
+                </div>
+                <div className={styles.entryBody}>{memo.comment}</div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </>
   );
 }

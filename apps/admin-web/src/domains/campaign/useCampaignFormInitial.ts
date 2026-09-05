@@ -29,6 +29,8 @@ function toFormValues(campaign: CampaignResponse): Values {
     recruitStartDate: campaign.recruitStartDate,
     recruitEndDate: campaign.recruitEndDate,
     postingPeriodDays: campaign.postingPeriodDays,
+    publishStartDateTime: campaign.publishStartDateTime,
+    publishEndDateTime: campaign.publishEndDateTime,
     orderPeriodDays: campaign.orderPeriodDays,
     recruits: campaign.recruits,
     productSummary: campaign.productSummary,
@@ -41,7 +43,7 @@ function toFormValues(campaign: CampaignResponse): Values {
   };
 }
 
-/** 복사 초기값 — 모집기간만 비우고 나머지는 원본을 그대로 쓴다. 제목은 원본과 구분되게 표시. */
+/** 복사 초기값 — 모집기간·게시 기간은 비우고 나머지는 원본을 그대로 쓴다. 제목은 원본과 구분되게 표시. */
 function toCopyValues(campaign: CampaignResponse): Values {
   return {
     ...toFormValues(campaign),
@@ -51,6 +53,8 @@ function toCopyValues(campaign: CampaignResponse): Values {
     ),
     recruitStartDate: "",
     recruitEndDate: "",
+    publishStartDateTime: null,
+    publishEndDateTime: null,
   };
 }
 

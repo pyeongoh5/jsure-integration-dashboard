@@ -98,20 +98,28 @@ export function Applicants() {
     setSearchParams(next);
   };
 
-  // 목록 끝 감시자가 보이면 다음 페이지를 이어 붙인다.
+  // 목록 끝 감시자가 보이면 다음 페이지를 이어 붙인다. 감시자는 테이블의 스크롤
+  // 컨테이너 안에 렌더되고(ApplicantTable footer), root 도 그 컨테이너로 잡는다.
+  // 바깥에 두면 항상 화면에 보여 스크롤 없이도 계속 다음 페이지를 불러온다.
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // 콜백은 ref 로 갈아끼운다. loadMore 를 의존성에 두면 페치 상태가 토글될 때마다
+  // 감시자가 재등록되고, 이미 보이는 감시 영역에 대해 콜백이 즉시 다시 울려
+  // 페이지가 연달아 요청된다. 재등록은 행이 늘어난 뒤 한 번만 —
+  // 목록이 화면을 다 못 채웠을 때 다음 페이지를 이어 받기 위해.
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
   useEffect(() => {
     const node = sentinelRef.current;
     if (!node) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) loadMore();
+        if (entries.some((entry) => entry.isIntersecting)) loadMoreRef.current();
       },
-      { rootMargin: "300px" },
+      { root: node.closest("[data-scroll-root]"), rootMargin: "300px" },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, [hasMore, applicants.length]);
 
   const handleCsvDownload = useCallback(async () => {
     setCsvPending(true);
@@ -253,12 +261,14 @@ export function Applicants() {
                 statusLabel: t(APPLICANT_STATUS_LABEL[applicant.status]),
               })
             }
+            footer={
+              hasMore ? (
+                <div ref={sentinelRef} className={styles.loadMore}>
+                  {loadingMore ? t("pages.applicants.loadingMore") : ""}
+                </div>
+              ) : null
+            }
           />
-          {hasMore && (
-            <div ref={sentinelRef} className={styles.loadMore}>
-              {loadingMore ? t("pages.applicants.loadingMore") : ""}
-            </div>
-          )}
         </>
       )}
 

@@ -12,6 +12,8 @@ import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import { t } from "@i18n";
 import { CrossPostSection } from "./CrossPostSection";
+import { PublishWindowNotice } from "./PublishWindowNotice";
+import type { PublishWindowText } from "../publishWindowText";
 
 const urlSchema = z
   .string()
@@ -55,6 +57,7 @@ interface Props {
   ) => Promise<void>;
   submitting: boolean;
   postingDeadlineAt: string | null;
+  publishWindow: PublishWindowText;
 }
 
 function formatDeadline(iso: string): string {
@@ -71,6 +74,7 @@ export function PostSubmitForm({
   onSubmit,
   submitting,
   postingDeadlineAt,
+  publishWindow,
 }: Props) {
   const schema = z.object({
     ...Object.fromEntries(subTypes.map((subType) => [subType, urlSchema])),
@@ -143,7 +147,7 @@ export function PostSubmitForm({
         />
         <PrimaryButton
           type="submit"
-          disabled={submitting}
+          disabled={submitting || publishWindow.state === "BEFORE"}
           style={{ marginTop: 18 }}
         >
           {submitting
@@ -162,7 +166,8 @@ export function PostSubmitForm({
         >
           {t("application.postForm.prHint")}
         </p>
-        {postingDeadlineAt && (
+        <PublishWindowNotice publishWindow={publishWindow} />
+        {publishWindow.state === "NONE" && postingDeadlineAt && (
           <p
             style={{
               fontSize: 11,

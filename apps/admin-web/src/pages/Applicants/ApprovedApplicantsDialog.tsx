@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useState } from "react";
-import type {
-  ApprovedApplicantExportResponse,
-  CampaignResponse,
+import {
+  formatTitleWithTags,
+  type ApprovedApplicantExportResponse,
+  type CampaignResponse,
 } from "@jsure/shared";
 import {
   APPROVED_APPLICANT_EXPORT_HEADER_KEYS,
@@ -139,7 +140,8 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
               </option>
               {campaignOptions.map((campaign) => (
                 <option key={campaign.id} value={campaign.id}>
-                  {campaign.title}
+                  {/* native option 안에는 배지를 넣을 수 없어 태그를 문자열로 붙인다. */}
+                  {formatTitleWithTags(campaign.tags ?? [], campaign.title)}
                 </option>
               ))}
             </select>

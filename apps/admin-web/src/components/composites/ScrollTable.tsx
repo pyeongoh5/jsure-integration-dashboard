@@ -8,7 +8,8 @@ type Props = {
 
 export function ScrollTable({ minWidth = 1024, children }: Props) {
   return (
-    <div className={styles.scroll}>
+    // data 속성은 무한 스크롤 감시자가 IntersectionObserver 의 root 로 찾아 쓴다.
+    <div className={styles.scroll} data-scroll-root>
       <div className={styles.inner} style={{ minWidth }}>
         {children}
       </div>

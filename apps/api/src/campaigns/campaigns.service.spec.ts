@@ -1,8 +1,11 @@
 import { BadRequestException } from "@nestjs/common";
+import { CreateCampaignRequestSchema, UpdateCampaignRequestSchema } from "@jsure/shared";
 import {
   jstDayStartUtc,
   jstDayEndUtc,
   utcToJstDateStr,
+  jstDateTimeToUtc,
+  utcToJstDateTimeStr,
   validateRecruitsForCategory,
   validateRecruitsForRewardType,
   validateRecruitOptionConfigs,
@@ -29,6 +32,19 @@ describe("JST date conversion helpers", () => {
     );
     expect(utcToJstDateStr(new Date("2026-05-19T14:59:59Z"))).toBe(
       "2026-05-19",
+    );
+  });
+
+  it("jstDateTimeToUtc converts YYYY-MM-DDTHH:mm as JST", () => {
+    // 2026-09-01 10:00 JST === 2026-09-01 01:00 UTC
+    expect(jstDateTimeToUtc("2026-09-01T10:00").toISOString()).toBe(
+      "2026-09-01T01:00:00.000Z",
+    );
+  });
+
+  it("utcToJstDateTimeStr round-trips through jstDateTimeToUtc", () => {
+    expect(utcToJstDateTimeStr(jstDateTimeToUtc("2026-09-10T23:59"))).toBe(
+      "2026-09-10T23:59",
     );
   });
 });
@@ -250,5 +266,110 @@ describe("validateRecruitOptionConfigs / RewardType — 옵션별 정원·보수
         ]),
       ]),
     ).toThrow(BadRequestException);
+  });
+});
+
+describe("CreateCampaignRequestSchema 게시 기간", () => {
+  const base = {
+    category: "SNS" as const,
+    title: "테스트 캠페인",
+    tags: [],
+    rewardType: "UNIFIED" as const,
+    rewardJpy: 1000,
+    recruitStartDate: "2026-08-01",
+    recruitEndDate: "2026-08-20",
+    postingPeriodDays: 14,
+    recruits: [
+      {
+        subType: "INSTAGRAM" as const,
+        minFollowers: 0,
+        recruitCount: 1,
+        subTypeOptions: ["FEED"],
+        insightRequired: true,
+        isRequired: false,
+        productPriceJpy: null,
+        productUrl: null,
+        options: [],
+      },
+    ],
+    productSummary: "요약",
+    productDetailUrls: ["https://example.com/product"],
+    guideline: "가이드",
+    referenceMediaUrls: [],
+    cautions: "주의",
+    thumbnailUrl: null,
+    excludedCampaignIds: [],
+  };
+
+  it("게시 기간 미입력이면 null 로 통과한다", () => {
+    const parsed = CreateCampaignRequestSchema.parse(base);
+    expect(parsed.publishStartDateTime).toBeNull();
+    expect(parsed.publishEndDateTime).toBeNull();
+  });
+
+  it("시작만 입력하면 거부한다", () => {
+    const result = CreateCampaignRequestSchema.safeParse({
+      ...base,
+      publishStartDateTime: "2026-09-01T10:00",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("종료가 시작보다 이르면 거부한다", () => {
+    const result = CreateCampaignRequestSchema.safeParse({
+      ...base,
+      publishStartDateTime: "2026-09-10T10:00",
+      publishEndDateTime: "2026-09-01T10:00",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("정상 게시 기간은 통과한다", () => {
+    const parsed = CreateCampaignRequestSchema.parse({
+      ...base,
+      publishStartDateTime: "2026-09-01T10:00",
+      publishEndDateTime: "2026-09-10T23:59",
+    });
+    expect(parsed.publishStartDateTime).toBe("2026-09-01T10:00");
+  });
+});
+
+describe("UpdateCampaignRequestSchema 게시 기간", () => {
+  it("시작만 보내면 거부한다", () => {
+    const result = UpdateCampaignRequestSchema.safeParse({
+      publishStartDateTime: "2026-09-01T10:00",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("역전된 값이면 거부한다", () => {
+    const result = UpdateCampaignRequestSchema.safeParse({
+      publishStartDateTime: "2026-09-10T10:00",
+      publishEndDateTime: "2026-09-01T10:00",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("둘 다 null 이면 통과한다 (게시 기간 해제)", () => {
+    const result = UpdateCampaignRequestSchema.safeParse({
+      publishStartDateTime: null,
+      publishEndDateTime: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("둘 다 미포함이면 통과한다 (미변경)", () => {
+    const result = UpdateCampaignRequestSchema.safeParse({
+      title: "제목만 수정",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("정상 쌍은 통과한다", () => {
+    const result = UpdateCampaignRequestSchema.safeParse({
+      publishStartDateTime: "2026-09-01T10:00",
+      publishEndDateTime: "2026-09-10T23:59",
+    });
+    expect(result.success).toBe(true);
   });
 });

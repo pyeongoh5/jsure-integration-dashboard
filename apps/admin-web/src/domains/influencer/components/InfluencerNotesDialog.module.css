@@ -92,6 +92,16 @@
   color: #374151;
 }
 
+/* 다이얼로그 안이라 목록 페이지용 기본 탭 크기는 너무 크다. */
+.mainTabs {
+  margin-bottom: var(--space-3);
+}
+
+.mainTabs button {
+  padding: 4px var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
 .section {
   margin-top: 18px;
 }
@@ -165,16 +175,6 @@
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
 }
-
-.entryChip {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-full);
-}
-.entryChipMemo { background: #dbeafe; color: #1e40af; }
-.entryChipApp { background: #fee2e2; color: #991b1b; }
-.entryChipPost { background: #ffedd5; color: #9a3412; }
 
 .entryCampaign {
   font-weight: var(--font-weight-semibold);

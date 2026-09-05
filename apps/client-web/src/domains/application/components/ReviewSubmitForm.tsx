@@ -13,6 +13,8 @@ import { FormField } from "@/components/composites";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import { t } from "@i18n";
 import { useAttachmentUpload } from "../hooks/useAttachmentUpload";
+import { PublishWindowNotice } from "./PublishWindowNotice";
+import type { PublishWindowText } from "../publishWindowText";
 import styles from "./ReviewSubmitForm.module.css";
 
 const MIN_FILES = 2;
@@ -37,35 +39,21 @@ type Values = z.infer<typeof schema>;
 
 interface Props {
   applicationId: string;
-  orderSubmittedAt: string;
-  postingPeriodDays: number;
   subTypeOptions: readonly string[];
   onSubmit: (
     screenshots: AttachmentUploadInput[],
     reviewUrls: Partial<Record<ReviewChannel, string>>,
   ) => Promise<void>;
   submitting: boolean;
-}
-
-function computeRemainingDays(
-  orderSubmittedAt: string,
-  postingPeriodDays: number,
-): number {
-  const start = new Date(orderSubmittedAt);
-  const deadline = new Date(start);
-  deadline.setDate(deadline.getDate() + postingPeriodDays);
-  const now = new Date();
-  const diffMs = deadline.getTime() - now.getTime();
-  return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+  publishWindow: PublishWindowText;
 }
 
 export function ReviewSubmitForm({
   applicationId,
-  orderSubmittedAt,
-  postingPeriodDays,
   subTypeOptions,
   onSubmit,
   submitting,
+  publishWindow,
 }: Props) {
   const activeChannels = useMemo<ReviewChannel[]>(() => {
     const result: ReviewChannel[] = [];
@@ -90,8 +78,8 @@ export function ReviewSubmitForm({
   const busy = submitting || upload.uploading;
   // Qoo10 기본 2장 + 요구 채널(LIPS/@cosme)당 1장
   const requiredFiles = MIN_FILES + activeChannels.length;
-  const remainingDays = computeRemainingDays(orderSubmittedAt, postingPeriodDays);
-  const deadlinePassed = remainingDays < 0;
+  const remainingDays = publishWindow.remainingDays;
+  const deadlinePassed = remainingDays !== null && remainingDays < 0;
 
   function openPicker() {
     if (busy || upload.remaining <= 0) return;
@@ -293,13 +281,17 @@ export function ReviewSubmitForm({
 
         {submitError && <div className={styles.error}>{submitError}</div>}
 
-        <PrimaryButton type="submit" disabled={busy}>
+        <PrimaryButton
+          type="submit"
+          disabled={busy || publishWindow.state === "BEFORE"}
+        >
           {submitting
             ? t("application.reviewForm.submitting")
             : upload.uploading
               ? t("application.attachmentUpload.uploading")
               : t("application.stage.awaitingReview.submit")}
         </PrimaryButton>
+        <PublishWindowNotice publishWindow={publishWindow} />
       </form>
     </FormProvider>
   );

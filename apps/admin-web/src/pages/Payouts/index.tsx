@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { SUB_TYPE_LABEL, type AdminSettlement, type CampaignCategory } from "@jsure/shared";
+import {
+  SUB_TYPE_LABEL,
+  pickRepresentativeSnsAccount,
+  type AdminSettlement,
+  type CampaignCategory,
+} from "@jsure/shared";
 import { translate, type AdminLanguage, type AdminTranslationKey } from "@i18n/admin";
 import { getStoredLanguage, useLanguage, useT } from "@/lib/i18n";
 import {
@@ -13,7 +18,7 @@ import {
   CATEGORY_FILTER_OPTIONS,
   type HistoryTarget,
 } from "@/domains/application";
-import { ScrollTable } from "@/components/composites";
+import { ScrollTable, SnsHandleCell } from "@/components/composites";
 import { FilterChipBar } from "@/components/composites/FilterChip";
 import { Button } from "@/components/ui";
 import styles from "./Payouts.module.css";
@@ -47,6 +52,18 @@ function formatRefund(amount: number): string {
 function latestDate(values: (string | null)[]): string | null {
   const submitted = values.filter((value): value is string => value !== null);
   return submitted.length === 0 ? null : submitted.sort()[submitted.length - 1]!;
+}
+
+type SettlementSnsAccount = AdminSettlement["influencer"]["snsAccounts"][number];
+
+/** 응모 서브타입과 일치하는 SNS 계정. 가구매·단순리뷰 응모는 일치하는 계정이 없다. */
+function appliedSnsAccount(row: AdminSettlement): SettlementSnsAccount | null {
+  const appliedSubTypes = row.posts.map((post) => post.subType);
+  return (
+    row.influencer.snsAccounts.find((account) =>
+      appliedSubTypes.includes(account.snsType),
+    ) ?? null
+  );
 }
 
 function csvEscape(value: string | number | null): string {
@@ -101,6 +118,7 @@ function submissionViewLabelKey(row: AdminSettlement): AdminTranslationKey {
 const CSV_HEADER_KEYS: AdminTranslationKey[] = [
   "pages.payouts.csv.groupId",
   "domains.application.applicants.table.influencer",
+  "pages.payouts.columns.snsId",
   "domains.application.applicants.table.campaign",
   "domains.application.applicants.table.category",
   "domains.application.export.sns",
@@ -129,6 +147,13 @@ const CSV_HEADER_KEYS: AdminTranslationKey[] = [
   "pages.payouts.columns.completedAt",
   "common.status",
 ];
+
+// 응모자 관리 CSV 와 동일하게 핸들만(bare) 내보낸다. 채널 구분은 SNS 컬럼이 담당.
+function snsCsvHandle(row: AdminSettlement): string {
+  const account =
+    appliedSnsAccount(row) ?? pickRepresentativeSnsAccount(row.influencer.snsAccounts);
+  return account?.handle ?? "";
+}
 
 function downloadCsv(rows: AdminSettlement[], month: string): void {
   const language = getStoredLanguage();
@@ -170,6 +195,7 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
         [
           groupId,
           row.influencer.name,
+          snsCsvHandle(row),
           row.campaign.title,
           translate(CATEGORY_LABEL_KO[row.campaign.category], language),
           post ? SUB_TYPE_LABEL[post.subType] : "",
@@ -221,6 +247,7 @@ export function Payouts() {
   const [categoryFilter, setCategoryFilter] =
     useState<CampaignCategory | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(null);
   // 제출물/인사이트 상세 모달 — 응모 단건 조회 후 검수 화면과 동일한 다이얼로그로 표시.
   const submissionDetail = useSubmissionDetail();
@@ -261,12 +288,18 @@ export function Payouts() {
 
   const visibleRows = useMemo(() => {
     if (state.kind !== "ready") return [];
+    // SNS ID 는 bare 로 저장되므로 사용자가 붙여 넣은 "@" 는 떼고 비교한다.
+    const keyword = query.trim().replace(/^@/, "").toLowerCase();
     return state.rows.filter((row) => {
       if (categoryFilter !== null && row.campaign.category !== categoryFilter) return false;
       if (campaignId !== null && row.campaign.id !== campaignId) return false;
-      return true;
+      if (keyword === "") return true;
+      const handles = row.influencer.snsAccounts.map((account) => account.handle);
+      return [row.influencer.name, ...handles].some((value) =>
+        value.toLowerCase().includes(keyword),
+      );
     });
-  }, [state, categoryFilter, campaignId]);
+  }, [state, categoryFilter, campaignId, query]);
 
   const pendingRows = useMemo(
     () => visibleRows.filter((r) => r.status === "PENDING"),
@@ -377,6 +410,14 @@ export function Payouts() {
           <p className={styles.subtitle}>{t("pages.payouts.subtitle")}</p>
         </div>
         <div className={styles.actions}>
+          <div className={styles.search}>
+            <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
+            <input
+              placeholder={t("pages.payouts.searchPlaceholder")}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
           <label className={styles.month}>
             <input
               type="month"
@@ -478,7 +519,7 @@ export function Payouts() {
           <div className={styles.empty}>{t("pages.payouts.empty")}</div>
         )}
         {state.kind === "ready" && visibleRows.length > 0 && (
-          <ScrollTable minWidth={2000}>
+          <ScrollTable minWidth={2140}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -494,7 +535,10 @@ export function Payouts() {
                       aria-label={t("domains.broadcast.dialog.selectAll")}
                     />
                   </th>
-                  <th>{t("domains.application.applicants.table.influencer")}</th>
+                  <th style={{ minWidth: 120 }}>
+                    {t("domains.application.applicants.table.influencer")}
+                  </th>
+                  <th>{t("pages.payouts.columns.snsId")}</th>
                   <th>{t("domains.application.applicants.table.campaign")}</th>
                   <th style={{ minWidth: 80 }}>
                     {t("domains.application.applicants.table.category")}
@@ -525,6 +569,10 @@ export function Payouts() {
               <tbody>
                 {visibleRows.map((row) => {
                   const isPending = row.status === "PENDING";
+                  const appliedAccount = appliedSnsAccount(row);
+                  const representativeAccount = pickRepresentativeSnsAccount(
+                    row.influencer.snsAccounts,
+                  );
                   const categoryBadgeCls =
                     row.campaign.category === "SNS"
                       ? styles.categoryBadgeSns
@@ -541,7 +589,13 @@ export function Payouts() {
                           />
                         ) : null}
                       </td>
-                      <td>{row.influencer.name}</td>
+                      <td className={styles.nameCell}>{row.influencer.name}</td>
+                      <td className={styles.snsCell}>
+                        <SnsHandleCell
+                          applied={appliedAccount}
+                          representative={representativeAccount}
+                        />
+                      </td>
                       <td>{row.campaign.title}</td>
                       <td>
                         <span className={`${styles.categoryBadge} ${categoryBadgeCls}`}>

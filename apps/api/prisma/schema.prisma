@@ -137,6 +137,11 @@ model Campaign {
   /// 논리 삭제 시각. 응모·정산 이력을 보존하기 위해 물리 삭제하지 않는다.
   deletedAt          DateTime?
   postingPeriodDays  Int       @default(14)
+  /// 게시(투고) 기간 시작. null 이면 투고 시점 제약이 없다.
+  /// publishEndAt 과 항상 함께 설정되거나 함께 null 이다.
+  publishStartAt     DateTime?
+  /// 게시(투고) 기간 종료. 지난 뒤에도 제출은 허용하며 안내·마감 계산에만 쓴다.
+  publishEndAt       DateTime?
   /// 가구매 전용. 승인일로부터 주문 제출까지 허용 일수. null 이면 주문 마감이 없어
   /// 리마인더도 자동 취소도 동작하지 않는다.
   orderPeriodDays    Int?
@@ -155,6 +160,7 @@ model Campaign {
   recruits     CampaignRecruit[]
   applications CampaignApplication[]
   influencerMemos InfluencerMemo[]
+  views        CampaignView[]
 
   // 이 캠페인이 "제외 대상" 으로 지정한 다른 캠페인들 (E → A,B)
   exclusionsAsExcluding CampaignExclusion[] @relation("excludingCampaign")
@@ -163,6 +169,20 @@ model Campaign {
 
   @@index([recruitStartAt])
   @@map("campaigns")
+}
+
+// 인플루언서의 캠페인 상세 열람 기록. 복합 PK 가 곧 중복 제거 장치라
+// 같은 인플루언서가 몇 번을 다시 봐도 1행이며, 조회 인원(UV)만 집계한다.
+model CampaignView {
+  campaignId   String
+  influencerId String
+
+  campaign   Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, influencerId])
+  @@index([campaignId])
+  @@map("campaign_views")
 }
 
 // 캠페인 응모 시 제외(exclusion) 관계.
@@ -256,6 +276,7 @@ model Influencer {
   bankAccount  InfluencerBankAccount?
   sessions     InfluencerSession[]
   memos        InfluencerMemo[]
+  campaignViews CampaignView[]
 
   @@map("influencers")
 }

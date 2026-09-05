@@ -1,0 +1,47 @@
+/* 응모자 관리·검토 테이블의 SNS 배지 스타일 — application.module.css 의 .media 계열을 그대로 옮겼다. */
+.icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.iconSm {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.brandInstagram {
+  background: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
+}
+
+.brandYoutube {
+  background: var(--color-sns-youtube);
+}
+
+.brandTiktok {
+  background: #000;
+}
+
+/* TikTok 로고의 색수차 표현. */
+.brandTiktok i {
+  text-shadow:
+    -1.2px -1.2px 0 #ff0050,
+    1.2px 1.2px 0 #00f2ea;
+}
+
+.brandX {
+  background: #000;
+}
+
+/* 가구매·단순리뷰 서브타입은 브랜드 색이 없어 중립 배경을 쓴다. */
+.brandNeutral {
+  background: #6b7280;
+}

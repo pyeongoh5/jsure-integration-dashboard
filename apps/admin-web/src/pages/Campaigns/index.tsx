@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import type { CampaignResponse } from "@jsure/shared";
+import { formatRewardRange, type CampaignResponse } from "@jsure/shared";
 import { Card } from "@/components/composites/Card";
 import {
   FilterChipBar,
@@ -24,6 +24,7 @@ import type { Campaign, CampaignCategory, CampaignStatus } from "@/domains/campa
 import { CATEGORY_FILTER_OPTIONS } from "@/domains/application";
 import { translate, type AdminTranslationKey } from "@i18n/admin";
 import { getStoredLanguage, useT } from "@/lib/i18n";
+import { foldForSearch } from "@/lib/searchText";
 import { ApprovedApplicantsDialog } from "../Applicants/ApprovedApplicantsDialog";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import styles from "./Campaigns.module.css";
@@ -80,10 +81,6 @@ function formatUpdatedAt(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function formatReward(jpy: number): string {
-  return `¥${jpy.toLocaleString()}円`;
-}
-
 function stripHtml(html: string): string {
   return html
     .replace(/<[^>]+>/g, " ")
@@ -110,9 +107,11 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     thumbIcon: "📋",
     thumbnailUrl: c.thumbnailUrl,
     period: formatDateRange(c.recruitStartDate, c.recruitEndDate),
-    reward: formatReward(c.rewardJpy),
+    // 개별보수(PER_SUBTYPE)는 c.rewardJpy 가 0 이고 실제 보수가 recruit/옵션에 있다.
+    reward: formatRewardRange(c),
     approved: c.approvedCount,
     applied: c.appliedCount,
+    viewers: c.viewerCount,
     capacity,
     dday: daysUntil(c.recruitEndAt, now),
     updatedAt: c.updatedAt,
@@ -194,12 +193,12 @@ export function Campaigns() {
   }, [state]);
 
   const filtered = useMemo(() => {
-    const q = debouncedQuery.trim().toLowerCase();
+    const q = foldForSearch(debouncedQuery.trim());
     // 정렬은 서버가 이미 적용(모집중→임시저장→모집 완료→모집 종료). 여기선 필터만.
     return cards.filter((c) => {
       if (statusFilter !== "all" && c.status !== statusFilter) return false;
       if (categoryFilter !== null && c.category !== categoryFilter) return false;
-      if (q && !`${c.brand} ${c.name}`.toLowerCase().includes(q)) return false;
+      if (q && !foldForSearch(`${c.brand} ${c.name}`).includes(q)) return false;
       return true;
     });
   }, [cards, statusFilter, categoryFilter, debouncedQuery]);
@@ -309,6 +308,7 @@ export function Campaigns() {
                       approved={c.approved}
                       applied={c.applied}
                       capacity={c.capacity}
+                      viewers={c.viewers}
                     />
                   )
                 }

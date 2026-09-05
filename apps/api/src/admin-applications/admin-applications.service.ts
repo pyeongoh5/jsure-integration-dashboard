@@ -1643,6 +1643,11 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
       id: row.application.influencer.id,
       name: row.application.influencer.name,
       handle: matchingAccount?.handle ?? "",
+      snsAccounts: row.application.influencer.snsAccounts.map((account) => ({
+        snsType:
+          account.snsType as AdminSettlement["influencer"]["snsAccounts"][number]["snsType"],
+        handle: account.handle,
+      })),
       bankAccount,
     },
     campaign: {

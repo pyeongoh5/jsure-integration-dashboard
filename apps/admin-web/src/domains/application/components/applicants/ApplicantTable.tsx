@@ -3,6 +3,7 @@ import { SUB_TYPE_LABEL } from "@jsure/shared";
 import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
 import {
   ScrollTable,
+  SnsHandleCell,
   SnsProfileLink,
   SubTypeIcon,
   SubTypePill,
@@ -286,28 +287,19 @@ export function ApplicantTable({
                         {applicant.name}
                         {applicant.flagged && <span className={shared.flaggedBadge}>{t("domains.application.applicants.table.flagged")}</span>}
                       </div>
-                      {applicant.handle ? (
-                        <div className={shared.infHandle}>
-                          <SnsProfileLink
-                            subType={applicant.handleSnsType}
-                            handle={applicant.handle}
-                          >
-                            @{applicant.handle}
-                          </SnsProfileLink>
-                        </div>
-                      ) : applicant.representativeSns ? (
-                        <div className={shared.infHandle}>
-                          <SnsProfileLink
-                            subType={applicant.representativeSns.snsType}
-                            handle={applicant.representativeSns.handle}
-                          >
-                            {t("domains.application.applicants.table.representativeSns", {
-                              snsType: SUB_TYPE_LABEL[applicant.representativeSns.snsType],
-                              handle: applicant.representativeSns.handle,
-                            })}
-                          </SnsProfileLink>
-                        </div>
-                      ) : null}
+                      <div className={shared.infHandle}>
+                        <SnsHandleCell
+                          applied={
+                            applicant.handle
+                              ? {
+                                  snsType: applicant.handleSnsType,
+                                  handle: applicant.handle,
+                                }
+                              : null
+                          }
+                          representative={applicant.representativeSns}
+                        />
+                      </div>
                     </div>
                   </div>
                 </td>

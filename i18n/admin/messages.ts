@@ -2263,7 +2263,13 @@ export const adminMessages = {
           ja: "完了処理に失敗しました。",
         },
       },
+      searchPlaceholder: {
+        ko: "인플루언서명 · SNS ID 검색",
+        en: "Search by influencer name or SNS ID",
+        ja: "インフルエンサー名・SNS ID 検索",
+      },
       columns: {
+        snsId: { ko: "SNS ID", en: "SNS ID", ja: "SNS ID" },
         postPublishedAt: { ko: "투고 게시일", en: "Post published", ja: "投稿掲載日" },
         insightSubmittedAt: { ko: "인사이트 제출일", en: "Insights submitted", ja: "インサイト提出日" },
         reward: { ko: "보수", en: "Reward", ja: "報酬" },

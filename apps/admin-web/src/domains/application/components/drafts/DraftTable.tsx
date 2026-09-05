@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import type { AdminTranslationKey } from "@i18n/admin";
 import {
   ScrollTable,
+  SnsHandleCell,
   SnsProfileLink,
   SubTypeIcon,
   SubTypePill,
@@ -9,7 +10,6 @@ import {
 import { Button } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 import { CATEGORY_LABEL_KO } from "../applicants/types";
-import { SUB_TYPE_LABEL } from "@jsure/shared";
 import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
 import {
   DRAFT_STATUS_LABEL,
@@ -261,32 +261,19 @@ export function DraftTable({
                               </span>
                             )}
                           </div>
-                          {draft.influencerHandle ? (
-                            <div className={shared.infHandle}>
-                              <SnsProfileLink
-                                subType={draft.influencerHandleSnsType}
-                                handle={draft.influencerHandle}
-                              >
-                                @{draft.influencerHandle}
-                              </SnsProfileLink>
-                            </div>
-                          ) : draft.representativeSns ? (
-                            <div className={shared.infHandle}>
-                              <SnsProfileLink
-                                subType={draft.representativeSns.snsType}
-                                handle={draft.representativeSns.handle}
-                              >
-                                {t(
-                                  "domains.application.applicants.table.representativeSns",
-                                  {
-                                    snsType:
-                                      SUB_TYPE_LABEL[draft.representativeSns.snsType],
-                                    handle: draft.representativeSns.handle,
-                                  },
-                                )}
-                              </SnsProfileLink>
-                            </div>
-                          ) : null}
+                          <div className={shared.infHandle}>
+                            <SnsHandleCell
+                              applied={
+                                draft.influencerHandle
+                                  ? {
+                                      snsType: draft.influencerHandleSnsType,
+                                      handle: draft.influencerHandle,
+                                    }
+                                  : null
+                              }
+                              representative={draft.representativeSns}
+                            />
+                          </div>
                         </div>
                       </div>
                     </td>

@@ -52,12 +52,16 @@ Railway는 Vercel 주소(`WEB_BASE_URL`)를 알아야 하고, Vercel은 Railway 
 
 해법은 배포 전에 **쓸 도메인을 먼저 정해두는 것**이다. 커스텀 도메인은 우리가 정하는 값이라 배포를 기다릴 필요가 없다. 아래 표를 채우고 시작한다.
 
-| 용도 | 예시 | 실제 사용할 값 |
+| 용도 | 값 | 상태 |
 |---|---|---|
-| 참여자 웹 (Vercel) | `https://jwin.example.com` | ⬜ |
-| J-WIN API (Railway) | `https://api.jwin.example.com` | ⬜ |
-| 어드민 (기존 Vercel) | `https://admin.example.com` | ⬜ (이미 있음) |
-| 대시보드 API (기존 Railway) | `https://api.example.com/api` | ⬜ (이미 있음) |
+| 참여자 웹 (Vercel jwin-web) | `https://jsure-instance.com` | 확정 — 커스텀 도메인 |
+| J-WIN API (Railway jwin-api) | `https://jsure-instance-win-production.up.railway.app` | 확정 — Railway 생성 도메인 |
+| 어드민 (기존 Vercel admin-web) | ⬜ 기존 운영 도메인 | 이미 있음 |
+| 대시보드 API (기존 Railway) | ⬜ 기존 운영 도메인 + `/api` | 이미 있음 |
+
+**J-WIN API 는 Railway 생성 도메인(`*.up.railway.app`)을 그대로 쓴다.** 서비스가 살아 있는 한 유지되고, 재배포로는 바뀌지 않는다. 서비스를 지웠다 다시 만들거나 이름을 바꿀 때만 바뀌는데, 그때 깨지는 것(브랜드 연동 링크·X 콜백·Vercel 환경변수)은 전부 다시 설정하면 복구된다.
+
+**참여자 웹만 커스텀 도메인을 쓰는 이유**는 그 주소가 X 포스트 본문에 박혀 되돌릴 수 없기 때문이다 (§5-3). 나중에 API 에도 커스텀 도메인을 붙이고 싶으면 Railway 에서 추가하고 `API_BASE_URL`·X 콜백·Vercel 두 곳을 고치면 된다.
 
 이 값들을 처음부터 환경변수에 넣으면 §5(Railway) → §6(Vercel) 순서로 진행해도 문제가 없다. `WEB_BASE_URL`은 **형식만 검증하고 실제 접속을 시도하지 않으므로**, 아직 Vercel 배포 전이어도 jwin-api는 정상 기동한다. 나중에 도메인만 연결하면 값이 맞아떨어진다.
 
@@ -151,8 +155,8 @@ X 앱 하나에 콜백 URI를 여러 개 등록할 수 있으므로, **기존 �
 ```
 http://localhost:8080/oauth/brand/callback          ← 개발
 http://localhost:8080/oauth/user/callback           ← 개발
-https://api.jwin.example.com/oauth/brand/callback   ← 운영
-https://api.jwin.example.com/oauth/user/callback    ← 운영
+https://jsure-instance-win-production.up.railway.app/oauth/brand/callback   ← 운영
+https://jsure-instance-win-production.up.railway.app/oauth/user/callback    ← 운영
 ```
 
 **다만 크레딧과 레이트리밋이 공유된다.** 개발 중 실수로 게시 한 번이 나가면 운영 크레딧에서 $0.20이 빠진다. 로컬 `.env`의 `SCHEDULER_ENABLED`는 반드시 `false`로 둔다 — `true`면 자동 게시가 실제로 돈다.
@@ -169,7 +173,7 @@ https://api.jwin.example.com/oauth/user/callback    ← 운영
    |---|---|
    | App permissions | **`Read and write and Direct message`** |
    | Type of App | `Web App, Automated App or Bot` (Confidential client) |
-   | Callback URI | `https://api.jwin.example.com/oauth/brand/callback`<br>`https://api.jwin.example.com/oauth/user/callback`<br>(개발도 같이 쓰면 `http://localhost:8080/...` 2개 추가) |
+   | Callback URI | `https://jsure-instance-win-production.up.railway.app/oauth/brand/callback`<br>`https://jsure-instance-win-production.up.railway.app/oauth/user/callback`<br>(개발도 같이 쓰면 `http://localhost:8080/...` 2개 추가) |
    | Website URL | 유효한 URL 아무거나 (필수 입력) |
 
    App permissions가 낮으면 브랜드가 승인 화면에서 **"You weren't able to give access to the App"** 을 보게 된다.
@@ -218,8 +222,8 @@ https://api.jwin.example.com/oauth/user/callback    ← 운영
 | `PORT` | `8080` | Railway가 자동 주입하기도 한다 |
 | `DATABASE_URL` | Neon **pooled** | §3에서 복사 |
 | `DIRECT_DATABASE_URL` | Neon **direct** | 마이그레이션용 |
-| `API_BASE_URL` | `https://api.jwin.example.com` | **자기 자신의 공개 주소.** OAuth 콜백 URL을 이걸로 조립한다 |
-| `WEB_BASE_URL` | `https://jwin.example.com` | **참여자 웹(jwin-web) 주소.** 아래 설명 참조 |
+| `API_BASE_URL` | `https://jsure-instance-win-production.up.railway.app` | **자기 자신의 공개 주소.** OAuth 콜백 URL을 이걸로 조립한다 |
+| `WEB_BASE_URL` | `https://jsure-instance.com` | **참여자 웹(jwin-web) 주소.** 아래 설명 참조 |
 | `CORS_ORIGIN` | `https://admin.example.com` | **어드민(admin-web) 주소.** 쉼표로 여러 개 가능 |
 | `SESSION_SECRET` | §2의 ② | |
 | `TOKEN_ENCRYPTION_KEY` | §2의 ① | 64자 hex |
@@ -227,6 +231,17 @@ https://api.jwin.example.com/oauth/user/callback    ← 운영
 | `X_CLIENT_ID` | §4에서 복사 | |
 | `X_CLIENT_SECRET` | §4에서 복사 | |
 | `SCHEDULER_ENABLED` | `true` | `false`면 자동 게시가 안 돈다 |
+
+#### `API_BASE_URL` — 서버가 자기 주소를 왜 알아야 하나
+
+서버가 **자기 주소를 남에게 알려줘야 하는** 경우가 있어서다.
+
+1. **OAuth `redirect_uri`** — 브랜드가 X 에서 승인을 누르면 X 가 브라우저를 어디로 돌려보낼지 알아야 한다. 그 주소를 인가 요청에 실어 X 에게 미리 알려주는데, **절대 URL 이어야 한다.** X 가 브라우저를 보내는 주체라 상대 경로로는 안 된다
+2. **브랜드에 전달하는 연동 링크** — 어드민 응답에 `{API_BASE_URL}/oauth/brand/start?accountId=...` 형태로 담긴다
+
+요청의 `Host` 헤더로 유추할 수도 있지만 OAuth 에서는 위험하다. `redirect_uri` 는 X 콘솔에 등록한 값과 **정확히 일치**해야 하는데, 프록시를 거치면 내부 주소로 바뀔 수 있고 `Host` 는 클라이언트가 조작할 수 있어 인가 코드를 빼돌리는 통로가 된다. 그래서 명시적으로 설정하고 콘솔 등록값과 눈으로 맞춘다.
+
+정리하면 **`WEB_BASE_URL` 은 "브라우저를 어디로 보낼까", `API_BASE_URL` 은 "X 가 나를 어디로 부를까"** 다. 둘 다 서버가 스스로 알 수 없다.
 
 #### `WEB_BASE_URL`이 왜 중요한가
 
@@ -237,6 +252,8 @@ https://api.jwin.example.com/oauth/user/callback    ← 운영
 3. **CORS 허용** — 코드가 항상 허용 목록에 넣는다. `CORS_ORIGIN`에 다시 적지 않아도 된다
 
 그래서 **Vercel 커스텀 도메인을 연결한 뒤 그 값으로 반드시 갱신**한다. `xxx.vercel.app` 임시 도메인으로 캠페인을 시작하면 그 URL이 포스트에 박힌다.
+
+> 끝 슬래시는 코드가 자동으로 제거하므로(`config.ts`) `https://jsure-instance.com/` 로 넣어도 링크가 `//c/slug` 로 깨지지 않는다. `https://` 는 반드시 포함해야 한다 — 형식 검증에 걸려 서버가 기동하지 않는다.
 
 #### `CORS_ORIGIN`
 
@@ -249,12 +266,12 @@ https://api.jwin.example.com/oauth/user/callback    ← 운영
 3. 헬스체크
 
    ```bash
-   curl https://api.jwin.example.com/health
+   curl https://jsure-instance-win-production.up.railway.app/health
    ```
 
-4. **커스텀 도메인 연결** → `API_BASE_URL`을 그 값으로 갱신 → X Developer Console의 콜백 URI도 같은 도메인으로 맞춘다
+4. **도메인 확인.** 현재 구성은 Railway 생성 도메인(`https://jsure-instance-win-production.up.railway.app`)을 그대로 쓴다. Settings → Networking 에서 실제 값이 §1-1 표와 같은지 확인하고, 다르면 `API_BASE_URL`·X 콜백·Vercel 두 곳을 실제 값으로 맞춘다.
 
-   도메인을 붙여두면 나중에 서비스를 옮겨도 브랜드에 나간 연동 링크가 깨지지 않는다.
+   나중에 커스텀 도메인을 붙일 때도 같은 네 곳을 고치면 된다.
 
 5. `TZ`는 설정하든 안 하든 무관하다. 스케줄러가 `timezone: 'Asia/Tokyo'`를 명시한다 (2026-09-05 수정). 로그 시각이 헷갈리지 않게 굳이 바꾸지 않기를 권한다
 
@@ -268,9 +285,11 @@ https://api.jwin.example.com/oauth/user/callback    ← 운영
 2. **Root Directory = `apps/jwin-web`**
 3. 환경변수
 
-   | 변수 | 값 |
-   |---|---|
-   | `NEXT_PUBLIC_API_BASE_URL` | `https://api.jwin.example.com` (Railway 도메인) |
+   | 변수 | 값 | 타입 |
+   |---|---|---|
+   | `NEXT_PUBLIC_API_BASE_URL` | `https://jsure-instance-win-production.up.railway.app` | **Config** |
+
+   > Vercel 이 `NEXT_PUBLIC_` 접두사를 보고 *"Remove the public framework prefix to keep this value private"* 경고를 낸다. 에러가 아니라 **정말 공개해도 되는 값인지 묻는 것**이다. 이 주소는 참여자 브라우저가 직접 호출해야 해서 애초에 감출 수 없으므로, **이름은 그대로 두고 타입만 `Config`(Secret 아님)로 지정**한다. 접두사를 떼면 Next.js 가 브라우저 번들에 넣지 않아 API 호출이 전부 실패한다.
 
 4. **커스텀 도메인 연결**
 
@@ -284,9 +303,11 @@ https://api.jwin.example.com/oauth/user/callback    ← 운영
 
 **새로 배포하지 않는다.** 이미 떠 있는 대시보드 Vercel 프로젝트에 환경변수 하나만 추가한다.
 
-| 변수 | 값 |
-|---|---|
-| `VITE_JWIN_API_BASE_URL` | `https://api.jwin.example.com` |
+| 변수 | 값 | 타입 |
+|---|---|---|
+| `VITE_JWIN_API_BASE_URL` | `https://jsure-instance-win-production.up.railway.app` | **Config** |
+
+Vite 도 빌드 타임에 번들로 넣는 공개 값이라 Secret 이 아니다. **Vercel 두 프로젝트에는 비밀이 하나도 들어가지 않는다** — 시크릿은 전부 Railway 쪽이다.
 
 비워두면 로컬 개발용 프록시(`/jwin-api` → `localhost:8080`)를 쓰기 때문에 운영에서 동작하지 않는다.
 
@@ -335,7 +356,7 @@ J-WIN 소재 이미지는 대시보드의 R2 업로드를 재사용한다 (D-12)
 
 ## 9. 배포 직후 점검
 
-- [ ] `curl https://api.jwin.example.com/health` → 200
+- [ ] `curl https://jsure-instance-win-production.up.railway.app/health` → 200
 - [ ] Railway 배포 로그에 `prisma migrate deploy` 성공
 - [ ] replica = 1
 - [ ] 대시보드에 로그인한 상태로 admin-web의 `J-WIN → 캠페인 관리` 진입 → 목록이 뜨면 **`JWT_SECRET`이 양쪽 일치**한다는 뜻. 401이면 두 서비스 값을 다시 확인

@@ -1,5 +1,5 @@
-export * from './adminApi';
-export * from './campaignReadiness';
+export * from './adminApi.js';
+export * from './campaignReadiness.js';
 
 /** JST(UTC+9) 기준 "YYYY-MM-DD" 문자열. 응모/포스트 매칭 키. */
 export function dateJst(date: Date = new Date()): string {
@@ -42,6 +42,10 @@ export interface CampaignLp {
   /** 당일 캠페인 포스트 URL (리포스트 유도용). 미게시 시 null */
   todayPostUrl: string | null;
   prizeSummary: string;
+  /** 트윗 링크 카드용 이미지 — LP 의 og:image 로 쓴다 */
+  cardImageUrl: string | null;
+  /** 이벤트 규칙 가이드 URL */
+  rulesUrl: string | null;
   prUrl: string | null;
   winMediaUrl: string | null;
   loseMediaUrl: string | null;

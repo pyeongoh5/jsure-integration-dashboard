@@ -2,9 +2,11 @@ import { jwinApi } from "@/lib/api";
 import {
   AdminCampaignListSchema,
   AdminCampaignDetailSchema,
+  AdminCampaignDeleteImpactSchema,
   AdminBrandAccountListSchema,
   AdminBrandAccountSchema,
   AdminPrizeListSchema,
+  AdminPrizeCodeListSchema,
   AdminPostTemplateListSchema,
   AdminWinnerListSchema,
   AdminWinnerExportSchema,
@@ -14,11 +16,13 @@ import {
   AdminWinnerSchema,
   type AdminCampaignList,
   type AdminCampaignDetail,
+  type AdminCampaignDeleteImpact,
   type AdminCampaignCreate,
   type AdminCampaignPatch,
   type AdminBrandAccountList,
   type AdminBrandAccount,
   type AdminPrizeList,
+  type AdminPrizeCode,
   type AdminPostTemplateList,
   type AdminWinnerList,
   type AdminWinnerFilter,
@@ -29,6 +33,7 @@ import {
   type AdminPrizePatch,
   type AdminPrizeCreate,
   type AdminPostTemplateCreate,
+  type AdminPostTemplatePatch,
   type AdminWinner,
   type AdminFulfillmentPatch,
 } from "./types";
@@ -122,6 +127,26 @@ export async function updatePrize(prizeId: string, body: AdminPrizePatch): Promi
   return AdminPrizeSchema.parse(response.data);
 }
 
+/** 삭제 시 함께 사라지는 데이터 건수 — 확인 다이얼로그가 보여준다. */
+export async function fetchCampaignDeleteImpact(
+  campaignId: string,
+): Promise<AdminCampaignDeleteImpact> {
+  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/delete-impact`);
+  return AdminCampaignDeleteImpactSchema.parse(response.data);
+}
+
+export async function deleteCampaign(campaignId: string): Promise<void> {
+  await jwinApi.delete(`/admin/campaigns/${campaignId}`);
+}
+
+/** 포스트 정정. 응답이 Prisma 모델이라 파싱하지 않는다 — 호출부가 목록을 다시 불러온다. */
+export async function updatePostTemplate(
+  templateId: string,
+  body: AdminPostTemplatePatch,
+): Promise<void> {
+  await jwinApi.patch(`/admin/post-templates/${templateId}`, body);
+}
+
 export async function deletePostTemplate(templateId: string): Promise<void> {
   await jwinApi.delete(`/admin/post-templates/${templateId}`);
 }
@@ -143,6 +168,12 @@ export async function createBrandAccount(label: string): Promise<AdminBrandAccou
  */
 export async function createPrize(body: AdminPrizeCreate): Promise<void> {
   await jwinApi.post(`/admin/prizes`, body);
+}
+
+/** 등록된 기프트코드 목록 — 서버가 원문을 복호화해 내려준다(열람은 감사 로그에 남는다). */
+export async function fetchPrizeCodes(prizeId: string): Promise<AdminPrizeCode[]> {
+  const response = await jwinApi.get(`/admin/prizes/${prizeId}/codes`);
+  return AdminPrizeCodeListSchema.parse(response.data).codes;
 }
 
 /** CODE 재고 보충. 본문은 붙여넣기 원문 그대로(jwin-api 가 text/plain 파서를 등록해 둔다). */

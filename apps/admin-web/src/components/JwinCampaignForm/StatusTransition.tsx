@@ -21,6 +21,10 @@ type Props = {
   onChange: (status: JwinCampaignStatus) => void;
 };
 
+/**
+ * 시작 조건 체크리스트 본문. 헤더(상태 배지 줄)의 토글로 펼치고 접는다 —
+ * 접었을 때는 헤더 한 줄만 남는다.
+ */
 function ChecklistView({ checks }: { checks: ActivationCheck[] }) {
   const t = useT();
   return (
@@ -50,6 +54,10 @@ function ChecklistView({ checks }: { checks: ActivationCheck[] }) {
  */
 export function StatusTransition({ detail, checks, changing, checksStale, error, onChange }: Props) {
   const t = useT();
+  // 시작 전에는 펼쳐 두고, 이미 시작한 캠페인에서는 접어 둔다.
+  const [checklistOpen, setChecklistOpen] = useState(detail.status === "SETUP");
+  const passedCount = checks.filter((check) => check.ok).length;
+  const allPassed = passedCount === checks.length;
   const [pauseOpen, setPauseOpen] = useState(false);
   const [resumeOpen, setResumeOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -61,64 +69,82 @@ export function StatusTransition({ detail, checks, changing, checksStale, error,
 
   return (
     <div className={styles.transition}>
-      <div className={styles.transitionButtons}>
+      <div className={styles.transitionHeader}>
         <JwinStatusBadge status={detail.status} />
 
-        {detail.status === "SETUP" && (
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => onChange("ACTIVE")}
-            disabled={changing || checksStale || !canActivate(checks)}
-          >
-            {changing ? t("jwin.status.changing") : t("jwin.status.start")}
-          </Button>
-        )}
+        <button
+          type="button"
+          className={styles.checklistToggle}
+          aria-expanded={checklistOpen}
+          onClick={() => setChecklistOpen((current) => !current)}
+        >
+          <i
+            className={`fa-solid fa-chevron-${checklistOpen ? "up" : "down"}`}
+            aria-hidden="true"
+          />
+          <span>{t("jwin.status.checklistTitle")}</span>
+          <span className={allPassed ? styles.checkOk : styles.checkFail}>
+            {t("jwin.status.checklistCount", { passed: passedCount, total: checks.length })}
+          </span>
+        </button>
 
-        {detail.status === "ACTIVE" && (
-          <>
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={() => setPauseOpen(true)}
-              disabled={changing}
-            >
-              {t("jwin.status.pause")}
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={() => setEndOpen(true)}
-              disabled={changing}
-            >
-              {t("jwin.status.end")}
-            </Button>
-          </>
-        )}
-
-        {detail.status === "PAUSED" && (
-          <>
+        <div className={styles.transitionButtons}>
+          {detail.status === "SETUP" && (
             <Button
               variant="primary"
               size="md"
-              onClick={() => setResumeOpen(true)}
-              disabled={changing}
+              onClick={() => onChange("ACTIVE")}
+              disabled={changing || checksStale || !canActivate(checks)}
             >
-              {t("jwin.status.resume")}
+              {changing ? t("jwin.status.changing") : t("jwin.status.start")}
             </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={() => setEndOpen(true)}
-              disabled={changing}
-            >
-              {t("jwin.status.end")}
-            </Button>
-          </>
-        )}
+          )}
+
+          {detail.status === "ACTIVE" && (
+            <>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setPauseOpen(true)}
+                disabled={changing}
+              >
+                {t("jwin.status.pause")}
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setEndOpen(true)}
+                disabled={changing}
+              >
+                {t("jwin.status.end")}
+              </Button>
+            </>
+          )}
+
+          {detail.status === "PAUSED" && (
+            <>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => setResumeOpen(true)}
+                disabled={changing}
+              >
+                {t("jwin.status.resume")}
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setEndOpen(true)}
+                disabled={changing}
+              >
+                {t("jwin.status.end")}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      {detail.status === "SETUP" && <ChecklistView checks={checks} />}
+      {checklistOpen && <ChecklistView checks={checks} />}
       {error && <span className={styles.errorText}>{error}</span>}
 
       <PauseCampaignDialog

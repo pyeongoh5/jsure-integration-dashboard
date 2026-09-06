@@ -70,6 +70,8 @@ export async function publicRoutes(app: FastifyInstance) {
           ? `https://x.com/${brandXUsername}/status/${todayPost.xPostId}`
           : null,
       prizeSummary: campaign.prizes.map((prize) => `${prize.name}×${prize.totalQty}`).join(' / '),
+      cardImageUrl: campaign.cardImageUrl,
+      rulesUrl: campaign.rulesUrl,
       prUrl: campaign.prUrl,
       winMediaUrl: campaign.winMediaUrl,
       loseMediaUrl: campaign.loseMediaUrl,

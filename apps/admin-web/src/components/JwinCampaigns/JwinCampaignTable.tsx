@@ -1,5 +1,6 @@
 import { JwinStatusBadge } from "@/components/composites/JwinStatusBadge";
 import { ScrollTable } from "@/components/composites";
+import { IconButton } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 import type { JwinCampaignRow } from "./jwinCampaignTransform";
 import styles from "./JwinCampaignTable.module.css";
@@ -7,9 +8,10 @@ import styles from "./JwinCampaignTable.module.css";
 type Props = {
   rows: JwinCampaignRow[];
   onRowClick: (id: string) => void;
+  onDelete: (row: JwinCampaignRow) => void;
 };
 
-export function JwinCampaignTable({ rows, onRowClick }: Props) {
+export function JwinCampaignTable({ rows, onRowClick, onDelete }: Props) {
   const t = useT();
 
   if (rows.length === 0) {
@@ -28,6 +30,7 @@ export function JwinCampaignTable({ rows, onRowClick }: Props) {
             <th>{t("jwin.campaign.columns.account")}</th>
             <th className={styles.num}>{t("jwin.campaign.columns.entries")}</th>
             <th>{t("jwin.campaign.columns.warnings")}</th>
+            <th className={styles.num}>{t("jwin.campaign.columns.actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -56,6 +59,20 @@ export function JwinCampaignTable({ rows, onRowClick }: Props) {
                     ))}
                   </div>
                 )}
+              </td>
+              <td className={styles.num}>
+                {/* 행 클릭(편집 이동)과 겹치지 않도록 이벤트 전파를 끊는다. */}
+                <IconButton
+                  variant="ghost"
+                  size="sm"
+                  aria-label={t("jwin.campaign.delete")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDelete(row);
+                  }}
+                >
+                  <i className="fa-solid fa-trash" aria-hidden="true" />
+                </IconButton>
               </td>
             </tr>
           ))}

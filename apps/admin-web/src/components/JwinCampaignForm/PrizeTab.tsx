@@ -4,10 +4,13 @@ import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
 import type { AdminPrize, AdminPrizeCreate, AdminPrizePatch } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
-import { isProbabilityOverflow, probabilitySum } from "./prizeProbability";
+import {
+  formatProbabilityPercent,
+  isProbabilityOverflow,
+  probabilitySum,
+} from "./prizeProbability";
 import { PrizeAddDialog } from "./PrizeAddDialog";
 import { PrizeEditDialog } from "./PrizeEditDialog";
-import { PrizeCodeAppendDialog } from "./PrizeCodeAppendDialog";
 import styles from "./JwinCampaignTabs.module.css";
 
 type Props = {
@@ -28,7 +31,6 @@ export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCo
   const t = useT();
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<AdminPrize | null>(null);
-  const [appending, setAppending] = useState<AdminPrize | null>(null);
 
   return (
     <div className={styles.tab}>
@@ -41,7 +43,9 @@ export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCo
 
       {isProbabilityOverflow(prizes) && (
         <div className={styles.warning}>
-          {t("jwin.prize.probabilityOverflow", { sum: probabilitySum(prizes).toFixed(3) })}
+          {t("jwin.prize.probabilityOverflow", {
+            sum: formatProbabilityPercent(probabilitySum(prizes)),
+          })}
         </div>
       )}
 
@@ -63,7 +67,7 @@ export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCo
                 <th className={styles.num}>{t("jwin.prize.columns.quantity")}</th>
                 <th className={styles.num}>{t("jwin.prize.columns.probability")}</th>
                 <th className={styles.num}>{t("jwin.prize.columns.codeStock")}</th>
-                <th />
+                <th className={styles.actionsHead}>{t("jwin.prize.columns.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -75,20 +79,15 @@ export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCo
                   <td className={styles.num}>
                     {prize.remainingQty} / {prize.totalQty}
                   </td>
-                  <td className={styles.num}>{prize.winProbability}</td>
+                  <td className={styles.num}>{formatProbabilityPercent(prize.winProbability)}</td>
                   <td className={styles.num}>
                     {prize.type === "CODE" ? prize.availableCodeCount : t("jwin.common.dash")}
                   </td>
-                  <td>
+                  <td className={styles.actionsCell}>
                     <div className={styles.rowActions}>
                       <Button variant="secondary" size="sm" onClick={() => setEditing(prize)}>
                         {t("jwin.prize.action.edit")}
                       </Button>
-                      {prize.type === "CODE" && (
-                        <Button variant="secondary" size="sm" onClick={() => setAppending(prize)}>
-                          {t("jwin.prize.action.appendCodes")}
-                        </Button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -99,10 +98,10 @@ export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCo
       )}
 
       <PrizeAddDialog open={addOpen} onClose={() => setAddOpen(false)} onAdd={onAdd} />
-      <PrizeEditDialog prize={editing} onClose={() => setEditing(null)} onEdit={onEdit} />
-      <PrizeCodeAppendDialog
-        prize={appending}
-        onClose={() => setAppending(null)}
+      <PrizeEditDialog
+        prize={editing}
+        onClose={() => setEditing(null)}
+        onEdit={onEdit}
         onAppendCodes={onAppendCodes}
       />
     </div>

@@ -112,6 +112,49 @@ export const adminMessages = {
         account: { ko: "연동 계정", en: "Linked account", ja: "連携アカウント" },
         entries: { ko: "응모", en: "Entries", ja: "応募" },
         warnings: { ko: "경고", en: "Warnings", ja: "警告" },
+        actions: { ko: "관리", en: "Actions", ja: "操作" },
+      },
+      delete: { ko: "삭제", en: "Delete", ja: "削除" },
+      deleteDialog: {
+        title: {
+          ko: "{brand} 캠페인을 삭제할까요?",
+          en: "Delete the {brand} campaign?",
+          ja: "{brand} キャンペーンを削除しますか？",
+        },
+        clean: {
+          ko: "이 캠페인과 등록된 경품·포스트가 함께 삭제됩니다. 되돌릴 수 없습니다.",
+          en: "The campaign and its prizes and posts will be deleted. This cannot be undone.",
+          ja: "このキャンペーンと登録済みの景品・投稿が削除されます。元に戻せません。",
+        },
+        impactIntro: {
+          ko: "아래 데이터가 함께 영구 삭제됩니다. 되돌릴 수 없습니다.",
+          en: "The following data will be permanently deleted. This cannot be undone.",
+          ja: "以下のデータも完全に削除されます。元に戻せません。",
+        },
+        entries: { ko: "응모 {count}건", en: "{count} entries", ja: "応募 {count}件" },
+        winners: { ko: "당첨자 {count}명", en: "{count} winners", ja: "当選者 {count}名" },
+        posted: {
+          ko: "게시된 포스트 {count}건",
+          en: "{count} published posts",
+          ja: "投稿済み {count}件",
+        },
+        prizes: { ko: "경품 {count}건", en: "{count} prizes", ja: "景品 {count}件" },
+        templates: { ko: "포스트 {count}건", en: "{count} posts", ja: "投稿 {count}件" },
+        acknowledge: {
+          ko: "위 데이터가 모두 삭제되는 것을 확인했습니다",
+          en: "I understand all of the above will be deleted",
+          ja: "上記データがすべて削除されることを確認しました",
+        },
+        impactFailed: {
+          ko: "삭제 영향을 확인할 수 없습니다.",
+          en: "Could not check what would be deleted.",
+          ja: "削除の影響を確認できませんでした。",
+        },
+        failed: {
+          ko: "캠페인을 삭제할 수 없습니다.",
+          en: "Could not delete the campaign.",
+          ja: "キャンペーンを削除できませんでした。",
+        },
       },
       warning: {
         reconnect: { ko: "브랜드 재연동 필요", en: "Reconnect required", ja: "再連携が必要" },
@@ -126,7 +169,7 @@ export const adminMessages = {
         basic: { ko: "기본", en: "Basic", ja: "基本" },
         connect: { ko: "연동", en: "Account", ja: "連携" },
         prize: { ko: "경품", en: "Prizes", ja: "景品" },
-        template: { ko: "소재", en: "Post content", ja: "投稿素材" },
+        template: { ko: "포스팅 설정", en: "Post settings", ja: "投稿設定" },
         result: { ko: "결과화면", en: "Result screen", ja: "結果画面" },
         stats: { ko: "통계", en: "Stats", ja: "統計" },
       },
@@ -285,6 +328,16 @@ export const adminMessages = {
       paused: { ko: "일시중지", en: "Paused", ja: "一時停止" },
       ended: { ko: "종료", en: "Ended", ja: "終了" },
       start: { ko: "캠페인 시작", en: "Start campaign", ja: "キャンペーン開始" },
+      checklistTitle: {
+        ko: "캠페인 시작 조건",
+        en: "Requirements to start",
+        ja: "開始条件",
+      },
+      checklistCount: {
+        ko: "{passed}/{total} 충족",
+        en: "{passed}/{total} met",
+        ja: "{passed}/{total} 達成",
+      },
       changing: { ko: "전환 중…", en: "Switching…", ja: "切り替え中…" },
       changeFailed: {
         ko: "상태 전환에 실패했습니다.",
@@ -338,9 +391,9 @@ export const adminMessages = {
         ja: "景品タブで景品を1件以上登録してください。",
       },
       coverage: {
-        ko: "기간 전체를 덮는 소재",
-        en: "Post content covering the whole period",
-        ja: "期間全体をカバーする素材",
+        ko: "기간 전체를 덮는 포스트",
+        en: "Posts covering the whole period",
+        ja: "期間全体をカバーする投稿",
       },
       coverageNoPostingDates: {
         ko: "게시 예정일이 없습니다. 기본 탭에서 캠페인 기간을 하루 이상으로 잡으세요.",
@@ -348,9 +401,9 @@ export const adminMessages = {
         ja: "投稿予定日がありません。基本タブでキャンペーン期間を1日以上に設定してください。",
       },
       coverageGaps: {
-        ko: "소재가 없는 날: {gaps}",
-        en: "Days without post content: {gaps}",
-        ja: "素材のない日: {gaps}",
+        ko: "포스트가 없는 날: {gaps}",
+        en: "Days without a post: {gaps}",
+        ja: "投稿のない日: {gaps}",
       },
       dmCode: { ko: "당첨 DM에 {{CODE}}", en: "{{CODE}} in the win DM", ja: "当選DMに {{CODE}}" },
       dmCodeMissing: {
@@ -363,6 +416,11 @@ export const adminMessages = {
       select: { ko: "파일 선택", en: "Choose file", ja: "ファイルを選択" },
       uploading: { ko: "업로드 중…", en: "Uploading…", ja: "アップロード中…" },
       remove: { ko: "제거", en: "Remove", ja: "削除" },
+      maxReached: {
+        ko: "최대 {max}장까지 첨부할 수 있습니다.",
+        en: "Up to {max} files can be attached.",
+        ja: "最大{max}枚まで添付できます。",
+      },
       hint: {
         ko: "PNG·JPEG·WebP·MP4 / 100MB 이하",
         en: "PNG, JPEG, WebP or MP4 / up to 100MB",
@@ -407,9 +465,9 @@ export const adminMessages = {
         ja: "景品一覧を読み込めませんでした。",
       },
       probabilityOverflow: {
-        ko: "확률 합계가 {sum}로 1을 넘습니다. 티어 순서대로 판정하므로 동작은 하지만, 뒤쪽 티어 경품은 의도한 확률보다 적게 나갑니다.",
-        en: "Probabilities add up to {sum}, over 1. Draws still work because tiers are evaluated in order, but lower tiers will win less often than intended.",
-        ja: "確率の合計が {sum} で1を超えています。ティア順に判定するため動作はしますが、後ろのティアの景品は想定より当たりにくくなります。",
+        ko: "확률 합계가 {sum}로 100%를 넘습니다. 티어 순서대로 판정하므로 동작은 하지만, 뒤쪽 티어 경품은 의도한 확률보다 적게 나갑니다.",
+        en: "Probabilities add up to {sum}, over 100%. Draws still work because tiers are evaluated in order, but lower tiers will win less often than intended.",
+        ja: "確率の合計が {sum} で100%を超えています。ティア順に判定するため動作はしますが、後ろのティアの景品は想定より当たりにくくなります。",
       },
       columns: {
         name: { ko: "이름", en: "Name", ja: "名前" },
@@ -418,6 +476,7 @@ export const adminMessages = {
         quantity: { ko: "수량 (잔여/전체)", en: "Qty (left/total)", ja: "数量（残り/全体）" },
         probability: { ko: "확률", en: "Probability", ja: "確率" },
         codeStock: { ko: "코드 재고", en: "Code stock", ja: "コード在庫" },
+        actions: { ko: "관리", en: "Actions", ja: "操作" },
       },
       type: {
         physical: { ko: "현물", en: "Physical", ja: "現物" },
@@ -445,6 +504,27 @@ export const adminMessages = {
           en: "Gift codes to add",
           ja: "追加するギフトコード",
         },
+        existingCodes: {
+          ko: "등록된 기프트코드",
+          en: "Registered gift codes",
+          ja: "登録済みギフトコード",
+        },
+      },
+      codeStatus: {
+        available: { ko: "미사용", en: "Available", ja: "未使用" },
+        assigned: { ko: "배정됨", en: "Assigned", ja: "割当済み" },
+        sent: { ko: "발송됨", en: "Sent", ja: "送信済み" },
+        revoked: { ko: "회수됨", en: "Revoked", ja: "回収済み" },
+      },
+      codesEmpty: {
+        ko: "등록된 코드가 없습니다.",
+        en: "No codes registered yet.",
+        ja: "登録されたコードがありません。",
+      },
+      codesLoadFailed: {
+        ko: "코드 목록을 불러올 수 없습니다.",
+        en: "Could not load the codes.",
+        ja: "コード一覧を読み込めませんでした。",
       },
       placeholder: {
         name: {
@@ -474,6 +554,11 @@ export const adminMessages = {
           ko: "입력 {count}건 — 등록한 만큼 수량과 잔여가 함께 늘어납니다.",
           en: "{count} entered — quantity and remaining stock both increase by this amount.",
           ja: "入力 {count}件 — 登録した分だけ数量と残数が増えます。",
+        },
+        codesPlaintext: {
+          ko: "코드 원문입니다. 열람 기록이 감사 로그에 남습니다.",
+          en: "These are the raw codes. Viewing them is recorded in the audit log.",
+          ja: "コードの原文です。閲覧は監査ログに記録されます。",
         },
         codeQtyLocked: {
           ko: "기프트코드 경품의 수량은 코드를 추가 등록해야 늘어납니다.",
@@ -579,22 +664,41 @@ export const adminMessages = {
       },
     },
     postTemplate: {
-      title: { ko: "소재", en: "Post content", ja: "投稿素材" },
-      add: { ko: "소재 추가", en: "Add content", ja: "素材を追加" },
+      title: { ko: "포스팅 설정", en: "Post settings", ja: "投稿設定" },
+      add: { ko: "포스트 추가", en: "Add post", ja: "投稿を追加" },
+      edit: { ko: "수정", en: "Edit", ja: "修正" },
+      settingsTitle: {
+        ko: "포스트 공통 설정",
+        en: "Shared post settings",
+        ja: "投稿の共通設定",
+      },
+      cardImage: { ko: "링크 카드 이미지", en: "Link card image", ja: "リンクカード画像" },
+      cardImageHint: {
+        ko: "미디어를 첨부하지 않은 포스트에서 이 이미지로 링크 카드가 만들어집니다. 카드 이미지를 누르면 응모 페이지가 열립니다(첨부 이미지는 뷰어만 열립니다).",
+        en: "Posts without attached media show a link card built from this image. Tapping the card opens the entry page — attached photos only open the viewer.",
+        ja: "メディアを添付しない投稿は、この画像でリンクカードが作られます。カード画像をタップすると応募ページが開きます（添付画像はビューアが開くだけです）。",
+      },
+      rulesUrl: { ko: "이벤트 규칙 링크", en: "Rules link", ja: "応募規約リンク" },
+      rulesUrlHint: {
+        ko: "포스트 본문에 텍스트 링크로 함께 나갑니다. 본문에 {{LP_URL}} 을 직접 넣은 경우에는 규칙 링크가 마지막 URL 이 되어 카드가 규칙 페이지로 잡힐 수 있습니다.",
+        en: "Added to the post body as a text link. If the body places {{LP_URL}} itself, the rules link becomes the last URL and the card may point at the rules page instead.",
+        ja: "投稿本文にテキストリンクとして追加されます。本文に {{LP_URL}} を直接置いた場合は規約リンクが最後のURLになり、カードが規約ページになることがあります。",
+      },
+      editTitle: { ko: "포스트 수정", en: "Edit post", ja: "投稿を修正" },
       empty: {
-        ko: "등록된 소재가 없습니다. 소재가 없으면 매일 게시가 통째로 건너뜁니다.",
-        en: "No post content yet. Without it every daily post is skipped.",
-        ja: "登録された素材がありません。素材がないと毎日の投稿がすべてスキップされます。",
+        ko: "등록된 포스트가 없습니다. 포스트가 없으면 매일 게시가 통째로 건너뜁니다.",
+        en: "No posts yet. Without one every daily post is skipped.",
+        ja: "登録された投稿がありません。投稿がないと毎日の投稿がすべてスキップされます。",
       },
       loadFailed: {
-        ko: "소재 목록을 불러올 수 없습니다.",
-        en: "Could not load post content.",
-        ja: "素材一覧を読み込めませんでした。",
+        ko: "포스트 목록을 불러올 수 없습니다.",
+        en: "Could not load posts.",
+        ja: "投稿一覧を読み込めませんでした。",
       },
       coverageWarning: {
-        ko: "⚠ 소재가 없는 날: {gaps} (이 날은 게시가 건너뜁니다)",
-        en: "⚠ Days without post content: {gaps} (posting is skipped on these days)",
-        ja: "⚠ 素材のない日: {gaps}（この日は投稿がスキップされます）",
+        ko: "⚠ 포스트가 없는 날: {gaps} (이 날은 게시가 건너뜁니다)",
+        en: "⚠ Days without a post: {gaps} (posting is skipped on these days)",
+        ja: "⚠ 投稿のない日: {gaps}（この日は投稿がスキップされます）",
       },
       columns: {
         label: { ko: "이름", en: "Name", ja: "名前" },
@@ -603,13 +707,14 @@ export const adminMessages = {
         media: { ko: "미디어", en: "Media", ja: "メディア" },
       },
       mediaPresent: { ko: "있음", en: "Yes", ja: "あり" },
+      mediaCount: { ko: "{count}장", en: "{count}", ja: "{count}枚" },
       deleteBlocked: {
-        ko: "이미 게시에 사용된 소재는 삭제할 수 없습니다",
-        en: "Content already used in a post cannot be deleted",
-        ja: "既に投稿に使用された素材は削除できません",
+        ko: "이미 게시에 사용된 포스트는 삭제할 수 없습니다",
+        en: "A post already used for publishing cannot be deleted",
+        ja: "既に投稿に使用された投稿は削除できません",
       },
       field: {
-        label: { ko: "소재 이름", en: "Content name", ja: "素材名" },
+        label: { ko: "포스트 이름", en: "Post name", ja: "投稿名" },
         body: { ko: "본문", en: "Body", ja: "本文" },
         activeFrom: { ko: "유효 시작 (JST)", en: "Active from (JST)", ja: "有効開始 (JST)" },
         activeTo: { ko: "유효 종료 (JST)", en: "Active until (JST)", ja: "有効終了 (JST)" },
@@ -633,6 +738,11 @@ export const adminMessages = {
           en: "The body has no {{LP_URL}}. The entry link will be appended at the end automatically.",
           ja: "本文に {{LP_URL}} がありません。応募リンクは本文末尾に自動で追加されます。",
         },
+        editUsed: {
+          ko: "이미 게시에 사용된 포스트입니다. 수정해도 이미 나간 트윗은 바뀌지 않고, 앞으로의 게시부터 반영됩니다.",
+          en: "This post has already been published. Editing does not change tweets already sent — it applies from the next post onward.",
+          ja: "すでに投稿に使用された内容です。修正しても投稿済みのツイートは変わらず、次回の投稿から反映されます。",
+        },
         materializeTime: {
           ko: "게시 여부는 매일 00:05 JST 시점에 판정합니다. 시작을 그날 낮으로 잡으면 그날은 게시되지 않습니다.",
           en: "Each day's post is decided at 00:05 JST. If the start is set to midday, that day is skipped.",
@@ -641,9 +751,9 @@ export const adminMessages = {
       },
       error: {
         labelRequired: {
-          ko: "소재 이름을 입력하세요.",
-          en: "Enter a content name.",
-          ja: "素材名を入力してください。",
+          ko: "포스트 이름을 입력하세요.",
+          en: "Enter a post name.",
+          ja: "投稿名を入力してください。",
         },
         bodyRequired: { ko: "본문을 입력하세요.", en: "Enter a body.", ja: "本文を入力してください。" },
         bodyTooLong: {
@@ -661,15 +771,20 @@ export const adminMessages = {
           en: "The end must come after the start.",
           ja: "終了日時は開始日時より後にしてください。",
         },
+        editFailed: {
+          ko: "포스트 수정에 실패했습니다.",
+          en: "Could not update the post.",
+          ja: "投稿の修正に失敗しました。",
+        },
         addFailed: {
-          ko: "소재 등록에 실패했습니다.",
-          en: "Could not register the content.",
-          ja: "素材の登録に失敗しました。",
+          ko: "포스트 등록에 실패했습니다.",
+          en: "Could not register the post.",
+          ja: "投稿の登録に失敗しました。",
         },
         deleteFailed: {
-          ko: "소재 삭제에 실패했습니다.",
-          en: "Could not delete the content.",
-          ja: "素材の削除に失敗しました。",
+          ko: "포스트 삭제에 실패했습니다.",
+          en: "Could not delete the post.",
+          ja: "投稿の削除に失敗しました。",
         },
       },
     },

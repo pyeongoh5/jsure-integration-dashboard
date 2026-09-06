@@ -39,6 +39,8 @@ export function toCampaignDetail(
     endsAt: Date;
     dailyPostTime: string;
     dailyWinCap: number | null;
+    cardImageUrl: string | null;
+    rulesUrl: string | null;
     prUrl: string | null;
     winMediaUrl: string | null;
     loseMediaUrl: string | null;
@@ -56,6 +58,8 @@ export function toCampaignDetail(
     endsAt: campaign.endsAt.toISOString(),
     dailyPostTime: campaign.dailyPostTime,
     dailyWinCap: campaign.dailyWinCap,
+    cardImageUrl: campaign.cardImageUrl,
+    rulesUrl: campaign.rulesUrl,
     prUrl: campaign.prUrl,
     winMediaUrl: campaign.winMediaUrl,
     loseMediaUrl: campaign.loseMediaUrl,
@@ -162,6 +166,7 @@ export function toPostTemplate(
     label: string;
     bodyText: string;
     mediaUrl: string | null;
+    mediaUrls: string[];
     activeFrom: Date;
     activeTo: Date;
   },
@@ -172,6 +177,7 @@ export function toPostTemplate(
     label: template.label,
     bodyText: template.bodyText,
     mediaUrl: template.mediaUrl,
+    mediaUrls: template.mediaUrls,
     activeFrom: template.activeFrom.toISOString(),
     activeTo: template.activeTo.toISOString(),
     used,

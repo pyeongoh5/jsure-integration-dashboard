@@ -34,6 +34,11 @@ model BrandCampaign {
   dailyPostTime String         @default("11:00")
   // 추첨 설정
   dailyWinCap   Int? // 일별 당첨 상한 (null = 무제한, 재고만 따름)
+  /// 트윗 링크 카드(summary_large_image)에 쓰는 이미지 — LP 의 og:image 로 내려간다.
+  /// 카드 이미지를 누르면 LP 가 열린다(첨부 이미지는 뷰어가 열려서 링크 이동이 안 된다).
+  cardImageUrl  String?
+  /// 이벤트 규칙 가이드 URL — 포스트 본문에 텍스트 링크로 함께 나간다.
+  rulesUrl      String?
   // 결과 화면 (F-6.5)
   prUrl         String? // PR 전환 대상 URL — 결과 화면에서 브랜드 사이트로 유도
   winMediaUrl   String? // 당첨 결과 이미지/동영상
@@ -80,7 +85,10 @@ model PostTemplate {
   campaign   BrandCampaign @relation(fields: [campaignId], references: [id])
   label      String // 예: "1주차"
   bodyText   String // LP 링크는 게시 시점에 자동 삽입 ({{LP_URL}} 플레이스홀더)
-  mediaUrl   String? // 첨부 이미지/동영상 URL — 게시 시 X media upload 후 첨부 (F-2.3)
+  /// @deprecated mediaUrls 로 대체. 기존 행 호환을 위해 남겨 둔다 — 새 코드는 쓰지 않는다.
+  mediaUrl   String?
+  /// 첨부 이미지/동영상 URL 목록 (최대 4장) — 게시 시 X media upload 후 첨부 (F-2.3)
+  mediaUrls  String[]      @default([])
   activeFrom DateTime
   activeTo   DateTime
   createdAt  DateTime      @default(now())

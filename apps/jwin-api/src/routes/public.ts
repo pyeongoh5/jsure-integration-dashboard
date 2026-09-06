@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getPrisma } from '@jsure/jwin-db';
 import {
   CampaignLp,
+  CampaignSeasonLp,
   CampaignSummary,
   EntryResultResponse,
   WinHistoryItem,
@@ -24,69 +25,121 @@ export async function publicRoutes(app: FastifyInstance) {
     return session ? { loggedIn: true, xUsername: session.xUsername } : { loggedIn: false };
   });
 
-  // 진행 중 캠페인 목록 (별도 목록 페이지용)
+  /** 브랜드 카드에 실을 경품 요약. */
+  const prizeSummaryOf = (prizes: { name: string; totalQty: number }[]) =>
+    prizes.map((prize) => `${prize.name}×${prize.totalQty}`).join(' / ');
+
+  // 진행 중 시즌 목록 (별도 목록 페이지용)
   app.get('/campaigns', async (): Promise<CampaignSummary[]> => {
     const now = new Date();
-    const campaigns = await prisma.brandCampaign.findMany({
-      where: { status: 'ACTIVE', startsAt: { lte: now }, endsAt: { gte: now } },
-      include: {
-        prizes: { orderBy: { tier: 'asc' } },
-        brandAccount: { select: { xUsername: true } },
+    const campaigns = await prisma.campaign.findMany({
+      where: {
+        startsAt: { lte: now },
+        endsAt: { gte: now },
+        // 공개 조건: 기간 내 + ACTIVE 참여가 1건 이상
+        brands: { some: { status: 'ACTIVE' } },
       },
+      include: { _count: { select: { brands: true } } },
       orderBy: { endsAt: 'asc' },
     });
     return campaigns.map((campaign) => ({
       slug: campaign.slug,
-      brandName: campaign.brandName,
-      xUsername: campaign.brandAccount?.xUsername ?? null,
+      name: campaign.name,
+      startsAt: campaign.startsAt.toISOString(),
       endsAt: campaign.endsAt.toISOString(),
-      prizeSummary: campaign.prizes.map((prize) => `${prize.name}×${prize.totalQty}`).join(' / '),
+      brandCount: campaign._count.brands,
     }));
   });
 
-  // 단독 LP (/c/{slug})
-  app.get<{ Params: { slug: string } }>('/campaigns/:slug', async (req, reply) => {
-    const campaign = await prisma.brandCampaign.findFirst({
-      where: { slug: req.params.slug, status: { in: ['ACTIVE', 'PAUSED', 'ENDED'] } },
+  // 시즌 LP (/c/{campaignSlug}) — 참여 브랜드 카드 목록
+  app.get<{ Params: { campaignSlug: string } }>('/campaigns/:campaignSlug', async (req, reply) => {
+    const campaign = await prisma.campaign.findUnique({
+      where: { slug: req.params.campaignSlug },
       include: {
-        prizes: { orderBy: { tier: 'asc' } },
-        posts: { where: { dateJst: dateJst(), status: 'POSTED' } },
-        brandAccount: { select: { xUsername: true } },
+        brands: {
+          where: { status: { in: ['ACTIVE', 'PAUSED', 'ENDED'] } },
+          include: {
+            prizes: { orderBy: { tier: 'asc' } },
+            brandAccount: { select: { label: true, slug: true, logoUrl: true, xUsername: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
     if (!campaign) return reply.code(404).send({ error: 'キャンペーンが見つかりません' });
 
-    const todayPost = campaign.posts[0];
-    const brandXUsername = campaign.brandAccount?.xUsername ?? null;
-    const lp: CampaignLp = {
+    const lp: CampaignSeasonLp = {
       campaignId: campaign.id,
+      name: campaign.name,
       slug: campaign.slug,
-      brandName: campaign.brandName,
-      xUsername: brandXUsername,
       startsAt: campaign.startsAt.toISOString(),
       endsAt: campaign.endsAt.toISOString(),
-      todayPostUrl:
-        todayPost?.xPostId && brandXUsername
-          ? `https://x.com/${brandXUsername}/status/${todayPost.xPostId}`
-          : null,
-      prizeSummary: campaign.prizes.map((prize) => `${prize.name}×${prize.totalQty}`).join(' / '),
-      cardImageUrl: campaign.cardImageUrl,
-      rulesUrl: campaign.rulesUrl,
-      prUrl: campaign.prUrl,
-      winMediaUrl: campaign.winMediaUrl,
-      loseMediaUrl: campaign.loseMediaUrl,
+      brands: campaign.brands.map((brandCampaign) => ({
+        brandCampaignId: brandCampaign.id,
+        brandName: brandCampaign.brandAccount.label,
+        brandSlug: brandCampaign.brandAccount.slug,
+        brandLogoUrl: brandCampaign.brandAccount.logoUrl,
+        xUsername: brandCampaign.brandAccount.xUsername,
+        prizeSummary: prizeSummaryOf(brandCampaign.prizes),
+      })),
     };
     return lp;
   });
 
+  // 참여 LP (/c/{campaignSlug}/{brandSlug})
+  app.get<{ Params: { campaignSlug: string; brandSlug: string } }>(
+    '/campaigns/:campaignSlug/brands/:brandSlug',
+    async (req, reply) => {
+      const brandCampaign = await prisma.brandCampaign.findFirst({
+        where: {
+          status: { in: ['ACTIVE', 'PAUSED', 'ENDED'] },
+          campaign: { slug: req.params.campaignSlug },
+          brandAccount: { slug: req.params.brandSlug },
+        },
+        include: {
+          campaign: true,
+          prizes: { orderBy: { tier: 'asc' } },
+          posts: { where: { dateJst: dateJst(), status: 'POSTED' } },
+          brandAccount: { select: { label: true, slug: true, logoUrl: true, xUsername: true } },
+        },
+      });
+      if (!brandCampaign) return reply.code(404).send({ error: 'キャンペーンが見つかりません' });
+
+      const todayPost = brandCampaign.posts[0];
+      const brandXUsername = brandCampaign.brandAccount.xUsername;
+      const lp: CampaignLp = {
+        brandCampaignId: brandCampaign.id,
+        campaign: { name: brandCampaign.campaign.name, slug: brandCampaign.campaign.slug },
+        brandName: brandCampaign.brandAccount.label,
+        brandSlug: brandCampaign.brandAccount.slug,
+        brandLogoUrl: brandCampaign.brandAccount.logoUrl,
+        xUsername: brandXUsername,
+        // 기간은 시즌에서 온다
+        startsAt: brandCampaign.campaign.startsAt.toISOString(),
+        endsAt: brandCampaign.campaign.endsAt.toISOString(),
+        todayPostUrl:
+          todayPost?.xPostId && brandXUsername
+            ? `https://x.com/${brandXUsername}/status/${todayPost.xPostId}`
+            : null,
+        prizeSummary: prizeSummaryOf(brandCampaign.prizes),
+        cardImageUrl: brandCampaign.cardImageUrl,
+        rulesUrl: brandCampaign.rulesUrl,
+        prUrl: brandCampaign.prUrl,
+        winMediaUrl: brandCampaign.winMediaUrl,
+        loseMediaUrl: brandCampaign.loseMediaUrl,
+      };
+      return lp;
+    },
+  );
+
   // 응모(추첨 참가) → 당첨 후보면 즉시 lazy 검증까지 수행
-  app.post<{ Params: { campaignId: string } }>(
-    '/campaigns/:campaignId/enter',
+  app.post<{ Params: { brandCampaignId: string } }>(
+    '/brand-campaigns/:brandCampaignId/enter',
     async (req, reply): Promise<EntryResultResponse | void> => {
       const session = getUserSession(req);
       if (!session) return reply.code(401).send({ error: 'login required' });
 
-      const outcome = await draw(req.params.campaignId, session.userId);
+      const outcome = await draw(req.params.brandCampaignId, session.userId);
       if (outcome.kind === 'already_entered') {
         return reply.code(409).send({ error: 'already entered today' });
       }
@@ -128,8 +181,8 @@ export async function publicRoutes(app: FastifyInstance) {
       : { ok: false, reason: verified.reason };
   });
 
-  // 당첨 히스토리 (F-3.6): 확정 당첨 건만. campaignId 쿼리로 캠페인별 필터 가능.
-  app.get<{ Querystring: { campaignId?: string } }>('/me/wins', async (req, reply) => {
+  // 당첨 히스토리 (F-3.6): 확정 당첨 건만. brandCampaignId 쿼리로 참여별 필터 가능.
+  app.get<{ Querystring: { brandCampaignId?: string } }>('/me/wins', async (req, reply) => {
     const session = getUserSession(req);
     if (!session) return reply.code(401).send({ error: 'login required' });
     const now = Date.now();
@@ -139,10 +192,13 @@ export async function publicRoutes(app: FastifyInstance) {
         entry: {
           userId: session.userId,
           result: 'WIN_CONFIRMED',
-          ...(req.query.campaignId ? { campaignId: req.query.campaignId } : {}),
+          ...(req.query.brandCampaignId ? { campaignId: req.query.brandCampaignId } : {}),
         },
       },
-      include: { prize: true, entry: { include: { campaign: true } } },
+      include: {
+        prize: true,
+        entry: { include: { campaign: { include: { campaign: true } } } },
+      },
       orderBy: { verifiedAt: 'desc' },
     });
     const items: WinHistoryItem[] = winners.map((winner) => ({
@@ -153,7 +209,7 @@ export async function publicRoutes(app: FastifyInstance) {
       needsShipping:
         winner.prize.type === 'PHYSICAL' &&
         !winner.encryptedShipping &&
-        winner.entry.campaign.endsAt.getTime() >= now,
+        winner.entry.campaign.campaign.endsAt.getTime() >= now,
       shippingEntered: winner.encryptedShipping != null,
       dmSent: winner.fulfillment === 'DM_SENT',
     }));

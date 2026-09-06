@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { activationChecklist, canActivate, type ActivationCheck } from "./activationChecklist";
 import type { PostTemplateCoverage } from "./postTemplateCoverage";
-import type { AdminBrandAccount, AdminCampaignDetail, AdminPrize } from "@/domains/jwin";
+import type { AdminBrandAccount, AdminBrandCampaignDetail, AdminPrize } from "@/domains/jwin";
 
 const CONNECTED_ACCOUNT: AdminBrandAccount = {
   id: "acct-1",
   label: "브랜드 공식",
+  slug: "brand-official",
+  logoUrl: null,
   xUserId: "1234",
   xUsername: "devsure5",
   status: "CONNECTED",
@@ -15,13 +17,16 @@ const CONNECTED_ACCOUNT: AdminBrandAccount = {
   connectUrl: "https://example.test/connect?accountId=acct-1",
 };
 
-const BASE_DETAIL: AdminCampaignDetail = {
-  id: "camp-1",
-  brandName: "브랜드",
-  slug: "brand-2026",
+const BASE_DETAIL: AdminBrandCampaignDetail = {
+  id: "bc-1",
   status: "SETUP",
-  startsAt: "2026-08-31T15:00:00.000Z",
-  endsAt: "2026-09-05T14:59:00.000Z",
+  campaign: {
+    id: "camp-1",
+    name: "9월 캠페인",
+    slug: "2026-09",
+    startsAt: "2026-08-31T15:00:00.000Z",
+    endsAt: "2026-09-05T14:59:00.000Z",
+  },
   dailyPostTime: "11:00",
   dailyWinCap: null,
   cardImageUrl: null,
@@ -89,14 +94,17 @@ describe("activationChecklist", () => {
     ]);
   });
 
-  it("계정 미선택은 사유 키를 알려준다", () => {
+  it("연동 전(PENDING) 브랜드는 통과하지 못한다", () => {
     const checks = activationChecklist({
-      detail: { ...BASE_DETAIL, brandAccountId: null, brandAccount: null },
+      detail: {
+        ...BASE_DETAIL,
+        brandAccount: { ...CONNECTED_ACCOUNT, status: "PENDING", xUserId: null, xUsername: null },
+      },
       prizes: [PHYSICAL_PRIZE],
       coverage: FULL_COVERAGE,
     });
     expect(checkOf(checks, "account").ok).toBe(false);
-    expect(checkOf(checks, "account").reasonKey).toBe("jwin.checklist.accountNotSelected");
+    expect(checkOf(checks, "account").reasonKey).toBe("jwin.checklist.accountNotConnected");
     expect(canActivate(checks)).toBe(false);
   });
 

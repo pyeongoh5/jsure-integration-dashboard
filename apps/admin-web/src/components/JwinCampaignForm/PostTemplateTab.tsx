@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ScrollTable } from "@/components/composites";
 import { Button, Input } from "@/components/ui";
 import type {
-  AdminCampaignDetail,
+  AdminBrandCampaignDetail,
   AdminPostTemplate,
   AdminPostTemplateCreate,
   AdminPostTemplatePatch,
@@ -17,7 +17,7 @@ import { useJwinPostSettingsForm } from "./useJwinPostSettingsForm";
 import styles from "./JwinCampaignTabs.module.css";
 
 type Props = {
-  detail: AdminCampaignDetail;
+  detail: AdminBrandCampaignDetail;
   templates: AdminPostTemplate[];
   loading: boolean;
   loadError: string | null;
@@ -51,7 +51,11 @@ export function PostTemplateTab({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const coverage = useMemo(() => postTemplateCoverage(detail, templates), [detail, templates]);
+  // 커버리지는 시즌 기간을 기준으로 판정한다
+  const coverage = useMemo(
+    () => postTemplateCoverage(detail.campaign, templates),
+    [detail.campaign, templates],
+  );
   const settings = useJwinPostSettingsForm(detail, onCampaignChanged);
 
   const handleDelete = async (templateId: string) => {
@@ -184,8 +188,8 @@ export function PostTemplateTab({
       <PostTemplateAddDialog
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        defaultActiveFrom={utcIsoToJstLocal(detail.startsAt)}
-        defaultActiveTo={utcIsoToJstLocal(detail.endsAt)}
+        defaultActiveFrom={utcIsoToJstLocal(detail.campaign.startsAt)}
+        defaultActiveTo={utcIsoToJstLocal(detail.campaign.endsAt)}
         onAdd={onAdd}
       />
     </div>

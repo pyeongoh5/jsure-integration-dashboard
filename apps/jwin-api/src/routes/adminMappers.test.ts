@@ -58,65 +58,99 @@ describe('canTransitionFulfillment', () => {
   });
 });
 
-describe('toCampaignDetail', () => {
-  it('brandAccountId와 brandAccount(연동된 계정 DTO)를 그대로 담는다', async () => {
-    const { toCampaignDetail, toBrandAccount } = await import('./adminMappers');
-    const campaign = {
-      id: 'c1',
-      brandName: 'B',
-      slug: 'b-slug',
-      status: 'ACTIVE',
-      startsAt: new Date('2026-08-01T00:00:00Z'),
-      endsAt: new Date('2026-08-10T00:00:00Z'),
-      dailyPostTime: '11:00',
-      dailyWinCap: null,
-      prUrl: null,
-      winMediaUrl: null,
-      loseMediaUrl: null,
-      dmTemplate: null,
-      brandAccountId: 'a1',
-    };
+describe('시즌·참여 매퍼', () => {
+  const season = {
+    id: 'camp-1',
+    name: '9월 캠페인',
+    slug: '2026-09',
+    startsAt: new Date('2026-09-01T00:00:00Z'),
+    endsAt: new Date('2026-09-30T00:00:00Z'),
+  };
+
+  const brandCampaignRow = {
+    id: 'bc-1',
+    status: 'ACTIVE',
+    brandAccountId: 'a1',
+    brandAccount: {
+      label: '코카콜라 재팬',
+      slug: 'coke-jp',
+      logoUrl: null,
+      xUsername: 'coke_jp',
+      refreshFailedAt: new Date(),
+    },
+    _count: { entries: 7 },
+    posts: [{ id: 'p1' }],
+  };
+
+  it('참여 상세는 시즌 요약과 브랜드 DTO 를 함께 담는다', async () => {
+    const { toBrandCampaignDetail, toBrandAccount } = await import('./adminMappers');
     const brandAccount = toBrandAccount(
       {
-        id: 'a1', label: 'L', xUserId: 'x123', xUsername: 'brandx',
+        id: 'a1', label: '코카콜라 재팬', slug: 'coke-jp', logoUrl: null,
+        xUserId: 'x123', xUsername: 'brandx',
         encryptedAccessToken: 'secret', accessTokenExpiresAt: null,
         refreshFailedAt: new Date(), refreshFailCount: 1,
       },
       1,
       'https://api/oauth/brand/start?accountId=a1',
     );
-    const mapped = toCampaignDetail(campaign as never, brandAccount);
+    const mapped = toBrandCampaignDetail(
+      {
+        id: 'bc-1',
+        status: 'ACTIVE',
+        dailyPostTime: '11:00',
+        dailyWinCap: null,
+        cardImageUrl: null,
+        rulesUrl: null,
+        prUrl: null,
+        winMediaUrl: null,
+        loseMediaUrl: null,
+        dmTemplate: null,
+        brandAccountId: 'a1',
+        campaign: season,
+      },
+      brandAccount,
+    );
     expect(mapped.brandAccountId).toBe('a1');
-    expect(mapped.brandAccount?.status).toBe('NEEDS_RECONNECT');
-    expect(mapped.startsAt).toBe('2026-08-01T00:00:00.000Z');
+    expect(mapped.brandAccount.status).toBe('NEEDS_RECONNECT');
+    expect(mapped.campaign.startsAt).toBe('2026-09-01T00:00:00.000Z');
   });
 
-  it('brandAccount가 없으면 null을 그대로 담는다', async () => {
-    const { toCampaignDetail } = await import('./adminMappers');
-    const campaign = {
-      id: 'c2',
-      brandName: 'B',
-      slug: 'b-slug-2',
-      status: 'DRAFT',
-      startsAt: new Date('2026-08-01T00:00:00Z'),
-      endsAt: new Date('2026-08-10T00:00:00Z'),
-      dailyPostTime: '11:00',
-      dailyWinCap: null,
-      prUrl: null,
-      winMediaUrl: null,
-      loseMediaUrl: null,
-      dmTemplate: null,
-      brandAccountId: null,
-    };
-    const mapped = toCampaignDetail(campaign as never, null);
-    expect(mapped.brandAccountId).toBeNull();
-    expect(mapped.brandAccount).toBeNull();
+  it('참여 목록 행은 브랜드 표시명·slug 와 경고를 담는다', async () => {
+    const { toBrandCampaignListItem } = await import('./adminMappers');
+    const item = toBrandCampaignListItem(brandCampaignRow);
+    expect(item.brandName).toBe('코카콜라 재팬');
+    expect(item.brandSlug).toBe('coke-jp');
+    expect(item.needsReconnect).toBe(true);
+    expect(item.entryCount).toBe(7);
+    expect(item.failedPostCount).toBe(1);
+  });
+
+  it('시즌 목록 행은 참여 브랜드들의 응모·경고를 합산한다', async () => {
+    const { toCampaignListItem } = await import('./adminMappers');
+    const item = toCampaignListItem({
+      ...season,
+      brands: [
+        brandCampaignRow,
+        {
+          ...brandCampaignRow,
+          id: 'bc-2',
+          brandAccount: { ...brandCampaignRow.brandAccount, refreshFailedAt: null },
+          _count: { entries: 3 },
+          posts: [],
+        },
+      ],
+    });
+    expect(item.brandCount).toBe(2);
+    expect(item.entryCount).toBe(10);
+    expect(item.needsReconnectCount).toBe(1);
+    expect(item.failedPostCount).toBe(1);
   });
 });
 
 describe('brandAccountStatus', () => {
   const base = {
-    id: 'a', label: 'L', xUserId: null, xUsername: null,
+    id: 'a', label: 'L', slug: 'brand-a', logoUrl: null, xUserId: null, xUsername: null,
     encryptedAccessToken: null, encryptedRefreshToken: null,
     accessTokenExpiresAt: null, scopes: null,
     refreshFailedAt: null, refreshFailCount: 0,

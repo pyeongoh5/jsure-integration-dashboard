@@ -3,6 +3,8 @@ import type { AdminBrandAccount } from "@/domains/jwin";
 export type JwinBrandAccountRow = {
   id: string;
   label: string;
+  slug: string;
+  logoUrl: string | null;
   /** 원본 값. 표시 문구·스타일은 렌더하는 컴포넌트가 결정한다 */
   xUsername: string | null;
   status: AdminBrandAccount["status"];
@@ -15,6 +17,8 @@ export function toJwinBrandAccountRow(account: AdminBrandAccount): JwinBrandAcco
   return {
     id: account.id,
     label: account.label,
+    slug: account.slug,
+    logoUrl: account.logoUrl,
     xUsername: account.xUsername,
     status: account.status,
     campaignCount: account.campaignCount,

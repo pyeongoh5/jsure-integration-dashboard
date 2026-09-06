@@ -3,6 +3,9 @@ import {
   AdminCampaignListSchema,
   AdminCampaignDetailSchema,
   AdminCampaignDeleteImpactSchema,
+  AdminBrandCampaignDeleteImpactSchema,
+  AdminBrandCampaignDetailSchema,
+  AdminBrandCampaignListSchema,
   AdminBrandAccountListSchema,
   AdminBrandAccountSchema,
   AdminPrizeListSchema,
@@ -17,6 +20,13 @@ import {
   type AdminCampaignList,
   type AdminCampaignDetail,
   type AdminCampaignDeleteImpact,
+  type AdminBrandAccountCreate,
+  type AdminBrandAccountPatch,
+  type AdminBrandCampaignCreate,
+  type AdminBrandCampaignDeleteImpact,
+  type AdminBrandCampaignDetail,
+  type AdminBrandCampaignList,
+  type AdminBrandCampaignPatch,
   type AdminCampaignCreate,
   type AdminCampaignPatch,
   type AdminBrandAccountList,
@@ -61,13 +71,42 @@ export async function updateCampaign(
   return AdminCampaignDetailSchema.parse(response.data);
 }
 
-export async function fetchPrizes(campaignId: string): Promise<AdminPrizeList> {
-  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/prizes`);
+/** 시즌에 참여 중인 브랜드 목록. */
+export async function fetchBrandCampaigns(campaignId: string): Promise<AdminBrandCampaignList> {
+  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/brand-campaigns`);
+  return AdminBrandCampaignListSchema.parse(response.data);
+}
+
+export async function fetchBrandCampaign(
+  brandCampaignId: string,
+): Promise<AdminBrandCampaignDetail> {
+  const response = await jwinApi.get(`/admin/brand-campaigns/${brandCampaignId}`);
+  return AdminBrandCampaignDetailSchema.parse(response.data);
+}
+
+/** 브랜드를 시즌에 참여시킨다. */
+export async function createBrandCampaign(
+  body: AdminBrandCampaignCreate,
+): Promise<AdminBrandCampaignDetail> {
+  const response = await jwinApi.post(`/admin/brand-campaigns`, body);
+  return AdminBrandCampaignDetailSchema.parse(response.data);
+}
+
+export async function updateBrandCampaign(
+  brandCampaignId: string,
+  body: AdminBrandCampaignPatch,
+): Promise<AdminBrandCampaignDetail> {
+  const response = await jwinApi.patch(`/admin/brand-campaigns/${brandCampaignId}`, body);
+  return AdminBrandCampaignDetailSchema.parse(response.data);
+}
+
+export async function fetchPrizes(brandCampaignId: string): Promise<AdminPrizeList> {
+  const response = await jwinApi.get(`/admin/brand-campaigns/${brandCampaignId}/prizes`);
   return AdminPrizeListSchema.parse(response.data);
 }
 
-export async function fetchPostTemplates(campaignId: string): Promise<AdminPostTemplateList> {
-  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/post-templates`);
+export async function fetchPostTemplates(brandCampaignId: string): Promise<AdminPostTemplateList> {
+  const response = await jwinApi.get(`/admin/brand-campaigns/${brandCampaignId}/post-templates`);
   return AdminPostTemplateListSchema.parse(response.data);
 }
 
@@ -80,11 +119,11 @@ function winnerFilterParams(filter: AdminWinnerFilter): Record<string, string> {
 
 /** 당첨자 목록 한 페이지. 필터는 서버가 걸고 커서로 이어 받는다. */
 export async function fetchWinners(
-  campaignId: string,
+  brandCampaignId: string,
   filter: AdminWinnerFilter,
   cursor?: string,
 ): Promise<AdminWinnerList> {
-  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/winners`, {
+  const response = await jwinApi.get(`/admin/brand-campaigns/${brandCampaignId}/winners`, {
     params: { ...winnerFilterParams(filter), ...(cursor ? { cursor } : {}) },
   });
   return AdminWinnerListSchema.parse(response.data);
@@ -95,17 +134,17 @@ export async function fetchWinners(
  * 배송지 평문이 포함되므로 서버가 열람과 동일하게 감사 로그를 남긴다.
  */
 export async function fetchWinnersForExport(
-  campaignId: string,
+  brandCampaignId: string,
   filter: AdminWinnerFilter,
 ): Promise<AdminWinnerExport> {
-  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/winners/export`, {
+  const response = await jwinApi.get(`/admin/brand-campaigns/${brandCampaignId}/winners/export`, {
     params: winnerFilterParams(filter),
   });
   return AdminWinnerExportSchema.parse(response.data);
 }
 
-export async function fetchCampaignStats(campaignId: string): Promise<AdminCampaignStats> {
-  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/stats`);
+export async function fetchCampaignStats(brandCampaignId: string): Promise<AdminCampaignStats> {
+  const response = await jwinApi.get(`/admin/brand-campaigns/${brandCampaignId}/stats`);
   return AdminCampaignStatsSchema.parse(response.data);
 }
 
@@ -127,7 +166,7 @@ export async function updatePrize(prizeId: string, body: AdminPrizePatch): Promi
   return AdminPrizeSchema.parse(response.data);
 }
 
-/** 삭제 시 함께 사라지는 데이터 건수 — 확인 다이얼로그가 보여준다. */
+/** 시즌 삭제 시 함께 사라지는 데이터 건수 — 참여 브랜드들의 합산. */
 export async function fetchCampaignDeleteImpact(
   campaignId: string,
 ): Promise<AdminCampaignDeleteImpact> {
@@ -137,6 +176,29 @@ export async function fetchCampaignDeleteImpact(
 
 export async function deleteCampaign(campaignId: string): Promise<void> {
   await jwinApi.delete(`/admin/campaigns/${campaignId}`);
+}
+
+/** 참여 삭제 시 함께 사라지는 데이터 건수. */
+export async function fetchBrandCampaignDeleteImpact(
+  brandCampaignId: string,
+): Promise<AdminBrandCampaignDeleteImpact> {
+  const response = await jwinApi.get(
+    `/admin/brand-campaigns/${brandCampaignId}/delete-impact`,
+  );
+  return AdminBrandCampaignDeleteImpactSchema.parse(response.data);
+}
+
+export async function deleteBrandCampaign(brandCampaignId: string): Promise<void> {
+  await jwinApi.delete(`/admin/brand-campaigns/${brandCampaignId}`);
+}
+
+/** 브랜드 표시명·slug·로고 수정. */
+export async function updateBrandAccount(
+  brandAccountId: string,
+  body: AdminBrandAccountPatch,
+): Promise<AdminBrandAccount> {
+  const response = await jwinApi.patch(`/admin/brand-accounts/${brandAccountId}`, body);
+  return AdminBrandAccountSchema.parse(response.data);
 }
 
 /** 포스트 정정. 응답이 Prisma 모델이라 파싱하지 않는다 — 호출부가 목록을 다시 불러온다. */
@@ -156,8 +218,10 @@ export async function fetchBrandAccounts(): Promise<AdminBrandAccountList> {
   return AdminBrandAccountListSchema.parse(response.data);
 }
 
-export async function createBrandAccount(label: string): Promise<AdminBrandAccount> {
-  const response = await jwinApi.post(`/admin/brand-accounts`, { label });
+export async function createBrandAccount(
+  body: AdminBrandAccountCreate,
+): Promise<AdminBrandAccount> {
+  const response = await jwinApi.post(`/admin/brand-accounts`, body);
   return AdminBrandAccountSchema.parse(response.data);
 }
 

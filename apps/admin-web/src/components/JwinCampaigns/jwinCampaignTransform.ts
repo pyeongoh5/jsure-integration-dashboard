@@ -2,20 +2,19 @@ import type { AdminTranslationKey } from "@i18n/admin";
 import type { AdminCampaignListItem } from "@/domains/jwin";
 
 export type JwinCampaignWarning = {
-  kind: "reconnect" | "unconnected" | "failedPosts";
+  kind: "reconnect" | "failedPosts";
   labelKey: AdminTranslationKey;
   labelParams?: Record<string, string | number>;
 };
 
+/** 시즌 목록 행. 경고는 참여 브랜드들에서 합산된 값이다. */
 export type JwinCampaignRow = {
   id: string;
-  brandName: string;
+  name: string;
   slug: string;
-  status: AdminCampaignListItem["status"];
   /** "YYYY.MM.DD ~ YYYY.MM.DD" (JST) */
   period: string;
-  /** 원본 값. 표시 문구·스타일은 렌더하는 컴포넌트가 결정한다 */
-  xUsername: string | null;
+  brandCount: number;
   entryCount: number;
   warnings: JwinCampaignWarning[];
 };
@@ -32,14 +31,15 @@ function formatJstDate(iso: string): string {
   return JST_DATE.format(new Date(iso)).replace(/\.\s?/g, ".").replace(/\.$/, "");
 }
 
-/** 목록 항목 → 뷰 모델. 경고 판정 포함 (MVP_PLAN §3.2). */
+/** 시즌 목록 항목 → 뷰 모델. 경고 판정 포함 (MVP_PLAN §3.2). */
 export function toJwinCampaignRow(campaign: AdminCampaignListItem): JwinCampaignRow {
   const warnings: JwinCampaignWarning[] = [];
-  if (campaign.needsReconnect) {
-    warnings.push({ kind: "reconnect", labelKey: "jwin.campaign.warning.reconnect" });
-  }
-  if (campaign.status === "ACTIVE" && campaign.xUserId === null) {
-    warnings.push({ kind: "unconnected", labelKey: "jwin.campaign.warning.unconnected" });
+  if (campaign.needsReconnectCount > 0) {
+    warnings.push({
+      kind: "reconnect",
+      labelKey: "jwin.campaign.warning.reconnect",
+      labelParams: { count: campaign.needsReconnectCount },
+    });
   }
   if (campaign.failedPostCount > 0) {
     warnings.push({
@@ -51,11 +51,10 @@ export function toJwinCampaignRow(campaign: AdminCampaignListItem): JwinCampaign
 
   return {
     id: campaign.id,
-    brandName: campaign.brandName,
+    name: campaign.name,
     slug: campaign.slug,
-    status: campaign.status,
     period: `${formatJstDate(campaign.startsAt)} ~ ${formatJstDate(campaign.endsAt)}`,
-    xUsername: campaign.xUsername,
+    brandCount: campaign.brandCount,
     entryCount: campaign.entryCount,
     warnings,
   };

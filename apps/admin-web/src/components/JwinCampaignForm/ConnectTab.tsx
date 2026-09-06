@@ -1,46 +1,39 @@
 import { Link } from "react-router-dom";
 import { JwinAccountStatusBadge } from "@/components/composites";
-import type { AdminCampaignDetail, AdminBrandAccount } from "@/domains/jwin";
+import type { AdminBrandCampaignDetail } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import styles from "./JwinCampaignForm.module.css";
 
 type Props = {
-  detail: AdminCampaignDetail;
-  accounts: AdminBrandAccount[];
-  onSelectAccount: (brandAccountId: string) => void;
-  selectError: string | null;
-  accountsError: string | null;
+  detail: AdminBrandCampaignDetail;
 };
 
-export function ConnectTab({ detail, accounts, onSelectAccount, selectError, accountsError }: Props) {
+/**
+ * 브랜드 X 계정 연동 상태. 브랜드가 곧 계정이라 여기서 계정을 고르지 않는다 —
+ * 연동·재연동 링크는 브랜드 관리 화면에서 발급한다.
+ */
+export function ConnectTab({ detail }: Props) {
   const t = useT();
-  const connectable = accounts.filter((account) => account.status !== "PENDING");
+  const account = detail.brandAccount;
 
   return (
     <div className={styles.connect}>
-      <div className={styles.field}>
+      <div className={styles.statusRow}>
         <span className={styles.label}>{t("jwin.connect.brandAccount")}</span>
-        <select
-          className={styles.accountSelect}
-          value={detail.brandAccountId ?? ""}
-          onChange={(event) => event.target.value && onSelectAccount(event.target.value)}
-        >
-          <option value="">{t("jwin.connect.selectAccount")}</option>
-          {connectable.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.xUsername ? `@${account.xUsername} (${account.label})` : account.label}
-            </option>
-          ))}
-        </select>
-        {accountsError && <span className={styles.error}>{accountsError}</span>}
-        {selectError && <span className={styles.error}>{selectError}</span>}
+        <span>{account.label}</span>
       </div>
-      {detail.brandAccount && (
-        <div className={styles.statusRow}>
-          <span className={styles.label}>{t("jwin.connect.status")}</span>
-          <JwinAccountStatusBadge status={detail.brandAccount.status} />
-          {detail.brandAccount.xUsername && <span>@{detail.brandAccount.xUsername}</span>}
-        </div>
+      <div className={styles.statusRow}>
+        <span className={styles.label}>{t("jwin.connect.status")}</span>
+        <JwinAccountStatusBadge status={account.status} />
+        {account.xUsername && <span>@{account.xUsername}</span>}
+      </div>
+      {account.status !== "CONNECTED" && (
+        <p className={styles.note}>
+          {t("jwin.connect.connectNote")}{" "}
+          <a href={account.connectUrl} target="_blank" rel="noreferrer">
+            {account.connectUrl}
+          </a>
+        </p>
       )}
       <p className={styles.note}>
         {t("jwin.connect.manageNote")} <Link to="/jwin/accounts">{t("jwin.connect.manageLink")}</Link>

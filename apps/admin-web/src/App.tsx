@@ -18,7 +18,8 @@ import { NoticeEdit } from "./pages/Notices/Edit";
 import { MessageTemplates } from "./pages/MessageTemplates";
 import { MessageTemplateEdit } from "./pages/MessageTemplates/Edit";
 import { JwinCampaigns } from "./pages/Jwin/Campaigns";
-import { JwinCampaignEdit } from "./pages/Jwin/CampaignEdit";
+import { JwinCampaignDetail } from "./pages/Jwin/CampaignDetail";
+import { JwinBrandCampaignEdit } from "./pages/Jwin/BrandCampaignEdit";
 import { JwinBrandAccounts } from "./pages/Jwin/BrandAccounts";
 import { JwinWinners } from "./pages/Jwin/Winners";
 import { Login } from "./pages/Login";
@@ -62,8 +63,9 @@ export function App() {
           {/* J-WIN (X 인스턴트윈). 기존 인플루언서 경로와 섞이지 않도록 /jwin 아래에 둔다. */}
           <Route path="/jwin" element={<Navigate to="/jwin/campaigns" replace />} />
           <Route path="/jwin/campaigns" element={<JwinCampaigns />} />
-          <Route path="/jwin/campaigns/new" element={<JwinCampaignEdit />} />
-          <Route path="/jwin/campaigns/:id" element={<JwinCampaignEdit />} />
+          <Route path="/jwin/campaigns/new" element={<JwinCampaignDetail />} />
+          <Route path="/jwin/campaigns/:id" element={<JwinCampaignDetail />} />
+          <Route path="/jwin/brand-campaigns/:id" element={<JwinBrandCampaignEdit />} />
           <Route path="/jwin/accounts" element={<JwinBrandAccounts />} />
           <Route path="/jwin/winners" element={<JwinWinners />} />
         </Route>

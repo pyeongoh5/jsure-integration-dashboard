@@ -69,8 +69,12 @@ export async function materializeTodayPosts(): Promise<void> {
   const today = dateJst();
   const now = new Date();
 
+  // 기간은 시즌이, 진행 상태는 참여가 갖는다.
   const campaigns = await prisma.brandCampaign.findMany({
-    where: { status: 'ACTIVE', startsAt: { lte: now }, endsAt: { gte: now } },
+    where: {
+      status: 'ACTIVE',
+      campaign: { startsAt: { lte: now }, endsAt: { gte: now } },
+    },
     include: { postTemplates: true },
   });
 
@@ -98,14 +102,18 @@ export async function publishDuePosts(): Promise<void> {
   const now = new Date();
   const due = await prisma.campaignPost.findMany({
     where: { status: 'SCHEDULED', scheduledAt: { lte: now } },
-    include: { template: true, campaign: { include: { brandAccount: true } } },
+    include: {
+      template: true,
+      campaign: { include: { brandAccount: true, campaign: true } },
+    },
     take: 20,
   });
 
   for (const post of due) {
     const campaign = post.campaign;
-    // 캠페인 비활성 또는 기간 밖 → 게시 건너뜀
-    if (campaign.status !== 'ACTIVE' || campaign.startsAt > now || campaign.endsAt < now) {
+    // 참여가 비활성이거나 시즌 기간 밖 → 게시 건너뜀
+    const season = campaign.campaign;
+    if (campaign.status !== 'ACTIVE' || season.startsAt > now || season.endsAt < now) {
       await prisma.campaignPost.update({ where: { id: post.id }, data: { status: 'SKIPPED' } });
       continue;
     }
@@ -123,7 +131,8 @@ export async function publishDuePosts(): Promise<void> {
     }
     try {
       const token = await getBrandAccessToken(brandAccount);
-      const lpUrl = `${config().WEB_BASE_URL}/c/${campaign.slug}`;
+      // 참여 LP: /c/{시즌 slug}/{브랜드 slug}
+      const lpUrl = `${config().WEB_BASE_URL}/c/${season.slug}/${brandAccount.slug}`;
       const text = buildPostText({
         bodyText: post.template.bodyText,
         lpUrl,

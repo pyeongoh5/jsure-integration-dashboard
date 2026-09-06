@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   jwinErrorMessage,
-  updateCampaign,
-  type AdminCampaignDetail,
-  type AdminCampaignPatch,
+  updateBrandCampaign,
+  type AdminBrandCampaignDetail,
+  type AdminBrandCampaignPatch,
 } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import { dmTemplateMissingCode } from "./dmTemplatePreview";
@@ -31,7 +31,7 @@ export type UseJwinResultFormResult = {
   save: () => Promise<void>;
 };
 
-function toValues(detail: AdminCampaignDetail): JwinResultFormValues {
+function toValues(detail: AdminBrandCampaignDetail): JwinResultFormValues {
   return {
     winMediaUrl: detail.winMediaUrl,
     loseMediaUrl: detail.loseMediaUrl,
@@ -48,9 +48,9 @@ function toValues(detail: AdminCampaignDetail): JwinResultFormValues {
  * 문구가 비어 있으면 서버 기본 문구({{CODE}} 포함)가 쓰이므로 막지 않는다.
  */
 export function useJwinResultForm(
-  detail: AdminCampaignDetail,
+  detail: AdminBrandCampaignDetail,
   hasCodePrize: boolean,
-  onSaved: (updated: AdminCampaignDetail) => void,
+  onSaved: (updated: AdminBrandCampaignDetail) => void,
 ): UseJwinResultFormResult {
   const t = useT();
   const [values, setValues] = useState<JwinResultFormValues>(() => toValues(detail));
@@ -82,7 +82,7 @@ export function useJwinResultForm(
 
   const save = async () => {
     if (blockedReason()) return;
-    const body: AdminCampaignPatch = {
+    const body: AdminBrandCampaignPatch = {
       winMediaUrl: values.winMediaUrl,
       loseMediaUrl: values.loseMediaUrl,
       // 빈 문자열은 서버 z.string().url() 을 통과하지 못한다
@@ -92,7 +92,7 @@ export function useJwinResultForm(
     setSaving(true);
     setError(null);
     try {
-      const updated = await updateCampaign(detail.id, body);
+      const updated = await updateBrandCampaign(detail.id, body);
       onSaved(updated);
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2000);

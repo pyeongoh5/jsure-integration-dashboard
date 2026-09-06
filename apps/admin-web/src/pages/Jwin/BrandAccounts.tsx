@@ -5,6 +5,8 @@ import {
   useJwinBrandAccountMutations,
   JwinBrandAccountTable,
   AddBrandAccountDialog,
+  EditBrandAccountDialog,
+  type JwinBrandAccountRow,
 } from "@/components/JwinBrandAccounts";
 import { useT } from "@/lib/i18n";
 import styles from "./Jwin.module.css";
@@ -22,8 +24,9 @@ async function copyToClipboard(url: string): Promise<boolean> {
 export function JwinBrandAccounts() {
   const t = useT();
   const { state, accounts, reload } = useJwinBrandAccountsData();
-  const { create } = useJwinBrandAccountMutations(reload);
+  const { create, edit } = useJwinBrandAccountMutations(reload);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<JwinBrandAccountRow | null>(null);
 
   return (
     <div className={styles.root}>
@@ -52,7 +55,11 @@ export function JwinBrandAccounts() {
         ) : state.kind === "error" ? (
           <div className={styles.empty}>{state.message}</div>
         ) : (
-          <JwinBrandAccountTable accounts={accounts} onCopyLink={copyToClipboard} />
+          <JwinBrandAccountTable
+            accounts={accounts}
+            onCopyLink={copyToClipboard}
+            onEdit={setEditTarget}
+          />
         )}
       </div>
 
@@ -60,6 +67,12 @@ export function JwinBrandAccounts() {
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onCreate={create}
+      />
+
+      <EditBrandAccountDialog
+        account={editTarget}
+        onClose={() => setEditTarget(null)}
+        onEdit={edit}
       />
     </div>
   );

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { CampaignSummary } from '@jsure/jwin-shared';
 import { API_BASE } from '../../lib/api';
 
-/** 진행 중 캠페인 목록 페이지 (별도 목록 — 필요한 곳에 링크로 노출) */
+/** 진행 중 시즌 캠페인 목록 페이지 — 카드를 누르면 시즌 LP 로 간다 */
 export default async function CampaignListPage() {
   const res = await fetch(`${API_BASE}/campaigns`, { cache: 'no-store' });
   const campaigns: CampaignSummary[] = res.ok ? await res.json() : [];
@@ -26,13 +26,13 @@ export default async function CampaignListPage() {
               color: 'inherit',
             }}
           >
-            <strong>{campaign.brandName}</strong>
-            {campaign.xUsername && <span> @{campaign.xUsername}</span>}
+            <strong>{campaign.name}</strong>
             <p style={{ margin: '8px 0 0', fontSize: 14, color: '#555' }}>
-              {campaign.prizeSummary}
+              参加ブランド {campaign.brandCount}社
             </p>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#999' }}>
-              〜{new Date(campaign.endsAt).toLocaleDateString('ja-JP')}
+              {new Date(campaign.startsAt).toLocaleDateString('ja-JP')} 〜{' '}
+              {new Date(campaign.endsAt).toLocaleDateString('ja-JP')}
             </p>
           </Link>
         ))}

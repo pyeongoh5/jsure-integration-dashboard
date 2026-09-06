@@ -105,6 +105,8 @@ export const adminMessages = {
       },
       notConnected: { ko: "미연동", en: "Not connected", ja: "未連携" },
       columns: {
+        name: { ko: "캠페인", en: "Campaign", ja: "キャンペーン" },
+        brands: { ko: "브랜드", en: "Brands", ja: "ブランド" },
         brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
         slug: { ko: "slug", en: "Slug", ja: "slug" },
         status: { ko: "상태", en: "Status", ja: "ステータス" },
@@ -115,6 +117,31 @@ export const adminMessages = {
         actions: { ko: "관리", en: "Actions", ja: "操作" },
       },
       delete: { ko: "삭제", en: "Delete", ja: "削除" },
+      brands: {
+        title: { ko: "참여 브랜드", en: "Participating brands", ja: "参加ブランド" },
+        add: { ko: "브랜드 참여 추가", en: "Add brand", ja: "ブランドを追加" },
+        empty: {
+          ko: "참여 중인 브랜드가 없습니다. 브랜드를 추가해 캠페인을 구성하세요.",
+          en: "No brands yet. Add one to build the campaign.",
+          ja: "参加ブランドがありません。ブランドを追加してください。",
+        },
+        selectBrand: { ko: "브랜드 선택", en: "Select a brand", ja: "ブランドを選択" },
+        addFailed: {
+          ko: "브랜드를 추가할 수 없습니다.",
+          en: "Could not add the brand.",
+          ja: "ブランドを追加できませんでした。",
+        },
+        loadFailed: {
+          ko: "참여 브랜드를 불러올 수 없습니다.",
+          en: "Could not load participating brands.",
+          ja: "参加ブランドを読み込めませんでした。",
+        },
+        deleteTitle: {
+          ko: "{brand} 의 참여를 삭제할까요?",
+          en: "Remove {brand} from this campaign?",
+          ja: "{brand} の参加を削除しますか？",
+        },
+      },
       deleteDialog: {
         title: {
           ko: "{brand} 캠페인을 삭제할까요?",
@@ -131,6 +158,7 @@ export const adminMessages = {
           en: "The following data will be permanently deleted. This cannot be undone.",
           ja: "以下のデータも完全に削除されます。元に戻せません。",
         },
+        brands: { ko: "참여 브랜드 {count}개", en: "{count} brands", ja: "参加ブランド {count}社" },
         entries: { ko: "응모 {count}건", en: "{count} entries", ja: "応募 {count}件" },
         winners: { ko: "당첨자 {count}명", en: "{count} winners", ja: "当選者 {count}名" },
         posted: {
@@ -157,7 +185,11 @@ export const adminMessages = {
         },
       },
       warning: {
-        reconnect: { ko: "브랜드 재연동 필요", en: "Reconnect required", ja: "再連携が必要" },
+        reconnect: {
+          ko: "재연동 필요 {count}건",
+          en: "{count} need reconnect",
+          ja: "再連携が必要 {count}件",
+        },
         unconnected: { ko: "계정 미연동", en: "Account not linked", ja: "アカウント未連携" },
         failedPosts: {
           ko: "게시 실패 {count}건",
@@ -176,12 +208,10 @@ export const adminMessages = {
     },
     basic: {
       brandName: { ko: "브랜드명", en: "Brand name", ja: "ブランド名" },
+      name: { ko: "캠페인명", en: "Campaign name", ja: "キャンペーン名" },
+      namePlaceholder: { ko: "9월 캠페인", en: "September campaign", ja: "9月キャンペーン" },
       slug: { ko: "slug", en: "Slug", ja: "slug" },
-      slugPlaceholder: {
-        ko: "brand-campaign-2026",
-        en: "brand-campaign-2026",
-        ja: "brand-campaign-2026",
-      },
+      slugPlaceholder: { ko: "2026-09", en: "2026-09", ja: "2026-09" },
       slugHint: {
         ko: "LP 링크에 사용됩니다. 영소문자·숫자·하이픈만.",
         en: "Used in the landing page URL. Lowercase letters, digits and hyphens only.",
@@ -207,6 +237,11 @@ export const adminMessages = {
           ko: "브랜드명을 입력하세요.",
           en: "Enter a brand name.",
           ja: "ブランド名を入力してください。",
+        },
+        nameRequired: {
+          ko: "캠페인명을 입력하세요.",
+          en: "Enter a campaign name.",
+          ja: "キャンペーン名を入力してください。",
         },
         slugRequired: {
           ko: "slug를 입력하세요.",
@@ -254,6 +289,11 @@ export const adminMessages = {
         en: "Could not link the account.",
         ja: "アカウントの連携に失敗しました。",
       },
+      connectNote: {
+        ko: "아직 연동되지 않았습니다. 아래 링크를 브랜드에 전달해 승인받으세요.",
+        en: "Not connected yet. Send this link to the brand for approval.",
+        ja: "まだ連携されていません。以下のリンクをブランドに共有して承認を受けてください。",
+      },
       manageNote: {
         ko: "계정 추가·재연동은 브랜드 계정 페이지에서 합니다.",
         en: "Add or reconnect accounts on the Brand Accounts page.",
@@ -269,6 +309,19 @@ export const adminMessages = {
       listTitle: { ko: "브랜드 계정", en: "Brand accounts", ja: "ブランドアカウント" },
       add: { ko: "계정 추가", en: "Add account", ja: "アカウント追加" },
       linkTitle: { ko: "연동 링크", en: "Connect link", ja: "連携リンク" },
+      slug: { ko: "브랜드 slug", en: "Brand slug", ja: "ブランド slug" },
+      logo: { ko: "브랜드 로고", en: "Brand logo", ja: "ブランドロゴ" },
+      editTitle: { ko: "브랜드 정보 수정", en: "Edit brand", ja: "ブランド情報を修正" },
+      slugHint: {
+        ko: "응모 페이지 주소에 쓰입니다: /c/{캠페인}/{브랜드}. 영소문자·숫자·하이픈만.",
+        en: "Used in the entry page URL: /c/{campaign}/{brand}. Lowercase letters, digits and hyphens only.",
+        ja: "応募ページのURLに使われます: /c/{キャンペーン}/{ブランド}。英小文字・数字・ハイフンのみ。",
+      },
+      editFailed: {
+        ko: "브랜드 정보를 저장할 수 없습니다.",
+        en: "Could not save the brand.",
+        ja: "ブランド情報を保存できませんでした。",
+      },
       empty: {
         ko: "등록된 브랜드 계정이 없습니다.",
         en: "No brand accounts yet.",
@@ -826,6 +879,7 @@ export const adminMessages = {
     },
     winner: {
       title: { ko: "당첨자 관리", en: "Winners", ja: "当選者管理" },
+      selectBrand: { ko: "브랜드 선택", en: "Select a brand", ja: "ブランドを選択" },
       selectCampaign: { ko: "캠페인 선택", en: "Select a campaign", ja: "キャンペーンを選択" },
       selectCampaignHint: {
         ko: "캠페인을 선택하면 당첨자 목록이 표시됩니다.",

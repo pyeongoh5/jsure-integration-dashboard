@@ -54,7 +54,7 @@ export function JwinCampaigns() {
       {deleteTarget && (
         <JwinCampaignDeleteDialog
           campaignId={deleteTarget.id}
-          brandName={deleteTarget.brandName}
+          brandName={deleteTarget.name}
           onClose={() => setDeleteTarget(null)}
           onDeleted={() => {
             setDeleteTarget(null);

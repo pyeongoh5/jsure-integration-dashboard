@@ -18,6 +18,7 @@ type ActivationAccount = {
 };
 
 export type ActivationInput = {
+  /** startsAt/endsAt 은 시즌(Campaign), dmTemplate 은 참여(BrandCampaign) 에서 온다. */
   campaign: { startsAt: Date; endsAt: Date; dmTemplate: string | null };
   brandAccount: ActivationAccount | null;
   prizes: { type: 'PHYSICAL' | 'CODE' }[];

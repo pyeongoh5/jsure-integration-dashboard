@@ -1,5 +1,5 @@
 import { Button, Input, Textarea } from "@/components/ui";
-import type { AdminCampaignDetail } from "@/domains/jwin";
+import type { AdminBrandCampaignDetail } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import { DM_PREVIEW_SAMPLE, renderDmPreview } from "./dmTemplatePreview";
 import { JwinMediaUpload } from "./JwinMediaUpload";
@@ -7,10 +7,10 @@ import { DM_TEMPLATE_MAX_LENGTH, useJwinResultForm } from "./useJwinResultForm";
 import styles from "./JwinCampaignTabs.module.css";
 
 type Props = {
-  detail: AdminCampaignDetail;
+  detail: AdminBrandCampaignDetail;
   /** CODE 경품이 하나라도 있으면 DM 문구에 {{CODE}} 를 강제한다 */
   hasCodePrize: boolean;
-  onSaved: (updated: AdminCampaignDetail) => void;
+  onSaved: (updated: AdminBrandCampaignDetail) => void;
 };
 
 export function ResultTab({ detail, hasCodePrize, onSaved }: Props) {
@@ -19,7 +19,7 @@ export function ResultTab({ detail, hasCodePrize, onSaved }: Props) {
 
   const preview = renderDmPreview(form.values.dmTemplate, {
     ...DM_PREVIEW_SAMPLE,
-    brandName: detail.brandName,
+    brandName: detail.brandAccount.label,
   });
 
   return (

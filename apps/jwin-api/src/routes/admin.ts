@@ -3,6 +3,10 @@ import { z } from 'zod';
 import { getPrisma } from '@jsure/jwin-db';
 import {
   ADMIN_WINNER_PAGE_SIZE,
+  AdminBrandAccountCreateSchema,
+  AdminBrandAccountPatchSchema,
+  AdminBrandCampaignCreateSchema,
+  AdminBrandCampaignPatchSchema,
   AdminWinnerFilterSchema,
   dateJst,
   parseCodesInput,
@@ -14,6 +18,8 @@ import { decrypt, encrypt } from '../lib/crypto';
 import { AdminIdentity, getAdminIdentity } from '../lib/auth';
 import {
   toBrandAccount,
+  toBrandCampaignDetail,
+  toBrandCampaignListItem,
   toCampaignDetail,
   toCampaignListItem,
   toPrize,
@@ -93,11 +99,30 @@ export async function adminRoutes(app: FastifyInstance) {
   app.post('/admin/brand-accounts', async (req, reply) => {
     const admin = requireAdmin(req, reply);
     if (!admin) return;
-    const parsed = z.object({ label: z.string().min(1) }).safeParse(req.body);
+    const parsed = AdminBrandAccountCreateSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
-    const account = await prisma.brandXAccount.create({ data: { label: parsed.data.label } });
+    if (!(await ensureBrandSlugAvailable(parsed.data.slug, reply))) return;
+    const account = await prisma.brandXAccount.create({ data: parsed.data });
     await audit(admin, 'brandAccount.create', account.id, parsed.data);
     return toBrandAccount(account, 0, accountConnectUrl(account.id));
+  });
+
+  app.patch<{ Params: { id: string } }>('/admin/brand-accounts/:id', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const parsed = AdminBrandAccountPatchSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+    if (!(await ensureBrandSlugAvailable(parsed.data.slug, reply, req.params.id))) return;
+    const account = await prisma.brandXAccount.findUnique({ where: { id: req.params.id } });
+    if (!account) return reply.code(404).send({ error: '브랜드를 찾을 수 없습니다' });
+
+    const updated = await prisma.brandXAccount.update({
+      where: { id: account.id },
+      data: parsed.data,
+      include: { _count: { select: { campaigns: true } } },
+    });
+    await audit(admin, 'brandAccount.update', updated.id, parsed.data);
+    return toBrandAccount(updated, updated._count.campaigns, accountConnectUrl(updated.id));
   });
 
   /**
@@ -122,19 +147,16 @@ export async function adminRoutes(app: FastifyInstance) {
   }
 
   /**
-   * slug 는 LP URL(/c/{slug})이라 unique 다. 중복이면 Prisma 가 P2002 를 던져
-   * 500 으로 나가므로, 원인을 알 수 있는 400 으로 미리 거른다.
+   * slug 는 LP URL 조각이라 unique 다. 중복이면 Prisma 가 P2002 를 던져 500 으로
+   * 나가므로, 원인을 알 수 있는 400 으로 미리 거른다.
    */
-  async function ensureSlugAvailable(
+  async function ensureCampaignSlugAvailable(
     slug: string | undefined,
     reply: FastifyReply,
     currentCampaignId?: string,
   ): Promise<boolean> {
     if (slug === undefined) return true;
-    const existing = await prisma.brandCampaign.findUnique({
-      where: { slug },
-      select: { id: true },
-    });
+    const existing = await prisma.campaign.findUnique({ where: { slug }, select: { id: true } });
     if (existing && existing.id !== currentCampaignId) {
       reply.code(400).send({ error: `이미 사용 중인 slug 입니다: ${slug}` });
       return false;
@@ -142,30 +164,56 @@ export async function adminRoutes(app: FastifyInstance) {
     return true;
   }
 
-  /** 캠페인 응답에 실을 brandAccount DTO 조립 (연동된 계정이 없으면 null) */
-  async function buildBrandAccountDto(brandAccount: BrandAccountRow | null) {
-    if (!brandAccount) return null;
+  async function ensureBrandSlugAvailable(
+    slug: string | undefined,
+    reply: FastifyReply,
+    currentBrandAccountId?: string,
+  ): Promise<boolean> {
+    if (slug === undefined) return true;
+    const existing = await prisma.brandXAccount.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+    if (existing && existing.id !== currentBrandAccountId) {
+      reply.code(400).send({ error: `이미 사용 중인 브랜드 slug 입니다: ${slug}` });
+      return false;
+    }
+    return true;
+  }
+
+  /** 참여 응답에 실을 브랜드 DTO 조립 */
+  async function buildBrandAccountDto(brandAccount: BrandAccountRow) {
     const campaignCount = await prisma.brandCampaign.count({
       where: { brandAccountId: brandAccount.id },
     });
     return toBrandAccount(brandAccount, campaignCount, accountConnectUrl(brandAccount.id));
   }
 
-  // ── 브랜드 캠페인 (F-1.1, F-1.5 — 기간 단위) ──
+  // ── 시즌 캠페인 (F-1.1) ──
+  //
+  // 위계: Campaign(시즌) → BrandCampaign(참여) → BrandXAccount(브랜드).
+  // 기간은 시즌이, 진행 상태·게시 설정은 참여가 갖는다. 설계: docs/jwin/CAMPAIGN_HIERARCHY.md
+
+  /** 시즌 목록·상세에서 참여 브랜드 행을 만들 때 쓰는 include. */
+  const BRAND_CAMPAIGN_LIST_INCLUDE = {
+    _count: { select: { entries: true } },
+    brandAccount: {
+      select: {
+        label: true,
+        slug: true,
+        logoUrl: true,
+        xUsername: true,
+        refreshFailedAt: true,
+      },
+    },
+    posts: { where: { status: 'FAILED' as const }, select: { id: true } },
+  };
+
   const campaignSchema = z.object({
-    brandName: z.string().min(1),
+    name: z.string().min(1),
     slug: z.string().regex(/^[a-z0-9-]+$/),
     startsAt: z.coerce.date(),
     endsAt: z.coerce.date(),
-    dailyPostTime: z.string().regex(/^\d{2}:\d{2}$/).default('11:00'),
-    dailyWinCap: z.number().int().positive().nullable().optional(),
-    cardImageUrl: z.string().url().nullable().optional(),
-    rulesUrl: z.string().url().nullable().optional(),
-    prUrl: z.string().url().nullable().optional(),
-    winMediaUrl: z.string().url().nullable().optional(),
-    loseMediaUrl: z.string().url().nullable().optional(),
-    dmTemplate: z.string().max(1000).nullable().optional(),
-    brandAccountId: z.string().nullable().optional(),
   });
 
   app.post('/admin/campaigns', async (req, reply) => {
@@ -176,42 +224,188 @@ export async function adminRoutes(app: FastifyInstance) {
     if (parsed.data.endsAt <= parsed.data.startsAt) {
       return reply.code(400).send({ error: '종료일은 시작일 이후여야 합니다' });
     }
-    if (!(await ensureBrandAccountExists(parsed.data.brandAccountId, reply))) return;
-    if (!(await ensureSlugAvailable(parsed.data.slug, reply))) return;
-    const campaign = await prisma.brandCampaign.create({
-      data: parsed.data,
-      include: { brandAccount: true },
-    });
+    if (!(await ensureCampaignSlugAvailable(parsed.data.slug, reply))) return;
+
+    const campaign = await prisma.campaign.create({ data: parsed.data });
     await audit(admin, 'campaign.create', campaign.id, parsed.data);
-    return toCampaignDetail(campaign, await buildBrandAccountDto(campaign.brandAccount));
+    return toCampaignDetail(campaign, []);
   });
 
   app.get('/admin/campaigns', async (req, reply) => {
     if (!requireAdmin(req, reply)) return;
-    const campaigns = await prisma.brandCampaign.findMany({
+    const campaigns = await prisma.campaign.findMany({
       orderBy: { startsAt: 'desc' },
-      include: {
-        _count: { select: { entries: true } },
-        brandAccount: { select: { xUserId: true, xUsername: true, refreshFailedAt: true } },
-        posts: { where: { status: 'FAILED' }, select: { id: true } },
-      },
+      include: { brands: { include: BRAND_CAMPAIGN_LIST_INCLUDE } },
     });
     return { campaigns: campaigns.map(toCampaignListItem) };
   });
 
-  // ① 편집 폼 초기값 — brandAccountId·연동된 계정 정보(brandAccount) 포함
   app.get<{ Params: { id: string } }>('/admin/campaigns/:id', async (req, reply) => {
     if (!requireAdmin(req, reply)) return;
-    const campaign = await prisma.brandCampaign.findUnique({
+    const campaign = await prisma.campaign.findUnique({
       where: { id: req.params.id },
-      include: { brandAccount: true },
+      include: {
+        brands: {
+          include: BRAND_CAMPAIGN_LIST_INCLUDE,
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     });
     if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
-    return toCampaignDetail(campaign, await buildBrandAccountDto(campaign.brandAccount));
+    return toCampaignDetail(campaign, campaign.brands.map(toBrandCampaignListItem));
+  });
+
+  app.patch<{ Params: { id: string } }>('/admin/campaigns/:id', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const parsed = campaignSchema.partial().safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+    if (!(await ensureCampaignSlugAvailable(parsed.data.slug, reply, req.params.id))) return;
+
+    const current = await prisma.campaign.findUnique({ where: { id: req.params.id } });
+    if (!current) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
+    const startsAt = parsed.data.startsAt ?? current.startsAt;
+    const endsAt = parsed.data.endsAt ?? current.endsAt;
+    if (endsAt <= startsAt) {
+      return reply.code(400).send({ error: '종료일은 시작일 이후여야 합니다' });
+    }
+
+    const campaign = await prisma.campaign.update({
+      where: { id: current.id },
+      data: parsed.data,
+      include: { brands: { include: BRAND_CAMPAIGN_LIST_INCLUDE } },
+    });
+    await audit(admin, 'campaign.update', campaign.id, parsed.data);
+    return toCampaignDetail(campaign, campaign.brands.map(toBrandCampaignListItem));
+  });
+
+  /** 시즌 삭제 영향도 — 참여 브랜드들의 데이터를 합산한다. */
+  app.get<{ Params: { id: string } }>(
+    '/admin/campaigns/:id/delete-impact',
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+      const campaign = await prisma.campaign.findUnique({
+        where: { id: req.params.id },
+        select: { id: true, name: true, slug: true, _count: { select: { brands: true } } },
+      });
+      if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
+
+      const [entryCount, winnerCount, postedCount] = await Promise.all([
+        prisma.entry.count({ where: { campaign: { campaignId: campaign.id } } }),
+        prisma.winner.count({ where: { entry: { campaign: { campaignId: campaign.id } } } }),
+        prisma.campaignPost.count({
+          where: { campaign: { campaignId: campaign.id }, status: 'POSTED' },
+        }),
+      ]);
+
+      return {
+        campaignId: campaign.id,
+        name: campaign.name,
+        slug: campaign.slug,
+        brandCount: campaign._count.brands,
+        entryCount,
+        winnerCount,
+        postedCount,
+      };
+    },
+  );
+
+  /** 시즌 삭제 — 참여와 그 하위 데이터를 모두 지운다. */
+  app.delete<{ Params: { id: string } }>('/admin/campaigns/:id', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, name: true, slug: true },
+    });
+    if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
+
+    const where = { campaign: { campaignId: campaign.id } };
+    await prisma.$transaction([
+      prisma.prizeCode.deleteMany({ where: { prize: where } }),
+      prisma.winner.deleteMany({ where: { entry: where } }),
+      prisma.entry.deleteMany({ where }),
+      prisma.campaignPost.deleteMany({ where }),
+      prisma.prize.deleteMany({ where }),
+      prisma.postTemplate.deleteMany({ where }),
+      prisma.brandCampaign.deleteMany({ where: { campaignId: campaign.id } }),
+      prisma.campaign.delete({ where: { id: campaign.id } }),
+    ]);
+    await audit(admin, 'campaign.delete', campaign.id, {
+      name: campaign.name,
+      slug: campaign.slug,
+    });
+    return { deleted: true };
+  });
+
+  // ── 브랜드 참여 (Campaign × Brand) ──
+
+  app.post('/admin/brand-campaigns', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const parsed = AdminBrandCampaignCreateSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+    if (!(await ensureBrandAccountExists(parsed.data.brandAccountId, reply))) return;
+
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: parsed.data.campaignId },
+      select: { id: true },
+    });
+    if (!campaign) return reply.code(400).send({ error: '존재하지 않는 캠페인입니다' });
+
+    const duplicate = await prisma.brandCampaign.findUnique({
+      where: {
+        campaignId_brandAccountId: {
+          campaignId: parsed.data.campaignId,
+          brandAccountId: parsed.data.brandAccountId,
+        },
+      },
+      select: { id: true },
+    });
+    if (duplicate) {
+      return reply.code(400).send({ error: '이미 이 캠페인에 참여 중인 브랜드입니다' });
+    }
+
+    const brandCampaign = await prisma.brandCampaign.create({
+      data: parsed.data,
+      include: { brandAccount: true, campaign: true },
+    });
+    await audit(admin, 'brandCampaign.create', brandCampaign.id, parsed.data);
+    return toBrandCampaignDetail(
+      brandCampaign,
+      await buildBrandAccountDto(brandCampaign.brandAccount),
+    );
+  });
+
+  app.get<{ Params: { id: string } }>(
+    '/admin/campaigns/:id/brand-campaigns',
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+      const brandCampaigns = await prisma.brandCampaign.findMany({
+        where: { campaignId: req.params.id },
+        include: BRAND_CAMPAIGN_LIST_INCLUDE,
+        orderBy: { createdAt: 'asc' },
+      });
+      return { brandCampaigns: brandCampaigns.map(toBrandCampaignListItem) };
+    },
+  );
+
+  /** ① 참여 편집 폼 초기값 — 시즌 요약·브랜드 정보 포함 */
+  app.get<{ Params: { id: string } }>('/admin/brand-campaigns/:id', async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const brandCampaign = await prisma.brandCampaign.findUnique({
+      where: { id: req.params.id },
+      include: { brandAccount: true, campaign: true },
+    });
+    if (!brandCampaign) return reply.code(404).send({ error: '참여를 찾을 수 없습니다' });
+    return toBrandCampaignDetail(
+      brandCampaign,
+      await buildBrandAccountDto(brandCampaign.brandAccount),
+    );
   });
 
   // ② 경품 목록 — id·확률·유형·코드 재고 포함
-  app.get<{ Params: { id: string } }>('/admin/campaigns/:id/prizes', async (req, reply) => {
+  app.get<{ Params: { id: string } }>('/admin/brand-campaigns/:id/prizes', async (req, reply) => {
     if (!requireAdmin(req, reply)) return;
     const prizes = await prisma.prize.findMany({
       where: { campaignId: req.params.id },
@@ -231,7 +425,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
   // ④ 포스트 소재 목록 — 커버리지 검사·삭제 가능 여부(used)용
   app.get<{ Params: { id: string } }>(
-    '/admin/campaigns/:id/post-templates',
+    '/admin/brand-campaigns/:id/post-templates',
     async (req, reply) => {
       if (!requireAdmin(req, reply)) return;
       const templates = await prisma.postTemplate.findMany({
@@ -247,88 +441,69 @@ export async function adminRoutes(app: FastifyInstance) {
     },
   );
 
-  app.patch<{ Params: { id: string } }>('/admin/campaigns/:id', async (req, reply) => {
+  app.patch<{ Params: { id: string } }>('/admin/brand-campaigns/:id', async (req, reply) => {
     const admin = requireAdmin(req, reply);
     if (!admin) return;
-    const parsed = campaignSchema
-      .partial()
-      .extend({ status: z.enum(['SETUP', 'ACTIVE', 'PAUSED', 'ENDED']).optional() })
-      .safeParse(req.body);
+    const parsed = AdminBrandCampaignPatchSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
-    if (!(await ensureBrandAccountExists(parsed.data.brandAccountId, reply))) return;
-    if (!(await ensureSlugAvailable(parsed.data.slug, reply, req.params.id))) return;
+
+    const current = await prisma.brandCampaign.findUnique({
+      where: { id: req.params.id },
+      include: { brandAccount: true, campaign: true, prizes: true, postTemplates: true },
+    });
+    if (!current) return reply.code(404).send({ error: '참여를 찾을 수 없습니다' });
 
     // SETUP → ACTIVE 는 서버가 최종 검증한다. 미비된 채로 올라가면 매일 게시가 조용히 실패한다.
-    if (parsed.data.status === 'ACTIVE') {
-      const current = await prisma.brandCampaign.findUnique({
-        where: { id: req.params.id },
-        include: { brandAccount: true, prizes: true, postTemplates: true },
+    if (parsed.data.status === 'ACTIVE' && current.status === 'SETUP') {
+      const blockers = activationBlockers({
+        campaign: {
+          // 기간은 시즌에서 온다. DM 문구는 같은 요청에서 함께 바뀔 수 있어 새 값을 우선한다.
+          startsAt: current.campaign.startsAt,
+          endsAt: current.campaign.endsAt,
+          dmTemplate:
+            parsed.data.dmTemplate === undefined ? current.dmTemplate : parsed.data.dmTemplate,
+        },
+        brandAccount: current.brandAccount,
+        prizes: current.prizes,
+        postTemplates: current.postTemplates,
       });
-      if (!current) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
-
-      if (current.status === 'SETUP') {
-        // 같은 요청에서 계정 연결을 함께 바꾸는 경우가 있으므로 새 값을 우선한다.
-        // 새 id 가 이미 가진 값과 다르면만 조회 — resolveAccountForActivationCheck 가 최종 판단.
-        const needsAccountLookup =
-          parsed.data.brandAccountId !== undefined &&
-          parsed.data.brandAccountId !== null &&
-          parsed.data.brandAccountId !== current.brandAccountId;
-        const fetchedAccount = needsAccountLookup
-          ? await prisma.brandXAccount.findUnique({
-              where: { id: parsed.data.brandAccountId as string },
-            })
-          : null;
-        const brandAccountForCheck = resolveAccountForActivationCheck(
-          parsed.data.brandAccountId,
-          current,
-          fetchedAccount,
-        );
-
-        const blockers = activationBlockers({
-          campaign: {
-            // 같은 요청에서 기간·DM 문구를 함께 바꾸는 경우가 있으므로 새 값을 우선한다
-            startsAt: parsed.data.startsAt ?? current.startsAt,
-            endsAt: parsed.data.endsAt ?? current.endsAt,
-            dmTemplate:
-              parsed.data.dmTemplate === undefined
-                ? current.dmTemplate
-                : parsed.data.dmTemplate,
-          },
-          brandAccount: brandAccountForCheck,
-          prizes: current.prizes,
-          postTemplates: current.postTemplates,
-        });
-        if (blockers.length > 0) {
-          return reply
-            .code(400)
-            .send({ error: `캠페인을 시작할 수 없습니다 — ${blockers.join(' / ')}` });
-        }
+      if (blockers.length > 0) {
+        return reply
+          .code(400)
+          .send({ error: `캠페인을 시작할 수 없습니다 — ${blockers.join(' / ')}` });
       }
     }
 
-    const campaign = await prisma.brandCampaign.update({
-      where: { id: req.params.id },
+    const brandCampaign = await prisma.brandCampaign.update({
+      where: { id: current.id },
       data: parsed.data,
-      include: { brandAccount: true },
+      include: { brandAccount: true, campaign: true },
     });
-    await audit(admin, 'campaign.update', campaign.id, parsed.data);
-    return toCampaignDetail(campaign, await buildBrandAccountDto(campaign.brandAccount));
+    await audit(admin, 'brandCampaign.update', brandCampaign.id, parsed.data);
+    return toBrandCampaignDetail(
+      brandCampaign,
+      await buildBrandAccountDto(brandCampaign.brandAccount),
+    );
   });
 
   /**
-   * 삭제 영향도 — 함께 사라지는 데이터 건수. 어드민 다이얼로그가 이 값을 보여주고
+   * 참여 삭제 영향도 — 함께 사라지는 데이터 건수. 어드민 다이얼로그가 이 값을 보여주고
    * 응모·게시 이력이 있으면 한 번 더 확인받는다.
    */
   app.get<{ Params: { id: string } }>(
-    '/admin/campaigns/:id/delete-impact',
+    '/admin/brand-campaigns/:id/delete-impact',
     async (req, reply) => {
       if (!requireAdmin(req, reply)) return;
       const campaignId = req.params.id;
-      const campaign = await prisma.brandCampaign.findUnique({
+      const brandCampaign = await prisma.brandCampaign.findUnique({
         where: { id: campaignId },
-        select: { id: true, brandName: true, slug: true },
+        select: {
+          id: true,
+          brandAccount: { select: { label: true } },
+          campaign: { select: { name: true } },
+        },
       });
-      if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
+      if (!brandCampaign) return reply.code(404).send({ error: '참여를 찾을 수 없습니다' });
 
       const [entryCount, winnerCount, postedCount, prizeCount, postTemplateCount] =
         await Promise.all([
@@ -340,9 +515,9 @@ export async function adminRoutes(app: FastifyInstance) {
         ]);
 
       return {
-        campaignId: campaign.id,
-        brandName: campaign.brandName,
-        slug: campaign.slug,
+        brandCampaignId: brandCampaign.id,
+        campaignName: brandCampaign.campaign.name,
+        brandName: brandCampaign.brandAccount.label,
         entryCount,
         winnerCount,
         postedCount,
@@ -353,20 +528,24 @@ export async function adminRoutes(app: FastifyInstance) {
   );
 
   /**
-   * 캠페인 삭제 — 자식 행까지 한 트랜잭션으로 지운다.
+   * 참여 삭제 — 자식 행까지 한 트랜잭션으로 지운다.
    * 스키마에 onDelete 규칙이 없어(FK 기본 Restrict) 참조 역순으로 지워야 한다:
-   * 코드 → 당첨자 → 응모 → 포스트 → 경품 → 포스팅 설정 → 캠페인.
+   * 코드 → 당첨자 → 응모 → 포스트 → 경품 → 포스팅 설정 → 참여.
    * 되돌릴 수 없으므로 확인은 어드민 화면이 책임진다(영향도 표시 + 재확인).
    */
-  app.delete<{ Params: { id: string } }>('/admin/campaigns/:id', async (req, reply) => {
+  app.delete<{ Params: { id: string } }>('/admin/brand-campaigns/:id', async (req, reply) => {
     const admin = requireAdmin(req, reply);
     if (!admin) return;
     const campaignId = req.params.id;
-    const campaign = await prisma.brandCampaign.findUnique({
+    const brandCampaign = await prisma.brandCampaign.findUnique({
       where: { id: campaignId },
-      select: { id: true, brandName: true, slug: true },
+      select: {
+        id: true,
+        campaignId: true,
+        brandAccount: { select: { label: true } },
+      },
     });
-    if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
+    if (!brandCampaign) return reply.code(404).send({ error: '참여를 찾을 수 없습니다' });
 
     await prisma.$transaction([
       prisma.prizeCode.deleteMany({ where: { prize: { campaignId } } }),
@@ -377,9 +556,9 @@ export async function adminRoutes(app: FastifyInstance) {
       prisma.postTemplate.deleteMany({ where: { campaignId } }),
       prisma.brandCampaign.delete({ where: { id: campaignId } }),
     ]);
-    await audit(admin, 'campaign.delete', campaignId, {
-      brandName: campaign.brandName,
-      slug: campaign.slug,
+    await audit(admin, 'brandCampaign.delete', campaignId, {
+      campaignId: brandCampaign.campaignId,
+      brandName: brandCampaign.brandAccount.label,
     });
     return { deleted: true };
   });
@@ -645,13 +824,16 @@ export async function adminRoutes(app: FastifyInstance) {
     return { deleted: true };
   });
 
-  // ── 모니터링 대시보드 (캠페인 단위) ──
-  app.get<{ Params: { id: string } }>('/admin/campaigns/:id/stats', async (req, reply) => {
+  // ── 모니터링 대시보드 (참여 단위) ──
+  app.get<{ Params: { id: string } }>('/admin/brand-campaigns/:id/stats', async (req, reply) => {
     if (!requireAdmin(req, reply)) return;
     const campaign = await prisma.brandCampaign.findUnique({
       where: { id: req.params.id },
       include: {
-        brandAccount: { select: { xUsername: true, refreshFailedAt: true } },
+        campaign: true,
+        brandAccount: {
+          select: { label: true, slug: true, xUsername: true, refreshFailedAt: true },
+        },
         prizes: true,
         posts: { where: { status: 'FAILED' } },
         _count: { select: { entries: true } },
@@ -673,12 +855,12 @@ export async function adminRoutes(app: FastifyInstance) {
 
     return {
       campaignId: campaign.id,
-      brandName: campaign.brandName,
-      slug: campaign.slug,
-      xUsername: campaign.brandAccount?.xUsername ?? null,
+      brandName: campaign.brandAccount.label,
+      slug: campaign.brandAccount.slug,
+      xUsername: campaign.brandAccount.xUsername,
       status: campaign.status,
-      startsAt: campaign.startsAt.toISOString(),
-      endsAt: campaign.endsAt.toISOString(),
+      startsAt: campaign.campaign.startsAt.toISOString(),
+      endsAt: campaign.campaign.endsAt.toISOString(),
       entries: campaign._count.entries,
       winConfirmed,
       winPendingToday,
@@ -697,7 +879,7 @@ export async function adminRoutes(app: FastifyInstance) {
   // 필터는 서버에서 걸고 커서로 페이징한다. 화면이 전량 로드 후 거르면 데이터가
   // 늘었을 때 "보이는 목록 ≠ 실제 전체"가 되고 CSV가 조용히 일부만 담는다.
   app.get<{ Params: { id: string }; Querystring: Record<string, string | undefined> }>(
-    '/admin/campaigns/:id/winners',
+    '/admin/brand-campaigns/:id/winners',
     async (req, reply) => {
       if (!requireAdmin(req, reply)) return;
       const parsed = AdminWinnerFilterSchema.safeParse(req.query);
@@ -724,7 +906,7 @@ export async function adminRoutes(app: FastifyInstance) {
   // CSV 내보내기 — 필터에 걸린 **전체**를 배송지 평문까지 담아 내려준다.
   // 목록과 분리한 이유가 이것이고, 개인정보 반출이므로 열람과 동일하게 감사에 남긴다.
   app.get<{ Params: { id: string }; Querystring: Record<string, string | undefined> }>(
-    '/admin/campaigns/:id/winners/export',
+    '/admin/brand-campaigns/:id/winners/export',
     async (req, reply) => {
       const admin = requireAdmin(req, reply);
       if (!admin) return;

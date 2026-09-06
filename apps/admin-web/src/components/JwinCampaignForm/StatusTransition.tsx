@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { JwinStatusBadge } from "@/components/composites";
 import { Button } from "@/components/ui";
-import type { AdminCampaignDetail } from "@/domains/jwin";
+import type { AdminBrandCampaignDetail } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import { canActivate, type ActivationCheck } from "./activationChecklist";
 import { PauseCampaignDialog } from "./PauseCampaignDialog";
@@ -11,7 +11,7 @@ import type { JwinCampaignStatus } from "./useJwinStatusTransition";
 import styles from "./JwinCampaignTabs.module.css";
 
 type Props = {
-  detail: AdminCampaignDetail;
+  detail: AdminBrandCampaignDetail;
   checks: ActivationCheck[];
   changing: boolean;
   // 체크리스트가 참조하는 경품·소재 데이터가 재조회 중이면 ACTIVE 버튼을 잠가

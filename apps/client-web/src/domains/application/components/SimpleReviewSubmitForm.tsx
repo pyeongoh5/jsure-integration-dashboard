@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import {
+  useForm,
+  FormProvider,
+  useFieldArray,
+  useFormState,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
 import {
+  CampaignSubTypeSchema,
+  MAX_REVIEW_URLS,
   SUB_TYPE_LABEL,
   type AttachmentUploadInput,
   type CampaignSubType,
@@ -31,18 +38,100 @@ const PLACEHOLDER_BY_SUB_TYPE: Partial<Record<CampaignSubType, string>> = {
   ATCOSME: "https://www.cosme.net/...",
 };
 
+/** 채널당 URL 배열. useFieldArray 가 객체 배열을 요구해 { value } 로 감싼다. */
+type FormValues = {
+  channels: { subType: CampaignSubType; urls: { value: string }[] }[];
+};
+
 interface Props {
 
   applicationId: string;
   subTypes: CampaignSubType[]; // 참여한 모든 리뷰 채널의 URL 을 한 폼에서 일괄 제출
-  initial: Partial<Record<CampaignSubType, string>>;
+  initial: Partial<Record<CampaignSubType, string[]>>;
   onSubmit: (
-    reviews: { subType: CampaignSubType; url: string }[],
+    reviews: { subType: CampaignSubType; urls: string[] }[],
     screenshots: AttachmentUploadInput[],
   ) => Promise<void>;
   submitting: boolean;
   reviewDeadlineAt: string | null;
   publishWindow: PublishWindowText;
+}
+
+/**
+ * 채널 하나의 URL 입력 행들. 훅을 채널마다 호출해야 해서 컴포넌트로 분리한다.
+ * 상품이 여러 개인 안건에서 리뷰 URL 을 필요한 만큼 추가할 수 있다.
+ */
+function ChannelUrlFields({
+  channelIndex,
+  subType,
+  disabled,
+}: {
+  channelIndex: number;
+  subType: CampaignSubType;
+  disabled: boolean;
+}) {
+  const { fields, append, remove } = useFieldArray<FormValues>({
+    name: `channels.${channelIndex}.urls`,
+  });
+  const { errors } = useFormState<FormValues>();
+  // 중복 검사는 배열 전체에 걸리므로 개별 입력칸이 아니라 여기서 보여준다.
+  const channelError = errors.channels?.[channelIndex]?.urls?.root?.message;
+
+  return (
+    <div className={styles.urlList}>
+      {fields.map((field, urlIndex) => (
+        <div key={field.id} className={styles.urlRow}>
+          <div className={styles.urlInput}>
+            <FormField
+              name={`channels.${channelIndex}.urls.${urlIndex}.value`}
+              label={
+                urlIndex === 0
+                  ? `${SUB_TYPE_LABEL[subType]} ${t("application.simpleReviewForm.labelSuffix")}`
+                  : undefined
+              }
+            >
+              {(field) => (
+                <Input
+                  id={field.id}
+                  type="text"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  error={field.error}
+                  disabled={disabled}
+                  placeholder={PLACEHOLDER_BY_SUB_TYPE[subType] ?? "https://..."}
+                  aria-invalid={field["aria-invalid"]}
+                />
+              )}
+            </FormField>
+          </div>
+
+          {fields.length > 1 && (
+            <button
+              type="button"
+              className={styles.urlRemove}
+              onClick={() => remove(urlIndex)}
+              disabled={disabled}
+              aria-label={t("application.simpleReviewForm.removeUrlAriaLabel")}
+            >
+              ×
+            </button>
+          )}
+        </div>
+      ))}
+
+      {channelError && <div className={styles.error}>{channelError}</div>}
+
+      <button
+        type="button"
+        className={styles.urlAdd}
+        onClick={() => append({ value: "" })}
+        disabled={disabled || fields.length >= MAX_REVIEW_URLS}
+      >
+        {t("application.simpleReviewForm.addUrl")}
+      </button>
+    </div>
+  );
 }
 
 function formatDeadline(iso: string): string {
@@ -60,15 +149,36 @@ export function SimpleReviewSubmitForm({
   reviewDeadlineAt,
   publishWindow,
 }: Props) {
-  const schema = z.object(
-    Object.fromEntries(subTypes.map((subType) => [subType, urlSchema])),
-  );
-  const hasInitial = subTypes.some((subType) => Boolean(initial[subType]));
-  const methods = useForm<Record<string, string>>({
-    resolver: zodResolver(schema),
-    defaultValues: Object.fromEntries(
-      subTypes.map((subType) => [subType, initial[subType] ?? ""]),
+  const schema = z.object({
+    channels: z.array(
+      z.object({
+        subType: CampaignSubTypeSchema,
+        urls: z
+          .array(z.object({ value: urlSchema }))
+          .min(1)
+          .refine(
+            (rows) =>
+              new Set(rows.map((row) => row.value)).size === rows.length,
+            t("application.simpleReviewForm.urlDuplicate"),
+          ),
+      }),
     ),
+  });
+  const hasInitial = subTypes.some(
+    (subType) => (initial[subType]?.length ?? 0) > 0,
+  );
+  const methods = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      channels: subTypes.map((subType) => ({
+        subType,
+        // 저장된 URL 이 없으면 빈 입력 한 줄로 시작한다.
+        urls:
+          initial[subType]?.length
+            ? initial[subType]!.map((url) => ({ value: url }))
+            : [{ value: "" }],
+      })),
+    },
   });
   const upload = useAttachmentUpload({
 
@@ -87,7 +197,7 @@ export function SimpleReviewSubmitForm({
     upload.fileInputRef.current?.click();
   }
 
-  async function handle(values: Record<string, string>) {
+  async function handle(values: FormValues) {
     setSubmitError(null);
     const screenshots = upload.toInputs();
     if (screenshots.length < MIN_FILES) {
@@ -96,7 +206,10 @@ export function SimpleReviewSubmitForm({
     }
     try {
       await onSubmit(
-        subTypes.map((subType) => ({ subType, url: values[subType] ?? "" })),
+        values.channels.map((channel) => ({
+          subType: channel.subType,
+          urls: channel.urls.map((row) => row.value.trim()).filter(Boolean),
+        })),
         screenshots,
       );
     } catch (err) {
@@ -116,25 +229,13 @@ export function SimpleReviewSubmitForm({
   return (
     <FormProvider {...methods}>
       <form className={styles.form} onSubmit={methods.handleSubmit(handle)}>
-        {subTypes.map((subType) => (
-          <FormField
+        {subTypes.map((subType, channelIndex) => (
+          <ChannelUrlFields
             key={subType}
-            name={subType}
-            label={`${SUB_TYPE_LABEL[subType]} ${t("application.simpleReviewForm.labelSuffix")}`}
-          >
-            {(field) => (
-              <Input
-                id={field.id}
-                type="text"
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                error={field.error}
-                placeholder={PLACEHOLDER_BY_SUB_TYPE[subType] ?? "https://..."}
-                aria-invalid={field["aria-invalid"]}
-              />
-            )}
-          </FormField>
+            channelIndex={channelIndex}
+            subType={subType}
+            disabled={busy}
+          />
         ))}
 
         <div className={styles.section}>

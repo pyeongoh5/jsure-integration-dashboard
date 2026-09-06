@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   SUB_TYPE_LABEL,
   pickRepresentativeSnsAccount,
+  postUrls,
   type AdminSettlement,
   type CampaignCategory,
 } from "@jsure/shared";
@@ -199,7 +200,8 @@ function downloadCsv(rows: AdminSettlement[], month: string): void {
           row.campaign.title,
           translate(CATEGORY_LABEL_KO[row.campaign.category], language),
           post ? SUB_TYPE_LABEL[post.subType] : "",
-          post?.url ?? "",
+          // 복수 URL 은 줄바꿈으로 잇는다 — csvEscape 가 따옴표로 감싸 안전하다.
+          post ? postUrls(post).join("\n") : "",
           post ? formatDateTime(post.submittedAt, language) : "",
           post ? formatDateTime(post.insightSubmittedAt, language) : "",
           metricCell(post?.insightLikes ?? null),

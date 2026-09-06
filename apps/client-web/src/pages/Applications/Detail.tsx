@@ -27,7 +27,7 @@ import {
   useApplication,
 } from "@/domains/application";
 import { useCampaign } from "@/domains/campaign";
-import type { AttachmentUploadInput } from "@jsure/shared";
+import { postUrls, type AttachmentUploadInput } from "@jsure/shared";
 import { PageHeader } from "@/components/composites/PageHeader";
 import { PrimaryButton } from "@/components/composites/PrimaryButton";
 import { t } from "@i18n";
@@ -106,7 +106,7 @@ export function ApplicationDetail() {
       reviews,
       screenshots,
     }: {
-      reviews: { subType: CampaignSubType; url: string }[];
+      reviews: { subType: CampaignSubType; urls: string[] }[];
       screenshots: AttachmentUploadInput[];
     }) => submitSimpleReview(id, reviews, screenshots),
     onSuccess: () => invalidate(),
@@ -431,9 +431,7 @@ export function ApplicationDetail() {
                 applicationId={data.id}
                 subTypes={data.subTypes}
                 initial={Object.fromEntries(
-                  data.posts
-                    .filter((p) => p.url !== null)
-                    .map((p) => [p.subType, p.url ?? ""]),
+                  data.posts.map((post) => [post.subType, postUrls(post)]),
                 )}
                 onSubmit={async (reviews, screenshots) => {
                   await simpleReview.mutateAsync({ reviews, screenshots });

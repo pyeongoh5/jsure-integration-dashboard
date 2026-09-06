@@ -1,4 +1,8 @@
-import { pickRepresentativeSnsAccount, type AdminSubmission } from "@jsure/shared";
+import {
+  pickRepresentativeSnsAccount,
+  postUrls,
+  type AdminSubmission,
+} from "@jsure/shared";
 import type { AdminLanguage } from "@i18n/admin";
 import { toHandleBySubType } from "@/domains/influencer/handleBySubType";
 import { formatRelative } from "../applicants/applicantTransform";
@@ -80,6 +84,7 @@ export function toDraftReview(
       subType: post.subType,
       media: SNS_TO_MEDIA[post.subType],
       url: post.url,
+      urls: postUrls(post),
       insightSubmitted: post.insightSubmittedAt !== null,
       insight: {
         likes: post.insightLikes,

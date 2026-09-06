@@ -178,6 +178,17 @@
   text-decoration: underline;
 }
 
+/* 복수 URL — 채널 라벨 옆에 세로로 쌓는다. */
+.urlList {
+  display: inline-block;
+  vertical-align: top;
+  max-width: calc(100% - 72px);
+}
+
+.urlList .url {
+  display: block;
+}
+
 .reviewChannelLabel {
   display: inline-block;
   min-width: 64px;

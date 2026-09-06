@@ -94,7 +94,7 @@ export function InsightDetailDialog({
     );
     return kindFiltered.filter((item) => activeAttachmentIds.has(item.id));
   }, [attachmentsState, attachmentKind, isReviewCategory, activePost]);
-  const submittedUrls = visiblePosts.filter((post) => post.url !== null);
+  const submittedUrls = visiblePosts.filter((post) => post.urls.length > 0);
   // 보정 대상은 인사이트가 제출된 SNS 게시물뿐 — 리뷰 카테고리·미제출 건은 제외.
   const canEdit = activePost !== null && activePost.insightSubmitted;
   // 가구매는 주문 명세서(ORDER_RECEIPT)도 같은 첨부 응답에 실려온다.
@@ -335,14 +335,20 @@ export function InsightDetailDialog({
                       <span className={styles.reviewChannelLabel}>
                         {SUB_TYPE_LABEL[post.subType]}
                       </span>
-                      <a
-                        className={styles.url}
-                        href={post.url ?? undefined}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {post.url}
-                      </a>
+                      {/* 단순리뷰는 상품 수만큼 URL 이 여러 개 올 수 있다. */}
+                      <span className={styles.urlList}>
+                        {post.urls.map((url) => (
+                          <a
+                            key={url}
+                            className={styles.url}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {url}
+                          </a>
+                        ))}
+                      </span>
                     </div>
                   ))}
                 </section>

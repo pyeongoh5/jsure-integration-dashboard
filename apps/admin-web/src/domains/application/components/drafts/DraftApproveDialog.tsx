@@ -31,10 +31,10 @@ export function DraftApproveDialog({
             {draft.campaignTitle}
           </div>
           {draft.posts
-            .filter((post) => post.url !== null)
-            .map((post) => (
-              <div key={post.id} className={styles.dialogHint}>
-                {post.url}
+            .flatMap((post) => post.urls)
+            .map((url) => (
+              <div key={url} className={styles.dialogHint}>
+                {url}
               </div>
             ))}
           {error && <div className={styles.mutationError}>{error}</div>}

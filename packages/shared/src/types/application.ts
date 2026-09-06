@@ -48,10 +48,15 @@ export const PostReviewStatusSchema = z.enum([
 ]);
 export type PostReviewStatus = z.infer<typeof PostReviewStatusSchema>;
 
+/** 단순리뷰에서 한 채널에 제출할 수 있는 리뷰 URL 개수 상한. 스크린샷 상한과 맞춘다. */
+export const MAX_REVIEW_URLS = 10;
+
 export const SubmittedPostSchema = z.object({
   id: z.string(),
   subType: CampaignSubTypeSchema,
   url: z.string().url().nullable(),
+  /** 두 번째부터의 리뷰 URL. 전체 목록이 필요하면 postUrls() 를 쓴다. */
+  extraUrls: z.array(z.string().url()).default([]),
   submissionData: z.record(z.unknown()).nullable().default(null),
   submittedAt: z.string().datetime(),
   insightLikes: z.number().int().nullable(),
@@ -64,6 +69,19 @@ export const SubmittedPostSchema = z.object({
   insightSubmittedAt: z.string().datetime().nullable(),
 });
 export type SubmittedPost = z.infer<typeof SubmittedPostSchema>;
+
+/**
+ * 제출된 리뷰 URL 전체를 제출 순서대로 반환한다.
+ * 대표 URL(url) 과 나머지(extraUrls) 로 나뉘어 저장되므로, 읽는 쪽은 항상 이 함수를 쓴다.
+ */
+export function postUrls(post: {
+  url: string | null;
+  extraUrls?: string[];
+}): string[] {
+  return [post.url, ...(post.extraUrls ?? [])].filter(
+    (url): url is string => typeof url === "string" && url.length > 0,
+  );
+}
 
 export const AttachmentUploadInputSchema = z.object({
   objectKey: z.string().min(1),
@@ -199,7 +217,11 @@ export const SubmitSimpleReviewRequestSchema = z.object({
     .array(
       z.object({
         subType: CampaignSubTypeSchema,
-        url: z.string().url().startsWith("https://"),
+        /** 채널당 리뷰 URL. 상품이 여러 개면 2개 이상 제출한다. */
+        urls: z
+          .array(z.string().url().startsWith("https://"))
+          .min(1, "レビューURLを入力してください")
+          .max(MAX_REVIEW_URLS),
       }),
     )
     .min(1, "レビューURLを入力してください")

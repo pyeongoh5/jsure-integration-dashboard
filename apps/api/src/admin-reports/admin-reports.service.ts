@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import {
   SLOT_CONSUMING_STATUSES,
   formatTitleWithTags,
+  postUrls,
   type CampaignParticipantsResponse,
   type CampaignReportParticipant,
   type CampaignReportResponse,
@@ -211,7 +212,8 @@ export class AdminReportsService {
             influencerName: application.influencer.name,
             handle: matchedAccount?.handle ?? "",
             subType,
-            postUrl: post?.url ?? null,
+            // 복수 URL 은 줄바꿈으로 잇는다 — URL 자체에 쉼표가 들어갈 수 있다.
+            postUrl: post ? (postUrls(post).join("\n") || null) : null,
             submittedAt: post ? post.submittedAt.toISOString() : null,
             option:
               application.options.find((entry) => entry.subType === subType)

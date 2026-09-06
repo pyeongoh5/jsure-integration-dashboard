@@ -46,6 +46,8 @@ export type DraftPost = {
   subType: CampaignSubType;
   media: Media;
   url: string | null;
+  /** 제출된 리뷰 URL 전체(대표 URL 포함). 단순리뷰는 2개 이상일 수 있다. */
+  urls: string[];
   insightSubmitted: boolean;
   insight: InsightMetrics;
   attachments: Attachment[];

@@ -752,9 +752,135 @@ describe("게시 기간 시작 전 제출 차단", () => {
       svc.submitSimpleReview(
         "inf-1",
         "app-1",
-        [{ subType: "LIPS", url: "https://lips.test/1" }],
+        [{ subType: "LIPS", urls: ["https://lips.test/1"] }],
         [],
       ),
     ).rejects.toThrow(/PUBLISH_NOT_STARTED|게시 기간 시작 전/);
+  });
+
+  describe("단순 리뷰: 복수 URL 제출", () => {
+    const screenshots = [
+      {
+        objectKey: "attachments/app-1/REVIEW_SCREENSHOT/a.png",
+        contentType: "image/png" as const,
+        sizeBytes: 100,
+      },
+    ];
+
+    function makeSimpleReviewPrisma(subTypes: string[] = ["LIPS"]) {
+      const upsert = jest.fn(async () => ({ id: "post-1" }));
+      const detailRow = makeApplicationRow({ status: "REVIEW_SUBMITTED" });
+      const findUnique = jest
+        .fn()
+        .mockResolvedValueOnce({
+          id: "app-1",
+          influencerId: "inf-1",
+          status: "DELIVERED",
+          subTypes,
+          receivedAt: new Date("2026-08-20T00:00:00Z"),
+          submissionReviewStatus: "PENDING",
+          posts: [],
+          campaign: {
+            category: "SIMPLE_REVIEW",
+            publishStartAt: PAST_START,
+            publishEndAt: PAST_END,
+          },
+        })
+        .mockResolvedValueOnce(detailRow);
+      const prisma = {
+        campaignApplication: {
+          findUnique,
+          findUniqueOrThrow: jest.fn(async () => detailRow),
+          update: jest.fn(async () => ({ id: "app-1" })),
+        },
+        $transaction: async (fn: (t: unknown) => Promise<unknown>) =>
+          fn({
+            submittedPost: { upsert },
+            attachment: {
+              deleteMany: jest.fn(async () => ({ count: 0 })),
+              createMany: jest.fn(async () => ({ count: 1 })),
+            },
+            campaignApplication: { update: jest.fn(async () => ({ id: "app-1" })) },
+          }),
+      };
+      return { prisma, upsert };
+    }
+
+    it("URL 2개 제출 → 첫 URL 은 url, 나머지는 extraUrls 로 분해 저장", async () => {
+      const { prisma, upsert } = makeSimpleReviewPrisma();
+      const svc = makeService({ prisma });
+
+      await svc.submitSimpleReview(
+        "inf-1",
+        "app-1",
+        [
+          {
+            subType: "LIPS",
+            urls: ["https://lips.test/a", "https://lips.test/b"],
+          },
+        ],
+        screenshots,
+      );
+
+      expect(upsert).toHaveBeenCalledTimes(1);
+      const arg = (upsert.mock.calls[0] as unknown[])[0] as {
+        create: { url: string; extraUrls: string[] };
+        update: { url: string; extraUrls: string[] };
+      };
+      expect(arg.create.url).toBe("https://lips.test/a");
+      expect(arg.create.extraUrls).toEqual(["https://lips.test/b"]);
+      expect(arg.update.url).toBe("https://lips.test/a");
+      expect(arg.update.extraUrls).toEqual(["https://lips.test/b"]);
+    });
+
+    it("URL 1개만 제출하면 extraUrls 는 빈 배열", async () => {
+      const { prisma, upsert } = makeSimpleReviewPrisma();
+      const svc = makeService({ prisma });
+
+      await svc.submitSimpleReview(
+        "inf-1",
+        "app-1",
+        [{ subType: "LIPS", urls: ["https://lips.test/a"] }],
+        screenshots,
+      );
+
+      const arg = (upsert.mock.calls[0] as unknown[])[0] as {
+        create: { extraUrls: string[] };
+      };
+      expect(arg.create.extraUrls).toEqual([]);
+    });
+
+    it("같은 URL 을 중복 제출하면 REVIEW_URL_DUPLICATE", async () => {
+      const { prisma } = makeSimpleReviewPrisma();
+      const svc = makeService({ prisma });
+
+      await expect(
+        svc.submitSimpleReview(
+          "inf-1",
+          "app-1",
+          [
+            {
+              subType: "LIPS",
+              urls: ["https://lips.test/a", "https://lips.test/a"],
+            },
+          ],
+          screenshots,
+        ),
+      ).rejects.toMatchObject({ response: { code: "REVIEW_URL_DUPLICATE" } });
+    });
+
+    it("참여 채널을 빠뜨리면 REVIEW_URL_REQUIRED", async () => {
+      const { prisma } = makeSimpleReviewPrisma(["LIPS", "ATCOSME"]);
+      const svc = makeService({ prisma });
+
+      await expect(
+        svc.submitSimpleReview(
+          "inf-1",
+          "app-1",
+          [{ subType: "LIPS", urls: ["https://lips.test/a"] }],
+          screenshots,
+        ),
+      ).rejects.toMatchObject({ response: { code: "REVIEW_URL_REQUIRED" } });
+    });
   });
 });

@@ -991,6 +991,7 @@ export class AdminApplicationsService {
               select: {
                 id: true,
                 url: true,
+                extraUrls: true,
                 subType: true,
                 submittedAt: true,
                 insightSubmittedAt: true,
@@ -1473,6 +1474,7 @@ type SubmissionRow = {
     id: string;
     subType: CampaignSubType;
     url: string | null;
+    extraUrls: string[];
     submissionData: unknown;
     submittedAt: Date;
     insightLikes: number | null;
@@ -1575,6 +1577,7 @@ async function toSubmissionResponse(
       id: post.id,
       subType: post.subType,
       url: post.url,
+      extraUrls: post.extraUrls,
       submissionData:
         post.submissionData &&
         typeof post.submissionData === "object" &&
@@ -1667,6 +1670,7 @@ type SettlementRow = {
     posts: {
       id: string;
       url: string | null;
+      extraUrls: string[];
       subType: CampaignSubType;
       submittedAt: Date;
       insightSubmittedAt: Date | null;
@@ -1753,6 +1757,7 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
     posts: row.application.posts.map((post) => ({
       id: post.id,
       url: post.url,
+      extraUrls: post.extraUrls,
       subType: post.subType,
       submittedAt: post.submittedAt.toISOString(),
       insightSubmittedAt: post.insightSubmittedAt

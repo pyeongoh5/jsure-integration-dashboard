@@ -442,6 +442,14 @@ export const messages = {
     simpleReviewForm: {
       urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
       labelSuffix: { jp: "レビューURL", kr: "리뷰 URL" },
+      // — 상품이 여러 개인 안건에서 리뷰 URL 을 여러 개 제출할 때 쓴다
+      addUrl: { jp: "＋ URLを追加", kr: "＋ URL 추가" }, // new
+      removeUrlAriaLabel: { jp: "削除", kr: "삭제" }, // new
+      urlDuplicate: {
+        // new
+        jp: "同じURLが重複しています",
+        kr: "같은 URL이 중복되었습니다",
+      },
       screenshotsLabelSuffix: {
         //— 단순리뷰는 리뷰 대신 즐겨찾기(お気に入り) 등록 스크린샷 제출
         jp: "お気に入り登録のスクリーンショット提出",

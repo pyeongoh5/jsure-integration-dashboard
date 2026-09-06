@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import {
+  MAX_REVIEW_URLS,
   OPTION_SELECTABLE_SUB_TYPES,
   publishWindowState,
   resolvePostingDeadline,
@@ -50,6 +51,7 @@ type PostRow = {
   id: string;
   subType: CampaignSubType;
   url: string | null;
+  extraUrls: string[];
   submissionData: unknown;
   submittedAt: Date;
   insightLikes: number | null;
@@ -120,6 +122,7 @@ function toPost(row: PostRow): SubmittedPost {
     id: row.id,
     subType: row.subType,
     url: row.url,
+    extraUrls: row.extraUrls,
     submissionData:
       row.submissionData &&
       typeof row.submissionData === "object" &&
@@ -1165,7 +1168,7 @@ export class InfluencerApplicationsService {
   async submitSimpleReview(
     influencerId: string,
     applicationId: string,
-    reviews: { subType: CampaignSubType; url: string }[],
+    reviews: { subType: CampaignSubType; urls: string[] }[],
     screenshots: AttachmentUploadInput[],
   ): Promise<InfluencerApplication> {
     const application = await this.prisma.campaignApplication.findUnique({
@@ -1222,14 +1225,35 @@ export class InfluencerApplicationsService {
       });
     }
     const normalizedReviews = reviews.map((review) => {
-      const trimmed = review.url.trim();
-      if (!/^https:\/\//i.test(trimmed)) {
+      const urls = review.urls.map((url) => url.trim()).filter(Boolean);
+      if (urls.length < 1) {
         throw new BadRequestException({
-          code: "REVIEW_URL_INVALID",
-          message: "https:// 로 시작하는 URL 을 입력해주세요",
+          code: "REVIEW_URL_REQUIRED",
+          message: "참여한 모든 리뷰 채널의 URL 을 한 번에 제출해주세요",
         });
       }
-      return { subType: review.subType, url: trimmed };
+      if (urls.length > MAX_REVIEW_URLS) {
+        throw new BadRequestException({
+          code: "REVIEW_URL_TOO_MANY",
+          message: `리뷰 URL 은 최대 ${MAX_REVIEW_URLS}개까지 제출할 수 있습니다`,
+        });
+      }
+      // 같은 URL 을 두 번 내면 어드민이 리뷰 개수를 잘못 세게 된다.
+      if (new Set(urls).size !== urls.length) {
+        throw new BadRequestException({
+          code: "REVIEW_URL_DUPLICATE",
+          message: "같은 리뷰 URL 을 중복해서 제출할 수 없습니다",
+        });
+      }
+      for (const url of urls) {
+        if (!/^https:\/\//i.test(url)) {
+          throw new BadRequestException({
+            code: "REVIEW_URL_INVALID",
+            message: "https:// 로 시작하는 URL 을 입력해주세요",
+          });
+        }
+      }
+      return { subType: review.subType, urls };
     });
     if (screenshots.length < 1) {
       throw new BadRequestException({
@@ -1253,10 +1277,15 @@ export class InfluencerApplicationsService {
           create: {
             applicationId,
             subType: review.subType,
-            url: review.url,
+            url: review.urls[0],
+            extraUrls: review.urls.slice(1),
             submittedAt: now,
           },
-          update: { url: review.url, submittedAt: now },
+          update: {
+            url: review.urls[0],
+            extraUrls: review.urls.slice(1),
+            submittedAt: now,
+          },
         });
       }
       // 스크린샷은 응모 공용(post 미지정)으로 교체 저장.

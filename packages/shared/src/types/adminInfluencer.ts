@@ -156,6 +156,7 @@ export const AdminSubmissionPostSchema = z.object({
   id: z.string(),
   subType: CampaignSubTypeSchema,
   url: z.string().url().nullable(),
+  extraUrls: z.array(z.string().url()).default([]),
   submissionData: z.record(z.unknown()).nullable().default(null),
   submittedAt: z.string().datetime(),
   insightLikes: z.number().int().nullable(),
@@ -322,6 +323,7 @@ export const AdminSettlementSchema = z.object({
     z.object({
       id: z.string(),
       url: z.string().url().nullable(),
+      extraUrls: z.array(z.string().url()).default([]),
       subType: CampaignSubTypeSchema,
       submittedAt: z.string().datetime(),
       insightSubmittedAt: z.string().datetime().nullable(),

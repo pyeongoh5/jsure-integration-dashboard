@@ -69,6 +69,51 @@
   gap: var(--space-2);
 }
 
+/* 단순리뷰 복수 URL — 채널 하나에 URL 입력 행이 여러 개 쌓인다. */
+.urlList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.urlRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.urlInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.urlRemove {
+  flex: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 15px;
+  line-height: 1;
+  padding: 9px 4px;
+}
+
+.urlAdd {
+  width: 100%;
+  border: 1px dashed var(--border, #d1d5db);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #4b5563;
+  padding: 8px;
+}
+
+.urlAdd:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .sectionTitle {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);

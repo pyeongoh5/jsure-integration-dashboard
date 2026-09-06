@@ -114,7 +114,7 @@ export async function submitReview(
 
 export async function submitSimpleReview(
   applicationId: string,
-  reviews: { subType: CampaignSubType; url: string }[],
+  reviews: { subType: CampaignSubType; urls: string[] }[],
   screenshots: AttachmentUploadInput[],
 ): Promise<InfluencerApplication> {
   const res = await api.post(

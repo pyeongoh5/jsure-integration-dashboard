@@ -513,7 +513,7 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
             header: translate(column.labelKey, language),
             key: column.key,
             width: column.width ?? (column.numeric ? 12 : 18),
-            style: column.numeric ? { alignment: { horizontal: "right" } } : undefined,
+            style: excelColumnStyle(column),
           })),
           ...recruitPeriodColumns.map((column) => ({
             header: column.label,
@@ -701,12 +701,21 @@ type Translator = (
   params?: Record<string, string | number>,
 ) => string;
 
+/** xlsx 열 정렬 스타일. 숫자는 우측 정렬, 줄바꿈이 들어가는 컬럼은 접어서 표시. */
+function excelColumnStyle(column: ParticipantColumn) {
+  if (column.numeric) return { alignment: { horizontal: "right" as const } };
+  if (column.wrap) return { alignment: { wrapText: true } };
+  return undefined;
+}
+
 type ParticipantColumn = {
   key: string;
   labelKey: AdminTranslationKey;
   numeric: boolean;
   /** xlsx 열 너비. 생략하면 numeric 여부로 정한다. */
   width?: number;
+  /** 셀 값에 줄바꿈이 들어가는 컬럼(복수 URL 등)은 xlsx 에서 접어 보여준다. */
+  wrap?: boolean;
   format: (participant: CampaignReportParticipant, translateLabel: Translator) => string;
   /** 화면 표시를 커스텀할 때만 사용(링크 등). 없으면 `format` 결과를 그대로 렌더링한다. */
   render?: (
@@ -819,6 +828,7 @@ const EXCEL_ONLY_COLUMNS: ParticipantColumn[] = [
     labelKey: "pages.reports.columns.postUrl",
     numeric: false,
     width: 48,
+    wrap: true,
     format: (participant) => participant.postUrl ?? "-",
     excelValue: (participant) => participant.postUrl ?? "",
   },

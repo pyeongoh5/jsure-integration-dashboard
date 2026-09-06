@@ -335,18 +335,25 @@ export function InsightDetailDialog({
                       <span className={styles.reviewChannelLabel}>
                         {SUB_TYPE_LABEL[post.subType]}
                       </span>
-                      {/* 단순리뷰는 상품 수만큼 URL 이 여러 개 올 수 있다. */}
+                      {/* 단순리뷰는 상품 수만큼 URL 이 여러 개 올 수 있다.
+                          긴 URL 이 여러 줄로 접히므로 번호와 구분선으로 경계를 만든다. */}
                       <span className={styles.urlList}>
-                        {post.urls.map((url) => (
-                          <a
-                            key={url}
-                            className={styles.url}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {url}
-                          </a>
+                        {post.urls.map((url, index) => (
+                          <span key={url} className={styles.urlItem}>
+                            {post.urls.length > 1 && (
+                              <span className={styles.urlIndex}>
+                                {index + 1}
+                              </span>
+                            )}
+                            <a
+                              className={styles.url}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {url}
+                            </a>
+                          </span>
                         ))}
                       </span>
                     </div>

@@ -185,8 +185,29 @@
   max-width: calc(100% - 72px);
 }
 
+/* 긴 URL 은 여러 줄로 접히므로 항목마다 왼쪽 선과 간격으로 경계를 준다. */
+.urlItem {
+  display: flex;
+  gap: var(--space-2);
+  padding-left: var(--space-2);
+  border-left: 2px solid #e5e7eb;
+}
+
+.urlItem + .urlItem {
+  margin-top: var(--space-2);
+}
+
+.urlIndex {
+  flex: none;
+  min-width: 14px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: #6b7280;
+}
+
 .urlList .url {
   display: block;
+  min-width: 0;
 }
 
 .reviewChannelLabel {

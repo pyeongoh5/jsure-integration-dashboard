@@ -338,11 +338,11 @@ export function InsightDetailDialog({
                       {/* 단순리뷰는 상품 수만큼 URL 이 여러 개 올 수 있다.
                           긴 URL 이 여러 줄로 접히므로 번호와 구분선으로 경계를 만든다. */}
                       <span className={styles.urlList}>
-                        {post.urls.map((url, index) => (
+                        {post.urls.map((url) => (
                           <span key={url} className={styles.urlItem}>
                             {post.urls.length > 1 && (
-                              <span className={styles.urlIndex}>
-                                {index + 1}
+                              <span className={styles.urlBullet} aria-hidden>
+                                •
                               </span>
                             )}
                             <a

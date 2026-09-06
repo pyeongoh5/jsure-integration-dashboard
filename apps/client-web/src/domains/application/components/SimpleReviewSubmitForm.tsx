@@ -79,16 +79,17 @@ function ChannelUrlFields({
 
   return (
     <div className={styles.urlList}>
+      {/* 라벨은 채널 단위 — 행 안에 두면 삭제 버튼이 입력칸 대신 라벨에 맞춰진다. */}
+      <span className={styles.urlListLabel}>
+        {SUB_TYPE_LABEL[subType]}{" "}
+        {t("application.simpleReviewForm.labelSuffix")}
+      </span>
+
       {fields.map((field, urlIndex) => (
         <div key={field.id} className={styles.urlRow}>
           <div className={styles.urlInput}>
             <FormField
               name={`channels.${channelIndex}.urls.${urlIndex}.value`}
-              label={
-                urlIndex === 0
-                  ? `${SUB_TYPE_LABEL[subType]} ${t("application.simpleReviewForm.labelSuffix")}`
-                  : undefined
-              }
             >
               {(field) => (
                 <Input
@@ -100,6 +101,7 @@ function ChannelUrlFields({
                   error={field.error}
                   disabled={disabled}
                   placeholder={PLACEHOLDER_BY_SUB_TYPE[subType] ?? "https://..."}
+                  aria-label={`${SUB_TYPE_LABEL[subType]} ${t("application.simpleReviewForm.labelSuffix")} ${urlIndex + 1}`}
                   aria-invalid={field["aria-invalid"]}
                 />
               )}

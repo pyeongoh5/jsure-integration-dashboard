@@ -76,6 +76,12 @@
   gap: var(--space-2);
 }
 
+.urlListLabel {
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
 .urlRow {
   display: flex;
   align-items: flex-start;
@@ -87,15 +93,19 @@
   min-width: 0;
 }
 
+/* 입력칸(44px) 높이에 맞춰 세로 중앙 — 아래에 에러 문구가 붙어도 흔들리지 않는다. */
 .urlRemove {
   flex: none;
+  display: flex;
+  align-items: center;
+  height: 44px;
   border: none;
   background: none;
   cursor: pointer;
   color: #9ca3af;
   font-size: 15px;
   line-height: 1;
-  padding: 9px 4px;
+  padding: 0 4px;
 }
 
 .urlAdd {

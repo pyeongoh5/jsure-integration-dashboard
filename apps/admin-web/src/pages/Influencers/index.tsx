@@ -111,9 +111,11 @@ export function Influencers() {
   const { state, influencers, total, hasMore, loadingMore, loadMore, reload } =
     useInfluencersData(filter);
 
-  // 목록 끝 감시자가 보이면 다음 페이지를 이어 붙인다. 감시자는 테이블의 스크롤
-  // 컨테이너 안에 렌더되고 root 도 그 컨테이너로 잡는다. 바깥에 두면 항상 화면에
-  // 보여 스크롤 없이도 계속 다음 페이지를 불러온다.
+  // 목록 끝 감시자가 보이면 다음 페이지를 이어 붙인다. 이 화면은 응모자 목록과 달리
+  // 테이블이 아니라 페이지 자체가 세로로 스크롤된다 — 카드가 남은 높이를 채우는
+  // flex 컬럼이 아니라 내용만큼 늘어나기 때문이다. 그래서 root 는 뷰포트로 둔다.
+  // ScrollTable 을 root 로 잡으면 그 박스가 목록 전체 높이라 감시자가 늘 안쪽에
+  // 있게 되고, 스크롤하지 않아도 끝까지 연달아 불러온다.
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   // 콜백은 ref 로 갈아끼운다. loadMore 를 의존성에 두면 페치 상태가 토글될 때마다
   // 감시자가 재등록되고, 이미 보이는 감시 영역에 대해 콜백이 즉시 다시 울려
@@ -128,7 +130,7 @@ export function Influencers() {
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) loadMoreRef.current();
       },
-      { root: node.closest("[data-scroll-root]"), rootMargin: "300px" },
+      { rootMargin: "300px" },
     );
     observer.observe(node);
     return () => observer.disconnect();

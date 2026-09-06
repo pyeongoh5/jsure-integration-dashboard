@@ -41,6 +41,28 @@ export function startScheduler(): void {
 const logError = (job: string) => (error: unknown) =>
   console.error(`[scheduler:${job}]`, error instanceof Error ? error.message : error);
 
+/**
+ * 트윗 본문 조립.
+ *
+ * 미디어를 첨부하지 않은 트윗은 본문의 URL 로 링크 카드가 만들어지고, 그 카드 이미지를
+ * 누르면 링크가 열린다(첨부 이미지는 뷰어만 열린다). 카드가 LP 로 잡히도록 LP URL 을
+ * **마지막 줄**에 두고, 이벤트 규칙 링크는 그 앞에 텍스트 링크로 넣는다.
+ *
+ * 본문이 {{LP_URL}} 로 위치를 직접 지정한 경우엔 그 자리를 존중한다 — 이때는 규칙 링크가
+ * 마지막 URL 이 되므로 카드가 규칙 페이지로 잡힐 수 있다(어드민 화면에 안내가 있다).
+ */
+export function buildPostText(input: {
+  bodyText: string;
+  lpUrl: string;
+  rulesUrl: string | null;
+}): string {
+  const rulesLine = input.rulesUrl ? `\n${input.rulesUrl}` : '';
+  if (input.bodyText.includes('{{LP_URL}}')) {
+    return `${input.bodyText.replaceAll('{{LP_URL}}', input.lpUrl)}${rulesLine}`;
+  }
+  return `${input.bodyText}${rulesLine}\n${input.lpUrl}`;
+}
+
 /** 오늘자(JST) 게시 예정 행 생성. unique(campaignId, dateJst)로 중복 방지. */
 export async function materializeTodayPosts(): Promise<void> {
   const prisma = getPrisma();
@@ -102,15 +124,22 @@ export async function publishDuePosts(): Promise<void> {
     try {
       const token = await getBrandAccessToken(brandAccount);
       const lpUrl = `${config().WEB_BASE_URL}/c/${campaign.slug}`;
-      const text = post.template.bodyText.includes('{{LP_URL}}')
-        ? post.template.bodyText.replaceAll('{{LP_URL}}', lpUrl)
-        : `${post.template.bodyText}\n${lpUrl}`;
+      const text = buildPostText({
+        bodyText: post.template.bodyText,
+        lpUrl,
+        rulesUrl: campaign.rulesUrl,
+      });
 
-      // F-2.3: 소재에 미디어가 있으면 업로드 후 첨부
-      let mediaIds: string[] | undefined;
-      if (post.template.mediaUrl) {
-        const mediaId = await uploadMediaFromUrl(token, post.template.mediaUrl);
-        mediaIds = [mediaId];
+      // F-2.3: 첨부 미디어를 순서대로 업로드해 붙인다. mediaUrls 도입 전 행은 단일 mediaUrl 사용.
+      const mediaUrls =
+        post.template.mediaUrls.length > 0
+          ? post.template.mediaUrls
+          : post.template.mediaUrl
+            ? [post.template.mediaUrl]
+            : [];
+      const mediaIds: string[] = [];
+      for (const mediaUrl of mediaUrls) {
+        mediaIds.push(await uploadMediaFromUrl(token, mediaUrl));
       }
 
       const created = await createPost(token, text, mediaIds);

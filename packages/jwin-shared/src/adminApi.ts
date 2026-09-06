@@ -94,6 +94,10 @@ export type AdminCampaignCreate = z.infer<typeof AdminCampaignCreateSchema>;
 /** PATCH /admin/campaigns/:id (요청) — 결과화면·상태 전환 포함 */
 export const AdminCampaignPatchSchema = AdminCampaignCreateSchema.partial().extend({
   status: CampaignStatusSchema.optional(),
+  /** 링크 카드 이미지 (LP 의 og:image) */
+  cardImageUrl: z.string().url().nullable().optional(),
+  /** 이벤트 규칙 가이드 URL — 포스트 본문에 텍스트 링크로 나간다 */
+  rulesUrl: z.string().url().nullable().optional(),
   prUrl: z.string().url().nullable().optional(),
   winMediaUrl: z.string().url().nullable().optional(),
   loseMediaUrl: z.string().url().nullable().optional(),
@@ -111,6 +115,10 @@ export const AdminCampaignDetailSchema = z.object({
   endsAt: z.string(),
   dailyPostTime: z.string(),
   dailyWinCap: z.number().int().nullable(),
+  /** 링크 카드 이미지 (LP 의 og:image). default 는 구 API 응답 대비. */
+  cardImageUrl: z.string().nullable().default(null),
+  /** 이벤트 규칙 가이드 URL. default 는 구 API 응답 대비. */
+  rulesUrl: z.string().nullable().default(null),
   prUrl: z.string().nullable(),
   winMediaUrl: z.string().nullable(),
   loseMediaUrl: z.string().nullable(),
@@ -137,6 +145,21 @@ export type AdminPrize = z.infer<typeof AdminPrizeSchema>;
 export const AdminPrizeListSchema = z.object({ prizes: z.array(AdminPrizeSchema) });
 export type AdminPrizeList = z.infer<typeof AdminPrizeListSchema>;
 
+/**
+ * 등록된 기프트코드 1건. 코드 원문은 DB 에 암호화 저장돼 있고, 이 응답에서만
+ * 복호화해 내려간다 — 정정 화면에서 오기입을 확인할 수 있어야 하기 때문이다.
+ */
+export const AdminPrizeCodeSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  status: z.enum(['AVAILABLE', 'ASSIGNED', 'SENT', 'REVOKED']),
+  createdAt: z.string(),
+});
+export type AdminPrizeCode = z.infer<typeof AdminPrizeCodeSchema>;
+
+export const AdminPrizeCodeListSchema = z.object({ codes: z.array(AdminPrizeCodeSchema) });
+export type AdminPrizeCodeList = z.infer<typeof AdminPrizeCodeListSchema>;
+
 /** ③ PATCH /admin/prizes/:id (요청) — 확률·수량 정정 */
 export const AdminPrizePatchSchema = z.object({
   name: z.string().min(1).optional(),
@@ -147,11 +170,17 @@ export const AdminPrizePatchSchema = z.object({
 export type AdminPrizePatch = z.infer<typeof AdminPrizePatchSchema>;
 
 /** ④ GET /admin/campaigns/:id/post-templates */
+/** 트윗 1건에 붙일 수 있는 미디어 최대 개수 (X 제한). */
+export const POST_MEDIA_MAX = 4;
+
 export const AdminPostTemplateSchema = z.object({
   id: z.string(),
   label: z.string(),
   bodyText: z.string(),
+  /** @deprecated mediaUrls 로 대체. 구버전 API 응답 호환용. */
   mediaUrl: z.string().nullable(),
+  /** 첨부 미디어 URL 목록 (최대 4장). default 는 이 필드를 아직 안 주는 구 API 대비. */
+  mediaUrls: z.array(z.string()).default([]),
   activeFrom: z.string(),
   activeTo: z.string(),
   /** 이미 게시에 사용됨 → 삭제 불가 */
@@ -183,7 +212,7 @@ export const AdminPostTemplateCreateSchema = z
     campaignId: z.string(),
     label: z.string().min(1),
     bodyText: z.string().min(1).max(500),
-    mediaUrl: z.string().url().optional(),
+    mediaUrls: z.array(z.string().url()).max(POST_MEDIA_MAX).default([]),
     activeFrom: z.string(),
     activeTo: z.string(),
   })
@@ -193,6 +222,25 @@ export const AdminPostTemplateCreateSchema = z
     path: ['activeTo'],
   });
 export type AdminPostTemplateCreate = z.infer<typeof AdminPostTemplateCreateSchema>;
+
+/**
+ * ⑥ PATCH /admin/post-templates/:id — 등록한 포스트 정정.
+ * 전체 필드를 다시 보낸다(부분 갱신이 아니다) — 화면이 폼 값을 통째로 들고 있다.
+ * mediaUrl 을 null 로 보내면 첨부를 제거한다.
+ */
+export const AdminPostTemplatePatchSchema = z
+  .object({
+    label: z.string().min(1),
+    bodyText: z.string().min(1).max(500),
+    mediaUrls: z.array(z.string().url()).max(POST_MEDIA_MAX).default([]),
+    activeFrom: z.string(),
+    activeTo: z.string(),
+  })
+  .refine((value) => new Date(value.activeTo) > new Date(value.activeFrom), {
+    message: '유효 종료는 유효 시작 이후여야 합니다',
+    path: ['activeTo'],
+  });
+export type AdminPostTemplatePatch = z.infer<typeof AdminPostTemplatePatchSchema>;
 
 /** 당첨자 목록 항목 — 배송지 평문/암호문 없이 유무(hasShipping)만 노출 */
 export const AdminWinnerSchema = z.object({
@@ -284,6 +332,23 @@ export const AdminCampaignStatsSchema = z.object({
   needsReconnect: z.boolean(),
 });
 export type AdminCampaignStats = z.infer<typeof AdminCampaignStatsSchema>;
+
+/**
+ * DELETE 전 영향도 — 캠페인을 지우면 함께 사라지는 데이터의 건수.
+ * 응모·게시 이력이 있으면 어드민에게 한 번 더 확인받는 데 쓴다.
+ */
+export const AdminCampaignDeleteImpactSchema = z.object({
+  campaignId: z.string(),
+  brandName: z.string(),
+  slug: z.string(),
+  entryCount: z.number().int(),
+  winnerCount: z.number().int(),
+  /** 실제로 X 에 게시된 포스트 수 (게시 전 예약분은 제외) */
+  postedCount: z.number().int(),
+  prizeCount: z.number().int(),
+  postTemplateCount: z.number().int(),
+});
+export type AdminCampaignDeleteImpact = z.infer<typeof AdminCampaignDeleteImpactSchema>;
 
 /** ⑦ PATCH /admin/winners/:id/fulfillment (요청) */
 export const AdminFulfillmentPatchSchema = z.object({

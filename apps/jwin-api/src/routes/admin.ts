@@ -6,10 +6,11 @@ import {
   AdminWinnerFilterSchema,
   dateJst,
   parseCodesInput,
+  POST_MEDIA_MAX,
   type AdminWinnerFilter,
 } from '@jsure/jwin-shared';
 import { config } from '../config';
-import { encrypt } from '../lib/crypto';
+import { decrypt, encrypt } from '../lib/crypto';
 import { AdminIdentity, getAdminIdentity } from '../lib/auth';
 import {
   toBrandAccount,
@@ -120,6 +121,27 @@ export async function adminRoutes(app: FastifyInstance) {
     return true;
   }
 
+  /**
+   * slug 는 LP URL(/c/{slug})이라 unique 다. 중복이면 Prisma 가 P2002 를 던져
+   * 500 으로 나가므로, 원인을 알 수 있는 400 으로 미리 거른다.
+   */
+  async function ensureSlugAvailable(
+    slug: string | undefined,
+    reply: FastifyReply,
+    currentCampaignId?: string,
+  ): Promise<boolean> {
+    if (slug === undefined) return true;
+    const existing = await prisma.brandCampaign.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+    if (existing && existing.id !== currentCampaignId) {
+      reply.code(400).send({ error: `이미 사용 중인 slug 입니다: ${slug}` });
+      return false;
+    }
+    return true;
+  }
+
   /** 캠페인 응답에 실을 brandAccount DTO 조립 (연동된 계정이 없으면 null) */
   async function buildBrandAccountDto(brandAccount: BrandAccountRow | null) {
     if (!brandAccount) return null;
@@ -137,6 +159,8 @@ export async function adminRoutes(app: FastifyInstance) {
     endsAt: z.coerce.date(),
     dailyPostTime: z.string().regex(/^\d{2}:\d{2}$/).default('11:00'),
     dailyWinCap: z.number().int().positive().nullable().optional(),
+    cardImageUrl: z.string().url().nullable().optional(),
+    rulesUrl: z.string().url().nullable().optional(),
     prUrl: z.string().url().nullable().optional(),
     winMediaUrl: z.string().url().nullable().optional(),
     loseMediaUrl: z.string().url().nullable().optional(),
@@ -153,6 +177,7 @@ export async function adminRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: '종료일은 시작일 이후여야 합니다' });
     }
     if (!(await ensureBrandAccountExists(parsed.data.brandAccountId, reply))) return;
+    if (!(await ensureSlugAvailable(parsed.data.slug, reply))) return;
     const campaign = await prisma.brandCampaign.create({
       data: parsed.data,
       include: { brandAccount: true },
@@ -231,6 +256,7 @@ export async function adminRoutes(app: FastifyInstance) {
       .safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
     if (!(await ensureBrandAccountExists(parsed.data.brandAccountId, reply))) return;
+    if (!(await ensureSlugAvailable(parsed.data.slug, reply, req.params.id))) return;
 
     // SETUP → ACTIVE 는 서버가 최종 검증한다. 미비된 채로 올라가면 매일 게시가 조용히 실패한다.
     if (parsed.data.status === 'ACTIVE') {
@@ -289,17 +315,100 @@ export async function adminRoutes(app: FastifyInstance) {
     return toCampaignDetail(campaign, await buildBrandAccountDto(campaign.brandAccount));
   });
 
-  // ── 포스트 소재 (F-1.2 주 단위 교체, mediaUrl 첨부 F-2.3) ──
+  /**
+   * 삭제 영향도 — 함께 사라지는 데이터 건수. 어드민 다이얼로그가 이 값을 보여주고
+   * 응모·게시 이력이 있으면 한 번 더 확인받는다.
+   */
+  app.get<{ Params: { id: string } }>(
+    '/admin/campaigns/:id/delete-impact',
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+      const campaignId = req.params.id;
+      const campaign = await prisma.brandCampaign.findUnique({
+        where: { id: campaignId },
+        select: { id: true, brandName: true, slug: true },
+      });
+      if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
+
+      const [entryCount, winnerCount, postedCount, prizeCount, postTemplateCount] =
+        await Promise.all([
+          prisma.entry.count({ where: { campaignId } }),
+          prisma.winner.count({ where: { entry: { campaignId } } }),
+          prisma.campaignPost.count({ where: { campaignId, status: 'POSTED' } }),
+          prisma.prize.count({ where: { campaignId } }),
+          prisma.postTemplate.count({ where: { campaignId } }),
+        ]);
+
+      return {
+        campaignId: campaign.id,
+        brandName: campaign.brandName,
+        slug: campaign.slug,
+        entryCount,
+        winnerCount,
+        postedCount,
+        prizeCount,
+        postTemplateCount,
+      };
+    },
+  );
+
+  /**
+   * 캠페인 삭제 — 자식 행까지 한 트랜잭션으로 지운다.
+   * 스키마에 onDelete 규칙이 없어(FK 기본 Restrict) 참조 역순으로 지워야 한다:
+   * 코드 → 당첨자 → 응모 → 포스트 → 경품 → 포스팅 설정 → 캠페인.
+   * 되돌릴 수 없으므로 확인은 어드민 화면이 책임진다(영향도 표시 + 재확인).
+   */
+  app.delete<{ Params: { id: string } }>('/admin/campaigns/:id', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const campaignId = req.params.id;
+    const campaign = await prisma.brandCampaign.findUnique({
+      where: { id: campaignId },
+      select: { id: true, brandName: true, slug: true },
+    });
+    if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
+
+    await prisma.$transaction([
+      prisma.prizeCode.deleteMany({ where: { prize: { campaignId } } }),
+      prisma.winner.deleteMany({ where: { entry: { campaignId } } }),
+      prisma.entry.deleteMany({ where: { campaignId } }),
+      prisma.campaignPost.deleteMany({ where: { campaignId } }),
+      prisma.prize.deleteMany({ where: { campaignId } }),
+      prisma.postTemplate.deleteMany({ where: { campaignId } }),
+      prisma.brandCampaign.delete({ where: { id: campaignId } }),
+    ]);
+    await audit(admin, 'campaign.delete', campaignId, {
+      brandName: campaign.brandName,
+      slug: campaign.slug,
+    });
+    return { deleted: true };
+  });
+
+  // ── 포스팅 설정 (F-1.2 주 단위 교체, 미디어 첨부 F-2.3) ──
   const templateSchema = z
     .object({
       campaignId: z.string(),
       label: z.string().min(1),
       bodyText: z.string().min(1).max(500),
-      mediaUrl: z.string().url().optional(),
+      mediaUrls: z.array(z.string().url()).max(POST_MEDIA_MAX).default([]),
       activeFrom: z.coerce.date(),
       activeTo: z.coerce.date(),
     })
     // 역전 구간은 어떤 날에도 선택되지 않아 조용히 게시가 빠진다
+    .refine((value) => value.activeTo > value.activeFrom, {
+      message: '유효 종료는 유효 시작 이후여야 합니다',
+      path: ['activeTo'],
+    });
+
+  /** 정정은 campaignId 를 받지 않는다 — 다른 캠페인으로 옮기는 동작은 없다. */
+  const templatePatchSchema = z
+    .object({
+      label: z.string().min(1),
+      bodyText: z.string().min(1).max(500),
+      mediaUrls: z.array(z.string().url()).max(POST_MEDIA_MAX).default([]),
+      activeFrom: z.coerce.date(),
+      activeTo: z.coerce.date(),
+    })
     .refine((value) => value.activeTo > value.activeFrom, {
       message: '유효 종료는 유효 시작 이후여야 합니다',
       path: ['activeTo'],
@@ -310,6 +419,24 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!admin) return;
     const parsed = templateSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+
+    // 기간이 겹치면 스케줄러(materializeTodayPosts)가 배열 순서대로 첫 매치 하나만
+    // 골라 나머지는 조용히 게시되지 않는다. 어느 쪽이 뽑힐지 보장이 없으므로
+    // 등록 시점에 막는다. 경계가 닿는 것(A 종료 = B 시작)도 겹침으로 본다.
+    const overlapping = await prisma.postTemplate.findFirst({
+      where: {
+        campaignId: parsed.data.campaignId,
+        activeFrom: { lte: parsed.data.activeTo },
+        activeTo: { gte: parsed.data.activeFrom },
+      },
+      orderBy: { activeFrom: 'asc' },
+    });
+    if (overlapping) {
+      return reply
+        .code(400)
+        .send({ error: `유효 기간이 기존 포스트(${overlapping.label})와 겹칩니다` });
+    }
+
     const template = await prisma.postTemplate.create({ data: parsed.data });
     await audit(admin, 'template.create', template.id);
     return template;
@@ -365,6 +492,28 @@ export async function adminRoutes(app: FastifyInstance) {
     });
     await audit(admin, 'prize.create', prize.id, { ...prizeData, codeCount: codes.length });
     return { ...prize, codeCount: codes.length };
+  });
+
+  /**
+   * 등록된 코드 목록 — 정정 화면에서 오기입을 확인할 수 있도록 원문을 복호화해 내려준다.
+   * 평문 노출이므로 열람 자체를 감사 로그에 남긴다.
+   */
+  app.get<{ Params: { id: string } }>('/admin/prizes/:id/codes', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const rows = await prisma.prizeCode.findMany({
+      where: { prizeId: req.params.id },
+      orderBy: { createdAt: 'asc' },
+    });
+    await audit(admin, 'prize.codes_view', req.params.id, { count: rows.length });
+    return {
+      codes: rows.map((row) => ({
+        id: row.id,
+        code: decrypt(row.encryptedCode),
+        status: row.status,
+        createdAt: row.createdAt.toISOString(),
+      })),
+    };
   });
 
   // 코드 추가 등록 (재고 보충 — 본문: text/plain 또는 붙여넣기 원문)
@@ -442,6 +591,45 @@ export async function adminRoutes(app: FastifyInstance) {
         ? await prisma.prizeCode.count({ where: { prizeId: updated.id, status: 'AVAILABLE' } })
         : 0;
     return toPrize(updated, availableCodeCount);
+  });
+
+  /**
+   * 포스트 정정. 이미 게시에 사용된 포스트도 고칠 수 있다 — 나간 트윗은 그대로고
+   * 앞으로의 게시에만 반영된다. 기간은 등록 때와 같은 겹침 규칙을 적용한다(자기 자신 제외).
+   */
+  app.patch<{ Params: { id: string } }>('/admin/post-templates/:id', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const parsed = templatePatchSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+
+    const current = await prisma.postTemplate.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, campaignId: true },
+    });
+    if (!current) return reply.code(404).send({ error: '포스트를 찾을 수 없습니다' });
+
+    const overlapping = await prisma.postTemplate.findFirst({
+      where: {
+        campaignId: current.campaignId,
+        id: { not: current.id },
+        activeFrom: { lte: parsed.data.activeTo },
+        activeTo: { gte: parsed.data.activeFrom },
+      },
+      orderBy: { activeFrom: 'asc' },
+    });
+    if (overlapping) {
+      return reply
+        .code(400)
+        .send({ error: `유효 기간이 기존 포스트(${overlapping.label})와 겹칩니다` });
+    }
+
+    const template = await prisma.postTemplate.update({
+      where: { id: current.id },
+      data: parsed.data,
+    });
+    await audit(admin, 'template.update', template.id);
+    return template;
   });
 
   // ⑤ 소재 삭제 — 이미 게시에 사용된 소재는 거부 (CampaignPost.templateId 참조)

@@ -1,48 +1,44 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Dialog, Input, Textarea } from "@/components/ui";
-import type { AdminPostTemplateCreate } from "@/domains/jwin";
+import type { AdminPostTemplate, AdminPostTemplatePatch } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import { JwinMediaListUpload } from "./JwinMediaListUpload";
-import { jstLocalToUtcIso } from "./jwinDateTime";
+import { jstLocalToUtcIso, utcIsoToJstLocal } from "./jwinDateTime";
 import styles from "./JwinCampaignTabs.module.css";
 
 const BODY_MAX_LENGTH = 500;
 
 type Props = {
-  open: boolean;
+  /** null 이면 닫힘 */
+  template: AdminPostTemplate | null;
   onClose: () => void;
-  /** 다이얼로그를 열 때 기본값으로 채울 JST datetime-local 문자열 */
-  defaultActiveFrom: string;
-  defaultActiveTo: string;
-  onAdd: (body: Omit<AdminPostTemplateCreate, "campaignId">) => Promise<string | null>;
+  onEdit: (templateId: string, body: AdminPostTemplatePatch) => Promise<string | null>;
 };
 
-export function PostTemplateAddDialog({
-  open,
-  onClose,
-  defaultActiveFrom,
-  defaultActiveTo,
-  onAdd,
-}: Props) {
+/**
+ * 포스트 정정. 이미 게시에 사용된 포스트도 고칠 수 있다 —
+ * 이미 나간 트윗은 바뀌지 않고 앞으로의 게시부터 반영된다.
+ */
+export function PostTemplateEditDialog({ template, onClose, onEdit }: Props) {
   const t = useT();
   const [label, setLabel] = useState("");
   const [bodyText, setBodyText] = useState("");
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
-  const [activeFrom, setActiveFrom] = useState(defaultActiveFrom);
-  const [activeTo, setActiveTo] = useState(defaultActiveTo);
+  const [activeFrom, setActiveFrom] = useState("");
+  const [activeTo, setActiveTo] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleClose = () => {
-    setLabel("");
-    setBodyText("");
-    setMediaUrls([]);
-    setActiveFrom(defaultActiveFrom);
-    setActiveTo(defaultActiveTo);
+  useEffect(() => {
+    if (!template) return;
+    setLabel(template.label);
+    setBodyText(template.bodyText);
+    setMediaUrls(template.mediaUrls);
+    setActiveFrom(utcIsoToJstLocal(template.activeFrom));
+    setActiveTo(utcIsoToJstLocal(template.activeTo));
     setSaving(false);
     setError(null);
-    onClose();
-  };
+  }, [template]);
 
   const validationError = (): string | null => {
     if (!label.trim()) return t("jwin.postTemplate.error.labelRequired");
@@ -56,6 +52,7 @@ export function PostTemplateAddDialog({
   };
 
   const handleSubmit = async () => {
+    if (!template) return;
     const invalid = validationError();
     if (invalid) {
       setError(invalid);
@@ -63,7 +60,7 @@ export function PostTemplateAddDialog({
     }
     setSaving(true);
     setError(null);
-    const failure = await onAdd({
+    const failure = await onEdit(template.id, {
       label: label.trim(),
       bodyText,
       mediaUrls,
@@ -75,48 +72,46 @@ export function PostTemplateAddDialog({
       setError(failure);
       return;
     }
-    handleClose();
+    onClose();
   };
 
-  const counterClassName = [styles.counter, bodyText.length > BODY_MAX_LENGTH ? styles.counterOver : ""]
+  const counterClassName = [
+    styles.counter,
+    bodyText.length > BODY_MAX_LENGTH ? styles.counterOver : "",
+  ]
     .filter(Boolean)
     .join(" ");
 
   return (
     <Dialog
-      open={open}
-      onClose={handleClose}
-      title={t("jwin.postTemplate.add")}
+      open={template !== null}
+      onClose={onClose}
+      title={t("jwin.postTemplate.editTitle")}
       footer={
         <>
-          <Button variant="secondary" size="md" onClick={handleClose} disabled={saving}>
+          <Button variant="secondary" size="md" onClick={onClose} disabled={saving}>
             {t("jwin.common.cancel")}
           </Button>
           <Button variant="primary" size="md" onClick={handleSubmit} disabled={saving}>
-            {saving ? t("jwin.prize.action.registering") : t("jwin.prize.action.register")}
+            {saving ? t("jwin.common.saving") : t("jwin.common.save")}
           </Button>
         </>
       }
     >
       <div className={styles.dialogBody}>
+        {template?.used && (
+          <div className={styles.warning}>{t("jwin.postTemplate.hint.editUsed")}</div>
+        )}
+
         <div className={styles.field}>
           <span className={styles.fieldLabel}>{t("jwin.postTemplate.field.label")}</span>
-          <Input
-            value={label}
-            onChange={setLabel}
-            placeholder={t("jwin.postTemplate.placeholder.label")}
-          />
+          <Input value={label} onChange={setLabel} />
           <span className={styles.fieldHint}>{t("jwin.postTemplate.hint.label")}</span>
         </div>
 
         <div className={styles.field}>
           <span className={styles.fieldLabel}>{t("jwin.postTemplate.field.body")}</span>
-          <Textarea
-            value={bodyText}
-            onChange={setBodyText}
-            rows={6}
-            placeholder={t("jwin.postTemplate.placeholder.body")}
-          />
+          <Textarea value={bodyText} onChange={setBodyText} rows={6} />
           <span className={counterClassName}>
             {bodyText.length} / {BODY_MAX_LENGTH}
           </span>

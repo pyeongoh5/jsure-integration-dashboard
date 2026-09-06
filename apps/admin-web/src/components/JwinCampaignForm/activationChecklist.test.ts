@@ -24,6 +24,8 @@ const BASE_DETAIL: AdminCampaignDetail = {
   endsAt: "2026-09-05T14:59:00.000Z",
   dailyPostTime: "11:00",
   dailyWinCap: null,
+  cardImageUrl: null,
+  rulesUrl: null,
   prUrl: null,
   winMediaUrl: null,
   loseMediaUrl: null,

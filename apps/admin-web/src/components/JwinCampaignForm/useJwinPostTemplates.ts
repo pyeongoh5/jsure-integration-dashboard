@@ -2,10 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import {
   createPostTemplate,
   deletePostTemplate,
+  updatePostTemplate,
   fetchPostTemplates,
   jwinErrorMessage,
   type AdminPostTemplate,
   type AdminPostTemplateCreate,
+  type AdminPostTemplatePatch,
 } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 
@@ -16,6 +18,7 @@ export type UseJwinPostTemplatesResult = {
   reload: () => void;
   /** 성공하면 null, 실패하면 사용자에게 보여줄 메시지 */
   add: (body: Omit<AdminPostTemplateCreate, "campaignId">) => Promise<string | null>;
+  edit: (templateId: string, body: AdminPostTemplatePatch) => Promise<string | null>;
   remove: (templateId: string) => Promise<string | null>;
 };
 
@@ -65,6 +68,19 @@ export function useJwinPostTemplates(campaignId: string): UseJwinPostTemplatesRe
     [campaignId, reload, t],
   );
 
+  const edit = useCallback(
+    async (templateId: string, body: AdminPostTemplatePatch): Promise<string | null> => {
+      try {
+        await updatePostTemplate(templateId, body);
+        reload();
+        return null;
+      } catch (error: unknown) {
+        return jwinErrorMessage(error, t("jwin.postTemplate.error.editFailed"));
+      }
+    },
+    [reload, t],
+  );
+
   const remove = useCallback(
     async (templateId: string): Promise<string | null> => {
       try {
@@ -78,5 +94,5 @@ export function useJwinPostTemplates(campaignId: string): UseJwinPostTemplatesRe
     [reload, t],
   );
 
-  return { loading, loadError, templates, reload, add, remove };
+  return { loading, loadError, templates, reload, add, edit, remove };
 }

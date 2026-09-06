@@ -6,12 +6,6 @@ import path from "node:path";
 export default defineConfig({
   build: {
     sourcemap: true,
-    commonjsOptions: {
-      // @jsure/jwin-shared 는 pnpm 워크스페이스 심링크라 실경로가 node_modules 밖
-      // (packages/jwin-shared/dist) 이라 Rollup 기본 commonjs 처리 대상에서 빠진다.
-      // 포함시키지 않으면 프로덕션 빌드에서 re-export 된 named export 를 못 잡는다.
-      include: [/node_modules/, /packages\/jwin-shared/],
-    },
   },
   plugins: [
     react(),
@@ -27,12 +21,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@i18n": path.resolve(__dirname, "../../i18n"),
     },
-  },
-  // @jsure/jwin-shared 는 CJS 로 빌드된 링크 워크스페이스 패키지라
-  // vite 가 기본적으로 pre-bundle 하지 않아 재-export named export 를 못 잡는다.
-  // esbuild pre-bundle 로 강제해 named export 를 노출시킨다. (@jsure/shared 는 ESM 이라 불필요)
-  optimizeDeps: {
-    include: ["@jsure/jwin-shared"],
   },
   server: {
     // 0.0.0.0 바인딩 — 같은 Wi-Fi 의 폰에서 확인할 수 있게 한다.

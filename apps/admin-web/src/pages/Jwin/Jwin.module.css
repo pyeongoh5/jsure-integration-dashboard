@@ -87,9 +87,15 @@
   padding-top: 4px;
 }
 
-/* 상태 전환 영역 — 탭 내용 위에 붙는다 */
+/* 상태 전환 영역 — 탭 내용 위에 전체 폭으로 붙는다 */
 .statusRow {
-  display: flex;
-  justify-content: flex-end;
   margin-bottom: 16px;
+}
+
+/* 탭 본문 — 목록 화면의 .card 와 같은 위계로 감싼다 */
+.tabCard {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 20px;
 }

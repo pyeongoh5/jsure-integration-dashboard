@@ -28,7 +28,7 @@ const NEW_TAB_KEYS: TabKey[] = ["basic"];
 
 /**
  * S2 캠페인 생성·편집 (겸용). id 없으면 생성, 있으면 편집.
- * 경품·소재는 캠페인 id 가 있어야 붙일 수 있으므로 생성 모드에서는 기본 탭만 연다.
+ * 경품·포스트는 캠페인 id 가 있어야 붙일 수 있으므로 생성 모드에서는 기본 탭만 연다.
  * 페이지는 조립만 한다 — 데이터는 각 훅이, 판정은 순수 함수가 맡는다.
  */
 export function JwinCampaignEdit() {
@@ -109,23 +109,6 @@ export function JwinCampaignEdit() {
       <SegmentedTabs items={tabs} value={tab} onChange={setTab} />
 
       <div className={styles.tabContent}>
-        {tab === "basic" && (
-          <BasicTab
-            values={form.values}
-            errors={form.errors}
-            setField={form.setField}
-            slugLocked={form.detail?.status === "ACTIVE"}
-          />
-        )}
-        {tab === "connect" && form.detail && (
-          <ConnectTab
-            detail={form.detail}
-            accounts={form.accounts}
-            onSelectAccount={form.selectAccount}
-            selectError={form.selectError}
-            accountsError={form.accountsError}
-          />
-        )}
         {form.detail && form.mode === "edit" && (
           <CampaignEditBody
             campaignId={form.detail.id}
@@ -134,14 +117,35 @@ export function JwinCampaignEdit() {
             onDetailChanged={form.reload}
           />
         )}
+        {tab === "basic" && (
+          <div className={styles.tabCard}>
+            <BasicTab
+              values={form.values}
+              errors={form.errors}
+              setField={form.setField}
+              slugLocked={form.detail?.status === "ACTIVE"}
+            />
+          </div>
+        )}
+        {tab === "connect" && form.detail && (
+          <div className={styles.tabCard}>
+            <ConnectTab
+              detail={form.detail}
+              accounts={form.accounts}
+              onSelectAccount={form.selectAccount}
+              selectError={form.selectError}
+              accountsError={form.accountsError}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 /**
- * 경품·소재를 함께 읽는 편집 전용 본문.
- * 상태 전환 체크리스트가 경품·소재·커버리지를 모두 봐야 해서 한 곳에서 훅을 부른다.
+ * 경품·포스트를 함께 읽는 편집 전용 본문.
+ * 상태 전환 체크리스트가 경품·포스트·커버리지를 모두 봐야 해서 한 곳에서 훅을 부른다.
  */
 function CampaignEditBody({
   campaignId,
@@ -169,6 +173,8 @@ function CampaignEditBody({
   );
 
   const hasCodePrize = prizes.prizes.some((prize) => prize.type === "CODE");
+  // 상태 전환은 모든 탭 위에 걸리고, 본문 탭만 카드로 감싼다.
+  const showTabCard = tab === "prize" || tab === "template" || tab === "result" || tab === "stats";
 
   return (
     <>
@@ -183,33 +189,39 @@ function CampaignEditBody({
         />
       </div>
 
-      {tab === "prize" && (
-        <PrizeTab
-          prizes={prizes.prizes}
-          loading={prizes.loading}
-          loadError={prizes.loadError}
-          onAdd={prizes.add}
-          onEdit={prizes.edit}
-          onAppendCodes={prizes.appendCodes}
-        />
-      )}
+      {showTabCard && (
+        <div className={styles.tabCard}>
+          {tab === "prize" && (
+            <PrizeTab
+              prizes={prizes.prizes}
+              loading={prizes.loading}
+              loadError={prizes.loadError}
+              onAdd={prizes.add}
+              onEdit={prizes.edit}
+              onAppendCodes={prizes.appendCodes}
+            />
+          )}
 
-      {tab === "template" && (
-        <PostTemplateTab
-          detail={detail}
-          templates={postTemplates.templates}
-          loading={postTemplates.loading}
-          loadError={postTemplates.loadError}
-          onAdd={postTemplates.add}
-          onDelete={postTemplates.remove}
-        />
-      )}
+          {tab === "template" && (
+            <PostTemplateTab
+              detail={detail}
+              templates={postTemplates.templates}
+              loading={postTemplates.loading}
+              loadError={postTemplates.loadError}
+              onAdd={postTemplates.add}
+              onEdit={postTemplates.edit}
+              onDelete={postTemplates.remove}
+              onCampaignChanged={onDetailChanged}
+            />
+          )}
 
-      {tab === "result" && (
-        <ResultTab detail={detail} hasCodePrize={hasCodePrize} onSaved={onDetailChanged} />
-      )}
+          {tab === "result" && (
+            <ResultTab detail={detail} hasCodePrize={hasCodePrize} onSaved={onDetailChanged} />
+          )}
 
-      {tab === "stats" && <StatsTab campaignId={detail.id} />}
+          {tab === "stats" && <StatsTab campaignId={detail.id} />}
+        </div>
+      )}
     </>
   );
 }

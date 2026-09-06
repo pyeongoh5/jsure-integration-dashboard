@@ -32,6 +32,7 @@
 | 4 | `spike-post.ts` | URL 포함 포스트 게시 | 성공 + 차감액 $0.20 확인 |
 | 5 | `spike-media-upload.ts` | v2 chunked 미디어 업로드 + 첨부 게시 (F-2.3) | initialize/append/finalize 성공 + 업로드 무과금 확인 |
 | 6 | (수동) | Developer Console 크레딧 차감 내역 | 1·2번 호출이 owned read($0.001)로 잡히는지 |
+| 7 | `spike-card-post.ts` | 미디어 없이 게시했을 때 링크 카드 생성·카드 대상 URL·클릭 이동 | 카드가 LP 로 뜨고 이미지 클릭 시 LP 이동 |
 
 ## 실행 예시
 

@@ -15,3 +15,11 @@ export function probabilitySum(prizes: { winProbability: number }[]): number {
 export function isProbabilityOverflow(prizes: { winProbability: number }[]): boolean {
   return probabilitySum(prizes) > 1 + OVERFLOW_EPSILON;
 }
+
+/**
+ * 저장 값(0~1)을 화면 표기용 퍼센트 문자열로. 0.05 → "5%", 0.9999 → "99.99%".
+ * 부동소수 잔재(0.30000000000000004)를 소수점 4자리에서 끊고 뒤 0 은 버린다.
+ */
+export function formatProbabilityPercent(value: number): string {
+  return `${Number((value * 100).toFixed(4))}%`;
+}

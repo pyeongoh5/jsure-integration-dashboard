@@ -1,13 +1,20 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui";
-import { useJwinCampaignsData, JwinCampaignTable } from "@/components/JwinCampaigns";
+import {
+  useJwinCampaignsData,
+  JwinCampaignDeleteDialog,
+  JwinCampaignTable,
+  type JwinCampaignRow,
+} from "@/components/JwinCampaigns";
 import { useT } from "@/lib/i18n";
 import styles from "./Jwin.module.css";
 
 export function JwinCampaigns() {
   const t = useT();
   const navigate = useNavigate();
-  const { state, rows } = useJwinCampaignsData();
+  const { state, rows, reload } = useJwinCampaignsData();
+  const [deleteTarget, setDeleteTarget] = useState<JwinCampaignRow | null>(null);
 
   return (
     <div className={styles.root}>
@@ -36,9 +43,25 @@ export function JwinCampaigns() {
         ) : state.kind === "error" ? (
           <div className={styles.empty}>{state.message}</div>
         ) : (
-          <JwinCampaignTable rows={rows} onRowClick={(id) => navigate(`/jwin/campaigns/${id}`)} />
+          <JwinCampaignTable
+            rows={rows}
+            onRowClick={(id) => navigate(`/jwin/campaigns/${id}`)}
+            onDelete={setDeleteTarget}
+          />
         )}
       </div>
+
+      {deleteTarget && (
+        <JwinCampaignDeleteDialog
+          campaignId={deleteTarget.id}
+          brandName={deleteTarget.brandName}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => {
+            setDeleteTarget(null);
+            reload();
+          }}
+        />
+      )}
     </div>
   );
 }

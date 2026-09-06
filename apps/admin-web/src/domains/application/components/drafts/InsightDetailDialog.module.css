@@ -197,12 +197,10 @@
   margin-top: var(--space-2);
 }
 
-.urlIndex {
+.urlBullet {
   flex: none;
-  min-width: 14px;
   font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 .urlList .url {

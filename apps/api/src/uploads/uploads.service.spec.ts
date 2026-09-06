@@ -8,7 +8,7 @@ function makeService(r2: {
     publicUrl: r2.publicUrl ?? (() => null),
     presignGet: r2.presignGet ?? (async () => "https://signed.example/x"),
   } as never;
-  return new UploadsService({} as never, stub);
+  return new UploadsService({} as never, stub, {} as never);
 }
 
 describe("resolveCampaignThumbnailUrl", () => {

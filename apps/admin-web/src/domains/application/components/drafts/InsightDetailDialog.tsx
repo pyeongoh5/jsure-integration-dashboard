@@ -331,7 +331,7 @@ export function InsightDetailDialog({
                     {t("domains.application.drafts.insightDialog.submittedUrls")}
                   </h3>
                   {submittedUrls.map((post) => (
-                    <div key={post.id}>
+                    <div key={post.id} className={styles.channelRow}>
                       <span className={styles.reviewChannelLabel}>
                         {SUB_TYPE_LABEL[post.subType]}
                       </span>

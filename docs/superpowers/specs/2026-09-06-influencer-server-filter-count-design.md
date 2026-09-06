@@ -133,10 +133,12 @@ list(@Query() query: Record<string, string>): Promise<AdminInfluencerPageRespons
 
 ### 무한 스크롤
 
-응모자 화면과 같은 방식으로 sentinel `div` 를 `ScrollTable` 내부에 렌더하고
-`IntersectionObserver` 의 `root` 를 `node.closest("[data-scroll-root]")` 로 잡는다
-(`data-scroll-root` 는 `components/composites/ScrollTable.tsx:11` 에서 부여). 스크롤
-컨테이너 밖에 두면 sentinel 이 항상 보이는 상태가 되어 무한 페이징이 발생한다.
+sentinel `div` 를 목록 끝에 렌더하고 `IntersectionObserver` 로 감시한다. 응모자
+화면은 `root` 를 테이블의 스크롤 컨테이너로 잡지만, 이 화면은 그러면 안 된다 —
+응모자의 `.card` 는 남은 높이를 채우는 flex 컬럼이라 `ScrollTable` 이 세로 스크롤
+컨테이너가 되는 반면, 인플루언서의 `.card` 는 내용만큼 늘어나 세로로 스크롤되지
+않는다. 그 박스를 `root` 로 잡으면 감시자가 늘 안쪽에 있어 스크롤 없이도 마지막
+페이지까지 연달아 요청이 나간다. 따라서 `root` 는 뷰포트(기본값)로 둔다.
 
 `loadMore` 는 mutable ref 로 참조하고 effect 의존성은 `[hasMore, rows.length]` 만 둔다.
 페이지가 뷰포트를 채우지 못한 경우를 위해 페이지가 붙을 때마다 한 번씩만 재등록된다.

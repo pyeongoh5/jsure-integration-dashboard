@@ -178,11 +178,28 @@
   text-decoration: underline;
 }
 
+/* 채널 하나의 묶음 — 라벨 열과 URL 열. 채널 사이는 선으로 끊는다. */
+.channelRow {
+  display: flex;
+  align-items: flex-start;
+}
+
+.channelRow + .channelRow {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid #e5e7eb;
+}
+
+.channelRow .reviewChannelLabel {
+  flex: none;
+}
+
 /* 복수 URL — 채널 라벨 옆에 세로로 쌓는다. */
 .urlList {
-  display: inline-block;
-  vertical-align: top;
-  max-width: calc(100% - 72px);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 /* 긴 URL 은 여러 줄로 접히므로 항목마다 왼쪽 선과 간격으로 경계를 준다. */

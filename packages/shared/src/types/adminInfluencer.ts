@@ -58,12 +58,31 @@ export const AdminInfluencerSchema = z.object({
 });
 export type AdminInfluencer = z.infer<typeof AdminInfluencerSchema>;
 
-export const AdminInfluencerListResponseSchema = z.object({
+/**
+ * 인플루언서 관리 목록 한 페이지. nextCursor 가 null 이면 마지막 페이지.
+ * total 은 커서와 무관하게 필터 전체에 걸린 인원수 — 상단 총 건수의 근거.
+ */
+export const AdminInfluencerPageResponseSchema = z.object({
   influencers: z.array(AdminInfluencerSchema),
+  nextCursor: z.string().nullable(),
+  total: z.number().int().nonnegative(),
 });
-export type AdminInfluencerListResponse = z.infer<
-  typeof AdminInfluencerListResponseSchema
+export type AdminInfluencerPageResponse = z.infer<
+  typeof AdminInfluencerPageResponseSchema
 >;
+
+/** 필터에 걸린 인플루언서 전체 — CSV 내보내기와 일괄 발송 후보가 함께 쓴다. */
+export const AdminInfluencerExportResponseSchema = z.object({
+  influencers: z.array(AdminInfluencerSchema),
+  /** 상한(INFLUENCER_EXPORT_MAX_ROWS)에 걸려 잘렸는지 여부. */
+  truncated: z.boolean(),
+});
+export type AdminInfluencerExportResponse = z.infer<
+  typeof AdminInfluencerExportResponseSchema
+>;
+
+/** 한 번에 내보낼 수 있는 최대 인원수 — 메모리 보호용 상한. */
+export const INFLUENCER_EXPORT_MAX_ROWS = 20000;
 
 export const AdminApplicationSchema = z.object({
   id: z.string(),

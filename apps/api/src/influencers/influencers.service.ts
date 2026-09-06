@@ -1,8 +1,13 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import type { Prisma } from "@prisma/client";
+import { INFLUENCER_EXPORT_MAX_ROWS } from "@jsure/shared";
 import type {
   AddressCountry,
   AdminInfluencer,
+  AdminInfluencerExportResponse,
+  AdminInfluencerPageResponse,
   InfluencerActivityResponse,
+  InfluencerFilter,
   InfluencerNotesResponse,
   InfluencerMemoEntry,
 } from "@jsure/shared";
@@ -94,32 +99,111 @@ export class InfluencersService {
     });
   }
 
-  async listForAdmin(): Promise<AdminInfluencer[]> {
-    const [rows, applicationsWithCrossPosts] = await Promise.all([
-      this.prisma.influencer.findMany({
-        orderBy: { createdAt: "desc" },
-        include: ADMIN_INFLUENCER_INCLUDE,
-      }),
-      // 크로스포스팅 누적은 응모를 거쳐 인플루언서로 합산한다.
-      this.prisma.campaignApplication.findMany({
-        where: { crossPosts: { some: {} } },
-        select: {
-          influencerId: true,
-          _count: { select: { crossPosts: true } },
-        },
-      }),
-    ]);
-    const crossPostCountByInfluencer = new Map<string, number>();
-    for (const application of applicationsWithCrossPosts) {
-      crossPostCountByInfluencer.set(
+  /** 목록·CSV·발송 후보가 같은 조건을 쓰도록 where 는 여기 한 곳에서만 만든다. */
+  private buildAdminWhere(filter: InfluencerFilter): Prisma.InfluencerWhereInput {
+    const conditions: Prisma.InfluencerWhereInput[] = [];
+    // 선택한 채널 중 하나라도 계정을 보유하면 포함 (미선택이면 전체).
+    if (filter.snsTypes.length > 0) {
+      conditions.push({
+        snsAccounts: { some: { snsType: { in: filter.snsTypes } } },
+      });
+    }
+    const query = filter.query.trim();
+    if (query) {
+      conditions.push({
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { email: { contains: query, mode: "insensitive" } },
+          {
+            snsAccounts: {
+              some: { handle: { contains: query, mode: "insensitive" } },
+            },
+          },
+        ],
+      });
+    }
+    return conditions.length > 0 ? { AND: conditions } : {};
+  }
+
+  /** 크로스포스팅 누적은 응모를 거쳐 인플루언서로 합산한다. */
+  private async crossPostCountsByInfluencer(
+    influencerIds: string[],
+  ): Promise<Map<string, number>> {
+    const counts = new Map<string, number>();
+    if (influencerIds.length === 0) return counts;
+    const applications = await this.prisma.campaignApplication.findMany({
+      where: { influencerId: { in: influencerIds }, crossPosts: { some: {} } },
+      select: {
+        influencerId: true,
+        _count: { select: { crossPosts: true } },
+      },
+    });
+    for (const application of applications) {
+      counts.set(
         application.influencerId,
-        (crossPostCountByInfluencer.get(application.influencerId) ?? 0) +
+        (counts.get(application.influencerId) ?? 0) +
           application._count.crossPosts,
       );
     }
-    return rows.map((row) =>
-      toAdminResponse(row, crossPostCountByInfluencer.get(row.id) ?? 0),
+    return counts;
+  }
+
+  async listForAdminPage(
+    filter: InfluencerFilter,
+    cursor: string | null,
+    limit: number,
+  ): Promise<AdminInfluencerPageResponse> {
+    const where = this.buildAdminWhere(filter);
+    const [rows, total] = await Promise.all([
+      this.prisma.influencer.findMany({
+        where,
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        include: ADMIN_INFLUENCER_INCLUDE,
+        // 한 건 더 받아 다음 페이지 존재를 판정한다.
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      }),
+      this.prisma.influencer.count({ where }),
+    ]);
+
+    const hasMore = rows.length > limit;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+    const crossPostCounts = await this.crossPostCountsByInfluencer(
+      pageRows.map((row) => row.id),
     );
+    return {
+      influencers: pageRows.map((row) =>
+        toAdminResponse(row, crossPostCounts.get(row.id) ?? 0),
+      ),
+      nextCursor: hasMore ? (pageRows[pageRows.length - 1]?.id ?? null) : null,
+      total,
+    };
+  }
+
+  /** 필터에 걸린 전체 — CSV 내보내기와 일괄 발송 후보가 함께 쓴다. */
+  async exportForAdmin(
+    filter: InfluencerFilter,
+  ): Promise<AdminInfluencerExportResponse> {
+    const rows = await this.prisma.influencer.findMany({
+      where: this.buildAdminWhere(filter),
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      include: ADMIN_INFLUENCER_INCLUDE,
+      // 한 건 더 받아 상한 초과 여부를 판정한다.
+      take: INFLUENCER_EXPORT_MAX_ROWS + 1,
+    });
+    const truncated = rows.length > INFLUENCER_EXPORT_MAX_ROWS;
+    const pageRows = truncated
+      ? rows.slice(0, INFLUENCER_EXPORT_MAX_ROWS)
+      : rows;
+    const crossPostCounts = await this.crossPostCountsByInfluencer(
+      pageRows.map((row) => row.id),
+    );
+    return {
+      influencers: pageRows.map((row) =>
+        toAdminResponse(row, crossPostCounts.get(row.id) ?? 0),
+      ),
+      truncated,
+    };
   }
 
   async getNotes(influencerId: string): Promise<InfluencerNotesResponse> {

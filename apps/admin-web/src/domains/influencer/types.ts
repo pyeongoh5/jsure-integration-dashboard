@@ -1,5 +1,6 @@
 export type {
   AdminInfluencer,
   AdminInfluencerSnsAccount,
-  AdminInfluencerListResponse,
+  AdminInfluencerExportResponse,
+  AdminInfluencerPageResponse,
 } from "@jsure/shared";

@@ -6,12 +6,15 @@ import {
   HttpCode,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from "@nestjs/common";
 import {
   CreateInfluencerMemoRequestSchema,
-  type AdminInfluencerListResponse,
+  parseInfluencerFilterParams,
+  type AdminInfluencerExportResponse,
+  type AdminInfluencerPageResponse,
   type CreateInfluencerMemoRequest,
   type InfluencerActivityResponse,
   type InfluencerMemoEntry,
@@ -28,9 +31,22 @@ export class InfluencersController {
   constructor(private readonly svc: InfluencersService) {}
 
   @Get()
-  async list(): Promise<AdminInfluencerListResponse> {
-    const influencers = await this.svc.listForAdmin();
-    return { influencers };
+  list(
+    @Query() query: Record<string, string>,
+  ): Promise<AdminInfluencerPageResponse> {
+    const limit = Number(query.limit);
+    return this.svc.listForAdminPage(
+      parseInfluencerFilterParams(query),
+      query.cursor?.trim() || null,
+      Number.isFinite(limit) ? Math.min(Math.max(Math.floor(limit), 1), 100) : 30,
+    );
+  }
+
+  @Get("export")
+  exportAll(
+    @Query() query: Record<string, string>,
+  ): Promise<AdminInfluencerExportResponse> {
+    return this.svc.exportForAdmin(parseInfluencerFilterParams(query));
   }
 
   @Get(":id/notes")

@@ -1,18 +1,39 @@
 import {
-  AdminInfluencerListResponseSchema,
+  AdminInfluencerExportResponseSchema,
+  AdminInfluencerPageResponseSchema,
   InfluencerActivityResponseSchema,
   InfluencerMemoEntrySchema,
   InfluencerNotesResponseSchema,
-  type AdminInfluencer,
+  influencerFilterToParams,
+  type AdminInfluencerExportResponse,
+  type AdminInfluencerPageResponse,
   type InfluencerActivityGroup,
+  type InfluencerFilter,
   type InfluencerMemoEntry,
   type InfluencerNotesResponse,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
-export async function listInfluencers(): Promise<AdminInfluencer[]> {
-  const res = await api.get("/influencers");
-  return AdminInfluencerListResponseSchema.parse(res.data).influencers;
+/** 인플루언서 관리 목록 한 페이지 — 필터는 서버가 적용하고 total 도 서버가 센다. */
+export async function listInfluencersPage(
+  filter: InfluencerFilter,
+  cursor: string | null,
+  limit: number,
+): Promise<AdminInfluencerPageResponse> {
+  const search = new URLSearchParams(influencerFilterToParams(filter));
+  search.set("limit", String(limit));
+  if (cursor) search.set("cursor", cursor);
+  const res = await api.get(`/influencers?${search}`);
+  return AdminInfluencerPageResponseSchema.parse(res.data);
+}
+
+/** 필터에 걸린 인플루언서 전체 — CSV 내보내기와 일괄 발송 후보가 함께 쓴다. */
+export async function exportInfluencers(
+  filter: InfluencerFilter,
+): Promise<AdminInfluencerExportResponse> {
+  const search = new URLSearchParams(influencerFilterToParams(filter));
+  const res = await api.get(`/influencers/export?${search}`);
+  return AdminInfluencerExportResponseSchema.parse(res.data);
 }
 
 export async function fetchInfluencerNotes(

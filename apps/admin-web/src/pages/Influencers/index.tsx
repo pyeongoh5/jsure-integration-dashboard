@@ -1,11 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
-import { SUB_TYPE_LABEL } from "@jsure/shared";
-import type { AdminInfluencer, SnsAccountSubType } from "@jsure/shared";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ENABLED_SNS_TYPES,
+  INFLUENCER_EXPORT_MAX_ROWS,
+  InfluencerFilterSchema,
+  SUB_TYPE_LABEL,
+} from "@jsure/shared";
+import type {
+  AdminInfluencer,
+  InfluencerFilter,
+  SnsAccountSubType,
+} from "@jsure/shared";
 import {
   InfluencerNotesDialog,
   buildInfluencersCsv,
+  exportInfluencers,
   influencersCsvFilename,
-  listInfluencers,
+  useInfluencersData,
 } from "@/domains/influencer";
 import { triggerCsvDownload } from "@/domains/application";
 import { BroadcastDialog } from "@/domains/broadcast";
@@ -15,6 +25,7 @@ import {
   MultiSelectFilterChip,
 } from "@/components/composites/FilterChip";
 import { Button } from "@/components/ui";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
 import { useLanguage, useT } from "@/lib/i18n";
 import styles from "./Influencers.module.css";
 
@@ -60,71 +71,124 @@ function pickAvatarColor(seed: string): string {
   return AVATAR_PALETTE[hash % AVATAR_PALETTE.length] ?? "#6b7280";
 }
 
-type LoadState =
-  | { kind: "loading" }
-  | { kind: "ready"; rows: AdminInfluencer[] }
-  | { kind: "error"; message: string };
+// 활성 SNS 채널은 항상 노출한다. 커서 페이징에서는 불러온 페이지에 담긴 채널만
+// 옵션으로 두면 1페이지 구성에 따라 목록이 흔들린다. 인원 0명인 채널도 보이는 편이
+// 모수 확인이라는 목적에 맞다(선택 시 "총 0명").
+const SNS_FILTER_OPTIONS = SNS_FILTER_ORDER.filter((type) =>
+  ENABLED_SNS_TYPES.includes(type),
+).map((type) => ({
+  key: type,
+  label: SUB_TYPE_LABEL[type],
+  icon: SNS_ICON[type],
+}));
 
 export function Influencers() {
   const t = useT();
   const { language } = useLanguage();
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
-  const [reloadKey, setReloadKey] = useState(0);
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 300);
   const [snsFilter, setSnsFilter] = useState<Set<SnsAccountSubType>>(
     () => new Set(),
   );
-  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [broadcastCandidates, setBroadcastCandidates] = useState<
+    AdminInfluencer[] | null
+  >(null);
+  const [broadcastPending, setBroadcastPending] = useState(false);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [csvPending, setCsvPending] = useState(false);
   const [notesTarget, setNotesTarget] = useState<AdminInfluencer | null>(null);
 
+  // 선택 순서가 다른 쿼리 키를 만들지 않도록 정렬해서 넣는다.
+  const filter = useMemo<InfluencerFilter>(
+    () =>
+      InfluencerFilterSchema.parse({
+        snsTypes: [...snsFilter].sort(),
+        query: debouncedQuery,
+      }),
+    [snsFilter, debouncedQuery],
+  );
+
+  const { state, influencers, total, hasMore, loadingMore, loadMore, reload } =
+    useInfluencersData(filter);
+
+  // 목록 끝 감시자가 보이면 다음 페이지를 이어 붙인다. 감시자는 테이블의 스크롤
+  // 컨테이너 안에 렌더되고 root 도 그 컨테이너로 잡는다. 바깥에 두면 항상 화면에
+  // 보여 스크롤 없이도 계속 다음 페이지를 불러온다.
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // 콜백은 ref 로 갈아끼운다. loadMore 를 의존성에 두면 페치 상태가 토글될 때마다
+  // 감시자가 재등록되고, 이미 보이는 감시 영역에 대해 콜백이 즉시 다시 울려
+  // 페이지가 연달아 요청된다. 재등록은 행이 늘어난 뒤 한 번만 —
+  // 목록이 화면을 다 못 채웠을 때 다음 페이지를 이어 받기 위해.
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
   useEffect(() => {
-    let cancelled = false;
-    setState({ kind: "loading" });
-    listInfluencers()
-      .then((rows) => {
-        if (!cancelled) setState({ kind: "ready", rows });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState({
-          kind: "error",
-          message:
-            err instanceof Error ? err.message : t("pages.influencers.loadFailed"),
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [reloadKey]);
+    const node = sentinelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMoreRef.current();
+      },
+      { root: node.closest("[data-scroll-root]"), rootMargin: "300px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, influencers.length]);
 
-  // 데이터에 실제로 존재하는 SNS 타입만 필터 옵션으로 노출.
-  const snsOptions = useMemo(() => {
-    if (state.kind !== "ready") return [];
-    const present = new Set(state.rows.flatMap((r) => r.snsAccounts.map((s) => s.snsType)));
-    return SNS_FILTER_ORDER.filter((type) => present.has(type)).map((type) => ({
-      key: type,
-      label: SUB_TYPE_LABEL[type],
-      icon: SNS_ICON[type],
-    }));
-  }, [state]);
-
-  const filtered = useMemo(() => {
-    if (state.kind !== "ready") return [];
-    const q = query.trim().toLowerCase();
-    return state.rows.filter((r) => {
-      // 다중 SNS 필터: 선택한 타입 중 하나라도 보유하면 표시 (미선택이면 전체).
-      if (
-        snsFilter.size > 0 &&
-        !r.snsAccounts.some((s) => snsFilter.has(s.snsType))
-      ) {
-        return false;
+  const handleCsvDownload = useCallback(async () => {
+    setCsvPending(true);
+    setActionMessage(null);
+    try {
+      // 화면에 불러온 페이지가 아니라 필터에 걸린 인플루언서 전체를 받아온다.
+      const response = await exportInfluencers(filter);
+      if (response.influencers.length === 0) {
+        setActionMessage(t("pages.influencers.csvEmpty"));
+        return;
       }
-      if (!q) return true;
-      return `${r.name} ${r.email} ${r.snsAccounts.map((s) => s.handle).join(" ")}`
-        .toLowerCase()
-        .includes(q);
-    });
-  }, [state, query, snsFilter]);
+      triggerCsvDownload(
+        influencersCsvFilename(),
+        buildInfluencersCsv(response.influencers),
+      );
+      if (response.truncated) {
+        setActionMessage(
+          t("pages.influencers.csvTruncated", {
+            count: INFLUENCER_EXPORT_MAX_ROWS,
+          }),
+        );
+      }
+    } catch (cause) {
+      setActionMessage(
+        cause instanceof Error ? cause.message : t("pages.influencers.csvFailed"),
+      );
+    } finally {
+      setCsvPending(false);
+    }
+  }, [filter, t]);
+
+  // 발송 대상도 필터에 걸린 전체다. 후보를 다 받은 뒤에 다이얼로그를 연다 —
+  // 개별 선택 UI 가 불러온 페이지만 보여주면 상단 총 건수와 어긋난다.
+  const handleOpenBroadcast = useCallback(async () => {
+    setBroadcastPending(true);
+    setActionMessage(null);
+    try {
+      const response = await exportInfluencers(filter);
+      setBroadcastCandidates(response.influencers);
+      if (response.truncated) {
+        setActionMessage(
+          t("pages.influencers.broadcastTruncated", {
+            count: INFLUENCER_EXPORT_MAX_ROWS,
+          }),
+        );
+      }
+    } catch (cause) {
+      setActionMessage(
+        cause instanceof Error
+          ? cause.message
+          : t("pages.influencers.broadcastLoadFailed"),
+      );
+    } finally {
+      setBroadcastPending(false);
+    }
+  }, [filter, t]);
 
   return (
     <div className={styles.inf}>
@@ -132,7 +196,7 @@ export function Influencers() {
         <h1 className={styles.title}>{t("nav.items.influencers")}</h1>
         <p className={styles.subtitle}>
           {state.kind === "ready"
-            ? t("pages.influencers.totalCount", { count: state.rows.length })
+            ? t("pages.influencers.totalCount", { count: total })
             : t("pages.influencers.loadingList")}
         </p>
       </div>
@@ -142,7 +206,7 @@ export function Influencers() {
             emptyLabel="+ SNS"
             labelPrefix="SNS"
             popoverTitle={t("pages.influencers.snsPopoverTitle")}
-            options={snsOptions}
+            options={SNS_FILTER_OPTIONS}
             value={snsFilter}
             onChange={setSnsFilter}
           />
@@ -159,36 +223,39 @@ export function Influencers() {
           <Button
             variant="secondary"
             size="md"
-            onClick={() =>
-              triggerCsvDownload(influencersCsvFilename(), buildInfluencersCsv(filtered))
-            }
-            disabled={state.kind !== "ready" || filtered.length === 0}
+            onClick={handleCsvDownload}
+            disabled={csvPending || state.kind !== "ready" || total === 0}
             iconLeft={<i className="fa-solid fa-download" aria-hidden="true" />}
           >
-            {t("pages.influencers.csvDownload")}
+            {csvPending
+              ? t("pages.influencers.csvDownloading")
+              : t("pages.influencers.csvDownload")}
           </Button>
           <Button
             variant="primary"
             size="md"
-            onClick={() => setBroadcastOpen(true)}
-            disabled={state.kind !== "ready"}
+            onClick={handleOpenBroadcast}
+            disabled={broadcastPending || state.kind !== "ready" || total === 0}
             iconLeft={<i className="fa-regular fa-paper-plane" aria-hidden="true" />}
           >
-            {t("pages.influencers.sendMessage")}
+            {broadcastPending
+              ? t("pages.influencers.sendMessagePreparing")
+              : t("pages.influencers.sendMessage")}
           </Button>
         </div>
       </div>
+      {actionMessage && <p className={styles.actionMessage}>{actionMessage}</p>}
 
       {state.kind === "loading" ? (
         <div className={styles.empty}>{t("common.loading")}</div>
       ) : state.kind === "error" ? (
         <div className={styles.empty}>
           {state.message}{" "}
-          <Button variant="secondary" size="sm" onClick={() => setReloadKey((k) => k + 1)}>
+          <Button variant="secondary" size="sm" onClick={reload}>
             {t("common.retry")}
           </Button>
         </div>
-      ) : filtered.length === 0 ? (
+      ) : total === 0 ? (
         <div className={styles.empty}>{t("pages.influencers.emptyFiltered")}</div>
       ) : (
         <div className={styles.card}>
@@ -210,7 +277,7 @@ export function Influencers() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r) => (
+                {influencers.map((r) => (
                   <tr key={r.id}>
                     <td>
                       <div className={styles.name}>
@@ -295,14 +362,17 @@ export function Influencers() {
                 ))}
               </tbody>
             </table>
+            <div ref={sentinelRef} className={styles.sentinel}>
+              {loadingMore ? t("pages.influencers.loadingMore") : null}
+            </div>
           </ScrollTable>
         </div>
       )}
 
       <BroadcastDialog
-        open={broadcastOpen}
-        candidates={filtered}
-        onClose={() => setBroadcastOpen(false)}
+        open={broadcastCandidates !== null}
+        candidates={broadcastCandidates ?? []}
+        onClose={() => setBroadcastCandidates(null)}
       />
 
       {notesTarget && (
@@ -310,7 +380,7 @@ export function Influencers() {
           influencerId={notesTarget.id}
           influencerName={notesTarget.name}
           onClose={() => setNotesTarget(null)}
-          onChanged={() => setReloadKey((current) => current + 1)}
+          onChanged={reload}
         />
       )}
     </div>

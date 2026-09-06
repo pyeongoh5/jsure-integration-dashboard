@@ -2936,7 +2936,35 @@ export const adminMessages = {
         ja: "名前・メール・ハンドル名で検索",
       },
       csvDownload: { ko: "CSV 다운로드", en: "Download CSV", ja: "CSVダウンロード" },
+      csvDownloading: { ko: "준비 중...", en: "Preparing...", ja: "準備中..." },
+      csvFailed: {
+        ko: "CSV 다운로드에 실패했습니다.",
+        en: "Failed to download the CSV.",
+        ja: "CSVのダウンロードに失敗しました。",
+      },
+      csvEmpty: {
+        ko: "다운로드할 인플루언서가 없습니다.",
+        en: "No influencers to download.",
+        ja: "ダウンロードするインフルエンサーがいません。",
+      },
+      csvTruncated: {
+        ko: "행 수 상한({count}건)까지만 내보냈습니다. 필터를 좁혀 주세요.",
+        en: "Exported only up to the row limit ({count}). Narrow the filters.",
+        ja: "上限（{count}件）までのみ出力しました。フィルターを絞ってください。",
+      },
       sendMessage: { ko: "메시지 발송", en: "Send message", ja: "メッセージ送信" },
+      sendMessagePreparing: { ko: "준비 중...", en: "Preparing...", ja: "準備中..." },
+      broadcastLoadFailed: {
+        ko: "발송 대상을 불러오지 못했습니다.",
+        en: "Could not load the recipients.",
+        ja: "送信対象を読み込めませんでした。",
+      },
+      broadcastTruncated: {
+        ko: "발송 대상이 상한({count}명)까지만 준비되었습니다. 필터를 좁혀 주세요.",
+        en: "Only up to the recipient limit ({count}) was prepared. Narrow the filters.",
+        ja: "送信対象は上限（{count}名）までのみ準備されました。フィルターを絞ってください。",
+      },
+      loadingMore: { ko: "불러오는 중...", en: "Loading more...", ja: "読み込み中..." },
       emptyFiltered: {
         ko: "조건에 맞는 인플루언서가 없습니다.",
         en: "No influencers match the criteria.",

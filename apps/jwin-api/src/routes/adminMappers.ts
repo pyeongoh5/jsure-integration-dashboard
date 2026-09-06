@@ -1,7 +1,10 @@
 import type {
   AdminBrandAccount,
+  AdminBrandCampaignDetail,
+  AdminBrandCampaignListItem,
   AdminCampaignDetail,
   AdminCampaignListItem,
+  AdminCampaignSummary,
   AdminPrize,
   AdminPostTemplate,
   AdminShippingAddress,
@@ -29,75 +32,134 @@ export function canTransitionFulfillment(
   return ALLOWED_FULFILLMENT_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-export function toCampaignDetail(
-  campaign: {
-    id: string;
-    brandName: string;
-    slug: string;
-    status: string;
-    startsAt: Date;
-    endsAt: Date;
-    dailyPostTime: string;
-    dailyWinCap: number | null;
-    cardImageUrl: string | null;
-    rulesUrl: string | null;
-    prUrl: string | null;
-    winMediaUrl: string | null;
-    loseMediaUrl: string | null;
-    dmTemplate: string | null;
-    brandAccountId: string | null;
-  },
-  brandAccount: AdminBrandAccount | null,
-): AdminCampaignDetail {
+export type BrandCampaignRow = {
+  id: string;
+  status: string;
+  dailyPostTime: string;
+  dailyWinCap: number | null;
+  cardImageUrl: string | null;
+  rulesUrl: string | null;
+  prUrl: string | null;
+  winMediaUrl: string | null;
+  loseMediaUrl: string | null;
+  dmTemplate: string | null;
+  brandAccountId: string;
+  campaign: CampaignRow;
+};
+
+export type CampaignRow = {
+  id: string;
+  name: string;
+  slug: string;
+  startsAt: Date;
+  endsAt: Date;
+};
+
+export function toCampaignSummary(campaign: CampaignRow): AdminCampaignSummary {
   return {
     id: campaign.id,
-    brandName: campaign.brandName,
+    name: campaign.name,
     slug: campaign.slug,
-    status: campaign.status as AdminCampaignDetail['status'],
     startsAt: campaign.startsAt.toISOString(),
     endsAt: campaign.endsAt.toISOString(),
-    dailyPostTime: campaign.dailyPostTime,
-    dailyWinCap: campaign.dailyWinCap,
-    cardImageUrl: campaign.cardImageUrl,
-    rulesUrl: campaign.rulesUrl,
-    prUrl: campaign.prUrl,
-    winMediaUrl: campaign.winMediaUrl,
-    loseMediaUrl: campaign.loseMediaUrl,
-    dmTemplate: campaign.dmTemplate,
-    brandAccountId: campaign.brandAccountId,
+  };
+}
+
+/** 참여 상세 — 게시 설정·결과화면과 소속 시즌 요약을 함께 싣는다. */
+export function toBrandCampaignDetail(
+  brandCampaign: BrandCampaignRow,
+  brandAccount: AdminBrandAccount,
+): AdminBrandCampaignDetail {
+  return {
+    id: brandCampaign.id,
+    status: brandCampaign.status as AdminBrandCampaignDetail['status'],
+    dailyPostTime: brandCampaign.dailyPostTime,
+    dailyWinCap: brandCampaign.dailyWinCap,
+    cardImageUrl: brandCampaign.cardImageUrl,
+    rulesUrl: brandCampaign.rulesUrl,
+    prUrl: brandCampaign.prUrl,
+    winMediaUrl: brandCampaign.winMediaUrl,
+    loseMediaUrl: brandCampaign.loseMediaUrl,
+    dmTemplate: brandCampaign.dmTemplate,
+    campaign: toCampaignSummary(brandCampaign.campaign),
+    brandAccountId: brandCampaign.brandAccountId,
     brandAccount,
   };
 }
 
-export function toCampaignListItem(campaign: {
+export type BrandCampaignListRow = {
   id: string;
-  brandName: string;
-  slug: string;
   status: string;
-  startsAt: Date;
-  endsAt: Date;
-  brandAccount?: { xUserId: string | null; xUsername: string | null; refreshFailedAt: Date | null } | null;
+  brandAccountId: string;
+  brandAccount: {
+    label: string;
+    slug: string;
+    logoUrl: string | null;
+    xUsername: string | null;
+    refreshFailedAt: Date | null;
+  };
   _count: { entries: number };
+  /** status=FAILED 인 포스트만 담아 넘긴다 */
   posts: unknown[];
-}): AdminCampaignListItem {
+};
+
+/** 시즌 상세의 참여 브랜드 행. */
+export function toBrandCampaignListItem(
+  brandCampaign: BrandCampaignListRow,
+): AdminBrandCampaignListItem {
+  return {
+    id: brandCampaign.id,
+    status: brandCampaign.status as AdminBrandCampaignListItem['status'],
+    brandAccountId: brandCampaign.brandAccountId,
+    brandName: brandCampaign.brandAccount.label,
+    brandSlug: brandCampaign.brandAccount.slug,
+    brandLogoUrl: brandCampaign.brandAccount.logoUrl,
+    xUsername: brandCampaign.brandAccount.xUsername,
+    needsReconnect: !!brandCampaign.brandAccount.refreshFailedAt,
+    entryCount: brandCampaign._count.entries,
+    failedPostCount: brandCampaign.posts.length,
+  };
+}
+
+/** 시즌 상세 = 시즌 + 참여 브랜드 목록. */
+export function toCampaignDetail(
+  campaign: CampaignRow,
+  brands: AdminBrandCampaignListItem[],
+): AdminCampaignDetail {
   return {
     id: campaign.id,
-    brandName: campaign.brandName,
+    name: campaign.name,
     slug: campaign.slug,
-    status: campaign.status as AdminCampaignListItem['status'],
     startsAt: campaign.startsAt.toISOString(),
     endsAt: campaign.endsAt.toISOString(),
-    xUserId: campaign.brandAccount?.xUserId ?? null,
-    xUsername: campaign.brandAccount?.xUsername ?? null,
-    needsReconnect: !!campaign.brandAccount?.refreshFailedAt,
-    entryCount: campaign._count.entries,
-    failedPostCount: campaign.posts.length,
+    brands,
+  };
+}
+
+/** 시즌 목록 행 — 경고는 참여 브랜드들에서 합산한다. */
+export function toCampaignListItem(
+  campaign: CampaignRow & { brands: BrandCampaignListRow[] },
+): AdminCampaignListItem {
+  return {
+    id: campaign.id,
+    name: campaign.name,
+    slug: campaign.slug,
+    startsAt: campaign.startsAt.toISOString(),
+    endsAt: campaign.endsAt.toISOString(),
+    brandCount: campaign.brands.length,
+    entryCount: campaign.brands.reduce((sum, brand) => sum + brand._count.entries, 0),
+    needsReconnectCount: campaign.brands.filter(
+      (brand) => !!brand.brandAccount.refreshFailedAt,
+    ).length,
+    failedPostCount: campaign.brands.reduce((sum, brand) => sum + brand.posts.length, 0),
   };
 }
 
 export type BrandAccountRow = {
   id: string;
   label: string;
+  slug: string;
+  logoUrl: string | null;
   xUserId: string | null;
   xUsername: string | null;
   encryptedAccessToken: string | null;
@@ -124,6 +186,8 @@ export function toBrandAccount(
   return {
     id: account.id,
     label: account.label,
+    slug: account.slug,
+    logoUrl: account.logoUrl,
     xUserId: account.xUserId,
     xUsername: account.xUsername,
     status: brandAccountStatus(account),

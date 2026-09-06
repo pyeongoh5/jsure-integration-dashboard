@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui";
-import { useJwinCampaignsData } from "@/components/JwinCampaigns";
+import { useJwinBrandCampaignsData, useJwinCampaignsData } from "@/components/JwinCampaigns";
 import {
   buildJwinWinnersCsv,
   JwinWinnerFilters,
@@ -34,10 +34,13 @@ export function JwinWinners() {
   const t = useT();
   const campaigns = useJwinCampaignsData();
 
+  // 시즌 → 브랜드 2단 선택. 실제 조회 키는 참여(brandCampaignId) 다.
   const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [brandCampaignId, setBrandCampaignId] = useState<string | null>(null);
+  const brandCampaigns = useJwinBrandCampaignsData(campaignId);
   const [filter, setFilter] = useState<AdminWinnerFilter>({});
 
-  const winners = useJwinWinnersData(campaignId, filter);
+  const winners = useJwinWinnersData(brandCampaignId, filter);
   const mutations = useJwinWinnerMutations();
 
   const [shippingOpen, setShippingOpen] = useState(false);
@@ -52,7 +55,7 @@ export function JwinWinners() {
 
   const campaignRows = campaigns.state.kind === "ready" ? campaigns.rows : [];
   const campaignsError = campaigns.state.kind === "error" ? campaigns.state.message : null;
-  const selectedCampaign = campaignRows.find((campaign) => campaign.id === campaignId);
+  const selectedCampaign = brandCampaigns.rows.find((brand) => brand.id === brandCampaignId);
 
   const handleViewShipping = async (winner: AdminWinner) => {
     setShipping(null);
@@ -75,17 +78,17 @@ export function JwinWinners() {
   };
 
   const handleExport = async () => {
-    if (!campaignId || !selectedCampaign) return;
+    if (!brandCampaignId || !selectedCampaign) return;
     setExporting(true);
     setExportError(null);
     try {
-      const data = await fetchWinnersForExport(campaignId, filter);
+      const data = await fetchWinnersForExport(brandCampaignId, filter);
       if (data.rows.length === 0) {
         setExportError(t("jwin.winner.export.emptyResult"));
         return;
       }
       triggerCsvDownload(
-        jwinWinnersCsvFilename(selectedCampaign.slug, todayIso()),
+        jwinWinnersCsvFilename(selectedCampaign.brandSlug, todayIso()),
         buildJwinWinnersCsv(data),
       );
     } catch (error: unknown) {
@@ -99,7 +102,7 @@ export function JwinWinners() {
     <div className={styles.root}>
       <div className={styles.header}>
         <h1 className={styles.title}>{t("jwin.winner.title")}</h1>
-        <Button onClick={handleExport} disabled={!campaignId || exporting}>
+        <Button onClick={handleExport} disabled={!brandCampaignId || exporting}>
           {exporting ? t("jwin.winner.export.running") : t("jwin.winner.export.button")}
         </Button>
       </div>
@@ -110,27 +113,50 @@ export function JwinWinners() {
           <select
             className={styles.select}
             value={campaignId ?? ""}
-            onChange={(event) => setCampaignId(event.target.value || null)}
+            onChange={(event) => {
+              setCampaignId(event.target.value || null);
+              setBrandCampaignId(null);
+            }}
           >
             <option value="">{t("jwin.winner.selectCampaign")}</option>
             {campaignRows.map((campaign) => (
               <option key={campaign.id} value={campaign.id}>
-                {campaign.brandName} ({campaign.slug})
+                {campaign.name} ({campaign.slug})
               </option>
             ))}
           </select>
         </label>
 
-        <JwinWinnerFilters filter={filter} onChange={setFilter} disabled={!campaignId} />
+        <label className={styles.campaignField}>
+          <span className={styles.filterLabel}>{t("jwin.winner.selectBrand")}</span>
+          <select
+            className={styles.select}
+            value={brandCampaignId ?? ""}
+            disabled={!campaignId}
+            onChange={(event) => setBrandCampaignId(event.target.value || null)}
+          >
+            <option value="">{t("jwin.winner.selectBrand")}</option>
+            {brandCampaigns.rows.map((brand) => (
+              <option key={brand.id} value={brand.id}>
+                {brand.brandName}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <JwinWinnerFilters filter={filter} onChange={setFilter} disabled={!brandCampaignId} />
       </div>
 
       <p className={styles.exportNotice}>{t("jwin.winner.export.notice")}</p>
 
       {campaignsError ? <div className={styles.errorText}>{campaignsError}</div> : null}
+      {brandCampaigns.loadError ? (
+        <div className={styles.errorText}>{brandCampaigns.loadError}</div>
+      ) : null}
       {winners.loadError ? <div className={styles.errorText}>{winners.loadError}</div> : null}
       {exportError ? <div className={styles.errorText}>{exportError}</div> : null}
 
-      {!campaignId ? (
+      {!brandCampaignId ? (
         <div className={styles.empty}>{t("jwin.winner.selectCampaignHint")}</div>
       ) : null}
 

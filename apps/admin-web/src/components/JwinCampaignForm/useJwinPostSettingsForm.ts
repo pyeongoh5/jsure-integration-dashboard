@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import {
   jwinErrorMessage,
-  updateCampaign,
-  type AdminCampaignDetail,
+  updateBrandCampaign,
+  type AdminBrandCampaignDetail,
 } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 
@@ -23,7 +23,7 @@ export type UseJwinPostSettingsFormResult = {
   save: () => Promise<void>;
 };
 
-function toValues(detail: AdminCampaignDetail): JwinPostSettingsValues {
+function toValues(detail: AdminBrandCampaignDetail): JwinPostSettingsValues {
   return {
     cardImageUrl: detail.cardImageUrl,
     rulesUrl: detail.rulesUrl ?? "",
@@ -35,7 +35,7 @@ function toValues(detail: AdminCampaignDetail): JwinPostSettingsValues {
  * 포스트(PostTemplate)가 아니라 캠페인 PATCH 로 저장한다.
  */
 export function useJwinPostSettingsForm(
-  detail: AdminCampaignDetail,
+  detail: AdminBrandCampaignDetail,
   onSaved: () => void,
 ): UseJwinPostSettingsFormResult {
   const t = useT();
@@ -60,7 +60,7 @@ export function useJwinPostSettingsForm(
     setSaving(true);
     setError(null);
     try {
-      await updateCampaign(detail.id, {
+      await updateBrandCampaign(detail.id, {
         cardImageUrl: values.cardImageUrl,
         // 빈 문자열은 서버 z.string().url() 을 통과하지 못한다
         rulesUrl: values.rulesUrl.trim() === "" ? null : values.rulesUrl.trim(),

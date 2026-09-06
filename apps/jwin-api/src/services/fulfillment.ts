@@ -38,6 +38,7 @@ export async function assignCodeAndSendDm(winnerId: string): Promise<void> {
       prize: true,
       code: true,
       entry: { include: { user: true, campaign: { include: { brandAccount: true } } } },
+      // brandAccount.label 이 브랜드 표시명이다 (DM 의 {{BRAND_NAME}})
     },
   });
   if (!winner || winner.verification !== 'PASSED' || winner.prize.type !== 'CODE') return;
@@ -82,7 +83,7 @@ export async function assignCodeAndSendDm(winnerId: string): Promise<void> {
       code: decrypt(code.encryptedCode),
       prizeName: winner.prize.name,
       username: winner.entry.user.xUsername,
-      brandName: campaign.brandName,
+      brandName: brandAccount.label,
     });
     await sendDm(token, winner.entry.user.xUserId, text);
     await prisma.$transaction([
@@ -123,10 +124,11 @@ export async function saveShipping(
   const prisma = getPrisma();
   const winner = await prisma.winner.findFirst({
     where: { id: winnerId, entry: { userId }, verification: 'PASSED' },
-    include: { prize: true, entry: { include: { campaign: true } } },
+    include: { prize: true, entry: { include: { campaign: { include: { campaign: true } } } } },
   });
   if (!winner || winner.prize.type !== 'PHYSICAL') return 'not_eligible';
-  if (winner.entry.campaign.endsAt.getTime() < Date.now()) return 'closed';
+  // 마감은 시즌 종료 시각 기준 (F-6.3)
+  if (winner.entry.campaign.campaign.endsAt.getTime() < Date.now()) return 'closed';
   await prisma.winner.update({
     where: { id: winnerId },
     data: {

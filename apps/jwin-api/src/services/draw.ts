@@ -19,7 +19,7 @@ export type DrawOutcome =
   | { kind: 'win_pending'; entryId: string; winnerId: string; prizeId: string; prizeName: string };
 
 export async function draw(
-  campaignId: string,
+  brandCampaignId: string,
   userId: string,
   rng: () => number = Math.random,
 ): Promise<DrawOutcome> {
@@ -27,15 +27,20 @@ export async function draw(
   const today = dateJst();
   const now = new Date();
 
+  // 기간은 시즌(Campaign)이, 진행 상태는 참여(BrandCampaign)가 갖는다.
   const campaign = await prisma.brandCampaign.findFirst({
-    where: { id: campaignId, status: 'ACTIVE', startsAt: { lte: now }, endsAt: { gte: now } },
+    where: {
+      id: brandCampaignId,
+      status: 'ACTIVE',
+      campaign: { startsAt: { lte: now }, endsAt: { gte: now } },
+    },
     include: { prizes: { orderBy: { tier: 'asc' } } },
   });
   if (!campaign) return { kind: 'no_post_today' };
 
   // D-1: 당일 게시된 캠페인 포스트가 응모 대상
   const post = await prisma.campaignPost.findFirst({
-    where: { campaignId, dateJst: today, status: 'POSTED' },
+    where: { campaignId: brandCampaignId, dateJst: today, status: 'POSTED' },
   });
   if (!post) return { kind: 'no_post_today' };
 
@@ -43,13 +48,13 @@ export async function draw(
   if (campaign.dailyWinCap != null) {
     const winsToday = await prisma.entry.count({
       where: {
-        campaignId,
+        campaignId: brandCampaignId,
         dateJst: today,
         result: { in: [EntryResult.WIN_PENDING, EntryResult.WIN_CONFIRMED] },
       },
     });
     if (winsToday >= campaign.dailyWinCap) {
-      return createEntry(campaignId, userId, post.id, today, EntryResult.LOSE);
+      return createEntry(brandCampaignId, userId, post.id, today, EntryResult.LOSE);
     }
   }
 
@@ -64,7 +69,7 @@ export async function draw(
     });
     if (decremented.count === 0) continue; // 동시 응모로 소진 → 다음 경품
 
-    const outcome = await createEntry(campaignId, userId, post.id, today, EntryResult.WIN_PENDING);
+    const outcome = await createEntry(brandCampaignId, userId, post.id, today, EntryResult.WIN_PENDING);
     if (outcome.kind === 'already_entered') {
       // 유니크 제약 충돌 → 차감 롤백
       await prisma.prize.update({
@@ -85,7 +90,7 @@ export async function draw(
     };
   }
 
-  return createEntry(campaignId, userId, post.id, today, EntryResult.LOSE);
+  return createEntry(brandCampaignId, userId, post.id, today, EntryResult.LOSE);
 }
 
 async function createEntry(

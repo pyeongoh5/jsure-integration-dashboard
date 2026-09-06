@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { JwinAccountStatusBadge } from "@/components/composites";
 import { ScrollTable } from "@/components/composites";
-import { Button } from "@/components/ui";
+import { Button, IconButton } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 import type { JwinBrandAccountRow } from "./jwinBrandAccountTransform";
 import styles from "./JwinBrandAccountTable.module.css";
@@ -10,9 +10,10 @@ type Props = {
   accounts: JwinBrandAccountRow[];
   /** 클립보드 복사 성공 여부를 반환한다(실패 시 false). */
   onCopyLink: (url: string) => Promise<boolean>;
+  onEdit: (account: JwinBrandAccountRow) => void;
 };
 
-export function JwinBrandAccountTable({ accounts, onCopyLink }: Props) {
+export function JwinBrandAccountTable({ accounts, onCopyLink, onEdit }: Props) {
   const t = useT();
 
   if (accounts.length === 0) {
@@ -25,15 +26,22 @@ export function JwinBrandAccountTable({ accounts, onCopyLink }: Props) {
         <thead>
           <tr>
             <th>{t("jwin.account.columns.label")}</th>
+            <th>{t("jwin.account.slug")}</th>
             <th>{t("jwin.account.columns.account")}</th>
             <th>{t("jwin.account.columns.status")}</th>
             <th className={styles.num}>{t("jwin.account.columns.campaignCount")}</th>
             <th>{t("jwin.account.columns.connectLink")}</th>
+            <th className={styles.num}>{t("jwin.campaign.columns.actions")}</th>
           </tr>
         </thead>
         <tbody>
           {accounts.map((account) => (
-            <CopyLinkRow key={account.id} account={account} onCopyLink={onCopyLink} />
+            <CopyLinkRow
+              key={account.id}
+              account={account}
+              onCopyLink={onCopyLink}
+              onEdit={onEdit}
+            />
           ))}
         </tbody>
       </table>
@@ -46,9 +54,11 @@ type CopyState = "idle" | "copied" | "failed";
 function CopyLinkRow({
   account,
   onCopyLink,
+  onEdit,
 }: {
   account: JwinBrandAccountRow;
   onCopyLink: (url: string) => Promise<boolean>;
+  onEdit: (account: JwinBrandAccountRow) => void;
 }) {
   const t = useT();
   const [copyState, setCopyState] = useState<CopyState>("idle");
@@ -62,6 +72,7 @@ function CopyLinkRow({
   return (
     <tr className={styles.row}>
       <td className={styles.label}>{account.label}</td>
+      <td className={styles.mono}>{account.slug}</td>
       <td className={account.xUsername ? styles.mono : styles.muted}>
         {account.xUsername ? `@${account.xUsername}` : t("jwin.account.notApproved")}
       </td>
@@ -86,6 +97,16 @@ function CopyLinkRow({
             </div>
           )}
         </div>
+      </td>
+      <td className={styles.num}>
+        <IconButton
+          variant="ghost"
+          size="sm"
+          aria-label={t("jwin.postTemplate.edit")}
+          onClick={() => onEdit(account)}
+        >
+          <i className="fa-solid fa-pen" aria-hidden="true" />
+        </IconButton>
       </td>
     </tr>
   );

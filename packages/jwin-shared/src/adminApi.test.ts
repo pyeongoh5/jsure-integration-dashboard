@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AdminWinnerSchema,
   AdminCampaignDetailSchema,
+  AdminBrandCampaignDetailSchema,
   AdminFulfillmentPatchSchema,
   AdminBrandAccountSchema,
   AdminBrandAccountCreateSchema,
@@ -16,10 +17,18 @@ describe('어드민 응답 스키마', () => {
     expect(shape).toContain('hasShipping');
   });
 
-  it('캠페인 상세는 brandAccountId·brandAccount를 포함하고 connectUrl은 없다', () => {
+  it('시즌 상세는 기간과 참여 브랜드 목록을 갖고, 게시 설정은 갖지 않는다', () => {
     const shape = Object.keys(AdminCampaignDetailSchema.shape);
+    expect(shape).toContain('startsAt');
+    expect(shape).toContain('brands');
+    expect(shape).not.toContain('dailyPostTime');
+  });
+
+  it('참여 상세는 brandAccount·시즌 요약을 포함하고 connectUrl은 없다', () => {
+    const shape = Object.keys(AdminBrandCampaignDetailSchema.shape);
     expect(shape).toContain('brandAccountId');
     expect(shape).toContain('brandAccount');
+    expect(shape).toContain('campaign');
     expect(shape).not.toContain('connectUrl');
   });
 
@@ -34,6 +43,8 @@ describe('AdminBrandAccount 계약', () => {
     const parsed = AdminBrandAccountSchema.parse({
       id: 'acc1',
       label: '코카콜라 재팬',
+      slug: 'coke-jp',
+      logoUrl: null,
       xUserId: '123',
       xUsername: 'coke_jp',
       status: 'CONNECTED',
@@ -49,6 +60,8 @@ describe('AdminBrandAccount 계약', () => {
     const parsed = AdminBrandAccountSchema.parse({
       id: 'acc2',
       label: '롯데(신규)',
+      slug: 'lotte',
+      logoUrl: null,
       xUserId: null,
       xUsername: null,
       status: 'PENDING',
@@ -60,20 +73,41 @@ describe('AdminBrandAccount 계약', () => {
     expect(parsed.status).toBe('PENDING');
   });
 
-  it('계정 생성 요청은 label만 받는다', () => {
-    expect(AdminBrandAccountCreateSchema.parse({ label: '롯데' }).label).toBe('롯데');
+  it('브랜드 생성 요청은 표시명과 slug 를 받는다', () => {
+    const parsed = AdminBrandAccountCreateSchema.parse({ label: '롯데', slug: 'lotte' });
+    expect(parsed.label).toBe('롯데');
+    expect(parsed.slug).toBe('lotte');
   });
 
-  it('캠페인 상세에 brandAccountId가 포함되고 connectUrl은 없다', () => {
+  it('slug 는 소문자·숫자·하이픈만 허용한다', () => {
+    expect(
+      AdminBrandAccountCreateSchema.safeParse({ label: '롯데', slug: '롯데' }).success,
+    ).toBe(false);
+  });
+
+  it('시즌 상세는 참여 브랜드 목록을 파싱한다', () => {
     const detail = AdminCampaignDetailSchema.parse({
-      id: 'c1', brandName: 'b', slug: 's', status: 'SETUP',
-      startsAt: '2026-09-01T00:00:00.000Z', endsAt: '2026-09-10T00:00:00.000Z',
-      dailyPostTime: '11:00', dailyWinCap: null, prUrl: null,
-      winMediaUrl: null, loseMediaUrl: null, dmTemplate: null,
-      brandAccountId: null, brandAccount: null,
+      id: 'camp-1',
+      name: '9월 캠페인',
+      slug: '2026-09',
+      startsAt: '2026-09-01T00:00:00.000Z',
+      endsAt: '2026-09-30T00:00:00.000Z',
+      brands: [
+        {
+          id: 'bc-1',
+          status: 'ACTIVE',
+          brandAccountId: 'acc1',
+          brandName: '코카콜라 재팬',
+          brandSlug: 'coke-jp',
+          brandLogoUrl: null,
+          xUsername: 'coke_jp',
+          needsReconnect: false,
+          entryCount: 12,
+          failedPostCount: 0,
+        },
+      ],
     });
-    expect(detail.brandAccountId).toBeNull();
-    expect('connectUrl' in detail).toBe(false);
+    expect(detail.brands[0]?.brandSlug).toBe('coke-jp');
   });
 });
 

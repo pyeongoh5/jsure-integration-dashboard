@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { CampaignLp, EntryResultResponse } from '@jsure/jwin-shared';
-import { api, userLoginUrl } from '../../../lib/api';
+import { api, userLoginUrl } from '../../../../lib/api';
 
 type Phase =
   | { name: 'loading' }
@@ -45,7 +45,7 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
   async function enter() {
     setPhase({ name: 'drawing' });
     try {
-      const data = await api<EntryResultResponse>(`/campaigns/${campaign.campaignId}/enter`, {
+      const data = await api<EntryResultResponse>(`/brand-campaigns/${campaign.brandCampaignId}/enter`, {
         method: 'POST',
       });
       setPhase({ name: 'result', data });
@@ -119,7 +119,7 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
           <h2>Xでログインして応募</h2>
           <p>応募にはXアカウントの連携が必要です。</p>
           {button('Xでログイン', () => {
-            window.location.href = userLoginUrl(`/c/${campaign.slug}`);
+            window.location.href = userLoginUrl(`/c/${campaign.campaign.slug}/${campaign.brandSlug}`);
           })}
         </>
       );

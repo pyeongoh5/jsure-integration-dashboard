@@ -5,6 +5,12 @@ export type {
   UseJwinCampaignFormResult,
 } from "./useJwinCampaignForm";
 export { BasicTab } from "./BasicTab";
+export { BrandCampaignBasicTab } from "./BrandCampaignBasicTab";
+export { useJwinBrandCampaign } from "./useJwinBrandCampaign";
+export type {
+  JwinBrandCampaignFormValues,
+  UseJwinBrandCampaignResult,
+} from "./useJwinBrandCampaign";
 export { ConnectTab } from "./ConnectTab";
 export { JwinMediaUpload } from "./JwinMediaUpload";
 export { useJwinPrizes } from "./useJwinPrizes";

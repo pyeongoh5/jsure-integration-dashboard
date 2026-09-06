@@ -1,5 +1,5 @@
 import type { AdminTranslationKey } from "@i18n/admin";
-import type { AdminCampaignDetail, AdminPrize } from "@/domains/jwin";
+import type { AdminBrandCampaignDetail, AdminPrize } from "@/domains/jwin";
 import { dmTemplateMissingCode } from "./dmTemplatePreview";
 import { formatCoverageGaps, type PostTemplateCoverage } from "./postTemplateCoverage";
 
@@ -23,11 +23,8 @@ export type ActivationCheck = {
   reasonParams?: Record<string, string | number>;
 };
 
-function accountCheck(detail: AdminCampaignDetail): ActivationCheck {
+function accountCheck(detail: AdminBrandCampaignDetail): ActivationCheck {
   const labelKey: AdminTranslationKey = "jwin.checklist.account";
-  if (!detail.brandAccountId || !detail.brandAccount) {
-    return { key: "account", labelKey, ok: false, reasonKey: "jwin.checklist.accountNotSelected" };
-  }
   if (detail.brandAccount.status !== "CONNECTED") {
     return { key: "account", labelKey, ok: false, reasonKey: "jwin.checklist.accountNotConnected" };
   }
@@ -74,7 +71,7 @@ function dmCodeCheck(prizes: AdminPrize[], dmTemplate: string | null): Activatio
 }
 
 export function activationChecklist(input: {
-  detail: AdminCampaignDetail;
+  detail: AdminBrandCampaignDetail;
   prizes: AdminPrize[];
   coverage: PostTemplateCoverage;
 }): ActivationCheck[] {

@@ -1,11 +1,16 @@
 import type { Metadata } from 'next';
 import type { CampaignLp } from '@jsure/jwin-shared';
-import { API_BASE } from '../../../lib/api';
+import { API_BASE } from '../../../../lib/api';
 import EntryClient from './entry-client';
 import WinHistory from './win-history';
 
-async function fetchCampaign(slug: string): Promise<CampaignLp | null> {
-  const res = await fetch(`${API_BASE}/campaigns/${slug}`, { cache: 'no-store' });
+async function fetchBrandCampaign(
+  campaignSlug: string,
+  brandSlug: string,
+): Promise<CampaignLp | null> {
+  const res = await fetch(`${API_BASE}/campaigns/${campaignSlug}/brands/${brandSlug}`, {
+    cache: 'no-store',
+  });
   if (!res.ok) return null;
   return (await res.json()) as CampaignLp;
 }
@@ -18,10 +23,10 @@ async function fetchCampaign(slug: string): Promise<CampaignLp | null> {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ campaign: string; brand: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const campaign = await fetchCampaign(slug);
+  const { campaign: campaignSlug, brand: brandSlug } = await params;
+  const campaign = await fetchBrandCampaign(campaignSlug, brandSlug);
   if (!campaign) return { title: 'キャンペーンが見つかりません' };
 
   const title = `${campaign.brandName} キャンペーン`;
@@ -43,9 +48,13 @@ export async function generateMetadata({
 }
 
 /** 캠페인 단독 LP (/c/{slug}) — 응모 + 당첨 히스토리 (F-3) */
-export default async function CampaignLpPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const campaign = await fetchCampaign(slug);
+export default async function BrandCampaignLpPage({
+  params,
+}: {
+  params: Promise<{ campaign: string; brand: string }>;
+}) {
+  const { campaign: campaignSlug, brand: brandSlug } = await params;
+  const campaign = await fetchBrandCampaign(campaignSlug, brandSlug);
   if (!campaign) {
     return <main style={{ padding: 24 }}>キャンペーンが見つかりません。</main>;
   }
@@ -73,7 +82,7 @@ export default async function CampaignLpPage({ params }: { params: Promise<{ slu
         </p>
       )}
       <EntryClient campaign={campaign} />
-      <WinHistory campaignId={campaign.campaignId} campaignEnded={new Date(campaign.endsAt).getTime() < Date.now()} />
+      <WinHistory brandCampaignId={campaign.brandCampaignId} campaignEnded={new Date(campaign.endsAt).getTime() < Date.now()} />
     </main>
   );
 }

@@ -2,26 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import type { WinHistoryItem } from '@jsure/jwin-shared';
-import { api } from '../../../lib/api';
+import { api } from '../../../../lib/api';
 
 /**
  * 당첨 히스토리 (F-3.6): 확정 당첨 건만 표시. 낙첨/미확정 로그는 표시하지 않는다.
  * PHYSICAL 미입력 건은 배송지 입력으로 유도 (캠페인 종료 전까지 — F-6.3).
  */
 export default function WinHistory({
-  campaignId,
+  brandCampaignId,
   campaignEnded,
 }: {
-  campaignId: string;
+  brandCampaignId: string;
   campaignEnded: boolean;
 }) {
   const [wins, setWins] = useState<WinHistoryItem[] | null>(null);
 
   useEffect(() => {
-    api<WinHistoryItem[]>(`/me/wins?campaignId=${campaignId}`)
+    api<WinHistoryItem[]>(`/me/wins?brandCampaignId=${brandCampaignId}`)
       .then(setWins)
       .catch(() => setWins(null)); // 미로그인 등 → 표시 생략
-  }, [campaignId]);
+  }, [brandCampaignId]);
 
   if (!wins || wins.length === 0) return null;
 

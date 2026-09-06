@@ -7,7 +7,7 @@ type Props = {
   values: JwinCampaignFormValues;
   errors: JwinCampaignFormErrors;
   setField: (field: keyof JwinCampaignFormValues, value: string) => void;
-  /** ACTIVE 전환 이후에는 slug 입력 잠금 (게시된 링크 보호, MVP_PLAN §3.3) */
+  /** 참여가 하나라도 ACTIVE 면 slug 입력 잠금 (게시된 링크 보호, MVP_PLAN §3.3) */
   slugLocked: boolean;
 };
 
@@ -18,16 +18,16 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
     <div className={styles.form}>
       <label className={styles.field}>
         <span className={styles.label}>
-          {t("jwin.basic.brandName")}
+          {t("jwin.basic.name")}
           <span className={styles.required}>*</span>
         </span>
         <Input
-          value={values.brandName}
-          onChange={(value) => setField("brandName", value)}
-          error={!!errors.brandName}
-          placeholder={t("jwin.basic.brandName")}
+          value={values.name}
+          onChange={(value) => setField("name", value)}
+          error={!!errors.name}
+          placeholder={t("jwin.basic.namePlaceholder")}
         />
-        {errors.brandName && <span className={styles.error}>{errors.brandName}</span>}
+        {errors.name && <span className={styles.error}>{errors.name}</span>}
       </label>
 
       <label className={styles.field}>
@@ -81,33 +81,6 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
         </label>
       </div>
 
-      <div className={styles.row2}>
-        <label className={styles.field}>
-          <span className={styles.label}>
-            {t("jwin.basic.dailyPostTime")}
-            <span className={styles.required}>*</span>
-          </span>
-          <Input
-            type="time"
-            value={values.dailyPostTime}
-            onChange={(value) => setField("dailyPostTime", value)}
-          />
-          <span className={styles.hint}>{t("jwin.basic.dailyPostTimeHint")}</span>
-        </label>
-
-        <label className={styles.field}>
-          <span className={styles.label}>{t("jwin.basic.dailyWinCap")}</span>
-          <Input
-            type="number"
-            min={1}
-            value={values.dailyWinCap}
-            onChange={(value) => setField("dailyWinCap", value)}
-            error={!!errors.dailyWinCap}
-            placeholder={t("jwin.basic.dailyWinCapPlaceholder")}
-          />
-          {errors.dailyWinCap && <span className={styles.error}>{errors.dailyWinCap}</span>}
-        </label>
-      </div>
     </div>
   );
 }

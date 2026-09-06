@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { Button, Dialog, Input } from "@/components/ui";
-import type { AdminBrandAccount } from "@/domains/jwin";
+import type { AdminBrandAccount, AdminBrandAccountCreate } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import styles from "./AddBrandAccountDialog.module.css";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  onCreate: (label: string) => Promise<AdminBrandAccount | null>;
+  onCreate: (body: AdminBrandAccountCreate) => Promise<AdminBrandAccount | null>;
 };
 
 /** 계정 추가 다이얼로그. 입력 상태는 여기서만 보관한다(§7 — 부모로 끌어올리지 않음). */
 export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
   const t = useT();
   const [label, setLabel] = useState("");
+  const [slug, setSlug] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<AdminBrandAccount | null>(null);
@@ -21,6 +22,7 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
 
   const handleClose = () => {
     setLabel("");
+    setSlug("");
     setCreating(false);
     setError(null);
     setCreated(null);
@@ -29,10 +31,14 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
   };
 
   const handleCreate = async () => {
-    if (!label.trim()) return;
+    if (!label.trim() || !slug.trim()) return;
+    if (!/^[a-z0-9-]+$/.test(slug.trim())) {
+      setError(t("jwin.basic.error.slugFormat"));
+      return;
+    }
     setCreating(true);
     setError(null);
-    const account = await onCreate(label.trim());
+    const account = await onCreate({ label: label.trim(), slug: slug.trim() });
     setCreating(false);
     if (account) {
       setCreated(account);
@@ -71,7 +77,7 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
               variant="primary"
               size="md"
               onClick={handleCreate}
-              disabled={!label.trim() || creating}
+              disabled={!label.trim() || !slug.trim() || creating}
             >
               {creating ? t("jwin.account.creating") : t("jwin.account.create")}
             </Button>
@@ -105,6 +111,17 @@ export function AddBrandAccountDialog({ open, onClose, onCreate }: Props) {
             disabled={creating}
             autoFocus
           />
+          <label className={styles.label} htmlFor="brand-account-slug">
+            {t("jwin.account.slug")}
+          </label>
+          <Input
+            id="brand-account-slug"
+            value={slug}
+            onChange={setSlug}
+            placeholder="damu"
+            disabled={creating}
+          />
+          <p className={styles.description}>{t("jwin.account.slugHint")}</p>
           {error && <div className={styles.error}>{error}</div>}
         </div>
       )}

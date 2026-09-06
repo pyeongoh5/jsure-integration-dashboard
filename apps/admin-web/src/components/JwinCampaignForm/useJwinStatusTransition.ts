@@ -1,12 +1,17 @@
 import { useState } from "react";
-import { jwinErrorMessage, updateCampaign, type AdminCampaignDetail } from "@/domains/jwin";
+import {
+  jwinErrorMessage,
+  updateBrandCampaign,
+  type AdminBrandCampaignDetail,
+} from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 
-export type JwinCampaignStatus = AdminCampaignDetail["status"];
+export type JwinCampaignStatus = AdminBrandCampaignDetail["status"];
 
+/** 상태 전환은 참여(BrandCampaign) 단위다 — 시즌에는 상태가 없다. */
 export function useJwinStatusTransition(
-  campaignId: string,
-  onChanged: (updated: AdminCampaignDetail) => void,
+  brandCampaignId: string,
+  onChanged: (updated: AdminBrandCampaignDetail) => void,
 ) {
   const t = useT();
   const [changing, setChanging] = useState(false);
@@ -16,7 +21,7 @@ export function useJwinStatusTransition(
     setChanging(true);
     setError(null);
     try {
-      const updated = await updateCampaign(campaignId, { status });
+      const updated = await updateBrandCampaign(brandCampaignId, { status });
       onChanged(updated);
     } catch (caught: unknown) {
       setError(jwinErrorMessage(caught, t("jwin.status.changeFailed")));

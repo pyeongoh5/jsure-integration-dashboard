@@ -1,9 +1,10 @@
 import type { AdminTranslationKey } from "@i18n/admin";
-import type { AdminCampaignListItem } from "@/domains/jwin";
+import type { AdminBrandCampaignListItem } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import styles from "./JwinStatusBadge.module.css";
 
-type CampaignStatus = AdminCampaignListItem["status"];
+/** 상태는 참여(BrandCampaign) 가 갖는다 — 시즌에는 상태가 없다. */
+type CampaignStatus = AdminBrandCampaignListItem["status"];
 
 const LABEL_KEY: Record<CampaignStatus, AdminTranslationKey> = {
   SETUP: "jwin.status.setup",

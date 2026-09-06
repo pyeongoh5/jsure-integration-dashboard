@@ -31,12 +31,17 @@ export type EntryResultResponse =
       needsShipping: boolean;
     };
 
-/** 단독 LP 데이터 (GET /campaigns/:slug) */
+/** 브랜드 참여 LP 데이터 (GET /campaigns/:campaignSlug/brands/:brandSlug) */
 export interface CampaignLp {
-  campaignId: string;
-  slug: string;
+  /** 참여(BrandCampaign) id — 응모 API 가 받는 값 */
+  brandCampaignId: string;
+  /** 속한 시즌 */
+  campaign: { name: string; slug: string };
   brandName: string;
+  brandSlug: string;
+  brandLogoUrl: string | null;
   xUsername: string | null;
+  /** 기간은 시즌에서 온다 */
   startsAt: string;
   endsAt: string;
   /** 당일 캠페인 포스트 URL (리포스트 유도용). 미게시 시 null */
@@ -51,13 +56,31 @@ export interface CampaignLp {
   loseMediaUrl: string | null;
 }
 
-/** 진행 중 캠페인 목록 카드 (GET /campaigns) */
+/** 진행 중 시즌 목록 카드 (GET /campaigns) */
 export interface CampaignSummary {
   slug: string;
-  brandName: string;
-  xUsername: string | null;
+  name: string;
+  startsAt: string;
   endsAt: string;
-  prizeSummary: string;
+  /** 참여 중(ACTIVE)인 브랜드 수 */
+  brandCount: number;
+}
+
+/** 시즌 LP 데이터 (GET /campaigns/:campaignSlug) — 참여 브랜드 카드 목록 */
+export interface CampaignSeasonLp {
+  campaignId: string;
+  name: string;
+  slug: string;
+  startsAt: string;
+  endsAt: string;
+  brands: {
+    brandCampaignId: string;
+    brandName: string;
+    brandSlug: string;
+    brandLogoUrl: string | null;
+    xUsername: string | null;
+    prizeSummary: string;
+  }[];
 }
 
 /** 당첨 히스토리 항목 (GET /me/wins) — 당첨 확정 건만 (F-3.6) */

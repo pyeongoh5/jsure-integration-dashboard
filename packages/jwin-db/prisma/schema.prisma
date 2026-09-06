@@ -14,7 +14,24 @@ datasource db {
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
-// ── 브랜드 캠페인 (기간 단위) ────────────────────────
+// ── 캠페인(시즌) · 브랜드 참여 ───────────────────────
+
+/// 시즌 캠페인 — "9월 캠페인" 처럼 기간 단위 묶음. 브랜드들이 여기에 참여한다.
+/// 기간은 시즌이 갖고, 진행 상태는 참여(BrandCampaign)가 갖는다.
+model Campaign {
+  id        String   @id @default(cuid())
+  name      String // "9月キャンペーン"
+  slug      String   @unique // 시즌 LP URL: /c/{slug}
+  startsAt  DateTime // JST 기준 입력, UTC 저장
+  endsAt    DateTime // 종료 시점 = 배송지 입력 마감 (F-6.3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// 참여 브랜드. 공개 여부는 별도 플래그 없이 "기간 내 + ACTIVE 참여 >= 1" 로 판정한다.
+  brands BrandCampaign[]
+
+  @@index([startsAt, endsAt])
+}
 
 enum CampaignStatus {
   SETUP  // 계정 연동 대기 등 준비 중
@@ -23,12 +40,12 @@ enum CampaignStatus {
   ENDED
 }
 
+/// 브랜드가 시즌 캠페인에 참여한 단위. 게시·경품·응모·추첨이 모두 여기에 걸린다.
+/// 브랜드 간에는 상관관계가 없다 — 응모 하루 1회 제한도 참여 단위다.
 model BrandCampaign {
   id            String         @id @default(cuid())
-  brandName     String
-  slug          String         @unique // 단독 LP URL: /c/{slug}
-  startsAt      DateTime // JST 기준 입력, UTC 저장
-  endsAt        DateTime // 종료 시점 = 배송지 입력 마감 (F-6.3)
+  campaignId    String
+  campaign      Campaign       @relation(fields: [campaignId], references: [id])
   status        CampaignStatus @default(SETUP)
   // 게시 스케줄: 매일 1회, JST 시각 "HH:mm"
   dailyPostTime String         @default("11:00")
@@ -48,20 +65,26 @@ model BrandCampaign {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  brandAccountId String?
-  brandAccount   BrandXAccount? @relation(fields: [brandAccountId], references: [id])
+  brandAccountId String
+  brandAccount   BrandXAccount @relation(fields: [brandAccountId], references: [id])
   postTemplates PostTemplate[]
   posts         CampaignPost[]
   prizes        Prize[]
   entries       Entry[]
 
-  @@index([status, startsAt, endsAt])
+  @@unique([campaignId, brandAccountId])
+  @@index([status])
 }
 
 // 브랜드 X 계정: 캠페인과 독립·재사용 가능한 엔티티. OAuth2 토큰은 AES-256-GCM 암호화 저장.
+/// 브랜드. X 계정 토큰을 함께 들고 있으며 시즌을 건너뛰어 재사용된다 (D-13).
 model BrandXAccount {
   id                    String    @id @default(cuid())
-  label                 String    // 운영자 식별용 메모 (예: "코카콜라 재팬 공식")
+  label                 String    // 브랜드 표시명 (예: "코카콜라 재팬 공식")
+  /// 참여 LP URL 조각: /c/{campaignSlug}/{slug}
+  slug                  String    @unique
+  /// 시즌 LP 의 브랜드 카드에 쓰는 로고
+  logoUrl               String?
   xUserId               String?   @unique // 브랜드 승인 후 채워짐 (계정 정체성)
   xUsername             String?
   encryptedAccessToken  String?

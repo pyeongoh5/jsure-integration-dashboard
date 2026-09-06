@@ -1,4 +1,3 @@
-import { JwinStatusBadge } from "@/components/composites/JwinStatusBadge";
 import { ScrollTable } from "@/components/composites";
 import { IconButton } from "@/components/ui";
 import { useT } from "@/lib/i18n";
@@ -23,11 +22,10 @@ export function JwinCampaignTable({ rows, onRowClick, onDelete }: Props) {
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>{t("jwin.campaign.columns.brand")}</th>
+            <th>{t("jwin.campaign.columns.name")}</th>
             <th>{t("jwin.campaign.columns.slug")}</th>
-            <th>{t("jwin.campaign.columns.status")}</th>
             <th>{t("jwin.campaign.columns.period")}</th>
-            <th>{t("jwin.campaign.columns.account")}</th>
+            <th className={styles.num}>{t("jwin.campaign.columns.brands")}</th>
             <th className={styles.num}>{t("jwin.campaign.columns.entries")}</th>
             <th>{t("jwin.campaign.columns.warnings")}</th>
             <th className={styles.num}>{t("jwin.campaign.columns.actions")}</th>
@@ -36,15 +34,10 @@ export function JwinCampaignTable({ rows, onRowClick, onDelete }: Props) {
         <tbody>
           {rows.map((row) => (
             <tr key={row.id} className={styles.row} onClick={() => onRowClick(row.id)}>
-              <td className={styles.brand}>{row.brandName}</td>
+              <td className={styles.brand}>{row.name}</td>
               <td className={styles.mono}>{row.slug}</td>
-              <td>
-                <JwinStatusBadge status={row.status} />
-              </td>
               <td className={styles.mono}>{row.period}</td>
-              <td className={row.xUsername ? styles.mono : styles.muted}>
-                {row.xUsername ? `@${row.xUsername}` : t("jwin.campaign.notConnected")}
-              </td>
+              <td className={styles.num}>{row.brandCount}</td>
               <td className={styles.num}>{row.entryCount}</td>
               <td>
                 {row.warnings.length === 0 ? (
@@ -61,7 +54,7 @@ export function JwinCampaignTable({ rows, onRowClick, onDelete }: Props) {
                 )}
               </td>
               <td className={styles.num}>
-                {/* 행 클릭(편집 이동)과 겹치지 않도록 이벤트 전파를 끊는다. */}
+                {/* 행 클릭(상세 이동)과 겹치지 않도록 이벤트 전파를 끊는다. */}
                 <IconButton
                   variant="ghost"
                   size="sm"

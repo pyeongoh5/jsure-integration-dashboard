@@ -146,7 +146,7 @@ export function MessageTemplateEdit(): JSX.Element {
             placeholder={t("pages.messageTemplates.bodyPlaceholder")}
           />
           <div className={styles.counter}>
-            {t("pages.messageTemplates.charCount", { count: body.length.toLocaleString() })}
+            {t("pages.messageTemplates.charCount", { count: body.length })}
           </div>
           {validationError && <div className={styles.error}>{validationError}</div>}
           {error && <div className={styles.error}>{error}</div>}

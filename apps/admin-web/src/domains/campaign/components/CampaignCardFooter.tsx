@@ -18,7 +18,7 @@ export function CampaignCardFooter({ approved, applied, capacity, viewers }: Pro
         <div className={styles.cardProgressText}>
           {t("domains.campaign.card.footer", { approved, capacity, ratio, applied })}
           {" · "}
-          {t("domains.campaign.card.viewerCount", { count: viewers.toLocaleString() })}
+          {t("domains.campaign.card.viewerCount", { count: viewers })}
         </div>
         <div className={styles.cardProgressBar}>
           <div className={styles.cardProgressFill} style={{ width: `${ratio}%` }} />

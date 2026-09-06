@@ -378,7 +378,7 @@ export function Payouts() {
       !window.confirm(
         t("pages.payouts.complete.confirmMessage", {
           label,
-          amount: targetAmount.toLocaleString("ja-JP"),
+          amount: targetAmount,
         }),
       )
     ) {

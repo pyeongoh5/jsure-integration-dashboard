@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ActiveProduct } from "@/components/Sidebar/ActiveProduct";
 import { FooterUser } from "@/components/Sidebar/FooterUser";
 import { findProductByPath } from "@/lib/navigation";
-import { useT } from "@/lib/i18n";
+import { formatNumber } from "@i18n/admin";
+import { useLanguage, useT } from "@/lib/i18n";
 import {
   fetchAppliedCount,
   fetchPendingReviewCount,
@@ -13,6 +14,7 @@ import {
 
 export const Sidebar = () => {
   const t = useT();
+  const { language } = useLanguage();
   const { pathname } = useLocation();
   const product = findProductByPath(pathname);
   const isInfluencerProduct = product.key === "influencer";
@@ -41,13 +43,13 @@ export const Sidebar = () => {
 
   const dynamicBadge = (to: string): ReactNode => {
     if (to === "/payouts" && pendingPayouts && pendingPayouts > 0) {
-      return pendingPayouts;
+      return formatNumber(pendingPayouts, language);
     }
     if (to === "/applicants" && pendingApplicants && pendingApplicants > 0) {
-      return pendingApplicants;
+      return formatNumber(pendingApplicants, language);
     }
     if (to === "/drafts" && pendingReviews && pendingReviews > 0) {
-      return pendingReviews;
+      return formatNumber(pendingReviews, language);
     }
     return undefined;
   };

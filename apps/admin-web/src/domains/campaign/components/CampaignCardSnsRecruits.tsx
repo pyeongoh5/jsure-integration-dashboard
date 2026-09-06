@@ -39,7 +39,7 @@ export function CampaignCardSnsRecruits({ recruits }: Props) {
               {recruit.minFollowers > 0
                 ? t("domains.campaign.card.minFollowers", {
                     label: t(SNS_FOLLOWER_LABEL[recruit.subType]),
-                    count: recruit.minFollowers.toLocaleString(),
+                    count: recruit.minFollowers,
                   })
                 : t("domains.campaign.card.noFollowerLimit", {
                     label: t(SNS_FOLLOWER_LABEL[recruit.subType]),

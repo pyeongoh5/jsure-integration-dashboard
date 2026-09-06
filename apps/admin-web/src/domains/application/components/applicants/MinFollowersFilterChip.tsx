@@ -13,7 +13,7 @@ export function MinFollowersFilterChip({ value, onChange }: Props) {
   const activeLabel =
     value !== null
       ? t("domains.application.applicants.minFollowersFilter.activeLabel", {
-          count: value.toLocaleString(),
+          count: value,
         })
       : null;
 

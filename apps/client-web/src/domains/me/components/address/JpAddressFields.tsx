@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useFormContext, useController } from "react-hook-form";
-import { JP_PREFECTURES } from "@jsure/shared";
+import { JP_PREFECTURES, POSTAL_PATTERN } from "@jsure/shared";
 import { LabeledInput } from "@/components/composites/LabeledInput";
 import labeledInputStyles from "@/components/composites/LabeledInput.module.css";
 import { lookupPostalCode } from "@/lib/zipcloud";
 import { t } from "@i18n";
 import { AddressTextFields } from "./AddressTextFields";
 
-const POSTAL_RE = /^\d{3}-?\d{4}$/;
 
 function formatPostalCode(raw: string): string {
   const digits = raw.replace(/[^\d]/g, "").slice(0, 7);
@@ -43,7 +42,7 @@ export function JpAddressFields({ fieldName }: { fieldName: (key: string) => str
   async function handlePostalChange(raw: string) {
     const formatted = formatPostalCode(raw);
     postal.field.onChange(formatted);
-    if (!POSTAL_RE.test(formatted)) {
+    if (!POSTAL_PATTERN.JP.test(formatted)) {
       setLookupState("idle");
       return;
     }

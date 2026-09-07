@@ -1,18 +1,15 @@
 import { useFormContext, useController } from "react-hook-form";
 import { z } from "zod";
 import {
-  JP_PREFECTURES,
-  KR_PROVINCES,
+  addressIssues,
   type AddressCountry,
+  type AddressRuleField,
 } from "@jsure/shared";
 import { t } from "@i18n";
 import styles from "./Address.module.css";
 import { CountryToggle } from "../CountryToggle";
 import { JpAddressFields } from "./JpAddressFields";
 import { KrAddressFields } from "./KrAddressFields";
-
-const JP_POSTAL_RE = /^\d{3}-?\d{4}$/;
-const KR_POSTAL_RE = /^\d{5}$/;
 
 export type AddressValues = {
   country: AddressCountry;
@@ -44,9 +41,31 @@ export function hasAddressValues(values: AddressValues): boolean {
 }
 
 /**
- * 국가별 주소 검증. discriminatedUnion 대신 superRefine 을 쓰는 이유는
- * react-hook-form 이 필드별 에러 경로를 유지해야 각 입력 아래에 메시지가 붙기 때문이다.
+ * 국가별 주소 검증. 규칙 자체는 shared 의 `addressIssues()` 하나만 쓴다 —
+ * 화면과 서버가 규칙을 따로 들고 있으면 한쪽만 고쳐 놓고 다른 쪽에서 막힌다
+ * (세종특별자치시 주소가 실제로 그렇게 저장되지 않았다).
+ *
+ * discriminatedUnion 대신 flat + superRefine 인 이유는 react-hook-form 이
+ * 필드별 에러 경로를 유지해야 각 입력 아래에 메시지가 붙기 때문이다.
  */
+
+/** 위반 코드 → 화면 문구. 나라별 표기가 달라 필드마다 갈라 쓴다. */
+function issueMessage(country: AddressCountry, field: AddressRuleField): string {
+  const isKr = country === "KR";
+  switch (field) {
+    case "postalCode":
+      return isKr ? t("me.addressKr.postalCodeError") : t("me.address.postalCodeError");
+    case "prefecture":
+      return isKr ? t("me.addressKr.provinceError") : t("me.address.prefectureError");
+    case "city":
+      return isKr ? t("me.addressKr.cityError") : t("me.address.cityError");
+    case "addressLine1":
+      return isKr
+        ? t("me.addressKr.addressLine1Error")
+        : t("me.address.addressLine1Error");
+  }
+}
+
 export const AddressZodSchema = z
   .object({
     country: z.enum(["JP", "KR"]),
@@ -57,46 +76,12 @@ export const AddressZodSchema = z
     addressLine2: z.string(),
   })
   .superRefine((values, ctx) => {
-    const isJp = values.country === "JP";
-
-    if (!(isJp ? JP_POSTAL_RE : KR_POSTAL_RE).test(values.postalCode)) {
+    for (const issue of addressIssues(values)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["postalCode"],
-        message: isJp
-          ? t("me.address.postalCodeError")
-          : t("me.addressKr.postalCodeError"),
-      });
-    }
-
-    const provinces: readonly string[] = isJp ? JP_PREFECTURES : KR_PROVINCES;
-    if (!provinces.includes(values.prefecture)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["prefecture"],
-        message: isJp
-          ? t("me.address.prefectureError")
-          : t("me.addressKr.provinceError"),
-      });
-    }
-
-    // 한국은 세종특별자치시처럼 시·군·구가 없는 광역자치단체가 있어 필수로 두지 않는다.
-    // (일본은 시·구·정·촌이 항상 있으므로 그대로 필수)
-    if (isJp && !values.city.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["city"],
-        message: t("me.address.cityError"),
-      });
-    }
-
-    if (!values.addressLine1.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["addressLine1"],
-        message: isJp
-          ? t("me.address.addressLine1Error")
-          : t("me.addressKr.addressLine1Error"),
+        path: [issue.field],
+        // 문구는 화면이 정한다 — 규칙 함수는 위반 사실만 알려준다.
+        message: issueMessage(values.country, issue.field),
       });
     }
   });

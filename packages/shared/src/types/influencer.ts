@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  addressIssues,
+  type AddressRuleCountry,
+  type AddressRuleField,
+} from "../utils/addressRules.js";
 import { normalizeSnsHandle } from "../utils/snsHandle.js";
 import { KR_PROVINCES } from "../data/krBanks.js";
 
@@ -119,33 +124,101 @@ export type JpPrefecture = z.infer<typeof JpPrefectureSchema>;
 export const KrProvinceSchema = z.enum(KR_PROVINCES);
 export type KrProvince = z.infer<typeof KrProvinceSchema>;
 
+/**
+ * 나라별 검증은 addressRules 의 `addressIssues()` 한 곳에서만 판정한다.
+ * 스키마는 길이 제한과 정규화(우편번호 하이픈)만 맡고, 나머지는 규칙 함수에 위임한다 —
+ * 화면(client-web)도 같은 함수를 쓰므로 규칙이 갈라지지 않는다.
+ */
+const JP_ISSUE_MESSAGE: Record<AddressRuleField, string> = {
+  postalCode: "郵便番号は7桁の数字",
+  prefecture: "都道府県を選択してください",
+  city: "市区町村は必須",
+  addressLine1: "番地は必須",
+};
+
+const KR_ISSUE_MESSAGE: Record<AddressRuleField, string> = {
+  postalCode: "우편번호는 5자리 숫자",
+  prefecture: "시/도를 선택해 주세요",
+  city: "시·군·구는 필수",
+  addressLine1: "도로명 주소는 필수",
+};
+
+function applyAddressIssues(
+  country: AddressRuleCountry,
+  messages: Record<AddressRuleField, string>,
+) {
+  return (
+    values: { postalCode: string; prefecture: string; city: string; addressLine1: string },
+    ctx: z.RefinementCtx,
+  ) => {
+    for (const issue of addressIssues({ country, ...values })) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [issue.field],
+        message: messages[issue.field],
+      });
+    }
+  };
+}
+
 export const JpAddressSchema = z.object({
   country: z.literal("JP"),
   postalCode: z
     .string()
-    .regex(/^\d{3}-?\d{4}$/, "郵便番号は7桁の数字")
+    // 하이픈 유무를 받아 "123-4567" 로 정규화한다. 형식 판정은 규칙 함수가 한다.
     .transform((v) => (v.length === 7 ? `${v.slice(0, 3)}-${v.slice(3)}` : v)),
-  prefecture: JpPrefectureSchema,
-  city: z.string().min(1, "市区町村は必須").max(100),
-  addressLine1: z.string().min(1, "番地は必須").max(100),
+  prefecture: z.string(),
+  city: z.string().max(100),
+  addressLine1: z.string().max(100),
   addressLine2: z.string().max(100).optional().default(""),
 });
 
 /** 한국 주소. 컬럼은 일본과 공유하고 의미만 시/도·시군구·도로명·상세로 바뀐다. */
 export const KrAddressSchema = z.object({
   country: z.literal("KR"),
-  postalCode: z.string().regex(/^\d{5}$/, "우편번호는 5자리 숫자"),
-  prefecture: KrProvinceSchema,
-  // 세종특별자치시처럼 시·군·구가 없는 광역자치단체가 있어 필수로 두지 않는다.
+  postalCode: z.string(),
+  prefecture: z.string(),
   city: z.string().max(100),
-  addressLine1: z.string().min(1, "도로명 주소는 필수").max(100),
+  addressLine1: z.string().max(100),
   addressLine2: z.string().max(100).optional().default(""),
 });
 
-export const InfluencerAddressSchema = z.discriminatedUnion("country", [
-  JpAddressSchema,
-  KrAddressSchema,
-]);
+/**
+ * 나라별 검증은 addressRules 의 `addressIssues()` 한 곳에서만 판정한다.
+ * 위 스키마들은 모양·길이·정규화(우편번호 하이픈)만 맡고, 규칙은 여기서 붙인다 —
+ * 화면(client-web)도 같은 함수를 쓰므로 규칙이 갈라지지 않는다.
+ *
+ * discriminatedUnion 은 멤버가 순수 ZodObject 여야 해서 refine 을 union 바깥에 건다.
+ */
+const ADDRESS_ISSUE_MESSAGE: Record<
+  AddressRuleCountry,
+  Record<AddressRuleField, string>
+> = {
+  JP: {
+    postalCode: "郵便番号は7桁の数字",
+    prefecture: "都道府県を選択してください",
+    city: "市区町村は必須",
+    addressLine1: "番地は必須",
+  },
+  KR: {
+    postalCode: "우편번호는 5자리 숫자",
+    prefecture: "시/도를 선택해 주세요",
+    city: "시·군·구는 필수",
+    addressLine1: "도로명 주소는 필수",
+  },
+};
+
+export const InfluencerAddressSchema = z
+  .discriminatedUnion("country", [JpAddressSchema, KrAddressSchema])
+  .superRefine((values, ctx) => {
+    for (const issue of addressIssues(values)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [issue.field],
+        message: ADDRESS_ISSUE_MESSAGE[values.country][issue.field],
+      });
+    }
+  });
 export type InfluencerAddress = z.infer<typeof InfluencerAddressSchema>;
 export type InfluencerBankAccount = z.infer<typeof InfluencerBankAccountSchema>;
 

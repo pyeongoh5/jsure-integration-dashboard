@@ -136,7 +136,8 @@ export const KrAddressSchema = z.object({
   country: z.literal("KR"),
   postalCode: z.string().regex(/^\d{5}$/, "우편번호는 5자리 숫자"),
   prefecture: KrProvinceSchema,
-  city: z.string().min(1, "시·군·구는 필수").max(100),
+  // 세종특별자치시처럼 시·군·구가 없는 광역자치단체가 있어 필수로 두지 않는다.
+  city: z.string().max(100),
   addressLine1: z.string().min(1, "도로명 주소는 필수").max(100),
   addressLine2: z.string().max(100).optional().default(""),
 });

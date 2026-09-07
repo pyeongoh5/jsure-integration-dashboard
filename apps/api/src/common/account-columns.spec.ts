@@ -162,8 +162,8 @@ describe("다음 우편번호 응답 변환", () => {
     expect(result.addressLine1).toBe("테헤란로 123 (아이타워)");
   });
 
-  it("접두가 예상과 다르면 도로명 주소를 그대로 쓴다", () => {
-    // 세종시처럼 시·군·구가 비는 지역이 있어 접두 제거가 항상 성립하지는 않는다.
+  it("시·군·구가 비는 세종시도 시·도 접두를 떼어낸다", () => {
+    // sigungu 가 빈 문자열이라 접두를 "시도 + 공백 2개"로 만들면 어디에도 걸리지 않는다.
     const result = toKrAddress({
       zonecode: "30151",
       sido: "세종특별자치시",
@@ -171,6 +171,19 @@ describe("다음 우편번호 응답 변환", () => {
       roadAddress: "세종특별자치시 한누리대로 2130",
       buildingName: "",
     });
-    expect(result.addressLine1).toBe("세종특별자치시 한누리대로 2130");
+    expect(result.city).toBe("");
+    expect(result.addressLine1).toBe("한누리대로 2130");
+  });
+
+  it("접두가 예상과 다르면 도로명 주소를 그대로 쓴다", () => {
+    // 다음이 주는 sido 약칭("경기")과 도로명의 표기("경기도")가 어긋나는 경우.
+    const result = toKrAddress({
+      zonecode: "13529",
+      sido: "경기",
+      sigungu: "성남시 분당구",
+      roadAddress: "경기도 성남시 분당구 판교로 1",
+      buildingName: "",
+    });
+    expect(result.addressLine1).toBe("경기도 성남시 분당구 판교로 1");
   });
 });

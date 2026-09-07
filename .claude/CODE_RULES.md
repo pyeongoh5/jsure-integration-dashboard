@@ -109,6 +109,27 @@ const res = await api.get("/health");
 return HealthResponseSchema.parse(res.data);
 ```
 
+### 검증 규칙은 `shared` 의 순수 함수 하나로
+
+화면과 서버가 **같은 규칙을 각자 적으면** 한쪽만 고쳐 놓고 다른 쪽에서 막힌다.
+실제로 세종특별자치시(시·군·구가 없는 광역자치단체) 주소가 그렇게 저장되지 않았다 —
+서버 스키마만 고치고 화면의 zod 스키마를 놓쳤다.
+
+- **DO** 판정은 `packages/shared` 의 순수 함수 하나에 적는다. 그 함수는 **위반 사실만**
+  돌려주고 문구는 만들지 않는다 — 서버는 고정 문자열, 화면은 i18n 을 쓰기 때문이다.
+- **DO** zod 스키마(서버)와 폼 스키마(화면)는 그 함수를 `superRefine` 에서 호출해
+  각자의 문구를 붙인다. 화면이 필드별 에러 경로를 필요로 하면 스키마 모양은 달라도 된다 —
+  **규칙만 공유하면 된다.**
+- **DON'T** 정규식·필수 여부·enum 목록을 화면에 다시 적지 않는다.
+
+```ts
+// packages/shared/src/utils/addressRules.ts — 판정만
+export function addressIssues(values: AddressRuleInput): AddressIssue[];
+
+// 서버: InfluencerAddressSchema.superRefine(...)  → 고정 문자열
+// 화면: AddressZodSchema.superRefine(...)         → i18n 키
+```
+
 ---
 
 ## 3. 타입 안전성

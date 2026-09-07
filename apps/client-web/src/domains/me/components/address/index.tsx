@@ -80,11 +80,13 @@ export const AddressZodSchema = z
       });
     }
 
-    if (!values.city.trim()) {
+    // 한국은 세종특별자치시처럼 시·군·구가 없는 광역자치단체가 있어 필수로 두지 않는다.
+    // (일본은 시·구·정·촌이 항상 있으므로 그대로 필수)
+    if (isJp && !values.city.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["city"],
-        message: isJp ? t("me.address.cityError") : t("me.addressKr.cityError"),
+        message: t("me.address.cityError"),
       });
     }
 

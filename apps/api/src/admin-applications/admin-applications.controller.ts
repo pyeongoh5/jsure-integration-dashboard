@@ -13,6 +13,7 @@ import {
 } from "@nestjs/common";
 import {
   AdminUpdateInsightRequestSchema,
+  ForceCancelApplicationRequestSchema,
   ApplicationStatusSchema,
   parseApplicantFilterParams,
   RejectApplicationRequestSchema,
@@ -28,6 +29,7 @@ import {
   type AdminSettlementListResponse,
   type AdminSubmissionListResponse,
   type AdminUpdateInsightRequest,
+  type ForceCancelApplicationRequest,
   type ApprovedApplicantExportResponse,
   type AttachmentListResponse,
   type ApplicationStatus,
@@ -150,6 +152,18 @@ export class AdminApplicationsController {
     body: AdminUpdateInsightRequest,
   ): Promise<AdminSubmission> {
     return this.svc.updateInsight(postId, body, req.user);
+  }
+
+  /** 강제 취소 — 단계와 무관. 정산이 생성된 건은 서비스가 400 으로 막는다. */
+  @Post(":id/force-cancel")
+  @HttpCode(200)
+  forceCancel(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(ForceCancelApplicationRequestSchema))
+    body: ForceCancelApplicationRequest,
+  ): Promise<AdminApplication> {
+    return this.svc.forceCancel(id, req.user, body.reason.trim());
   }
 
   @Post(":id/submission/approve")

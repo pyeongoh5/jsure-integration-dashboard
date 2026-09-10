@@ -5,6 +5,7 @@ import { getStoredLanguage } from "@/lib/i18n";
 import {
   approveApplication,
   deliverApplication,
+  forceCancelApplication,
   rejectApplication,
   shipApplication,
   undoApplication,
@@ -16,7 +17,8 @@ export type PendingActionType =
   | "reject"
   | "undo"
   | "ship"
-  | "deliver";
+  | "deliver"
+  | "forceCancel";
 
 export type PendingAction = {
   type: PendingActionType;
@@ -32,6 +34,7 @@ export type UseApplicantMutationsResult = {
   openUndo: (applicant: Applicant) => void;
   openShip: (applicant: Applicant) => void;
   openDeliver: (applicant: Applicant) => void;
+  openForceCancel: (applicant: Applicant) => void;
   cancel: () => void;
   confirm: (input?: ConfirmInput) => Promise<boolean>;
 };
@@ -111,6 +114,20 @@ export function useApplicantMutations(
         case "deliver":
           await deliverApplication(id);
           break;
+        case "forceCancel": {
+          const reason = typeof input === "string" ? input.trim() : "";
+          if (reason === "") {
+            setError(
+              translate(
+                "domains.application.forceCancel.reasonRequired",
+                getStoredLanguage(),
+              ),
+            );
+            return false;
+          }
+          await forceCancelApplication(id, reason);
+          break;
+        }
       }
       setPending(null);
       onMutated();
@@ -132,6 +149,7 @@ export function useApplicantMutations(
     openUndo: open("undo"),
     openShip: open("ship"),
     openDeliver: open("deliver"),
+    openForceCancel: open("forceCancel"),
     cancel,
     confirm,
   };

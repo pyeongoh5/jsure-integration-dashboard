@@ -254,6 +254,17 @@ export type RejectSubmissionRequest = z.infer<
   typeof RejectSubmissionRequestSchema
 >;
 
+/**
+ * 응모 강제 취소 — 단계와 무관하게 참여를 끝낸다.
+ * 사유는 감사 로그에만 남고 인플루언서에게 전달되지 않는다.
+ */
+export const ForceCancelApplicationRequestSchema = z.object({
+  reason: z.string().min(1, "취소 사유를 입력하세요").max(500),
+});
+export type ForceCancelApplicationRequest = z.infer<
+  typeof ForceCancelApplicationRequestSchema
+>;
+
 /** 어드민 인사이트 보정에서 다루는 지표 필드. 빈칸(미입력)은 null 로 저장한다. */
 export const ADMIN_INSIGHT_METRIC_KEYS = [
   "likes",

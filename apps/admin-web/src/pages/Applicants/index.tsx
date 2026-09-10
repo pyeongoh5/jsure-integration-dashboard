@@ -251,6 +251,7 @@ export function Applicants() {
             onUndo={mutations.openUndo}
             onShip={mutations.openShip}
             onDeliver={mutations.openDeliver}
+            onForceCancel={mutations.openForceCancel}
             onMemo={setNotesTarget}
             onDetail={setDetailTarget}
             onHistory={(applicant) =>

@@ -124,3 +124,6 @@ export async function fetchPendingReviewCount(): Promise<number> {
   const res = await api.get("/campaign-applications/submissions/pending-count");
   return (res.data as { count: number }).count;
 }
+
+/** 강제 취소 — 응모자 관리와 같은 엔드포인트를 검토 화면에서도 쓴다. */
+export { forceCancelApplication } from "./api";

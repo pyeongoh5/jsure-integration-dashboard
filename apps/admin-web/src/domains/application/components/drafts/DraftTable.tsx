@@ -55,6 +55,7 @@ type ActionHandlers = {
   onApprove: (draft: DraftReview) => void;
   onReject: (draft: DraftReview) => void;
   onUndo: (draft: DraftReview) => void;
+  onForceCancel: (draft: DraftReview) => void;
   onSettle: (draft: DraftReview) => void;
   onViewInsight: (draft: DraftReview) => void;
   onMemo: (draft: DraftReview) => void;
@@ -114,6 +115,13 @@ function renderActions(
       {t("domains.application.applicants.actions.history")}
     </Button>
   );
+  // 정산이 생긴 뒤에는 서버가 막으므로 버튼도 내린다. 반려 건은 이미 슬롯을 놓았다.
+  const forceCancelButton =
+    draft.settlement !== null || draft.status === "REJECTED" ? null : (
+      <Button variant="danger" size="sm" onClick={() => handlers.onForceCancel(draft)}>
+        {t("domains.application.forceCancel.action")}
+      </Button>
+    );
 
   if (draft.status === "REVIEW_PENDING") {
     return (
@@ -126,6 +134,7 @@ function renderActions(
         </Button>
         {memoButton}
         {historyButton}
+        {forceCancelButton}
       </div>
     );
   }
@@ -141,6 +150,7 @@ function renderActions(
         </Button>
         {memoButton}
         {historyButton}
+        {forceCancelButton}
       </div>
     );
   }
@@ -153,6 +163,7 @@ function renderActions(
         </Button>
         {memoButton}
         {historyButton}
+        {forceCancelButton}
       </div>
     );
   }
@@ -165,6 +176,7 @@ function renderActions(
         </Button>
         {memoButton}
         {historyButton}
+        {forceCancelButton}
       </div>
     );
   }
@@ -174,6 +186,7 @@ function renderActions(
     <div className={styles.actions}>
       {memoButton}
       {historyButton}
+      {forceCancelButton}
     </div>
   );
 }
@@ -184,6 +197,7 @@ type Props = {
   onApprove: (draft: DraftReview) => void;
   onReject: (draft: DraftReview) => void;
   onUndo: (draft: DraftReview) => void;
+  onForceCancel: (draft: DraftReview) => void;
   onSettle: (draft: DraftReview) => void;
   onViewInsight: (draft: DraftReview) => void;
   onMemo: (draft: DraftReview) => void;
@@ -197,6 +211,7 @@ export function DraftTable({
   onApprove,
   onReject,
   onUndo,
+  onForceCancel,
   onSettle,
   onViewInsight,
   onMemo,
@@ -332,6 +347,7 @@ export function DraftTable({
                           onApprove,
                           onReject,
                           onUndo,
+                          onForceCancel,
                           onSettle,
                           onViewInsight,
                           onMemo,

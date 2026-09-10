@@ -15,6 +15,8 @@ export const ACTIVITY_ACTION_LABEL: Record<
     "domains.application.history.actions.applicationReviewUndo",
   APPLICATION_SHIP: "domains.application.history.actions.applicationShip",
   APPLICATION_DELIVER: "domains.application.history.actions.applicationDeliver",
+  APPLICATION_FORCE_CANCEL:
+    "domains.application.history.actions.applicationForceCancel",
   SUBMISSION_APPROVE: "domains.application.history.actions.submissionApprove",
   SUBMISSION_REJECT: "domains.application.history.actions.submissionReject",
   SUBMISSION_REVIEW_UNDO:

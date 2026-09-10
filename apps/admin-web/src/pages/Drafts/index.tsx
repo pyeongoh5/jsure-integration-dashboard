@@ -120,6 +120,7 @@ export function Drafts() {
           onApprove={mutations.openApprove}
           onReject={mutations.openReject}
           onUndo={mutations.openUndo}
+          onForceCancel={mutations.openForceCancel}
           onSettle={async (draft) => {
             const ok = await mutations.settle(draft);
             if (ok) {

@@ -30,6 +30,7 @@ type ActionHandlers = {
   onMemo: (applicant: Applicant) => void;
   onDetail: (applicant: Applicant) => void;
   onHistory: (applicant: Applicant) => void;
+  onForceCancel: (applicant: Applicant) => void;
 };
 
 function renderActions(applicant: Applicant, handlers: ActionHandlers, t: TranslateFunction) {
@@ -49,6 +50,13 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
       {t("domains.application.applicants.actions.history")}
     </Button>
   );
+  // 강제 취소는 참여가 살아 있는 단계에만. 반려 건은 이미 슬롯을 놓았다.
+  const forceCancelButton =
+    applicant.status === "REJECTED" ? null : (
+      <Button variant="danger" size="sm" onClick={() => handlers.onForceCancel(applicant)}>
+        {t("domains.application.forceCancel.action")}
+      </Button>
+    );
   const hasShipping = applicant.category === "SNS" || applicant.category === "SIMPLE_REVIEW";
 
   switch (applicant.status) {
@@ -64,6 +72,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
           {detailButton}
           {memoButton}
           {historyButton}
+          {forceCancelButton}
         </div>
       );
     case "PRE_SHIP":
@@ -80,6 +89,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
           {detailButton}
           {memoButton}
           {historyButton}
+          {forceCancelButton}
         </div>
       );
     case "SHIPPING":
@@ -93,6 +103,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
           {detailButton}
           {memoButton}
           {historyButton}
+          {forceCancelButton}
         </div>
       );
     case "DELIVERED":
@@ -104,6 +115,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
           {detailButton}
           {memoButton}
           {historyButton}
+          {forceCancelButton}
         </div>
       );
     case "AWAITING_ORDER":
@@ -115,6 +127,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
           {detailButton}
           {memoButton}
           {historyButton}
+          {forceCancelButton}
         </div>
       );
     case "REJECTED":
@@ -126,6 +139,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
           {detailButton}
           {memoButton}
           {historyButton}
+          {forceCancelButton}
         </div>
       );
   }
@@ -210,6 +224,7 @@ type Props = {
   onMemo: (applicant: Applicant) => void;
   onDetail: (applicant: Applicant) => void;
   onHistory: (applicant: Applicant) => void;
+  onForceCancel: (applicant: Applicant) => void;
   /** 목록 끝에 붙일 영역. 무한 스크롤 감시자는 스크롤 컨테이너 안에 있어야 한다. */
   footer?: ReactNode;
 };
@@ -227,6 +242,7 @@ export function ApplicantTable({
   onMemo,
   onDetail,
   onHistory,
+  onForceCancel,
   footer,
 }: Props) {
   const t = useT();
@@ -369,6 +385,7 @@ export function ApplicantTable({
                       onMemo,
                       onDetail,
                       onHistory,
+                      onForceCancel,
                     },
                     t,
                   )}

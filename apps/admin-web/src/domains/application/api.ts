@@ -86,6 +86,18 @@ export async function undoApplication(id: string): Promise<AdminApplication> {
   return AdminApplicationSchema.parse(res.data);
 }
 
+/** 강제 취소 — 단계와 무관. 정산이 생성된 건은 서버가 400 으로 막는다. */
+export async function forceCancelApplication(
+  id: string,
+  reason: string,
+): Promise<AdminApplication> {
+  const res = await api.post(
+    `/campaign-applications/${encodeURIComponent(id)}/force-cancel`,
+    { reason },
+  );
+  return AdminApplicationSchema.parse(res.data);
+}
+
 export async function shipApplication(
   id: string,
   trackingCarrier: string,

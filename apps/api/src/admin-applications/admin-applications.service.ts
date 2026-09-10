@@ -23,6 +23,10 @@ import {
   type CrossPostPlatform,
 } from "@jsure/shared";
 import {
+  FORCE_CANCEL_BLOCK_MESSAGE,
+  forceCancelBlockedReason,
+} from "./force-cancel";
+import {
   buildInsightChanges,
   buildInsightUpdateData,
   type InsightSnapshot,
@@ -481,10 +485,13 @@ export class AdminApplicationsService {
     return rows.map(toResponse);
   }
 
-  /** 제출물 검토 목록 — 제출 데이터가 있는 응모(Application) 단위. */
+  /**
+   * 제출물 검토 목록 — 제출 데이터가 있는 응모(Application) 단위.
+   * 강제 취소된 응모는 제출물이 남아 있어도 검수 대상이 아니다.
+   */
   async listSubmissions(): Promise<AdminSubmission[]> {
     const rows = await this.prisma.campaignApplication.findMany({
-      where: { posts: { some: {} } },
+      where: { posts: { some: {} }, status: { not: "CANCELLED" } },
       orderBy: { reviewSubmittedAt: { sort: "desc", nulls: "last" } },
       include: SUBMISSION_INCLUDE,
     });
@@ -626,6 +633,56 @@ export class AdminApplicationsService {
     }
 
     return this.fetchSubmission(post.applicationId);
+  }
+
+  /**
+   * 응모 강제 취소 — 단계와 무관하게 참여를 끝낸다.
+   *
+   * 인플루언서 취소(응모 후 2일, APPLIED 한정)와 달리 운영자가 어느 단계에서든
+   * 부를 수 있다. 정산이 생성된 뒤에는 막는다 — 회계 기록과 어긋나기 때문이다.
+   *
+   * 제출물·첨부는 지우지 않는다. 나중에 분쟁이 생기면 어떤 URL 을 냈는지 확인해야 한다.
+   * 상태만 CANCELLED 로 바뀌면 슬롯이 풀리고 리포트·검수·응모자 목록에서 함께 빠진다.
+   * 인플루언서에게 자동 안내는 보내지 않는다 — 사정이 건마다 달라 운영자가 개별 연락한다.
+   */
+  async forceCancel(
+    id: string,
+    actor: AuditActor,
+    reason: string,
+  ): Promise<AdminApplication> {
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        campaignId: true,
+        influencerId: true,
+        settlement: { select: { id: true } },
+      },
+    });
+    if (!existing) throw new NotFoundException("응모를 찾을 수 없습니다");
+
+    const blocked = forceCancelBlockedReason({
+      status: existing.status,
+      hasSettlement: existing.settlement !== null,
+    });
+    if (blocked) {
+      throw new BadRequestException(FORCE_CANCEL_BLOCK_MESSAGE[blocked]);
+    }
+
+    await this.prisma.campaignApplication.update({
+      where: { id },
+      data: { status: "CANCELLED" },
+    });
+    await this.audit.record({
+      action: "APPLICATION_FORCE_CANCEL",
+      actor,
+      applicationId: id,
+      campaignId: existing.campaignId,
+      influencerId: existing.influencerId,
+      metadata: { previousStatus: existing.status, reason },
+    });
+    return this.fetch(id);
   }
 
   /** 제출물 전체 승인 — 응모 단위. */

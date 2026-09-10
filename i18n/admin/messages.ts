@@ -36,7 +36,7 @@ export const adminMessages = {
       dashboard: { ko: "대시보드", en: "Dashboard", ja: "ダッシュボード" },
       campaigns: { ko: "캠페인 관리", en: "Campaigns", ja: "キャンペーン管理" },
       applicants: { ko: "응모자 관리", en: "Applicants", ja: "応募者管理" },
-      drafts: { ko: "검토", en: "Reviews", ja: "レビュー" },
+    drafts: { ko: "검토", en: "Reviews", ja: "レビュー" },
       influencers: { ko: "인플루언서", en: "Influencers", ja: "インフルエンサー" },
       payouts: { ko: "정산 관리", en: "Payouts", ja: "精算管理" },
       reports: { ko: "리포트", en: "Reports", ja: "レポート" },
@@ -1268,6 +1268,40 @@ export const adminMessages = {
           placeholder: { ko: "예: 10000", en: "e.g. 10000", ja: "例: 10000" },
         },
       },
+      forceCancel: {
+        action: { ko: "강제 취소", en: "Force cancel", ja: "強制キャンセル" },
+        title: {
+          ko: "이 응모를 강제 취소할까요?",
+          en: "Force cancel this application?",
+          ja: "この応募を強制キャンセルしますか？",
+        },
+        currentStage: {
+          ko: "현재 단계: {stage}",
+          en: "Current stage: {stage}",
+          ja: "現在のステータス: {stage}",
+        },
+        warning: {
+          ko: "되돌릴 수 없습니다. 참여가 종료되고 모집 인원이 한 자리 다시 열립니다. 제출물 기록은 보존되지만 검수·리포트 집계에서는 빠집니다. 인플루언서에게 자동 안내는 발송되지 않으니 별도로 연락하세요.",
+          en: "This cannot be undone. The participation ends and one recruiting slot reopens. Submitted content is kept but excluded from review and report totals. No automatic notice is sent to the influencer — contact them separately.",
+          ja: "元に戻せません。参加が終了し、募集枠が1名分再び空きます。提出物の記録は保存されますが、レビュー・レポート集計からは除外されます。インフルエンサーへの自動通知は送られないため、別途ご連絡ください。",
+        },
+        reasonPlaceholder: {
+          ko: "취소 사유 (감사 로그에만 기록됩니다)",
+          en: "Reason (recorded in the audit log only)",
+          ja: "キャンセル理由（監査ログにのみ記録されます）",
+        },
+        reasonRequired: {
+          ko: "취소 사유를 입력하세요.",
+          en: "Enter a reason.",
+          ja: "キャンセル理由を入力してください。",
+        },
+        acknowledge: {
+          ko: "되돌릴 수 없음을 확인했습니다",
+          en: "I understand this cannot be undone",
+          ja: "元に戻せないことを確認しました",
+        },
+        confirm: { ko: "강제 취소", en: "Force cancel", ja: "強制キャンセル" },
+      },
       drafts: {
         status: {
           reviewPending: { ko: "검토 대기", en: "Pending review", ja: "レビュー待ち" },
@@ -1480,6 +1514,11 @@ export const adminMessages = {
           },
           applicationShip: { ko: "택배 발송", en: "Package shipped", ja: "発送済み" },
           applicationDeliver: { ko: "배송 완료", en: "Delivered", ja: "配送完了" },
+          applicationForceCancel: {
+            ko: "응모 강제 취소",
+            en: "Application force-cancelled",
+            ja: "応募の強制キャンセル",
+          },
           submissionApprove: { ko: "제출물 승인", en: "Submission approved", ja: "提出物承認" },
           submissionReject: {
             ko: "제출물 반려",

@@ -3,13 +3,14 @@ import { translate } from "@i18n/admin";
 import { getStoredLanguage } from "@/lib/i18n";
 import {
   approveSubmission,
+  forceCancelApplication,
   rejectSubmission,
   settleSubmission,
   undoSubmissionReview,
 } from "../draftsApi";
 import type { DraftReview } from "./types";
 
-export type PendingDraftActionType = "approve" | "reject" | "undo";
+export type PendingDraftActionType = "approve" | "reject" | "undo" | "forceCancel";
 
 export type PendingDraftAction = {
   type: PendingDraftActionType;
@@ -23,6 +24,7 @@ export type UseDraftMutationsResult = {
   openApprove: (draft: DraftReview) => void;
   openReject: (draft: DraftReview) => void;
   openUndo: (draft: DraftReview) => void;
+  openForceCancel: (draft: DraftReview) => void;
   settle: (draft: DraftReview) => Promise<boolean>;
   cancel: () => void;
   confirm: (input?: string) => Promise<boolean>;
@@ -72,6 +74,20 @@ export function useDraftMutations(
         case "undo":
           await undoSubmissionReview(applicationId);
           break;
+        case "forceCancel": {
+          const reason = (input ?? "").trim();
+          if (reason === "") {
+            setError(
+              translate(
+                "domains.application.forceCancel.reasonRequired",
+                getStoredLanguage(),
+              ),
+            );
+            return false;
+          }
+          await forceCancelApplication(applicationId, reason);
+          break;
+        }
       }
       setPending(null);
       onMutated();
@@ -98,6 +114,7 @@ export function useDraftMutations(
     openApprove: open("approve"),
     openReject: open("reject"),
     openUndo: open("undo"),
+    openForceCancel: open("forceCancel"),
     settle: async (draft: DraftReview) => {
       try {
         await settleSubmission(draft.id);

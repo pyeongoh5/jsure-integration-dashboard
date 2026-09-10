@@ -3,6 +3,9 @@ import { ApplicantDeliverDialog } from "./ApplicantDeliverDialog";
 import { ApplicantRejectDialog } from "./ApplicantRejectDialog";
 import { ApplicantShipDialog } from "./ApplicantShipDialog";
 import { ApplicantUndoDialog } from "./ApplicantUndoDialog";
+import { ForceCancelDialog } from "../ForceCancelDialog";
+import { useT } from "@/lib/i18n";
+import { APPLICANT_STATUS_LABEL } from "./types";
 import type { ConfirmInput, PendingAction } from "./useApplicantMutations";
 
 type Props = {
@@ -20,6 +23,7 @@ export function ApplicantDialogs({
   onConfirm,
   onCancel,
 }: Props) {
+  const t = useT();
   if (!pending) return null;
 
   const common = {
@@ -52,5 +56,18 @@ export function ApplicantDialogs({
       );
     case "deliver":
       return <ApplicantDeliverDialog {...common} onConfirm={() => onConfirm()} />;
+    case "forceCancel":
+      return (
+        <ForceCancelDialog
+          influencerName={pending.applicant.name}
+          handle={pending.applicant.handle}
+          campaignTitle={pending.applicant.campaign}
+          statusLabel={t(APPLICANT_STATUS_LABEL[pending.applicant.status])}
+          mutating={mutating}
+          error={error}
+          onConfirm={(reason) => onConfirm(reason)}
+          onCancel={onCancel}
+        />
+      );
   }
 }

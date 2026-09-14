@@ -3,8 +3,9 @@
   align-items: center;
   gap: var(--space-4);
   padding: 0 var(--space-5);
-  /* AdminLayout.css 가 사이드바/본문 높이 계산에 쓰는 값과 반드시 같아야 한다 */
-  height: var(--product-bar-h);
+  /* 내용이 넘치면 늘어나도 된다. 아래 셸은 남는 공간을 flex 로 받으므로
+     이 높이를 다른 곳에서 되풀이해 적지 않는다. */
+  min-height: 52px;
   flex-shrink: 0;
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-border);

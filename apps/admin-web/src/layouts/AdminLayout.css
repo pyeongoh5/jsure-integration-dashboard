@@ -15,8 +15,6 @@
   --r-md: 10px;
   --r-lg: 14px;
   --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.04);
-  /* 최상단 제품 스위처 높이 — 사이드바/본문 높이 계산의 기준 */
-  --product-bar-h: 52px;
 }
 
 body {
@@ -24,19 +22,23 @@ body {
   color: var(--c-text);
 }
 
+/* 셸은 뷰포트에 딱 맞춘다. 문서 자체는 스크롤되지 않고, 스크롤은 본문 안에서만
+   생긴다 — 그래야 사이드바가 목록 길이를 따라 늘어나지 않는다. */
 .admin {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-/* 제품 스위처 아래의 실제 셸 — 사이드바 + 본문 */
+/* 제품 스위처 아래의 실제 셸 — 사이드바 + 본문.
+   스위처 높이를 숫자로 빼지 않는다. 실제 높이가 조금만 달라져도 그만큼 문서가
+   넘쳐 스크롤이 생겼다. 남는 공간을 flex 로 받으면 높이와 무관하게 맞는다. */
 .admin__body {
   display: grid;
   grid-template-columns: 248px 1fr;
   flex: 1;
   min-height: 0;
-  height: calc(100dvh - var(--product-bar-h));
 }
 
 /* Sidebar */
@@ -46,10 +48,9 @@ body {
   display: flex;
   flex-direction: column;
   padding: 16px 12px;
-  position: sticky;
-  top: var(--product-bar-h);
   height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .admin__brand-link {
@@ -270,7 +271,12 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* grid 아이템의 자동 최소 크기(min-height:auto)를 풀어준다. 그대로 두면 긴 목록이
+     admin__body 의 높이를 밀어내 문서 전체가 스크롤되고, 사이드바도 같이 늘어나
+     하단의 프로필이 화면 밖으로 내려간다. */
+  min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .admin__topbar {

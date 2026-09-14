@@ -121,11 +121,7 @@ export function Login() {
             </button>
           </form>
 
-          <div className={styles.footer}>
-            <Link to="/password-reset" className={styles.link}>
-              {t("pages.login.forgotPassword")}
-            </Link>
-          </div>
+          <div className={styles.footer}>{t("pages.login.forgotPassword")}</div>
 
           <div className={styles.footer}>
             {t("pages.login.noAccount")}

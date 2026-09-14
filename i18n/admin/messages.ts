@@ -2846,9 +2846,9 @@ export const adminMessages = {
       submit: { ko: "로그인", en: "Log in", ja: "ログイン" },
       submitting: { ko: "로그인 중...", en: "Logging in...", ja: "ログイン中..." },
       forgotPassword: {
-        ko: "비밀번호를 잊으셨나요?",
-        en: "Forgot your password?",
-        ja: "パスワードをお忘れですか？",
+        ko: "비밀번호를 잊으셨다면 관리자(OWNER)에게 재설정을 요청해 주세요.",
+        en: "Forgot your password? Ask an OWNER to reset it for you.",
+        ja: "パスワードをお忘れの場合は、管理者（OWNER）に再設定を依頼してください。",
       },
       noAccount: {
         ko: "계정이 없으신가요?",
@@ -2881,27 +2881,6 @@ export const adminMessages = {
         en: "A problem occurred while logging in. Please try again later.",
         ja: "ログイン中に問題が発生しました。しばらくしてからもう一度お試しください。",
       },
-    },
-    passwordReset: {
-      title: { ko: "비밀번호 찾기", en: "Reset password", ja: "パスワード再設定" },
-      subtitle: {
-        ko: "가입한 이메일을 입력하면 임시 비밀번호를 보내드립니다.",
-        en: "Enter your account email and we will send a temporary password.",
-        ja: "登録メールアドレスを入力すると、仮パスワードをお送りします。",
-      },
-      submit: { ko: "임시 비밀번호 받기", en: "Send temporary password", ja: "仮パスワードを送る" },
-      submitting: { ko: "보내는 중…", en: "Sending…", ja: "送信中…" },
-      sent: {
-        ko: "등록된 계정이면 임시 비밀번호를 보냈습니다. 메일함을 확인해 주세요. 로그인 후 설정에서 비밀번호를 바꿔 주세요.",
-        en: "If the account exists, a temporary password has been sent. Check your inbox, then change it in Settings after signing in.",
-        ja: "登録済みのアカウントであれば仮パスワードを送信しました。受信箱をご確認のうえ、ログイン後に設定で変更してください。",
-      },
-      failed: {
-        ko: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-        en: "Could not process the request. Please try again shortly.",
-        ja: "リクエストを処理できませんでした。しばらくしてからお試しください。",
-      },
-      backToLogin: { ko: "로그인으로 돌아가기", en: "Back to sign in", ja: "ログインへ戻る" },
     },
     settings: {
       title: { ko: "설정", en: "Settings", ja: "設定" },

@@ -17,11 +17,13 @@ import {
   LogoutRequestSchema,
   RefreshRequestSchema,
   RegisterRequestSchema,
+  RequestPasswordResetRequestSchema,
   type ListSessionsResponse,
   type LoginRequest,
   type LogoutRequest,
   type RefreshRequest,
   type RegisterRequest,
+  type RequestPasswordResetRequest,
 } from "@jsure/shared";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
@@ -52,6 +54,18 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(LoginRequestSchema))
   login(@Body() dto: LoginRequest, @Request() req: ExpressRequest) {
     return this.auth.login(dto.email, dto.password, ctxFrom(req));
+  }
+
+  /**
+   * 비밀번호 찾기 — 임시 비밀번호를 메일로 보낸다.
+   * 계정 존재 여부와 무관하게 항상 202 다(계정 열거 방지).
+   */
+  @HttpCode(202)
+  @Post("password-reset")
+  @UsePipes(new ZodValidationPipe(RequestPasswordResetRequestSchema))
+  async requestPasswordReset(@Body() dto: RequestPasswordResetRequest) {
+    await this.auth.requestPasswordReset(dto.email);
+    return { ok: true };
   }
 
   @HttpCode(200)

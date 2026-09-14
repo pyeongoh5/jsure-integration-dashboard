@@ -4,11 +4,13 @@ import {
   RefreshResponseSchema,
   RegisterResponseSchema,
   type AuthResponse,
+  type ChangeMyPasswordRequest,
   type LoginRequest,
   type PublicAdminUser,
   type RefreshResponse,
   type RegisterRequest,
   type RegisterResponse,
+  type RequestPasswordResetRequest,
   type SessionSummary,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
@@ -68,6 +70,23 @@ export async function register(
 ): Promise<RegisterResponse> {
   const res = await api.post("/auth/register", input);
   return RegisterResponseSchema.parse(res.data);
+}
+
+/**
+ * 비밀번호 찾기 — 임시 비밀번호를 메일로 받는다.
+ * 서버는 계정 존재 여부와 무관하게 성공을 돌려준다(계정 열거 방지).
+ */
+export async function requestPasswordReset(
+  input: RequestPasswordResetRequest,
+): Promise<void> {
+  await api.post("/auth/password-reset", input);
+}
+
+/** 본인 비밀번호 변경. 서버가 현재 세션만 남기고 다른 기기를 로그아웃시킨다. */
+export async function changeMyPassword(
+  input: ChangeMyPasswordRequest,
+): Promise<void> {
+  await api.post("/admin/me/password", input);
 }
 
 export async function refreshAccessToken(): Promise<RefreshResponse | null> {

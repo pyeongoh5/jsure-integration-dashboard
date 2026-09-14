@@ -4,6 +4,7 @@ import {
   approveAdminUser,
   listAdminUsers,
   rejectAdminUser,
+  ResetMemberPasswordDialog,
   updateAdminUserRole,
 } from "@/domains/team";
 import { getStoredUser } from "@/domains/auth";
@@ -94,13 +95,17 @@ export function Team() {
   const [users, setUsers] = useState<PublicAdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [resetTarget, setResetTarget] = useState<PublicAdminUser | null>(null);
 
   const currentUser = getStoredUser();
   const canManage =
     currentUser?.role === "OWNER" || currentUser?.role === "ADMIN";
+  // 비밀번호를 잊은 멤버 구제는 OWNER 만 (ADMIN 이 상위 계정을 탈취하는 경로 차단)
+  const canResetPassword = currentUser?.role === "OWNER";
   // 승인/반려 버튼이 필요한 PENDING 행이 하나라도 있을 때만 액션 컬럼 노출
   const hasPending =
     (users ?? []).some((u) => u.status === "PENDING") && canManage;
+  const showActions = hasPending || canResetPassword;
 
   useEffect(() => {
     listAdminUsers()
@@ -174,14 +179,24 @@ export function Team() {
               : t("pages.team.loadingSummary")}
           </p>
         </div>
-        <Button
-          variant="primary"
-          size="md"
-          iconLeft={<i className="fa-solid fa-plus" aria-hidden="true" />}
-        >
-          {t("pages.team.invite")}
-        </Button>
+        <div className={styles.headerActions}>
+          <Button
+            variant="primary"
+            size="md"
+            iconLeft={<i className="fa-solid fa-plus" aria-hidden="true" />}
+          >
+            {t("pages.team.invite")}
+          </Button>
+        </div>
       </div>
+
+      {resetTarget && (
+        <ResetMemberPasswordDialog
+          memberId={resetTarget.id}
+          memberLabel={resetTarget.name ?? resetTarget.email}
+          onClose={() => setResetTarget(null)}
+        />
+      )}
 
       {error ? (
         <div className={`${styles.state} ${styles.stateError}`}>{error}</div>
@@ -200,7 +215,7 @@ export function Team() {
                 <th>{t("pages.team.table.role")}</th>
                 <th>{t("pages.team.table.lastActivity")}</th>
                 <th>{t("common.status")}</th>
-                {hasPending && <th aria-label={t("pages.team.table.actionsAria")} />}
+                {showActions && <th aria-label={t("pages.team.table.actionsAria")} />}
               </tr>
             </thead>
             <tbody>
@@ -254,9 +269,9 @@ export function Team() {
                         {t(status.labelKey)}
                       </span>
                     </td>
-                    {hasPending && (
+                    {showActions && (
                       <td className={styles.actions}>
-                        {u.status === "PENDING" ? (
+                        {u.status === "PENDING" && hasPending && (
                           <>
                             <Button
                               variant="primary"
@@ -275,7 +290,16 @@ export function Team() {
                               {t("domains.application.applicants.actions.reject")}
                             </Button>
                           </>
-                        ) : null}
+                        )}
+                        {canResetPassword && currentUser?.id !== u.id && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setResetTarget(u)}
+                          >
+                            {t("pages.team.password.reset")}
+                          </Button>
+                        )}
                       </td>
                     )}
                   </tr>

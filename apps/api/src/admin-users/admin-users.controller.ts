@@ -12,7 +12,13 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { z } from "zod";
-import type { ListAdminUsersResponse, PublicAdminUser } from "@jsure/shared";
+import {
+  ResetAdminUserPasswordRequestSchema,
+  type ListAdminUsersResponse,
+  type PasswordChangedResponse,
+  type PublicAdminUser,
+  type ResetAdminUserPasswordRequest,
+} from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import type { AuthenticatedUser } from "../auth/strategies/jwt.strategy";
@@ -80,5 +86,31 @@ export class AdminUsersController {
       throw new ForbiddenException("OWNER 권한은 OWNER 만 부여할 수 있습니다");
     }
     return this.adminUsers.updateRole(id, body.role);
+  }
+
+  /**
+   * 비밀번호를 잊은 어드민을 위해 OWNER 가 임시 비밀번호를 발급한다.
+   * 메일 발송 인프라가 없어 OWNER 가 직접 전달하는 것을 전제로 한다.
+   * - OWNER 만 가능 (ADMIN 이 상위 계정을 탈취하는 경로가 되지 않도록)
+   * - 대상의 기존 세션은 모두 무효화
+   */
+  @Post(":id/reset-password")
+  @HttpCode(200)
+  async resetPassword(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(ResetAdminUserPasswordRequestSchema))
+    body: ResetAdminUserPasswordRequest,
+  ): Promise<PasswordChangedResponse> {
+    if (req.user.role !== "OWNER") {
+      throw new ForbiddenException("비밀번호 재설정은 OWNER 만 할 수 있습니다");
+    }
+    if (req.user.id === id) {
+      throw new BadRequestException(
+        "자신의 비밀번호는 비밀번호 변경에서 직접 바꿔주세요",
+      );
+    }
+    await this.adminUsers.setPassword(id, body.newPassword, null);
+    return { ok: true };
   }
 }

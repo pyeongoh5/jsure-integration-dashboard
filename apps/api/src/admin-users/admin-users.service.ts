@@ -175,6 +175,41 @@ export class AdminUsersService {
     return toPublic(row);
   }
 
+  /** 현재 비밀번호 확인 — 본인 변경 시 본인임을 검증하는 용도. */
+  async verifyPassword(id: string, password: string): Promise<boolean> {
+    const row = await this.prisma.adminUser.findUnique({
+      where: { id },
+      select: { passwordHash: true },
+    });
+    if (!row) return false;
+    return bcrypt.compare(password, row.passwordHash);
+  }
+
+  /**
+   * 비밀번호를 새로 설정하고 `keepSessionId` 를 뺀 나머지 세션을 무효화한다.
+   * 비밀번호가 이미 노출됐을 수 있다고 보고 다른 기기의 로그인은 끊는다.
+   * OWNER 대행 재설정처럼 남길 세션이 없으면 `keepSessionId` 를 null 로 넘긴다.
+   */
+  async setPassword(
+    id: string,
+    newPassword: string,
+    keepSessionId: string | null,
+  ): Promise<void> {
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.$transaction([
+      this.prisma.adminUser.update({ where: { id }, data: { passwordHash } }),
+      this.prisma.adminUserSession.updateMany({
+        where: {
+          adminUserId: id,
+          revokedAt: null,
+          ...(keepSessionId ? { id: { not: keepSessionId } } : {}),
+        },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+    this.invalidateAuthCache(id);
+  }
+
   async create(input: { email: string; password: string; name?: string }) {
     const existing = await this.findByEmail(input.email);
     if (existing) {

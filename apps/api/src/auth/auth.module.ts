@@ -9,10 +9,12 @@ import { LocalStrategy } from "./strategies/local.strategy";
 import { SessionsService } from "./sessions.service";
 import { SessionsCleanupService } from "./sessions-cleanup.service";
 import { AdminUsersModule } from "../admin-users/admin-users.module";
+import { MailModule } from "../mail/mail.module";
 
 @Module({
   imports: [
     AdminUsersModule,
+    MailModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

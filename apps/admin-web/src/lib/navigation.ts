@@ -84,6 +84,7 @@ const INFLUENCER_PRODUCT: Product = {
           icon: "fa-solid fa-comment-dots",
         },
         { to: "/team", label: "nav.items.team", icon: "fa-solid fa-user-plus" },
+        { to: "/settings", label: "nav.items.settings", icon: "fa-solid fa-gear" },
       ],
     },
   ],

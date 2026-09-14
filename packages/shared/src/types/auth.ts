@@ -29,6 +29,35 @@ export const RegisterRequestSchema = LoginRequestSchema.extend({
 });
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 
+/** 본인 비밀번호 변경 — 현재 비밀번호로 본인을 확인한다. */
+export const ChangeMyPasswordRequestSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
+});
+export type ChangeMyPasswordRequest = z.infer<typeof ChangeMyPasswordRequestSchema>;
+
+/**
+ * 로그인 화면의 "비밀번호 찾기" — 임시 비밀번호를 메일로 받는다.
+ * 응답은 계정 존재 여부와 무관하게 항상 성공이다(계정 열거 방지).
+ */
+export const RequestPasswordResetRequestSchema = z.object({
+  email: z.string().email("이메일 형식이 올바르지 않습니다"),
+});
+export type RequestPasswordResetRequest = z.infer<
+  typeof RequestPasswordResetRequestSchema
+>;
+
+/** OWNER 가 다른 어드민의 비밀번호를 재설정 — 현재 비밀번호를 모르는 상태를 전제한다. */
+export const ResetAdminUserPasswordRequestSchema = z.object({
+  newPassword: z.string().min(8),
+});
+export type ResetAdminUserPasswordRequest = z.infer<
+  typeof ResetAdminUserPasswordRequestSchema
+>;
+
+export const PasswordChangedResponseSchema = z.object({ ok: z.literal(true) });
+export type PasswordChangedResponse = z.infer<typeof PasswordChangedResponseSchema>;
+
 export const AuthResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),

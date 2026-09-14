@@ -24,6 +24,8 @@ import { JwinBrandAccounts } from "./pages/Jwin/BrandAccounts";
 import { JwinWinners } from "./pages/Jwin/Winners";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
+import { PasswordReset } from "./pages/PasswordReset";
+import { Settings } from "./pages/Settings";
 import { NotFound } from "./pages/NotFound";
 
 export function App() {
@@ -33,6 +35,7 @@ export function App() {
         <Route path="/" element={<Navigate to="/overview" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/password-reset" element={<PasswordReset />} />
         <Route
           element={
             <RequireAuth>
@@ -41,6 +44,7 @@ export function App() {
           }
         >
           <Route path="/overview" element={<Overview />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/campaigns/new" element={<CampaignNew />} />
           <Route path="/campaigns/:id/edit" element={<CampaignEdit />} />

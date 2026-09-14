@@ -3145,6 +3145,7 @@ export const adminMessages = {
           ja: "{member} のパスワード再設定",
         },
         temporary: { ko: "임시 비밀번호", en: "Temporary password", ja: "仮パスワード" },
+        generate: { ko: "자동 생성", en: "Generate", ja: "自動生成" },
         resetSubmit: { ko: "재설정", en: "Reset", ja: "再設定" },
         resetHint: {
           ko: "8자 이상. 이 임시 비밀번호를 안전한 방법으로 본인에게 전달하고, 로그인 후 직접 변경하도록 안내해 주세요. 재설정하면 해당 계정의 모든 세션이 해제됩니다.",

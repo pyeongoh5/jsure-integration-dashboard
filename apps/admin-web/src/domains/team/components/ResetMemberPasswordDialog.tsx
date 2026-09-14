@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { ResetAdminUserPasswordRequestSchema } from "@jsure/shared";
+import {
+  generateTempPassword,
+  ResetAdminUserPasswordRequestSchema,
+} from "@jsure/shared";
 import { Button, Dialog, Input } from "@/components/ui";
 import { extractApiErrorMessage } from "@/lib/api";
 import { useT } from "@/lib/i18n";
@@ -66,12 +69,25 @@ export function ResetMemberPasswordDialog({
       <div className={styles.body}>
         <label className={styles.field}>
           <span className={styles.label}>{t("pages.team.password.temporary")}</span>
-          <Input
-            type="text"
-            autoComplete="off"
-            value={newPassword}
-            onChange={setNewPassword}
-          />
+          <div className={styles.inputRow}>
+            <Input
+              type="text"
+              autoComplete="off"
+              value={newPassword}
+              onChange={setNewPassword}
+            />
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                setError(null);
+                setNewPassword(generateTempPassword());
+              }}
+              disabled={saving}
+            >
+              {t("pages.team.password.generate")}
+            </Button>
+          </div>
         </label>
         <span className={styles.hint}>{t("pages.team.password.resetHint")}</span>
         {error && <span className={styles.error}>{error}</span>}

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { carouselFingerprint } from '../lib/ads-api';
-import { buildCardPostText, buildPostText, shouldUseCarousel } from './scheduler';
+import {
+  buildCardPostText,
+  buildCarouselSlides,
+  buildPostText,
+  shouldUseCarousel,
+} from './scheduler';
 
 const LP = 'https://jwin.example/c/demo';
 const RULES = 'https://brand.example/rules';
@@ -26,22 +31,40 @@ describe('buildPostText', () => {
 });
 
 describe('buildCardPostText', () => {
-  it('LP URL 을 자동으로 붙이지 않는다 — 카드가 목적지를 갖는다', () => {
-    expect(buildCardPostText({ bodyText: '応募受付中！', lpUrl: LP, rulesUrl: null })).toBe(
-      '応募受付中！',
-    );
-  });
-
-  it('규칙 링크는 유지한다', () => {
-    expect(buildCardPostText({ bodyText: '応募受付中！', lpUrl: LP, rulesUrl: RULES })).toBe(
-      `応募受付中！\n${RULES}`,
-    );
+  it('LP·규칙 링크를 자동으로 붙이지 않는다 — 카드 슬라이드가 목적지를 갖는다', () => {
+    expect(buildCardPostText({ bodyText: '応募受付中！', lpUrl: LP })).toBe('応募受付中！');
   });
 
   it('{{LP_URL}} 을 명시한 소재는 그 자리를 치환한다', () => {
-    expect(
-      buildCardPostText({ bodyText: `応募は ${'{{LP_URL}}'} から`, lpUrl: LP, rulesUrl: null }),
-    ).toBe(`応募は ${LP} から`);
+    expect(buildCardPostText({ bodyText: `応募は ${'{{LP_URL}}'} から`, lpUrl: LP })).toBe(
+      `応募は ${LP} から`,
+    );
+  });
+});
+
+describe('buildCarouselSlides', () => {
+  it('마지막 슬라이드는 규칙 페이지, 나머지는 LP 로 보낸다', () => {
+    const slides = buildCarouselSlides({
+      mediaUrls: ['img1', 'img2', 'img3'],
+      cardTitle: '☝️抽選はこちらをタップ',
+      lpUrl: LP,
+      rulesUrl: RULES,
+    });
+    expect(slides).toEqual([
+      { mediaUrl: 'img1', title: '☝️抽選はこちらをタップ', destinationUrl: LP },
+      { mediaUrl: 'img2', title: '☝️抽選はこちらをタップ', destinationUrl: LP },
+      { mediaUrl: 'img3', title: '☝️応募規約はこちら', destinationUrl: RULES },
+    ]);
+  });
+
+  it('2장이면 첫 장 = 응모, 둘째 장 = 규칙', () => {
+    const slides = buildCarouselSlides({
+      mediaUrls: ['a', 'b'],
+      cardTitle: 't',
+      lpUrl: LP,
+      rulesUrl: RULES,
+    });
+    expect(slides.map((slide) => slide.destinationUrl)).toEqual([LP, RULES]);
   });
 });
 
@@ -55,14 +78,15 @@ describe('shouldUseCarousel', () => {
 
 describe('carouselFingerprint', () => {
   it('구성이 같으면 같은 값, 하나라도 다르면 다른 값', () => {
-    const base = { mediaUrls: ['a', 'b'], title: 't', destinationUrl: LP };
-    expect(carouselFingerprint(base)).toBe(carouselFingerprint({ ...base }));
+    const slide = (mediaUrl: string) => ({ mediaUrl, title: 't', destinationUrl: LP });
+    const base = [slide('a'), slide('b')];
+    expect(carouselFingerprint(base)).toBe(carouselFingerprint([slide('a'), slide('b')]));
+    expect(carouselFingerprint(base)).not.toBe(carouselFingerprint([slide('b'), slide('a')]));
     expect(carouselFingerprint(base)).not.toBe(
-      carouselFingerprint({ ...base, mediaUrls: ['b', 'a'] }),
+      carouselFingerprint([slide('a'), { ...slide('b'), title: 'u' }]),
     );
-    expect(carouselFingerprint(base)).not.toBe(carouselFingerprint({ ...base, title: 'u' }));
     expect(carouselFingerprint(base)).not.toBe(
-      carouselFingerprint({ ...base, destinationUrl: `${LP}/other` }),
+      carouselFingerprint([slide('a'), { ...slide('b'), destinationUrl: `${LP}/other` }]),
     );
   });
 });

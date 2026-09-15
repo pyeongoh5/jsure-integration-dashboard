@@ -6,9 +6,9 @@ import { XApiError } from './x-api';
  * X Ads API — 캐러셀 카드 생성 (docs/jwin/CAROUSEL_CARD.md).
  *
  * 2026-09-15 실측으로 확정된 것:
- *  - 카드는 SWIPEABLE_MEDIA(2~6장) + DETAILS 1개 조합만 통과한다.
- *    DETAILS 를 여러 개 넣으면 400 INVALID_CARD_COMPONENTS_COMBINATION —
- *    슬라이드별 목적지는 API 로 불가, 전 슬라이드 공통 목적지다.
+ *  - 슬라이드별 목적지(multi-destination)는 `components` 가 아니라 **`slides`(배열의 배열)** 로
+ *    만든다: slides: [[MEDIA, DETAILS], [MEDIA, DETAILS], ...]. 슬라이드마다 제목·URL 이 다르다.
+ *    (components 에 DETAILS 를 여러 개 넣는 방식은 400 INVALID_CARD_COMPONENTS_COMBINATION)
  *  - POST /2/tweets 의 card_uri 는 "card://" 접두사를 뗀 숫자 id 여야 한다.
  *  - 미디어는 v1.1 media/upload → media_library 등록을 거쳐야 media_key 를 카드에 쓸 수 있다.
  *
@@ -93,17 +93,20 @@ export function oauth1Header(credentials: Omit<AdsCredentials, 'accountId'>, met
   );
 }
 
-/**
- * 카드 구성의 지문. PostTemplate.cardFingerprint 와 비교해 슬라이드·헤드라인·목적지가
- * 그대로면 만들어 둔 카드를 재사용한다 (매일 게시마다 재생성 방지).
- */
-export function carouselFingerprint(input: {
-  mediaUrls: string[];
+/** 캐러셀 슬라이드 1장 — 이미지·헤드라인·목적지 URL 을 슬라이드마다 따로 갖는다. */
+export interface CarouselSlide {
+  mediaUrl: string;
   title: string;
   destinationUrl: string;
-}): string {
+}
+
+/**
+ * 카드 구성의 지문. PostTemplate.cardFingerprint 와 비교해 슬라이드 구성(이미지·헤드라인·
+ * 목적지)이 그대로면 만들어 둔 카드를 재사용한다 (매일 게시마다 재생성 방지).
+ */
+export function carouselFingerprint(slides: CarouselSlide[]): string {
   return createHash('sha256')
-    .update(JSON.stringify([input.mediaUrls, input.title, input.destinationUrl]))
+    .update(JSON.stringify(slides.map((slide) => [slide.mediaUrl, slide.title, slide.destinationUrl])))
     .digest('hex');
 }
 
@@ -145,20 +148,26 @@ async function uploadToMediaLibrary(credentials: AdsCredentials, imageUrl: strin
 }
 
 /**
- * 캐러셀 카드를 만들고 트윗에 붙일 카드 id(숫자)를 반환한다.
- * 호출 전 mediaUrls 가 2~6장인지 확인할 것 — 1장은 카드가 성립하지 않는다.
+ * multi-destination 캐러셀 카드를 만들고 트윗에 붙일 카드 id(숫자)를 반환한다.
+ * 호출 전 slides 가 2~6장인지 확인할 것 — 1장은 카드가 성립하지 않는다.
  */
 export async function buildCarouselCard(input: {
   name: string;
-  mediaUrls: string[];
-  title: string;
-  destinationUrl: string;
+  slides: CarouselSlide[];
 }): Promise<string> {
   const credentials = adsCredentials();
 
-  const mediaKeys: string[] = [];
-  for (const mediaUrl of input.mediaUrls) {
-    mediaKeys.push(await uploadToMediaLibrary(credentials, mediaUrl));
+  const slides: unknown[] = [];
+  for (const slide of input.slides) {
+    const mediaKey = await uploadToMediaLibrary(credentials, slide.mediaUrl);
+    slides.push([
+      { type: 'MEDIA', media_key: mediaKey },
+      {
+        type: 'DETAILS',
+        title: slide.title,
+        destination: { type: 'WEBSITE', url: slide.destinationUrl },
+      },
+    ]);
   }
 
   const cardsUrl = `${ADS_API}/accounts/${credentials.accountId}/cards`;
@@ -168,17 +177,7 @@ export async function buildCarouselCard(input: {
       Authorization: oauth1Header(credentials, 'POST', cardsUrl),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      name: input.name,
-      components: [
-        { type: 'SWIPEABLE_MEDIA', media_keys: mediaKeys },
-        {
-          type: 'DETAILS',
-          title: input.title,
-          destination: { type: 'WEBSITE', url: input.destinationUrl },
-        },
-      ],
-    }),
+    body: JSON.stringify({ name: input.name, slides }),
   });
   const createdBody = (await created.json().catch(() => null)) as {
     data?: { card_uri?: string };

@@ -3,7 +3,7 @@ import { getPrisma } from '@jsure/jwin-db';
 import { dateJst, jstToUtc } from '@jsure/jwin-shared';
 import { config } from '../config';
 import { getBrandAccessToken } from '../lib/tokens';
-import { buildCarouselCard, carouselFingerprint } from '../lib/ads-api';
+import { buildCarouselCard, carouselFingerprint, type CarouselSlide } from '../lib/ads-api';
 import { createPost, uploadMediaFromUrl } from '../lib/x-api';
 import { assignCodeAndSendDm } from './fulfillment';
 
@@ -65,22 +65,38 @@ export function buildPostText(input: {
 }
 
 /**
- * 캐러셀 카드 포스트의 본문. LP 링크는 카드가 갖고 있으므로 자동으로 붙이지 않는다 —
- * 본문에 URL 이 남아 있으면 링크 카드 스크래핑과 경합할 수 있어 규칙 링크만 유지한다.
- * {{LP_URL}} 을 명시한 소재는 그 자리를 존중한다.
+ * 캐러셀 카드 포스트의 본문. LP 링크도 규칙 링크도 자동으로 붙이지 않는다 —
+ * 둘 다 카드 슬라이드가 목적지로 갖고 있고, 본문에 URL 이 남아 있으면
+ * 링크 카드 스크래핑과 경합할 수 있다. {{LP_URL}} 을 명시한 소재는 그 자리를 존중한다.
  */
-export function buildCardPostText(input: {
-  bodyText: string;
-  lpUrl: string;
-  rulesUrl: string | null;
-}): string {
-  const rulesLine = input.rulesUrl ? `\n${input.rulesUrl}` : '';
-  return `${input.bodyText.replaceAll('{{LP_URL}}', input.lpUrl)}${rulesLine}`;
+export function buildCardPostText(input: { bodyText: string; lpUrl: string }): string {
+  return input.bodyText.replaceAll('{{LP_URL}}', input.lpUrl);
 }
 
 /** 카드 게시 조건: 헤드라인이 있고 슬라이드가 2장 이상 (카드는 2~6장만 성립). */
 export function shouldUseCarousel(template: { cardTitle: string | null; mediaUrls: string[] }): boolean {
   return Boolean(template.cardTitle) && template.mediaUrls.length >= 2;
+}
+
+/** 규칙 슬라이드(마지막 장)의 고정 헤드라인 — 참여자 대상이라 일본어. */
+const RULES_SLIDE_TITLE = '☝️応募規約はこちら';
+
+/**
+ * 캐러셀 슬라이드 조립: 마지막 이미지는 응모 규약 페이지로, 나머지는 응모 LP 로 보낸다.
+ * (F: 첫 슬라이드 = 추첨 응모, 둘째 슬라이드 = 참가 규칙 — 참고 서비스와 같은 구성)
+ */
+export function buildCarouselSlides(input: {
+  mediaUrls: string[];
+  cardTitle: string;
+  lpUrl: string;
+  rulesUrl: string;
+}): CarouselSlide[] {
+  return input.mediaUrls.map((mediaUrl, index) => {
+    const isRulesSlide = index === input.mediaUrls.length - 1;
+    return isRulesSlide
+      ? { mediaUrl, title: RULES_SLIDE_TITLE, destinationUrl: input.rulesUrl }
+      : { mediaUrl, title: input.cardTitle, destinationUrl: input.lpUrl };
+  });
 }
 
 /** 오늘자(JST) 게시 예정 행 생성. unique(campaignId, dateJst)로 중복 방지. */
@@ -156,31 +172,23 @@ export async function publishDuePosts(): Promise<void> {
 
       let created: Awaited<ReturnType<typeof createPost>>;
       if (shouldUseCarousel(post.template)) {
-        // 캐러셀 카드 게시 — 이미지 클릭이 LP 로 이동한다 (docs/jwin/CAROUSEL_CARD.md)
-        const title = post.template.cardTitle as string;
-        const fingerprint = carouselFingerprint({
+        // 캐러셀 카드 게시 — 마지막 슬라이드는 규칙 페이지, 나머지는 응모 LP (docs/jwin/CAROUSEL_CARD.md)
+        const slides = buildCarouselSlides({
           mediaUrls: post.template.mediaUrls,
-          title,
-          destinationUrl: lpUrl,
+          cardTitle: post.template.cardTitle as string,
+          lpUrl,
+          rulesUrl: campaign.rulesUrl ?? `${lpUrl}/rules`,
         });
+        const fingerprint = carouselFingerprint(slides);
         let cardId = post.template.cardId;
         if (!cardId || post.template.cardFingerprint !== fingerprint) {
-          cardId = await buildCarouselCard({
-            name: `jwin-${post.template.id}`,
-            mediaUrls: post.template.mediaUrls,
-            title,
-            destinationUrl: lpUrl,
-          });
+          cardId = await buildCarouselCard({ name: `jwin-${post.template.id}`, slides });
           await prisma.postTemplate.update({
             where: { id: post.template.id },
             data: { cardId, cardFingerprint: fingerprint },
           });
         }
-        const text = buildCardPostText({
-          bodyText: post.template.bodyText,
-          lpUrl,
-          rulesUrl: campaign.rulesUrl,
-        });
+        const text = buildCardPostText({ bodyText: post.template.bodyText, lpUrl });
         created = await createPost(token, text, { cardUri: cardId });
       } else {
         const text = buildPostText({

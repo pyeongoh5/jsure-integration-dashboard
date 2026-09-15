@@ -59,12 +59,12 @@
 
 ## 3. 미확정 2건 — 2026-09-15 실측 결과 (`spikes/spike-ads-carousel.ts`)
 
-1. **multi-destination 을 API 로 만드는 요청 형태** → **`DETAILS` 복수는 불가.**
-   `DETAILS` 를 2개 넣으면 `400 INVALID_CARD_COMPONENTS_COMBINATION`.
-   단일 `DETAILS`(전 슬라이드 공통 목적지)는 `201`, `card_type: IMAGE_CAROUSEL_WEBSITE`.
-   참고 서비스의 슬라이드별 URL 은 이 컴포넌트 조합으로는 재현되지 않았다 —
-   Ads Manager UI 로 만들었거나 다른 카드 타입일 가능성. **v1 은 공통 목적지로 간다**
-   (슬라이드 전부 LP 로 보내면 목표 "이미지 클릭 → 응모 페이지"는 충족).
+1. **multi-destination 을 API 로 만드는 요청 형태** → **`slides`(배열의 배열)로 가능.**
+   `components` 에 `DETAILS` 를 2개 넣는 방식은 `400 INVALID_CARD_COMPONENTS_COMBINATION` 이지만,
+   `slides: [[MEDIA, DETAILS], [MEDIA, DETAILS], ...]` 로 보내면 `201` — 슬라이드마다
+   제목·목적지 URL 이 다르게 만들어진다 (같은 날 추가 실측). `slides: [{components: [...]}]`
+   형태(객체 배열)는 `400 not a valid Seq`. 참고: X devcommunity "Multi-Destination Website
+   Carousels" 공지, docs.x.com/x-ads-api/creatives/reference.
 2. **오가닉 트윗 렌더** → **게시는 성공, 렌더는 눈 확인 필요.**
    - `POST /2/tweets` + `card_uri: "card://<id>"` → `400 The card URI provided is invalid`
    - `POST /2/tweets` + `card_uri: "<숫자 id만>"` → **`201` 게시 성공**
@@ -124,7 +124,12 @@ OAuth **2.0** 키(클라이언트 ID·시크릿)는 브랜드 연동이 쓰는 �
 - 어드민 소재 다이얼로그에 캐러셀 헤드라인 입력(ko/en/ja), 이미지 2장 미만이면 등록 차단
   (화면 + 서버 zod 이중)
 
-**슬라이드별 URL·헤드라인은 뺐다** — §3 실측으로 API 불가 확정. 전 슬라이드 공통 목적지(참여 LP).
+**슬라이드별 URL (같은 날 추가)** — `slides` 방식으로 전환했다. 마지막 슬라이드는 **응모 규약
+페이지**(`BrandCampaign.rulesUrl`, 없으면 `{LP}/rules`)로, 나머지 슬라이드는 응모 LP 로 간다.
+규칙 슬라이드 헤드라인은 고정(`☝️応募規約はこちら`), LP 슬라이드는 어드민의 `cardTitle`.
+규약 페이지는 jwin-web `/c/{campaign}/{brand}/rules` 로 템플릿화 — 브랜드명·기간(JST)·경품
+목록·@핸들을 캠페인 데이터로 치환해 렌더한다 (참고 구조: sonboda.neo-atatter.com/rules).
+카드 게시 본문에는 LP·규칙 링크를 자동으로 붙이지 않는다 — 둘 다 카드가 갖는다.
 
 **⚠ 미검증 리스크 — 브랜드 계정 교차 게시.** 실측은 카드 소유자(@devsure5) 본인 트윗으로만
 확인했다. 운영은 **브랜드 계정(OAuth 2.0)** 이 트윗을 올리는데, 다른 유저의 트윗에 우리 광고

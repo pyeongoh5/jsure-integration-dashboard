@@ -122,6 +122,10 @@ export async function publicRoutes(app: FastifyInstance) {
             ? `https://x.com/${brandXUsername}/status/${todayPost.xPostId}`
             : null,
         prizeSummary: prizeSummaryOf(brandCampaign.prizes),
+        prizes: brandCampaign.prizes.map((prize) => ({
+          name: prize.name,
+          totalQty: prize.totalQty,
+        })),
         cardImageUrl: brandCampaign.cardImageUrl,
         rulesUrl: brandCampaign.rulesUrl,
         prUrl: brandCampaign.prUrl,

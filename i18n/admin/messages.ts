@@ -804,9 +804,9 @@ export const adminMessages = {
           ja: "投稿の可否は毎日00:05 JST時点で判定します。開始をその日の日中にすると、その日は投稿されません。",
         },
         cardTitle: {
-          ko: "입력하면 이미지 첨부 대신 캐러셀 카드로 게시됩니다 (이미지 2장 이상 필요). 이미지를 누르면 응모 페이지가 열리고, 헤드라인은 이미지 아래에 표시됩니다.",
-          en: "If set, the post uses a carousel card instead of attached images (requires 2+ images). Tapping an image opens the entry page; the headline appears under the images.",
-          ja: "入力すると画像添付の代わりにカルーセルカードで投稿されます（画像2枚以上が必要）。画像をタップすると応募ページが開き、見出しは画像の下に表示されます。",
+          ko: "입력하면 이미지 첨부 대신 캐러셀 카드로 게시됩니다 (이미지 2장 이상 필요). 마지막 이미지는 응모 규약 페이지로, 나머지는 응모 페이지로 연결되며 헤드라인은 이미지 아래에 표시됩니다.",
+          en: "If set, the post uses a carousel card instead of attached images (requires 2+ images). The last image links to the rules page and the rest to the entry page; the headline appears under the images.",
+          ja: "入力すると画像添付の代わりにカルーセルカードで投稿されます（画像2枚以上が必要）。最後の画像は応募規約ページ、それ以外は応募ページに繋がり、見出しは画像の下に表示されます。",
         },
       },
       error: {

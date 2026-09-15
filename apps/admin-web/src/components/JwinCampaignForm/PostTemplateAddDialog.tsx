@@ -7,6 +7,7 @@ import { jstLocalToUtcIso } from "./jwinDateTime";
 import styles from "./JwinCampaignTabs.module.css";
 
 const BODY_MAX_LENGTH = 500;
+const CARD_TITLE_MAX_LENGTH = 70;
 
 type Props = {
   open: boolean;
@@ -28,6 +29,7 @@ export function PostTemplateAddDialog({
   const [label, setLabel] = useState("");
   const [bodyText, setBodyText] = useState("");
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [cardTitle, setCardTitle] = useState("");
   const [activeFrom, setActiveFrom] = useState(defaultActiveFrom);
   const [activeTo, setActiveTo] = useState(defaultActiveTo);
   const [saving, setSaving] = useState(false);
@@ -37,6 +39,7 @@ export function PostTemplateAddDialog({
     setLabel("");
     setBodyText("");
     setMediaUrls([]);
+    setCardTitle("");
     setActiveFrom(defaultActiveFrom);
     setActiveTo(defaultActiveTo);
     setSaving(false);
@@ -52,6 +55,9 @@ export function PostTemplateAddDialog({
     }
     if (!activeFrom || !activeTo) return t("jwin.postTemplate.error.periodRequired");
     if (activeTo <= activeFrom) return t("jwin.postTemplate.error.periodOrder");
+    if (cardTitle.trim() && mediaUrls.length < 2) {
+      return t("jwin.postTemplate.error.cardNeedsTwoImages");
+    }
     return null;
   };
 
@@ -67,6 +73,7 @@ export function PostTemplateAddDialog({
       label: label.trim(),
       bodyText,
       mediaUrls,
+      cardTitle: cardTitle.trim() || undefined,
       activeFrom: jstLocalToUtcIso(activeFrom),
       activeTo: jstLocalToUtcIso(activeTo),
     });
@@ -131,6 +138,16 @@ export function PostTemplateAddDialog({
           onChange={setMediaUrls}
           disabled={saving}
         />
+
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>{t("jwin.postTemplate.field.cardTitle")}</span>
+          <Input
+            value={cardTitle}
+            onChange={setCardTitle}
+            maxLength={CARD_TITLE_MAX_LENGTH}
+          />
+          <span className={styles.fieldHint}>{t("jwin.postTemplate.hint.cardTitle")}</span>
+        </div>
 
         <div className={styles.row2}>
           <div className={styles.field}>

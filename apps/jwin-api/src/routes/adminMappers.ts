@@ -231,6 +231,7 @@ export function toPostTemplate(
     bodyText: string;
     mediaUrl: string | null;
     mediaUrls: string[];
+    cardTitle: string | null;
     activeFrom: Date;
     activeTo: Date;
   },
@@ -242,6 +243,7 @@ export function toPostTemplate(
     bodyText: template.bodyText,
     mediaUrl: template.mediaUrl,
     mediaUrls: template.mediaUrls,
+    cardTitle: template.cardTitle,
     activeFrom: template.activeFrom.toISOString(),
     activeTo: template.activeTo.toISOString(),
     used,

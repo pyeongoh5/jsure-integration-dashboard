@@ -242,6 +242,9 @@ export type AdminPrizePatch = z.infer<typeof AdminPrizePatchSchema>;
 /** 트윗 1건에 붙일 수 있는 미디어 최대 개수 (X 제한). */
 export const POST_MEDIA_MAX = 4;
 
+/** 캐러셀 카드 헤드라인 최대 길이 — X website 카드 표시 한계 기준. */
+export const CARD_TITLE_MAX = 70;
+
 export const AdminPostTemplateSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -250,6 +253,8 @@ export const AdminPostTemplateSchema = z.object({
   mediaUrl: z.string().nullable(),
   /** 첨부 미디어 URL 목록 (최대 4장). default 는 이 필드를 아직 안 주는 구 API 대비. */
   mediaUrls: z.array(z.string()).default([]),
+  /** 캐러셀 카드 헤드라인. 값이 있고 미디어 2장 이상이면 카드로 게시된다 (CAROUSEL_CARD.md) */
+  cardTitle: z.string().nullable().default(null),
   activeFrom: z.string(),
   activeTo: z.string(),
   /** 이미 게시에 사용됨 → 삭제 불가 */
@@ -282,6 +287,8 @@ export const AdminPostTemplateCreateSchema = z
     label: z.string().min(1),
     bodyText: z.string().min(1).max(500),
     mediaUrls: z.array(z.string().url()).max(POST_MEDIA_MAX).default([]),
+    /** 캐러셀 카드 헤드라인 — 지정하면 미디어 첨부 대신 카드로 게시 (이미지 2장 이상 필요) */
+    cardTitle: z.string().min(1).max(CARD_TITLE_MAX).optional(),
     activeFrom: z.string(),
     activeTo: z.string(),
   })
@@ -289,6 +296,11 @@ export const AdminPostTemplateCreateSchema = z
   .refine((value) => new Date(value.activeTo) > new Date(value.activeFrom), {
     message: '유효 종료는 유효 시작 이후여야 합니다',
     path: ['activeTo'],
+  })
+  // 카드는 슬라이드 2~6장만 성립 — 1장이면 게시 시점에 조용히 실패하므로 등록에서 막는다
+  .refine((value) => !value.cardTitle || value.mediaUrls.length >= 2, {
+    message: '캐러셀 카드는 이미지가 2장 이상 필요합니다',
+    path: ['cardTitle'],
   });
 export type AdminPostTemplateCreate = z.infer<typeof AdminPostTemplateCreateSchema>;
 
@@ -302,12 +314,18 @@ export const AdminPostTemplatePatchSchema = z
     label: z.string().min(1),
     bodyText: z.string().min(1).max(500),
     mediaUrls: z.array(z.string().url()).max(POST_MEDIA_MAX).default([]),
+    /** 전체 교체 시맨틱 — null 이면 카드 사용 해제 */
+    cardTitle: z.string().min(1).max(CARD_TITLE_MAX).nullable().default(null),
     activeFrom: z.string(),
     activeTo: z.string(),
   })
   .refine((value) => new Date(value.activeTo) > new Date(value.activeFrom), {
     message: '유효 종료는 유효 시작 이후여야 합니다',
     path: ['activeTo'],
+  })
+  .refine((value) => !value.cardTitle || value.mediaUrls.length >= 2, {
+    message: '캐러셀 카드는 이미지가 2장 이상 필요합니다',
+    path: ['cardTitle'],
   });
 export type AdminPostTemplatePatch = z.infer<typeof AdminPostTemplatePatchSchema>;
 

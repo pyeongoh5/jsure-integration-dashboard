@@ -112,6 +112,12 @@ model PostTemplate {
   mediaUrl   String?
   /// 첨부 이미지/동영상 URL 목록 (최대 4장) — 게시 시 X media upload 후 첨부 (F-2.3)
   mediaUrls  String[]      @default([])
+  /// 캐러셀 카드 헤드라인. 값이 있고 mediaUrls 2장 이상이면 미디어 첨부 대신
+  /// 카드(IMAGE_CAROUSEL_WEBSITE)로 게시한다 — docs/jwin/CAROUSEL_CARD.md
+  cardTitle  String?
+  /// 게시 시점에 생성한 카드 캐시. 구성(fingerprint)이 같으면 재사용해 매일 재생성을 피한다
+  cardId          String?
+  cardFingerprint String?
   activeFrom DateTime
   activeTo   DateTime
   createdAt  DateTime      @default(now())

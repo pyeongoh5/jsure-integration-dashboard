@@ -33,6 +33,16 @@ const schema = z.object({
   TOKEN_ENCRYPTION_KEY: z.string().length(64, 'openssl rand -hex 32 로 생성한 64자 hex'),
   X_CLIENT_ID: z.string().min(1),
   X_CLIENT_SECRET: z.string().min(1),
+  /**
+   * 캐러셀 카드 게시용 Ads API 자격증명 (자사 광고 계정, OAuth 1.0a — 브랜드 연동의
+   * OAuth 2.0 과 다른 인증 축이다). 전부 선택값 — 미설정이면 카드 소재 게시 시점에
+   * 명시적 에러로 실패해 lastError 로 드러난다 (docs/jwin/CAROUSEL_CARD.md).
+   */
+  ADS_ACCOUNT_ID: z.string().optional(),
+  X_API_KEY: z.string().optional(),
+  X_API_SECRET: z.string().optional(),
+  X_ACCESS_TOKEN: z.string().optional(),
+  X_ACCESS_SECRET: z.string().optional(),
   SCHEDULER_ENABLED: z
     .string()
     .default('true')

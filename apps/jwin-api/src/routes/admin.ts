@@ -8,6 +8,7 @@ import {
   AdminBrandCampaignCreateSchema,
   AdminBrandCampaignPatchSchema,
   AdminWinnerFilterSchema,
+  CARD_TITLE_MAX,
   dateJst,
   parseCodesInput,
   POST_MEDIA_MAX,
@@ -570,6 +571,8 @@ export async function adminRoutes(app: FastifyInstance) {
       label: z.string().min(1),
       bodyText: z.string().min(1).max(500),
       mediaUrls: z.array(z.string().url()).max(POST_MEDIA_MAX).default([]),
+      // 캐러셀 카드 헤드라인 — 값이 있으면 미디어 첨부 대신 카드로 게시. 생략 시 null(카드 안 씀)
+      cardTitle: z.string().min(1).max(CARD_TITLE_MAX).nullable().default(null),
       activeFrom: z.coerce.date(),
       activeTo: z.coerce.date(),
     })
@@ -577,6 +580,11 @@ export async function adminRoutes(app: FastifyInstance) {
     .refine((value) => value.activeTo > value.activeFrom, {
       message: '유효 종료는 유효 시작 이후여야 합니다',
       path: ['activeTo'],
+    })
+    // 카드는 슬라이드 2~6장만 성립 — 1장이면 게시 시점에 실패하므로 등록에서 막는다
+    .refine((value) => !value.cardTitle || value.mediaUrls.length >= 2, {
+      message: '캐러셀 카드는 이미지가 2장 이상 필요합니다',
+      path: ['cardTitle'],
     });
 
   /** 정정은 campaignId 를 받지 않는다 — 다른 캠페인으로 옮기는 동작은 없다. */
@@ -585,12 +593,18 @@ export async function adminRoutes(app: FastifyInstance) {
       label: z.string().min(1),
       bodyText: z.string().min(1).max(500),
       mediaUrls: z.array(z.string().url()).max(POST_MEDIA_MAX).default([]),
+      // 전체 교체 시맨틱 — 생략하면 카드 사용 해제(null)
+      cardTitle: z.string().min(1).max(CARD_TITLE_MAX).nullable().default(null),
       activeFrom: z.coerce.date(),
       activeTo: z.coerce.date(),
     })
     .refine((value) => value.activeTo > value.activeFrom, {
       message: '유효 종료는 유효 시작 이후여야 합니다',
       path: ['activeTo'],
+    })
+    .refine((value) => !value.cardTitle || value.mediaUrls.length >= 2, {
+      message: '캐러셀 카드는 이미지가 2장 이상 필요합니다',
+      path: ['cardTitle'],
     });
 
   app.post('/admin/post-templates', async (req, reply) => {

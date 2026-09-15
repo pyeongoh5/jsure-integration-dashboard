@@ -1,6 +1,6 @@
 # 캐러셀 카드 게시 (Ads API) — 설계 노트
 
-> 2026-09-06 작성. Ads API 액세스 **승인 대기 중**이라 착수하지 못한 작업의 맥락을 남긴다.
+> 2026-09-06 작성 · 2026-09-15 갱신: Ads API 액세스 **승인 완료**, §3 미확정 2건 실측 반영.
 > 관련 문서: `REQUIREMENTS.md` · `DECISIONS.md` · `DEPLOY.md`
 
 ---
@@ -57,18 +57,26 @@
 
 ---
 
-## 3. 아직 확정되지 않은 것 (승인 후 실측 필요)
+## 3. 미확정 2건 — 2026-09-15 실측 결과 (`spikes/spike-ads-carousel.ts`)
 
-1. **multi-destination 을 API 로 만드는 정확한 요청 형태.**
-   문서의 website carousel 예시는 `DETAILS` 컴포넌트가 **하나**(전 슬라이드 공통 목적지)다.
-   그런데 참고 서비스는 슬라이드마다 URL 이 다르다. `DETAILS` 를 media_key 수만큼 넣는지,
-   다른 컴포넌트를 쓰는지 확인해야 한다.
-2. **오가닉(비프로모션) 트윗에서 캐러셀 카드가 렌더되는지.**
-   `card_uri` 는 일반 트윗에 붙일 수 있지만, 광고 집행 없이도 카드가 보이는지는 문서에 없다.
-   (`nullcast=true` 는 프로모션 전용 = 공개 타임라인 미노출)
+1. **multi-destination 을 API 로 만드는 요청 형태** → **`DETAILS` 복수는 불가.**
+   `DETAILS` 를 2개 넣으면 `400 INVALID_CARD_COMPONENTS_COMBINATION`.
+   단일 `DETAILS`(전 슬라이드 공통 목적지)는 `201`, `card_type: IMAGE_CAROUSEL_WEBSITE`.
+   참고 서비스의 슬라이드별 URL 은 이 컴포넌트 조합으로는 재현되지 않았다 —
+   Ads Manager UI 로 만들었거나 다른 카드 타입일 가능성. **v1 은 공통 목적지로 간다**
+   (슬라이드 전부 LP 로 보내면 목표 "이미지 클릭 → 응모 페이지"는 충족).
+2. **오가닉 트윗 렌더** → **게시는 성공, 렌더는 눈 확인 필요.**
+   - `POST /2/tweets` + `card_uri: "card://<id>"` → `400 The card URI provided is invalid`
+   - `POST /2/tweets` + `card_uri: "<숫자 id만>"` → **`201` 게시 성공**
+   - Ads API `POST accounts/:id/tweet` + `nullcast=false` → `400` — *"You cannot set nullcast
+     to false. To make organic posts use the X app"* (Ads API 로는 오가닉 게시 자체가 막혀 있다)
+   - v1.1 `statuses/update` → `404` (폐기)
 
-> **승인 전에도 검증 가능**: Ads Manager UI(크리에이티브 → 작성 도구)에서 캐러셀을 수동으로
-> 만들어 보면 위 두 가지를 확인할 수 있다. 광고 계정만 있으면 되고 API 승인은 필요 없다.
+**함께 확인된 것**
+- 광고 계정의 `approval_status: "REJECTED"` 는 카드 생성·미디어 라이브러리 등록을 **막지 않는다**
+  (광고 집행 승인과 별개).
+- 미디어 라이브러리 등록은 v1.1 `media/upload` (`media_category=TWEET_IMAGE`) 의 `media_key` 를
+  `POST accounts/:id/media_library` 에 넘기면 된다 — `3_...` 형식 key 그대로 통과.
 
 ---
 
@@ -83,12 +91,10 @@
 | 신청 폼 | https://docs.x.com/forms/ads-api-access |
 | 신청일 | 2026-09-06 |
 
-**승인 전 상태 확인** — `GET https://ads-api.x.com/12/accounts` 가
-`403 UNAUTHORIZED_CLIENT_APPLICATION` 을 돌려준다(2026-09-06 실측).
-`console.x.com` 에서 앱이 "Ads 프로젝트 연결됨" 으로 보이는 것과 Ads API 액세스는 **별개**다.
-
-**승인 후 첫 행동**: OAuth 1.0a 액세스 토큰을 **재발급**해야 한다(문서 명시).
-승인 전에 발급한 토큰으로는 계속 실패한다.
+**승인 완료 (2026-09-15 확인)** — 토큰 재발급 후 `GET /12/accounts` 가 `200` + `18ce55xapqv`.
+승인 전 이력: 2026-09-06 엔 `403 UNAUTHORIZED_CLIENT_APPLICATION`(앱 미승인), 승인 후
+구토큰으로는 `403 INSUFFICIENT_USER_AUTHORIZED_PERMISSION`(재발급 필요) — 문서 명시대로
+OAuth 1.0a 토큰을 **재발급**해야 통과했다.
 
 확인 스크립트:
 
@@ -104,7 +110,27 @@ OAuth **2.0** 키(클라이언트 ID·시크릿)는 브랜드 연동이 쓰는 �
 
 ---
 
-## 5. 승인 후 착수 순서
+## 5. 게시 파이프라인 — 2026-09-15 구현 완료
+
+구현된 것 (§5-1~5-2 의 계획을 실측 결과에 맞춰 반영):
+
+- `src/lib/ads-api.ts` — OAuth 1.0a 서명 · 미디어 라이브러리 등록 · 카드 생성(`buildCarouselCard`).
+  자격증명은 환경변수(`ADS_ACCOUNT_ID`, `X_API_KEY/SECRET`, `X_ACCESS_TOKEN/SECRET`) —
+  자사 광고 계정 하나만 쓰므로 DB 보관은 하지 않았다
+- `PostTemplate.cardTitle` — 값이 있고 이미지 2장 이상이면 카드로 게시.
+  `cardId`+`cardFingerprint` 로 카드 캐싱(슬라이드·헤드라인·목적지가 그대로면 재사용)
+- 스케줄러 분기(`shouldUseCarousel`) — 카드 게시 시 본문에 LP URL 자동 첨부 없음
+  (`buildCardPostText`), 카드가 목적지를 갖는다
+- 어드민 소재 다이얼로그에 캐러셀 헤드라인 입력(ko/en/ja), 이미지 2장 미만이면 등록 차단
+  (화면 + 서버 zod 이중)
+
+**슬라이드별 URL·헤드라인은 뺐다** — §3 실측으로 API 불가 확정. 전 슬라이드 공통 목적지(참여 LP).
+
+**⚠ 미검증 리스크 — 브랜드 계정 교차 게시.** 실측은 카드 소유자(@devsure5) 본인 트윗으로만
+확인했다. 운영은 **브랜드 계정(OAuth 2.0)** 이 트윗을 올리는데, 다른 유저의 트윗에 우리 광고
+계정의 card_uri 가 붙는지는 확인 못 했다(로컬 devsure5 refresh 토큰이 죽어 있어 OAuth 2.0
+경로 자체도 미검증). 첫 카드 캠페인 발행 전에 **브랜드 계정 재연동 후 테스트 게시 1건**으로
+확인할 것. 막혀 있으면 브랜드 계정을 광고 계정의 account user 로 추가하는 방향을 검토한다.
 
 ### 5-1. 게시 파이프라인
 

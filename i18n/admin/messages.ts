@@ -770,6 +770,7 @@ export const adminMessages = {
       field: {
         label: { ko: "포스트 이름", en: "Post name", ja: "投稿名" },
         body: { ko: "본문", en: "Body", ja: "本文" },
+        cardTitle: { ko: "캐러셀 헤드라인", en: "Carousel headline", ja: "カルーセルの見出し" },
         activeFrom: { ko: "유효 시작 (JST)", en: "Active from (JST)", ja: "有効開始 (JST)" },
         activeTo: { ko: "유효 종료 (JST)", en: "Active until (JST)", ja: "有効終了 (JST)" },
       },
@@ -802,6 +803,11 @@ export const adminMessages = {
           en: "Each day's post is decided at 00:05 JST. If the start is set to midday, that day is skipped.",
           ja: "投稿の可否は毎日00:05 JST時点で判定します。開始をその日の日中にすると、その日は投稿されません。",
         },
+        cardTitle: {
+          ko: "입력하면 이미지 첨부 대신 캐러셀 카드로 게시됩니다 (이미지 2장 이상 필요). 이미지를 누르면 응모 페이지가 열리고, 헤드라인은 이미지 아래에 표시됩니다.",
+          en: "If set, the post uses a carousel card instead of attached images (requires 2+ images). Tapping an image opens the entry page; the headline appears under the images.",
+          ja: "入力すると画像添付の代わりにカルーセルカードで投稿されます（画像2枚以上が必要）。画像をタップすると応募ページが開き、見出しは画像の下に表示されます。",
+        },
       },
       error: {
         labelRequired: {
@@ -824,6 +830,11 @@ export const adminMessages = {
           ko: "종료일시는 시작일시 이후여야 합니다.",
           en: "The end must come after the start.",
           ja: "終了日時は開始日時より後にしてください。",
+        },
+        cardNeedsTwoImages: {
+          ko: "캐러셀 카드는 이미지가 2장 이상 필요합니다.",
+          en: "A carousel card requires at least 2 images.",
+          ja: "カルーセルカードには画像が2枚以上必要です。",
         },
         editFailed: {
           ko: "포스트 수정에 실패했습니다.",

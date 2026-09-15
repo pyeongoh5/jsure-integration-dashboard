@@ -3,6 +3,7 @@ import { getPrisma } from '@jsure/jwin-db';
 import { dateJst, jstToUtc } from '@jsure/jwin-shared';
 import { config } from '../config';
 import { getBrandAccessToken } from '../lib/tokens';
+import { buildCarouselCard, carouselFingerprint } from '../lib/ads-api';
 import { createPost, uploadMediaFromUrl } from '../lib/x-api';
 import { assignCodeAndSendDm } from './fulfillment';
 
@@ -61,6 +62,25 @@ export function buildPostText(input: {
     return `${input.bodyText.replaceAll('{{LP_URL}}', input.lpUrl)}${rulesLine}`;
   }
   return `${input.bodyText}${rulesLine}\n${input.lpUrl}`;
+}
+
+/**
+ * 캐러셀 카드 포스트의 본문. LP 링크는 카드가 갖고 있으므로 자동으로 붙이지 않는다 —
+ * 본문에 URL 이 남아 있으면 링크 카드 스크래핑과 경합할 수 있어 규칙 링크만 유지한다.
+ * {{LP_URL}} 을 명시한 소재는 그 자리를 존중한다.
+ */
+export function buildCardPostText(input: {
+  bodyText: string;
+  lpUrl: string;
+  rulesUrl: string | null;
+}): string {
+  const rulesLine = input.rulesUrl ? `\n${input.rulesUrl}` : '';
+  return `${input.bodyText.replaceAll('{{LP_URL}}', input.lpUrl)}${rulesLine}`;
+}
+
+/** 카드 게시 조건: 헤드라인이 있고 슬라이드가 2장 이상 (카드는 2~6장만 성립). */
+export function shouldUseCarousel(template: { cardTitle: string | null; mediaUrls: string[] }): boolean {
+  return Boolean(template.cardTitle) && template.mediaUrls.length >= 2;
 }
 
 /** 오늘자(JST) 게시 예정 행 생성. unique(campaignId, dateJst)로 중복 방지. */
@@ -133,25 +153,56 @@ export async function publishDuePosts(): Promise<void> {
       const token = await getBrandAccessToken(brandAccount);
       // 참여 LP: /c/{시즌 slug}/{브랜드 slug}
       const lpUrl = `${config().WEB_BASE_URL}/c/${season.slug}/${brandAccount.slug}`;
-      const text = buildPostText({
-        bodyText: post.template.bodyText,
-        lpUrl,
-        rulesUrl: campaign.rulesUrl,
-      });
 
-      // F-2.3: 첨부 미디어를 순서대로 업로드해 붙인다. mediaUrls 도입 전 행은 단일 mediaUrl 사용.
-      const mediaUrls =
-        post.template.mediaUrls.length > 0
-          ? post.template.mediaUrls
-          : post.template.mediaUrl
-            ? [post.template.mediaUrl]
-            : [];
-      const mediaIds: string[] = [];
-      for (const mediaUrl of mediaUrls) {
-        mediaIds.push(await uploadMediaFromUrl(token, mediaUrl));
+      let created: Awaited<ReturnType<typeof createPost>>;
+      if (shouldUseCarousel(post.template)) {
+        // 캐러셀 카드 게시 — 이미지 클릭이 LP 로 이동한다 (docs/jwin/CAROUSEL_CARD.md)
+        const title = post.template.cardTitle as string;
+        const fingerprint = carouselFingerprint({
+          mediaUrls: post.template.mediaUrls,
+          title,
+          destinationUrl: lpUrl,
+        });
+        let cardId = post.template.cardId;
+        if (!cardId || post.template.cardFingerprint !== fingerprint) {
+          cardId = await buildCarouselCard({
+            name: `jwin-${post.template.id}`,
+            mediaUrls: post.template.mediaUrls,
+            title,
+            destinationUrl: lpUrl,
+          });
+          await prisma.postTemplate.update({
+            where: { id: post.template.id },
+            data: { cardId, cardFingerprint: fingerprint },
+          });
+        }
+        const text = buildCardPostText({
+          bodyText: post.template.bodyText,
+          lpUrl,
+          rulesUrl: campaign.rulesUrl,
+        });
+        created = await createPost(token, text, { cardUri: cardId });
+      } else {
+        const text = buildPostText({
+          bodyText: post.template.bodyText,
+          lpUrl,
+          rulesUrl: campaign.rulesUrl,
+        });
+
+        // F-2.3: 첨부 미디어를 순서대로 업로드해 붙인다. mediaUrls 도입 전 행은 단일 mediaUrl 사용.
+        const mediaUrls =
+          post.template.mediaUrls.length > 0
+            ? post.template.mediaUrls
+            : post.template.mediaUrl
+              ? [post.template.mediaUrl]
+              : [];
+        const mediaIds: string[] = [];
+        for (const mediaUrl of mediaUrls) {
+          mediaIds.push(await uploadMediaFromUrl(token, mediaUrl));
+        }
+
+        created = await createPost(token, text, { mediaIds });
       }
-
-      const created = await createPost(token, text, mediaIds);
       await prisma.campaignPost.update({
         where: { id: post.id },
         data: {

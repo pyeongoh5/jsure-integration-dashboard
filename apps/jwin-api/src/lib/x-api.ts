@@ -162,11 +162,21 @@ export function getMe(accessToken: string) {
   );
 }
 
-/** 브랜드 계정으로 캠페인 포스트 게시. URL 포함이므로 $0.20/건. 미디어 첨부 가능 (F-2.3). */
-export function createPost(brandAccessToken: string, text: string, mediaIds?: string[]) {
-  const body: { text: string; media?: { media_ids: string[] } } = { text };
-  if (mediaIds && mediaIds.length > 0) {
-    body.media = { media_ids: mediaIds };
+/**
+ * 브랜드 계정으로 캠페인 포스트 게시. URL 포함이므로 $0.20/건.
+ * 미디어 첨부(F-2.3) 또는 카드 첨부(cardUri — "card://" 접두사 없는 숫자 id) 중 하나만 쓴다.
+ */
+export function createPost(
+  brandAccessToken: string,
+  text: string,
+  attachments?: { mediaIds?: string[]; cardUri?: string },
+) {
+  const body: { text: string; media?: { media_ids: string[] }; card_uri?: string } = { text };
+  if (attachments?.mediaIds && attachments.mediaIds.length > 0) {
+    body.media = { media_ids: attachments.mediaIds };
+  }
+  if (attachments?.cardUri) {
+    body.card_uri = attachments.cardUri;
   }
   return xFetch<{ data: { id: string; text: string } }>(brandAccessToken, '/tweets', {
     method: 'POST',

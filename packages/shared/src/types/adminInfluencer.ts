@@ -40,7 +40,9 @@ export type AdminInfluencerAddress = z.infer<
 
 export const AdminInfluencerSchema = z.object({
   id: z.string(),
-  email: z.string().email(),
+  // 형식 검증(.email())을 걸지 않는다 — 표시용 응답이고, 탈퇴 회원의 익명화 이메일
+  // (예: deleted+<id>@invalid)처럼 형식이 아닌 값 하나가 목록 전체 파싱을 무너뜨린다
+  email: z.string(),
   name: z.string(),
   nameKana: z.string().nullable(),
   phone: z.string(),
@@ -112,7 +114,8 @@ export const AdminApplicationSchema = z.object({
   influencer: z.object({
     id: z.string(),
     name: z.string(),
-    email: z.string().email(),
+    // AdminInfluencerSchema.email 과 같은 이유로 형식 검증 없음
+    email: z.string(),
     flagged: z.boolean(),
     snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   }),

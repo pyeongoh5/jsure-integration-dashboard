@@ -36,6 +36,7 @@ import {
   applicantCursorSql,
   buildApplicantWhereSql,
 } from "./applicant-filter.sql";
+import { bucketMonthlyCounts, monthStartUtc9 } from "./monthly-counts";
 import { PrismaService } from "../prisma/prisma.service";
 import { toActivityLog } from "../audit/application-activity";
 import { influencerActivityEntries } from "../audit/influencer-activity";
@@ -445,6 +446,20 @@ export class AdminApplicationsService {
     return this.fetch(id);
   }
 
+  /** 대시보드 "월별 캠페인 응모 추이" — 최근 windowMonths 개월을 UTC+9 월 기준으로 집계 */
+  async monthlyCounts(windowMonths: number): Promise<{ month: string; count: number }[]> {
+    const now = new Date();
+    const rows = await this.prisma.campaignApplication.findMany({
+      where: { appliedAt: { gte: monthStartUtc9(now, windowMonths - 1) } },
+      select: { appliedAt: true },
+    });
+    return bucketMonthlyCounts(
+      rows.map((row) => row.appliedAt),
+      now,
+      windowMonths,
+    );
+  }
+
   async counts(campaignId?: string): Promise<Record<ApplicationStatus, number>> {
     const grouped = await this.prisma.campaignApplication.groupBy({
       by: ["status"],
@@ -466,23 +481,6 @@ export class AdminApplicationsService {
       out[g.status as ApplicationStatus] = g._count._all;
     }
     return out;
-  }
-
-  async list(filters: {
-    campaignId?: string;
-    statuses?: ApplicationStatus[];
-  }): Promise<AdminApplication[]> {
-    const rows = await this.prisma.campaignApplication.findMany({
-      where: {
-        ...(filters.campaignId ? { campaignId: filters.campaignId } : {}),
-        ...(filters.statuses && filters.statuses.length > 0
-          ? { status: { in: filters.statuses } }
-          : {}),
-      },
-      orderBy: { appliedAt: "desc" },
-      include: APPLICATION_INCLUDE,
-    });
-    return rows.map(toResponse);
   }
 
   /**

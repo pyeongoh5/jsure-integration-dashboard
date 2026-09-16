@@ -149,6 +149,24 @@ export type AdminApplicationCountsResponse = z.infer<
   typeof AdminApplicationCountsResponseSchema
 >;
 
+/**
+ * GET /campaign-applications/monthly-counts — 대시보드 "월별 캠페인 응모 추이" 전용 집계.
+ * 서버가 UTC+9(KST/JST) 월 기준으로 묶어 최근 N개월을 빈 달 포함 오름차순으로 내려준다.
+ * 전량 목록을 내려받아 프론트에서 세지 않기 위한 엔드포인트다.
+ */
+export const AdminMonthlyApplicationCountsResponseSchema = z.object({
+  months: z.array(
+    z.object({
+      /** "YYYY-MM" (UTC+9 기준) */
+      month: z.string().regex(/^\d{4}-\d{2}$/),
+      count: z.number().int().nonnegative(),
+    }),
+  ),
+});
+export type AdminMonthlyApplicationCountsResponse = z.infer<
+  typeof AdminMonthlyApplicationCountsResponseSchema
+>;
+
 export const RejectApplicationRequestSchema = z.object({
   /** 응모 반려 사유 — 선택 입력. (제출물 검토 반려 RejectSubmissionRequest 는 필수 유지) */
   reason: z.string().max(500).default(""),

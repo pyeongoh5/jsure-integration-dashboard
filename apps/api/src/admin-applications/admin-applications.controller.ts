@@ -22,6 +22,7 @@ import {
   type AdminApplicantPageResponse,
   type AdminApplication,
   type AdminApplicationCountsResponse,
+  type AdminMonthlyApplicationCountsResponse,
   type ApplicantExportResponse,
   type ApplicationActivityResponse,
   type AdminApplicationListResponse,
@@ -47,17 +48,11 @@ import { AdminApplicationsService } from "./admin-applications.service";
 export class AdminApplicationsController {
   constructor(private readonly svc: AdminApplicationsService) {}
 
-  @Get()
-  async list(
-    @Query("campaignId") campaignId?: string,
-    @Query("status") status?: string | string[],
-  ): Promise<AdminApplicationListResponse> {
-    const statuses = parseStatuses(status);
-    const applications = await this.svc.list({
-      campaignId: campaignId || undefined,
-      statuses,
-    });
-    return { applications };
+  /** 대시보드 "월별 캠페인 응모 추이" 전용 집계 — 전량 목록 대신 이걸 쓴다 */
+  @Get("monthly-counts")
+  async monthlyCounts(): Promise<AdminMonthlyApplicationCountsResponse> {
+    const months = await this.svc.monthlyCounts(12);
+    return { months };
   }
 
   @Get("counts")
@@ -79,10 +74,7 @@ export class AdminApplicationsController {
     return this.svc.pendingReviewCount();
   }
 
-  /**
-   * 응모자 관리 목록 — 화면 필터를 그대로 서버에서 적용하고 커서로 페이징한다.
-   * 필터 없는 전체 목록(@Get())은 대시보드 통계가 쓰고 있어 그대로 둔다.
-   */
+  /** 응모자 관리 목록 — 화면 필터를 그대로 서버에서 적용하고 커서로 페이징한다. */
   @Get("applicants")
   listApplicants(
     @Query() query: Record<string, string>,
@@ -286,15 +278,3 @@ export class AdminApplicationsController {
   }
 }
 
-function parseStatuses(raw: string | string[] | undefined): ApplicationStatus[] | undefined {
-  if (raw === undefined) return undefined;
-  const list = Array.isArray(raw) ? raw : raw.split(",");
-  const out: ApplicationStatus[] = [];
-  for (const s of list) {
-    const trimmed = s.trim();
-    if (!trimmed) continue;
-    const parsed = ApplicationStatusSchema.safeParse(trimmed);
-    if (parsed.success) out.push(parsed.data);
-  }
-  return out.length > 0 ? out : undefined;
-}

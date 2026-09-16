@@ -1,8 +1,8 @@
 import {
   AdminApplicantPageResponseSchema,
   AdminApplicationCountsResponseSchema,
-  AdminApplicationListResponseSchema,
   AdminApplicationSchema,
+  AdminMonthlyApplicationCountsResponseSchema,
   applicantFilterToParams,
   type AdminApplicantPageResponse,
   type AdminApplication,
@@ -24,22 +24,12 @@ export async function listApplicantsPage(
   return AdminApplicantPageResponseSchema.parse(res.data);
 }
 
-export type ListApplicationsParams = {
-  campaignId?: string;
-  statuses?: ApplicationStatus[];
-};
-
-export async function listApplications(
-  params: ListApplicationsParams = {},
-): Promise<AdminApplication[]> {
-  const search = new URLSearchParams();
-  if (params.campaignId) search.set("campaignId", params.campaignId);
-  if (params.statuses && params.statuses.length > 0) {
-    search.set("status", params.statuses.join(","));
-  }
-  const query = search.toString();
-  const res = await api.get(`/campaign-applications${query ? `?${query}` : ""}`);
-  return AdminApplicationListResponseSchema.parse(res.data).applications;
+/** 대시보드 "월별 캠페인 응모 추이" — 서버 집계 (전량 목록을 내려받지 않는다) */
+export async function getMonthlyApplicationCounts(): Promise<
+  { month: string; count: number }[]
+> {
+  const res = await api.get("/campaign-applications/monthly-counts");
+  return AdminMonthlyApplicationCountsResponseSchema.parse(res.data).months;
 }
 
 export async function getApplicationCounts(

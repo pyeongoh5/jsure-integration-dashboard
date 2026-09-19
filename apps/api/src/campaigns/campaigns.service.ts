@@ -28,6 +28,12 @@ import {
   canHideCampaignStatus,
   deriveCampaignStatus,
 } from "./campaign-headcount";
+import { isCampaignFull } from "./campaign-fullness";
+import {
+  EMPTY_OCCUPANCY,
+  loadSlotOccupancy,
+  type SlotOccupancy,
+} from "./slot-occupancy";
 
 export function jstDayStartUtc(dateStr: string): Date {
   return new Date(`${dateStr}T00:00:00+09:00`);
@@ -375,12 +381,14 @@ type CampaignCounts = {
   approvedCount: number;
   appliedCount: number;
   viewerCount: number;
+  occupancy: SlotOccupancy;
 };
 
 const EMPTY_COUNTS: CampaignCounts = {
   approvedCount: 0,
   appliedCount: 0,
   viewerCount: 0,
+  occupancy: EMPTY_OCCUPANCY,
 };
 
 // "응모한 인원"은 아직 검토 전(APPLIED)만 카운트.
@@ -396,12 +404,15 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     publishState: row.publishState,
     status: deriveCampaignStatus({
       publishState: row.publishState,
-      category: row.category,
       closedAt: row.closedAt,
       hiddenAt: row.hiddenAt,
       recruitEndAt: row.recruitEndAt,
-      recruits: row.recruits,
-      approvedCount: counts.approvedCount,
+      isFull: isCampaignFull({
+        category: row.category,
+        recruits: row.recruits,
+        subTypeApproved: counts.occupancy.subTypeApproved,
+        optionApproved: counts.occupancy.optionApproved,
+      }),
       now: new Date(),
     }),
     rewardType: row.rewardType,
@@ -590,10 +601,7 @@ export class CampaignsService {
   ): Promise<Map<string, CampaignCounts>> {
     const map = new Map<string, CampaignCounts>();
     if (campaignIds.length === 0) return map;
-    for (const id of campaignIds) {
-      map.set(id, { approvedCount: 0, appliedCount: 0, viewerCount: 0 });
-    }
-    const [grouped, viewGrouped] = await Promise.all([
+    const [grouped, viewGrouped, occupancyMap] = await Promise.all([
       this.prisma.campaignApplication.groupBy({
         by: ["campaignId", "status"],
         where: { campaignId: { in: campaignIds } },
@@ -604,7 +612,16 @@ export class CampaignsService {
         where: { campaignId: { in: campaignIds } },
         _count: { _all: true },
       }),
+      loadSlotOccupancy(this.prisma, campaignIds),
     ]);
+    for (const id of campaignIds) {
+      map.set(id, {
+        approvedCount: 0,
+        appliedCount: 0,
+        viewerCount: 0,
+        occupancy: occupancyMap.get(id) ?? EMPTY_OCCUPANCY,
+      });
+    }
     for (const view of viewGrouped) {
       const entry = map.get(view.campaignId);
       if (!entry) continue;

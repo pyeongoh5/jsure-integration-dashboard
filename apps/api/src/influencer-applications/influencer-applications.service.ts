@@ -26,7 +26,6 @@ import {
   type SubmittedPost,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
-import { campaignHeadcount } from "../campaigns/campaign-headcount";
 import { VISIBLE_PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 import { UploadsService } from "../uploads/uploads.service";
 import {
@@ -368,20 +367,9 @@ export class InfluencerApplicationsService {
       });
     }
 
-    // 총정원(모집 인원) 마감 시 응모 차단. 헤드카운트·슬롯 점유(SLOT_CONSUMING_STATUSES,
-    // 승인 이후)는 인플웹 카드 표시와 동일 기준. APPLIED 는 아직 미점유.
-    const headcount = campaignHeadcount(campaign.category, campaign.recruits);
-    if (headcount > 0) {
-      const slotConsumingCount = await this.prisma.campaignApplication.count({
-        where: { campaignId, status: { in: SLOT_CONSUMING_STATUSES } },
-      });
-      if (slotConsumingCount >= headcount) {
-        throw new BadRequestException({
-          code: "CAMPAIGN_FULL",
-          message: "모집이 마감되었습니다",
-        });
-      }
-    }
+    // 총정원 마감 차단은 아래 서브타입·옵션별 가드가 담당한다. (헤드카운트 vs
+    // 사람 수 비교는 전부-선택 캠페인에서 남은 슬롯이 있어도 조기 차단했다.
+    // 필수 서브타입은 모든 응모에 포함되므로, 필수 마감 = 서브타입 가드에서 차단.)
 
     if (campaign.category === "FAKE_PURCHASE") {
       subTypes = ["QOO10"];
@@ -424,8 +412,8 @@ export class InfluencerApplicationsService {
       });
     }
 
-    // 선택한 서브타입 중 개별 정원이 찬 게 있으면 응모 차단(선택 서브타입 "선택 마감").
-    // 필수 서브타입은 위 헤드카운트 가드가 이미 처리하지만 방어적으로 함께 검사한다.
+    // 선택한 서브타입 중 개별 정원이 찬 게 있으면 응모 차단.
+    // 필수 서브타입은 모든 응모에 포함되므로 필수 마감 시 여기서 함께 차단된다.
     for (const subType of subTypes) {
       const recruit = campaign.recruits.find((r) => r.subType === subType);
       if (!recruit) continue;

@@ -10,6 +10,12 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { UploadsService } from "../uploads/uploads.service";
 import { campaignHeadcount } from "../campaigns/campaign-headcount";
+import { isCampaignFull, optionKey } from "../campaigns/campaign-fullness";
+import {
+  EMPTY_OCCUPANCY,
+  loadSlotOccupancy,
+  type SlotOccupancy,
+} from "../campaigns/slot-occupancy";
 import {
   optionCapacitySlots,
   subTypesWithAllOptionsFull,
@@ -58,6 +64,7 @@ function toCard(
   approvedCount: number,
   closedAt: Date | null,
   now: Date,
+  occupancy: SlotOccupancy,
 ): InfluencerCampaignCard {
   const isEnded = closedAt !== null || row.recruitEndAt.getTime() < now.getTime();
   const isUpcoming = !isEnded && row.recruitStartAt.getTime() > now.getTime();
@@ -78,16 +85,23 @@ function toCard(
     isNew: !isEnded && !isUpcoming && isNew(row.createdAt, now),
     isEnded,
     isUpcoming,
+    // 모집 완료 판정은 서브타입·옵션별 마감 기준 — 헤드카운트 비교는
+    // 전부-선택 캠페인에서 남은 슬롯이 있어도 조기 완료로 오판한다.
+    isFull: isCampaignFull({
+      category: row.category,
+      recruits: row.recruits,
+      subTypeApproved: occupancy.subTypeApproved,
+      optionApproved: occupancy.optionApproved,
+    }),
   };
 }
 
 // 목록 정렬 순위. 모집 완료(정원 충족)·종료는 모집중보다 뒤로 보낸다.
-// full 판정은 카드의 헤드카운트(recruitCount) 대비 승인 인원(approvedCount)으로,
-// CampaignCard 의 "모집 완료" 표기와 동일 기준.
+// full 판정은 카드의 isFull(서브타입·옵션별 마감)로, "모집 완료" 표기와 동일 기준.
 function listSortRank(card: InfluencerCampaignCard): number {
   if (card.isEnded) return 3;
   if (card.isUpcoming) return 1;
-  if (card.recruitCount > 0 && card.approvedCount >= card.recruitCount) return 2;
+  if (card.isFull) return 2;
   return 0;
 }
 
@@ -165,19 +179,35 @@ export class InfluencerCampaignsService {
       },
     });
 
-    const counts = await Promise.all(
-      rows.map((r) =>
-        this.prisma.campaignApplication.count({
-          where: {
-            campaignId: r.id,
-            status: { in: SLOT_CONSUMING_STATUSES },
-          },
-        }),
+    const [counts, occupancies] = await Promise.all([
+      Promise.all(
+        rows.map((r) =>
+          this.prisma.campaignApplication.count({
+            where: {
+              campaignId: r.id,
+              status: { in: SLOT_CONSUMING_STATUSES },
+            },
+          }),
+        ),
       ),
-    );
+      loadSlotOccupancy(
+        this.prisma,
+        rows.map((r) => r.id),
+      ),
+    ]);
 
     const cards = await Promise.all(
-      rows.map((r, i) => this.resolveCard(toCard(r, counts[i] ?? 0, r.closedAt, now))),
+      rows.map((r, i) =>
+        this.resolveCard(
+          toCard(
+            r,
+            counts[i] ?? 0,
+            r.closedAt,
+            now,
+            occupancies.get(r.id) ?? EMPTY_OCCUPANCY,
+          ),
+        ),
+      ),
     );
     // DB orderBy 가 createdAt desc → stable sort 로 그룹 순서만 분리.
     // 우선순위: 모집중 → 개시전 → 모집 완료(정원 충족) → 모집 종료.
@@ -264,36 +294,20 @@ export class InfluencerCampaignsService {
       ),
     ).filter((subType) => recruitedCampaignSubTypes.has(subType));
 
-    // 서브타입별 승인(슬롯 점유) 인원을 세어, 각자 정원이 찬 서브타입을 모은다.
-    // 선택 서브타입은 여기서 "선택 마감"으로 표시된다(필수 서브타입이 차면 헤드카운트로
-    // 캠페인 전체가 이미 마감).
-    const subTypeApprovedCounts = await Promise.all(
-      row.recruits.map((recruit) =>
-        this.prisma.campaignApplication.count({
-          where: {
-            campaignId: row.id,
-            subTypes: { has: recruit.subType },
-            status: { in: SLOT_CONSUMING_STATUSES },
-          },
-        }),
-      ),
-    );
+    // 서브타입·옵션별 슬롯 점유를 집계해, 각자 정원이 찬 서브타입/옵션을 모은다.
+    // 선택 서브타입은 여기서 "선택 마감"으로 표시된다.
+    const occupancy =
+      (await loadSlotOccupancy(this.prisma, [row.id])).get(row.id) ??
+      EMPTY_OCCUPANCY;
     // 옵션별 정원 분리(FEED/REELS 등)를 쓰는 recruit 은 서브타입 정원과 별개로
     // 옵션마다 마감이 온다.
     const splitOptions = optionCapacitySlots(row.recruits);
-    const optionApprovedCounts = await Promise.all(
-      splitOptions.map((entry) =>
-        this.prisma.campaignApplication.count({
-          where: {
-            campaignId: row.id,
-            status: { in: SLOT_CONSUMING_STATUSES },
-            options: { some: { subType: entry.subType, option: entry.option } },
-          },
-        }),
-      ),
-    );
     const fullOptions = splitOptions
-      .filter((entry, index) => (optionApprovedCounts[index] ?? 0) >= entry.recruitCount)
+      .filter(
+        (entry) =>
+          (occupancy.optionApproved.get(optionKey(entry.subType, entry.option)) ??
+            0) >= entry.recruitCount,
+      )
       .map((entry) => ({ subType: entry.subType, option: entry.option }));
 
     const allOptionsFullSubTypes = subTypesWithAllOptionsFull(
@@ -303,13 +317,16 @@ export class InfluencerCampaignsService {
 
     const fullSubTypes = row.recruits
       .filter(
-        (recruit, index) =>
-          (subTypeApprovedCounts[index] ?? 0) >= recruit.recruitCount ||
+        (recruit) =>
+          (occupancy.subTypeApproved.get(recruit.subType) ?? 0) >=
+            recruit.recruitCount ||
           allOptionsFullSubTypes.includes(recruit.subType),
       )
       .map((recruit) => recruit.subType);
 
-    const card = await this.resolveCard(toCard(row, approvedCount, row.closedAt, now));
+    const card = await this.resolveCard(
+      toCard(row, approvedCount, row.closedAt, now, occupancy),
+    );
     const [guideline, cautions] = await Promise.all([
       this.uploads.resolveR2ImagesInHtml(row.guideline),
       this.uploads.resolveR2ImagesInHtml(row.cautions),

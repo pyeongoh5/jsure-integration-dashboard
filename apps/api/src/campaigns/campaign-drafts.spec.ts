@@ -73,6 +73,7 @@ function makeService(overrides: {
     campaignView: {
       groupBy: async () => [],
     },
+    $queryRaw: async () => [],
   } as never;
   const uploads = {
     resolveCampaignThumbnailUrl: async (value: string | null) => value,

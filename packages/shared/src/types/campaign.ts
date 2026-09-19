@@ -871,6 +871,12 @@ export const InfluencerCampaignCardSchema = z.object({
   isNew: z.boolean(),
   isEnded: z.boolean(),
   isUpcoming: z.boolean(),
+  /**
+   * 모집 완료(신규 승인 불가) — 서버가 서브타입·옵션별 마감 기준으로 계산.
+   * 사람 수 vs 헤드카운트 비교는 전부-선택 캠페인에서 조기 완료로 오판하므로
+   * 프론트는 이 값만 쓴다. default 는 구 API 배포 갭 대비.
+   */
+  isFull: z.boolean().default(false),
 });
 export type InfluencerCampaignCard = z.infer<
   typeof InfluencerCampaignCardSchema

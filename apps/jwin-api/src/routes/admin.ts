@@ -849,7 +849,7 @@ export async function adminRoutes(app: FastifyInstance) {
           select: { label: true, slug: true, xUsername: true, refreshFailedAt: true },
         },
         prizes: true,
-        posts: { where: { status: 'FAILED' } },
+        posts: { where: { status: 'FAILED' }, orderBy: { dateJst: 'desc' } },
         _count: { select: { entries: true } },
       },
     });
@@ -885,6 +885,10 @@ export async function adminRoutes(app: FastifyInstance) {
         remaining: prize.remainingQty,
       })),
       failedPosts: campaign.posts.length,
+      failedPostDetails: campaign.posts.map((post) => ({
+        dateJst: post.dateJst,
+        lastError: post.lastError,
+      })),
       needsReconnect: !!campaign.brandAccount?.refreshFailedAt, // 브랜드 재연동 필요 알림
     };
   });

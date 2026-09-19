@@ -875,6 +875,8 @@ export const adminMessages = {
         en: "Posts that used up all three retries. Check the account connection.",
         ja: "3回の再試行をすべて使い切った件です。アカウント連携の状態を確認してください。",
       },
+      failedPostDate: { ko: "일자 (JST)", en: "Date (JST)", ja: "日付 (JST)" },
+      failedPostReason: { ko: "실패 사유", en: "Failure reason", ja: "失敗理由" },
       needsReconnect: {
         ko: "브랜드 계정 재연동이 필요합니다. 재연동 전까지 게시와 DM이 모두 실패합니다.",
         en: "This brand account must be reconnected. Until then every post and DM fails.",

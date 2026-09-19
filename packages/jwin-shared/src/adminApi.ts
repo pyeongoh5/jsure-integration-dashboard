@@ -416,6 +416,10 @@ export const AdminCampaignStatsSchema = z.object({
     z.object({ name: z.string(), total: z.number().int(), remaining: z.number().int() }),
   ),
   failedPosts: z.number().int(),
+  /** 실패한 게시의 일자·사유 (최근순) — 카드 숫자만으로는 원인 파악이 안 된다 */
+  failedPostDetails: z
+    .array(z.object({ dateJst: z.string(), lastError: z.string().nullable() }))
+    .default([]),
   needsReconnect: z.boolean(),
 });
 export type AdminCampaignStats = z.infer<typeof AdminCampaignStatsSchema>;

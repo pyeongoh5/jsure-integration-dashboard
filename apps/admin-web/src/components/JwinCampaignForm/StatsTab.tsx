@@ -68,7 +68,25 @@ export function StatsTab({ campaignId }: Props) {
 
           <p className={styles.statHint}>{t("jwin.stats.unfulfilledHint")}</p>
           {stats.failedPosts > 0 ? (
-            <p className={styles.statHint}>{t("jwin.stats.failedPostsHint")}</p>
+            <>
+              <p className={styles.statHint}>{t("jwin.stats.failedPostsHint")}</p>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>{t("jwin.stats.failedPostDate")}</th>
+                    <th>{t("jwin.stats.failedPostReason")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.failedPostDetails.map((failedPost) => (
+                    <tr key={failedPost.dateJst}>
+                      <td>{failedPost.dateJst}</td>
+                      <td>{failedPost.lastError ?? "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           ) : null}
 
           <div className={styles.statPeriod}>

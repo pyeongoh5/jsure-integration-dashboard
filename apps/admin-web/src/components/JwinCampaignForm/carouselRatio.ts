@@ -37,6 +37,35 @@ function loadImageSize(url: string): Promise<{ width: number; height: number } |
   });
 }
 
+/** 업로드 전 로컬 파일의 이미지 크기. 이미지가 아니면(동영상 등) null. */
+export async function fileImageSize(
+  file: File,
+): Promise<{ width: number; height: number } | null> {
+  if (!file.type.startsWith("image/")) return null;
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    return await loadImageSize(objectUrl);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+/**
+ * 파일 선택 즉시 검증 — 새 파일과 이미 첨부된 이미지들을 합쳐 비율을 판정한다.
+ * R2 업로드 전에 막아서 잘못된 이미지가 목록에 들어가는 것 자체를 방지한다.
+ */
+export async function checkFileAgainstList(
+  file: File,
+  existingUrls: string[],
+): Promise<CarouselRatioIssue> {
+  const fileSize = await fileImageSize(file);
+  if (!fileSize) return null; // 동영상 등은 게시 시점 X 응답이 최종 방어선
+  const existingSizes = (await Promise.all(existingUrls.map(loadImageSize))).filter(
+    (size): size is { width: number; height: number } => size !== null,
+  );
+  return carouselRatioIssue([fileSize, ...existingSizes]);
+}
+
 /**
  * 업로드된 이미지 URL 들의 비율을 검사한다. 크기를 읽지 못한 URL(동영상 등)은
  * 건너뛴다 — 최종 방어선은 게시 시점의 X 응답이고 이건 등록 시점의 조기 경보다.

@@ -1,8 +1,9 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { POST_MEDIA_MAX } from "@jsure/jwin-shared";
 import { Button } from "@/components/ui";
 import { useT } from "@/lib/i18n";
+import { checkFileAgainstList } from "./carouselRatio";
 import { useJwinMediaUpload } from "./useJwinMediaUpload";
 import styles from "./JwinCampaignTabs.module.css";
 
@@ -27,14 +28,26 @@ export function JwinMediaListUpload({ labelKey, value, onChange, disabled = fals
   const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const { uploading, error, upload, clearError } = useJwinMediaUpload();
+  const [ratioError, setRatioError] = useState<string | null>(null);
   const label = t(labelKey);
   const isFull = value.length >= POST_MEDIA_MAX;
 
   const handleSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    setRatioError(null);
     const room = POST_MEDIA_MAX - value.length;
     const uploaded: string[] = [];
     for (const file of Array.from(files).slice(0, room)) {
+      // 캐러셀 비율 규칙(1:1·1.91:1, 슬라이드 간 동일)을 업로드 전에 검사한다
+      const ratioIssue = await checkFileAgainstList(file, [...value, ...uploaded]);
+      if (ratioIssue) {
+        setRatioError(
+          ratioIssue === "MISMATCH"
+            ? t("jwin.postTemplate.error.cardRatioMismatch")
+            : t("jwin.postTemplate.error.cardRatioUnsupported"),
+        );
+        break;
+      }
       const url = await upload(file);
       if (!url) break;
       uploaded.push(url);
@@ -46,6 +59,7 @@ export function JwinMediaListUpload({ labelKey, value, onChange, disabled = fals
 
   const handleRemove = (url: string) => {
     clearError();
+    setRatioError(null);
     onChange(value.filter((item) => item !== url));
   };
 
@@ -99,6 +113,7 @@ export function JwinMediaListUpload({ labelKey, value, onChange, disabled = fals
       )}
 
       {error && <span className={styles.uploadError}>{error}</span>}
+      {ratioError && <span className={styles.uploadError}>{ratioError}</span>}
     </div>
   );
 }

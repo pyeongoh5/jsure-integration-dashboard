@@ -51,8 +51,8 @@ export function PostTemplateEditDialog({ template, onClose, onEdit }: Props) {
     }
     if (!activeFrom || !activeTo) return t("jwin.postTemplate.error.periodRequired");
     if (activeTo <= activeFrom) return t("jwin.postTemplate.error.periodOrder");
-    if (cardTitle.trim() && mediaUrls.length < 2) {
-      return t("jwin.postTemplate.error.cardNeedsTwoImages");
+    if (cardTitle.trim() && mediaUrls.length < 1) {
+      return t("jwin.postTemplate.error.cardNeedsImage");
     }
     return null;
   };

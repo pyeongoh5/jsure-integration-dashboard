@@ -258,8 +258,12 @@ export const AdminPrizePatchSchema = z.object({
 export type AdminPrizePatch = z.infer<typeof AdminPrizePatchSchema>;
 
 /** ④ GET /admin/campaigns/:id/post-templates */
-/** 트윗 1건에 붙일 수 있는 미디어 최대 개수 (X 제한). */
-export const POST_MEDIA_MAX = 4;
+/**
+ * 포스트 1건의 미디어 개수 한도. 캐러셀은 항상 2슬라이드(응모·규약)로 나가고,
+ * 1장이면 같은 이미지를 두 슬라이드에 재사용하므로 2장이면 충분하다 —
+ * 2번째 장은 규약 슬라이드 전용 이미지(선택)다.
+ */
+export const POST_MEDIA_MAX = 2;
 
 /** 캐러셀 카드 헤드라인 최대 길이 — X website 카드 표시 한계 기준. */
 export const CARD_TITLE_MAX = 70;
@@ -342,8 +346,8 @@ export const AdminPostTemplatePatchSchema = z
     message: '유효 종료는 유효 시작 이후여야 합니다',
     path: ['activeTo'],
   })
-  .refine((value) => !value.cardTitle || value.mediaUrls.length >= 2, {
-    message: '캐러셀 카드는 이미지가 2장 이상 필요합니다',
+  .refine((value) => !value.cardTitle || value.mediaUrls.length >= 1, {
+    message: '캐러셀 카드는 이미지가 1장 이상 필요합니다',
     path: ['cardTitle'],
   });
 export type AdminPostTemplatePatch = z.infer<typeof AdminPostTemplatePatchSchema>;

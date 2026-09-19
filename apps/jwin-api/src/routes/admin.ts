@@ -668,9 +668,9 @@ export async function adminRoutes(app: FastifyInstance) {
       message: '유효 종료는 유효 시작 이후여야 합니다',
       path: ['activeTo'],
     })
-    // 카드는 슬라이드 2~6장만 성립 — 1장이면 게시 시점에 실패하므로 등록에서 막는다
-    .refine((value) => !value.cardTitle || value.mediaUrls.length >= 2, {
-      message: '캐러셀 카드는 이미지가 2장 이상 필요합니다',
+    // 카드는 이미지가 있어야 성립 — 1장이면 두 슬라이드(응모·규약)에 재사용한다
+    .refine((value) => !value.cardTitle || value.mediaUrls.length >= 1, {
+      message: '캐러셀 카드는 이미지가 1장 이상 필요합니다',
       path: ['cardTitle'],
     });
 
@@ -689,8 +689,8 @@ export async function adminRoutes(app: FastifyInstance) {
       message: '유효 종료는 유효 시작 이후여야 합니다',
       path: ['activeTo'],
     })
-    .refine((value) => !value.cardTitle || value.mediaUrls.length >= 2, {
-      message: '캐러셀 카드는 이미지가 2장 이상 필요합니다',
+    .refine((value) => !value.cardTitle || value.mediaUrls.length >= 1, {
+      message: '캐러셀 카드는 이미지가 1장 이상 필요합니다',
       path: ['cardTitle'],
     });
 

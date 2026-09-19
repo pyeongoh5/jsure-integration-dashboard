@@ -43,35 +43,36 @@ describe('buildCardPostText', () => {
 });
 
 describe('buildCarouselSlides', () => {
-  it('마지막 슬라이드는 규칙 페이지, 나머지는 LP 로 보낸다', () => {
+  it('항상 2슬라이드 — 1번 응모(LP), 2번 규약', () => {
     const slides = buildCarouselSlides({
-      mediaUrls: ['img1', 'img2', 'img3'],
+      mediaUrls: ['entry', 'rules-design'],
       cardTitle: '☝️抽選はこちらをタップ',
       lpUrl: LP,
       rulesUrl: RULES,
     });
     expect(slides).toEqual([
-      { mediaUrl: 'img1', title: '☝️抽選はこちらをタップ', destinationUrl: LP },
-      { mediaUrl: 'img2', title: '☝️抽選はこちらをタップ', destinationUrl: LP },
-      { mediaUrl: 'img3', title: '☝️応募規約はこちら', destinationUrl: RULES },
+      { mediaUrl: 'entry', title: '☝️抽選はこちらをタップ', destinationUrl: LP },
+      { mediaUrl: 'rules-design', title: '☝️応募規約はこちら', destinationUrl: RULES },
     ]);
   });
 
-  it('2장이면 첫 장 = 응모, 둘째 장 = 규칙', () => {
+  it('이미지가 1장이면 두 슬라이드에 같은 이미지를 재사용한다', () => {
     const slides = buildCarouselSlides({
-      mediaUrls: ['a', 'b'],
+      mediaUrls: ['only'],
       cardTitle: 't',
       lpUrl: LP,
       rulesUrl: RULES,
     });
+    expect(slides.map((slide) => slide.mediaUrl)).toEqual(['only', 'only']);
     expect(slides.map((slide) => slide.destinationUrl)).toEqual([LP, RULES]);
   });
 });
 
 describe('shouldUseCarousel', () => {
-  it('헤드라인 + 이미지 2장 이상일 때만 카드로 게시한다', () => {
+  it('헤드라인 + 이미지 1장 이상일 때 카드로 게시한다', () => {
     expect(shouldUseCarousel({ cardTitle: '応募はこちら', mediaUrls: ['a', 'b'] })).toBe(true);
-    expect(shouldUseCarousel({ cardTitle: '応募はこちら', mediaUrls: ['a'] })).toBe(false);
+    expect(shouldUseCarousel({ cardTitle: '応募はこちら', mediaUrls: ['a'] })).toBe(true);
+    expect(shouldUseCarousel({ cardTitle: '応募はこちら', mediaUrls: [] })).toBe(false);
     expect(shouldUseCarousel({ cardTitle: null, mediaUrls: ['a', 'b'] })).toBe(false);
   });
 });

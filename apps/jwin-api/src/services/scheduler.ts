@@ -73,17 +73,18 @@ export function buildCardPostText(input: { bodyText: string; lpUrl: string }): s
   return input.bodyText.replaceAll('{{LP_URL}}', input.lpUrl);
 }
 
-/** 카드 게시 조건: 헤드라인이 있고 슬라이드가 2장 이상 (카드는 2~6장만 성립). */
+/** 카드 게시 조건: 헤드라인과 이미지가 있으면 카드. 1장이면 두 슬라이드에 재사용한다. */
 export function shouldUseCarousel(template: { cardTitle: string | null; mediaUrls: string[] }): boolean {
-  return Boolean(template.cardTitle) && template.mediaUrls.length >= 2;
+  return Boolean(template.cardTitle) && template.mediaUrls.length >= 1;
 }
 
-/** 규칙 슬라이드(마지막 장)의 고정 헤드라인 — 참여자 대상이라 일본어. */
+/** 규칙 슬라이드(2번째 장)의 고정 헤드라인 — 참여자 대상이라 일본어. */
 const RULES_SLIDE_TITLE = '☝️応募規約はこちら';
 
 /**
- * 캐러셀 슬라이드 조립: 마지막 이미지는 응모 규약 페이지로, 나머지는 응모 LP 로 보낸다.
- * (F: 첫 슬라이드 = 추첨 응모, 둘째 슬라이드 = 참가 규칙 — 참고 서비스와 같은 구성)
+ * 캐러셀은 항상 2슬라이드다: 1번 = 추첨 응모(LP), 2번 = 응모 규약.
+ * 이미지가 1장이면 두 슬라이드에 같은 이미지를 쓰고, 2장이면 2번째 장이
+ * 규약 슬라이드 전용 이미지가 된다. (참고 서비스와 같은 구성)
  */
 export function buildCarouselSlides(input: {
   mediaUrls: string[];
@@ -91,12 +92,11 @@ export function buildCarouselSlides(input: {
   lpUrl: string;
   rulesUrl: string;
 }): CarouselSlide[] {
-  return input.mediaUrls.map((mediaUrl, index) => {
-    const isRulesSlide = index === input.mediaUrls.length - 1;
-    return isRulesSlide
-      ? { mediaUrl, title: RULES_SLIDE_TITLE, destinationUrl: input.rulesUrl }
-      : { mediaUrl, title: input.cardTitle, destinationUrl: input.lpUrl };
-  });
+  const [entryImage, rulesImage = input.mediaUrls[0]] = input.mediaUrls;
+  return [
+    { mediaUrl: entryImage as string, title: input.cardTitle, destinationUrl: input.lpUrl },
+    { mediaUrl: rulesImage as string, title: RULES_SLIDE_TITLE, destinationUrl: input.rulesUrl },
+  ];
 }
 
 /** 오늘자(JST) 게시 예정 행 생성. unique(campaignId, dateJst)로 중복 방지. */

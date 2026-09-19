@@ -822,9 +822,9 @@ export const adminMessages = {
           ja: "投稿の可否は毎日00:05 JST時点で判定します。開始をその日の日中にすると、その日は投稿されません。",
         },
         cardTitle: {
-          ko: "입력하면 이미지 첨부 대신 캐러셀 카드로 게시됩니다 (이미지 2장 이상 필요). 마지막 이미지는 응모 규약 페이지로, 나머지는 응모 페이지로 연결되며 헤드라인은 이미지 아래에 표시됩니다.",
-          en: "If set, the post uses a carousel card instead of attached images (requires 2+ images). The last image links to the rules page and the rest to the entry page; the headline appears under the images.",
-          ja: "入力すると画像添付の代わりにカルーセルカードで投稿されます（画像2枚以上が必要）。最後の画像は応募規約ページ、それ以外は応募ページに繋がり、見出しは画像の下に表示されます。",
+          ko: "입력하면 캐러셀 카드(2장)로 게시됩니다 — 1번 슬라이드는 응모 페이지, 2번 슬라이드는 응모 규약 페이지로 연결됩니다. 이미지가 1장이면 두 슬라이드에 같은 이미지를 쓰고, 2장이면 2번째가 규약 슬라이드 이미지가 됩니다.",
+          en: "If set, the post becomes a 2-slide carousel — slide 1 links to the entry page, slide 2 to the rules page. With one image it is reused on both slides; a second image becomes the rules slide.",
+          ja: "入力するとカルーセルカード（2枚）で投稿されます。1枚目は応募ページ、2枚目は応募規約ページに繋がります。画像が1枚なら両方に同じ画像を使い、2枚なら2枚目が規約スライドになります。",
         },
       },
       error: {
@@ -849,10 +849,10 @@ export const adminMessages = {
           en: "The end must come after the start.",
           ja: "終了日時は開始日時より後にしてください。",
         },
-        cardNeedsTwoImages: {
-          ko: "캐러셀 카드는 이미지가 2장 이상 필요합니다.",
-          en: "A carousel card requires at least 2 images.",
-          ja: "カルーセルカードには画像が2枚以上必要です。",
+        cardNeedsImage: {
+          ko: "캐러셀 카드는 이미지가 1장 이상 필요합니다.",
+          en: "A carousel card requires at least one image.",
+          ja: "カルーセルカードには画像が1枚以上必要です。",
         },
         editFailed: {
           ko: "포스트 수정에 실패했습니다.",

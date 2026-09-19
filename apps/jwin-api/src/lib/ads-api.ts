@@ -129,7 +129,11 @@ async function uploadToMediaLibrary(credentials: AdsCredentials, imageUrl: strin
   });
   const uploadedBody = (await uploaded.json().catch(() => null)) as { media_key?: string } | null;
   if (!uploaded.ok || !uploadedBody?.media_key) {
-    throw new XApiError(uploaded.status, uploadedBody, 'card media upload failed');
+    throw new XApiError(
+      uploaded.status,
+      uploadedBody,
+      `card media upload failed (${uploaded.status}) ${JSON.stringify(uploadedBody).slice(0, 200)}`,
+    );
   }
 
   const libraryUrl = `${ADS_API}/accounts/${credentials.accountId}/media_library?media_key=${uploadedBody.media_key}`;
@@ -141,7 +145,7 @@ async function uploadToMediaLibrary(credentials: AdsCredentials, imageUrl: strin
     throw new XApiError(
       registered.status,
       await registered.json().catch(() => null),
-      'media_library register failed',
+      `media_library register failed (${registered.status})`,
     );
   }
   return uploadedBody.media_key;
@@ -184,7 +188,11 @@ export async function buildCarouselCard(input: {
   } | null;
   const cardUri = createdBody?.data?.card_uri;
   if (!created.ok || !cardUri) {
-    throw new XApiError(created.status, createdBody, 'carousel card create failed');
+    throw new XApiError(
+      created.status,
+      createdBody,
+      `carousel card create failed (${created.status}) ${JSON.stringify(createdBody).slice(0, 200)}`,
+    );
   }
   // POST /2/tweets 는 "card://" 접두사가 붙어 있으면 400 을 낸다 (2026-09-15 실측)
   return cardUri.replace(/^card:\/\//, '');

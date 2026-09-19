@@ -3,6 +3,7 @@ import { Button, Dialog, Input, Textarea } from "@/components/ui";
 import type { AdminPostTemplate, AdminPostTemplatePatch } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import { JwinMediaListUpload } from "./JwinMediaListUpload";
+import { checkCarouselRatios } from "./carouselRatio";
 import { jstLocalToUtcIso, utcIsoToJstLocal } from "./jwinDateTime";
 import styles from "./JwinCampaignTabs.module.css";
 
@@ -63,6 +64,17 @@ export function PostTemplateEditDialog({ template, onClose, onEdit }: Props) {
     if (invalid) {
       setError(invalid);
       return;
+    }
+    if (cardTitle.trim()) {
+      const ratioIssue = await checkCarouselRatios(mediaUrls);
+      if (ratioIssue) {
+        setError(
+          ratioIssue === "MISMATCH"
+            ? t("jwin.postTemplate.error.cardRatioMismatch")
+            : t("jwin.postTemplate.error.cardRatioUnsupported"),
+        );
+        return;
+      }
     }
     setSaving(true);
     setError(null);

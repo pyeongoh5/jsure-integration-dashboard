@@ -849,6 +849,16 @@ export const adminMessages = {
           en: "The end must come after the start.",
           ja: "終了日時は開始日時より後にしてください。",
         },
+        cardRatioUnsupported: {
+          ko: "캐러셀 이미지는 1:1 또는 1.91:1 비율만 가능합니다.",
+          en: "Carousel images must be 1:1 or 1.91:1.",
+          ja: "カルーセル画像は1:1または1.91:1の比率のみ使用できます。",
+        },
+        cardRatioMismatch: {
+          ko: "두 이미지의 비율이 서로 다릅니다. 같은 비율(1:1 권장)로 맞춰 주세요.",
+          en: "The two images have different aspect ratios. Use the same ratio (1:1 recommended).",
+          ja: "2枚の画像の比率が異なります。同じ比率（1:1推奨）に揃えてください。",
+        },
         cardNeedsImage: {
           ko: "캐러셀 카드는 이미지가 1장 이상 필요합니다.",
           en: "A carousel card requires at least one image.",

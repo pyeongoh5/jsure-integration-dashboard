@@ -1,4 +1,9 @@
-import { postTemplateCoverage, dmTemplateMissingCode } from '@jsure/jwin-shared';
+import {
+  postTemplateCoverage,
+  dmTemplateMissingCode,
+  sniffMediaFormat,
+  X_POSTABLE_FORMATS,
+} from '@jsure/jwin-shared';
 import { brandAccountStatus } from './adminMappers';
 
 /**
@@ -88,4 +93,52 @@ export function resolveAccountForActivationCheck<Account>(
   if (incomingBrandAccountId === null) return null;
   if (incomingBrandAccountId === current.brandAccountId) return current.brandAccount;
   return fetchedAccount;
+}
+
+/** 매직 바이트 판별에는 앞 16바이트면 충분하다 — 전체 다운로드를 피한다. */
+async function fetchHeadBytes(url: string): Promise<Uint8Array | null> {
+  try {
+    const response = await fetch(url, { headers: { Range: 'bytes=0-15' } });
+    if (!response.ok || !response.body) return null;
+    const reader = response.body.getReader();
+    const chunks: number[] = [];
+    while (chunks.length < 16) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(...value.subarray(0, 16 - chunks.length));
+    }
+    await reader.cancel().catch(() => {});
+    return Uint8Array.from(chunks);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 발행 전 소재 미디어 실물 검사 (게이트 ⑤).
+ *
+ * 업로드 검증은 새 파일만 막는다 — 검증 도입 전에 등록된 소재나 확장자를 속인
+ * 파일(.png 탈을 쓴 AVIF, 2026-09-19 운영 실측)은 게시 시점에야 X 가 400 으로
+ * 거부해 매일 게시가 조용히 실패한다. ACTIVE 전환 때 실제 바이트를 확인한다.
+ */
+export async function mediaFormatBlockers(
+  postTemplates: { label: string; mediaUrls: string[] }[],
+): Promise<string[]> {
+  const blockers: string[] = [];
+  for (const template of postTemplates) {
+    for (const mediaUrl of template.mediaUrls) {
+      const head = await fetchHeadBytes(mediaUrl);
+      if (!head) {
+        blockers.push(`소재 "${template.label}"의 미디어를 가져올 수 없습니다: ${mediaUrl}`);
+        continue;
+      }
+      const format = sniffMediaFormat(head);
+      if (format === 'unknown' || !X_POSTABLE_FORMATS.includes(format)) {
+        blockers.push(
+          `소재 "${template.label}"에 X 가 지원하지 않는 형식(${format})의 미디어가 있습니다 — PNG/JPEG/WEBP/MP4 로 다시 업로드하세요`,
+        );
+      }
+    }
+  }
+  return blockers;
 }

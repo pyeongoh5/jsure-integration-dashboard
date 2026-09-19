@@ -33,7 +33,11 @@ import {
   WINNER_SELECT,
   BrandAccountRow,
 } from './adminMappers';
-import { activationBlockers, resolveAccountForActivationCheck } from './campaignActivation';
+import {
+  activationBlockers,
+  mediaFormatBlockers,
+  resolveAccountForActivationCheck,
+} from './campaignActivation';
 
 /**
  * 어드민 API (v1: J-sure 운영자 단일 테넌트 — 브로커형)
@@ -43,6 +47,23 @@ import { activationBlockers, resolveAccountForActivationCheck } from './campaign
  * 인증 (D-10): 로그인 엔드포인트가 없다. 대시보드(@jsure/api)에서 로그인해 받은
  * access token을 Authorization: Bearer 로 실어 보내면 서명만 검증한다.
  */
+
+/** 소재의 검사 대상 미디어 — mediaUrls 도입 전 행은 단일 mediaUrl 을 함께 본다. */
+function toMediaCheckInput(template: {
+  label: string;
+  mediaUrl: string | null;
+  mediaUrls: string[];
+}): { label: string; mediaUrls: string[] } {
+  return {
+    label: template.label,
+    mediaUrls:
+      template.mediaUrls.length > 0
+        ? template.mediaUrls
+        : template.mediaUrl
+          ? [template.mediaUrl]
+          : [],
+  };
+}
 
 export async function adminRoutes(app: FastifyInstance) {
   const prisma = getPrisma();
@@ -307,22 +328,28 @@ export async function adminRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: '시작할 준비(SETUP) 상태의 참여가 없습니다' });
     }
 
-    const blockers = campaign.brands
-      .map((brandCampaign) => ({
-        brandCampaignId: brandCampaign.id,
-        brandName: brandCampaign.brandAccount.label,
-        reasons: activationBlockers({
-          campaign: {
-            startsAt: campaign.startsAt,
-            endsAt: campaign.endsAt,
-            dmTemplate: brandCampaign.dmTemplate,
-          },
-          brandAccount: brandCampaign.brandAccount,
-          prizes: brandCampaign.prizes,
-          postTemplates: brandCampaign.postTemplates,
-        }),
-      }))
-      .filter((result) => result.reasons.length > 0);
+    const blockers = (
+      await Promise.all(
+        campaign.brands.map(async (brandCampaign) => ({
+          brandCampaignId: brandCampaign.id,
+          brandName: brandCampaign.brandAccount.label,
+          reasons: [
+            ...activationBlockers({
+              campaign: {
+                startsAt: campaign.startsAt,
+                endsAt: campaign.endsAt,
+                dmTemplate: brandCampaign.dmTemplate,
+              },
+              brandAccount: brandCampaign.brandAccount,
+              prizes: brandCampaign.prizes,
+              postTemplates: brandCampaign.postTemplates,
+            }),
+            // 게이트 ⑤ — 소재 미디어가 X 가 받는 포맷인지 실물(바이트)로 확인
+            ...(await mediaFormatBlockers(brandCampaign.postTemplates.map(toMediaCheckInput))),
+          ],
+        })),
+      )
+    ).filter((result) => result.reasons.length > 0);
 
     if (blockers.length > 0) {
       return { activated: 0, blockers };
@@ -526,6 +553,8 @@ export async function adminRoutes(app: FastifyInstance) {
         prizes: current.prizes,
         postTemplates: current.postTemplates,
       });
+      // 게이트 ⑤ — 소재 미디어가 X 가 받는 포맷인지 실물(바이트)로 확인
+      blockers.push(...(await mediaFormatBlockers(current.postTemplates.map(toMediaCheckInput))));
       if (blockers.length > 0) {
         return reply
           .code(400)

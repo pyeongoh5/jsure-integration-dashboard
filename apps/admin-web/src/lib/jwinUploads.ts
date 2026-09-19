@@ -4,6 +4,7 @@ import {
   JWIN_MEDIA_MAX_BYTES,
   type JwinMediaContentType,
 } from "@jsure/shared";
+import { MEDIA_FORMAT_CONTENT_TYPES, sniffMediaFormat } from "@jsure/jwin-shared";
 import { translate } from "@i18n/admin";
 import { api } from "./api";
 import { getStoredLanguage } from "./i18n";
@@ -15,9 +16,20 @@ export class JwinUploadError extends Error {
   }
 }
 
-function assertAllowed(file: File): JwinMediaContentType {
+/**
+ * File.type 은 확장자로 추정한 값이라 믿을 수 없다 — AVIF 를 .png 로 올리면
+ * image/png 으로 통과해 게시 시점에야 X 가 거부한다(운영 실측). 그래서
+ * 실제 파일 앞 바이트(매직 바이트)로 포맷을 판별해 contentType 을 정한다.
+ */
+async function assertAllowed(file: File): Promise<JwinMediaContentType> {
   const language = getStoredLanguage();
-  if (!JWIN_MEDIA_ALLOWED_CONTENT_TYPES.includes(file.type as JwinMediaContentType)) {
+  const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  const format = sniffMediaFormat(head);
+  const contentType = format === "unknown" ? null : MEDIA_FORMAT_CONTENT_TYPES[format];
+  if (
+    !contentType ||
+    !JWIN_MEDIA_ALLOWED_CONTENT_TYPES.includes(contentType as JwinMediaContentType)
+  ) {
     throw new JwinUploadError(translate("jwin.upload.invalidType", language));
   }
   if (file.size > JWIN_MEDIA_MAX_BYTES) {
@@ -27,7 +39,7 @@ function assertAllowed(file: File): JwinMediaContentType {
       }),
     );
   }
-  return file.type as JwinMediaContentType;
+  return contentType as JwinMediaContentType;
 }
 
 /**
@@ -38,7 +50,7 @@ function assertAllowed(file: File): JwinMediaContentType {
  * 캠페인 후반 게시가 조용히 실패한다. 반드시 viewUrl 만 저장한다.
  */
 export async function uploadJwinMedia(file: File): Promise<string> {
-  const contentType = assertAllowed(file);
+  const contentType = await assertAllowed(file);
 
   const presignResponse = await api.post("/uploads/admin/jwin-media/presign", {
     contentType,

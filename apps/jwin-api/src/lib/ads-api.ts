@@ -1,4 +1,9 @@
 import { createHash, createHmac, randomBytes } from 'crypto';
+import {
+  MEDIA_FORMAT_CONTENT_TYPES,
+  sniffMediaFormat,
+  X_POSTABLE_FORMATS,
+} from '@jsure/jwin-shared';
 import { config } from '../config';
 import { XApiError } from './x-api';
 
@@ -116,12 +121,22 @@ async function uploadToMediaLibrary(credentials: AdsCredentials, imageUrl: strin
   if (!source.ok) {
     throw new XApiError(source.status, null, `card media fetch failed: ${imageUrl}`);
   }
-  const bytes = await source.arrayBuffer();
-  const contentType = source.headers.get('content-type') ?? 'image/png';
+  const bytes = new Uint8Array(await source.arrayBuffer());
+
+  // content-type 헤더는 확장자 기반이라 거짓말을 한다 — 실제 바이트로 판별한다.
+  // AVIF 를 .png 로 올린 소재가 X 에서 "media type unrecognized" 로 거부된 실측 사례.
+  const format = sniffMediaFormat(bytes);
+  if (format === 'unknown' || !X_POSTABLE_FORMATS.includes(format)) {
+    throw new XApiError(
+      400,
+      null,
+      `X 가 지원하지 않는 이미지 형식(${format})입니다 — PNG/JPEG/WEBP 로 다시 업로드하세요: ${imageUrl}`,
+    );
+  }
 
   const uploadUrl = `${UPLOAD_API}?media_category=TWEET_IMAGE`;
   const form = new FormData();
-  form.append('media', new Blob([new Uint8Array(bytes)], { type: contentType }));
+  form.append('media', new Blob([bytes], { type: MEDIA_FORMAT_CONTENT_TYPES[format] }));
   const uploaded = await fetch(uploadUrl, {
     method: 'POST',
     headers: { Authorization: oauth1Header(credentials, 'POST', uploadUrl) },

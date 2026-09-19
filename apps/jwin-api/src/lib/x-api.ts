@@ -1,4 +1,9 @@
 import { randomBytes, createHash } from 'crypto';
+import {
+  MEDIA_FORMAT_CONTENT_TYPES,
+  sniffMediaFormat,
+  X_POSTABLE_FORMATS,
+} from '@jsure/jwin-shared';
 import { config } from '../config';
 
 /**
@@ -215,8 +220,19 @@ export async function uploadMediaFromUrl(
 ): Promise<string> {
   const source = await fetch(mediaUrl);
   if (!source.ok) throw new XApiError(source.status, null, `media fetch failed: ${mediaUrl}`);
-  const contentType = source.headers.get('content-type') ?? 'application/octet-stream';
   const bytes = Buffer.from(await source.arrayBuffer());
+
+  // content-type 헤더는 확장자 기반이라 거짓말을 한다 — 실제 바이트로 판별한다.
+  // AVIF 를 .png 로 올린 소재가 X 에서 "media type unrecognized" 로 거부된 실측 사례.
+  const format = sniffMediaFormat(bytes);
+  if (format === 'unknown' || !X_POSTABLE_FORMATS.includes(format)) {
+    throw new XApiError(
+      400,
+      null,
+      `X 가 지원하지 않는 미디어 형식(${format})입니다 — PNG/JPEG/WEBP/MP4 로 다시 업로드하세요: ${mediaUrl}`,
+    );
+  }
+  const contentType = MEDIA_FORMAT_CONTENT_TYPES[format];
 
   // initialize
   const initialized = await xFetch<MediaUploadResponse>(brandAccessToken, '/media/upload/initialize', {

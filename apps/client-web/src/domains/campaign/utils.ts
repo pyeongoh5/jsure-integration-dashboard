@@ -54,20 +54,18 @@ export type CampaignRecruitClosure =
 /**
  * 캠페인 응모 마감 여부와 사유. (상세 열람은 항상 가능하고, 이 판정은 응모 가능 여부·라벨에만 쓴다.)
  * - ended: 수동 종료(isEnded) 또는 모집 마감일 경과
- * - full: 총정원(approvedCount) 충족 — recruitCount 0(무제한/미설정)이면 full 아님
+ * - full: 서버가 서브타입·옵션별 마감 기준으로 계산한 isFull
+ *   (사람 수 vs 헤드카운트 비교는 전부-선택 캠페인에서 조기 완료로 오판)
  * 우선순위 ended > full.
  */
 export function campaignRecruitClosure(
-  card: Pick<
-    InfluencerCampaignCard,
-    "isEnded" | "recruitEndAt" | "approvedCount" | "recruitCount"
-  >,
+  card: Pick<InfluencerCampaignCard, "isEnded" | "recruitEndAt" | "isFull">, // new
   now: Date = new Date(),
 ): CampaignRecruitClosure {
   if (card.isEnded || new Date(card.recruitEndAt) < now) {
     return { closed: true, reason: "ended" };
   }
-  if (card.recruitCount > 0 && card.approvedCount >= card.recruitCount) {
+  if (card.isFull) {
     return { closed: true, reason: "full" };
   }
   return { closed: false, reason: null };

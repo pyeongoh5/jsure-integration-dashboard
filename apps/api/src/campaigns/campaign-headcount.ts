@@ -30,15 +30,15 @@ export function campaignHeadcount(
 /**
  * 어드민 캠페인 목록의 파생 상태. 뱃지 표기와 정렬의 단일 소스(서버 계산).
  * 우선순위: 임시저장 > 비공개 > 마감·종료 > 정원 충족(모집 완료) > 모집중.
+ * isFull 은 서브타입·옵션별 마감 기준(isCampaignFull)으로 계산해 넘긴다 —
+ * 사람 수 vs 헤드카운트 비교는 전부-선택 캠페인에서 조기 완료로 오판한다.
  */
 export function deriveCampaignStatus(args: {
   publishState: string;
-  category: CampaignCategory;
   closedAt: Date | null;
   hiddenAt: Date | null;
   recruitEndAt: Date;
-  recruits: { recruitCount: number; isRequired: boolean }[];
-  approvedCount: number;
+  isFull: boolean;
   now: Date;
 }): CampaignListStatus {
   if (args.publishState === "DRAFT") return "draft";
@@ -46,9 +46,7 @@ export function deriveCampaignStatus(args: {
   if (args.closedAt !== null || args.now.getTime() > args.recruitEndAt.getTime()) {
     return "done";
   }
-  const headcount = campaignHeadcount(args.category, args.recruits);
-  if (headcount > 0 && args.approvedCount >= headcount) return "full";
-  return "recruit";
+  return args.isFull ? "full" : "recruit";
 }
 
 /**

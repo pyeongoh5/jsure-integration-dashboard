@@ -46,6 +46,7 @@ function makeService(createManyImpl?: () => Promise<unknown>) {
       findUnique: async () => null,
       findMany: async () => [],
     },
+    $queryRaw: async () => [],
   } as never;
   const uploads = {
     resolveCampaignThumbnailUrl: async (url: string | null) => url,

@@ -10,13 +10,15 @@ import {
 import { useT } from "@/lib/i18n";
 import { utcIsoToJstLocal, jstLocalToUtcIso } from "./jwinDateTime";
 
-/** 시즌 캠페인 폼 — 이름·slug·기간. 게시 설정과 상태는 참여(BrandCampaign)가 갖는다. */
+/** 시즌 캠페인 폼 — 이름·slug·기간·게시 시각. 상태는 참여(BrandCampaign)가 갖는다. */
 export type JwinCampaignFormValues = {
   name: string;
   slug: string;
   /** JST datetime-local "YYYY-MM-DDTHH:mm" */
   startsAt: string;
   endsAt: string;
+  /** 매일 게시 시각 (JST "HH:mm") — 전 참여 브랜드 공통 */
+  dailyPostTime: string;
 };
 
 export type JwinCampaignFormErrors = Partial<Record<keyof JwinCampaignFormValues, string>>;
@@ -28,6 +30,7 @@ const EMPTY: JwinCampaignFormValues = {
   slug: "",
   startsAt: "",
   endsAt: "",
+  dailyPostTime: "11:00",
 };
 
 function toFormValues(detail: AdminCampaignDetail): JwinCampaignFormValues {
@@ -36,6 +39,7 @@ function toFormValues(detail: AdminCampaignDetail): JwinCampaignFormValues {
     slug: detail.slug,
     startsAt: utcIsoToJstLocal(detail.startsAt),
     endsAt: utcIsoToJstLocal(detail.endsAt),
+    dailyPostTime: detail.dailyPostTime,
   };
 }
 
@@ -46,6 +50,9 @@ function validate(values: JwinCampaignFormValues): JwinCampaignFormErrorKeys {
   else if (!/^[a-z0-9-]+$/.test(values.slug)) errorKeys.slug = "jwin.basic.error.slugFormat";
   if (!values.startsAt) errorKeys.startsAt = "jwin.basic.error.startsAtRequired";
   if (!values.endsAt) errorKeys.endsAt = "jwin.basic.error.endsAtRequired";
+  if (!/^\d{2}:\d{2}$/.test(values.dailyPostTime)) {
+    errorKeys.dailyPostTime = "jwin.basic.error.dailyPostTimeRequired";
+  }
   if (values.startsAt && values.endsAt && values.endsAt <= values.startsAt) {
     errorKeys.endsAt = "jwin.basic.error.endsAtOrder";
   }
@@ -120,6 +127,7 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
       slug: values.slug.trim(),
       startsAt: jstLocalToUtcIso(values.startsAt),
       endsAt: jstLocalToUtcIso(values.endsAt),
+      dailyPostTime: values.dailyPostTime,
     };
 
     setSaving(true);

@@ -99,3 +99,26 @@
   border-radius: var(--r-lg);
   padding: 20px;
 }
+
+/* 시즌 상세 — 참여 브랜드 섹션의 버튼 줄 */
+.sectionActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 일괄 시작 미충족 사유 — 브랜드별로 나열한다 */
+.activateBlockers {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border: 1px solid #fbbf24;
+  background: #fffbeb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #92400e;
+}
+
+.activateBlockers ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}

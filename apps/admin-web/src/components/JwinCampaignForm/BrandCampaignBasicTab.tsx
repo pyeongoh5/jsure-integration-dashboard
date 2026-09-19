@@ -19,7 +19,7 @@ function shortJst(iso: string): string {
 }
 
 /**
- * 참여의 게시 설정. 기간·이름은 시즌이 갖고 여기서 바꾸지 않는다 —
+ * 참여의 추첨 설정. 기간·이름·게시 시각은 시즌이 갖고 여기서 바꾸지 않는다 —
  * 대신 어느 시즌·어느 브랜드인지 요약으로 보여준다.
  */
 export function BrandCampaignBasicTab({ detail, values, setField }: Props) {
@@ -35,31 +35,16 @@ export function BrandCampaignBasicTab({ detail, values, setField }: Props) {
         <span>{detail.brandAccount.label}</span>
       </div>
 
-      <div className={styles.row2}>
-        <label className={styles.field}>
-          <span className={styles.label}>
-            {t("jwin.basic.dailyPostTime")}
-            <span className={styles.required}>*</span>
-          </span>
-          <Input
-            type="time"
-            value={values.dailyPostTime}
-            onChange={(value) => setField("dailyPostTime", value)}
-          />
-          <span className={styles.hint}>{t("jwin.basic.dailyPostTimeHint")}</span>
-        </label>
-
-        <label className={styles.field}>
-          <span className={styles.label}>{t("jwin.basic.dailyWinCap")}</span>
-          <Input
-            type="number"
-            min={1}
-            value={values.dailyWinCap}
-            onChange={(value) => setField("dailyWinCap", value)}
-            placeholder={t("jwin.basic.dailyWinCapPlaceholder")}
-          />
-        </label>
-      </div>
+      <label className={styles.field}>
+        <span className={styles.label}>{t("jwin.basic.dailyWinCap")}</span>
+        <Input
+          type="number"
+          min={1}
+          value={values.dailyWinCap}
+          onChange={(value) => setField("dailyWinCap", value)}
+          placeholder={t("jwin.basic.dailyWinCapPlaceholder")}
+        />
+      </label>
     </div>
   );
 }

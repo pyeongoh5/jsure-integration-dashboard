@@ -3,6 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui";
 import { BasicTab, useJwinCampaignForm } from "@/components/JwinCampaignForm";
 import { JwinBrandCampaignTable, JwinBrandCampaignAddDialog } from "@/components/JwinCampaigns";
+import {
+  activateCampaign,
+  jwinErrorMessage,
+  type AdminCampaignActivateResponse,
+} from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import styles from "./Jwin.module.css";
 
@@ -18,8 +23,33 @@ export function JwinCampaignDetail() {
   const form = useJwinCampaignForm(id);
   const [saved, setSaved] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [activating, setActivating] = useState(false);
+  const [activateError, setActivateError] = useState<string | null>(null);
+  const [activateBlockers, setActivateBlockers] = useState<
+    AdminCampaignActivateResponse["blockers"]
+  >([]);
 
   const brands = form.detail?.brands ?? [];
+  const setupCount = brands.filter((brand) => brand.status === "SETUP").length;
+
+  const handleActivate = async () => {
+    if (!form.detail) return;
+    setActivating(true);
+    setActivateError(null);
+    setActivateBlockers([]);
+    try {
+      const result = await activateCampaign(form.detail.id);
+      if (result.blockers.length > 0) {
+        setActivateBlockers(result.blockers);
+        return;
+      }
+      form.reload();
+    } catch (caught: unknown) {
+      setActivateError(jwinErrorMessage(caught, t("jwin.campaign.startFailed")));
+    } finally {
+      setActivating(false);
+    }
+  };
   // 참여가 하나라도 시작됐으면 slug 를 잠근다 — 게시된 링크가 깨진다.
   const slugLocked = brands.some((brand) => brand.status !== "SETUP");
 
@@ -98,10 +128,36 @@ export function JwinCampaignDetail() {
           <div className={styles.tabCard}>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>{t("jwin.campaign.brands.title")}</h2>
-              <Button variant="primary" size="md" onClick={() => setAddOpen(true)}>
-                {t("jwin.campaign.brands.add")}
-              </Button>
+              <div className={styles.sectionActions}>
+                {setupCount > 0 && (
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={() => void handleActivate()}
+                    loading={activating}
+                  >
+                    {t("jwin.campaign.start", { count: setupCount })}
+                  </Button>
+                )}
+                <Button variant="primary" size="md" onClick={() => setAddOpen(true)}>
+                  {t("jwin.campaign.brands.add")}
+                </Button>
+              </div>
             </div>
+
+            {activateError && <div className={styles.saveError}>{activateError}</div>}
+            {activateBlockers.length > 0 && (
+              <div className={styles.activateBlockers}>
+                <strong>{t("jwin.campaign.startBlockedTitle")}</strong>
+                <ul>
+                  {activateBlockers.map((blocker) => (
+                    <li key={blocker.brandCampaignId}>
+                      <strong>{blocker.brandName}</strong>: {blocker.reasons.join(" / ")}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <JwinBrandCampaignTable
               rows={brands}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Dialog, Input } from "@/components/ui";
+import { Button, Dialog } from "@/components/ui";
 import {
   createBrandCampaign,
   fetchBrandAccounts,
@@ -18,7 +18,7 @@ type Props = {
   onAdded: () => void;
 };
 
-/** 등록된 브랜드를 골라 시즌에 참여시킨다. 게시 설정은 이후 참여 편집에서 다듬는다. */
+/** 등록된 브랜드를 골라 시즌에 참여시킨다 — 게시 시각은 시즌이, 당첨 상한은 참여 편집이 갖는다. */
 export function JwinBrandCampaignAddDialog({
   open,
   campaignId,
@@ -29,8 +29,6 @@ export function JwinBrandCampaignAddDialog({
   const t = useT();
   const [accounts, setAccounts] = useState<AdminBrandAccount[]>([]);
   const [brandAccountId, setBrandAccountId] = useState("");
-  const [dailyPostTime, setDailyPostTime] = useState("11:00");
-  const [dailyWinCap, setDailyWinCap] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,16 +58,10 @@ export function JwinBrandCampaignAddDialog({
       setError(t("jwin.campaign.brands.selectBrand"));
       return;
     }
-    const cap = dailyWinCap.trim();
     setSaving(true);
     setError(null);
     try {
-      await createBrandCampaign({
-        campaignId,
-        brandAccountId,
-        dailyPostTime,
-        dailyWinCap: cap === "" ? null : Number(cap),
-      });
+      await createBrandCampaign({ campaignId, brandAccountId });
       onAdded();
     } catch (caught: unknown) {
       setError(jwinErrorMessage(caught, t("jwin.campaign.brands.addFailed")));
@@ -110,23 +102,6 @@ export function JwinBrandCampaignAddDialog({
             ))}
           </select>
         </label>
-
-        <div className={styles.row2}>
-          <label className={styles.field}>
-            <span className={styles.label}>{t("jwin.basic.dailyPostTime")}</span>
-            <Input type="time" value={dailyPostTime} onChange={setDailyPostTime} />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>{t("jwin.basic.dailyWinCap")}</span>
-            <Input
-              type="number"
-              min={1}
-              value={dailyWinCap}
-              onChange={setDailyWinCap}
-              placeholder={t("jwin.basic.dailyWinCapPlaceholder")}
-            />
-          </label>
-        </div>
 
         {error && <span className={styles.error}>{error}</span>}
       </div>

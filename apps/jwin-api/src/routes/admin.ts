@@ -215,6 +215,11 @@ export async function adminRoutes(app: FastifyInstance) {
     slug: z.string().regex(/^[a-z0-9-]+$/),
     startsAt: z.coerce.date(),
     endsAt: z.coerce.date(),
+    // 게시 시간은 시즌 소속 — 전 브랜드가 같은 시각에 게시된다
+    dailyPostTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/)
+      .default('11:00'),
   });
 
   app.post('/admin/campaigns', async (req, reply) => {
@@ -278,6 +283,59 @@ export async function adminRoutes(app: FastifyInstance) {
     });
     await audit(admin, 'campaign.update', campaign.id, parsed.data);
     return toCampaignDetail(campaign, campaign.brands.map(toBrandCampaignListItem));
+  });
+
+  /**
+   * 시즌 일괄 시작 (원자적) — SETUP 참여 전부가 발행 전 검증(D-14)을 통과할 때만
+   * 한 번에 ACTIVE 로 전환한다. 하나라도 미충족이면 아무것도 바꾸지 않고
+   * 브랜드별 사유를 돌려준다. 이미 ACTIVE/PAUSED 인 참여는 건드리지 않는다.
+   */
+  app.post<{ Params: { id: string } }>('/admin/campaigns/:id/activate', async (req, reply) => {
+    const admin = requireAdmin(req, reply);
+    if (!admin) return;
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: req.params.id },
+      include: {
+        brands: {
+          where: { status: 'SETUP' },
+          include: { brandAccount: true, prizes: true, postTemplates: true },
+        },
+      },
+    });
+    if (!campaign) return reply.code(404).send({ error: '캠페인을 찾을 수 없습니다' });
+    if (campaign.brands.length === 0) {
+      return reply.code(400).send({ error: '시작할 준비(SETUP) 상태의 참여가 없습니다' });
+    }
+
+    const blockers = campaign.brands
+      .map((brandCampaign) => ({
+        brandCampaignId: brandCampaign.id,
+        brandName: brandCampaign.brandAccount.label,
+        reasons: activationBlockers({
+          campaign: {
+            startsAt: campaign.startsAt,
+            endsAt: campaign.endsAt,
+            dmTemplate: brandCampaign.dmTemplate,
+          },
+          brandAccount: brandCampaign.brandAccount,
+          prizes: brandCampaign.prizes,
+          postTemplates: brandCampaign.postTemplates,
+        }),
+      }))
+      .filter((result) => result.reasons.length > 0);
+
+    if (blockers.length > 0) {
+      return { activated: 0, blockers };
+    }
+
+    await prisma.brandCampaign.updateMany({
+      where: { campaignId: campaign.id, status: 'SETUP' },
+      data: { status: 'ACTIVE' },
+    });
+    await audit(admin, 'campaign.activate', campaign.id, {
+      brandCampaignIds: campaign.brands.map((brandCampaign) => brandCampaign.id),
+    });
+    return { activated: campaign.brands.length, blockers: [] };
   });
 
   /** 시즌 삭제 영향도 — 참여 브랜드들의 데이터를 합산한다. */

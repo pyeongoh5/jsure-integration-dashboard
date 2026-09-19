@@ -111,7 +111,7 @@ export async function materializeTodayPosts(): Promise<void> {
       status: 'ACTIVE',
       campaign: { startsAt: { lte: now }, endsAt: { gte: now } },
     },
-    include: { postTemplates: true },
+    include: { postTemplates: true, campaign: { select: { dailyPostTime: true } } },
   });
 
   for (const campaign of campaigns) {
@@ -125,7 +125,7 @@ export async function materializeTodayPosts(): Promise<void> {
           campaignId: campaign.id,
           templateId: template.id,
           dateJst: today,
-          scheduledAt: jstToUtc(today, campaign.dailyPostTime),
+          scheduledAt: jstToUtc(today, campaign.campaign.dailyPostTime),
         },
       })
       .catch(() => {}); // P2002(이미 생성) 무시

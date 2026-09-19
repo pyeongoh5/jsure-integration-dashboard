@@ -118,6 +118,21 @@ export const adminMessages = {
         actions: { ko: "관리", en: "Actions", ja: "操作" },
       },
       delete: { ko: "삭제", en: "Delete", ja: "削除" },
+      start: {
+        ko: "캠페인 시작 ({count}개 참여)",
+        en: "Start campaign ({count} brands)",
+        ja: "キャンペーン開始（{count}ブランド）",
+      },
+      startBlockedTitle: {
+        ko: "시작할 수 없습니다 — 브랜드별 미충족 항목을 채운 뒤 다시 시도하세요.",
+        en: "Cannot start — resolve each brand's missing items and try again.",
+        ja: "開始できません — ブランドごとの未充足項目を解消して再試行してください。",
+      },
+      startFailed: {
+        ko: "캠페인을 시작할 수 없습니다.",
+        en: "Could not start the campaign.",
+        ja: "キャンペーンを開始できませんでした。",
+      },
       brands: {
         title: { ko: "참여 브랜드", en: "Participating brands", ja: "参加ブランド" },
         add: { ko: "브랜드 참여 추가", en: "Add brand", ja: "ブランドを追加" },
@@ -225,8 +240,13 @@ export const adminMessages = {
       },
       startsAt: { ko: "시작일시 (JST)", en: "Starts at (JST)", ja: "開始日時 (JST)" },
       endsAt: { ko: "종료일시 (JST)", en: "Ends at (JST)", ja: "終了日時 (JST)" },
-      dailyPostTime: { ko: "매일 게시 시각", en: "Daily post time", ja: "毎日の投稿時刻" },
+      dailyPostTime: { ko: "매일 게시 시각 (JST)", en: "Daily post time (JST)", ja: "毎日の投稿時刻 (JST)" },
       dailyPostTimeHint: { ko: "JST 기준", en: "In JST", ja: "JST基準" },
+      dailyPostTimeSeasonHint: {
+        ko: "이 시즌에 참여하는 모든 브랜드가 같은 시각에 게시됩니다.",
+        en: "Every brand in this campaign posts at the same time.",
+        ja: "このキャンペーンに参加する全ブランドが同じ時刻に投稿されます。",
+      },
       dailyWinCap: { ko: "일일 당첨 상한", en: "Daily win cap", ja: "1日の当選上限" },
       dailyWinCapPlaceholder: {
         ko: "비우면 무제한",
@@ -268,6 +288,11 @@ export const adminMessages = {
           ko: "종료일시는 시작일시 이후여야 합니다.",
           en: "The end must come after the start.",
           ja: "終了日時は開始日時より後にしてください。",
+        },
+        dailyPostTimeRequired: {
+          ko: "매일 게시 시각을 입력하세요.",
+          en: "Enter the daily post time.",
+          ja: "毎日の投稿時刻を入力してください。",
         },
         dailyWinCapInvalid: {
           ko: "1 이상의 정수를 입력하세요.",

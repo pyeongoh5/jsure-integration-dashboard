@@ -2,6 +2,7 @@ import { jwinApi } from "@/lib/api";
 import {
   AdminCampaignListSchema,
   AdminCampaignDetailSchema,
+  AdminCampaignActivateResponseSchema,
   AdminCampaignDeleteImpactSchema,
   AdminBrandCampaignDeleteImpactSchema,
   AdminBrandCampaignDetailSchema,
@@ -19,6 +20,7 @@ import {
   AdminWinnerSchema,
   type AdminCampaignList,
   type AdminCampaignDetail,
+  type AdminCampaignActivateResponse,
   type AdminCampaignDeleteImpact,
   type AdminBrandAccountCreate,
   type AdminBrandAccountPatch,
@@ -69,6 +71,17 @@ export async function updateCampaign(
 ): Promise<AdminCampaignDetail> {
   const response = await jwinApi.patch(`/admin/campaigns/${campaignId}`, body);
   return AdminCampaignDetailSchema.parse(response.data);
+}
+
+/**
+ * 시즌 일괄 시작 (원자적) — SETUP 참여 전부가 검증을 통과할 때만 일괄 ACTIVE.
+ * 미충족이 있으면 아무것도 바뀌지 않고 브랜드별 사유가 돌아온다 (activated = 0).
+ */
+export async function activateCampaign(
+  campaignId: string,
+): Promise<AdminCampaignActivateResponse> {
+  const response = await jwinApi.post(`/admin/campaigns/${campaignId}/activate`);
+  return AdminCampaignActivateResponseSchema.parse(response.data);
 }
 
 /** 시즌에 참여 중인 브랜드 목록. */

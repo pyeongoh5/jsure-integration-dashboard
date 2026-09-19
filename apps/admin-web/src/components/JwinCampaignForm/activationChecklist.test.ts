@@ -27,7 +27,6 @@ const BASE_DETAIL: AdminBrandCampaignDetail = {
     startsAt: "2026-08-31T15:00:00.000Z",
     endsAt: "2026-09-05T14:59:00.000Z",
   },
-  dailyPostTime: "11:00",
   dailyWinCap: null,
   cardImageUrl: null,
   rulesUrl: null,

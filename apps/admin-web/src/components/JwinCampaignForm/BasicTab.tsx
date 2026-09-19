@@ -81,6 +81,23 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
         </label>
       </div>
 
+      <label className={styles.field}>
+        <span className={styles.label}>
+          {t("jwin.basic.dailyPostTime")}
+          <span className={styles.required}>*</span>
+        </span>
+        <Input
+          type="time"
+          value={values.dailyPostTime}
+          onChange={(value) => setField("dailyPostTime", value)}
+          error={!!errors.dailyPostTime}
+        />
+        {errors.dailyPostTime ? (
+          <span className={styles.error}>{errors.dailyPostTime}</span>
+        ) : (
+          <span className={styles.hint}>{t("jwin.basic.dailyPostTimeSeasonHint")}</span>
+        )}
+      </label>
     </div>
   );
 }

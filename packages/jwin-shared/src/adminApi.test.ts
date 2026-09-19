@@ -17,11 +17,11 @@ describe('어드민 응답 스키마', () => {
     expect(shape).toContain('hasShipping');
   });
 
-  it('시즌 상세는 기간과 참여 브랜드 목록을 갖고, 게시 설정은 갖지 않는다', () => {
+  it('시즌 상세는 기간·게시 시각·참여 브랜드 목록을 갖는다 — 게시 시각은 시즌 소속', () => {
     const shape = Object.keys(AdminCampaignDetailSchema.shape);
     expect(shape).toContain('startsAt');
     expect(shape).toContain('brands');
-    expect(shape).not.toContain('dailyPostTime');
+    expect(shape).toContain('dailyPostTime');
   });
 
   it('참여 상세는 brandAccount·시즌 요약을 포함하고 connectUrl은 없다', () => {
@@ -92,6 +92,7 @@ describe('AdminBrandAccount 계약', () => {
       slug: '2026-09',
       startsAt: '2026-09-01T00:00:00.000Z',
       endsAt: '2026-09-30T00:00:00.000Z',
+      dailyPostTime: '11:00',
       brands: [
         {
           id: 'bc-1',

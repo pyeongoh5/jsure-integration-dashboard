@@ -100,6 +100,11 @@ export const AdminCampaignCreateSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   startsAt: z.string(),
   endsAt: z.string(),
+  /** 매일 게시 시각 (JST "HH:mm") — 시즌의 전 브랜드가 같은 시각에 게시된다 */
+  dailyPostTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .default('11:00'),
 });
 export type AdminCampaignCreate = z.infer<typeof AdminCampaignCreateSchema>;
 
@@ -134,29 +139,24 @@ export const AdminCampaignDetailSchema = z.object({
   slug: z.string(),
   startsAt: z.string(),
   endsAt: z.string(),
+  dailyPostTime: z.string(),
   brands: z.array(AdminBrandCampaignListItemSchema),
 });
 export type AdminCampaignDetail = z.infer<typeof AdminCampaignDetailSchema>;
 
-/** POST /admin/brand-campaigns (요청) — 브랜드를 시즌에 참여시킨다 */
+/**
+ * POST /admin/brand-campaigns (요청) — 브랜드를 시즌에 참여시킨다.
+ * 게시 시간은 시즌이, 당첨 상한은 참여 편집 기본 탭이 갖는다 — 여기서는 브랜드 선택만.
+ */
 export const AdminBrandCampaignCreateSchema = z.object({
   campaignId: z.string(),
   brandAccountId: z.string(),
-  dailyPostTime: z
-    .string()
-    .regex(/^\d{2}:\d{2}$/)
-    .default('11:00'),
-  dailyWinCap: z.number().int().positive().nullable().optional(),
 });
 export type AdminBrandCampaignCreate = z.infer<typeof AdminBrandCampaignCreateSchema>;
 
 /** PATCH /admin/brand-campaigns/:id (요청) — 게시 설정·결과화면·상태 전환 */
 export const AdminBrandCampaignPatchSchema = z.object({
   status: CampaignStatusSchema.optional(),
-  dailyPostTime: z
-    .string()
-    .regex(/^\d{2}:\d{2}$/)
-    .optional(),
   dailyWinCap: z.number().int().positive().nullable().optional(),
   /** 링크 카드 이미지 (LP 의 og:image) */
   cardImageUrl: z.string().url().nullable().optional(),
@@ -168,6 +168,26 @@ export const AdminBrandCampaignPatchSchema = z.object({
   dmTemplate: z.string().max(1000).nullable().optional(),
 });
 export type AdminBrandCampaignPatch = z.infer<typeof AdminBrandCampaignPatchSchema>;
+
+/**
+ * POST /admin/campaigns/:id/activate — 시즌 일괄 시작 (원자적).
+ * SETUP 참여 전부가 발행 전 검증(D-14)을 통과할 때만 일괄 ACTIVE 로 전환한다.
+ * 하나라도 미충족이면 아무것도 바꾸지 않고 브랜드별 사유를 돌려준다 (activated = 0).
+ */
+export const AdminCampaignActivateResponseSchema = z.object({
+  /** 이번 호출로 ACTIVE 가 된 참여 수 */
+  activated: z.number().int(),
+  blockers: z
+    .array(
+      z.object({
+        brandCampaignId: z.string(),
+        brandName: z.string(),
+        reasons: z.array(z.string()),
+      }),
+    )
+    .default([]),
+});
+export type AdminCampaignActivateResponse = z.infer<typeof AdminCampaignActivateResponseSchema>;
 
 /** 참여가 속한 시즌 요약 — 기간 판정과 화면 상단 표시에 쓴다. */
 export const AdminCampaignSummarySchema = z.object({
@@ -183,7 +203,6 @@ export type AdminCampaignSummary = z.infer<typeof AdminCampaignSummarySchema>;
 export const AdminBrandCampaignDetailSchema = z.object({
   id: z.string(),
   status: CampaignStatusSchema,
-  dailyPostTime: z.string(),
   dailyWinCap: z.number().int().nullable(),
   cardImageUrl: z.string().nullable(),
   rulesUrl: z.string().nullable(),

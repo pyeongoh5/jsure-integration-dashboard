@@ -24,6 +24,8 @@ model Campaign {
   slug      String   @unique // 시즌 LP URL: /c/{slug}
   startsAt  DateTime // JST 기준 입력, UTC 저장
   endsAt    DateTime // 종료 시점 = 배송지 입력 마감 (F-6.3)
+  // 게시 스케줄: 매일 1회, JST 시각 "HH:mm". 시즌의 전 브랜드가 같은 시각에 게시된다
+  dailyPostTime String @default("11:00")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -47,8 +49,6 @@ model BrandCampaign {
   campaignId    String
   campaign      Campaign       @relation(fields: [campaignId], references: [id])
   status        CampaignStatus @default(SETUP)
-  // 게시 스케줄: 매일 1회, JST 시각 "HH:mm"
-  dailyPostTime String         @default("11:00")
   // 추첨 설정
   dailyWinCap   Int? // 일별 당첨 상한 (null = 무제한, 재고만 따름)
   /// 트윗 링크 카드(summary_large_image)에 쓰는 이미지 — LP 의 og:image 로 내려간다.

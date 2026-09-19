@@ -65,6 +65,7 @@ describe('시즌·참여 매퍼', () => {
     slug: '2026-09',
     startsAt: new Date('2026-09-01T00:00:00Z'),
     endsAt: new Date('2026-09-30T00:00:00Z'),
+    dailyPostTime: '11:00',
   };
 
   const brandCampaignRow = {
@@ -98,7 +99,6 @@ describe('시즌·참여 매퍼', () => {
       {
         id: 'bc-1',
         status: 'ACTIVE',
-        dailyPostTime: '11:00',
         dailyWinCap: null,
         cardImageUrl: null,
         rulesUrl: null,

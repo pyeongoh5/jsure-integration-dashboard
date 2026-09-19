@@ -35,7 +35,6 @@ export function canTransitionFulfillment(
 export type BrandCampaignRow = {
   id: string;
   status: string;
-  dailyPostTime: string;
   dailyWinCap: number | null;
   cardImageUrl: string | null;
   rulesUrl: string | null;
@@ -53,6 +52,7 @@ export type CampaignRow = {
   slug: string;
   startsAt: Date;
   endsAt: Date;
+  dailyPostTime: string;
 };
 
 export function toCampaignSummary(campaign: CampaignRow): AdminCampaignSummary {
@@ -73,7 +73,6 @@ export function toBrandCampaignDetail(
   return {
     id: brandCampaign.id,
     status: brandCampaign.status as AdminBrandCampaignDetail['status'],
-    dailyPostTime: brandCampaign.dailyPostTime,
     dailyWinCap: brandCampaign.dailyWinCap,
     cardImageUrl: brandCampaign.cardImageUrl,
     rulesUrl: brandCampaign.rulesUrl,
@@ -132,6 +131,7 @@ export function toCampaignDetail(
     slug: campaign.slug,
     startsAt: campaign.startsAt.toISOString(),
     endsAt: campaign.endsAt.toISOString(),
+    dailyPostTime: campaign.dailyPostTime,
     brands,
   };
 }

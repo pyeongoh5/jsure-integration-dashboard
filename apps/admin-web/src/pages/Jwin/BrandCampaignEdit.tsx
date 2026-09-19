@@ -190,7 +190,6 @@ function BrandCampaignEditBody({
               onAdd={postTemplates.add}
               onEdit={postTemplates.edit}
               onDelete={postTemplates.remove}
-              onCampaignChanged={onDetailChanged}
             />
           )}
 

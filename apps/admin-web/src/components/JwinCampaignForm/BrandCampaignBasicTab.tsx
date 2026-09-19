@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui";
 import type { AdminBrandCampaignDetail } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
+import { JwinMediaUpload } from "./JwinMediaUpload";
 import { utcIsoToJstLocal } from "./jwinDateTime";
 import type { JwinBrandCampaignFormValues } from "./useJwinBrandCampaign";
 import styles from "./JwinCampaignForm.module.css";
@@ -8,7 +9,10 @@ import styles from "./JwinCampaignForm.module.css";
 type Props = {
   detail: AdminBrandCampaignDetail;
   values: JwinBrandCampaignFormValues;
-  setField: (field: keyof JwinBrandCampaignFormValues, value: string) => void;
+  setField: <Field extends keyof JwinBrandCampaignFormValues>(
+    field: Field,
+    value: JwinBrandCampaignFormValues[Field],
+  ) => void;
 };
 
 /** UTC ISO → "9/1 00:00" (JST, 언어 중립) */
@@ -45,6 +49,15 @@ export function BrandCampaignBasicTab({ detail, values, setField }: Props) {
           placeholder={t("jwin.basic.dailyWinCapPlaceholder")}
         />
       </label>
+
+      <div className={styles.field}>
+        <JwinMediaUpload
+          labelKey="jwin.basic.lpShareImage"
+          value={values.cardImageUrl}
+          onChange={(url) => setField("cardImageUrl", url)}
+        />
+        <span className={styles.hint}>{t("jwin.basic.lpShareImageHint")}</span>
+      </div>
     </div>
   );
 }

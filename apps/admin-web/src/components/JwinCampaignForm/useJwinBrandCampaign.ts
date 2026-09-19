@@ -8,12 +8,14 @@ import {
 import { useT } from "@/lib/i18n";
 
 /**
- * 참여(BrandCampaign) 상세 로드 + 추첨 설정 저장.
- * 기간·이름·게시 시각은 시즌이 갖고, 여기서는 일일 당첨 상한만 다룬다.
+ * 참여(BrandCampaign) 상세 로드 + 기본 설정 저장.
+ * 기간·이름·게시 시각은 시즌이 갖고, 여기서는 일일 당첨 상한과
+ * LP 공유 미리보기 이미지(og:image — 링크를 카톡 등에 공유할 때의 썸네일)를 다룬다.
  */
 export type JwinBrandCampaignFormValues = {
   /** "" = 무제한 */
   dailyWinCap: string;
+  cardImageUrl: string | null;
 };
 
 export type UseJwinBrandCampaignResult = {
@@ -21,7 +23,10 @@ export type UseJwinBrandCampaignResult = {
   loadError: string | null;
   detail: AdminBrandCampaignDetail | null;
   values: JwinBrandCampaignFormValues;
-  setField: (field: keyof JwinBrandCampaignFormValues, value: string) => void;
+  setField: <Field extends keyof JwinBrandCampaignFormValues>(
+    field: Field,
+    value: JwinBrandCampaignFormValues[Field],
+  ) => void;
   error: string | null;
   saving: boolean;
   saved: boolean;
@@ -34,13 +39,17 @@ export type UseJwinBrandCampaignResult = {
 function toValues(detail: AdminBrandCampaignDetail): JwinBrandCampaignFormValues {
   return {
     dailyWinCap: detail.dailyWinCap === null ? "" : String(detail.dailyWinCap),
+    cardImageUrl: detail.cardImageUrl,
   };
 }
 
 export function useJwinBrandCampaign(brandCampaignId: string): UseJwinBrandCampaignResult {
   const t = useT();
   const [detail, setDetail] = useState<AdminBrandCampaignDetail | null>(null);
-  const [values, setValues] = useState<JwinBrandCampaignFormValues>({ dailyWinCap: "" });
+  const [values, setValues] = useState<JwinBrandCampaignFormValues>({
+    dailyWinCap: "",
+    cardImageUrl: null,
+  });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +81,10 @@ export function useJwinBrandCampaign(brandCampaignId: string): UseJwinBrandCampa
   }, [brandCampaignId, reloadKey, t]);
 
   const setField = useCallback(
-    (field: keyof JwinBrandCampaignFormValues, value: string) => {
+    <Field extends keyof JwinBrandCampaignFormValues>(
+      field: Field,
+      value: JwinBrandCampaignFormValues[Field],
+    ) => {
       setSaved(false);
       setValues((previous) => ({ ...previous, [field]: value }));
     },
@@ -96,6 +108,7 @@ export function useJwinBrandCampaign(brandCampaignId: string): UseJwinBrandCampa
     try {
       const updated = await updateBrandCampaign(detail.id, {
         dailyWinCap: cap === "" ? null : Number(cap),
+        cardImageUrl: values.cardImageUrl,
       });
       applyDetail(updated);
       setSaved(true);

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ScrollTable } from "@/components/composites";
-import { Button, Input } from "@/components/ui";
+import { Button } from "@/components/ui";
 import type {
   AdminBrandCampaignDetail,
   AdminPostTemplate,
@@ -12,8 +12,6 @@ import { formatCoverageGaps, postTemplateCoverage } from "./postTemplateCoverage
 import { utcIsoToJstLocal } from "./jwinDateTime";
 import { PostTemplateAddDialog } from "./PostTemplateAddDialog";
 import { PostTemplateEditDialog } from "./PostTemplateEditDialog";
-import { JwinMediaUpload } from "./JwinMediaUpload";
-import { useJwinPostSettingsForm } from "./useJwinPostSettingsForm";
 import styles from "./JwinCampaignTabs.module.css";
 
 type Props = {
@@ -24,8 +22,6 @@ type Props = {
   onAdd: (body: Omit<AdminPostTemplateCreate, "campaignId">) => Promise<string | null>;
   onEdit: (templateId: string, body: AdminPostTemplatePatch) => Promise<string | null>;
   onDelete: (templateId: string) => Promise<string | null>;
-  /** 캠페인 단위 설정(카드 이미지·규칙 링크) 저장 후 상세를 다시 읽는다 */
-  onCampaignChanged: () => void;
 };
 
 /** UTC ISO → "9/1 00:00" (JST, 언어 중립) */
@@ -43,7 +39,6 @@ export function PostTemplateTab({
   onAdd,
   onEdit,
   onDelete,
-  onCampaignChanged,
 }: Props) {
   const t = useT();
   const [addOpen, setAddOpen] = useState(false);
@@ -56,8 +51,6 @@ export function PostTemplateTab({
     () => postTemplateCoverage(detail.campaign, templates),
     [detail.campaign, templates],
   );
-  const settings = useJwinPostSettingsForm(detail, onCampaignChanged);
-
   const handleDelete = async (templateId: string) => {
     setDeletingId(templateId);
     setDeleteError(null);
@@ -73,40 +66,6 @@ export function PostTemplateTab({
         <Button variant="primary" size="md" onClick={() => setAddOpen(true)}>
           {t("jwin.postTemplate.add")}
         </Button>
-      </div>
-
-      <div className={styles.postSettings}>
-        <h3 className={styles.settingsTitle}>{t("jwin.postTemplate.settingsTitle")}</h3>
-        <JwinMediaUpload
-          labelKey="jwin.postTemplate.cardImage"
-          value={settings.values.cardImageUrl}
-          onChange={(url) => settings.setField("cardImageUrl", url)}
-          disabled={settings.saving}
-        />
-        <span className={styles.fieldHint}>{t("jwin.postTemplate.cardImageHint")}</span>
-
-        <div className={styles.field}>
-          <span className={styles.fieldLabel}>{t("jwin.postTemplate.rulesUrl")}</span>
-          <Input
-            value={settings.values.rulesUrl}
-            onChange={(value) => settings.setField("rulesUrl", value)}
-            placeholder="https://example.com/rules"
-          />
-          <span className={styles.fieldHint}>{t("jwin.postTemplate.rulesUrlHint")}</span>
-        </div>
-
-        <div className={styles.uploadRow}>
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={() => void settings.save()}
-            disabled={settings.saving}
-          >
-            {settings.saving ? t("jwin.common.saving") : t("jwin.common.save")}
-          </Button>
-          {settings.saved && <span className={styles.uploadHint}>{t("jwin.common.saved")}</span>}
-          {settings.error && <span className={styles.errorText}>{settings.error}</span>}
-        </div>
       </div>
 
       {!loading && coverage.gaps.length > 0 && (

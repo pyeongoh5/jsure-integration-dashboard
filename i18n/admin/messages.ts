@@ -217,7 +217,7 @@ export const adminMessages = {
         basic: { ko: "기본", en: "Basic", ja: "基本" },
         connect: { ko: "연동", en: "Account", ja: "連携" },
         prize: { ko: "경품", en: "Prizes", ja: "景品" },
-        template: { ko: "포스팅 설정", en: "Post settings", ja: "投稿設定" },
+        template: { ko: "포스트", en: "Posts", ja: "投稿" },
         result: { ko: "결과화면", en: "Result screen", ja: "結果画面" },
         stats: { ko: "통계", en: "Stats", ja: "統計" },
       },
@@ -252,6 +252,16 @@ export const adminMessages = {
         ko: "비우면 무제한",
         en: "Leave empty for no cap",
         ja: "空欄で無制限",
+      },
+      lpShareImage: {
+        ko: "LP 공유 미리보기 이미지",
+        en: "LP share preview image",
+        ja: "LP共有プレビュー画像",
+      },
+      lpShareImageHint: {
+        ko: "응모 페이지 링크를 X·메신저 등에 공유할 때 표시되는 미리보기(og:image)입니다. 게시 포스트에는 나가지 않습니다.",
+        en: "Preview image (og:image) shown when the entry page link is shared on X or messengers. Not used in posted tweets.",
+        ja: "応募ページのリンクをXやメッセンジャーで共有したときに表示されるプレビュー（og:image）です。投稿ツイートには使われません。",
       },
       error: {
         brandNameRequired: {
@@ -743,26 +753,9 @@ export const adminMessages = {
       },
     },
     postTemplate: {
-      title: { ko: "포스팅 설정", en: "Post settings", ja: "投稿設定" },
+      title: { ko: "포스트", en: "Posts", ja: "投稿" },
       add: { ko: "포스트 추가", en: "Add post", ja: "投稿を追加" },
       edit: { ko: "수정", en: "Edit", ja: "修正" },
-      settingsTitle: {
-        ko: "포스트 공통 설정",
-        en: "Shared post settings",
-        ja: "投稿の共通設定",
-      },
-      cardImage: { ko: "링크 카드 이미지", en: "Link card image", ja: "リンクカード画像" },
-      cardImageHint: {
-        ko: "미디어를 첨부하지 않은 포스트에서 이 이미지로 링크 카드가 만들어집니다. 카드 이미지를 누르면 응모 페이지가 열립니다(첨부 이미지는 뷰어만 열립니다).",
-        en: "Posts without attached media show a link card built from this image. Tapping the card opens the entry page — attached photos only open the viewer.",
-        ja: "メディアを添付しない投稿は、この画像でリンクカードが作られます。カード画像をタップすると応募ページが開きます（添付画像はビューアが開くだけです）。",
-      },
-      rulesUrl: { ko: "이벤트 규칙 링크", en: "Rules link", ja: "応募規約リンク" },
-      rulesUrlHint: {
-        ko: "포스트 본문에 텍스트 링크로 함께 나갑니다. 본문에 {{LP_URL}} 을 직접 넣은 경우에는 규칙 링크가 마지막 URL 이 되어 카드가 규칙 페이지로 잡힐 수 있습니다.",
-        en: "Added to the post body as a text link. If the body places {{LP_URL}} itself, the rules link becomes the last URL and the card may point at the rules page instead.",
-        ja: "投稿本文にテキストリンクとして追加されます。本文に {{LP_URL}} を直接置いた場合は規約リンクが最後のURLになり、カードが規約ページになることがあります。",
-      },
       editTitle: { ko: "포스트 수정", en: "Edit post", ja: "投稿を修正" },
       empty: {
         ko: "등록된 포스트가 없습니다. 포스트가 없으면 매일 게시가 통째로 건너뜁니다.",

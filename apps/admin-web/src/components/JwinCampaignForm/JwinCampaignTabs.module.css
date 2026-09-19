@@ -394,19 +394,3 @@
   gap: 6px;
 }
 
-/* 포스트 공통 설정 블록 (카드 이미지·규칙 링크) */
-.postSettings {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--border, #e5e7eb);
-  border-radius: 8px;
-  background: var(--surface-muted, #f9fafb);
-}
-
-.settingsTitle {
-  font-size: 13px;
-  font-weight: 600;
-  margin: 0;
-}

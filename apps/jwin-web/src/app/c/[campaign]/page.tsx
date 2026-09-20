@@ -67,7 +67,9 @@ export default async function CampaignSeasonPage({
   }
 
   return (
-    <main>
+    // 페이지 최소 높이 = 한 화면. 키비주얼이 위를 차지하면 배경 섹션(flex: 1)이
+    // 나머지만 채워서, 콘텐츠가 짧아도 불필요한 스크롤이 생기지 않는다.
+    <main style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       {season.keyVisualUrl && (
         // 키비주얼·카드 이미지는 외부 URL(R2)이라 next/image 최적화 대상이 아니다
         // eslint-disable-next-line @next/next/no-img-element
@@ -80,9 +82,7 @@ export default async function CampaignSeasonPage({
 
       <section
         style={{
-          // 콘텐츠가 짧아도 배경이 화면을 채우도록 뷰포트 높이를 최소로 잡는다
-          // (dvh: 모바일 주소창 접힘/펼침에 따라 변하는 실제 가시 높이)
-          minHeight: '100dvh',
+          flex: 1,
           padding: '32px 16px 48px',
           ...(season.listBackgroundUrl
             ? {

@@ -131,6 +131,7 @@ export async function publicRoutes(app: FastifyInstance) {
           todayPost?.xPostId && brandXUsername
             ? `https://x.com/${brandXUsername}/status/${todayPost.xPostId}`
             : null,
+        dailyPostTime: brandCampaign.campaign.dailyPostTime,
         prizeSummary: prizeSummaryOf(brandCampaign.prizes),
         prizes: brandCampaign.prizes.map((prize) => ({
           name: prize.name,

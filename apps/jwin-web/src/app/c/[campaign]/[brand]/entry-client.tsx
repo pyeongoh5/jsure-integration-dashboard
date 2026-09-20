@@ -53,6 +53,12 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
       const status = (error as { status?: number }).status;
       if (status === 409) setPhase({ name: 'already' });
       else if (status === 401) setPhase({ name: 'need_login' });
+      else if (status === 404)
+        // 오늘자 포스트가 아직 없다 — 게시 전 응모 (no_post_today)
+        setPhase({
+          name: 'error',
+          message: `本日のキャンペーンポストはまだ投稿されていません。毎日${campaign.dailyPostTime}（日本時間）頃に投稿されます。投稿後にご応募ください。`,
+        });
       else setPhase({ name: 'error', message: '応募できませんでした。時間をおいて再度お試しください。' });
     }
   }
@@ -123,7 +129,24 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
           })}
         </>
       );
-    case 'ready':
+    case 'ready': {
+      // 시즌 종료 후에는 응모 입구를 닫는다
+      if (new Date(campaign.endsAt).getTime() < Date.now()) {
+        return <p>このキャンペーンは終了しました。たくさんのご参加ありがとうございました！</p>;
+      }
+      // 오늘자 포스트가 아직 없으면(게시 시각 전) 버튼 대신 예정 시각을 안내한다 —
+      // 응모는 당일 포스트에 귀속되므로(D-1) 게시 전에는 눌러도 404 만 난다
+      if (!campaign.todayPostUrl) {
+        return (
+          <>
+            <h2>本日の応募はもうすぐ！</h2>
+            <p>
+              本日のキャンペーンポストは {campaign.dailyPostTime}
+              （日本時間）頃に投稿予定です。投稿後にこのページからご応募いただけます。
+            </p>
+          </>
+        );
+      }
       return (
         <>
           <h2>フォロー&リポストして抽選に参加！</h2>
@@ -135,6 +158,7 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
           {button('抽選に参加する', enter)}
         </>
       );
+    }
     case 'drawing':
       return <p style={{ fontSize: 24 }}>抽選中…</p>;
     case 'already':

@@ -47,6 +47,8 @@ export interface CampaignLp {
   endsAt: string;
   /** 당일 캠페인 포스트 URL (리포스트 유도용). 미게시 시 null */
   todayPostUrl: string | null;
+  /** 매일 게시 시각 (JST "HH:mm") — 게시 전 안내 문구용 */
+  dailyPostTime: string;
   prizeSummary: string;
   /** 경품 목록 (티어순) — 규칙 페이지의 경품 항목 렌더용 */
   prizes: { name: string; totalQty: number }[];

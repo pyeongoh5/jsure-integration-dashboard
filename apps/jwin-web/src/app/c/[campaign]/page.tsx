@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import type { Metadata } from 'next';
 import type { CampaignSeasonLp } from '@jsure/jwin-shared';
 import { API_BASE } from '../../../lib/api';
@@ -52,8 +51,8 @@ export async function generateMetadata({
 
 /**
  * 시즌 LP (/c/{campaign}) — 키비주얼 아래 배경 위에 참여 브랜드 카드를 깐다.
- * 카드를 누르면 각 브랜드 응모 페이지로 간다. 이미지 2장(키비주얼·배경)은
- * 어드민 시즌 기본정보에서 올린다 — 없으면 해당 영역만 생략/단색으로 동작한다.
+ * 카드를 누르면 당일 X 캠페인 포스트로 간다(미게시면 참여 LP 폴백). 이미지 2장
+ * (키비주얼·배경)은 어드민 시즌 기본정보에서 올린다 — 없으면 생략/단색으로 동작한다.
  */
 export default async function CampaignSeasonPage({
   params,
@@ -130,9 +129,12 @@ export default async function CampaignSeasonPage({
             }}
           >
             {season.brands.map((brand) => (
-              <Link
+              // 카드 클릭 = 당일 X 포스트로 이동 (미게시면 참여 LP 로 폴백)
+              <a
                 key={brand.brandCampaignId}
-                href={`/c/${season.slug}/${brand.brandSlug}`}
+                href={brand.todayPostUrl ?? `/c/${season.slug}/${brand.brandSlug}`}
+                target={brand.todayPostUrl ? '_blank' : undefined}
+                rel={brand.todayPostUrl ? 'noreferrer' : undefined}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -176,8 +178,7 @@ export default async function CampaignSeasonPage({
                     )}
                   </span>
                 </span>
-                <span style={{ fontSize: 12, color: '#555' }}>{brand.prizeSummary}</span>
-              </Link>
+              </a>
             ))}
           </div>
         </div>

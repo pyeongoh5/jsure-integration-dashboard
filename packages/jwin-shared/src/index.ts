@@ -86,9 +86,10 @@ export interface CampaignSeasonLp {
     brandSlug: string;
     brandLogoUrl: string | null;
     xUsername: string | null;
-    prizeSummary: string;
     /** 카드 썸네일 — 참여의 LP 공유 미리보기 이미지 재사용 */
     cardImageUrl: string | null;
+    /** 당일 캠페인 포스트 URL — 카드 클릭 시 이동 대상. 미게시면 null (참여 LP 로 폴백) */
+    todayPostUrl: string | null;
   }[];
 }
 

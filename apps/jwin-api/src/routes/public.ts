@@ -59,7 +59,7 @@ export async function publicRoutes(app: FastifyInstance) {
         brands: {
           where: { status: { in: ['ACTIVE', 'PAUSED', 'ENDED'] } },
           include: {
-            prizes: { orderBy: { tier: 'asc' } },
+            posts: { where: { dateJst: dateJst(), status: 'POSTED' } },
             brandAccount: { select: { label: true, slug: true, logoUrl: true, xUsername: true } },
           },
           orderBy: { createdAt: 'asc' },
@@ -76,15 +76,22 @@ export async function publicRoutes(app: FastifyInstance) {
       endsAt: campaign.endsAt.toISOString(),
       keyVisualUrl: campaign.keyVisualUrl,
       listBackgroundUrl: campaign.listBackgroundUrl,
-      brands: campaign.brands.map((brandCampaign) => ({
-        brandCampaignId: brandCampaign.id,
-        brandName: brandCampaign.brandAccount.label,
-        brandSlug: brandCampaign.brandAccount.slug,
-        brandLogoUrl: brandCampaign.brandAccount.logoUrl,
-        xUsername: brandCampaign.brandAccount.xUsername,
-        prizeSummary: prizeSummaryOf(brandCampaign.prizes),
-        cardImageUrl: brandCampaign.cardImageUrl,
-      })),
+      brands: campaign.brands.map((brandCampaign) => {
+        const todayPost = brandCampaign.posts[0];
+        const xUsername = brandCampaign.brandAccount.xUsername;
+        return {
+          brandCampaignId: brandCampaign.id,
+          brandName: brandCampaign.brandAccount.label,
+          brandSlug: brandCampaign.brandAccount.slug,
+          brandLogoUrl: brandCampaign.brandAccount.logoUrl,
+          xUsername,
+          cardImageUrl: brandCampaign.cardImageUrl,
+          todayPostUrl:
+            todayPost?.xPostId && xUsername
+              ? `https://x.com/${xUsername}/status/${todayPost.xPostId}`
+              : null,
+        };
+      }),
     };
     return lp;
   });

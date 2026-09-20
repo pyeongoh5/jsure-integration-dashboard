@@ -76,6 +76,10 @@ export interface CampaignSeasonLp {
   slug: string;
   startsAt: string;
   endsAt: string;
+  /** 시즌 LP 상단 키비주얼 */
+  keyVisualUrl: string | null;
+  /** 브랜드 목록 영역의 배경 이미지 */
+  listBackgroundUrl: string | null;
   brands: {
     brandCampaignId: string;
     brandName: string;
@@ -83,6 +87,8 @@ export interface CampaignSeasonLp {
     brandLogoUrl: string | null;
     xUsername: string | null;
     prizeSummary: string;
+    /** 카드 썸네일 — 참여의 LP 공유 미리보기 이미지 재사용 */
+    cardImageUrl: string | null;
   }[];
 }
 

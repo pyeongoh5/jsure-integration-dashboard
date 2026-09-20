@@ -241,6 +241,9 @@ export async function adminRoutes(app: FastifyInstance) {
       .string()
       .regex(/^\d{2}:\d{2}$/)
       .default('11:00'),
+    // 시즌 LP 이미지 — 상단 키비주얼·브랜드 목록 배경
+    keyVisualUrl: z.string().url().nullable().optional(),
+    listBackgroundUrl: z.string().url().nullable().optional(),
   });
 
   app.post('/admin/campaigns', async (req, reply) => {

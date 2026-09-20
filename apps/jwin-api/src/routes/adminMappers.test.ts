@@ -66,6 +66,8 @@ describe('시즌·참여 매퍼', () => {
     startsAt: new Date('2026-09-01T00:00:00Z'),
     endsAt: new Date('2026-09-30T00:00:00Z'),
     dailyPostTime: '11:00',
+    keyVisualUrl: null,
+    listBackgroundUrl: null,
   };
 
   const brandCampaignRow = {

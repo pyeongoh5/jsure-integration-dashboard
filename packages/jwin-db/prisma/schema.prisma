@@ -26,6 +26,10 @@ model Campaign {
   endsAt    DateTime // 종료 시점 = 배송지 입력 마감 (F-6.3)
   // 게시 스케줄: 매일 1회, JST 시각 "HH:mm". 시즌의 전 브랜드가 같은 시각에 게시된다
   dailyPostTime String @default("11:00")
+  /// 시즌 LP 상단 키비주얼 이미지
+  keyVisualUrl String?
+  /// 시즌 LP 브랜드 목록 영역의 배경 이미지
+  listBackgroundUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

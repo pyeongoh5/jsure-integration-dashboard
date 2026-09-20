@@ -1,12 +1,16 @@
 import { Input } from "@/components/ui";
 import { useT } from "@/lib/i18n";
+import { JwinMediaUpload } from "./JwinMediaUpload";
 import type { JwinCampaignFormValues, JwinCampaignFormErrors } from "./useJwinCampaignForm";
 import styles from "./JwinCampaignForm.module.css";
 
 type Props = {
   values: JwinCampaignFormValues;
   errors: JwinCampaignFormErrors;
-  setField: (field: keyof JwinCampaignFormValues, value: string) => void;
+  setField: <Field extends keyof JwinCampaignFormValues>(
+    field: Field,
+    value: JwinCampaignFormValues[Field],
+  ) => void;
   /** 참여가 하나라도 ACTIVE 면 slug 입력 잠금 (게시된 링크 보호, MVP_PLAN §3.3) */
   slugLocked: boolean;
 };
@@ -98,6 +102,25 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
           <span className={styles.hint}>{t("jwin.basic.dailyPostTimeSeasonHint")}</span>
         )}
       </label>
+
+      <div className={styles.row2}>
+        <div className={styles.field}>
+          <JwinMediaUpload
+            labelKey="jwin.basic.keyVisual"
+            value={values.keyVisualUrl}
+            onChange={(url) => setField("keyVisualUrl", url)}
+          />
+          <span className={styles.hint}>{t("jwin.basic.keyVisualHint")}</span>
+        </div>
+        <div className={styles.field}>
+          <JwinMediaUpload
+            labelKey="jwin.basic.listBackground"
+            value={values.listBackgroundUrl}
+            onChange={(url) => setField("listBackgroundUrl", url)}
+          />
+          <span className={styles.hint}>{t("jwin.basic.listBackgroundHint")}</span>
+        </div>
+      </div>
     </div>
   );
 }

@@ -105,6 +105,10 @@ export const AdminCampaignCreateSchema = z.object({
     .string()
     .regex(/^\d{2}:\d{2}$/)
     .default('11:00'),
+  /** 시즌 LP 상단 키비주얼 이미지 */
+  keyVisualUrl: z.string().url().nullable().optional(),
+  /** 시즌 LP 브랜드 목록 영역의 배경 이미지 */
+  listBackgroundUrl: z.string().url().nullable().optional(),
 });
 export type AdminCampaignCreate = z.infer<typeof AdminCampaignCreateSchema>;
 
@@ -140,6 +144,8 @@ export const AdminCampaignDetailSchema = z.object({
   startsAt: z.string(),
   endsAt: z.string(),
   dailyPostTime: z.string(),
+  keyVisualUrl: z.string().nullable().default(null),
+  listBackgroundUrl: z.string().nullable().default(null),
   brands: z.array(AdminBrandCampaignListItemSchema),
 });
 export type AdminCampaignDetail = z.infer<typeof AdminCampaignDetailSchema>;

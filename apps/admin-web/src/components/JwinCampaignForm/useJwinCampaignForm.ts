@@ -19,6 +19,10 @@ export type JwinCampaignFormValues = {
   endsAt: string;
   /** 매일 게시 시각 (JST "HH:mm") — 전 참여 브랜드 공통 */
   dailyPostTime: string;
+  /** 시즌 LP 상단 키비주얼 */
+  keyVisualUrl: string | null;
+  /** 시즌 LP 브랜드 목록 배경 */
+  listBackgroundUrl: string | null;
 };
 
 export type JwinCampaignFormErrors = Partial<Record<keyof JwinCampaignFormValues, string>>;
@@ -31,6 +35,8 @@ const EMPTY: JwinCampaignFormValues = {
   startsAt: "",
   endsAt: "",
   dailyPostTime: "11:00",
+  keyVisualUrl: null,
+  listBackgroundUrl: null,
 };
 
 function toFormValues(detail: AdminCampaignDetail): JwinCampaignFormValues {
@@ -40,6 +46,8 @@ function toFormValues(detail: AdminCampaignDetail): JwinCampaignFormValues {
     startsAt: utcIsoToJstLocal(detail.startsAt),
     endsAt: utcIsoToJstLocal(detail.endsAt),
     dailyPostTime: detail.dailyPostTime,
+    keyVisualUrl: detail.keyVisualUrl,
+    listBackgroundUrl: detail.listBackgroundUrl,
   };
 }
 
@@ -65,7 +73,10 @@ export type UseJwinCampaignFormResult = {
   loadError: string | null;
   detail: AdminCampaignDetail | null;
   values: JwinCampaignFormValues;
-  setField: (field: keyof JwinCampaignFormValues, value: string) => void;
+  setField: <Field extends keyof JwinCampaignFormValues>(
+    field: Field,
+    value: JwinCampaignFormValues[Field],
+  ) => void;
   errors: JwinCampaignFormErrors;
   saving: boolean;
   saveError: string | null;
@@ -109,9 +120,15 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
     };
   }, [campaignId, reloadKey, t]);
 
-  const setField = useCallback((field: keyof JwinCampaignFormValues, value: string) => {
-    setValues((prev) => ({ ...prev, [field]: value }));
-  }, []);
+  const setField = useCallback(
+    <Field extends keyof JwinCampaignFormValues>(
+      field: Field,
+      value: JwinCampaignFormValues[Field],
+    ) => {
+      setValues((prev) => ({ ...prev, [field]: value }));
+    },
+    [],
+  );
 
   const save = useCallback(async (): Promise<AdminCampaignDetail | null> => {
     const nextErrorKeys = validate(values);
@@ -128,6 +145,8 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
       startsAt: jstLocalToUtcIso(values.startsAt),
       endsAt: jstLocalToUtcIso(values.endsAt),
       dailyPostTime: values.dailyPostTime,
+      keyVisualUrl: values.keyVisualUrl,
+      listBackgroundUrl: values.listBackgroundUrl,
     };
 
     setSaving(true);

@@ -74,6 +74,8 @@ export async function publicRoutes(app: FastifyInstance) {
       slug: campaign.slug,
       startsAt: campaign.startsAt.toISOString(),
       endsAt: campaign.endsAt.toISOString(),
+      keyVisualUrl: campaign.keyVisualUrl,
+      listBackgroundUrl: campaign.listBackgroundUrl,
       brands: campaign.brands.map((brandCampaign) => ({
         brandCampaignId: brandCampaign.id,
         brandName: brandCampaign.brandAccount.label,
@@ -81,6 +83,7 @@ export async function publicRoutes(app: FastifyInstance) {
         brandLogoUrl: brandCampaign.brandAccount.logoUrl,
         xUsername: brandCampaign.brandAccount.xUsername,
         prizeSummary: prizeSummaryOf(brandCampaign.prizes),
+        cardImageUrl: brandCampaign.cardImageUrl,
       })),
     };
     return lp;

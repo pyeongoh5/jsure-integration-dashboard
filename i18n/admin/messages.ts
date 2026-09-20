@@ -253,6 +253,26 @@ export const adminMessages = {
         en: "Leave empty for no cap",
         ja: "空欄で無制限",
       },
+      keyVisual: {
+        ko: "시즌 LP 키비주얼",
+        en: "Season LP key visual",
+        ja: "シーズンLPキービジュアル",
+      },
+      keyVisualHint: {
+        ko: "시즌 페이지 최상단에 전체 폭으로 표시되는 대표 이미지입니다.",
+        en: "Hero image shown full-width at the top of the season page.",
+        ja: "シーズンページ最上部に全幅で表示されるメイン画像です。",
+      },
+      listBackground: {
+        ko: "브랜드 목록 배경",
+        en: "Brand list background",
+        ja: "ブランド一覧の背景",
+      },
+      listBackgroundHint: {
+        ko: "참여 브랜드 카드 목록 영역의 배경으로 깔리는 이미지입니다.",
+        en: "Background image behind the participating brand cards.",
+        ja: "参加ブランドカード一覧の背景に敷かれる画像です。",
+      },
       lpShareImage: {
         ko: "LP 공유 미리보기 이미지",
         en: "LP share preview image",

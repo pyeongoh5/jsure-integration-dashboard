@@ -53,6 +53,8 @@ export type CampaignRow = {
   startsAt: Date;
   endsAt: Date;
   dailyPostTime: string;
+  keyVisualUrl: string | null;
+  listBackgroundUrl: string | null;
 };
 
 export function toCampaignSummary(campaign: CampaignRow): AdminCampaignSummary {
@@ -132,6 +134,8 @@ export function toCampaignDetail(
     startsAt: campaign.startsAt.toISOString(),
     endsAt: campaign.endsAt.toISOString(),
     dailyPostTime: campaign.dailyPostTime,
+    keyVisualUrl: campaign.keyVisualUrl,
+    listBackgroundUrl: campaign.listBackgroundUrl,
     brands,
   };
 }

@@ -80,6 +80,9 @@ export default async function CampaignSeasonPage({
 
       <section
         style={{
+          // 콘텐츠가 짧아도 배경이 화면을 채우도록 뷰포트 높이를 최소로 잡는다
+          // (dvh: 모바일 주소창 접힘/펼침에 따라 변하는 실제 가시 높이)
+          minHeight: '100dvh',
           padding: '32px 16px 48px',
           ...(season.listBackgroundUrl
             ? {

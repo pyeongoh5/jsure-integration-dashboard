@@ -55,6 +55,7 @@ export type CampaignRow = {
   dailyPostTime: string;
   keyVisualUrl: string | null;
   listBackgroundUrl: string | null;
+  thumbnailUrl: string | null;
 };
 
 export function toCampaignSummary(campaign: CampaignRow): AdminCampaignSummary {
@@ -136,6 +137,7 @@ export function toCampaignDetail(
     dailyPostTime: campaign.dailyPostTime,
     keyVisualUrl: campaign.keyVisualUrl,
     listBackgroundUrl: campaign.listBackgroundUrl,
+    thumbnailUrl: campaign.thumbnailUrl,
     brands,
   };
 }

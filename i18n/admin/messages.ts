@@ -273,6 +273,16 @@ export const adminMessages = {
         en: "Background image behind the participating brand cards.",
         ja: "参加ブランドカード一覧の背景に敷かれる画像です。",
       },
+      thumbnail: {
+        ko: "응모 페이지 배너 썸네일",
+        en: "Entry page banner thumbnail",
+        ja: "応募ページのバナーサムネイル",
+      },
+      thumbnailHint: {
+        ko: "각 브랜드 응모 페이지 하단에 배너로 표시되고, 클릭하면 시즌(브랜드 목록) 페이지로 이동합니다.",
+        en: "Shown as a banner at the bottom of each entry page; tapping it opens the season (brand list) page.",
+        ja: "各応募ページ下部にバナーとして表示され、タップするとシーズン（ブランド一覧）ページに移動します。",
+      },
       lpShareImage: {
         ko: "LP 공유 미리보기 이미지",
         en: "LP share preview image",

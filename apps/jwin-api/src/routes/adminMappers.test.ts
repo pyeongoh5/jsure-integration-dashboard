@@ -68,6 +68,7 @@ describe('시즌·참여 매퍼', () => {
     dailyPostTime: '11:00',
     keyVisualUrl: null,
     listBackgroundUrl: null,
+    thumbnailUrl: null,
   };
 
   const brandCampaignRow = {

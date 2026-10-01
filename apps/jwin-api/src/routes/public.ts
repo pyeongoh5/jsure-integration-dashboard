@@ -109,7 +109,8 @@ export async function publicRoutes(app: FastifyInstance) {
         include: {
           campaign: true,
           prizes: { orderBy: { tier: 'asc' } },
-          posts: { where: { dateJst: dateJst(), status: 'POSTED' } },
+          posts: { where: { dateJst: dateJst(), status: 'POSTED' }, include: { template: true } },
+          postTemplates: true,
           brandAccount: { select: { label: true, slug: true, logoUrl: true, xUsername: true } },
         },
       });
@@ -117,9 +118,20 @@ export async function publicRoutes(app: FastifyInstance) {
 
       const todayPost = brandCampaign.posts[0];
       const brandXUsername = brandCampaign.brandAccount.xUsername;
+      // 응모 화면 상단 이미지: 당일 게시물의 소재 → 없으면 현재 유효한 소재의 첫 이미지
+      const now = new Date();
+      const activeTemplate =
+        todayPost?.template ??
+        brandCampaign.postTemplates.find(
+          (template) => template.activeFrom <= now && now <= template.activeTo,
+        );
       const lp: CampaignLp = {
         brandCampaignId: brandCampaign.id,
-        campaign: { name: brandCampaign.campaign.name, slug: brandCampaign.campaign.slug },
+        campaign: {
+          name: brandCampaign.campaign.name,
+          slug: brandCampaign.campaign.slug,
+          thumbnailUrl: brandCampaign.campaign.thumbnailUrl,
+        },
         brandName: brandCampaign.brandAccount.label,
         brandSlug: brandCampaign.brandAccount.slug,
         brandLogoUrl: brandCampaign.brandAccount.logoUrl,
@@ -132,6 +144,7 @@ export async function publicRoutes(app: FastifyInstance) {
             ? `https://x.com/${brandXUsername}/status/${todayPost.xPostId}`
             : null,
         dailyPostTime: brandCampaign.campaign.dailyPostTime,
+        postImageUrl: activeTemplate?.mediaUrls[0] ?? activeTemplate?.mediaUrl ?? null,
         prizeSummary: prizeSummaryOf(brandCampaign.prizes),
         prizes: brandCampaign.prizes.map((prize) => ({
           name: prize.name,

@@ -109,6 +109,8 @@ export const AdminCampaignCreateSchema = z.object({
   keyVisualUrl: z.string().url().nullable().optional(),
   /** 시즌 LP 브랜드 목록 영역의 배경 이미지 */
   listBackgroundUrl: z.string().url().nullable().optional(),
+  /** 응모 페이지 하단 배너 썸네일 — 클릭 시 시즌 LP(브랜드 목록)로 이동 */
+  thumbnailUrl: z.string().url().nullable().optional(),
 });
 export type AdminCampaignCreate = z.infer<typeof AdminCampaignCreateSchema>;
 
@@ -146,6 +148,7 @@ export const AdminCampaignDetailSchema = z.object({
   dailyPostTime: z.string(),
   keyVisualUrl: z.string().nullable().default(null),
   listBackgroundUrl: z.string().nullable().default(null),
+  thumbnailUrl: z.string().nullable().default(null),
   brands: z.array(AdminBrandCampaignListItemSchema),
 });
 export type AdminCampaignDetail = z.infer<typeof AdminCampaignDetailSchema>;

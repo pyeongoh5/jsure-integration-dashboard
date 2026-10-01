@@ -121,6 +121,15 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
           <span className={styles.hint}>{t("jwin.basic.listBackgroundHint")}</span>
         </div>
       </div>
+
+      <div className={styles.field}>
+        <JwinMediaUpload
+          labelKey="jwin.basic.thumbnail"
+          value={values.thumbnailUrl}
+          onChange={(url) => setField("thumbnailUrl", url)}
+        />
+        <span className={styles.hint}>{t("jwin.basic.thumbnailHint")}</span>
+      </div>
     </div>
   );
 }

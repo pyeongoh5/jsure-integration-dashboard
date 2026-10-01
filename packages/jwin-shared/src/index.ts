@@ -37,7 +37,12 @@ export interface CampaignLp {
   /** 참여(BrandCampaign) id — 응모 API 가 받는 값 */
   brandCampaignId: string;
   /** 속한 시즌 */
-  campaign: { name: string; slug: string };
+  campaign: {
+    name: string;
+    slug: string;
+    /** 시즌 LP 유도 배너 썸네일 — 응모 페이지 하단에 노출 */
+    thumbnailUrl: string | null;
+  };
   brandName: string;
   brandSlug: string;
   brandLogoUrl: string | null;
@@ -49,6 +54,8 @@ export interface CampaignLp {
   todayPostUrl: string | null;
   /** 매일 게시 시각 (JST "HH:mm") — 게시 전 안내 문구용 */
   dailyPostTime: string;
+  /** 당일 게시물(없으면 유효 소재)의 첫 번째 이미지 — 응모 화면 상단에 보여준다 */
+  postImageUrl: string | null;
   prizeSummary: string;
   /** 경품 목록 (티어순) — 규칙 페이지의 경품 항목 렌더용 */
   prizes: { name: string; totalQty: number }[];

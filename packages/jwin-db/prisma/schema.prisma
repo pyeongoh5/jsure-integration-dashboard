@@ -30,6 +30,8 @@ model Campaign {
   keyVisualUrl String?
   /// 시즌 LP 브랜드 목록 영역의 배경 이미지
   listBackgroundUrl String?
+  /// 응모 페이지 하단 배너 썸네일 — 클릭하면 시즌 LP(브랜드 목록)로 이동
+  thumbnailUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

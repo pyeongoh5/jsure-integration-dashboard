@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import type { CampaignLp } from '@jsure/jwin-shared';
 import { API_BASE } from '../../../../lib/api';
@@ -74,6 +75,15 @@ export default async function BrandCampaignLpPage({
         フォロー&リポストでその場で当たる！
       </p>
       <p style={{ fontSize: 14, color: '#555' }}>{campaign.prizeSummary}</p>
+      {campaign.postImageUrl && (
+        // 브랜드가 X 에 게시하는 소재의 첫 번째 이미지 — 트윗과 같은 비주얼을 보여준다
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={campaign.postImageUrl}
+          alt=""
+          style={{ width: '100%', borderRadius: 12, margin: '12px 0' }}
+        />
+      )}
       {campaign.todayPostUrl && (
         <p>
           <a href={campaign.todayPostUrl} target="_blank" rel="noreferrer">
@@ -83,6 +93,24 @@ export default async function BrandCampaignLpPage({
       )}
       <EntryClient campaign={campaign} />
       <WinHistory brandCampaignId={campaign.brandCampaignId} campaignEnded={new Date(campaign.endsAt).getTime() < Date.now()} />
+
+      {/* 시즌(브랜드 목록) 유도 배너 — 다른 참여 브랜드도 둘러보게 한다 */}
+      <Link
+        href={`/c/${campaign.campaign.slug}`}
+        style={{ display: 'block', marginTop: 32, textDecoration: 'none', color: 'inherit' }}
+      >
+        {campaign.campaign.thumbnailUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={campaign.campaign.thumbnailUrl}
+            alt={campaign.campaign.name}
+            style={{ width: '100%', borderRadius: 12 }}
+          />
+        )}
+        <span style={{ display: 'block', marginTop: 8, fontSize: 14, fontWeight: 700 }}>
+          他の参加ブランドもチェック →
+        </span>
+      </Link>
     </main>
   );
 }

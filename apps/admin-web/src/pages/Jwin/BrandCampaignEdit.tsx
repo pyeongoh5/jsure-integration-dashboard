@@ -10,7 +10,6 @@ import {
   activationChecklist,
   postTemplateCoverage,
   BrandCampaignBasicTab,
-  ConnectTab,
   PrizeTab,
   PostTemplateTab,
   ResultTab,
@@ -20,9 +19,9 @@ import type { AdminBrandCampaignDetail } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import styles from "./Jwin.module.css";
 
-type TabKey = "basic" | "connect" | "prize" | "template" | "result";
+type TabKey = "basic" | "prize" | "template" | "result";
 
-const TAB_KEYS: TabKey[] = ["basic", "connect", "prize", "template", "result"];
+const TAB_KEYS: TabKey[] = ["basic", "prize", "template", "result"];
 
 /**
  * 참여(브랜드 × 시즌) 편집. 기간·이름은 시즌이 갖고 여기서는 게시 설정·경품·포스트·결과화면을 다룬다.
@@ -108,11 +107,6 @@ export function JwinBrandCampaignEdit() {
               values={form.values}
               setField={form.setField}
             />
-          </div>
-        )}
-        {tab === "connect" && (
-          <div className={styles.tabCard}>
-            <ConnectTab detail={detail} />
           </div>
         )}
       </div>

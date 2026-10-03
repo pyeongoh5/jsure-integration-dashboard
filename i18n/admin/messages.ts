@@ -220,11 +220,10 @@ export const adminMessages = {
         },
       },
       tabs: {
-        basic: { ko: "기본", en: "Basic", ja: "基本" },
-        connect: { ko: "연동", en: "Account", ja: "連携" },
+        basic: { ko: "설정", en: "Settings", ja: "設定" },
         prize: { ko: "경품", en: "Prizes", ja: "景品" },
         template: { ko: "포스트", en: "Posts", ja: "投稿" },
-        result: { ko: "결과화면", en: "Result screen", ja: "結果画面" },
+        result: { ko: "결과화면·브랜드 링크", en: "Result & brand link", ja: "結果画面・ブランドリンク" },
       },
     },
     basic: {

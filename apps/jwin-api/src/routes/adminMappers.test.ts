@@ -106,6 +106,7 @@ describe('시즌·참여 매퍼', () => {
         cardImageUrl: null,
         rulesUrl: null,
         prUrl: null,
+        prBannerUrl: null,
         winMediaUrl: null,
         loseMediaUrl: null,
         dmTemplate: null,

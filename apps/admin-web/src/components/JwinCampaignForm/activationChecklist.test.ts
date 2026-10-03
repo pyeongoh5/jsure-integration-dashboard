@@ -30,6 +30,7 @@ const BASE_DETAIL: AdminBrandCampaignDetail = {
   dailyWinCap: null,
   rulesUrl: null,
   prUrl: null,
+  prBannerUrl: null,
   winMediaUrl: null,
   loseMediaUrl: null,
   dmTemplate: null,

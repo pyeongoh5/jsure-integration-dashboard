@@ -108,7 +108,6 @@ export const adminMessages = {
       columns: {
         name: { ko: "캠페인", en: "Campaign", ja: "キャンペーン" },
         brands: { ko: "브랜드", en: "Brands", ja: "ブランド" },
-        status: { ko: "상태", en: "Status", ja: "ステータス" },
         brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
         slug: { ko: "slug", en: "Slug", ja: "slug" },
         status: { ko: "상태", en: "Status", ja: "ステータス" },

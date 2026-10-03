@@ -35,6 +35,7 @@ function PrLink({ url }: { url: string | null }) {
 export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
   const [phase, setPhase] = useState<Phase>({ name: 'loading' });
   const [retrying, setRetrying] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
 
   useEffect(() => {
     api<{ loggedIn: boolean }>('/me')
@@ -66,6 +67,7 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
   /** 검증 재시도 — 응모 당일에만 유효 (F-5.3) */
   async function retryVerify(winnerId: string, prizeName: string) {
     setRetrying(true);
+    setVerifyError(null);
     try {
       const res = await api<{ ok: boolean; prizeType?: 'PHYSICAL' | 'CODE'; reason?: string }>(
         `/winners/${winnerId}/verify`,
@@ -93,6 +95,9 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
           },
         });
       }
+    } catch {
+      // 확인 실패가 화면 전체를 죽이면 안 된다 — 당첨 후보 상태를 유지하고 재시도를 열어둔다
+      setVerifyError('確認に失敗しました。時間をおいて再度お試しください。');
     } finally {
       setRetrying(false);
     }
@@ -192,6 +197,7 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
               () => retryVerify(result.winnerId, result.prizeName),
               retrying,
             )}
+            {verifyError && <p style={{ color: '#dc2626', fontSize: 14 }}>{verifyError}</p>}
           </>
         );
       }

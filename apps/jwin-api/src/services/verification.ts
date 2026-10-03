@@ -15,7 +15,10 @@ import { assignCodeAndSendDm } from './fulfillment';
 
 export type VerifyResult =
   | { ok: true; prizeType: 'PHYSICAL' | 'CODE' }
-  | { ok: false; reason: 'follow' | 'repost' | 'expired' | 'token' | 'not_found' };
+  | {
+      ok: false;
+      reason: 'follow' | 'repost' | 'expired' | 'token' | 'not_found' | 'x_error';
+    };
 
 export async function verifyWinner(winnerId: string, userId: string): Promise<VerifyResult> {
   const prisma = getPrisma();
@@ -37,7 +40,14 @@ export async function verifyWinner(winnerId: string, userId: string): Promise<Ve
   const brandXUserId = campaign.brandAccount?.xUserId;
   if (!brandXUserId || !post.xPostId) return { ok: false, reason: 'not_found' };
 
-  const follows = await checkFollows(token, brandXUserId);
+  // X API 장애·레이트리밋이 그대로 500 이 되면 화면이 죽는다(운영 실측) —
+  // 실패로 취급해 유저가 재시도할 수 있게 한다
+  let follows: boolean;
+  try {
+    follows = await checkFollows(token, brandXUserId);
+  } catch {
+    return { ok: false, reason: 'x_error' };
+  }
   if (!follows) {
     await prisma.winner.update({
       where: { id: winner.id },
@@ -46,7 +56,12 @@ export async function verifyWinner(winnerId: string, userId: string): Promise<Ve
     return { ok: false, reason: 'follow' };
   }
 
-  const reposted = await checkReposted(token, user.xUserId, post.xPostId);
+  let reposted: boolean;
+  try {
+    reposted = await checkReposted(token, user.xUserId, post.xPostId);
+  } catch {
+    return { ok: false, reason: 'x_error' };
+  }
   if (!reposted) {
     await prisma.winner.update({
       where: { id: winner.id },

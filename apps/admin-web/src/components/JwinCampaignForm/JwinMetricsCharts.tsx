@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useT } from "@/lib/i18n";
 import type { AdminMetricSnapshot } from "@/domains/jwin";
 import styles from "./JwinMetricsCharts.module.css";
@@ -14,9 +15,10 @@ function shortDate(dateJst: string): string {
   return `${Number(month)}/${Number(day)}`;
 }
 
-/** 팔로워 추이 — 단일 계열 라인. 마지막 점에 값·순증 직접 라벨. */
+/** 팔로워 추이 — 단일 계열 라인. 마지막 점 직접 라벨 + 포인트 호버 툴팁. */
 export function FollowerTrendChart({ snapshots }: { snapshots: AdminMetricSnapshot[] }) {
   const t = useT();
+  const [hovered, setHovered] = useState<number | null>(null);
   if (snapshots.length < 2) return null;
 
   const width = 1120;
@@ -38,8 +40,31 @@ export function FollowerTrendChart({ snapshots }: { snapshots: AdminMetricSnapsh
   const first = snapshots[0] as AdminMetricSnapshot;
   const delta = last.followerCount - first.followerCount;
 
+  const hoveredSnapshot = hovered !== null ? snapshots[hovered] : null;
+  const hoveredPrevious = hovered !== null && hovered > 0 ? snapshots[hovered - 1] : null;
+  const hoveredDelta =
+    hoveredSnapshot && hoveredPrevious
+      ? hoveredSnapshot.followerCount - hoveredPrevious.followerCount
+      : null;
+
   return (
-    <figure className={styles.figure}>
+    <figure className={`${styles.figure} ${styles.chartWrap}`}>
+      {/* 포인트 호버 툴팁 — 즉시 표시, 날짜·값·전일比 */}
+      {hoveredSnapshot && hovered !== null && (
+        <div
+          className={styles.tooltip}
+          style={{
+            left: `${(x(hovered) / width) * 100}%`,
+            top: `${(y(hoveredSnapshot.followerCount) / height) * 100}%`,
+          }}
+        >
+          <strong>{shortDate(hoveredSnapshot.dateJst)}</strong>{" "}
+          {hoveredSnapshot.followerCount.toLocaleString()}
+          {hoveredDelta !== null && hoveredDelta !== 0 && (
+            <span> ({hoveredDelta > 0 ? "+" : ""}{hoveredDelta.toLocaleString()})</span>
+          )}
+        </div>
+      )}
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className={styles.lineChart}
@@ -65,13 +90,21 @@ export function FollowerTrendChart({ snapshots }: { snapshots: AdminMetricSnapsh
         />
         {snapshots.map((snapshot, index) => (
           <g key={`${snapshot.dateJst}-${snapshot.kind}`}>
-            <circle cx={x(index)} cy={y(snapshot.followerCount)} r={4} className={styles.dot} />
-            {/* 히트 타깃은 마크보다 크게 — 네이티브 툴팁 */}
-            <circle cx={x(index)} cy={y(snapshot.followerCount)} r={12} fill="transparent">
-              <title>
-                {shortDate(snapshot.dateJst)} · {snapshot.followerCount.toLocaleString()}
-              </title>
-            </circle>
+            <circle
+              cx={x(index)}
+              cy={y(snapshot.followerCount)}
+              r={hovered === index ? 6 : 4}
+              className={styles.dot}
+            />
+            {/* 히트 타깃은 마크보다 크게 */}
+            <circle
+              cx={x(index)}
+              cy={y(snapshot.followerCount)}
+              r={14}
+              fill="transparent"
+              onMouseEnter={() => setHovered(index)}
+              onMouseLeave={() => setHovered(null)}
+            />
           </g>
         ))}
         {/* 마지막 값 직접 라벨 */}

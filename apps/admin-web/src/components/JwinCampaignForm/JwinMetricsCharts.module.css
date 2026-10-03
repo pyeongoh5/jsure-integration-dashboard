@@ -44,3 +44,32 @@
   font-size: 11px;
   fill: var(--text-muted, #9ca3af);
 }
+
+/* 호버 툴팁 — 포인트 좌표(%) 기준으로 위에 띄운다 */
+.chartWrap {
+  position: relative;
+}
+
+.tooltip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 10px));
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #111827;
+  color: #fff;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: #111827;
+}

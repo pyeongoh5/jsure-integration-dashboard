@@ -1014,7 +1014,7 @@ export async function adminRoutes(app: FastifyInstance) {
     '/admin/brand-campaigns/:id/metrics',
     async (req, reply) => {
       if (!requireAdmin(req, reply)) return;
-      const [snapshots, entriesByDate, uniqueUsers, totalEntries] = await Promise.all([
+      const [snapshots, uniqueUsers, totalEntries] = await Promise.all([
         prisma.brandMetricSnapshot.findMany({
           where: { campaignId: req.params.id },
           orderBy: [{ dateJst: 'asc' }, { kind: 'asc' }],
@@ -1029,26 +1029,12 @@ export async function adminRoutes(app: FastifyInstance) {
           },
         }),
         prisma.entry.groupBy({
-          by: ['dateJst'],
-          where: { campaignId: req.params.id },
-          _count: { _all: true },
-          orderBy: { dateJst: 'asc' },
-        }),
-        prisma.entry.groupBy({
           by: ['userId'],
           where: { campaignId: req.params.id },
         }),
         prisma.entry.count({ where: { campaignId: req.params.id } }),
       ]);
-      return {
-        snapshots,
-        entriesByDate: entriesByDate.map((row) => ({
-          dateJst: row.dateJst,
-          count: row._count._all,
-        })),
-        uniqueEntrants: uniqueUsers.length,
-        totalEntries,
-      };
+      return { snapshots, uniqueEntrants: uniqueUsers.length, totalEntries };
     },
   );
 

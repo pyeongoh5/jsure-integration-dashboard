@@ -808,6 +808,8 @@ export const adminMessages = {
         brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
         followerDelta: { ko: "팔로워 증감", en: "Follower change", ja: "フォロワー増減" },
       },
+      selectCampaign: { ko: "캠페인", en: "Campaign", ja: "キャンペーン" },
+      selectBrand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
       uniqueEntrants: { ko: "고유 응모자", en: "Unique entrants", ja: "ユニーク応募者" },
       dailyTitle: { ko: "데일리 지표", en: "Daily metrics", ja: "デイリー指標" },
       noBrands: { ko: "참여 브랜드 없음", en: "No brands", ja: "参加ブランドなし" },
@@ -1005,7 +1007,6 @@ export const adminMessages = {
       metricsDate: { ko: "일자 (JST)", en: "Date (JST)", ja: "日付 (JST)" },
       metricsDelta: { ko: "팔로워 증감", en: "Change", ja: "増減" },
       chartFollowers: { ko: "팔로워 추이", en: "Follower trend", ja: "フォロワー推移" },
-      chartEntriesByWeekday: { ko: "요일별 응모", en: "Entries by weekday", ja: "曜日別応募" },
       metricsImpressions: { ko: "노출", en: "Impressions", ja: "インプレッション" },
       stockTitle: { ko: "경품별 잔여 재고", en: "Stock left by prize", ja: "景品別の残り在庫" },
       stockEmpty: {

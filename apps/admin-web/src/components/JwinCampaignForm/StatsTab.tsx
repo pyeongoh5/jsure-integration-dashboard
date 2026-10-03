@@ -21,8 +21,8 @@ type StatCard = {
 };
 
 function statCards(stats: AdminCampaignStats): StatCard[] {
+  // 응모 수는 통계 페이지 상단 타일이 보여준다 — 여기서는 당첨·이행 쪽만
   return [
-    { labelKey: "jwin.stats.entries", value: stats.entries },
     { labelKey: "jwin.stats.winConfirmed", value: stats.winConfirmed },
     { labelKey: "jwin.stats.winPendingToday", value: stats.winPendingToday },
     { labelKey: "jwin.stats.unfulfilledWins", value: stats.unfulfilledWins, warnWhenPositive: true },

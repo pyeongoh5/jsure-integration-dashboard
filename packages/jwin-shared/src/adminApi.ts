@@ -261,8 +261,6 @@ export type AdminMetricSnapshot = z.infer<typeof AdminMetricSnapshotSchema>;
 /** GET /admin/brand-campaigns/:id/metrics — 날짜 오름차순 */
 export const AdminBrandMetricsSchema = z.object({
   snapshots: z.array(AdminMetricSnapshotSchema),
-  /** 일별 응모 수 — 요일별 분포·추이 계산용 */
-  entriesByDate: z.array(z.object({ dateJst: z.string(), count: z.number().int() })).default([]),
   /** 고유 응모자 수 (기간 전체) */
   uniqueEntrants: z.number().int().default(0),
   /** 총 응모 수 */

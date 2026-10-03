@@ -40,7 +40,6 @@ export function FollowerTrendChart({ snapshots }: { snapshots: AdminMetricSnapsh
 
   return (
     <figure className={styles.figure}>
-      <figcaption className={styles.caption}>{t("jwin.stats.chartFollowers")}</figcaption>
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className={styles.lineChart}
@@ -97,102 +96,6 @@ export function FollowerTrendChart({ snapshots }: { snapshots: AdminMetricSnapsh
           {shortDate(last.dateJst)}
         </text>
       </svg>
-    </figure>
-  );
-}
-
-/**
- * 요일별 응모 분포 도넛 — 중앙에 총 응모 수. 요일 7개는 검증된 팔레트
- * 1~7번 슬롯 고정 순서(인접쌍 검증 통과), 범례에 요일·건수를 함께 쓴다.
- */
-const WEEKDAY_COLORS = [
-  "#2a78d6",
-  "#eb6834",
-  "#1baf7a",
-  "#eda100",
-  "#e87ba4",
-  "#008300",
-  "#4a3aa7",
-] as const;
-
-const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] as const;
-
-export function EntriesDonut({
-  byWeekday,
-  totalEntries,
-}: {
-  /** 월~일 순서 7칸 */
-  byWeekday: number[];
-  totalEntries: number;
-}) {
-  const t = useT();
-  const size = 160;
-  const radius = 62;
-  const strokeWidth = 22;
-  const circumference = 2 * Math.PI * radius;
-  const total = Math.max(1, totalEntries);
-
-  let offset = 0;
-  const segments = byWeekday.map((count, index) => {
-    const fraction = count / total;
-    const segment = { index, count, fraction, offset };
-    offset += fraction;
-    return segment;
-  });
-
-  return (
-    <figure className={styles.figure}>
-      <figcaption className={styles.caption}>{t("jwin.stats.chartEntriesByWeekday")}</figcaption>
-      <div className={styles.donutRow}>
-        <div className={styles.donutWrap}>
-          <svg viewBox={`0 0 ${size} ${size}`} className={styles.donut} role="img">
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              fill="none"
-              stroke="#f3f4f6"
-              strokeWidth={strokeWidth}
-            />
-            {segments.map(
-              (segment) =>
-                segment.count > 0 && (
-                  <circle
-                    key={segment.index}
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="none"
-                    stroke={WEEKDAY_COLORS[segment.index]}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={`${Math.max(0, segment.fraction * circumference - 2)} ${circumference}`}
-                    strokeDashoffset={-segment.offset * circumference}
-                    transform={`rotate(-90 ${size / 2} ${size / 2})`}
-                  >
-                    <title>
-                      {WEEKDAY_LABELS[segment.index]} · {segment.count.toLocaleString()}
-                    </title>
-                  </circle>
-                ),
-            )}
-          </svg>
-          <div className={styles.donutCenter}>
-            <span className={styles.donutTotal}>{totalEntries.toLocaleString()}</span>
-            <span className={styles.donutTotalLabel}>{t("jwin.stats.entries")}</span>
-          </div>
-        </div>
-        <ul className={styles.donutLegend}>
-          {segments.map((segment) => (
-            <li key={segment.index} className={styles.legendItem}>
-              <span
-                className={styles.legendChip}
-                style={{ background: WEEKDAY_COLORS[segment.index] }}
-              />
-              {WEEKDAY_LABELS[segment.index]} {segment.count.toLocaleString()}
-            </li>
-          ))}
-        </ul>
-      </div>
     </figure>
   );
 }

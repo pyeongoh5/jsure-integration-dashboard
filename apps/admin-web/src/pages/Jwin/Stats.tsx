@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui";
 import { ScrollTable } from "@/components/composites";
-import {
-  EntriesDonut,
-  FollowerTrendChart,
-  StatTile,
-  StatsTab,
-} from "@/components/JwinCampaignForm";
-import {
-  entriesByWeekday,
-  useJwinBrandMetrics,
-} from "@/components/JwinCampaignForm/useJwinBrandMetrics";
+import { FollowerTrendChart, StatTile, StatsTab } from "@/components/JwinCampaignForm";
+import { useJwinBrandMetrics } from "@/components/JwinCampaignForm/useJwinBrandMetrics";
 import {
   buildJwinMetricsCsv,
   jwinMetricsCsvFilename,
@@ -41,7 +34,7 @@ function DeltaCell({ current, previous }: { current: number | null; previous: nu
 
 /**
  * 캠페인 통계 — 캠페인·브랜드를 셀렉트로 고르고,
- * 상단: 팔로워 추이(라인) / 요일별 응모(도넛, 중앙 총 응모) / 고유 응모자(타일)
+ * 상단: 팔로워 추이(라인) / 총 응모 수·고유 응모자 수(타일)
  * 하단: 데일리 테이블(팔로워·리포스트·좋아요·노출 — 전일 대비 증감 병기) + 운영 현황.
  */
 export function JwinStats() {
@@ -97,44 +90,54 @@ export function JwinStats() {
       <h1 className={styles.title}>{t("jwin.statsPage.title")}</h1>
 
       <div className={styles.filterRow}>
-        <select
-          className={styles.select}
-          value={campaignId ?? ""}
-          onChange={(event) => {
-            setCampaignId(event.target.value || null);
-            setBrandCampaignId(null);
-          }}
-        >
-          {campaignRows.map((campaign) => (
-            <option key={campaign.id} value={campaign.id}>
-              {campaign.name} ({campaign.period})
-            </option>
-          ))}
-        </select>
+        <label className={styles.filterField}>
+          <span className={styles.filterLabel}>{t("jwin.statsPage.selectCampaign")}</span>
+          <select
+            className={styles.select}
+            value={campaignId ?? ""}
+            onChange={(event) => {
+              setCampaignId(event.target.value || null);
+              setBrandCampaignId(null);
+            }}
+          >
+            {campaignRows.map((campaign) => (
+              <option key={campaign.id} value={campaign.id}>
+                {campaign.name} ({campaign.period})
+              </option>
+            ))}
+          </select>
+        </label>
 
-        <select
-          className={styles.select}
-          value={brandCampaignId ?? ""}
-          onChange={(event) => setBrandCampaignId(event.target.value || null)}
-          disabled={brandCampaigns.rows.length === 0}
-        >
-          {brandCampaigns.rows.length === 0 && (
-            <option value="">{t("jwin.statsPage.noBrands")}</option>
-          )}
-          {brandCampaigns.rows.map((brand) => (
-            <option key={brand.id} value={brand.id}>
-              {brand.brandName}
-            </option>
-          ))}
-        </select>
+        <label className={styles.filterField}>
+          <span className={styles.filterLabel}>{t("jwin.statsPage.selectBrand")}</span>
+          <select
+            className={styles.select}
+            value={brandCampaignId ?? ""}
+            onChange={(event) => setBrandCampaignId(event.target.value || null)}
+            disabled={brandCampaigns.rows.length === 0}
+          >
+            {brandCampaigns.rows.length === 0 && (
+              <option value="">{t("jwin.statsPage.noBrands")}</option>
+            )}
+            {brandCampaigns.rows.map((brand) => (
+              <option key={brand.id} value={brand.id}>
+                {brand.brandName}
+              </option>
+            ))}
+          </select>
+        </label>
 
-        <button
-          className={styles.exportButton}
-          onClick={() => void handleExport()}
-          disabled={exporting || !campaignId}
-        >
-          {exporting ? t("jwin.statsPage.exporting") : t("jwin.statsPage.exportCsv")}
-        </button>
+        <div className={styles.exportSlot}>
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => void handleExport()}
+            disabled={exporting || !campaignId}
+          >
+            <i className="fa-solid fa-download" aria-hidden="true" />{" "}
+            {exporting ? t("jwin.statsPage.exporting") : t("jwin.statsPage.exportCsv")}
+          </Button>
+        </div>
       </div>
 
       {campaigns.state.kind === "error" && (
@@ -146,9 +149,11 @@ export function JwinStats() {
 
       {brandCampaignId && (
         <>
-          {/* 상단 — 추세·분포·헤드라인 숫자 */}
+          {/* 상단 — 추세 차트 + 헤드라인 숫자 */}
           <div className={styles.chartsRow}>
             <div className={styles.card}>
+              {/* 데이터가 없어도 어떤 지표인지 제목은 보여준다 */}
+              <h2 className={styles.sectionTitle}>{t("jwin.stats.chartFollowers")}</h2>
               {snapshots.length >= 2 ? (
                 <FollowerTrendChart snapshots={snapshots} />
               ) : (
@@ -156,10 +161,7 @@ export function JwinStats() {
               )}
             </div>
             <div className={styles.card}>
-              <EntriesDonut
-                byWeekday={entriesByWeekday(metrics.data.entriesByDate)}
-                totalEntries={metrics.data.totalEntries}
-              />
+              <StatTile label={t("jwin.stats.entries")} value={metrics.data.totalEntries} />
             </div>
             <div className={styles.card}>
               <StatTile

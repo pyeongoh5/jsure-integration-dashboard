@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from 'react';
 import { api } from '../../../../lib/api';
+import styles from './shipping.module.css';
 
 type ShippingForm = {
   fullName: string;
@@ -18,7 +19,7 @@ type ShippingState = {
   xUsername: string;
   closed: boolean;
   entered: boolean;
-  shipping: (Partial<ShippingForm> & { nameKana?: string }) | null;
+  shipping: Partial<ShippingForm> | null;
 };
 
 const EMPTY: ShippingForm = {
@@ -34,6 +35,7 @@ const EMPTY: ShippingForm = {
 /**
  * 현물 당첨자 배송지 입력 폼 (§3.2 경품=현물 분기).
  * 새로고침·재진입하면 저장된 값을 불러와 복구하고, 마감 전까지는 수정도 가능하다.
+ * 톤앤매너는 jsure-dashboard(client-web) 디자인 토큰을 따른다.
  */
 export default function ShippingPage({ params }: { params: Promise<{ winnerId: string }> }) {
   const { winnerId } = use(params);
@@ -81,103 +83,126 @@ export default function ShippingPage({ params }: { params: Promise<{ winnerId: s
     }
   }
 
-  if (loadError) {
-    return <main style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}>{loadError}</main>;
-  }
-  if (!state) {
-    return <main style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}>読み込み中…</main>;
-  }
+  const shell = (children: React.ReactNode) => (
+    <div className={styles.page}>
+      <div className={styles.card}>{children}</div>
+    </div>
+  );
+
+  if (loadError) return shell(<p style={{ margin: 0 }}>{loadError}</p>);
+  if (!state) return shell(<p style={{ margin: 0, color: '#6b7280' }}>読み込み中…</p>);
 
   if (state.closed && !state.entered) {
-    return (
-      <main style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}>
-        <h2>配送先の入力は締め切りました</h2>
-        <p>キャンペーン終了のため、配送先の入力を受け付けられません。</p>
-      </main>
+    return shell(
+      <>
+        <h2 className={styles.title}>配送先の入力は締め切りました</h2>
+        <p className={styles.subtitle}>
+          キャンペーン終了のため、配送先の入力を受け付けられません。
+        </p>
+      </>,
     );
   }
 
   // 입력 완료 화면 — 마감 전이면 수정 입구를 열어둔다
   if (!editing) {
-    return (
-      <main style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}>
-        <h2>配送先を受け付けました</h2>
-        <p>
+    const summaryRow = (label: string, value?: string) =>
+      value ? (
+        <div className={styles.summaryRow}>
+          <span className={styles.summaryLabel}>{label}</span>
+          <span>{value}</span>
+        </div>
+      ) : null;
+    return shell(
+      <>
+        <h2 className={styles.title}>配送先を受け付けました</h2>
+        <p className={styles.subtitle}>
           <strong>{state.prizeName}</strong> の発送までしばらくお待ちください。
         </p>
         {state.shipping && (
-          <p style={{ fontSize: 14, color: '#555' }}>
-            {state.shipping.fullName} 様／〒{state.shipping.postalCode}／
-            {state.shipping.prefecture}
-            {state.shipping.address1} {state.shipping.address2}
-          </p>
+          <div className={styles.summary}>
+            {summaryRow('お名前', state.shipping.fullName)}
+            {summaryRow('フリガナ', state.shipping.nameKana)}
+            {summaryRow('電話番号', state.shipping.phone)}
+            {summaryRow('郵便番号', state.shipping.postalCode)}
+            {summaryRow(
+              '住所',
+              `${state.shipping.prefecture ?? ''}${state.shipping.address1 ?? ''} ${state.shipping.address2 ?? ''}`.trim(),
+            )}
+          </div>
         )}
         {!state.closed && (
-          <button onClick={() => setEditing(true)} style={{ padding: '10px 24px' }}>
+          <button className={styles.secondaryButton} onClick={() => setEditing(true)}>
             配送先を修正する
           </button>
         )}
-      </main>
+      </>,
     );
   }
 
   const field = (
     key: keyof ShippingForm,
     label: string,
-    options: { required?: boolean; placeholder?: string; pattern?: string; title?: string } = {},
+    options: {
+      required?: boolean;
+      placeholder?: string;
+      pattern?: string;
+      title?: string;
+      hint?: string;
+    } = {},
   ) => (
-    <label style={{ display: 'block', marginBottom: 12 }}>
-      {label}
-      {options.required !== false && <span style={{ color: 'crimson' }}> *</span>}
+    <label className={styles.field}>
+      <span className={styles.label}>
+        {label}
+        {options.required !== false && <span className={styles.required}>*</span>}
+      </span>
       <input
+        className={styles.input}
         required={options.required !== false}
         value={form[key]}
         placeholder={options.placeholder}
         pattern={options.pattern}
         title={options.title}
         onChange={(changeEvent) => setForm({ ...form, [key]: changeEvent.target.value })}
-        style={{ display: 'block', width: '100%', padding: 8, marginTop: 4 }}
       />
+      {options.hint && <span className={styles.hint}>{options.hint}</span>}
     </label>
   );
 
-  return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: 24 }}>
-      <h2>配送先の入力</h2>
-      <p style={{ fontSize: 14, color: '#555' }}>
+  return shell(
+    <>
+      <h2 className={styles.title}>配送先の入力</h2>
+      <p className={styles.subtitle}>
         賞品: <strong>{state.prizeName}</strong>
       </p>
 
-      <label style={{ display: 'block', marginBottom: 12 }}>
-        X（旧Twitter）ユーザー名
-        <input
-          value={`@${state.xUsername}`}
-          disabled
-          style={{ display: 'block', width: '100%', padding: 8, marginTop: 4, background: '#f3f4f6' }}
-        />
+      <label className={styles.field}>
+        <span className={styles.label}>X（旧Twitter）ユーザー名</span>
+        <input className={styles.input} value={`@${state.xUsername}`} disabled />
       </label>
 
       <form onSubmit={submit}>
         {field('fullName', 'お名前')}
         {field('nameKana', 'お名前（フリガナ）', { placeholder: 'ヤマダ タロウ' })}
-        {field('phone', '電話番号（ハイフンなし）', {
+        {field('phone', '電話番号', {
           placeholder: '09012345678',
           pattern: '[0-9]{10,11}',
           title: 'ハイフンなしの数字10〜11桁',
+          hint: 'ハイフンなしで入力してください',
         })}
-        {field('postalCode', '郵便番号（ハイフンあり）', {
+        {field('postalCode', '郵便番号', {
           placeholder: '123-4567',
           pattern: '[0-9]{3}-[0-9]{4}',
           title: '例: 123-4567',
+          hint: 'ハイフンありで入力してください',
         })}
-        {field('prefecture', '都道府県')}
+        {field('prefecture', '都道府県', { placeholder: '東京都' })}
         {field('address1', '住所（市区町村・番地）')}
         {field('address2', '建物名・部屋番号', { required: false })}
-        {error && <p style={{ color: 'crimson' }}>{error}</p>}
-        <button type="submit" disabled={saving} style={{ padding: '12px 32px' }}>
+        {error && <p className={styles.error}>{error}</p>}
+        <button type="submit" className={styles.submit} disabled={saving}>
           {saving ? '送信中…' : '送信する'}
         </button>
       </form>
-    </main>
+    </>,
   );
 }

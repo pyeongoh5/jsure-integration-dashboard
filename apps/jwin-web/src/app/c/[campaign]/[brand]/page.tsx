@@ -182,31 +182,31 @@ export default async function BrandCampaignLpPage({
           />
         </div>
 
-        {/* 시즌(브랜드 목록) 유도 배너 — 다른 참여 브랜드도 둘러보게 한다 */}
+        {/* 시즌(브랜드 목록) 유도 배너 — 썸네일이 곧 배너, 없을 때만 텍스트 링크로 폴백 */}
         <div style={{ padding: '32px 24px 0' }}>
           <Link
             href={`/c/${campaign.campaign.slug}`}
             style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
           >
-            {campaign.campaign.thumbnailUrl && (
+            {campaign.campaign.thumbnailUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={campaign.campaign.thumbnailUrl}
-                alt={campaign.campaign.name}
-                style={{ width: '100%', borderRadius: 12 }}
+                alt={`${campaign.campaign.name} — 他の参加ブランドもチェック`}
+                style={{ display: 'block', width: '100%', borderRadius: 12 }}
               />
+            ) : (
+              <span
+                style={{
+                  display: 'block',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textAlign: 'center',
+                }}
+              >
+                他の参加ブランドもチェック →
+              </span>
             )}
-            <span
-              style={{
-                display: 'block',
-                marginTop: 8,
-                fontSize: 14,
-                fontWeight: 700,
-                textAlign: 'center',
-              }}
-            >
-              他の参加ブランドもチェック →
-            </span>
           </Link>
         </div>
 

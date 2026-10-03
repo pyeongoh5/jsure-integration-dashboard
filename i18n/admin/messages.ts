@@ -288,16 +288,6 @@ export const adminMessages = {
         en: "Shown as a banner at the bottom of each entry page; tapping it opens the season (brand list) page.",
         ja: "各応募ページ下部にバナーとして表示され、タップするとシーズン（ブランド一覧）ページに移動します。",
       },
-      lpShareImage: {
-        ko: "LP 공유 미리보기 이미지",
-        en: "LP share preview image",
-        ja: "LP共有プレビュー画像",
-      },
-      lpShareImageHint: {
-        ko: "응모 페이지 링크를 X·메신저 등에 공유할 때 표시되는 미리보기(og:image)입니다. 게시 포스트에는 나가지 않습니다.",
-        en: "Preview image (og:image) shown when the entry page link is shared on X or messengers. Not used in posted tweets.",
-        ja: "応募ページのリンクをXやメッセンジャーで共有したときに表示されるプレビュー（og:image）です。投稿ツイートには使われません。",
-      },
       error: {
         brandNameRequired: {
           ko: "브랜드명을 입력하세요.",

@@ -28,7 +28,6 @@ const BASE_DETAIL: AdminBrandCampaignDetail = {
     endsAt: "2026-09-05T14:59:00.000Z",
   },
   dailyWinCap: null,
-  cardImageUrl: null,
   rulesUrl: null,
   prUrl: null,
   winMediaUrl: null,

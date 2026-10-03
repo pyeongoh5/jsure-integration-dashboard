@@ -167,8 +167,6 @@ export type AdminBrandCampaignCreate = z.infer<typeof AdminBrandCampaignCreateSc
 export const AdminBrandCampaignPatchSchema = z.object({
   status: CampaignStatusSchema.optional(),
   dailyWinCap: z.number().int().positive().nullable().optional(),
-  /** 링크 카드 이미지 (LP 의 og:image) */
-  cardImageUrl: z.string().url().nullable().optional(),
   /** 이벤트 규칙 가이드 URL — 포스트 본문에 텍스트 링크로 나간다 */
   rulesUrl: z.string().url().nullable().optional(),
   prUrl: z.string().url().nullable().optional(),
@@ -215,7 +213,6 @@ export const AdminBrandCampaignDetailSchema = z.object({
   id: z.string(),
   status: CampaignStatusSchema,
   dailyWinCap: z.number().int().nullable(),
-  cardImageUrl: z.string().nullable(),
   rulesUrl: z.string().nullable(),
   prUrl: z.string().nullable(),
   prBannerUrl: z.string().nullable(),

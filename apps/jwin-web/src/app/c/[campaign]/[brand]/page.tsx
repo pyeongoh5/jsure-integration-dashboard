@@ -45,7 +45,8 @@ export async function generateMetadata({
 
   const title = `${campaign.brandName} キャンペーン`;
   const description = campaign.prizeSummary || 'フォロー&リポストでその場で当たる！';
-  const images = campaign.cardImageUrl ? [campaign.cardImageUrl] : [];
+  // og:image 는 포스트 소재의 첫 번째 이미지를 그대로 쓴다 — 별도 업로드 불필요
+  const images = campaign.postImageUrl ? [campaign.postImageUrl] : [];
 
   return {
     title,

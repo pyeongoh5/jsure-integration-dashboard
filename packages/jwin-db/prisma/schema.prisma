@@ -57,9 +57,6 @@ model BrandCampaign {
   status        CampaignStatus @default(SETUP)
   // 추첨 설정
   dailyWinCap   Int? // 일별 당첨 상한 (null = 무제한, 재고만 따름)
-  /// 트윗 링크 카드(summary_large_image)에 쓰는 이미지 — LP 의 og:image 로 내려간다.
-  /// 카드 이미지를 누르면 LP 가 열린다(첨부 이미지는 뷰어가 열려서 링크 이동이 안 된다).
-  cardImageUrl  String?
   /// 이벤트 규칙 가이드 URL — 포스트 본문에 텍스트 링크로 함께 나간다.
   rulesUrl      String?
   // 결과 화면 (F-6.5)

@@ -180,7 +180,6 @@ export async function publicRoutes(app: FastifyInstance) {
           name: prize.name,
           totalQty: prize.totalQty,
         })),
-        cardImageUrl: brandCampaign.cardImageUrl,
         rulesUrl: brandCampaign.rulesUrl,
         prUrl: brandCampaign.prUrl,
         prBannerUrl: brandCampaign.prBannerUrl,

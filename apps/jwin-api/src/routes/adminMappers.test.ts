@@ -103,7 +103,6 @@ describe('시즌·참여 매퍼', () => {
         id: 'bc-1',
         status: 'ACTIVE',
         dailyWinCap: null,
-        cardImageUrl: null,
         rulesUrl: null,
         prUrl: null,
         prBannerUrl: null,

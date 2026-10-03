@@ -66,8 +66,6 @@ export interface CampaignLp {
   prizeSummary: string;
   /** 경품 목록 (티어순) — 규칙 페이지의 경품 항목 렌더용 */
   prizes: { name: string; totalQty: number }[];
-  /** 트윗 링크 카드용 이미지 — LP 의 og:image 로 쓴다 */
-  cardImageUrl: string | null;
   /** 이벤트 규칙 가이드 URL */
   rulesUrl: string | null;
   prUrl: string | null;

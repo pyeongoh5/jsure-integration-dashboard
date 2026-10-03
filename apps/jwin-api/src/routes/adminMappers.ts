@@ -36,7 +36,6 @@ export type BrandCampaignRow = {
   id: string;
   status: string;
   dailyWinCap: number | null;
-  cardImageUrl: string | null;
   rulesUrl: string | null;
   prUrl: string | null;
   prBannerUrl: string | null;
@@ -78,7 +77,6 @@ export function toBrandCampaignDetail(
     id: brandCampaign.id,
     status: brandCampaign.status as AdminBrandCampaignDetail['status'],
     dailyWinCap: brandCampaign.dailyWinCap,
-    cardImageUrl: brandCampaign.cardImageUrl,
     rulesUrl: brandCampaign.rulesUrl,
     prUrl: brandCampaign.prUrl,
     prBannerUrl: brandCampaign.prBannerUrl,

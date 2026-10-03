@@ -39,12 +39,6 @@
 }
 
 /* 연동 탭 */
-.connect {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-width: 640px;
-}
 
 .accountSelect {
   width: 100%;

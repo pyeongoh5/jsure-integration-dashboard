@@ -63,7 +63,9 @@ model BrandCampaign {
   /// 이벤트 규칙 가이드 URL — 포스트 본문에 텍스트 링크로 함께 나간다.
   rulesUrl      String?
   // 결과 화면 (F-6.5)
-  prUrl         String? // PR 전환 대상 URL — 결과 화면에서 브랜드 사이트로 유도
+  prUrl         String? // PR 전환 대상 URL — 결과 화면·LP 하단 배너에서 브랜드 사이트로 유도
+  /// LP 하단 브랜드 배너 이미지 (16:9 권장) — 클릭하면 prUrl 로 이동
+  prBannerUrl   String?
   winMediaUrl   String? // 당첨 결과 이미지/동영상
   loseMediaUrl  String? // 낙첨 결과 이미지/동영상
   // 당첨 DM 문구 (F-6.1) — 플레이스홀더: {{CODE}} {{PRIZE_NAME}} {{USERNAME}} {{BRAND_NAME}}

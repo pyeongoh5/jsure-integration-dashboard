@@ -172,6 +172,8 @@ export const AdminBrandCampaignPatchSchema = z.object({
   /** 이벤트 규칙 가이드 URL — 포스트 본문에 텍스트 링크로 나간다 */
   rulesUrl: z.string().url().nullable().optional(),
   prUrl: z.string().url().nullable().optional(),
+  /** LP 하단 브랜드 배너 (16:9 권장) — 클릭 시 prUrl 로 이동 */
+  prBannerUrl: z.string().url().nullable().optional(),
   winMediaUrl: z.string().url().nullable().optional(),
   loseMediaUrl: z.string().url().nullable().optional(),
   dmTemplate: z.string().max(1000).nullable().optional(),
@@ -216,6 +218,7 @@ export const AdminBrandCampaignDetailSchema = z.object({
   cardImageUrl: z.string().nullable(),
   rulesUrl: z.string().nullable(),
   prUrl: z.string().nullable(),
+  prBannerUrl: z.string().nullable(),
   winMediaUrl: z.string().nullable(),
   loseMediaUrl: z.string().nullable(),
   dmTemplate: z.string().nullable(),

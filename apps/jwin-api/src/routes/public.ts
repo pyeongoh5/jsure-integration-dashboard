@@ -183,6 +183,7 @@ export async function publicRoutes(app: FastifyInstance) {
         cardImageUrl: brandCampaign.cardImageUrl,
         rulesUrl: brandCampaign.rulesUrl,
         prUrl: brandCampaign.prUrl,
+        prBannerUrl: brandCampaign.prBannerUrl,
         winMediaUrl: brandCampaign.winMediaUrl,
         loseMediaUrl: brandCampaign.loseMediaUrl,
       };

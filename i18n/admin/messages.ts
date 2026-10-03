@@ -751,6 +751,16 @@ export const adminMessages = {
     result: {
       title: { ko: "결과화면 / DM", en: "Result screen / DM", ja: "結果画面 / DM" },
       prUrl: { ko: "브랜드 사이트 URL", en: "Brand site URL", ja: "ブランドサイトURL" },
+      prBanner: {
+        ko: "브랜드 배너 (LP 하단)",
+        en: "Brand banner (bottom of LP)",
+        ja: "ブランドバナー（LP下部）",
+      },
+      prBannerHint: {
+        ko: "응모 페이지 하단에 표시되고, 클릭하면 위의 PR URL로 이동합니다. 16:9 가로 배너 권장 (예: 750×422).",
+        en: "Shown at the bottom of the entry page; tapping opens the PR URL above. 16:9 recommended (e.g. 750×422).",
+        ja: "応募ページ下部に表示され、タップすると上記のPR URLに移動します。16:9推奨（例: 750×422）。",
+      },
       prUrlHint: {
         ko: "결과 화면의 유도 버튼에 씁니다. 비우면 버튼이 나오지 않습니다.",
         en: "Used for the call-to-action button on the result screen. Leave empty to hide the button.",

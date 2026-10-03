@@ -14,6 +14,8 @@ export type JwinResultFormValues = {
   winMediaUrl: string | null;
   loseMediaUrl: string | null;
   prUrl: string;
+  /** LP 하단 브랜드 배너 (16:9) — 클릭 시 prUrl 로 이동 */
+  prBannerUrl: string | null;
   dmTemplate: string;
 };
 
@@ -36,6 +38,7 @@ function toValues(detail: AdminBrandCampaignDetail): JwinResultFormValues {
     winMediaUrl: detail.winMediaUrl,
     loseMediaUrl: detail.loseMediaUrl,
     prUrl: detail.prUrl ?? "",
+    prBannerUrl: detail.prBannerUrl,
     dmTemplate: detail.dmTemplate ?? "",
   };
 }
@@ -87,6 +90,7 @@ export function useJwinResultForm(
       loseMediaUrl: values.loseMediaUrl,
       // 빈 문자열은 서버 z.string().url() 을 통과하지 못한다
       prUrl: values.prUrl.trim() === "" ? null : values.prUrl.trim(),
+      prBannerUrl: values.prBannerUrl,
       dmTemplate: values.dmTemplate.trim() === "" ? null : values.dmTemplate,
     };
     setSaving(true);

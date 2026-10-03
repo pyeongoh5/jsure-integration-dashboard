@@ -79,7 +79,7 @@ async function main() {
       dailyPostTime: '12:00',
       keyVisualUrl: `https://picsum.photos/seed/keyvisual/1200/500`,
       listBackgroundUrl: `https://picsum.photos/seed/background/1200/1600`,
-      thumbnailUrl: `https://picsum.photos/seed/thumb/900/300`,
+      thumbnailUrl: `https://picsum.photos/seed/thumb/800/450`,
     },
   });
 
@@ -109,6 +109,7 @@ async function main() {
         status: 'ACTIVE',
         dmTemplate: '当選おめでとうございます！コード: {{CODE}}',
         prUrl: 'https://example.com',
+        prBannerUrl: image(`${spec.slug}-banner`, 800).replace('/800/800', '/800/450'),
       },
     });
     const template = await prisma.postTemplate.create({

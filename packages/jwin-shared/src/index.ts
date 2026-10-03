@@ -71,6 +71,8 @@ export interface CampaignLp {
   /** 이벤트 규칙 가이드 URL */
   rulesUrl: string | null;
   prUrl: string | null;
+  /** LP 하단 브랜드 배너 (16:9) — 클릭하면 prUrl */
+  prBannerUrl: string | null;
   winMediaUrl: string | null;
   loseMediaUrl: string | null;
 }

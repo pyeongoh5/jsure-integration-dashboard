@@ -55,6 +55,16 @@ export function ResultTab({ detail, hasCodePrize, onSaved }: Props) {
         </div>
 
         <div className={styles.field}>
+          <JwinMediaUpload
+            labelKey="jwin.result.prBanner"
+            value={form.values.prBannerUrl}
+            onChange={(url) => form.setField("prBannerUrl", url)}
+            disabled={form.saving}
+          />
+          <span className={styles.fieldHint}>{t("jwin.result.prBannerHint")}</span>
+        </div>
+
+        <div className={styles.field}>
           <span className={styles.fieldLabel}>{t("jwin.result.dmTemplate")}</span>
           <Textarea
             value={form.values.dmTemplate}

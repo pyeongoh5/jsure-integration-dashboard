@@ -39,6 +39,7 @@ export type BrandCampaignRow = {
   cardImageUrl: string | null;
   rulesUrl: string | null;
   prUrl: string | null;
+  prBannerUrl: string | null;
   winMediaUrl: string | null;
   loseMediaUrl: string | null;
   dmTemplate: string | null;
@@ -80,6 +81,7 @@ export function toBrandCampaignDetail(
     cardImageUrl: brandCampaign.cardImageUrl,
     rulesUrl: brandCampaign.rulesUrl,
     prUrl: brandCampaign.prUrl,
+    prBannerUrl: brandCampaign.prBannerUrl,
     winMediaUrl: brandCampaign.winMediaUrl,
     loseMediaUrl: brandCampaign.loseMediaUrl,
     dmTemplate: brandCampaign.dmTemplate,

@@ -1,12 +1,13 @@
 /* 성과 지표 차트 — 추세용. 정밀값은 아래 테이블이 담당한다 */
 .figure {
-  margin: 16px 0 0;
+  margin: 0;
 }
 
+/* 카드 제목(sectionTitle)과 같은 스펙 — 카드 3장의 타이틀 기준선을 맞춘다 */
 .caption {
-  margin-bottom: 8px;
-  font-size: 13px;
-  font-weight: 600;
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text, #111827);
 }
 

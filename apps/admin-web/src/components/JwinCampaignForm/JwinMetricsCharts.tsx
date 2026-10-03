@@ -19,8 +19,8 @@ export function FollowerTrendChart({ snapshots }: { snapshots: AdminMetricSnapsh
   const t = useT();
   if (snapshots.length < 2) return null;
 
-  const width = 560;
-  const height = 160;
+  const width = 1120;
+  const height = 200;
   const padding = { top: 16, right: 96, bottom: 24, left: 8 };
   const innerWidth = width - padding.left - padding.right;
   const innerHeight = height - padding.top - padding.bottom;
@@ -96,18 +96,6 @@ export function FollowerTrendChart({ snapshots }: { snapshots: AdminMetricSnapsh
           {shortDate(last.dateJst)}
         </text>
       </svg>
-    </figure>
-  );
-}
-
-/** 단일 수치 스탯 타일 — 차트가 필요 없는 헤드라인 숫자용. */
-export function StatTile({ label, value }: { label: string; value: number }) {
-  return (
-    <figure className={styles.figure}>
-      <figcaption className={styles.caption}>{label}</figcaption>
-      <div className={styles.statTile}>
-        <span className={styles.statTileValue}>{value.toLocaleString()}</span>
-      </div>
     </figure>
   );
 }

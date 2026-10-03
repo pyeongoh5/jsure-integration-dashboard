@@ -23,7 +23,7 @@ export { postTemplateCoverage, formatCoverageGaps } from "./postTemplateCoverage
 export type { PostTemplateCoverage, CoverageGap } from "./postTemplateCoverage";
 export { ResultTab } from "./ResultTab";
 export { StatsTab } from "./StatsTab";
-export { FollowerTrendChart, StatTile } from "./JwinMetricsCharts";
+export { FollowerTrendChart } from "./JwinMetricsCharts";
 export { useJwinCampaignStats } from "./useJwinCampaignStats";
 export type { UseJwinCampaignStatsResult } from "./useJwinCampaignStats";
 export {

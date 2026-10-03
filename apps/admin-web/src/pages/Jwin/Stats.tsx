@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui";
 import { ScrollTable } from "@/components/composites";
-import { FollowerTrendChart, StatTile, StatsTab } from "@/components/JwinCampaignForm";
+import { FollowerTrendChart, StatsTab } from "@/components/JwinCampaignForm";
 import { useJwinBrandMetrics } from "@/components/JwinCampaignForm/useJwinBrandMetrics";
 import {
   buildJwinMetricsCsv,
@@ -34,8 +34,8 @@ function DeltaCell({ current, previous }: { current: number | null; previous: nu
 
 /**
  * 캠페인 통계 — 캠페인·브랜드를 셀렉트로 고르고,
- * 상단: 팔로워 추이(라인) / 총 응모 수·고유 응모자 수(타일)
- * 하단: 데일리 테이블(팔로워·리포스트·좋아요·노출 — 전일 대비 증감 병기) + 운영 현황.
+ * 상단: 팔로워 추이(전폭 라인 차트)
+ * 하단: 데일리 테이블(전일 대비 증감 병기) + 운영 현황(응모자·당첨·재고).
  */
 export function JwinStats() {
   const t = useT();
@@ -149,26 +149,15 @@ export function JwinStats() {
 
       {brandCampaignId && (
         <>
-          {/* 상단 — 추세 차트 + 헤드라인 숫자 */}
-          <div className={styles.chartsRow}>
-            <div className={styles.card}>
-              {/* 데이터가 없어도 어떤 지표인지 제목은 보여준다 */}
-              <h2 className={styles.sectionTitle}>{t("jwin.stats.chartFollowers")}</h2>
-              {snapshots.length >= 2 ? (
-                <FollowerTrendChart snapshots={snapshots} />
-              ) : (
-                <div className={styles.empty}>{t("jwin.stats.metricsEmpty")}</div>
-              )}
-            </div>
-            <div className={styles.card}>
-              <StatTile label={t("jwin.stats.entries")} value={metrics.data.totalEntries} />
-            </div>
-            <div className={styles.card}>
-              <StatTile
-                label={t("jwin.statsPage.uniqueEntrants")}
-                value={metrics.data.uniqueEntrants}
-              />
-            </div>
+          {/* 팔로워 추이 — 가로 전폭 */}
+          <div className={styles.card}>
+            {/* 데이터가 없어도 어떤 지표인지 제목은 보여준다 */}
+            <h2 className={styles.sectionTitle}>{t("jwin.stats.chartFollowers")}</h2>
+            {snapshots.length >= 2 ? (
+              <FollowerTrendChart snapshots={snapshots} />
+            ) : (
+              <div className={styles.empty}>{t("jwin.stats.metricsEmpty")}</div>
+            )}
           </div>
 
           {/* 데일리 지표 — 정밀값 + 전일 대비 증감 */}
@@ -229,7 +218,10 @@ export function JwinStats() {
 
           {/* 운영 현황·게시 실패 사유·경품 재고 */}
           <div className={styles.card}>
-            <StatsTab campaignId={brandCampaignId} />
+            <StatsTab
+              campaignId={brandCampaignId}
+              uniqueEntrants={metrics.data.uniqueEntrants}
+            />
           </div>
         </>
       )}

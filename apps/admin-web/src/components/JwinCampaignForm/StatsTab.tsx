@@ -6,6 +6,8 @@ import styles from "./JwinCampaignTabs.module.css";
 
 type Props = {
   campaignId: string;
+  /** 고유 응모자 수 — 지표 응답에서 오므로 호출부(통계 페이지)가 넘겨준다 */
+  uniqueEntrants?: number;
 };
 
 /** UTC ISO → "2026-09-01 00:00" (JST, 언어 중립) */
@@ -21,8 +23,8 @@ type StatCard = {
 };
 
 function statCards(stats: AdminCampaignStats): StatCard[] {
-  // 응모 수는 통계 페이지 상단 타일이 보여준다 — 여기서는 당첨·이행 쪽만
   return [
+    { labelKey: "jwin.stats.entries", value: stats.entries },
     { labelKey: "jwin.stats.winConfirmed", value: stats.winConfirmed },
     { labelKey: "jwin.stats.winPendingToday", value: stats.winPendingToday },
     { labelKey: "jwin.stats.unfulfilledWins", value: stats.unfulfilledWins, warnWhenPositive: true },
@@ -30,7 +32,7 @@ function statCards(stats: AdminCampaignStats): StatCard[] {
   ];
 }
 
-export function StatsTab({ campaignId }: Props) {
+export function StatsTab({ campaignId, uniqueEntrants }: Props) {
   const t = useT();
   const { loading, loadError, stats } = useJwinCampaignStats(campaignId);
 
@@ -50,6 +52,12 @@ export function StatsTab({ campaignId }: Props) {
           ) : null}
 
           <div className={styles.statGrid}>
+            {uniqueEntrants !== undefined && (
+              <div className={styles.statCard}>
+                <span className={styles.statLabel}>{t("jwin.statsPage.uniqueEntrants")}</span>
+                <span className={styles.statValue}>{uniqueEntrants.toLocaleString()}</span>
+              </div>
+            )}
             {statCards(stats).map((card) => (
               <div key={card.labelKey} className={styles.statCard}>
                 <span className={styles.statLabel}>{t(card.labelKey)}</span>

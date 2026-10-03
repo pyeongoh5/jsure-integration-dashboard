@@ -14,7 +14,6 @@
 /* ── 팔로워 라인 ── */
 .lineChart {
   width: 100%;
-  max-width: 560px;
   display: block;
 }
 
@@ -44,21 +43,4 @@
 .axisLabel {
   font-size: 11px;
   fill: var(--text-muted, #9ca3af);
-}
-
-
-/* ── 스탯 타일 ── */
-.statTile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 120px;
-  border: 1px solid var(--border, #e5e7eb);
-  border-radius: 12px;
-  background: var(--surface-muted, #f9fafb);
-}
-
-.statTileValue {
-  font-size: 36px;
-  font-weight: 700;
 }

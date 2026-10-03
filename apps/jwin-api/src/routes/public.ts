@@ -6,6 +6,7 @@ import {
   CampaignSeasonLp,
   CampaignSummary,
   EntryResultResponse,
+  TodayEntryResponse,
   WinHistoryItem,
   dateJst,
 } from '@jsure/jwin-shared';
@@ -208,6 +209,53 @@ export async function publicRoutes(app: FastifyInstance) {
           verified.reason === 'follow' || verified.reason === 'repost'
             ? verified.reason
             : undefined,
+      };
+    },
+  );
+
+  // 오늘(JST) 응모 상태 — 화면 재진입 시 당첨 후보(검증 대기) 상태를 복구한다.
+  // 이게 없으면 새로고침 후 응모 버튼이 409 "응모 완료"만 보여줘 재검증 입구가 사라진다.
+  app.get<{ Params: { brandCampaignId: string } }>(
+    '/brand-campaigns/:brandCampaignId/entries/today',
+    async (req, reply): Promise<TodayEntryResponse | void> => {
+      const session = getUserSession(req);
+      if (!session) return reply.code(401).send({ error: 'login required' });
+
+      const entry = await prisma.entry.findUnique({
+        where: {
+          campaignId_userId_dateJst: {
+            campaignId: req.params.brandCampaignId,
+            userId: session.userId,
+            dateJst: dateJst(),
+          },
+        },
+        include: { winner: { include: { prize: true } } },
+      });
+      if (!entry) return { entered: false };
+      if (entry.result === 'LOSE' || !entry.winner) return { entered: true, result: 'lose' };
+
+      const winner = entry.winner;
+      if (entry.result === 'WIN_CONFIRMED' || winner.verification === 'PASSED') {
+        return {
+          entered: true,
+          result: 'win_confirmed',
+          winnerId: winner.id,
+          prizeName: winner.prize.name,
+          prizeType: winner.prize.type,
+          needsShipping: winner.prize.type === 'PHYSICAL' && !winner.encryptedShipping,
+        };
+      }
+      return {
+        entered: true,
+        result: 'win_pending',
+        winnerId: winner.id,
+        prizeName: winner.prize.name,
+        failReason:
+          winner.verification === 'FOLLOW_FAILED'
+            ? 'follow'
+            : winner.verification === 'REPOST_FAILED'
+              ? 'repost'
+              : undefined,
       };
     },
   );

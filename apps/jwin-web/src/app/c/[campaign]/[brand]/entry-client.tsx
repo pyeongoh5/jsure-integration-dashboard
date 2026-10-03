@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { CampaignLp, EntryResultResponse } from '@jsure/jwin-shared';
+import type { CampaignLp, EntryResultResponse, TodayEntryResponse } from '@jsure/jwin-shared';
 import { api, userLoginUrl } from '../../../../lib/api';
 
 type Phase =
@@ -38,10 +38,26 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
   const [verifyError, setVerifyError] = useState<string | null>(null);
 
   useEffect(() => {
+    // 로그인 확인 후 오늘 응모 상태를 복구한다 — 새로고침·재진입해도
+    // 당첨 후보(검증 대기)면 재검증 화면으로 돌아온다
     api<{ loggedIn: boolean }>('/me')
-      .then((me) => setPhase(me.loggedIn ? { name: 'ready' } : { name: 'need_login' }))
+      .then(async (me) => {
+        if (!me.loggedIn) {
+          setPhase({ name: 'need_login' });
+          return;
+        }
+        try {
+          const today = await api<TodayEntryResponse>(
+            `/brand-campaigns/${campaign.brandCampaignId}/entries/today`,
+          );
+          setPhase(today.entered ? { name: 'result', data: today } : { name: 'ready' });
+        } catch {
+          // 상태 복구 실패는 치명적이지 않다 — 응모 화면으로 두면 409 가 다시 안내한다
+          setPhase({ name: 'ready' });
+        }
+      })
       .catch(() => setPhase({ name: 'error', message: '通信エラーが発生しました。' }));
-  }, []);
+  }, [campaign.brandCampaignId]);
 
   async function enter() {
     setPhase({ name: 'drawing' });
@@ -52,7 +68,17 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
       setPhase({ name: 'result', data });
     } catch (error) {
       const status = (error as { status?: number }).status;
-      if (status === 409) setPhase({ name: 'already' });
+      if (status === 409) {
+        // 이미 응모한 날 — 당첨 후보면 "응모 완료" 대신 검증 화면을 복구한다
+        try {
+          const today = await api<TodayEntryResponse>(
+            `/brand-campaigns/${campaign.brandCampaignId}/entries/today`,
+          );
+          setPhase(today.entered ? { name: 'result', data: today } : { name: 'already' });
+        } catch {
+          setPhase({ name: 'already' });
+        }
+      }
       else if (status === 401) setPhase({ name: 'need_login' });
       else if (status === 404)
         // 오늘자 포스트가 아직 없다 — 게시 전 응모 (no_post_today)

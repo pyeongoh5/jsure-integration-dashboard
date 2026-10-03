@@ -32,6 +32,13 @@ export type EntryResultResponse =
       needsShipping: boolean;
     };
 
+/**
+ * 오늘(JST) 응모 상태 (GET /brand-campaigns/:id/entries/today).
+ * 화면 재진입·새로고침 시 당첨 후보(검증 대기) 상태를 복구하는 데 쓴다 —
+ * 이게 없으면 응모 버튼이 409 "응모 완료"만 보여줘 검증 재시도 입구가 사라진다.
+ */
+export type TodayEntryResponse = { entered: false } | ({ entered: true } & EntryResultResponse);
+
 /** 브랜드 참여 LP 데이터 (GET /campaigns/:campaignSlug/brands/:brandSlug) */
 export interface CampaignLp {
   /** 참여(BrandCampaign) id — 응모 API 가 받는 값 */

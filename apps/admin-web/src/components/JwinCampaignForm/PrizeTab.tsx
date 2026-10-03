@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { ScrollTable } from "@/components/composites";
-import { Button } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import type { AdminPrize, AdminPrizeCreate, AdminPrizePatch } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import {
@@ -20,6 +20,9 @@ type Props = {
   onAdd: (body: Omit<AdminPrizeCreate, "campaignId">) => Promise<string | null>;
   onEdit: (prizeId: string, body: AdminPrizePatch) => Promise<string | null>;
   onAppendCodes: (prizeId: string, codesText: string) => Promise<string | null>;
+  /** 일일 당첨 상한 — 추첨 설정이라 경품과 같은 탭에 둔다 ("" = 무제한) */
+  dailyWinCap: string;
+  onDailyWinCapChange: (value: string) => void;
 };
 
 const TYPE_LABEL_KEY: Record<AdminPrize["type"], AdminTranslationKey> = {
@@ -27,7 +30,16 @@ const TYPE_LABEL_KEY: Record<AdminPrize["type"], AdminTranslationKey> = {
   CODE: "jwin.prize.type.code",
 };
 
-export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCodes }: Props) {
+export function PrizeTab({
+  prizes,
+  loading,
+  loadError,
+  onAdd,
+  onEdit,
+  onAppendCodes,
+  dailyWinCap,
+  onDailyWinCapChange,
+}: Props) {
   const t = useT();
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<AdminPrize | null>(null);
@@ -39,6 +51,18 @@ export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCo
         <Button variant="primary" size="md" onClick={() => setAddOpen(true)}>
           {t("jwin.prize.add")}
         </Button>
+      </div>
+
+      <div className={styles.field}>
+        <span className={styles.fieldLabel}>{t("jwin.basic.dailyWinCap")}</span>
+        <Input
+          type="number"
+          min={1}
+          value={dailyWinCap}
+          onChange={onDailyWinCapChange}
+          placeholder={t("jwin.basic.dailyWinCapPlaceholder")}
+        />
+        <span className={styles.fieldHint}>{t("jwin.prize.dailyWinCapHint")}</span>
       </div>
 
       {isProbabilityOverflow(prizes) && (

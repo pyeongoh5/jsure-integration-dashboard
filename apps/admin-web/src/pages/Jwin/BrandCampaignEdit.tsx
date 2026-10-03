@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { JwinAccountStatusBadge } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { SegmentedTabs } from "@/components/composites/SegmentedTabs";
 import {
@@ -9,7 +10,6 @@ import {
   useJwinStatusTransition,
   activationChecklist,
   postTemplateCoverage,
-  BrandCampaignBasicTab,
   PrizeTab,
   PostTemplateTab,
   ResultTab,
@@ -19,9 +19,9 @@ import type { AdminBrandCampaignDetail } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import styles from "./Jwin.module.css";
 
-type TabKey = "basic" | "prize" | "template" | "result";
+type TabKey = "prize" | "template" | "result";
 
-const TAB_KEYS: TabKey[] = ["basic", "prize", "template", "result"];
+const TAB_KEYS: TabKey[] = ["prize", "template", "result"];
 
 /**
  * 참여(브랜드 × 시즌) 편집. 기간·이름은 시즌이 갖고 여기서는 게시 설정·경품·포스트·결과화면을 다룬다.
@@ -32,7 +32,7 @@ export function JwinBrandCampaignEdit() {
   const navigate = useNavigate();
   const t = useT();
   const form = useJwinBrandCampaign(id ?? "");
-  const [tab, setTab] = useState<TabKey>("basic");
+  const [tab, setTab] = useState<TabKey>("prize");
 
   const tabs = useMemo(
     () => TAB_KEYS.map((key) => ({ key, label: t(`jwin.campaign.tabs.${key}` as const) })),
@@ -72,6 +72,11 @@ export function JwinBrandCampaignEdit() {
           </button>
           <div className={styles.titleRow}>
             <h1 className={styles.title}>{detail.brandAccount.label}</h1>
+            {/* 연동 상태는 브랜드명 옆 배지로 — 정상이면 이것만, 문제면 아래 안내가 붙는다 */}
+            <JwinAccountStatusBadge status={detail.brandAccount.status} />
+            {detail.brandAccount.xUsername && (
+              <span className={styles.titleMeta}>@{detail.brandAccount.xUsername}</span>
+            )}
           </div>
         </div>
         <div className={styles.saveRow}>
@@ -91,6 +96,16 @@ export function JwinBrandCampaignEdit() {
         </div>
       </div>
 
+      {detail.brandAccount.status !== "CONNECTED" && (
+        <p className={styles.connectNotice}>
+          {t("jwin.connect.connectNote")}{" "}
+          <a href={detail.brandAccount.connectUrl} target="_blank" rel="noreferrer">
+            {detail.brandAccount.connectUrl}
+          </a>{" "}
+          · <Link to="/jwin/accounts">{t("jwin.connect.manageLink")}</Link>
+        </p>
+      )}
+
       <SegmentedTabs items={tabs} value={tab} onChange={setTab} />
 
       <div className={styles.tabContent}>
@@ -99,16 +114,9 @@ export function JwinBrandCampaignEdit() {
           detail={detail}
           tab={tab}
           onDetailChanged={form.reload}
+          dailyWinCap={form.values.dailyWinCap}
+          onDailyWinCapChange={(value) => form.setField("dailyWinCap", value)}
         />
-        {tab === "basic" && (
-          <div className={styles.tabCard}>
-            <BrandCampaignBasicTab
-              detail={detail}
-              values={form.values}
-              setField={form.setField}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -123,11 +131,15 @@ function BrandCampaignEditBody({
   detail,
   tab,
   onDetailChanged,
+  dailyWinCap,
+  onDailyWinCapChange,
 }: {
   brandCampaignId: string;
   detail: AdminBrandCampaignDetail;
   tab: TabKey;
   onDetailChanged: () => void;
+  dailyWinCap: string;
+  onDailyWinCapChange: (value: string) => void;
 }) {
   const prizes = useJwinPrizes(brandCampaignId);
   const postTemplates = useJwinPostTemplates(brandCampaignId);
@@ -171,6 +183,8 @@ function BrandCampaignEditBody({
               onAdd={prizes.add}
               onEdit={prizes.edit}
               onAppendCodes={prizes.appendCodes}
+              dailyWinCap={dailyWinCap}
+              onDailyWinCapChange={onDailyWinCapChange}
             />
           )}
 

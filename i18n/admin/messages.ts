@@ -220,7 +220,6 @@ export const adminMessages = {
         },
       },
       tabs: {
-        basic: { ko: "설정", en: "Settings", ja: "設定" },
         prize: { ko: "경품", en: "Prizes", ja: "景品" },
         template: { ko: "포스트", en: "Posts", ja: "投稿" },
         result: { ko: "결과화면·브랜드 링크", en: "Result & brand link", ja: "結果画面・ブランドリンク" },
@@ -566,6 +565,11 @@ export const adminMessages = {
     prize: {
       title: { ko: "경품", en: "Prizes", ja: "景品" },
       add: { ko: "경품 추가", en: "Add prize", ja: "景品を追加" },
+      dailyWinCapHint: {
+        ko: "하루에 이 참여에서 나올 수 있는 당첨 건수 상한입니다. 비우면 재고가 허용하는 만큼 나갑니다.",
+        en: "Caps how many wins this brand can award per day. Leave empty to be limited only by stock.",
+        ja: "1日にこの参加で当選できる件数の上限です。空欄なら在庫の許す限り当選します。",
+      },
       editTitle: { ko: "경품 정정", en: "Edit prize", ja: "景品を修正" },
       empty: {
         ko: "등록된 경품이 없습니다. 경품을 1건 이상 등록해야 캠페인을 시작할 수 있습니다.",

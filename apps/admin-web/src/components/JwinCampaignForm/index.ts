@@ -5,7 +5,6 @@ export type {
   UseJwinCampaignFormResult,
 } from "./useJwinCampaignForm";
 export { BasicTab } from "./BasicTab";
-export { BrandCampaignBasicTab } from "./BrandCampaignBasicTab";
 export { useJwinBrandCampaign } from "./useJwinBrandCampaign";
 export type {
   JwinBrandCampaignFormValues,

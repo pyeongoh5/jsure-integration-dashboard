@@ -407,3 +407,13 @@
   color: var(--color-text-muted, #9ca3af);
   font-size: 12px;
 }
+
+.deltaUp {
+  color: #047857;
+  font-weight: 600;
+}
+
+.deltaDown {
+  color: #dc2626;
+  font-weight: 600;
+}

@@ -1,6 +1,7 @@
 import type { AdminCampaignStats } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import { utcIsoToJstLocal } from "./jwinDateTime";
+import { EngagementBars, FollowerTrendChart } from "./JwinMetricsCharts";
 import { useJwinBrandMetrics } from "./useJwinBrandMetrics";
 import { useJwinCampaignStats } from "./useJwinCampaignStats";
 import styles from "./JwinCampaignTabs.module.css";
@@ -141,31 +142,55 @@ export function StatsTab({ campaignId }: Props) {
                 </div>
               </div>
 
+              {/* 추세는 차트로 (2포인트 미만이면 자동 생략), 정밀값은 아래 테이블로 */}
+              <FollowerTrendChart snapshots={metrics.snapshots} />
+              <EngagementBars snapshots={metrics.snapshots} />
+
               <table className={styles.table}>
                 <thead>
                   <tr>
                     <th>{t("jwin.stats.metricsDate")}</th>
                     <th className={styles.num}>{t("jwin.stats.metricsFollowers")}</th>
+                    <th className={styles.num}>{t("jwin.stats.metricsDelta")}</th>
                     <th className={styles.num}>{t("jwin.stats.metricsReposts")}</th>
                     <th className={styles.num}>{t("jwin.stats.metricsLikes")}</th>
                     <th className={styles.num}>{t("jwin.stats.metricsReplies")}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {metrics.snapshots.map((snapshot) => (
-                    <tr key={`${snapshot.dateJst}-${snapshot.kind}`}>
-                      <td>
-                        {snapshot.dateJst}
-                        {snapshot.kind === "BASELINE" && (
-                          <span className={styles.muted}> ({t("jwin.stats.metricsBaselineTag")})</span>
-                        )}
-                      </td>
-                      <td className={styles.num}>{snapshot.followerCount.toLocaleString()}</td>
-                      <td className={styles.num}>{snapshot.repostCount?.toLocaleString() ?? "-"}</td>
-                      <td className={styles.num}>{snapshot.likeCount?.toLocaleString() ?? "-"}</td>
-                      <td className={styles.num}>{snapshot.replyCount?.toLocaleString() ?? "-"}</td>
-                    </tr>
-                  ))}
+                  {metrics.snapshots.map((snapshot, index) => {
+                    const previous = index > 0 ? metrics.snapshots[index - 1] : undefined;
+                    const dayDelta = previous
+                      ? snapshot.followerCount - previous.followerCount
+                      : null;
+                    return (
+                      <tr key={`${snapshot.dateJst}-${snapshot.kind}`}>
+                        <td>
+                          {snapshot.dateJst}
+                          {snapshot.kind === "BASELINE" && (
+                            <span className={styles.muted}> ({t("jwin.stats.metricsBaselineTag")})</span>
+                          )}
+                        </td>
+                        <td className={styles.num}>{snapshot.followerCount.toLocaleString()}</td>
+                        <td
+                          className={
+                            dayDelta === null || dayDelta === 0
+                              ? styles.num
+                              : dayDelta > 0
+                                ? `${styles.num} ${styles.deltaUp}`
+                                : `${styles.num} ${styles.deltaDown}`
+                          }
+                        >
+                          {dayDelta === null
+                            ? "-"
+                            : `${dayDelta > 0 ? "+" : ""}${dayDelta.toLocaleString()}`}
+                        </td>
+                        <td className={styles.num}>{snapshot.repostCount?.toLocaleString() ?? "-"}</td>
+                        <td className={styles.num}>{snapshot.likeCount?.toLocaleString() ?? "-"}</td>
+                        <td className={styles.num}>{snapshot.replyCount?.toLocaleString() ?? "-"}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </>

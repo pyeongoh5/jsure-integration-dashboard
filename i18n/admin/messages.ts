@@ -808,6 +808,25 @@ export const adminMessages = {
         brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
         followerDelta: { ko: "팔로워 증감", en: "Follower change", ja: "フォロワー増減" },
       },
+      exportCsv: { ko: "지표 CSV 다운로드", en: "Download metrics CSV", ja: "指標CSVダウンロード" },
+      exporting: { ko: "내보내는 중…", en: "Exporting…", ja: "エクスポート中…" },
+      exportFailed: {
+        ko: "CSV 내보내기에 실패했습니다.",
+        en: "Could not export the CSV.",
+        ja: "CSVのエクスポートに失敗しました。",
+      },
+      export: {
+        header: {
+          brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
+          date: { ko: "일자(JST)", en: "Date (JST)", ja: "日付(JST)" },
+          kind: { ko: "구분", en: "Kind", ja: "区分" },
+          followers: { ko: "팔로워", en: "Followers", ja: "フォロワー" },
+          reposts: { ko: "리포스트", en: "Reposts", ja: "リポスト" },
+          likes: { ko: "좋아요", en: "Likes", ja: "いいね" },
+          replies: { ko: "댓글", en: "Replies", ja: "返信" },
+        },
+        kindDaily: { ko: "일별", en: "Daily", ja: "日次" },
+      },
     },
     postTemplate: {
       title: { ko: "포스트", en: "Posts", ja: "投稿" },
@@ -980,6 +999,9 @@ export const adminMessages = {
       metricsLikes: { ko: "좋아요", en: "Likes", ja: "いいね" },
       metricsReplies: { ko: "댓글", en: "Replies", ja: "返信" },
       metricsDate: { ko: "일자 (JST)", en: "Date (JST)", ja: "日付 (JST)" },
+      metricsDelta: { ko: "팔로워 증감", en: "Change", ja: "増減" },
+      chartFollowers: { ko: "팔로워 추이", en: "Follower trend", ja: "フォロワー推移" },
+      chartEngagement: { ko: "일별 반응", en: "Daily engagement", ja: "日別の反応" },
       stockTitle: { ko: "경품별 잔여 재고", en: "Stock left by prize", ja: "景品別の残り在庫" },
       stockEmpty: {
         ko: "등록된 경품이 없습니다.",

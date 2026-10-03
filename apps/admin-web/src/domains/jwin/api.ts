@@ -17,6 +17,7 @@ import {
   AdminCampaignStatsSchema,
   AdminBrandMetricsSchema,
   AdminCampaignStatsSummarySchema,
+  AdminCampaignMetricsExportSchema,
   AdminShippingSchema,
   AdminPrizeSchema,
   AdminWinnerSchema,
@@ -44,6 +45,7 @@ import {
   type AdminCampaignStats,
   type AdminBrandMetrics,
   type AdminCampaignStatsSummary,
+  type AdminCampaignMetricsExport,
   type AdminShipping,
   type AdminPrize,
   type AdminPrizePatch,
@@ -158,6 +160,14 @@ export async function fetchWinnersForExport(
     params: winnerFilterParams(filter),
   });
   return AdminWinnerExportSchema.parse(response.data);
+}
+
+/** 시즌 전체 지표 (브랜드×일자) — CSV 다운로드용 */
+export async function fetchCampaignMetricsExport(
+  campaignId: string,
+): Promise<AdminCampaignMetricsExport> {
+  const response = await jwinApi.get(`/admin/campaigns/${campaignId}/metrics-export`);
+  return AdminCampaignMetricsExportSchema.parse(response.data);
 }
 
 /** 시즌 단위 성과 요약 — 캠페인 통계 페이지 */

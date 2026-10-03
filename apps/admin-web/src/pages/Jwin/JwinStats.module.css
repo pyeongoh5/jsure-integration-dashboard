@@ -85,3 +85,23 @@
 .rowSelected:hover {
   background: #eff6ff;
 }
+
+.exportButton {
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.exportButton:hover:not(:disabled) {
+  background: var(--surface-muted, #f9fafb);
+}
+
+.exportButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

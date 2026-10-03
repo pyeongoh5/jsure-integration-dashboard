@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { ScrollTable } from "@/components/composites";
 import { StatsTab } from "@/components/JwinCampaignForm";
 import { useJwinCampaignsData } from "@/components/JwinCampaigns";
-import { fetchCampaignStatsSummary, jwinErrorMessage } from "@/domains/jwin";
+import { triggerCsvDownload } from "@/domains/application";
+import {
+  buildJwinMetricsCsv,
+  jwinMetricsCsvFilename,
+} from "@/components/JwinCampaigns/buildJwinMetricsCsv";
+import { fetchCampaignMetricsExport, fetchCampaignStatsSummary, jwinErrorMessage } from "@/domains/jwin";
 import type { AdminCampaignStatsSummary } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import styles from "./JwinStats.module.css";
@@ -19,6 +24,7 @@ export function JwinStats() {
   const [summary, setSummary] = useState<AdminCampaignStatsSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const campaignRows = campaigns.state.kind === "ready" ? campaigns.rows : [];
 
@@ -49,6 +55,25 @@ export function JwinStats() {
     };
   }, [campaignId, t]);
 
+  const selectedCampaignRow = campaignRows.find((campaign) => campaign.id === campaignId);
+
+  const handleExport = async () => {
+    if (!campaignId || !selectedCampaignRow) return;
+    setExporting(true);
+    setLoadError(null);
+    try {
+      const data = await fetchCampaignMetricsExport(campaignId);
+      triggerCsvDownload(
+        jwinMetricsCsvFilename(selectedCampaignRow.slug, new Date().toISOString().slice(0, 10)),
+        buildJwinMetricsCsv(data),
+      );
+    } catch (error: unknown) {
+      setLoadError(jwinErrorMessage(error, t("jwin.statsPage.exportFailed")));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const delta = (baseline: number | null, latest: number | null) =>
     baseline !== null && latest !== null ? latest - baseline : null;
 
@@ -71,6 +96,13 @@ export function JwinStats() {
             </option>
           ))}
         </select>
+        <button
+          className={styles.exportButton}
+          onClick={() => void handleExport()}
+          disabled={exporting || !campaignId}
+        >
+          {exporting ? t("jwin.statsPage.exporting") : t("jwin.statsPage.exportCsv")}
+        </button>
       </div>
 
       {campaigns.state.kind === "error" && (

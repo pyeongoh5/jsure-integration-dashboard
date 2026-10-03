@@ -228,6 +228,22 @@ export const AdminBrandCampaignDetailSchema = z.object({
 });
 export type AdminBrandCampaignDetail = z.infer<typeof AdminBrandCampaignDetailSchema>;
 
+/** GET /admin/campaigns/:id/metrics-export — 시즌 전체(브랜드×일자) 지표 CSV 용 */
+export const AdminCampaignMetricsExportSchema = z.object({
+  rows: z.array(
+    z.object({
+      brandName: z.string(),
+      dateJst: z.string(),
+      kind: z.enum(['BASELINE', 'DAILY']),
+      followerCount: z.number().int(),
+      repostCount: z.number().int().nullable(),
+      likeCount: z.number().int().nullable(),
+      replyCount: z.number().int().nullable(),
+    }),
+  ),
+});
+export type AdminCampaignMetricsExport = z.infer<typeof AdminCampaignMetricsExportSchema>;
+
 /** 참여 지표 스냅샷 — BASELINE(첫 게시 직후) / DAILY(게시일 종료 00:00 JST) */
 export const AdminMetricSnapshotSchema = z.object({
   dateJst: z.string(),

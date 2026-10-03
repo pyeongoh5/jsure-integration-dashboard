@@ -984,6 +984,30 @@ export async function adminRoutes(app: FastifyInstance) {
     };
   });
 
+  // 시즌 전체 지표 CSV 데이터 — 브랜드×일자 스냅샷 원본
+  app.get<{ Params: { id: string } }>(
+    '/admin/campaigns/:id/metrics-export',
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+      const snapshots = await prisma.brandMetricSnapshot.findMany({
+        where: { campaign: { campaignId: req.params.id } },
+        include: { campaign: { include: { brandAccount: { select: { label: true } } } } },
+        orderBy: [{ campaignId: 'asc' }, { dateJst: 'asc' }, { kind: 'asc' }],
+      });
+      return {
+        rows: snapshots.map((snapshot) => ({
+          brandName: snapshot.campaign.brandAccount.label,
+          dateJst: snapshot.dateJst,
+          kind: snapshot.kind,
+          followerCount: snapshot.followerCount,
+          repostCount: snapshot.repostCount,
+          likeCount: snapshot.likeCount,
+          replyCount: snapshot.replyCount,
+        })),
+      };
+    },
+  );
+
   // 시즌 단위 성과 요약 — 캠페인 통계 페이지용 (참여 브랜드별 집계)
   app.get<{ Params: { id: string } }>(
     '/admin/campaigns/:id/stats-summary',

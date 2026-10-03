@@ -42,6 +42,7 @@ async function wipeDemo() {
   });
   const participationIds = participations.map((participation) => participation.id);
 
+  await prisma.brandMetricSnapshot.deleteMany({ where: { campaignId: { in: participationIds } } });
   await prisma.prizeCode.deleteMany({ where: { prize: { campaignId: { in: participationIds } } } });
   await prisma.winner.deleteMany({ where: { entry: { campaignId: { in: participationIds } } } });
   await prisma.entry.deleteMany({ where: { campaignId: { in: participationIds } } });
@@ -168,6 +169,34 @@ async function main() {
           result,
         },
       });
+
+    // 성과 지표 목업 — 차트·테이블 확인용. 기준점 + 3일치 일별 스냅샷
+    if (spec.postToday) {
+      const baseFollowers = 1000 + spec.slug.length * 37;
+      await prisma.brandMetricSnapshot.create({
+        data: {
+          campaignId: participation.id,
+          dateJst: jstDate(-3),
+          kind: 'BASELINE',
+          followerCount: baseFollowers,
+        },
+      });
+      for (const offset of [-3, -2, -1]) {
+        const growth = (4 + offset) * (40 + spec.slug.length * 3);
+        await prisma.brandMetricSnapshot.create({
+          data: {
+            campaignId: participation.id,
+            dateJst: jstDate(offset),
+            kind: 'DAILY',
+            followerCount: baseFollowers + growth,
+            postId: '2000000000000000',
+            repostCount: 20 + Math.round(growth / 4),
+            likeCount: 60 + Math.round(growth / 2),
+            replyCount: 3 + Math.floor(growth / 30),
+          },
+        });
+      }
+    }
 
     if (spec.slug === 'demo-pending') {
       const entry = await makeEntry(today, 'WIN_PENDING');

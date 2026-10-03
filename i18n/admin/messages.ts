@@ -48,7 +48,7 @@ export const adminMessages = {
       brandAccounts: { ko: "브랜드 계정", en: "Brand Accounts", ja: "ブランドアカウント" },
       jwinWinners: { ko: "당첨자 관리", en: "Winners", ja: "当選者管理" },
       jwinPrizes: { ko: "경품·기프트코드", en: "Prizes & Gift Codes", ja: "景品・ギフトコード" },
-      jwinStats: { ko: "통계", en: "Statistics", ja: "統計" },
+      jwinStats: { ko: "캠페인 통계", en: "Campaign stats", ja: "キャンペーン統計" },
     },
     groupsJwin: {
       prizes: { ko: "경품", en: "Prizes", ja: "景品" },
@@ -791,6 +791,23 @@ export const adminMessages = {
         ko: "DM 문구는 {max}자 이하여야 합니다.",
         en: "The DM text must be {max} characters or fewer.",
         ja: "DM文面は{max}文字以下にしてください。",
+      },
+    },
+    statsPage: {
+      title: { ko: "캠페인 통계", en: "Campaign stats", ja: "キャンペーン統計" },
+      empty: {
+        ko: "이 시즌에 참여한 브랜드가 없습니다.",
+        en: "No brands in this campaign yet.",
+        ja: "このキャンペーンに参加ブランドがありません。",
+      },
+      rowHint: {
+        ko: "행을 누르면 브랜드별 상세(일자별 지표)로 이동합니다.",
+        en: "Click a row to open the brand's daily metrics.",
+        ja: "行をクリックするとブランド別の日次指標に移動します。",
+      },
+      columns: {
+        brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
+        followerDelta: { ko: "팔로워 증감", en: "Follower change", ja: "フォロワー増減" },
       },
     },
     postTemplate: {

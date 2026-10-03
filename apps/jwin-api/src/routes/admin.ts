@@ -984,6 +984,57 @@ export async function adminRoutes(app: FastifyInstance) {
     };
   });
 
+  // 시즌 단위 성과 요약 — 캠페인 통계 페이지용 (참여 브랜드별 집계)
+  app.get<{ Params: { id: string } }>(
+    '/admin/campaigns/:id/stats-summary',
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+      const participations = await prisma.brandCampaign.findMany({
+        where: { campaignId: req.params.id },
+        include: {
+          brandAccount: { select: { label: true } },
+          _count: { select: { entries: true } },
+          metricSnapshots: { orderBy: [{ dateJst: 'asc' }, { kind: 'asc' }] },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+      const winCounts = await prisma.entry.groupBy({
+        by: ['campaignId'],
+        where: {
+          campaignId: { in: participations.map((participation) => participation.id) },
+          result: 'WIN_CONFIRMED',
+        },
+        _count: { _all: true },
+      });
+      const winByParticipation = new Map(
+        winCounts.map((row) => [row.campaignId, row._count._all]),
+      );
+
+      return {
+        brands: participations.map((participation) => {
+          const snapshots = participation.metricSnapshots;
+          const baseline = snapshots.find((snapshot) => snapshot.kind === 'BASELINE');
+          const latest = snapshots[snapshots.length - 1];
+          const dailies = snapshots.filter((snapshot) => snapshot.kind === 'DAILY');
+          const sum = (pick: (s: (typeof dailies)[number]) => number | null) =>
+            dailies.reduce((total, snapshot) => total + (pick(snapshot) ?? 0), 0);
+          return {
+            brandCampaignId: participation.id,
+            brandName: participation.brandAccount.label,
+            status: participation.status,
+            entries: participation._count.entries,
+            winConfirmed: winByParticipation.get(participation.id) ?? 0,
+            baselineFollowers: baseline?.followerCount ?? null,
+            latestFollowers: latest?.followerCount ?? null,
+            totalReposts: sum((snapshot) => snapshot.repostCount),
+            totalLikes: sum((snapshot) => snapshot.likeCount),
+            totalReplies: sum((snapshot) => snapshot.replyCount),
+          };
+        }),
+      };
+    },
+  );
+
   // 참여 성과 지표 — BASELINE(첫 게시 직후 팔로워) + DAILY(매일 00:00 JST 수집)
   app.get<{ Params: { id: string } }>(
     '/admin/brand-campaigns/:id/metrics',

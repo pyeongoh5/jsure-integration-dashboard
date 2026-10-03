@@ -245,6 +245,25 @@ export const AdminBrandMetricsSchema = z.object({
 });
 export type AdminBrandMetrics = z.infer<typeof AdminBrandMetricsSchema>;
 
+/** GET /admin/campaigns/:id/stats-summary — 시즌의 참여 브랜드별 성과 요약 */
+export const AdminCampaignStatsSummarySchema = z.object({
+  brands: z.array(
+    z.object({
+      brandCampaignId: z.string(),
+      brandName: z.string(),
+      status: CampaignStatusSchema,
+      entries: z.number().int(),
+      winConfirmed: z.number().int(),
+      baselineFollowers: z.number().int().nullable(),
+      latestFollowers: z.number().int().nullable(),
+      totalReposts: z.number().int(),
+      totalLikes: z.number().int(),
+      totalReplies: z.number().int(),
+    }),
+  ),
+});
+export type AdminCampaignStatsSummary = z.infer<typeof AdminCampaignStatsSummarySchema>;
+
 /** ② GET /admin/campaigns/:id/prizes */
 export const AdminPrizeSchema = z.object({
   id: z.string(),

@@ -225,7 +225,6 @@ export const adminMessages = {
         prize: { ko: "경품", en: "Prizes", ja: "景品" },
         template: { ko: "포스트", en: "Posts", ja: "投稿" },
         result: { ko: "결과화면", en: "Result screen", ja: "結果画面" },
-        stats: { ko: "통계", en: "Stats", ja: "統計" },
       },
     },
     basic: {
@@ -801,9 +800,9 @@ export const adminMessages = {
         ja: "このキャンペーンに参加ブランドがありません。",
       },
       rowHint: {
-        ko: "행을 누르면 브랜드별 상세(일자별 지표)로 이동합니다.",
-        en: "Click a row to open the brand's daily metrics.",
-        ja: "行をクリックするとブランド別の日次指標に移動します。",
+        ko: "행을 누르면 아래에 브랜드 상세(운영 현황·일자별 지표·경품 재고)가 열립니다.",
+        en: "Click a row to open the brand's details (operations, daily metrics, stock) below.",
+        ja: "行をクリックすると下にブランド詳細（運用状況・日次指標・景品在庫）が開きます。",
       },
       columns: {
         brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },

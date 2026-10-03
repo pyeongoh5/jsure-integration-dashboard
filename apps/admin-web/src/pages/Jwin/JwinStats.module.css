@@ -77,3 +77,11 @@
   font-size: 12px;
   color: var(--text-muted, #9ca3af);
 }
+
+.rowSelected {
+  background: #eff6ff;
+}
+
+.rowSelected:hover {
+  background: #eff6ff;
+}

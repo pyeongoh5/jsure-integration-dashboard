@@ -14,16 +14,15 @@ import {
   PrizeTab,
   PostTemplateTab,
   ResultTab,
-  StatsTab,
   StatusTransition,
 } from "@/components/JwinCampaignForm";
 import type { AdminBrandCampaignDetail } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import styles from "./Jwin.module.css";
 
-type TabKey = "basic" | "connect" | "prize" | "template" | "result" | "stats";
+type TabKey = "basic" | "connect" | "prize" | "template" | "result";
 
-const TAB_KEYS: TabKey[] = ["basic", "connect", "prize", "template", "result", "stats"];
+const TAB_KEYS: TabKey[] = ["basic", "connect", "prize", "template", "result"];
 
 /**
  * 참여(브랜드 × 시즌) 편집. 기간·이름은 시즌이 갖고 여기서는 게시 설정·경품·포스트·결과화면을 다룬다.
@@ -153,7 +152,7 @@ function BrandCampaignEditBody({
 
   const hasCodePrize = prizes.prizes.some((prize) => prize.type === "CODE");
   // 상태 전환은 모든 탭 위에 걸리고, 본문 탭만 카드로 감싼다.
-  const showTabCard = tab === "prize" || tab === "template" || tab === "result" || tab === "stats";
+  const showTabCard = tab === "prize" || tab === "template" || tab === "result";
 
   return (
     <>
@@ -196,8 +195,6 @@ function BrandCampaignEditBody({
           {tab === "result" && (
             <ResultTab detail={detail} hasCodePrize={hasCodePrize} onSaved={onDetailChanged} />
           )}
-
-          {tab === "stats" && <StatsTab campaignId={detail.id} />}
         </div>
       )}
     </>

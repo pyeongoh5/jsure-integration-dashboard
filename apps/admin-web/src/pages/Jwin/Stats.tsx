@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ScrollTable } from "@/components/composites";
+import { StatsTab } from "@/components/JwinCampaignForm";
 import { useJwinCampaignsData } from "@/components/JwinCampaigns";
 import { fetchCampaignStatsSummary, jwinErrorMessage } from "@/domains/jwin";
 import type { AdminCampaignStatsSummary } from "@/domains/jwin";
@@ -13,9 +13,9 @@ import styles from "./JwinStats.module.css";
  */
 export function JwinStats() {
   const t = useT();
-  const navigate = useNavigate();
   const campaigns = useJwinCampaignsData();
   const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [selectedBrandCampaignId, setSelectedBrandCampaignId] = useState<string | null>(null);
   const [summary, setSummary] = useState<AdminCampaignStatsSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -60,7 +60,10 @@ export function JwinStats() {
         <select
           className={styles.select}
           value={campaignId ?? ""}
-          onChange={(event) => setCampaignId(event.target.value || null)}
+          onChange={(event) => {
+            setCampaignId(event.target.value || null);
+            setSelectedBrandCampaignId(null);
+          }}
         >
           {campaignRows.map((campaign) => (
             <option key={campaign.id} value={campaign.id}>
@@ -103,8 +106,12 @@ export function JwinStats() {
                   return (
                     <tr
                       key={brand.brandCampaignId}
-                      className={styles.row}
-                      onClick={() => navigate(`/jwin/brand-campaigns/${brand.brandCampaignId}`)}
+                      className={
+                        brand.brandCampaignId === selectedBrandCampaignId
+                          ? `${styles.row} ${styles.rowSelected}`
+                          : styles.row
+                      }
+                      onClick={() => setSelectedBrandCampaignId(brand.brandCampaignId)}
                     >
                       <td>{brand.brandName}</td>
                       <td className={styles.num}>{brand.entries.toLocaleString()}</td>
@@ -130,6 +137,13 @@ export function JwinStats() {
             </table>
           </ScrollTable>
           <p className={styles.hint}>{t("jwin.statsPage.rowHint")}</p>
+        </div>
+      )}
+
+      {/* 선택한 브랜드의 상세 — 운영 카드·게시 실패 사유·일자별 지표·경품 재고 */}
+      {selectedBrandCampaignId && (
+        <div className={styles.card}>
+          <StatsTab campaignId={selectedBrandCampaignId} />
         </div>
       )}
     </div>

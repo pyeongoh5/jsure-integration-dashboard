@@ -183,11 +183,17 @@ export default async function BrandCampaignLpPage({
           />
         </div>
 
-        {/* 하단 배너 — 둘 다 16:9 로 크롭해 비율을 맞춘다 */}
+        {/* 하단 배너 — 둘 다 16:9 로 크롭해 비율을 맞추고, 응모 페이지를 떠나지
+            않도록 새 탭으로 연다 */}
         <div style={{ padding: '32px 24px 0', display: 'grid', gap: 16 }}>
           {/* ① 시즌 배너 — 썸네일이 곧 배너 (시즌 LP 로 이동) */}
           {campaign.campaign.thumbnailUrl && (
-            <Link href={`/c/${campaign.campaign.slug}`} style={{ display: 'block' }}>
+            <Link
+              href={`/c/${campaign.campaign.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ display: 'block' }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={campaign.campaign.thumbnailUrl}

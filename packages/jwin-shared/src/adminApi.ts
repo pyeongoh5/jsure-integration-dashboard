@@ -404,6 +404,8 @@ export const AdminShippingAddressSchema = z.object({
   address1: z.string(),
   address2: z.string().optional(),
   fullName: z.string(),
+  /** 후리가나 — 도입(2026-10) 전 입력분에는 없다 */
+  nameKana: z.string().optional(),
   phone: z.string(),
 });
 export type AdminShippingAddress = z.infer<typeof AdminShippingAddressSchema>;

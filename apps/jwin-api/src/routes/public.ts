@@ -11,9 +11,10 @@ import {
   dateJst,
 } from '@jsure/jwin-shared';
 import { getUserSession } from '../lib/auth';
+import { decrypt } from '../lib/crypto';
 import { draw } from '../services/draw';
 import { verifyWinner } from '../services/verification';
-import { saveShipping } from '../services/fulfillment';
+import { saveShipping, type ShippingInfo } from '../services/fulfillment';
 
 /** 유저 대상 공개 API: 캠페인 목록/단독 LP, 응모(추첨), 검증 재시도, 당첨 히스토리, 배송지 입력 */
 export async function publicRoutes(app: FastifyInstance) {
@@ -307,12 +308,43 @@ export async function publicRoutes(app: FastifyInstance) {
 
   // 현물 당첨자 배송지 입력 (캠페인 종료 후에는 잠금 — F-6.3)
   const shippingSchema = z.object({
-    postalCode: z.string().min(7).max(8),
+    /** 하이픈 포함 "123-4567" */
+    postalCode: z.string().regex(/^\d{3}-\d{4}$/),
     prefecture: z.string().min(1),
     address1: z.string().min(1),
     address2: z.string().optional(),
     fullName: z.string().min(1),
-    phone: z.string().min(10),
+    nameKana: z.string().min(1),
+    /** 하이픈 없는 숫자만 */
+    phone: z.string().regex(/^\d{10,11}$/),
+  });
+
+  /**
+   * 본인 배송지 조회 — 새로고침·재진입 시 입력 상태를 복구한다.
+   * 본인(세션 userId) 당첨 건만 조회되고, 어드민 열람과 달리 감사 대상이 아니다.
+   */
+  app.get<{ Params: { winnerId: string } }>('/winners/:winnerId/shipping', async (req, reply) => {
+    const session = getUserSession(req);
+    if (!session) return reply.code(401).send({ error: 'login required' });
+    const winner = await prisma.winner.findFirst({
+      where: { id: req.params.winnerId, entry: { userId: session.userId }, verification: 'PASSED' },
+      include: {
+        prize: true,
+        entry: { include: { campaign: { include: { campaign: true } } } },
+      },
+    });
+    if (!winner || winner.prize.type !== 'PHYSICAL') {
+      return reply.code(404).send({ error: 'not eligible' });
+    }
+    return {
+      prizeName: winner.prize.name,
+      xUsername: session.xUsername,
+      closed: winner.entry.campaign.campaign.endsAt.getTime() < Date.now(),
+      entered: winner.encryptedShipping != null,
+      shipping: winner.encryptedShipping
+        ? (JSON.parse(decrypt(winner.encryptedShipping)) as ShippingInfo)
+        : null,
+    };
   });
   app.post<{ Params: { winnerId: string } }>('/winners/:winnerId/shipping', async (req, reply) => {
     const session = getUserSession(req);

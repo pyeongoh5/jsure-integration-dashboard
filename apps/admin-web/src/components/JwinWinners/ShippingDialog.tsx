@@ -49,6 +49,12 @@ export function ShippingDialog({ open, onClose, loading, error, shipping }: Prop
           <dl className={styles.addressList}>
             <dt>{t("jwin.winner.shipping.fullName")}</dt>
             <dd>{address.fullName}</dd>
+            {address.nameKana && (
+              <>
+                <dt>{t("jwin.winner.shipping.nameKana")}</dt>
+                <dd>{address.nameKana}</dd>
+              </>
+            )}
             <dt>{t("jwin.winner.shipping.postalCode")}</dt>
             <dd>{address.postalCode}</dd>
             <dt>{t("jwin.winner.shipping.prefecture")}</dt>

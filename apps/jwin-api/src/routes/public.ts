@@ -59,7 +59,13 @@ export async function publicRoutes(app: FastifyInstance) {
         brands: {
           where: { status: { in: ['ACTIVE', 'PAUSED', 'ENDED'] } },
           include: {
-            posts: { where: { dateJst: dateJst(), status: 'POSTED' } },
+            posts: {
+              where: { status: 'POSTED' },
+              orderBy: { dateJst: 'desc' },
+              take: 1,
+              include: { template: true },
+            },
+            postTemplates: true,
             brandAccount: { select: { label: true, slug: true, logoUrl: true, xUsername: true } },
           },
           orderBy: { createdAt: 'asc' },
@@ -77,18 +83,25 @@ export async function publicRoutes(app: FastifyInstance) {
       keyVisualUrl: campaign.keyVisualUrl,
       listBackgroundUrl: campaign.listBackgroundUrl,
       brands: campaign.brands.map((brandCampaign) => {
-        const todayPost = brandCampaign.posts[0];
+        const latestPost = brandCampaign.posts[0];
         const xUsername = brandCampaign.brandAccount.xUsername;
+        // 카드 썸네일: 최근 게시물의 소재 → 없으면 현재 유효 소재의 첫 이미지
+        const now = new Date();
+        const template =
+          latestPost?.template ??
+          brandCampaign.postTemplates.find(
+            (candidate) => candidate.activeFrom <= now && now <= candidate.activeTo,
+          );
         return {
           brandCampaignId: brandCampaign.id,
           brandName: brandCampaign.brandAccount.label,
           brandSlug: brandCampaign.brandAccount.slug,
           brandLogoUrl: brandCampaign.brandAccount.logoUrl,
           xUsername,
-          cardImageUrl: brandCampaign.cardImageUrl,
-          todayPostUrl:
-            todayPost?.xPostId && xUsername
-              ? `https://x.com/${xUsername}/status/${todayPost.xPostId}`
+          postImageUrl: template?.mediaUrls[0] ?? template?.mediaUrl ?? null,
+          latestPostUrl:
+            latestPost?.xPostId && xUsername
+              ? `https://x.com/${xUsername}/status/${latestPost.xPostId}`
               : null,
         };
       }),

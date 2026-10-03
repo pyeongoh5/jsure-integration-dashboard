@@ -62,6 +62,15 @@ export default async function BrandCampaignLpPage({
 
   return (
     <main style={{ maxWidth: 480, margin: '0 auto', padding: 24, textAlign: 'center' }}>
+      {campaign.postImageUrl && (
+        // 최상단: 브랜드가 X 에 게시하는 소재의 첫 번째 이미지 — 트윗과 같은 비주얼
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={campaign.postImageUrl}
+          alt=""
+          style={{ width: '100%', borderRadius: 12, marginBottom: 12 }}
+        />
+      )}
       <h1>{campaign.brandName}</h1>
       {campaign.xUsername && (
         <p>
@@ -75,15 +84,6 @@ export default async function BrandCampaignLpPage({
         フォロー&リポストでその場で当たる！
       </p>
       <p style={{ fontSize: 14, color: '#555' }}>{campaign.prizeSummary}</p>
-      {campaign.postImageUrl && (
-        // 브랜드가 X 에 게시하는 소재의 첫 번째 이미지 — 트윗과 같은 비주얼을 보여준다
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={campaign.postImageUrl}
-          alt=""
-          style={{ width: '100%', borderRadius: 12, margin: '12px 0' }}
-        />
-      )}
       {campaign.todayPostUrl && (
         <p>
           <a href={campaign.todayPostUrl} target="_blank" rel="noreferrer">

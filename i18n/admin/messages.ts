@@ -108,6 +108,7 @@ export const adminMessages = {
       columns: {
         name: { ko: "캠페인", en: "Campaign", ja: "キャンペーン" },
         brands: { ko: "브랜드", en: "Brands", ja: "ブランド" },
+        status: { ko: "상태", en: "Status", ja: "ステータス" },
         brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
         slug: { ko: "slug", en: "Slug", ja: "slug" },
         status: { ko: "상태", en: "Status", ja: "ステータス" },
@@ -118,6 +119,11 @@ export const adminMessages = {
         actions: { ko: "관리", en: "Actions", ja: "操作" },
       },
       delete: { ko: "삭제", en: "Delete", ja: "削除" },
+      status: {
+        upcoming: { ko: "예정", en: "Upcoming", ja: "開始前" },
+        active: { ko: "진행 중", en: "Active", ja: "開催中" },
+        ended: { ko: "종료", en: "Ended", ja: "終了" },
+      },
       start: {
         ko: "캠페인 시작 ({count}개 참여)",
         en: "Start campaign ({count} brands)",
@@ -664,10 +670,10 @@ export const adminMessages = {
           ja: "数字が小さいほど先に判定します。",
         },
         probability: { ko: "0 초과 1 미만. 0.05 = 5%", en: "Between 0 and 1. 0.05 = 5%", ja: "0より大きく1未満。0.05 = 5%" },
-        codeCount: {
-          ko: "입력 {count}건 / 수량 {quantity} — 개수가 같아야 등록됩니다.",
-          en: "{count} entered / quantity {quantity} — the counts must match to register.",
-          ja: "入力 {count}件 / 数量 {quantity} — 件数が一致しないと登録できません。",
+        codeCountAuto: {
+          ko: "입력 {count}건 — 코드 수가 그대로 경품 수량이 됩니다.",
+          en: "{count} entered — the number of codes becomes the quantity.",
+          ja: "入力 {count}件 — コード数がそのまま景品数量になります。",
         },
         appendCount: {
           ko: "입력 {count}건 — 등록한 만큼 수량과 잔여가 함께 늘어납니다.",
@@ -723,11 +729,6 @@ export const adminMessages = {
           ko: "중복 {count}건: {codes}",
           en: "{count} duplicates: {codes}",
           ja: "重複 {count}件: {codes}",
-        },
-        countMismatch: {
-          ko: "코드 수({count})가 수량({quantity})과 일치하지 않습니다.",
-          en: "Code count ({count}) does not match the quantity ({quantity}).",
-          ja: "コード数（{count}）が数量（{quantity}）と一致しません。",
         },
         codesRequired: { ko: "코드를 입력하세요.", en: "Enter at least one code.", ja: "コードを入力してください。" },
         addFailed: {

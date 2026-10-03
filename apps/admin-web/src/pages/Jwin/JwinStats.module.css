@@ -105,3 +105,33 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.chartsRow {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.4fr) minmax(280px, 1fr) minmax(200px, 0.7fr);
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .chartsRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.deltaUp {
+  color: #047857;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.deltaDown {
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 12px;
+}

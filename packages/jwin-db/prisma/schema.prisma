@@ -349,6 +349,8 @@ model BrandMetricSnapshot {
   repostCount Int?
   likeCount   Int?
   replyCount  Int?
+  /// 노출 수 — 본인 트윗이라 non_public_metrics 로 조회 가능
+  impressionCount Int?
   collectedAt DateTime @default(now())
 
   @@unique([campaignId, dateJst, kind])

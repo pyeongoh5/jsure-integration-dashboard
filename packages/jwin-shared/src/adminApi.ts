@@ -239,6 +239,7 @@ export const AdminCampaignMetricsExportSchema = z.object({
       repostCount: z.number().int().nullable(),
       likeCount: z.number().int().nullable(),
       replyCount: z.number().int().nullable(),
+      impressionCount: z.number().int().nullable().default(null),
     }),
   ),
 });
@@ -252,33 +253,22 @@ export const AdminMetricSnapshotSchema = z.object({
   repostCount: z.number().int().nullable(),
   likeCount: z.number().int().nullable(),
   replyCount: z.number().int().nullable(),
+  /** 노출 수 — 수집 도입(2026-10) 전 행과 BASELINE 은 null */
+  impressionCount: z.number().int().nullable().default(null),
 });
 export type AdminMetricSnapshot = z.infer<typeof AdminMetricSnapshotSchema>;
 
 /** GET /admin/brand-campaigns/:id/metrics — 날짜 오름차순 */
 export const AdminBrandMetricsSchema = z.object({
   snapshots: z.array(AdminMetricSnapshotSchema),
+  /** 일별 응모 수 — 요일별 분포·추이 계산용 */
+  entriesByDate: z.array(z.object({ dateJst: z.string(), count: z.number().int() })).default([]),
+  /** 고유 응모자 수 (기간 전체) */
+  uniqueEntrants: z.number().int().default(0),
+  /** 총 응모 수 */
+  totalEntries: z.number().int().default(0),
 });
 export type AdminBrandMetrics = z.infer<typeof AdminBrandMetricsSchema>;
-
-/** GET /admin/campaigns/:id/stats-summary — 시즌의 참여 브랜드별 성과 요약 */
-export const AdminCampaignStatsSummarySchema = z.object({
-  brands: z.array(
-    z.object({
-      brandCampaignId: z.string(),
-      brandName: z.string(),
-      status: CampaignStatusSchema,
-      entries: z.number().int(),
-      winConfirmed: z.number().int(),
-      baselineFollowers: z.number().int().nullable(),
-      latestFollowers: z.number().int().nullable(),
-      totalReposts: z.number().int(),
-      totalLikes: z.number().int(),
-      totalReplies: z.number().int(),
-    }),
-  ),
-});
-export type AdminCampaignStatsSummary = z.infer<typeof AdminCampaignStatsSummarySchema>;
 
 /** ② GET /admin/campaigns/:id/prizes */
 export const AdminPrizeSchema = z.object({

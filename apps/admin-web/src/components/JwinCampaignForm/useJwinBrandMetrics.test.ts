@@ -1,50 +1,19 @@
 import { describe, expect, it } from "vitest";
-import type { AdminMetricSnapshot } from "@/domains/jwin";
-import { summarizeMetrics } from "./useJwinBrandMetrics";
+import { entriesByWeekday } from "./useJwinBrandMetrics";
 
-const snapshot = (
-  overrides: Partial<AdminMetricSnapshot> & Pick<AdminMetricSnapshot, "dateJst" | "kind">,
-): AdminMetricSnapshot => ({
-  followerCount: 0,
-  repostCount: null,
-  likeCount: null,
-  replyCount: null,
-  ...overrides,
-});
-
-describe("summarizeMetrics", () => {
-  it("빈 목록이면 전부 null/0", () => {
-    const summary = summarizeMetrics([]);
-    expect(summary.baselineFollowers).toBeNull();
-    expect(summary.followerDelta).toBeNull();
-    expect(summary.totalReposts).toBe(0);
+describe("entriesByWeekday", () => {
+  it("월~일 7칸으로 요일별 응모를 집계한다", () => {
+    // 2026-10-05 = 월요일, 10-06 = 화요일, 10-11 = 일요일
+    const result = entriesByWeekday([
+      { dateJst: "2026-10-05", count: 3 },
+      { dateJst: "2026-10-06", count: 2 },
+      { dateJst: "2026-10-11", count: 5 },
+      { dateJst: "2026-10-12", count: 1 }, // 다음 주 월요일 — 같은 칸에 합산
+    ]);
+    expect(result).toEqual([4, 2, 0, 0, 0, 0, 5]);
   });
 
-  it("기준점 대비 팔로워 순증과 일별 반응 합계를 낸다", () => {
-    const summary = summarizeMetrics([
-      snapshot({ dateJst: "2026-10-01", kind: "BASELINE", followerCount: 1000 }),
-      snapshot({
-        dateJst: "2026-10-01",
-        kind: "DAILY",
-        followerCount: 1040,
-        repostCount: 12,
-        likeCount: 30,
-        replyCount: 3,
-      }),
-      snapshot({
-        dateJst: "2026-10-02",
-        kind: "DAILY",
-        followerCount: 1100,
-        repostCount: 20,
-        likeCount: 50,
-        replyCount: 5,
-      }),
-    ]);
-    expect(summary.baselineFollowers).toBe(1000);
-    expect(summary.latestFollowers).toBe(1100);
-    expect(summary.followerDelta).toBe(100);
-    expect(summary.totalReposts).toBe(32);
-    expect(summary.totalLikes).toBe(80);
-    expect(summary.totalReplies).toBe(8);
+  it("빈 입력이면 전부 0", () => {
+    expect(entriesByWeekday([])).toEqual([0, 0, 0, 0, 0, 0, 0]);
   });
 });

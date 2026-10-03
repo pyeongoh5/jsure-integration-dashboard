@@ -1,8 +1,6 @@
 import type { AdminCampaignStats } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import { utcIsoToJstLocal } from "./jwinDateTime";
-import { EngagementBars, FollowerTrendChart } from "./JwinMetricsCharts";
-import { useJwinBrandMetrics } from "./useJwinBrandMetrics";
 import { useJwinCampaignStats } from "./useJwinCampaignStats";
 import styles from "./JwinCampaignTabs.module.css";
 
@@ -35,7 +33,6 @@ function statCards(stats: AdminCampaignStats): StatCard[] {
 export function StatsTab({ campaignId }: Props) {
   const t = useT();
   const { loading, loadError, stats } = useJwinCampaignStats(campaignId);
-  const metrics = useJwinBrandMetrics(campaignId);
 
   return (
     <div className={styles.tab}>
@@ -95,106 +92,6 @@ export function StatsTab({ campaignId }: Props) {
           <div className={styles.statPeriod}>
             {t("jwin.stats.period")}: {jstDateTime(stats.startsAt)} ~ {jstDateTime(stats.endsAt)}
           </div>
-
-          <h3 className={styles.statSectionTitle}>{t("jwin.stats.metricsTitle")}</h3>
-          {metrics.loadError && <div className={styles.errorText}>{metrics.loadError}</div>}
-          {!metrics.loading && metrics.snapshots.length === 0 && (
-            <div className={styles.empty}>{t("jwin.stats.metricsEmpty")}</div>
-          )}
-          {metrics.snapshots.length > 0 && (
-            <>
-              <div className={styles.statGrid}>
-                <div className={styles.statCard}>
-                  <span className={styles.statLabel}>{t("jwin.stats.metricsBaseline")}</span>
-                  <span className={styles.statValue}>
-                    {metrics.summary.baselineFollowers?.toLocaleString() ?? t("jwin.common.dash")}
-                  </span>
-                </div>
-                <div className={styles.statCard}>
-                  <span className={styles.statLabel}>{t("jwin.stats.metricsFollowers")}</span>
-                  <span className={styles.statValue}>
-                    {metrics.summary.latestFollowers?.toLocaleString() ?? t("jwin.common.dash")}
-                    {metrics.summary.followerDelta !== null && (
-                      <span className={styles.statDelta}>
-                        {metrics.summary.followerDelta >= 0 ? " +" : " "}
-                        {metrics.summary.followerDelta.toLocaleString()}
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div className={styles.statCard}>
-                  <span className={styles.statLabel}>{t("jwin.stats.metricsReposts")}</span>
-                  <span className={styles.statValue}>
-                    {metrics.summary.totalReposts.toLocaleString()}
-                  </span>
-                </div>
-                <div className={styles.statCard}>
-                  <span className={styles.statLabel}>{t("jwin.stats.metricsLikes")}</span>
-                  <span className={styles.statValue}>
-                    {metrics.summary.totalLikes.toLocaleString()}
-                  </span>
-                </div>
-                <div className={styles.statCard}>
-                  <span className={styles.statLabel}>{t("jwin.stats.metricsReplies")}</span>
-                  <span className={styles.statValue}>
-                    {metrics.summary.totalReplies.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-
-              {/* 추세는 차트로 (2포인트 미만이면 자동 생략), 정밀값은 아래 테이블로 */}
-              <FollowerTrendChart snapshots={metrics.snapshots} />
-              <EngagementBars snapshots={metrics.snapshots} />
-
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>{t("jwin.stats.metricsDate")}</th>
-                    <th className={styles.num}>{t("jwin.stats.metricsFollowers")}</th>
-                    <th className={styles.num}>{t("jwin.stats.metricsDelta")}</th>
-                    <th className={styles.num}>{t("jwin.stats.metricsReposts")}</th>
-                    <th className={styles.num}>{t("jwin.stats.metricsLikes")}</th>
-                    <th className={styles.num}>{t("jwin.stats.metricsReplies")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {metrics.snapshots.map((snapshot, index) => {
-                    const previous = index > 0 ? metrics.snapshots[index - 1] : undefined;
-                    const dayDelta = previous
-                      ? snapshot.followerCount - previous.followerCount
-                      : null;
-                    return (
-                      <tr key={`${snapshot.dateJst}-${snapshot.kind}`}>
-                        <td>
-                          {snapshot.dateJst}
-                          {snapshot.kind === "BASELINE" && (
-                            <span className={styles.muted}> ({t("jwin.stats.metricsBaselineTag")})</span>
-                          )}
-                        </td>
-                        <td className={styles.num}>{snapshot.followerCount.toLocaleString()}</td>
-                        <td
-                          className={
-                            dayDelta === null || dayDelta === 0
-                              ? styles.num
-                              : dayDelta > 0
-                                ? `${styles.num} ${styles.deltaUp}`
-                                : `${styles.num} ${styles.deltaDown}`
-                          }
-                        >
-                          {dayDelta === null
-                            ? "-"
-                            : `${dayDelta > 0 ? "+" : ""}${dayDelta.toLocaleString()}`}
-                        </td>
-                        <td className={styles.num}>{snapshot.repostCount?.toLocaleString() ?? "-"}</td>
-                        <td className={styles.num}>{snapshot.likeCount?.toLocaleString() ?? "-"}</td>
-                        <td className={styles.num}>{snapshot.replyCount?.toLocaleString() ?? "-"}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </>
-          )}
 
           <h3 className={styles.statSectionTitle}>{t("jwin.stats.stockTitle")}</h3>
           {stats.prizeStock.length === 0 ? (

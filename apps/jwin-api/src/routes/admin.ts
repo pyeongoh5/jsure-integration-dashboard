@@ -1003,58 +1003,8 @@ export async function adminRoutes(app: FastifyInstance) {
           repostCount: snapshot.repostCount,
           likeCount: snapshot.likeCount,
           replyCount: snapshot.replyCount,
+          impressionCount: snapshot.impressionCount,
         })),
-      };
-    },
-  );
-
-  // 시즌 단위 성과 요약 — 캠페인 통계 페이지용 (참여 브랜드별 집계)
-  app.get<{ Params: { id: string } }>(
-    '/admin/campaigns/:id/stats-summary',
-    async (req, reply) => {
-      if (!requireAdmin(req, reply)) return;
-      const participations = await prisma.brandCampaign.findMany({
-        where: { campaignId: req.params.id },
-        include: {
-          brandAccount: { select: { label: true } },
-          _count: { select: { entries: true } },
-          metricSnapshots: { orderBy: [{ dateJst: 'asc' }, { kind: 'asc' }] },
-        },
-        orderBy: { createdAt: 'asc' },
-      });
-      const winCounts = await prisma.entry.groupBy({
-        by: ['campaignId'],
-        where: {
-          campaignId: { in: participations.map((participation) => participation.id) },
-          result: 'WIN_CONFIRMED',
-        },
-        _count: { _all: true },
-      });
-      const winByParticipation = new Map(
-        winCounts.map((row) => [row.campaignId, row._count._all]),
-      );
-
-      return {
-        brands: participations.map((participation) => {
-          const snapshots = participation.metricSnapshots;
-          const baseline = snapshots.find((snapshot) => snapshot.kind === 'BASELINE');
-          const latest = snapshots[snapshots.length - 1];
-          const dailies = snapshots.filter((snapshot) => snapshot.kind === 'DAILY');
-          const sum = (pick: (s: (typeof dailies)[number]) => number | null) =>
-            dailies.reduce((total, snapshot) => total + (pick(snapshot) ?? 0), 0);
-          return {
-            brandCampaignId: participation.id,
-            brandName: participation.brandAccount.label,
-            status: participation.status,
-            entries: participation._count.entries,
-            winConfirmed: winByParticipation.get(participation.id) ?? 0,
-            baselineFollowers: baseline?.followerCount ?? null,
-            latestFollowers: latest?.followerCount ?? null,
-            totalReposts: sum((snapshot) => snapshot.repostCount),
-            totalLikes: sum((snapshot) => snapshot.likeCount),
-            totalReplies: sum((snapshot) => snapshot.replyCount),
-          };
-        }),
       };
     },
   );
@@ -1064,19 +1014,41 @@ export async function adminRoutes(app: FastifyInstance) {
     '/admin/brand-campaigns/:id/metrics',
     async (req, reply) => {
       if (!requireAdmin(req, reply)) return;
-      const snapshots = await prisma.brandMetricSnapshot.findMany({
-        where: { campaignId: req.params.id },
-        orderBy: [{ dateJst: 'asc' }, { kind: 'asc' }],
-        select: {
-          dateJst: true,
-          kind: true,
-          followerCount: true,
-          repostCount: true,
-          likeCount: true,
-          replyCount: true,
-        },
-      });
-      return { snapshots };
+      const [snapshots, entriesByDate, uniqueUsers, totalEntries] = await Promise.all([
+        prisma.brandMetricSnapshot.findMany({
+          where: { campaignId: req.params.id },
+          orderBy: [{ dateJst: 'asc' }, { kind: 'asc' }],
+          select: {
+            dateJst: true,
+            kind: true,
+            followerCount: true,
+            repostCount: true,
+            likeCount: true,
+            replyCount: true,
+            impressionCount: true,
+          },
+        }),
+        prisma.entry.groupBy({
+          by: ['dateJst'],
+          where: { campaignId: req.params.id },
+          _count: { _all: true },
+          orderBy: { dateJst: 'asc' },
+        }),
+        prisma.entry.groupBy({
+          by: ['userId'],
+          where: { campaignId: req.params.id },
+        }),
+        prisma.entry.count({ where: { campaignId: req.params.id } }),
+      ]);
+      return {
+        snapshots,
+        entriesByDate: entriesByDate.map((row) => ({
+          dateJst: row.dateJst,
+          count: row._count._all,
+        })),
+        uniqueEntrants: uniqueUsers.length,
+        totalEntries,
+      };
     },
   );
 

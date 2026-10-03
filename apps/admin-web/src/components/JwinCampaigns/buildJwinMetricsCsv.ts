@@ -11,6 +11,7 @@ const HEADER_KEYS = [
   "jwin.statsPage.export.header.reposts",
   "jwin.statsPage.export.header.likes",
   "jwin.statsPage.export.header.replies",
+  "jwin.statsPage.export.header.impressions",
 ] as const satisfies readonly AdminTranslationKey[];
 
 /** 시즌 전체 지표(브랜드×일자) CSV. 순수 함수 — 정렬·내용은 서버 응답을 그대로 따른다. */
@@ -31,6 +32,7 @@ export function buildJwinMetricsCsv(data: AdminCampaignMetricsExport): string {
       row.repostCount === null ? "" : String(row.repostCount),
       row.likeCount === null ? "" : String(row.likeCount),
       row.replyCount === null ? "" : String(row.replyCount),
+      row.impressionCount === null ? "" : String(row.impressionCount),
     ]
       .map(escapeCsvCell)
       .join(","),

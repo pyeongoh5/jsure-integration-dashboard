@@ -808,6 +808,9 @@ export const adminMessages = {
         brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
         followerDelta: { ko: "팔로워 증감", en: "Follower change", ja: "フォロワー増減" },
       },
+      uniqueEntrants: { ko: "고유 응모자", en: "Unique entrants", ja: "ユニーク応募者" },
+      dailyTitle: { ko: "데일리 지표", en: "Daily metrics", ja: "デイリー指標" },
+      noBrands: { ko: "참여 브랜드 없음", en: "No brands", ja: "参加ブランドなし" },
       exportCsv: { ko: "지표 CSV 다운로드", en: "Download metrics CSV", ja: "指標CSVダウンロード" },
       exporting: { ko: "내보내는 중…", en: "Exporting…", ja: "エクスポート中…" },
       exportFailed: {
@@ -824,6 +827,7 @@ export const adminMessages = {
           reposts: { ko: "리포스트", en: "Reposts", ja: "リポスト" },
           likes: { ko: "좋아요", en: "Likes", ja: "いいね" },
           replies: { ko: "댓글", en: "Replies", ja: "返信" },
+          impressions: { ko: "노출", en: "Impressions", ja: "インプレッション" },
         },
         kindDaily: { ko: "일별", en: "Daily", ja: "日次" },
       },
@@ -1001,7 +1005,8 @@ export const adminMessages = {
       metricsDate: { ko: "일자 (JST)", en: "Date (JST)", ja: "日付 (JST)" },
       metricsDelta: { ko: "팔로워 증감", en: "Change", ja: "増減" },
       chartFollowers: { ko: "팔로워 추이", en: "Follower trend", ja: "フォロワー推移" },
-      chartEngagement: { ko: "일별 반응", en: "Daily engagement", ja: "日別の反応" },
+      chartEntriesByWeekday: { ko: "요일별 응모", en: "Entries by weekday", ja: "曜日別応募" },
+      metricsImpressions: { ko: "노출", en: "Impressions", ja: "インプレッション" },
       stockTitle: { ko: "경품별 잔여 재고", en: "Stock left by prize", ja: "景品別の残り在庫" },
       stockEmpty: {
         ko: "등록된 경품이 없습니다.",

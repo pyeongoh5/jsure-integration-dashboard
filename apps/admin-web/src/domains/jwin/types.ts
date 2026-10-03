@@ -35,7 +35,6 @@ export {
   AdminShippingAddressSchema,
   AdminCampaignStatsSchema,
   AdminBrandMetricsSchema,
-  AdminCampaignStatsSummarySchema,
   AdminCampaignMetricsExportSchema,
   AdminFulfillmentPatchSchema,
   VerificationStatusSchema,
@@ -81,7 +80,6 @@ export type {
   AdminCampaignStats,
   AdminBrandMetrics,
   AdminMetricSnapshot,
-  AdminCampaignStatsSummary,
   AdminCampaignMetricsExport,
   AdminFulfillmentPatch,
 } from "@jsure/jwin-shared";

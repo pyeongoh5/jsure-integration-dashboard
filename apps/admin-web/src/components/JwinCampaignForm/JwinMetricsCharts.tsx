@@ -3,16 +3,10 @@ import type { AdminMetricSnapshot } from "@/domains/jwin";
 import styles from "./JwinMetricsCharts.module.css";
 
 /**
- * 성과 지표 차트 — 추세는 차트로, 정밀값은 아래 테이블로 분담한다.
- * 라이브러리 없이 SVG 라인 + CSS 막대 (Overview 월별 차트와 같은 방식).
- * 색은 검증된 기본 팔레트의 1~3번 슬롯(파랑·주황·아쿠아) 고정 순서.
+ * 성과 지표 차트 — 추세는 차트로, 정밀값은 테이블로 분담한다.
+ * 라이브러리 없이 SVG (Overview 월별 차트와 같은 방식), 색은 검증된
+ * 기본 팔레트의 고정 슬롯 순서.
  */
-
-const SERIES = {
-  repost: "#2a78d6",
-  like: "#eb6834",
-  reply: "#1baf7a",
-} as const;
 
 /** "YYYY-MM-DD" → "M/D" */
 function shortDate(dateJst: string): string {
@@ -107,63 +101,109 @@ export function FollowerTrendChart({ snapshots }: { snapshots: AdminMetricSnapsh
   );
 }
 
-/** 일별 반응 — 리포스트/좋아요/댓글 3계열 그룹 막대. */
-export function EngagementBars({ snapshots }: { snapshots: AdminMetricSnapshot[] }) {
-  const t = useT();
-  const dailies = snapshots.filter((snapshot) => snapshot.kind === "DAILY");
-  if (dailies.length === 0) return null;
+/**
+ * 요일별 응모 분포 도넛 — 중앙에 총 응모 수. 요일 7개는 검증된 팔레트
+ * 1~7번 슬롯 고정 순서(인접쌍 검증 통과), 범례에 요일·건수를 함께 쓴다.
+ */
+const WEEKDAY_COLORS = [
+  "#2a78d6",
+  "#eb6834",
+  "#1baf7a",
+  "#eda100",
+  "#e87ba4",
+  "#008300",
+  "#4a3aa7",
+] as const;
 
-  const max = Math.max(
-    1,
-    ...dailies.flatMap((snapshot) => [
-      snapshot.repostCount ?? 0,
-      snapshot.likeCount ?? 0,
-      snapshot.replyCount ?? 0,
-    ]),
-  );
-  const series = [
-    { key: "repost" as const, labelKey: "jwin.stats.metricsReposts" as const, pick: (s: AdminMetricSnapshot) => s.repostCount ?? 0 },
-    { key: "like" as const, labelKey: "jwin.stats.metricsLikes" as const, pick: (s: AdminMetricSnapshot) => s.likeCount ?? 0 },
-    { key: "reply" as const, labelKey: "jwin.stats.metricsReplies" as const, pick: (s: AdminMetricSnapshot) => s.replyCount ?? 0 },
-  ];
-  // 라벨이 겹치지 않게 날짜는 듬성듬성 표시
-  const labelEvery = Math.max(1, Math.ceil(dailies.length / 10));
+const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] as const;
+
+export function EntriesDonut({
+  byWeekday,
+  totalEntries,
+}: {
+  /** 월~일 순서 7칸 */
+  byWeekday: number[];
+  totalEntries: number;
+}) {
+  const t = useT();
+  const size = 160;
+  const radius = 62;
+  const strokeWidth = 22;
+  const circumference = 2 * Math.PI * radius;
+  const total = Math.max(1, totalEntries);
+
+  let offset = 0;
+  const segments = byWeekday.map((count, index) => {
+    const fraction = count / total;
+    const segment = { index, count, fraction, offset };
+    offset += fraction;
+    return segment;
+  });
 
   return (
     <figure className={styles.figure}>
-      <figcaption className={styles.caption}>{t("jwin.stats.chartEngagement")}</figcaption>
-      <div className={styles.legend}>
-        {series.map((item) => (
-          <span key={item.key} className={styles.legendItem}>
-            <span className={styles.legendChip} style={{ background: SERIES[item.key] }} />
-            {t(item.labelKey)}
-          </span>
-        ))}
-      </div>
-      <div className={styles.barChart}>
-        {dailies.map((snapshot, index) => (
-          <div key={snapshot.dateJst} className={styles.barGroup}>
-            <div className={styles.bars}>
-              {series.map((item) => {
-                const value = item.pick(snapshot);
-                return (
-                  <div
-                    key={item.key}
-                    className={styles.bar}
-                    style={{
-                      height: `${(value / max) * 100}%`,
-                      background: SERIES[item.key],
-                    }}
-                    title={`${shortDate(snapshot.dateJst)} · ${t(item.labelKey)} ${value.toLocaleString()}`}
-                  />
-                );
-              })}
-            </div>
-            <span className={styles.barLabel}>
-              {index % labelEvery === 0 ? shortDate(snapshot.dateJst) : ""}
-            </span>
+      <figcaption className={styles.caption}>{t("jwin.stats.chartEntriesByWeekday")}</figcaption>
+      <div className={styles.donutRow}>
+        <div className={styles.donutWrap}>
+          <svg viewBox={`0 0 ${size} ${size}`} className={styles.donut} role="img">
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke="#f3f4f6"
+              strokeWidth={strokeWidth}
+            />
+            {segments.map(
+              (segment) =>
+                segment.count > 0 && (
+                  <circle
+                    key={segment.index}
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    fill="none"
+                    stroke={WEEKDAY_COLORS[segment.index]}
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={`${Math.max(0, segment.fraction * circumference - 2)} ${circumference}`}
+                    strokeDashoffset={-segment.offset * circumference}
+                    transform={`rotate(-90 ${size / 2} ${size / 2})`}
+                  >
+                    <title>
+                      {WEEKDAY_LABELS[segment.index]} · {segment.count.toLocaleString()}
+                    </title>
+                  </circle>
+                ),
+            )}
+          </svg>
+          <div className={styles.donutCenter}>
+            <span className={styles.donutTotal}>{totalEntries.toLocaleString()}</span>
+            <span className={styles.donutTotalLabel}>{t("jwin.stats.entries")}</span>
           </div>
-        ))}
+        </div>
+        <ul className={styles.donutLegend}>
+          {segments.map((segment) => (
+            <li key={segment.index} className={styles.legendItem}>
+              <span
+                className={styles.legendChip}
+                style={{ background: WEEKDAY_COLORS[segment.index] }}
+              />
+              {WEEKDAY_LABELS[segment.index]} {segment.count.toLocaleString()}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </figure>
+  );
+}
+
+/** 단일 수치 스탯 타일 — 차트가 필요 없는 헤드라인 숫자용. */
+export function StatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <figure className={styles.figure}>
+      <figcaption className={styles.caption}>{label}</figcaption>
+      <div className={styles.statTile}>
+        <span className={styles.statTileValue}>{value.toLocaleString()}</span>
       </div>
     </figure>
   );

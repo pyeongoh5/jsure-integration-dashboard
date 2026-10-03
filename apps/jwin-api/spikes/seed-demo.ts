@@ -193,6 +193,7 @@ async function main() {
             repostCount: 20 + Math.round(growth / 4),
             likeCount: 60 + Math.round(growth / 2),
             replyCount: 3 + Math.floor(growth / 30),
+            impressionCount: 2000 + growth * 15,
           },
         });
       }

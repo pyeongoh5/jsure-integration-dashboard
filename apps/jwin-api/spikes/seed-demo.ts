@@ -12,6 +12,7 @@
 //   demo-physical  오늘 당첨 확정(현물) — 배송지 입력 / 어제 당첨은 입력 완료(수정 가능)
 //   demo-code      오늘 당첨 확정(코드) — DM 발송 완료 안내
 //   demo-prepost   오늘 게시 없음 — "HH:mm 頃投稿予定" 안내
+//   demo-mixed     여러 날 혼합 당첨 — 그제 코드(DM 발송)·어제 현물(배송지 미입력)·오늘 낙첨
 //   시즌 demo-ended 의 demo-closed — 종료 화면 + 배송지 마감
 //
 // 몇 번을 다시 돌려도 안전하다 — demo 시즌·브랜드를 지우고 다시 만든다.
@@ -90,6 +91,7 @@ async function main() {
     { slug: 'demo-physical', label: '현물 당첨 브랜드', postToday: true, prizeType: 'PHYSICAL' },
     { slug: 'demo-code', label: '코드 당첨 브랜드', postToday: true, prizeType: 'CODE' },
     { slug: 'demo-prepost', label: '게시 전 브랜드', postToday: false, prizeType: 'CODE' },
+    { slug: 'demo-mixed', label: '혼합 당첨 브랜드', postToday: true, prizeType: 'PHYSICAL' },
   ];
 
   for (const spec of brands) {
@@ -136,7 +138,8 @@ async function main() {
     });
 
     const posts: Record<string, string> = {};
-    for (const offset of spec.postToday ? [-1, 0] : [-1]) {
+    const postOffsets = spec.slug === 'demo-mixed' ? [-2, -1, 0] : spec.postToday ? [-1, 0] : [-1];
+    for (const offset of postOffsets) {
       const date = jstDate(offset);
       const post = await prisma.campaignPost.create({
         data: {
@@ -215,6 +218,43 @@ async function main() {
           shippingEnteredAt: new Date(Date.now() - DAY_MS),
         },
       });
+    }
+    if (spec.slug === 'demo-mixed') {
+      // 그제: 코드 당첨(DM 발송) / 어제: 현물 당첨(배송지 미입력) / 오늘: 낙첨
+      const codePrize = await prisma.prize.create({
+        data: {
+          campaignId: participation.id,
+          type: 'CODE',
+          name: '데모 기프트코드 500円',
+          tier: 2,
+          totalQty: 10,
+          remainingQty: 9,
+          winProbability: 0.3,
+        },
+      });
+      const dayBefore = jstDate(-2);
+      const codeEntry = await makeEntry(dayBefore, 'WIN_CONFIRMED');
+      await prisma.winner.create({
+        data: {
+          entryId: codeEntry.id,
+          prizeId: codePrize.id,
+          verification: 'PASSED',
+          verifiedAt: new Date(Date.now() - 2 * DAY_MS),
+          fulfillment: 'DM_SENT',
+          dmSentAt: new Date(Date.now() - 2 * DAY_MS),
+        },
+      });
+      const physicalEntry = await makeEntry(yesterday, 'WIN_CONFIRMED');
+      await prisma.winner.create({
+        data: {
+          entryId: physicalEntry.id,
+          prizeId: prize.id,
+          verification: 'PASSED',
+          verifiedAt: new Date(Date.now() - DAY_MS),
+          fulfillment: 'AWAITING_INFO',
+        },
+      });
+      await makeEntry(today, 'LOSE');
     }
     if (spec.slug === 'demo-code') {
       const entry = await makeEntry(today, 'WIN_CONFIRMED');
@@ -308,7 +348,7 @@ async function main() {
   console.log('데모 시드 완료. 둘러보기:');
   console.log('  1) http://localhost:8080/dev/login  (데모 유저 로그인 → /c/demo 로 이동)');
   console.log('  2) 시즌 LP:        http://localhost:3100/c/demo');
-  console.log('  3) 응모 베리에이션: /c/demo/demo-pending · demo-repost · demo-lose · demo-physical · demo-code · demo-prepost');
+  console.log('  3) 응모 베리에이션: /c/demo/demo-pending · demo-repost · demo-lose · demo-physical · demo-code · demo-prepost · demo-mixed');
   console.log('  4) 종료·마감:      http://localhost:3100/c/demo-ended/demo-closed');
 }
 

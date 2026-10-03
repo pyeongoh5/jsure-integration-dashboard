@@ -16,6 +16,19 @@ async function fetchBrandCampaign(
   return (await res.json()) as CampaignLp;
 }
 
+/** JST "2026.9.1(火)" */
+function jstDay(iso: string): string {
+  const parts = new Intl.DateTimeFormat('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+  }).formatToParts(new Date(iso));
+  const part = (type: string) => parts.find((candidate) => candidate.type === type)?.value ?? '';
+  return `${part('year')}.${part('month')}.${part('day')}(${part('weekday')})`;
+}
+
 /**
  * X 링크 카드(summary_large_image)용 메타데이터.
  * 트윗 본문의 이 페이지 URL 로 카드가 만들어지고, 카드 이미지를 누르면 이 페이지가 열린다 —
@@ -48,7 +61,10 @@ export async function generateMetadata({
   };
 }
 
-/** 캠페인 단독 LP (/c/{slug}) — 응모 + 당첨 히스토리 (F-3) */
+/**
+ * 캠페인 응모 LP — 포스터(소재 이미지)가 디자인을 전담하고 페이지는 침묵한다.
+ * 포스터 전폭 → 기간 바 → CTA(응모) → 회색 안내 박스 → 당첨 히스토리 → 시즌 배너.
+ */
 export default async function BrandCampaignLpPage({
   params,
 }: {
@@ -61,56 +77,151 @@ export default async function BrandCampaignLpPage({
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: 24, textAlign: 'center' }}>
-      {campaign.postImageUrl && (
-        // 최상단: 브랜드가 X 에 게시하는 소재의 첫 번째 이미지 — 트윗과 같은 비주얼
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={campaign.postImageUrl}
-          alt=""
-          style={{ width: '100%', borderRadius: 12, marginBottom: 12 }}
-        />
-      )}
-      <h1>{campaign.brandName}</h1>
-      {campaign.xUsername && (
-        <p>
-          <a href={`https://x.com/${campaign.xUsername}`} target="_blank" rel="noreferrer">
-            @{campaign.xUsername}
-          </a>
-        </p>
-      )}
-      <p>
-        期間: 〜{new Date(campaign.endsAt).toLocaleDateString('ja-JP')} ／ 毎日応募OK！
-        フォロー&リポストでその場で当たる！
-      </p>
-      <p style={{ fontSize: 14, color: '#555' }}>{campaign.prizeSummary}</p>
-      {campaign.todayPostUrl && (
-        <p>
-          <a href={campaign.todayPostUrl} target="_blank" rel="noreferrer">
-            本日のキャンペーンポストはこちら →
-          </a>
-        </p>
-      )}
-      <EntryClient campaign={campaign} />
-      <WinHistory brandCampaignId={campaign.brandCampaignId} campaignEnded={new Date(campaign.endsAt).getTime() < Date.now()} />
-
-      {/* 시즌(브랜드 목록) 유도 배너 — 다른 참여 브랜드도 둘러보게 한다 */}
-      <Link
-        href={`/c/${campaign.campaign.slug}`}
-        style={{ display: 'block', marginTop: 32, textDecoration: 'none', color: 'inherit' }}
+    <div style={{ background: '#f6f6f4', minHeight: '100dvh' }}>
+      <main
+        style={{
+          maxWidth: 640,
+          margin: '0 auto',
+          background: '#fff',
+          minHeight: '100dvh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
-        {campaign.campaign.thumbnailUrl && (
+        {/* 포스터 — 경품·기간·카피는 이미지가 말한다 */}
+        {campaign.postImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={campaign.campaign.thumbnailUrl}
-            alt={campaign.campaign.name}
-            style={{ width: '100%', borderRadius: 12 }}
+            src={campaign.postImageUrl}
+            alt={`${campaign.brandName} キャンペーン`}
+            style={{ display: 'block', width: '100%', height: 'auto' }}
           />
+        ) : (
+          <header style={{ padding: '40px 24px 8px', textAlign: 'center' }}>
+            <h1 style={{ margin: 0, fontSize: 24 }}>{campaign.brandName}</h1>
+          </header>
         )}
-        <span style={{ display: 'block', marginTop: 8, fontSize: 14, fontWeight: 700 }}>
-          他の参加ブランドもチェック →
-        </span>
-      </Link>
-    </main>
+
+        {/* 기간 바 — 포스터 바로 아래 한 줄 */}
+        <p
+          style={{
+            margin: 0,
+            padding: '10px 16px',
+            background: '#1a1a1a',
+            color: '#e8d9a0',
+            textAlign: 'center',
+            fontSize: 14,
+            fontWeight: 600,
+            letterSpacing: '.04em',
+          }}
+        >
+          【 キャンペーン期間 】 {jstDay(campaign.startsAt)} − {jstDay(campaign.endsAt)}
+        </p>
+
+        <section style={{ padding: '32px 24px 8px', textAlign: 'center' }}>
+          {/* 브랜드 한 줄 — 포스터가 못 담는 공식 계정 링크만 남긴다 */}
+          <p style={{ margin: '0 0 20px', fontSize: 13, color: '#777' }}>
+            {campaign.brandName}
+            {campaign.xUsername && (
+              <>
+                {' '}
+                <a
+                  href={`https://x.com/${campaign.xUsername}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: '#555' }}
+                >
+                  @{campaign.xUsername}
+                </a>
+              </>
+            )}
+          </p>
+
+          <EntryClient campaign={campaign} />
+
+          {campaign.todayPostUrl && (
+            <p style={{ marginTop: 16 }}>
+              <a
+                href={campaign.todayPostUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontSize: 13, color: '#555' }}
+              >
+                本日のキャンペーンポストはこちら →
+              </a>
+            </p>
+          )}
+        </section>
+
+        {/* 안내 — 레퍼런스처럼 회색 박스로 조용히 */}
+        <section style={{ padding: '24px 24px 0' }}>
+          <div
+            style={{
+              background: '#f3f3f1',
+              border: '1px solid #e5e5e2',
+              borderRadius: 8,
+              padding: '14px 16px',
+              fontSize: 12,
+              lineHeight: 1.8,
+              color: '#666',
+              textAlign: 'left',
+            }}
+          >
+            ・ブランドの公式Xアカウントのフォローと、本日のキャンペーンポストのリポストが当選条件です
+            <br />
+            ・本人確認のためX（Twitter）の認証を利用しています
+            <br />
+            ・利用する情報は、SNSの「ID」「アカウント名」「投稿の確認」「フォローしているアカウントの確認」のみです
+          </div>
+        </section>
+
+        <div style={{ padding: '0 24px' }}>
+          <WinHistory
+            brandCampaignId={campaign.brandCampaignId}
+            campaignEnded={new Date(campaign.endsAt).getTime() < Date.now()}
+          />
+        </div>
+
+        {/* 시즌(브랜드 목록) 유도 배너 — 다른 참여 브랜드도 둘러보게 한다 */}
+        <div style={{ padding: '32px 24px 0' }}>
+          <Link
+            href={`/c/${campaign.campaign.slug}`}
+            style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+          >
+            {campaign.campaign.thumbnailUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={campaign.campaign.thumbnailUrl}
+                alt={campaign.campaign.name}
+                style={{ width: '100%', borderRadius: 12 }}
+              />
+            )}
+            <span
+              style={{
+                display: 'block',
+                marginTop: 8,
+                fontSize: 14,
+                fontWeight: 700,
+                textAlign: 'center',
+              }}
+            >
+              他の参加ブランドもチェック →
+            </span>
+          </Link>
+        </div>
+
+        <footer
+          style={{
+            marginTop: 'auto',
+            padding: '32px 24px 24px',
+            textAlign: 'center',
+            fontSize: 11,
+            color: '#999',
+          }}
+        >
+          © {new Date().getFullYear()} {campaign.brandName}. All Rights Reserved.
+        </footer>
+      </main>
+    </div>
   );
 }

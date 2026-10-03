@@ -129,33 +129,63 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
     }
   }
 
-  const button = (label: string, onClick: () => void, disabled = false) => (
+  /* X 로고 — 외부 에셋 없이 인라인 SVG */
+  const xLogo = (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+
+  const button = (label: string, onClick: () => void, disabled = false, withLogo = true) => (
     <button
       onClick={onClick}
       disabled={disabled}
       style={{
-        fontSize: 18,
-        padding: '14px 40px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+        minWidth: 260,
+        fontSize: 16,
+        fontWeight: 700,
+        padding: '16px 40px',
         borderRadius: 999,
         border: 'none',
-        background: disabled ? '#ccc' : '#e0245e',
+        background: disabled ? '#9ca3af' : '#0f1419',
         color: '#fff',
         cursor: disabled ? 'default' : 'pointer',
       }}
     >
+      {withLogo && xLogo}
       {label}
     </button>
   );
 
+  /* 상태(당첨/낙첨/후보) 카드 — 포스터 아래에서 조용히 결과만 말한다 */
+  const card = (children: React.ReactNode) => (
+    <div
+      style={{
+        background: '#fff',
+        border: '1px solid #eceae6',
+        borderRadius: 16,
+        boxShadow: '0 2px 10px rgba(0,0,0,.06)',
+        padding: '28px 20px',
+      }}
+    >
+      {children}
+    </div>
+  );
+
   switch (phase.name) {
     case 'loading':
-      return <p>読み込み中…</p>;
+      return <p style={{ color: '#999' }}>読み込み中…</p>;
     case 'need_login':
       return (
         <>
-          <h2>Xでログインして応募</h2>
-          <p>応募にはXアカウントの連携が必要です。</p>
-          {button('Xでログイン', () => {
+          <p style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600 }}>
+            応募にはXアカウントの連携が必要です。
+          </p>
+          {button('Xでログインして応募', () => {
             window.location.href = userLoginUrl(`/c/${campaign.campaign.slug}/${campaign.brandSlug}`);
           })}
         </>
@@ -180,38 +210,38 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
       }
       return (
         <>
-          <h2>フォロー&リポストして抽選に参加！</h2>
-          <ol style={{ textAlign: 'left' }}>
-            <li>ブランドのXアカウントをフォロー</li>
-            <li>本日のキャンペーンポストをリポスト</li>
-            <li>下のボタンで抽選！</li>
-          </ol>
+          <p style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600 }}>
+            フォロー&リポストで、その場で結果がわかります。
+          </p>
           {button('抽選に参加する', enter)}
+          <p style={{ marginTop: 10, fontSize: 12, color: '#999' }}>
+            ※ フォローと本日のポストのリポストが当選条件です
+          </p>
         </>
       );
     }
     case 'drawing':
-      return <p style={{ fontSize: 24 }}>抽選中…</p>;
+      return card(<p style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>抽選中…</p>);
     case 'already':
-      return <p>本日はすでに応募済みです。また明日のポストからご応募ください！</p>;
+      return card(<p style={{ margin: 0 }}>本日はすでに応募済みです。また明日のポストからご応募ください！</p>);
     case 'error':
-      return <p>{phase.message}</p>;
+      return card(<p style={{ margin: 0 }}>{phase.message}</p>);
     case 'result': {
       const result = phase.data;
       if (result.result === 'lose') {
-        return (
+        return card(
           <>
-            <h2>残念…はずれ</h2>
+            <h2 style={{ marginTop: 0 }}>残念…はずれ</h2>
             <ResultMedia url={campaign.loseMediaUrl} alt="はずれ" />
             <p>明日のポストから再チャレンジできます！</p>
             <PrLink url={campaign.prUrl} />
-          </>
+          </>,
         );
       }
       if (result.result === 'win_pending') {
-        return (
+        return card(
           <>
-            <h2>🎉 当選候補です！</h2>
+            <h2 style={{ marginTop: 0 }}>🎉 当選候補です！</h2>
             <p>
               {result.failReason === 'follow' && 'フォローが確認できませんでした。'}
               {result.failReason === 'repost' && '本日のポストのリポストが確認できませんでした。'}
@@ -222,23 +252,37 @@ export default function EntryClient({ campaign }: { campaign: CampaignLp }) {
               retrying ? '確認中…' : 'フォロー&リポストしたので確認する',
               () => retryVerify(result.winnerId, result.prizeName),
               retrying,
+              false,
             )}
             {verifyError && <p style={{ color: '#dc2626', fontSize: 14 }}>{verifyError}</p>}
-          </>
+          </>,
         );
       }
-      return (
+      return card(
         <>
-          <h2>🎉 当選おめでとうございます！</h2>
+          <h2 style={{ marginTop: 0 }}>🎉 当選おめでとうございます！</h2>
           <ResultMedia url={campaign.winMediaUrl} alt="当選" />
-          <p>{result.prizeName}</p>
+          <p style={{ fontWeight: 700 }}>{result.prizeName}</p>
           {result.needsShipping ? (
-            <a href={`/winners/${result.winnerId}/shipping`}>配送先を入力する →</a>
+            <a
+              href={`/winners/${result.winnerId}/shipping`}
+              style={{
+                display: 'inline-block',
+                padding: '12px 32px',
+                borderRadius: 999,
+                background: '#0f1419',
+                color: '#fff',
+                textDecoration: 'none',
+                fontWeight: 700,
+              }}
+            >
+              配送先を入力する →
+            </a>
           ) : (
             <p>ギフトコードはブランド公式アカウントからDMでお送りします。</p>
           )}
           <PrLink url={campaign.prUrl} />
-        </>
+        </>,
       );
     }
   }

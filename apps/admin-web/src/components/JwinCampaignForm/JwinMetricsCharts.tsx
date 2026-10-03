@@ -58,7 +58,6 @@ export function FollowerTrendChart({ snapshots }: { snapshots: AdminMetricSnapsh
             top: `${(y(hoveredSnapshot.followerCount) / height) * 100}%`,
           }}
         >
-          <strong>{shortDate(hoveredSnapshot.dateJst)}</strong>{" "}
           {hoveredSnapshot.followerCount.toLocaleString()}
           {hoveredDelta !== null && hoveredDelta !== 0 && (
             <span> ({hoveredDelta > 0 ? "+" : ""}{hoveredDelta.toLocaleString()})</span>
@@ -116,18 +115,22 @@ export function FollowerTrendChart({ snapshots }: { snapshots: AdminMetricSnapsh
           {last.followerCount.toLocaleString()}
           {delta !== 0 && ` (${delta > 0 ? "+" : ""}${delta.toLocaleString()})`}
         </text>
-        {/* 양 끝 날짜 */}
-        <text x={padding.left} y={height - 6} className={styles.axisLabel}>
-          {shortDate(first.dateJst)}
-        </text>
-        <text
-          x={x(snapshots.length - 1)}
-          y={height - 6}
-          textAnchor="middle"
-          className={styles.axisLabel}
-        >
-          {shortDate(last.dateJst)}
-        </text>
+        {/* 포인트별 날짜 — 많으면 겹치지 않게 듬성듬성 */}
+        {snapshots.map((snapshot, index) => {
+          const labelEvery = Math.max(1, Math.ceil(snapshots.length / 14));
+          if (index % labelEvery !== 0 && index !== snapshots.length - 1) return null;
+          return (
+            <text
+              key={`label-${snapshot.dateJst}-${snapshot.kind}`}
+              x={x(index)}
+              y={height - 6}
+              textAnchor="middle"
+              className={styles.axisLabel}
+            >
+              {shortDate(snapshot.dateJst)}
+            </text>
+          );
+        })}
       </svg>
     </figure>
   );

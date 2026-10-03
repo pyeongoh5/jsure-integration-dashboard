@@ -11,17 +11,21 @@
   font-weight: 700;
 }
 
+/* 셀렉트 2개 + CSV 버튼은 항상 한 줄 — 좁으면 셀렉트가 줄어든다 */
 .filterRow {
   display: flex;
   gap: 16px;
   align-items: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .filterField {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 320px;
 }
 
 .filterLabel {
@@ -29,13 +33,10 @@
   color: var(--color-text-muted, #6b7280);
 }
 
-/* 셀렉트 — 고정 폭 + 우측 화살표 아이콘(appearance 리셋 환경에서도 보장) */
-.filterField {
-  flex: 0 0 auto;
-}
-
+/* 셀렉트 — 우측 화살표 아이콘(appearance 리셋 환경에서도 보장) */
 .select {
-  width: 300px;
+  width: 100%;
+  min-width: 160px;
   height: 34px;
   padding: 0 32px 0 10px;
   border: 1px solid var(--color-border-strong, #d1d5db);
@@ -58,6 +59,7 @@
 
 .exportSlot {
   margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .card {

@@ -352,6 +352,23 @@ export async function publicRoutes(app: FastifyInstance) {
     if (!winner || winner.prize.type !== 'PHYSICAL') {
       return reply.code(404).send({ error: 'not eligible' });
     }
+
+    // 같은 시즌에서 본인이 가장 최근에 입력한 배송지 — 새 당첨 폼의 자동 입력용
+    const previous = winner.encryptedShipping
+      ? null
+      : await prisma.winner.findFirst({
+          where: {
+            id: { not: winner.id },
+            encryptedShipping: { not: null },
+            entry: {
+              userId: session.userId,
+              campaign: { campaignId: winner.entry.campaign.campaignId },
+            },
+          },
+          orderBy: { shippingEnteredAt: 'desc' },
+          select: { encryptedShipping: true },
+        });
+
     return {
       prizeName: winner.prize.name,
       xUsername: session.xUsername,
@@ -359,6 +376,9 @@ export async function publicRoutes(app: FastifyInstance) {
       entered: winner.encryptedShipping != null,
       shipping: winner.encryptedShipping
         ? (JSON.parse(decrypt(winner.encryptedShipping)) as ShippingInfo)
+        : null,
+      previousShipping: previous?.encryptedShipping
+        ? (JSON.parse(decrypt(previous.encryptedShipping)) as ShippingInfo)
         : null,
     };
   });

@@ -167,3 +167,13 @@
   color: var(--color-text-muted);
   font-size: 13px;
 }
+
+/* 이전 입력 자동 반영 안내 */
+.prefillNotice {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 13px;
+}

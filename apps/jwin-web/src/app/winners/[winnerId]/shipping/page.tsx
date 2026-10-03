@@ -20,6 +20,8 @@ type ShippingState = {
   closed: boolean;
   entered: boolean;
   shipping: Partial<ShippingForm> | null;
+  /** 같은 시즌에서 본인이 가장 최근에 입력한 배송지 — 새 당첨 폼 자동 입력용 */
+  previousShipping: Partial<ShippingForm> | null;
 };
 
 const EMPTY: ShippingForm = {
@@ -45,12 +47,19 @@ export default function ShippingPage({ params }: { params: Promise<{ winnerId: s
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<ShippingForm>(EMPTY);
+  const [prefilled, setPrefilled] = useState(false);
 
   useEffect(() => {
     api<ShippingState>(`/winners/${winnerId}/shipping`)
       .then((result) => {
         setState(result);
-        if (result.shipping) setForm({ ...EMPTY, ...result.shipping });
+        if (result.shipping) {
+          setForm({ ...EMPTY, ...result.shipping });
+        } else if (result.previousShipping) {
+          // 같은 시즌에서 입력한 적이 있으면 복사해온다 — 당첨마다 다시 치지 않게
+          setForm({ ...EMPTY, ...result.previousShipping });
+          setPrefilled(true);
+        }
         setEditing(!result.entered);
       })
       .catch((caught) => {
@@ -174,6 +183,12 @@ export default function ShippingPage({ params }: { params: Promise<{ winnerId: s
       <p className={styles.subtitle}>
         賞品: <strong>{state.prizeName}</strong>
       </p>
+
+      {prefilled && (
+        <p className={styles.prefillNotice}>
+          前回入力した配送先を自動入力しました。内容をご確認のうえ送信してください。
+        </p>
+      )}
 
       <label className={styles.field}>
         <span className={styles.label}>X（旧Twitter）ユーザー名</span>

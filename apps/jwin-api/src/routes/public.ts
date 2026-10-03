@@ -10,7 +10,8 @@ import {
   WinHistoryItem,
   dateJst,
 } from '@jsure/jwin-shared';
-import { getUserSession } from '../lib/auth';
+import { config } from '../config';
+import { getUserSession, setUserSession } from '../lib/auth';
 import { decrypt } from '../lib/crypto';
 import { draw } from '../services/draw';
 import { verifyWinner } from '../services/verification';
@@ -21,6 +22,20 @@ export async function publicRoutes(app: FastifyInstance) {
   const prisma = getPrisma();
 
   app.get('/health', async () => ({ ok: true }));
+
+  // 로컬 확인용 — X 연동 없이 데모 유저로 로그인한다. 운영에서는 등록되지 않는다.
+  // 데모 데이터는 apps/jwin-api/spikes/seed-demo.ts 로 심는다.
+  if (config().NODE_ENV !== 'production') {
+    app.get('/dev/login', async (req, reply) => {
+      const user = await prisma.user.upsert({
+        where: { xUserId: 'demo-user' },
+        update: {},
+        create: { xUserId: 'demo-user', xUsername: 'demo_user', displayName: '데모 유저' },
+      });
+      setUserSession(reply, { userId: user.id, xUsername: user.xUsername });
+      return reply.redirect(`${config().WEB_BASE_URL}/c/demo`);
+    });
+  }
 
   app.get('/me', async (req) => {
     const session = getUserSession(req);

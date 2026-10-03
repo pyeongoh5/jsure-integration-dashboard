@@ -159,6 +159,39 @@ async function xFetch<T>(
 
 // ── 엔드포인트 래퍼 ──────────────────────────────────
 
+/** 본인 팔로워 수 (owned read $0.001) — 캠페인 지표 수집용 */
+export async function getFollowerCount(accessToken: string): Promise<number> {
+  const res = await xFetch<{ data: { public_metrics?: { followers_count: number } } }>(
+    accessToken,
+    '/users/me?user.fields=public_metrics',
+  );
+  return res.data.public_metrics?.followers_count ?? 0;
+}
+
+export interface PostPublicMetrics {
+  repostCount: number;
+  likeCount: number;
+  replyCount: number;
+}
+
+/** 본인 포스트의 공개 지표 (owned read $0.001) — 리포스트·좋아요·댓글 수 */
+export async function getPostMetrics(
+  accessToken: string,
+  postId: string,
+): Promise<PostPublicMetrics> {
+  const res = await xFetch<{
+    data: {
+      public_metrics?: { retweet_count: number; like_count: number; reply_count: number };
+    };
+  }>(accessToken, `/tweets/${postId}?tweet.fields=public_metrics`);
+  const metrics = res.data.public_metrics;
+  return {
+    repostCount: metrics?.retweet_count ?? 0,
+    likeCount: metrics?.like_count ?? 0,
+    replyCount: metrics?.reply_count ?? 0,
+  };
+}
+
 /** 토큰 소유자 본인 정보 */
 export function getMe(accessToken: string) {
   return xFetch<{ data: { id: string; username: string; name: string } }>(

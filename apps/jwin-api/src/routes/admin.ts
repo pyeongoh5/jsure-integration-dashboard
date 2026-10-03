@@ -984,6 +984,27 @@ export async function adminRoutes(app: FastifyInstance) {
     };
   });
 
+  // 참여 성과 지표 — BASELINE(첫 게시 직후 팔로워) + DAILY(매일 00:00 JST 수집)
+  app.get<{ Params: { id: string } }>(
+    '/admin/brand-campaigns/:id/metrics',
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+      const snapshots = await prisma.brandMetricSnapshot.findMany({
+        where: { campaignId: req.params.id },
+        orderBy: [{ dateJst: 'asc' }, { kind: 'asc' }],
+        select: {
+          dateJst: true,
+          kind: true,
+          followerCount: true,
+          repostCount: true,
+          likeCount: true,
+          replyCount: true,
+        },
+      });
+      return { snapshots };
+    },
+  );
+
   // 당첨자 목록 (이행 처리용) — 배송지 평문/암호문 미노출 (D-11).
   // 필터는 서버에서 걸고 커서로 페이징한다. 화면이 전량 로드 후 거르면 데이터가
   // 늘었을 때 "보이는 목록 ≠ 실제 전체"가 되고 CSV가 조용히 일부만 담는다.

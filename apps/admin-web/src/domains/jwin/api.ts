@@ -15,6 +15,7 @@ import {
   AdminWinnerListSchema,
   AdminWinnerExportSchema,
   AdminCampaignStatsSchema,
+  AdminBrandMetricsSchema,
   AdminShippingSchema,
   AdminPrizeSchema,
   AdminWinnerSchema,
@@ -40,6 +41,7 @@ import {
   type AdminWinnerFilter,
   type AdminWinnerExport,
   type AdminCampaignStats,
+  type AdminBrandMetrics,
   type AdminShipping,
   type AdminPrize,
   type AdminPrizePatch,
@@ -154,6 +156,12 @@ export async function fetchWinnersForExport(
     params: winnerFilterParams(filter),
   });
   return AdminWinnerExportSchema.parse(response.data);
+}
+
+/** 참여 성과 지표 (팔로워 추이·포스트 반응) */
+export async function fetchBrandMetrics(brandCampaignId: string): Promise<AdminBrandMetrics> {
+  const response = await jwinApi.get(`/admin/brand-campaigns/${brandCampaignId}/metrics`);
+  return AdminBrandMetricsSchema.parse(response.data);
 }
 
 export async function fetchCampaignStats(brandCampaignId: string): Promise<AdminCampaignStats> {

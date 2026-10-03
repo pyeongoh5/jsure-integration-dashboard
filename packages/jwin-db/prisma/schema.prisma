@@ -79,6 +79,7 @@ model BrandCampaign {
   posts         CampaignPost[]
   prizes        Prize[]
   entries       Entry[]
+  metricSnapshots BrandMetricSnapshot[]
 
   @@unique([campaignId, brandAccountId])
   @@index([status])
@@ -325,4 +326,31 @@ model OAuthState {
   campaignId   String? // brand 연동 시 대상 캠페인
   redirectTo   String? // user 로그인 후 돌아갈 LP 경로
   createdAt    DateTime @default(now())
+}
+
+// ── 브랜드 캠페인 지표 (성과 측정) ────────────────────
+
+enum MetricKind {
+  BASELINE // 첫 게시 직후의 기준점 (팔로워만 의미 있음)
+  DAILY    // 게시일 종료(00:00 JST) 시점 수집
+}
+
+/// 참여 단위 지표 스냅샷. BASELINE 은 첫 게시 직후 1회, DAILY 는 매일 자정(JST).
+model BrandMetricSnapshot {
+  id         String        @id @default(cuid())
+  campaignId String
+  campaign   BrandCampaign @relation(fields: [campaignId], references: [id])
+  /// 지표가 속한 게시일 (JST "YYYY-MM-DD")
+  dateJst    String
+  kind       MetricKind
+  followerCount Int
+  /// 당일 POSTED 포스트의 public_metrics — 포스트가 없거나 BASELINE 이면 null
+  postId      String?
+  repostCount Int?
+  likeCount   Int?
+  replyCount  Int?
+  collectedAt DateTime @default(now())
+
+  @@unique([campaignId, dateJst, kind])
+  @@index([campaignId, dateJst])
 }

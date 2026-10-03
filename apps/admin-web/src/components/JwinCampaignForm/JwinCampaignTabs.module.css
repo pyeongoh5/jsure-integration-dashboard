@@ -394,3 +394,16 @@
   gap: 6px;
 }
 
+
+/* 성과 지표 */
+.statDelta {
+  margin-left: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #047857;
+}
+
+.muted {
+  color: var(--color-text-muted, #9ca3af);
+  font-size: 12px;
+}

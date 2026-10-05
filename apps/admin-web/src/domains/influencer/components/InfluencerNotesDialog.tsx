@@ -11,6 +11,7 @@ import {
 import { formatDateTime } from "../formatDateTime";
 import { useT } from "@/lib/i18n";
 import { InfluencerHistoryTab } from "./InfluencerHistoryTab";
+import { InfluencerWithdrawDialog } from "./InfluencerWithdrawDialog";
 import styles from "./InfluencerNotesDialog.module.css";
 
 type NotesState =
@@ -49,6 +50,7 @@ export function InfluencerNotesDialog({
   const [memoDraft, setMemoDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -187,7 +189,28 @@ export function InfluencerNotesDialog({
               ? t("domains.influencer.notesDialog.unflag")
               : t("domains.influencer.notesDialog.flag")}
           </button>
+          <button
+            type="button"
+            className={`${styles.toolbarBtn} ${styles.toolbarBtnDanger}`}
+            onClick={() => setWithdrawOpen(true)}
+            disabled={state.kind !== "ready"}
+          >
+            {t("domains.influencer.withdrawDialog.openButton")}
+          </button>
         </div>
+
+        {withdrawOpen && (
+          <InfluencerWithdrawDialog
+            influencerId={influencerId}
+            influencerName={influencerName}
+            onDone={() => {
+              setWithdrawOpen(false);
+              onChanged?.();
+              onClose();
+            }}
+            onCancel={() => setWithdrawOpen(false)}
+          />
+        )}
 
         <SegmentedTabs
           className={styles.mainTabs}

@@ -78,3 +78,8 @@ export async function flagInfluencer(
 export async function unflagInfluencer(influencerId: string): Promise<void> {
   await api.delete(`/influencers/${encodeURIComponent(influencerId)}/flag`);
 }
+
+/** 탈퇴 처리 — PII 익명화. 되돌릴 수 없다. */
+export async function withdrawInfluencer(influencerId: string): Promise<void> {
+  await api.post(`/influencers/${encodeURIComponent(influencerId)}/withdraw`);
+}

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
 import { INFLUENCER_EXPORT_MAX_ROWS } from "@jsure/shared";
 import type {
@@ -15,6 +19,9 @@ import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import type { AuditActor } from "../audit/audit.service";
 import { influencerHistoryGroups } from "../audit/influencer-history";
+
+/** 탈퇴 회원의 익명화 이메일 접두사 — deleted+<id>@invalid 형식의 단일 출처. */
+const WITHDRAWN_EMAIL_PREFIX = "deleted+";
 
 const ADMIN_INFLUENCER_INCLUDE = {
   snsAccounts: {
@@ -376,6 +383,54 @@ export class InfluencersService {
       actor,
       influencerId,
       metadata: { previousFlaggedById: existing.flaggedById },
+    });
+  }
+
+  /**
+   * 탈퇴 처리 — 계정 삭제가 아니라 PII 익명화다. 응모·정산·동의·메모 이력은
+   * 업무/법적 기록으로 남기고(CampaignApplication 은 onDelete: Restrict 라
+   * 물리 삭제 자체가 불가), 개인정보만 지운다. 되돌릴 수 없다.
+   */
+  async withdraw(influencerId: string, actor: AuditActor): Promise<void> {
+    const existing = await this.prisma.influencer.findUnique({
+      where: { id: influencerId },
+      select: { email: true },
+    });
+    if (!existing) throw new NotFoundException("인플루언서를 찾을 수 없습니다");
+    if (existing.email.startsWith(WITHDRAWN_EMAIL_PREFIX))
+      throw new ConflictException("이미 탈퇴 처리된 회원입니다");
+
+    await this.prisma.$transaction([
+      this.prisma.influencerSnsAccount.deleteMany({ where: { influencerId } }),
+      this.prisma.influencerBankAccount.deleteMany({ where: { influencerId } }),
+      // 세션 삭제 = 로그인된 기기 전부 강제 로그아웃
+      this.prisma.influencerSession.deleteMany({ where: { influencerId } }),
+      this.prisma.influencer.update({
+        where: { id: influencerId },
+        data: {
+          email: `${WITHDRAWN_EMAIL_PREFIX}${influencerId}@invalid`,
+          passwordHash: null,
+          lineUserId: null,
+          lineLinkedAt: null,
+          name: "탈퇴 회원",
+          nameKana: null,
+          phone: "",
+          birthDate: null,
+          postalCode: "",
+          prefecture: "",
+          city: "",
+          addressLine1: "",
+          addressLine2: "",
+          status: "SUSPENDED",
+        },
+      }),
+    ]);
+
+    // 익명화 전 PII(이름·이메일)는 로그에도 남기지 않는다.
+    await this.audit.record({
+      action: "INFLUENCER_WITHDRAW",
+      actor,
+      influencerId,
     });
   }
 }

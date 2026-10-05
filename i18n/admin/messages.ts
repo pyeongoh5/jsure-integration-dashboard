@@ -2743,6 +2743,40 @@ export const adminMessages = {
           },
         },
       },
+      withdrawDialog: {
+        openButton: { ko: "탈퇴 처리", en: "Withdraw account", ja: "退会処理" },
+        title: {
+          ko: "{name} 탈퇴 처리",
+          en: "Withdraw {name}",
+          ja: "{name} の退会処理",
+        },
+        totalCount: {
+          ko: "지금까지 참여(응모)한 캠페인: {count}건",
+          en: "Campaigns participated so far: {count}",
+          ja: "これまで参加（応募）したキャンペーン：{count}件",
+        },
+        ongoingWarning: {
+          ko: "진행 중인 캠페인이 {count}건 있습니다. 탈퇴 처리하면 이 인플루언서는 더 이상 로그인할 수 없습니다.",
+          en: "{count} campaign(s) are still in progress. After withdrawal this influencer can no longer sign in.",
+          ja: "進行中のキャンペーンが{count}件あります。退会処理するとこのインフルエンサーはログインできなくなります。",
+        },
+        irreversible: {
+          ko: "탈퇴 처리하면 이메일·이름·연락처·주소·계좌·SNS 계정 등 개인정보가 삭제되며 되돌릴 수 없습니다. 응모·정산 이력은 기록용으로 남습니다.",
+          en: "Withdrawal permanently deletes personal data (email, name, contact, address, bank account, SNS accounts) and cannot be undone. Application and settlement history is kept for records.",
+          ja: "退会処理するとメール・氏名・連絡先・住所・口座・SNSアカウントなどの個人情報が削除され、元に戻せません。応募・精算履歴は記録として残ります。",
+        },
+        loadFailed: {
+          ko: "참여 현황을 불러올 수 없습니다.",
+          en: "Could not load participation status.",
+          ja: "参加状況を読み込めませんでした。",
+        },
+        confirm: { ko: "탈퇴 처리", en: "Withdraw", ja: "退会処理する" },
+        failure: {
+          ko: "탈퇴 처리에 실패했습니다.",
+          en: "Withdrawal failed.",
+          ja: "退会処理に失敗しました。",
+        },
+      },
     },
     report: {
       metrics: {

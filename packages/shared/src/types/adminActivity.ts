@@ -45,6 +45,7 @@ export const AdminActivityActionSchema = z.enum([
   "INFLUENCER_MEMO_CREATE",
   "INFLUENCER_FLAG_SET",
   "INFLUENCER_FLAG_CLEAR",
+  "INFLUENCER_WITHDRAW",
 ]);
 export type AdminActivityAction = z.infer<typeof AdminActivityActionSchema>;
 

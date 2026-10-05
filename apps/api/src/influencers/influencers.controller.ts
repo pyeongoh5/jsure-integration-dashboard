@@ -75,6 +75,15 @@ export class InfluencersController {
     );
   }
 
+  @Post(":id/withdraw")
+  @HttpCode(204)
+  async withdraw(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<void> {
+    await this.svc.withdraw(id, req.user);
+  }
+
   @Post(":id/flag")
   @HttpCode(200)
   flag(

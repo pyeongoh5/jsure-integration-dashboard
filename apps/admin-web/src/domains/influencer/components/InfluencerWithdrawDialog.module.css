@@ -1,0 +1,9 @@
+.line {
+  display: block;
+  margin-top: 6px;
+}
+
+.warn {
+  color: var(--color-danger);
+  font-weight: 600;
+}

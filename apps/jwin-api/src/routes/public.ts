@@ -6,19 +6,36 @@ import {
   CampaignSeasonLp,
   CampaignSummary,
   EntryResultResponse,
+  TodayEntryResponse,
   WinHistoryItem,
   dateJst,
 } from '@jsure/jwin-shared';
-import { getUserSession } from '../lib/auth';
+import { config } from '../config';
+import { getUserSession, setUserSession } from '../lib/auth';
+import { decrypt } from '../lib/crypto';
 import { draw } from '../services/draw';
 import { verifyWinner } from '../services/verification';
-import { saveShipping } from '../services/fulfillment';
+import { saveShipping, type ShippingInfo } from '../services/fulfillment';
 
 /** 유저 대상 공개 API: 캠페인 목록/단독 LP, 응모(추첨), 검증 재시도, 당첨 히스토리, 배송지 입력 */
 export async function publicRoutes(app: FastifyInstance) {
   const prisma = getPrisma();
 
   app.get('/health', async () => ({ ok: true }));
+
+  // 로컬 확인용 — X 연동 없이 데모 유저로 로그인한다. 운영에서는 등록되지 않는다.
+  // 데모 데이터는 apps/jwin-api/spikes/seed-demo.ts 로 심는다.
+  if (config().NODE_ENV !== 'production') {
+    app.get('/dev/login', async (req, reply) => {
+      const user = await prisma.user.upsert({
+        where: { xUserId: 'demo-user' },
+        update: {},
+        create: { xUserId: 'demo-user', xUsername: 'demo_user', displayName: '데모 유저' },
+      });
+      setUserSession(reply, { userId: user.id, xUsername: user.xUsername });
+      return reply.redirect(`${config().WEB_BASE_URL}/c/demo`);
+    });
+  }
 
   app.get('/me', async (req) => {
     const session = getUserSession(req);
@@ -59,7 +76,13 @@ export async function publicRoutes(app: FastifyInstance) {
         brands: {
           where: { status: { in: ['ACTIVE', 'PAUSED', 'ENDED'] } },
           include: {
-            posts: { where: { dateJst: dateJst(), status: 'POSTED' } },
+            posts: {
+              where: { status: 'POSTED' },
+              orderBy: { dateJst: 'desc' },
+              take: 1,
+              include: { template: true },
+            },
+            postTemplates: true,
             brandAccount: { select: { label: true, slug: true, logoUrl: true, xUsername: true } },
           },
           orderBy: { createdAt: 'asc' },
@@ -77,18 +100,25 @@ export async function publicRoutes(app: FastifyInstance) {
       keyVisualUrl: campaign.keyVisualUrl,
       listBackgroundUrl: campaign.listBackgroundUrl,
       brands: campaign.brands.map((brandCampaign) => {
-        const todayPost = brandCampaign.posts[0];
+        const latestPost = brandCampaign.posts[0];
         const xUsername = brandCampaign.brandAccount.xUsername;
+        // 카드 썸네일: 최근 게시물의 소재 → 없으면 현재 유효 소재의 첫 이미지
+        const now = new Date();
+        const template =
+          latestPost?.template ??
+          brandCampaign.postTemplates.find(
+            (candidate) => candidate.activeFrom <= now && now <= candidate.activeTo,
+          );
         return {
           brandCampaignId: brandCampaign.id,
           brandName: brandCampaign.brandAccount.label,
           brandSlug: brandCampaign.brandAccount.slug,
           brandLogoUrl: brandCampaign.brandAccount.logoUrl,
           xUsername,
-          cardImageUrl: brandCampaign.cardImageUrl,
-          todayPostUrl:
-            todayPost?.xPostId && xUsername
-              ? `https://x.com/${xUsername}/status/${todayPost.xPostId}`
+          postImageUrl: template?.mediaUrls[0] ?? template?.mediaUrl ?? null,
+          latestPostUrl:
+            latestPost?.xPostId && xUsername
+              ? `https://x.com/${xUsername}/status/${latestPost.xPostId}`
               : null,
         };
       }),
@@ -109,7 +139,8 @@ export async function publicRoutes(app: FastifyInstance) {
         include: {
           campaign: true,
           prizes: { orderBy: { tier: 'asc' } },
-          posts: { where: { dateJst: dateJst(), status: 'POSTED' } },
+          posts: { where: { dateJst: dateJst(), status: 'POSTED' }, include: { template: true } },
+          postTemplates: true,
           brandAccount: { select: { label: true, slug: true, logoUrl: true, xUsername: true } },
         },
       });
@@ -117,9 +148,20 @@ export async function publicRoutes(app: FastifyInstance) {
 
       const todayPost = brandCampaign.posts[0];
       const brandXUsername = brandCampaign.brandAccount.xUsername;
+      // 응모 화면 상단 이미지: 당일 게시물의 소재 → 없으면 현재 유효한 소재의 첫 이미지
+      const now = new Date();
+      const activeTemplate =
+        todayPost?.template ??
+        brandCampaign.postTemplates.find(
+          (template) => template.activeFrom <= now && now <= template.activeTo,
+        );
       const lp: CampaignLp = {
         brandCampaignId: brandCampaign.id,
-        campaign: { name: brandCampaign.campaign.name, slug: brandCampaign.campaign.slug },
+        campaign: {
+          name: brandCampaign.campaign.name,
+          slug: brandCampaign.campaign.slug,
+          thumbnailUrl: brandCampaign.campaign.thumbnailUrl,
+        },
         brandName: brandCampaign.brandAccount.label,
         brandSlug: brandCampaign.brandAccount.slug,
         brandLogoUrl: brandCampaign.brandAccount.logoUrl,
@@ -132,14 +174,15 @@ export async function publicRoutes(app: FastifyInstance) {
             ? `https://x.com/${brandXUsername}/status/${todayPost.xPostId}`
             : null,
         dailyPostTime: brandCampaign.campaign.dailyPostTime,
+        postImageUrl: activeTemplate?.mediaUrls[0] ?? activeTemplate?.mediaUrl ?? null,
         prizeSummary: prizeSummaryOf(brandCampaign.prizes),
         prizes: brandCampaign.prizes.map((prize) => ({
           name: prize.name,
           totalQty: prize.totalQty,
         })),
-        cardImageUrl: brandCampaign.cardImageUrl,
         rulesUrl: brandCampaign.rulesUrl,
         prUrl: brandCampaign.prUrl,
+        prBannerUrl: brandCampaign.prBannerUrl,
         winMediaUrl: brandCampaign.winMediaUrl,
         loseMediaUrl: brandCampaign.loseMediaUrl,
       };
@@ -182,6 +225,53 @@ export async function publicRoutes(app: FastifyInstance) {
           verified.reason === 'follow' || verified.reason === 'repost'
             ? verified.reason
             : undefined,
+      };
+    },
+  );
+
+  // 오늘(JST) 응모 상태 — 화면 재진입 시 당첨 후보(검증 대기) 상태를 복구한다.
+  // 이게 없으면 새로고침 후 응모 버튼이 409 "응모 완료"만 보여줘 재검증 입구가 사라진다.
+  app.get<{ Params: { brandCampaignId: string } }>(
+    '/brand-campaigns/:brandCampaignId/entries/today',
+    async (req, reply): Promise<TodayEntryResponse | void> => {
+      const session = getUserSession(req);
+      if (!session) return reply.code(401).send({ error: 'login required' });
+
+      const entry = await prisma.entry.findUnique({
+        where: {
+          campaignId_userId_dateJst: {
+            campaignId: req.params.brandCampaignId,
+            userId: session.userId,
+            dateJst: dateJst(),
+          },
+        },
+        include: { winner: { include: { prize: true } } },
+      });
+      if (!entry) return { entered: false };
+      if (entry.result === 'LOSE' || !entry.winner) return { entered: true, result: 'lose' };
+
+      const winner = entry.winner;
+      if (entry.result === 'WIN_CONFIRMED' || winner.verification === 'PASSED') {
+        return {
+          entered: true,
+          result: 'win_confirmed',
+          winnerId: winner.id,
+          prizeName: winner.prize.name,
+          prizeType: winner.prize.type,
+          needsShipping: winner.prize.type === 'PHYSICAL' && !winner.encryptedShipping,
+        };
+      }
+      return {
+        entered: true,
+        result: 'win_pending',
+        winnerId: winner.id,
+        prizeName: winner.prize.name,
+        failReason:
+          winner.verification === 'FOLLOW_FAILED'
+            ? 'follow'
+            : winner.verification === 'REPOST_FAILED'
+              ? 'repost'
+              : undefined,
       };
     },
   );
@@ -233,12 +323,63 @@ export async function publicRoutes(app: FastifyInstance) {
 
   // 현물 당첨자 배송지 입력 (캠페인 종료 후에는 잠금 — F-6.3)
   const shippingSchema = z.object({
-    postalCode: z.string().min(7).max(8),
+    /** 하이픈 포함 "123-4567" */
+    postalCode: z.string().regex(/^\d{3}-\d{4}$/),
     prefecture: z.string().min(1),
     address1: z.string().min(1),
     address2: z.string().optional(),
     fullName: z.string().min(1),
-    phone: z.string().min(10),
+    nameKana: z.string().min(1),
+    /** 하이픈 없는 숫자만 */
+    phone: z.string().regex(/^\d{10,11}$/),
+  });
+
+  /**
+   * 본인 배송지 조회 — 새로고침·재진입 시 입력 상태를 복구한다.
+   * 본인(세션 userId) 당첨 건만 조회되고, 어드민 열람과 달리 감사 대상이 아니다.
+   */
+  app.get<{ Params: { winnerId: string } }>('/winners/:winnerId/shipping', async (req, reply) => {
+    const session = getUserSession(req);
+    if (!session) return reply.code(401).send({ error: 'login required' });
+    const winner = await prisma.winner.findFirst({
+      where: { id: req.params.winnerId, entry: { userId: session.userId }, verification: 'PASSED' },
+      include: {
+        prize: true,
+        entry: { include: { campaign: { include: { campaign: true } } } },
+      },
+    });
+    if (!winner || winner.prize.type !== 'PHYSICAL') {
+      return reply.code(404).send({ error: 'not eligible' });
+    }
+
+    // 같은 시즌에서 본인이 가장 최근에 입력한 배송지 — 새 당첨 폼의 자동 입력용
+    const previous = winner.encryptedShipping
+      ? null
+      : await prisma.winner.findFirst({
+          where: {
+            id: { not: winner.id },
+            encryptedShipping: { not: null },
+            entry: {
+              userId: session.userId,
+              campaign: { campaignId: winner.entry.campaign.campaignId },
+            },
+          },
+          orderBy: { shippingEnteredAt: 'desc' },
+          select: { encryptedShipping: true },
+        });
+
+    return {
+      prizeName: winner.prize.name,
+      xUsername: session.xUsername,
+      closed: winner.entry.campaign.campaign.endsAt.getTime() < Date.now(),
+      entered: winner.encryptedShipping != null,
+      shipping: winner.encryptedShipping
+        ? (JSON.parse(decrypt(winner.encryptedShipping)) as ShippingInfo)
+        : null,
+      previousShipping: previous?.encryptedShipping
+        ? (JSON.parse(decrypt(previous.encryptedShipping)) as ShippingInfo)
+        : null,
+    };
   });
   app.post<{ Params: { winnerId: string } }>('/winners/:winnerId/shipping', async (req, reply) => {
     const session = getUserSession(req);

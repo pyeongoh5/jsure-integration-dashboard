@@ -22,6 +22,7 @@ import { JwinCampaignDetail } from "./pages/Jwin/CampaignDetail";
 import { JwinBrandCampaignEdit } from "./pages/Jwin/BrandCampaignEdit";
 import { JwinBrandAccounts } from "./pages/Jwin/BrandAccounts";
 import { JwinWinners } from "./pages/Jwin/Winners";
+import { JwinStats } from "./pages/Jwin/Stats";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Settings } from "./pages/Settings";
@@ -70,6 +71,7 @@ export function App() {
           <Route path="/jwin/brand-campaigns/:id" element={<JwinBrandCampaignEdit />} />
           <Route path="/jwin/accounts" element={<JwinBrandAccounts />} />
           <Route path="/jwin/winners" element={<JwinWinners />} />
+          <Route path="/jwin/stats" element={<JwinStats />} />
         </Route>
         <Route path="/*" element={<NotFound />} />
       </Routes>

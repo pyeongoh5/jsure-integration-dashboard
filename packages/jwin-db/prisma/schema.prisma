@@ -30,6 +30,8 @@ model Campaign {
   keyVisualUrl String?
   /// 시즌 LP 브랜드 목록 영역의 배경 이미지
   listBackgroundUrl String?
+  /// 응모 페이지 하단 배너 썸네일 — 클릭하면 시즌 LP(브랜드 목록)로 이동
+  thumbnailUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -55,13 +57,12 @@ model BrandCampaign {
   status        CampaignStatus @default(SETUP)
   // 추첨 설정
   dailyWinCap   Int? // 일별 당첨 상한 (null = 무제한, 재고만 따름)
-  /// 트윗 링크 카드(summary_large_image)에 쓰는 이미지 — LP 의 og:image 로 내려간다.
-  /// 카드 이미지를 누르면 LP 가 열린다(첨부 이미지는 뷰어가 열려서 링크 이동이 안 된다).
-  cardImageUrl  String?
   /// 이벤트 규칙 가이드 URL — 포스트 본문에 텍스트 링크로 함께 나간다.
   rulesUrl      String?
   // 결과 화면 (F-6.5)
-  prUrl         String? // PR 전환 대상 URL — 결과 화면에서 브랜드 사이트로 유도
+  prUrl         String? // PR 전환 대상 URL — 결과 화면·LP 하단 배너에서 브랜드 사이트로 유도
+  /// LP 하단 브랜드 배너 이미지 (16:9 권장) — 클릭하면 prUrl 로 이동
+  prBannerUrl   String?
   winMediaUrl   String? // 당첨 결과 이미지/동영상
   loseMediaUrl  String? // 낙첨 결과 이미지/동영상
   // 당첨 DM 문구 (F-6.1) — 플레이스홀더: {{CODE}} {{PRIZE_NAME}} {{USERNAME}} {{BRAND_NAME}}
@@ -75,6 +76,7 @@ model BrandCampaign {
   posts         CampaignPost[]
   prizes        Prize[]
   entries       Entry[]
+  metricSnapshots BrandMetricSnapshot[]
 
   @@unique([campaignId, brandAccountId])
   @@index([status])
@@ -321,4 +323,33 @@ model OAuthState {
   campaignId   String? // brand 연동 시 대상 캠페인
   redirectTo   String? // user 로그인 후 돌아갈 LP 경로
   createdAt    DateTime @default(now())
+}
+
+// ── 브랜드 캠페인 지표 (성과 측정) ────────────────────
+
+enum MetricKind {
+  BASELINE // 첫 게시 직후의 기준점 (팔로워만 의미 있음)
+  DAILY    // 게시일 종료(00:00 JST) 시점 수집
+}
+
+/// 참여 단위 지표 스냅샷. BASELINE 은 첫 게시 직후 1회, DAILY 는 매일 자정(JST).
+model BrandMetricSnapshot {
+  id         String        @id @default(cuid())
+  campaignId String
+  campaign   BrandCampaign @relation(fields: [campaignId], references: [id])
+  /// 지표가 속한 게시일 (JST "YYYY-MM-DD")
+  dateJst    String
+  kind       MetricKind
+  followerCount Int
+  /// 당일 POSTED 포스트의 public_metrics — 포스트가 없거나 BASELINE 이면 null
+  postId      String?
+  repostCount Int?
+  likeCount   Int?
+  replyCount  Int?
+  /// 노출 수 — 본인 트윗이라 non_public_metrics 로 조회 가능
+  impressionCount Int?
+  collectedAt DateTime @default(now())
+
+  @@unique([campaignId, dateJst, kind])
+  @@index([campaignId, dateJst])
 }

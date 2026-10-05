@@ -48,7 +48,7 @@ export const adminMessages = {
       brandAccounts: { ko: "브랜드 계정", en: "Brand Accounts", ja: "ブランドアカウント" },
       jwinWinners: { ko: "당첨자 관리", en: "Winners", ja: "当選者管理" },
       jwinPrizes: { ko: "경품·기프트코드", en: "Prizes & Gift Codes", ja: "景品・ギフトコード" },
-      jwinStats: { ko: "통계", en: "Statistics", ja: "統計" },
+      jwinStats: { ko: "캠페인 통계", en: "Campaign stats", ja: "キャンペーン統計" },
     },
     groupsJwin: {
       prizes: { ko: "경품", en: "Prizes", ja: "景品" },
@@ -118,6 +118,11 @@ export const adminMessages = {
         actions: { ko: "관리", en: "Actions", ja: "操作" },
       },
       delete: { ko: "삭제", en: "Delete", ja: "削除" },
+      status: {
+        upcoming: { ko: "예정", en: "Upcoming", ja: "開始前" },
+        active: { ko: "진행 중", en: "Active", ja: "開催中" },
+        ended: { ko: "종료", en: "Ended", ja: "終了" },
+      },
       start: {
         ko: "캠페인 시작 ({count}개 참여)",
         en: "Start campaign ({count} brands)",
@@ -214,12 +219,9 @@ export const adminMessages = {
         },
       },
       tabs: {
-        basic: { ko: "기본", en: "Basic", ja: "基本" },
-        connect: { ko: "연동", en: "Account", ja: "連携" },
         prize: { ko: "경품", en: "Prizes", ja: "景品" },
         template: { ko: "포스트", en: "Posts", ja: "投稿" },
-        result: { ko: "결과화면", en: "Result screen", ja: "結果画面" },
-        stats: { ko: "통계", en: "Stats", ja: "統計" },
+        result: { ko: "결과화면·브랜드 링크", en: "Result & brand link", ja: "結果画面・ブランドリンク" },
       },
     },
     basic: {
@@ -273,15 +275,15 @@ export const adminMessages = {
         en: "Background image behind the participating brand cards.",
         ja: "参加ブランドカード一覧の背景に敷かれる画像です。",
       },
-      lpShareImage: {
-        ko: "LP 공유 미리보기 이미지",
-        en: "LP share preview image",
-        ja: "LP共有プレビュー画像",
+      thumbnail: {
+        ko: "응모 페이지 배너 썸네일",
+        en: "Entry page banner thumbnail",
+        ja: "応募ページのバナーサムネイル",
       },
-      lpShareImageHint: {
-        ko: "응모 페이지 링크를 X·메신저 등에 공유할 때 표시되는 미리보기(og:image)입니다. 게시 포스트에는 나가지 않습니다.",
-        en: "Preview image (og:image) shown when the entry page link is shared on X or messengers. Not used in posted tweets.",
-        ja: "応募ページのリンクをXやメッセンジャーで共有したときに表示されるプレビュー（og:image）です。投稿ツイートには使われません。",
+      thumbnailHint: {
+        ko: "각 브랜드 응모 페이지 하단에 배너로 표시되고, 클릭하면 시즌(브랜드 목록) 페이지로 이동합니다.",
+        en: "Shown as a banner at the bottom of each entry page; tapping it opens the season (brand list) page.",
+        ja: "各応募ページ下部にバナーとして表示され、タップするとシーズン（ブランド一覧）ページに移動します。",
       },
       error: {
         brandNameRequired: {
@@ -562,6 +564,11 @@ export const adminMessages = {
     prize: {
       title: { ko: "경품", en: "Prizes", ja: "景品" },
       add: { ko: "경품 추가", en: "Add prize", ja: "景品を追加" },
+      dailyWinCapHint: {
+        ko: "하루에 이 참여에서 나올 수 있는 당첨 건수 상한입니다. 비우면 재고가 허용하는 만큼 나갑니다.",
+        en: "Caps how many wins this brand can award per day. Leave empty to be limited only by stock.",
+        ja: "1日にこの参加で当選できる件数の上限です。空欄なら在庫の許す限り当選します。",
+      },
       editTitle: { ko: "경품 정정", en: "Edit prize", ja: "景品を修正" },
       empty: {
         ko: "등록된 경품이 없습니다. 경품을 1건 이상 등록해야 캠페인을 시작할 수 있습니다.",
@@ -654,10 +661,10 @@ export const adminMessages = {
           ja: "数字が小さいほど先に判定します。",
         },
         probability: { ko: "0 초과 1 미만. 0.05 = 5%", en: "Between 0 and 1. 0.05 = 5%", ja: "0より大きく1未満。0.05 = 5%" },
-        codeCount: {
-          ko: "입력 {count}건 / 수량 {quantity} — 개수가 같아야 등록됩니다.",
-          en: "{count} entered / quantity {quantity} — the counts must match to register.",
-          ja: "入力 {count}件 / 数量 {quantity} — 件数が一致しないと登録できません。",
+        codeCountAuto: {
+          ko: "입력 {count}건 — 코드 수가 그대로 경품 수량이 됩니다.",
+          en: "{count} entered — the number of codes becomes the quantity.",
+          ja: "入力 {count}件 — コード数がそのまま景品数量になります。",
         },
         appendCount: {
           ko: "입력 {count}건 — 등록한 만큼 수량과 잔여가 함께 늘어납니다.",
@@ -714,11 +721,6 @@ export const adminMessages = {
           en: "{count} duplicates: {codes}",
           ja: "重複 {count}件: {codes}",
         },
-        countMismatch: {
-          ko: "코드 수({count})가 수량({quantity})과 일치하지 않습니다.",
-          en: "Code count ({count}) does not match the quantity ({quantity}).",
-          ja: "コード数（{count}）が数量（{quantity}）と一致しません。",
-        },
         codesRequired: { ko: "코드를 입력하세요.", en: "Enter at least one code.", ja: "コードを入力してください。" },
         addFailed: {
           ko: "경품 등록에 실패했습니다.",
@@ -740,6 +742,16 @@ export const adminMessages = {
     result: {
       title: { ko: "결과화면 / DM", en: "Result screen / DM", ja: "結果画面 / DM" },
       prUrl: { ko: "브랜드 사이트 URL", en: "Brand site URL", ja: "ブランドサイトURL" },
+      prBanner: {
+        ko: "브랜드 배너 (LP 하단)",
+        en: "Brand banner (bottom of LP)",
+        ja: "ブランドバナー（LP下部）",
+      },
+      prBannerHint: {
+        ko: "응모 페이지 하단에 표시되고, 클릭하면 위의 PR URL로 이동합니다. 16:9 가로 배너 권장 (예: 750×422).",
+        en: "Shown at the bottom of the entry page; tapping opens the PR URL above. 16:9 recommended (e.g. 750×422).",
+        ja: "応募ページ下部に表示され、タップすると上記のPR URLに移動します。16:9推奨（例: 750×422）。",
+      },
       prUrlHint: {
         ko: "결과 화면의 유도 버튼에 씁니다. 비우면 버튼이 나오지 않습니다.",
         en: "Used for the call-to-action button on the result screen. Leave empty to hide the button.",
@@ -770,6 +782,48 @@ export const adminMessages = {
         ko: "DM 문구는 {max}자 이하여야 합니다.",
         en: "The DM text must be {max} characters or fewer.",
         ja: "DM文面は{max}文字以下にしてください。",
+      },
+    },
+    statsPage: {
+      title: { ko: "캠페인 통계", en: "Campaign stats", ja: "キャンペーン統計" },
+      empty: {
+        ko: "이 시즌에 참여한 브랜드가 없습니다.",
+        en: "No brands in this campaign yet.",
+        ja: "このキャンペーンに参加ブランドがありません。",
+      },
+      rowHint: {
+        ko: "행을 누르면 아래에 브랜드 상세(운영 현황·일자별 지표·경품 재고)가 열립니다.",
+        en: "Click a row to open the brand's details (operations, daily metrics, stock) below.",
+        ja: "行をクリックすると下にブランド詳細（運用状況・日次指標・景品在庫）が開きます。",
+      },
+      columns: {
+        brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
+        followerDelta: { ko: "팔로워 증감", en: "Follower change", ja: "フォロワー増減" },
+      },
+      selectCampaign: { ko: "캠페인", en: "Campaign", ja: "キャンペーン" },
+      selectBrand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
+      uniqueEntrants: { ko: "고유 응모자 수", en: "Unique entrants", ja: "ユニーク応募者数" },
+      dailyTitle: { ko: "데일리 지표", en: "Daily metrics", ja: "デイリー指標" },
+      noBrands: { ko: "참여 브랜드 없음", en: "No brands", ja: "参加ブランドなし" },
+      exportCsv: { ko: "지표 CSV 다운로드", en: "Download metrics CSV", ja: "指標CSVダウンロード" },
+      exporting: { ko: "내보내는 중…", en: "Exporting…", ja: "エクスポート中…" },
+      exportFailed: {
+        ko: "CSV 내보내기에 실패했습니다.",
+        en: "Could not export the CSV.",
+        ja: "CSVのエクスポートに失敗しました。",
+      },
+      export: {
+        header: {
+          brand: { ko: "브랜드", en: "Brand", ja: "ブランド" },
+          date: { ko: "일자(JST)", en: "Date (JST)", ja: "日付(JST)" },
+          kind: { ko: "구분", en: "Kind", ja: "区分" },
+          followers: { ko: "팔로워", en: "Followers", ja: "フォロワー" },
+          reposts: { ko: "리포스트", en: "Reposts", ja: "リポスト" },
+          likes: { ko: "좋아요", en: "Likes", ja: "いいね" },
+          replies: { ko: "댓글", en: "Replies", ja: "返信" },
+          impressions: { ko: "노출", en: "Impressions", ja: "インプレッション" },
+        },
+        kindDaily: { ko: "일별", en: "Daily", ja: "日次" },
       },
     },
     postTemplate: {
@@ -908,7 +962,7 @@ export const adminMessages = {
         en: "Could not load stats.",
         ja: "統計を読み込めませんでした。",
       },
-      entries: { ko: "응모 수", en: "Entries", ja: "応募数" },
+      entries: { ko: "응모자 수", en: "Entries", ja: "応募者数" },
       winConfirmed: { ko: "당첨 확정", en: "Confirmed wins", ja: "当選確定" },
       winPendingToday: { ko: "당일 검증 대기", en: "Awaiting checks today", ja: "本日の検証待ち" },
       unfulfilledWins: { ko: "미이행 종료", en: "Closed unfulfilled", ja: "未履行終了" },
@@ -930,6 +984,22 @@ export const adminMessages = {
         en: "This brand account must be reconnected. Until then every post and DM fails.",
         ja: "ブランドアカウントの再連携が必要です。再連携するまで投稿もDMも失敗します。",
       },
+      metricsTitle: { ko: "캠페인 성과", en: "Campaign performance", ja: "キャンペーン成果" },
+      metricsEmpty: {
+        ko: "아직 수집된 지표가 없습니다. 첫 게시 시 팔로워 기준점이, 매일 00:00(JST)에 게시 반응이 수집됩니다.",
+        en: "No metrics yet. The follower baseline is captured at the first post, and post engagement every day at 00:00 JST.",
+        ja: "まだ収集された指標がありません。初回投稿時にフォロワー基準値、毎日00:00(JST)に投稿の反応を収集します。",
+      },
+      metricsBaseline: { ko: "시작 시 팔로워", en: "Followers at start", ja: "開始時フォロワー" },
+      metricsBaselineTag: { ko: "기준점", en: "baseline", ja: "基準値" },
+      metricsFollowers: { ko: "팔로워", en: "Followers", ja: "フォロワー" },
+      metricsReposts: { ko: "리포스트", en: "Reposts", ja: "リポスト" },
+      metricsLikes: { ko: "좋아요", en: "Likes", ja: "いいね" },
+      metricsReplies: { ko: "댓글", en: "Replies", ja: "返信" },
+      metricsDate: { ko: "일자 (JST)", en: "Date (JST)", ja: "日付 (JST)" },
+      metricsDelta: { ko: "팔로워 증감", en: "Change", ja: "増減" },
+      chartFollowers: { ko: "팔로워 추이", en: "Follower trend", ja: "フォロワー推移" },
+      metricsImpressions: { ko: "노출", en: "Impressions", ja: "インプレッション" },
       stockTitle: { ko: "경품별 잔여 재고", en: "Stock left by prize", ja: "景品別の残り在庫" },
       stockEmpty: {
         ko: "등록된 경품이 없습니다.",
@@ -1017,6 +1087,7 @@ export const adminMessages = {
         address1: { ko: "주소", en: "Address", ja: "住所" },
         address2: { ko: "상세 주소", en: "Address line 2", ja: "建物名など" },
         fullName: { ko: "수령인", en: "Recipient", ja: "受取人" },
+        nameKana: { ko: "후리가나", en: "Name (kana)", ja: "フリガナ" },
         phone: { ko: "연락처", en: "Phone", ja: "電話番号" },
         close: { ko: "닫기", en: "Close", ja: "閉じる" },
       },
@@ -1065,6 +1136,7 @@ export const adminMessages = {
           address1: { ko: "주소", en: "Address", ja: "住所" },
           address2: { ko: "상세 주소", en: "Address line 2", ja: "建物名など" },
           fullName: { ko: "수령인", en: "Recipient", ja: "受取人" },
+          nameKana: { ko: "후리가나", en: "Name (kana)", ja: "フリガナ" },
           phone: { ko: "연락처", en: "Phone", ja: "電話番号" },
         },
       },

@@ -23,6 +23,8 @@ export type JwinCampaignFormValues = {
   keyVisualUrl: string | null;
   /** 시즌 LP 브랜드 목록 배경 */
   listBackgroundUrl: string | null;
+  /** 응모 페이지 하단 배너 썸네일 (시즌 LP 유도) */
+  thumbnailUrl: string | null;
 };
 
 export type JwinCampaignFormErrors = Partial<Record<keyof JwinCampaignFormValues, string>>;
@@ -37,6 +39,7 @@ const EMPTY: JwinCampaignFormValues = {
   dailyPostTime: "11:00",
   keyVisualUrl: null,
   listBackgroundUrl: null,
+  thumbnailUrl: null,
 };
 
 function toFormValues(detail: AdminCampaignDetail): JwinCampaignFormValues {
@@ -48,6 +51,7 @@ function toFormValues(detail: AdminCampaignDetail): JwinCampaignFormValues {
     dailyPostTime: detail.dailyPostTime,
     keyVisualUrl: detail.keyVisualUrl,
     listBackgroundUrl: detail.listBackgroundUrl,
+    thumbnailUrl: detail.thumbnailUrl,
   };
 }
 
@@ -147,6 +151,7 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
       dailyPostTime: values.dailyPostTime,
       keyVisualUrl: values.keyVisualUrl,
       listBackgroundUrl: values.listBackgroundUrl,
+      thumbnailUrl: values.thumbnailUrl,
     };
 
     setSaving(true);

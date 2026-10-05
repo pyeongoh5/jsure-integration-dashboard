@@ -32,12 +32,24 @@ export type EntryResultResponse =
       needsShipping: boolean;
     };
 
+/**
+ * 오늘(JST) 응모 상태 (GET /brand-campaigns/:id/entries/today).
+ * 화면 재진입·새로고침 시 당첨 후보(검증 대기) 상태를 복구하는 데 쓴다 —
+ * 이게 없으면 응모 버튼이 409 "응모 완료"만 보여줘 검증 재시도 입구가 사라진다.
+ */
+export type TodayEntryResponse = { entered: false } | ({ entered: true } & EntryResultResponse);
+
 /** 브랜드 참여 LP 데이터 (GET /campaigns/:campaignSlug/brands/:brandSlug) */
 export interface CampaignLp {
   /** 참여(BrandCampaign) id — 응모 API 가 받는 값 */
   brandCampaignId: string;
   /** 속한 시즌 */
-  campaign: { name: string; slug: string };
+  campaign: {
+    name: string;
+    slug: string;
+    /** 시즌 LP 유도 배너 썸네일 — 응모 페이지 하단에 노출 */
+    thumbnailUrl: string | null;
+  };
   brandName: string;
   brandSlug: string;
   brandLogoUrl: string | null;
@@ -49,14 +61,16 @@ export interface CampaignLp {
   todayPostUrl: string | null;
   /** 매일 게시 시각 (JST "HH:mm") — 게시 전 안내 문구용 */
   dailyPostTime: string;
+  /** 당일 게시물(없으면 유효 소재)의 첫 번째 이미지 — 응모 화면 상단에 보여준다 */
+  postImageUrl: string | null;
   prizeSummary: string;
   /** 경품 목록 (티어순) — 규칙 페이지의 경품 항목 렌더용 */
   prizes: { name: string; totalQty: number }[];
-  /** 트윗 링크 카드용 이미지 — LP 의 og:image 로 쓴다 */
-  cardImageUrl: string | null;
   /** 이벤트 규칙 가이드 URL */
   rulesUrl: string | null;
   prUrl: string | null;
+  /** LP 하단 브랜드 배너 (16:9) — 클릭하면 prUrl */
+  prBannerUrl: string | null;
   winMediaUrl: string | null;
   loseMediaUrl: string | null;
 }
@@ -88,10 +102,10 @@ export interface CampaignSeasonLp {
     brandSlug: string;
     brandLogoUrl: string | null;
     xUsername: string | null;
-    /** 카드 썸네일 — 참여의 LP 공유 미리보기 이미지 재사용 */
-    cardImageUrl: string | null;
-    /** 당일 캠페인 포스트 URL — 카드 클릭 시 이동 대상. 미게시면 null (참여 LP 로 폴백) */
-    todayPostUrl: string | null;
+    /** 카드 썸네일 — 현재 유효한 포스트 소재의 첫 번째 이미지 */
+    postImageUrl: string | null;
+    /** 가장 최근 게시된 캠페인 포스트 URL — 카드 클릭 시 이동 대상. 없으면 참여 LP 로 폴백 */
+    latestPostUrl: string | null;
   }[];
 }
 

@@ -5,13 +5,11 @@ export type {
   UseJwinCampaignFormResult,
 } from "./useJwinCampaignForm";
 export { BasicTab } from "./BasicTab";
-export { BrandCampaignBasicTab } from "./BrandCampaignBasicTab";
 export { useJwinBrandCampaign } from "./useJwinBrandCampaign";
 export type {
   JwinBrandCampaignFormValues,
   UseJwinBrandCampaignResult,
 } from "./useJwinBrandCampaign";
-export { ConnectTab } from "./ConnectTab";
 export { JwinMediaUpload } from "./JwinMediaUpload";
 export { useJwinPrizes } from "./useJwinPrizes";
 export type { UseJwinPrizesResult } from "./useJwinPrizes";
@@ -23,6 +21,7 @@ export { postTemplateCoverage, formatCoverageGaps } from "./postTemplateCoverage
 export type { PostTemplateCoverage, CoverageGap } from "./postTemplateCoverage";
 export { ResultTab } from "./ResultTab";
 export { StatsTab } from "./StatsTab";
+export { FollowerTrendChart } from "./JwinMetricsCharts";
 export { useJwinCampaignStats } from "./useJwinCampaignStats";
 export type { UseJwinCampaignStatsResult } from "./useJwinCampaignStats";
 export {

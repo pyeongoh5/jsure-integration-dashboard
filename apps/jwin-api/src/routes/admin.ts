@@ -241,9 +241,10 @@ export async function adminRoutes(app: FastifyInstance) {
       .string()
       .regex(/^\d{2}:\d{2}$/)
       .default('11:00'),
-    // 시즌 LP 이미지 — 상단 키비주얼·브랜드 목록 배경
+    // 시즌 LP 이미지 — 상단 키비주얼·브랜드 목록 배경·응모 페이지 하단 배너 썸네일
     keyVisualUrl: z.string().url().nullable().optional(),
     listBackgroundUrl: z.string().url().nullable().optional(),
+    thumbnailUrl: z.string().url().nullable().optional(),
   });
 
   app.post('/admin/campaigns', async (req, reply) => {
@@ -982,6 +983,60 @@ export async function adminRoutes(app: FastifyInstance) {
       needsReconnect: !!campaign.brandAccount?.refreshFailedAt, // 브랜드 재연동 필요 알림
     };
   });
+
+  // 시즌 전체 지표 CSV 데이터 — 브랜드×일자 스냅샷 원본
+  app.get<{ Params: { id: string } }>(
+    '/admin/campaigns/:id/metrics-export',
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+      const snapshots = await prisma.brandMetricSnapshot.findMany({
+        where: { campaign: { campaignId: req.params.id } },
+        include: { campaign: { include: { brandAccount: { select: { label: true } } } } },
+        orderBy: [{ campaignId: 'asc' }, { dateJst: 'asc' }, { kind: 'asc' }],
+      });
+      return {
+        rows: snapshots.map((snapshot) => ({
+          brandName: snapshot.campaign.brandAccount.label,
+          dateJst: snapshot.dateJst,
+          kind: snapshot.kind,
+          followerCount: snapshot.followerCount,
+          repostCount: snapshot.repostCount,
+          likeCount: snapshot.likeCount,
+          replyCount: snapshot.replyCount,
+          impressionCount: snapshot.impressionCount,
+        })),
+      };
+    },
+  );
+
+  // 참여 성과 지표 — BASELINE(첫 게시 직후 팔로워) + DAILY(매일 00:00 JST 수집)
+  app.get<{ Params: { id: string } }>(
+    '/admin/brand-campaigns/:id/metrics',
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+      const [snapshots, uniqueUsers, totalEntries] = await Promise.all([
+        prisma.brandMetricSnapshot.findMany({
+          where: { campaignId: req.params.id },
+          orderBy: [{ dateJst: 'asc' }, { kind: 'asc' }],
+          select: {
+            dateJst: true,
+            kind: true,
+            followerCount: true,
+            repostCount: true,
+            likeCount: true,
+            replyCount: true,
+            impressionCount: true,
+          },
+        }),
+        prisma.entry.groupBy({
+          by: ['userId'],
+          where: { campaignId: req.params.id },
+        }),
+        prisma.entry.count({ where: { campaignId: req.params.id } }),
+      ]);
+      return { snapshots, uniqueEntrants: uniqueUsers.length, totalEntries };
+    },
+  );
 
   // 당첨자 목록 (이행 처리용) — 배송지 평문/암호문 미노출 (D-11).
   // 필터는 서버에서 걸고 커서로 페이징한다. 화면이 전량 로드 후 거르면 데이터가

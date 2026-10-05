@@ -74,3 +74,28 @@
   color: var(--c-muted);
   font-size: 14px;
 }
+
+/* 시즌 진행 상태 태그 — 기간에서 파생 (예정/진행 중/종료) */
+.statusBadge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status_upcoming {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.status_active {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.status_ended {
+  background: #f3f4f6;
+  color: #6b7280;
+}

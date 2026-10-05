@@ -48,7 +48,7 @@ const codeRow: AdminWinnerExportRow = {
   shipping: null,
 };
 
-const HEADER_COLUMNS = 12;
+const HEADER_COLUMNS = 13;
 
 describe("buildJwinWinnersCsv", () => {
   it("행이 없어도 헤더는 남는다", () => {

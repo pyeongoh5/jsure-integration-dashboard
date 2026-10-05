@@ -45,7 +45,9 @@ export default function WinHistory({
             <div style={{ fontSize: 14, marginTop: 4 }}>
               {win.prizeType === 'CODE' &&
                 (win.dmSent ? 'ギフトコードをDMでお送りしました' : 'DM送信の準備中です')}
-              {win.prizeType === 'PHYSICAL' && win.shippingEntered && '配送先入力済み'}
+              {win.prizeType === 'PHYSICAL' && win.shippingEntered && (
+                <a href={`/winners/${win.winnerId}/shipping`}>配送先入力済み — 確認する →</a>
+              )}
               {win.prizeType === 'PHYSICAL' && !win.shippingEntered && win.needsShipping && (
                 <a href={`/winners/${win.winnerId}/shipping`}>配送先を入力する →</a>
               )}

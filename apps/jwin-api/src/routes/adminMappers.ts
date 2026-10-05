@@ -36,9 +36,9 @@ export type BrandCampaignRow = {
   id: string;
   status: string;
   dailyWinCap: number | null;
-  cardImageUrl: string | null;
   rulesUrl: string | null;
   prUrl: string | null;
+  prBannerUrl: string | null;
   winMediaUrl: string | null;
   loseMediaUrl: string | null;
   dmTemplate: string | null;
@@ -55,6 +55,7 @@ export type CampaignRow = {
   dailyPostTime: string;
   keyVisualUrl: string | null;
   listBackgroundUrl: string | null;
+  thumbnailUrl: string | null;
 };
 
 export function toCampaignSummary(campaign: CampaignRow): AdminCampaignSummary {
@@ -76,9 +77,9 @@ export function toBrandCampaignDetail(
     id: brandCampaign.id,
     status: brandCampaign.status as AdminBrandCampaignDetail['status'],
     dailyWinCap: brandCampaign.dailyWinCap,
-    cardImageUrl: brandCampaign.cardImageUrl,
     rulesUrl: brandCampaign.rulesUrl,
     prUrl: brandCampaign.prUrl,
+    prBannerUrl: brandCampaign.prBannerUrl,
     winMediaUrl: brandCampaign.winMediaUrl,
     loseMediaUrl: brandCampaign.loseMediaUrl,
     dmTemplate: brandCampaign.dmTemplate,
@@ -136,6 +137,7 @@ export function toCampaignDetail(
     dailyPostTime: campaign.dailyPostTime,
     keyVisualUrl: campaign.keyVisualUrl,
     listBackgroundUrl: campaign.listBackgroundUrl,
+    thumbnailUrl: campaign.thumbnailUrl,
     brands,
   };
 }

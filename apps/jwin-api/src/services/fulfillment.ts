@@ -107,6 +107,8 @@ export interface ShippingInfo {
   address1: string;
   address2?: string;
   fullName: string;
+  /** 후리가나 — 배송 실무용. 도입 전 데이터에는 없을 수 있다 */
+  nameKana?: string;
   phone: string;
 }
 

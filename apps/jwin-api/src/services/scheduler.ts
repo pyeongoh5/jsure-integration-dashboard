@@ -6,6 +6,7 @@ import { getBrandAccessToken } from '../lib/tokens';
 import { buildCarouselCard, carouselFingerprint, type CarouselSlide } from '../lib/ads-api';
 import { createPost, uploadMediaFromUrl } from '../lib/x-api';
 import { assignCodeAndSendDm } from './fulfillment';
+import { collectBaseline, collectDailyMetrics } from './metrics';
 
 /**
  * 인프로세스 스케줄러 (Railway 단일 인스턴스 전제 — v1)
@@ -32,6 +33,10 @@ export function startScheduler(): void {
     timezone: 'Asia/Tokyo',
   });
   cron.schedule('* * * * *', () => void publishDuePosts().catch(logError('publish')));
+  // 게시일이 끝나는 00:00 JST 에 팔로워·포스트 지표를 수집한다
+  cron.schedule('0 0 * * *', () => void collectDailyMetrics().catch(logError('metrics')), {
+    timezone: 'Asia/Tokyo',
+  });
   cron.schedule('*/5 * * * *', () => void retryFailedDms().catch(logError('dm-retry')));
   cron.schedule('*/10 * * * *', () => void cleanupOAuthStates().catch(logError('oauth-cleanup')));
 
@@ -220,6 +225,9 @@ export async function publishDuePosts(): Promise<void> {
           attempts: { increment: 1 },
         },
       });
+
+      // 첫 게시 직후 팔로워 기준점 수집 — 실패해도 게시 흐름에는 영향 없음
+      collectBaseline(campaign.id).catch(logError('metrics-baseline'));
     } catch (error) {
       const attempts = post.attempts + 1;
       await prisma.campaignPost.update({

@@ -1,0 +1,140 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* 셀렉트 2개 + CSV 버튼은 항상 한 줄 — 좁으면 셀렉트가 줄어든다 */
+.filterRow {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 320px;
+}
+
+.filterLabel {
+  font-size: 12px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* 셀렉트 — 우측 화살표 아이콘(appearance 리셋 환경에서도 보장) */
+.select {
+  width: 100%;
+  min-width: 160px;
+  height: 34px;
+  padding: 0 32px 0 10px;
+  border: 1px solid var(--color-border-strong, #d1d5db);
+  border-radius: 6px;
+  color: var(--color-text, #111827);
+  font-size: 14px;
+  cursor: pointer;
+  appearance: none;
+  background-color: var(--color-bg, #fff);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.select:disabled {
+  background-color: var(--color-bg-muted, #f3f4f6);
+  color: var(--color-text-subtle, #9ca3af);
+  cursor: default;
+}
+
+.exportSlot {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border, #f3f4f6);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table th {
+  color: var(--text-muted, #6b7280);
+  font-weight: 600;
+}
+
+.num {
+  text-align: right;
+}
+
+.row {
+  cursor: pointer;
+}
+
+.row:hover {
+  background: var(--surface-muted, #f9fafb);
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted, #6b7280);
+  font-size: 14px;
+}
+
+.hint {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--text-muted, #9ca3af);
+}
+
+.rowSelected {
+  background: #eff6ff;
+}
+
+.rowSelected:hover {
+  background: #eff6ff;
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.deltaUp {
+  color: #047857;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.deltaDown {
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 12px;
+}

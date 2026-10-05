@@ -26,9 +26,10 @@ export function PrizeAddDialog({ open, onClose, onAdd }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const quantity = Number(totalQty);
   const probability = Number(winProbability);
   const codeSummary = summarizeCodeInput(codesText);
+  // CODE 경품은 수량을 따로 받지 않는다 — 붙여넣은 코드 수가 곧 수량이다
+  const quantity = type === "CODE" ? codeSummary.count : Number(totalQty);
 
   const handleClose = () => {
     setType("PHYSICAL");
@@ -44,18 +45,20 @@ export function PrizeAddDialog({ open, onClose, onAdd }: Props) {
 
   const validationError = (): string | null => {
     if (!name.trim()) return t("jwin.prize.error.nameRequired");
-    if (!Number.isInteger(quantity) || quantity <= 0) return t("jwin.prize.error.quantityInvalid");
     if (!Number.isInteger(Number(tier)) || Number(tier) < 1) return t("jwin.prize.error.tierInvalid");
     if (!(probability > 0 && probability < 1)) return t("jwin.prize.error.probabilityInvalid");
-    if (type !== "CODE") return null;
+    if (type !== "CODE") {
+      if (!Number.isInteger(quantity) || quantity <= 0) {
+        return t("jwin.prize.error.quantityInvalid");
+      }
+      return null;
+    }
     if (codeSummary.duplicates.length > 0) {
       return t("jwin.prize.error.duplicateCodes", {
         codes: codeSummary.duplicates.slice(0, 3).join(", "),
       });
     }
-    if (codeSummary.count !== quantity) {
-      return t("jwin.prize.error.countMismatch", { count: codeSummary.count, quantity });
-    }
+    if (codeSummary.count === 0) return t("jwin.prize.error.codesRequired");
     return null;
   };
 
@@ -135,10 +138,12 @@ export function PrizeAddDialog({ open, onClose, onAdd }: Props) {
             <Input type="number" min={1} value={tier} onChange={setTier} />
             <span className={styles.fieldHint}>{t("jwin.prize.hint.tier")}</span>
           </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>{t("jwin.prize.field.quantity")}</span>
-            <Input type="number" min={1} value={totalQty} onChange={setTotalQty} placeholder="10" />
-          </div>
+          {type === "PHYSICAL" && (
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>{t("jwin.prize.field.quantity")}</span>
+              <Input type="number" min={1} value={totalQty} onChange={setTotalQty} placeholder="10" />
+            </div>
+          )}
         </div>
 
         <div className={styles.field}>
@@ -165,10 +170,7 @@ export function PrizeAddDialog({ open, onClose, onAdd }: Props) {
               placeholder={t("jwin.prize.placeholder.codes")}
             />
             <span className={styles.fieldHint}>
-              {t("jwin.prize.hint.codeCount", {
-                count: codeSummary.count,
-                quantity: Number.isFinite(quantity) ? quantity : 0,
-              })}
+              {t("jwin.prize.hint.codeCountAuto", { count: codeSummary.count })}
             </span>
             {codeSummary.duplicates.length > 0 && (
               <span className={styles.errorText}>

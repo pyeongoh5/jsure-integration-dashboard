@@ -68,6 +68,7 @@ describe('시즌·참여 매퍼', () => {
     dailyPostTime: '11:00',
     keyVisualUrl: null,
     listBackgroundUrl: null,
+    thumbnailUrl: null,
   };
 
   const brandCampaignRow = {
@@ -102,9 +103,9 @@ describe('시즌·참여 매퍼', () => {
         id: 'bc-1',
         status: 'ACTIVE',
         dailyWinCap: null,
-        cardImageUrl: null,
         rulesUrl: null,
         prUrl: null,
+        prBannerUrl: null,
         winMediaUrl: null,
         loseMediaUrl: null,
         dmTemplate: null,

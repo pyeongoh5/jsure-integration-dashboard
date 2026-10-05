@@ -129,12 +129,12 @@ export default async function CampaignSeasonPage({
             }}
           >
             {season.brands.map((brand) => (
-              // 카드 클릭 = 당일 X 포스트로 이동 (미게시면 참여 LP 로 폴백)
+              // 카드 클릭 = 가장 최근 X 포스트로 이동 (게시 전이면 참여 LP 로 폴백)
               <a
                 key={brand.brandCampaignId}
-                href={brand.todayPostUrl ?? `/c/${season.slug}/${brand.brandSlug}`}
-                target={brand.todayPostUrl ? '_blank' : undefined}
-                rel={brand.todayPostUrl ? 'noreferrer' : undefined}
+                href={brand.latestPostUrl ?? `/c/${season.slug}/${brand.brandSlug}`}
+                target={brand.latestPostUrl ? '_blank' : undefined}
+                rel={brand.latestPostUrl ? 'noreferrer' : undefined}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -147,10 +147,10 @@ export default async function CampaignSeasonPage({
                   color: 'inherit',
                 }}
               >
-                {brand.cardImageUrl && (
+                {brand.postImageUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={brand.cardImageUrl}
+                    src={brand.postImageUrl}
                     alt=""
                     style={{
                       width: '100%',

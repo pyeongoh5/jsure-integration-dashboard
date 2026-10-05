@@ -1,6 +1,19 @@
 import type { AdminTranslationKey } from "@i18n/admin";
 import type { AdminCampaignListItem } from "@/domains/jwin";
 
+/** 시즌 진행 상태 — 컬럼 없이 기간에서 파생한다 (예정/진행 중/종료) */
+export type JwinSeasonStatus = "upcoming" | "active" | "ended";
+
+export function seasonStatusOf(
+  startsAt: string,
+  endsAt: string,
+  now: Date = new Date(),
+): JwinSeasonStatus {
+  if (now.getTime() < new Date(startsAt).getTime()) return "upcoming";
+  if (now.getTime() > new Date(endsAt).getTime()) return "ended";
+  return "active";
+}
+
 export type JwinCampaignWarning = {
   kind: "reconnect" | "failedPosts";
   labelKey: AdminTranslationKey;
@@ -16,6 +29,7 @@ export type JwinCampaignRow = {
   period: string;
   brandCount: number;
   entryCount: number;
+  status: JwinSeasonStatus;
   warnings: JwinCampaignWarning[];
 };
 
@@ -56,6 +70,7 @@ export function toJwinCampaignRow(campaign: AdminCampaignListItem): JwinCampaign
     period: `${formatJstDate(campaign.startsAt)} ~ ${formatJstDate(campaign.endsAt)}`,
     brandCount: campaign.brandCount,
     entryCount: campaign.entryCount,
+    status: seasonStatusOf(campaign.startsAt, campaign.endsAt),
     warnings,
   };
 }

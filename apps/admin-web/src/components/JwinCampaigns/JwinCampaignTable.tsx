@@ -24,6 +24,7 @@ export function JwinCampaignTable({ rows, onRowClick, onDelete }: Props) {
           <tr>
             <th>{t("jwin.campaign.columns.name")}</th>
             <th>{t("jwin.campaign.columns.slug")}</th>
+            <th>{t("jwin.campaign.columns.status")}</th>
             <th>{t("jwin.campaign.columns.period")}</th>
             <th className={styles.num}>{t("jwin.campaign.columns.brands")}</th>
             <th className={styles.num}>{t("jwin.campaign.columns.entries")}</th>
@@ -36,6 +37,11 @@ export function JwinCampaignTable({ rows, onRowClick, onDelete }: Props) {
             <tr key={row.id} className={styles.row} onClick={() => onRowClick(row.id)}>
               <td className={styles.brand}>{row.name}</td>
               <td className={styles.mono}>{row.slug}</td>
+              <td>
+                <span className={`${styles.statusBadge} ${styles[`status_${row.status}`]}`}>
+                  {t(`jwin.campaign.status.${row.status}`)}
+                </span>
+              </td>
               <td className={styles.mono}>{row.period}</td>
               <td className={styles.num}>{row.brandCount}</td>
               <td className={styles.num}>{row.entryCount}</td>

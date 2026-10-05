@@ -15,6 +15,7 @@ const HEADER_KEYS = [
   "jwin.winner.export.header.address1",
   "jwin.winner.export.header.address2",
   "jwin.winner.export.header.fullName",
+  "jwin.winner.export.header.nameKana",
   "jwin.winner.export.header.phone",
 ] as const satisfies readonly AdminTranslationKey[];
 
@@ -36,6 +37,7 @@ function formatRow(
     row.shipping?.address1 ?? "",
     row.shipping?.address2 ?? "",
     row.shipping?.fullName ?? "",
+    row.shipping?.nameKana ?? "",
     row.shipping?.phone ?? "",
   ];
 }

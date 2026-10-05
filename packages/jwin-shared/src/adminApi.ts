@@ -109,6 +109,8 @@ export const AdminCampaignCreateSchema = z.object({
   keyVisualUrl: z.string().url().nullable().optional(),
   /** 시즌 LP 브랜드 목록 영역의 배경 이미지 */
   listBackgroundUrl: z.string().url().nullable().optional(),
+  /** 응모 페이지 하단 배너 썸네일 — 클릭 시 시즌 LP(브랜드 목록)로 이동 */
+  thumbnailUrl: z.string().url().nullable().optional(),
 });
 export type AdminCampaignCreate = z.infer<typeof AdminCampaignCreateSchema>;
 
@@ -146,6 +148,7 @@ export const AdminCampaignDetailSchema = z.object({
   dailyPostTime: z.string(),
   keyVisualUrl: z.string().nullable().default(null),
   listBackgroundUrl: z.string().nullable().default(null),
+  thumbnailUrl: z.string().nullable().default(null),
   brands: z.array(AdminBrandCampaignListItemSchema),
 });
 export type AdminCampaignDetail = z.infer<typeof AdminCampaignDetailSchema>;
@@ -164,11 +167,11 @@ export type AdminBrandCampaignCreate = z.infer<typeof AdminBrandCampaignCreateSc
 export const AdminBrandCampaignPatchSchema = z.object({
   status: CampaignStatusSchema.optional(),
   dailyWinCap: z.number().int().positive().nullable().optional(),
-  /** 링크 카드 이미지 (LP 의 og:image) */
-  cardImageUrl: z.string().url().nullable().optional(),
   /** 이벤트 규칙 가이드 URL — 포스트 본문에 텍스트 링크로 나간다 */
   rulesUrl: z.string().url().nullable().optional(),
   prUrl: z.string().url().nullable().optional(),
+  /** LP 하단 브랜드 배너 (16:9 권장) — 클릭 시 prUrl 로 이동 */
+  prBannerUrl: z.string().url().nullable().optional(),
   winMediaUrl: z.string().url().nullable().optional(),
   loseMediaUrl: z.string().url().nullable().optional(),
   dmTemplate: z.string().max(1000).nullable().optional(),
@@ -210,9 +213,9 @@ export const AdminBrandCampaignDetailSchema = z.object({
   id: z.string(),
   status: CampaignStatusSchema,
   dailyWinCap: z.number().int().nullable(),
-  cardImageUrl: z.string().nullable(),
   rulesUrl: z.string().nullable(),
   prUrl: z.string().nullable(),
+  prBannerUrl: z.string().nullable(),
   winMediaUrl: z.string().nullable(),
   loseMediaUrl: z.string().nullable(),
   dmTemplate: z.string().nullable(),
@@ -221,6 +224,46 @@ export const AdminBrandCampaignDetailSchema = z.object({
   brandAccount: AdminBrandAccountSchema,
 });
 export type AdminBrandCampaignDetail = z.infer<typeof AdminBrandCampaignDetailSchema>;
+
+/** GET /admin/campaigns/:id/metrics-export — 시즌 전체(브랜드×일자) 지표 CSV 용 */
+export const AdminCampaignMetricsExportSchema = z.object({
+  rows: z.array(
+    z.object({
+      brandName: z.string(),
+      dateJst: z.string(),
+      kind: z.enum(['BASELINE', 'DAILY']),
+      followerCount: z.number().int(),
+      repostCount: z.number().int().nullable(),
+      likeCount: z.number().int().nullable(),
+      replyCount: z.number().int().nullable(),
+      impressionCount: z.number().int().nullable().default(null),
+    }),
+  ),
+});
+export type AdminCampaignMetricsExport = z.infer<typeof AdminCampaignMetricsExportSchema>;
+
+/** 참여 지표 스냅샷 — BASELINE(첫 게시 직후) / DAILY(게시일 종료 00:00 JST) */
+export const AdminMetricSnapshotSchema = z.object({
+  dateJst: z.string(),
+  kind: z.enum(['BASELINE', 'DAILY']),
+  followerCount: z.number().int(),
+  repostCount: z.number().int().nullable(),
+  likeCount: z.number().int().nullable(),
+  replyCount: z.number().int().nullable(),
+  /** 노출 수 — 수집 도입(2026-10) 전 행과 BASELINE 은 null */
+  impressionCount: z.number().int().nullable().default(null),
+});
+export type AdminMetricSnapshot = z.infer<typeof AdminMetricSnapshotSchema>;
+
+/** GET /admin/brand-campaigns/:id/metrics — 날짜 오름차순 */
+export const AdminBrandMetricsSchema = z.object({
+  snapshots: z.array(AdminMetricSnapshotSchema),
+  /** 고유 응모자 수 (기간 전체) */
+  uniqueEntrants: z.number().int().default(0),
+  /** 총 응모 수 */
+  totalEntries: z.number().int().default(0),
+});
+export type AdminBrandMetrics = z.infer<typeof AdminBrandMetricsSchema>;
 
 /** ② GET /admin/campaigns/:id/prizes */
 export const AdminPrizeSchema = z.object({
@@ -401,6 +444,8 @@ export const AdminShippingAddressSchema = z.object({
   address1: z.string(),
   address2: z.string().optional(),
   fullName: z.string(),
+  /** 후리가나 — 도입(2026-10) 전 입력분에는 없다 */
+  nameKana: z.string().optional(),
   phone: z.string(),
 });
 export type AdminShippingAddress = z.infer<typeof AdminShippingAddressSchema>;

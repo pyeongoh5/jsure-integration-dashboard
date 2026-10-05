@@ -122,3 +122,20 @@
   margin: 8px 0 0;
   padding-left: 18px;
 }
+
+/* 참여 편집 헤더 — 브랜드명 옆 연동 메타 */
+.titleMeta {
+  font-size: 13px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* 미연동·재연동 필요일 때만 보이는 안내 줄 */
+.connectNotice {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  color: #92400e;
+  font-size: 13px;
+}

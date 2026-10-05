@@ -1715,6 +1715,11 @@ export const adminMessages = {
             en: "Influencer flag cleared",
             ja: "インフルエンサーフラグ解除",
           },
+          influencerWithdraw: {
+            ko: "인플루언서 탈퇴 처리",
+            en: "Influencer withdrawn",
+            ja: "インフルエンサー退会処理",
+          },
         },
         metadata: {
           reason: { ko: "사유", en: "Reason", ja: "理由" },

@@ -50,13 +50,14 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
       {t("domains.application.applicants.actions.history")}
     </Button>
   );
-  // 강제 취소는 참여가 살아 있는 단계에만. 반려 건은 이미 슬롯을 놓았다.
-  const forceCancelButton =
-    applicant.status === "REJECTED" ? null : (
-      <Button variant="danger" size="sm" onClick={() => handlers.onForceCancel(applicant)}>
-        {t("domains.application.forceCancel.action")}
-      </Button>
-    );
+  // 강제 취소는 모든 단계에서 가능하다 — 반려·재제출 대기 건도 정리해야 할 때가 있다.
+  // 차단은 서버가 판단한다(이미 취소됨·정산 존재 — force-cancel.ts).
+  // 이 목록에는 취소된 건이 오지 않으므로 화면에서 거를 상태가 없다.
+  const forceCancelButton = (
+    <Button variant="danger" size="sm" onClick={() => handlers.onForceCancel(applicant)}>
+      {t("domains.application.forceCancel.action")}
+    </Button>
+  );
   const hasShipping = applicant.category === "SNS" || applicant.category === "SIMPLE_REVIEW";
 
   switch (applicant.status) {

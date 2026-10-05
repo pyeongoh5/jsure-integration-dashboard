@@ -115,9 +115,10 @@ function renderActions(
       {t("domains.application.applicants.actions.history")}
     </Button>
   );
-  // 정산이 생긴 뒤에는 서버가 막으므로 버튼도 내린다. 반려 건은 이미 슬롯을 놓았다.
+  // 정산이 생긴 뒤에는 서버가 막으므로 버튼도 내린다.
+  // 반려·재제출 대기 건은 취소할 수 있어야 한다 — 상태로는 막지 않는다.
   const forceCancelButton =
-    draft.settlement !== null || draft.status === "REJECTED" ? null : (
+    draft.settlement !== null ? null : (
       <Button variant="danger" size="sm" onClick={() => handlers.onForceCancel(draft)}>
         {t("domains.application.forceCancel.action")}
       </Button>

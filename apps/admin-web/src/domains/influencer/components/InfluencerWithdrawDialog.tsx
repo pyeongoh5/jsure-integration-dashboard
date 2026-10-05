@@ -126,13 +126,19 @@ function DialogBody({
               count: String(counts.totalCount),
             })}
           </span>
-          {counts.ongoingCount > 0 && (
-            <span className={`${styles.line} ${styles.warn}`}>
-              {t("domains.influencer.withdrawDialog.ongoingWarning", {
-                count: String(counts.ongoingCount),
-              })}
-            </span>
-          )}
+          <span
+            className={
+              counts.ongoingCount > 0
+                ? `${styles.line} ${styles.warn}`
+                : styles.line
+            }
+          >
+            {counts.ongoingCount > 0
+              ? t("domains.influencer.withdrawDialog.ongoingWarning", {
+                  count: String(counts.ongoingCount),
+                })
+              : t("domains.influencer.withdrawDialog.ongoingNone")}
+          </span>
         </>
       )}
       <span className={`${styles.line} ${styles.warn}`}>

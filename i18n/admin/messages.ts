@@ -2827,6 +2827,11 @@ export const adminMessages = {
           en: "Campaigns participated so far: {count}",
           ja: "これまで参加（応募）したキャンペーン：{count}件",
         },
+        ongoingNone: {
+          ko: "현재 진행 중인 캠페인: 없음",
+          en: "Campaigns currently in progress: none",
+          ja: "現在進行中のキャンペーン：なし",
+        },
         ongoingWarning: {
           ko: "진행 중인 캠페인이 {count}건 있습니다. 탈퇴 처리하면 이 인플루언서는 더 이상 로그인할 수 없습니다.",
           en: "{count} campaign(s) are still in progress. After withdrawal this influencer can no longer sign in.",

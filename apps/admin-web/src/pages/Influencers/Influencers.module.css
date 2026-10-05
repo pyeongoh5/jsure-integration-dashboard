@@ -62,6 +62,12 @@
   font-size: 12px;
 }
 
+.rowActions {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
 /* 무한 스크롤 감시자 — 테이블 스크롤 컨테이너 안에 놓인다. */
 .sentinel {
   padding: 16px;

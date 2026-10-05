@@ -12,6 +12,7 @@ import type {
 } from "@jsure/shared";
 import {
   InfluencerNotesDialog,
+  InfluencerWithdrawDialog,
   buildInfluencersCsv,
   exportInfluencers,
   influencersCsvFilename,
@@ -97,6 +98,9 @@ export function Influencers() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [csvPending, setCsvPending] = useState(false);
   const [notesTarget, setNotesTarget] = useState<AdminInfluencer | null>(null);
+  const [withdrawTarget, setWithdrawTarget] = useState<AdminInfluencer | null>(
+    null,
+  );
 
   // 선택 순서가 다른 쿼리 키를 만들지 않도록 정렬해서 넣는다.
   const filter = useMemo<InfluencerFilter>(
@@ -273,7 +277,7 @@ export function Influencers() {
                   </th>
                   <th>{t("common.status")}</th>
                   <th>{t("common.joinedAt")}</th>
-                  <th style={{ width: 90 }}>
+                  <th style={{ width: 160 }}>
                     {t("domains.application.applicants.table.actions")}
                   </th>
                 </tr>
@@ -356,9 +360,14 @@ export function Influencers() {
                       })}
                     </td>
                     <td>
-                      <Button variant="secondary" size="sm" onClick={() => setNotesTarget(r)}>
-                        {t("domains.application.applicants.actions.memo")}
-                      </Button>
+                      <div className={styles.rowActions}>
+                        <Button variant="secondary" size="sm" onClick={() => setNotesTarget(r)}>
+                          {t("domains.application.applicants.actions.memo")}
+                        </Button>
+                        <Button variant="danger" size="sm" onClick={() => setWithdrawTarget(r)}>
+                          {t("domains.influencer.withdrawDialog.openButton")}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -383,6 +392,18 @@ export function Influencers() {
           influencerName={notesTarget.name}
           onClose={() => setNotesTarget(null)}
           onChanged={reload}
+        />
+      )}
+
+      {withdrawTarget && (
+        <InfluencerWithdrawDialog
+          influencerId={withdrawTarget.id}
+          influencerName={withdrawTarget.name}
+          onDone={() => {
+            setWithdrawTarget(null);
+            reload();
+          }}
+          onCancel={() => setWithdrawTarget(null)}
         />
       )}
     </div>

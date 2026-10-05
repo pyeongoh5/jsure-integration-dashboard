@@ -1,5 +1,11 @@
-import { ConflictException, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from "@nestjs/common";
+import { InfluencersController } from "./influencers.controller";
 import { InfluencersService } from "./influencers.service";
+import type { AuthenticatedUser } from "../auth/strategies/jwt.strategy";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { AuditService, AuditActor } from "../audit/audit.service";
 
@@ -93,4 +99,34 @@ describe("인플루언서 탈퇴 처리", () => {
     );
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
+});
+
+describe("탈퇴 권한 (컨트롤러)", () => {
+  function makeController() {
+    const svc = { withdraw: jest.fn().mockResolvedValue(undefined) };
+    const controller = new InfluencersController(
+      svc as unknown as InfluencersService,
+    );
+    return { svc, controller };
+  }
+
+  const userWithRole = (role: string) =>
+    ({ id: "admin-1", role } as unknown as AuthenticatedUser);
+
+  it("OWNER 는 탈퇴를 실행할 수 있다", async () => {
+    const { svc, controller } = makeController();
+    await controller.withdraw({ user: userWithRole("OWNER") }, "inf-1");
+    expect(svc.withdraw).toHaveBeenCalledWith("inf-1", expect.anything());
+  });
+
+  it.each(["ADMIN", "GUEST"])(
+    "%s 는 거부되고 서비스가 호출되지 않는다 — 화면 우회 방어",
+    async (role) => {
+      const { svc, controller } = makeController();
+      await expect(
+        controller.withdraw({ user: userWithRole(role) }, "inf-1"),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(svc.withdraw).not.toHaveBeenCalled();
+    },
+  );
 });

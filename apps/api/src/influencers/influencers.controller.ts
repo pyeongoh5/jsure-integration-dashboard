@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   Param,
@@ -75,12 +76,20 @@ export class InfluencersController {
     );
   }
 
+  /**
+   * 탈퇴 처리 — PII 를 익명화하며 되돌릴 수 없다.
+   * 파급이 큰 비가역 조치라 OWNER 만 할 수 있다 (화면도 OWNER 에게만 버튼을 보여주지만,
+   * 최종 방어선은 여기다 — 직접 호출로 우회되면 안 된다).
+   */
   @Post(":id/withdraw")
   @HttpCode(204)
   async withdraw(
     @Req() req: { user: AuthenticatedUser },
     @Param("id") id: string,
   ): Promise<void> {
+    if (req.user.role !== "OWNER") {
+      throw new ForbiddenException("탈퇴 처리는 OWNER 만 할 수 있습니다");
+    }
     await this.svc.withdraw(id, req.user);
   }
 

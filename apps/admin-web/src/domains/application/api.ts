@@ -88,6 +88,16 @@ export async function forceCancelApplication(
   return AdminApplicationSchema.parse(res.data);
 }
 
+/** 강제 취소 되돌리기 — 취소 직전 상태로 복원한다 (복원 대상은 서버가 감사 로그에서 찾는다). */
+export async function restoreCancelledApplication(
+  id: string,
+): Promise<AdminApplication> {
+  const res = await api.post(
+    `/campaign-applications/${encodeURIComponent(id)}/restore-cancel`,
+  );
+  return AdminApplicationSchema.parse(res.data);
+}
+
 export async function shipApplication(
   id: string,
   trackingCarrier: string,

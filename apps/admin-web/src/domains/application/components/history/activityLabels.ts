@@ -54,6 +54,7 @@ export const ACTIVITY_ACTION_LABEL: Record<
   INFLUENCER_FLAG_CLEAR:
     "domains.application.history.actions.influencerFlagClear",
   INFLUENCER_WITHDRAW: "domains.application.history.actions.influencerWithdraw",
+  APPLICATION_RESTORE: "domains.application.history.actions.applicationRestore",
 };
 
 /**

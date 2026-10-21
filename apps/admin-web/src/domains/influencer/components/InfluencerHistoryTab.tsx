@@ -9,7 +9,11 @@ import {
 } from "@jsure/shared";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { SegmentedTabs, SubTypeIcon } from "@/components/composites";
-import { ACTIVITY_ACTION_LABEL } from "@/domains/application";
+import { Button } from "@/components/ui";
+import {
+  ACTIVITY_ACTION_LABEL,
+  restoreCancelledApplication,
+} from "@/domains/application";
 import { useT } from "@/lib/i18n";
 import { fetchInfluencerActivity } from "../api";
 import { formatDateTime } from "../formatDateTime";
@@ -32,6 +36,8 @@ type HistoryRow = {
   event: AdminActivityLog;
   /** 반려 이벤트에만 채워진다. */
   rejectReason: string | null;
+  /** 되돌리기 대상 — 현재 취소 상태이고 이 행이 가장 최근 강제 취소일 때만 채워진다. */
+  restorableApplicationId: string | null;
 };
 
 const FILTER_LABEL: Record<HistoryFilter, AdminTranslationKey> = {
@@ -95,6 +101,14 @@ function toRows(
   const rows: HistoryRow[] = [];
   for (const group of groups) {
     if (!matchesFilter(group, filter)) continue;
+    // 되돌리기는 "지금 취소 상태"인 응모의 가장 최근 강제 취소 기록에만 건다.
+    // events 는 최신순이라 처음 만나는 강제 취소가 그 건이다.
+    const latestCancelEventId =
+      group.status === "CANCELLED"
+        ? (group.events.find(
+            (event) => event.action === "APPLICATION_FORCE_CANCEL",
+          )?.id ?? null)
+        : null;
     for (const event of group.events) {
       rows.push({
         key: `${group.applicationId}-${event.id}`,
@@ -105,6 +119,8 @@ function toRows(
         rejectReason: REJECTION_ACTIONS.includes(event.action)
           ? group.rejectReason
           : null,
+        restorableApplicationId:
+          event.id === latestCancelEventId ? group.applicationId : null,
       });
     }
   }
@@ -121,6 +137,8 @@ export function InfluencerHistoryTab({ influencerId }: Props) {
   const t = useT();
   const [state, setState] = useState<ActivityState>({ kind: "loading" });
   const [filter, setFilter] = useState<HistoryFilter>("ALL");
+  // 되돌리기 후 목록을 다시 읽는다 — 상태 뱃지와 버튼 노출이 함께 갱신돼야 한다
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -142,7 +160,7 @@ export function InfluencerHistoryTab({ influencerId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [influencerId]);
+  }, [influencerId, reloadKey, t]);
 
   const rows = useMemo(
     () => (state.kind === "ready" ? toRows(state.groups, filter) : []),
@@ -157,7 +175,11 @@ export function InfluencerHistoryTab({ influencerId }: Props) {
         value={filter}
         onChange={setFilter}
       />
-      <HistoryBody state={state} rows={rows} />
+      <HistoryBody
+        state={state}
+        rows={rows}
+        onRestored={() => setReloadKey((current) => current + 1)}
+      />
     </div>
   );
 }
@@ -165,9 +187,11 @@ export function InfluencerHistoryTab({ influencerId }: Props) {
 function HistoryBody({
   state,
   rows,
+  onRestored,
 }: {
   state: ActivityState;
   rows: HistoryRow[];
+  onRestored: () => void;
 }) {
   const t = useT();
   if (state.kind === "loading") {
@@ -186,14 +210,30 @@ function HistoryBody({
   return (
     <div className={styles.list}>
       {rows.map((row) => (
-        <HistoryEntry key={row.key} row={row} />
+        <HistoryEntry key={row.key} row={row} onRestored={onRestored} />
       ))}
     </div>
   );
 }
 
-function HistoryEntry({ row }: { row: HistoryRow }) {
+function HistoryEntry({ row, onRestored }: { row: HistoryRow; onRestored: () => void }) {
   const t = useT();
+  const [restoring, setRestoring] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+
+  const handleRestore = async () => {
+    if (!row.restorableApplicationId) return;
+    setRestoring(true);
+    setRestoreError(null);
+    try {
+      await restoreCancelledApplication(row.restorableApplicationId);
+      onRestored();
+    } catch {
+      setRestoreError(t("domains.influencer.notesDialog.history.restoreFailed"));
+      setRestoring(false);
+    }
+  };
+
   return (
     <article className={styles.entry}>
       <div className={styles.entryTop}>
@@ -222,6 +262,24 @@ function HistoryEntry({ row }: { row: HistoryRow }) {
             {t("domains.influencer.notesDialog.history.rejectReason")}
           </span>
           {row.rejectReason}
+        </div>
+      )}
+      {row.restorableApplicationId && (
+        <div className={styles.restoreRow}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void handleRestore()}
+            disabled={restoring}
+          >
+            {restoring
+              ? t("domains.influencer.notesDialog.history.restoring")
+              : t("domains.influencer.notesDialog.history.restore")}
+          </Button>
+          <span className={styles.restoreHint}>
+            {t("domains.influencer.notesDialog.history.restoreHint")}
+          </span>
+          {restoreError && <span className={styles.error}>{restoreError}</span>}
         </div>
       )}
     </article>

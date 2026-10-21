@@ -13,6 +13,7 @@ export const AdminActivityActionSchema = z.enum([
   "APPLICATION_SHIP",
   "APPLICATION_DELIVER",
   "APPLICATION_FORCE_CANCEL",
+  "APPLICATION_RESTORE",
   // 제출물
   "SUBMISSION_APPROVE",
   "SUBMISSION_REJECT",

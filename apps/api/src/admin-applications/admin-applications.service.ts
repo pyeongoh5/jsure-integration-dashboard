@@ -27,6 +27,10 @@ import {
   forceCancelBlockedReason,
 } from "./force-cancel";
 import {
+  RESTORE_CANCEL_BLOCK_MESSAGE,
+  restoreCancelBlockedReason,
+} from "./restore-cancel";
+import {
   buildInsightChanges,
   buildInsightUpdateData,
   type InsightSnapshot,
@@ -679,6 +683,61 @@ export class AdminApplicationsService {
       campaignId: existing.campaignId,
       influencerId: existing.influencerId,
       metadata: { previousStatus: existing.status, reason },
+    });
+    return this.fetch(id);
+  }
+
+  /**
+   * 강제 취소 되돌리기 — 취소 시 감사 로그에 남긴 previousStatus 로 복원한다.
+   *
+   * 강제 취소는 status 만 바꾸므로 반려 사유·검토 시각 등은 그대로 남아 있다.
+   * 따라서 status 를 되돌리는 것만으로 취소 직전 상태가 완전히 복원된다.
+   */
+  async restoreFromForceCancel(
+    id: string,
+    actor: AuditActor,
+  ): Promise<AdminApplication> {
+    const existing = await this.prisma.campaignApplication.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        campaignId: true,
+        influencerId: true,
+        settlement: { select: { id: true } },
+      },
+    });
+    if (!existing) throw new NotFoundException("응모를 찾을 수 없습니다");
+
+    const cancelLog = await this.prisma.adminActivityLog.findFirst({
+      where: { applicationId: id, action: "APPLICATION_FORCE_CANCEL" },
+      orderBy: { createdAt: "desc" },
+      select: { metadata: true },
+    });
+    const previousStatus =
+      (cancelLog?.metadata as { previousStatus?: string } | null)
+        ?.previousStatus ?? null;
+
+    const blocked = restoreCancelBlockedReason({
+      status: existing.status,
+      hasSettlement: existing.settlement !== null,
+      previousStatus,
+    });
+    if (blocked) {
+      throw new BadRequestException(RESTORE_CANCEL_BLOCK_MESSAGE[blocked]);
+    }
+
+    await this.prisma.campaignApplication.update({
+      where: { id },
+      data: { status: previousStatus as ApplicationStatus },
+    });
+    await this.audit.record({
+      action: "APPLICATION_RESTORE",
+      actor,
+      applicationId: id,
+      campaignId: existing.campaignId,
+      influencerId: existing.influencerId,
+      metadata: { restoredStatus: previousStatus },
     });
     return this.fetch(id);
   }

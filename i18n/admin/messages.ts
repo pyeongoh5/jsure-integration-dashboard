@@ -1720,6 +1720,11 @@ export const adminMessages = {
             en: "Influencer withdrawn",
             ja: "インフルエンサー退会処理",
           },
+          applicationRestore: {
+            ko: "강제 취소 되돌림",
+            en: "Force cancel undone",
+            ja: "強制キャンセルを取り消し",
+          },
         },
         metadata: {
           reason: { ko: "사유", en: "Reason", ja: "理由" },
@@ -2807,6 +2812,18 @@ export const adminMessages = {
           columnTime: { ko: "처리 일시", en: "Time", ja: "処理日時" },
           columnActor: { ko: "담당자", en: "Handled by", ja: "担当者" },
           rejectReason: { ko: "반려 사유", en: "Reject reason", ja: "却下理由" },
+          restore: { ko: "취소 되돌리기", en: "Undo cancel", ja: "キャンセルを取り消す" },
+          restoring: { ko: "되돌리는 중…", en: "Undoing…", ja: "取り消し中…" },
+          restoreHint: {
+            ko: "취소 직전 상태로 되돌립니다.",
+            en: "Restores the application to the status it had before cancelling.",
+            ja: "キャンセル直前の状態に戻します。",
+          },
+          restoreFailed: {
+            ko: "되돌리지 못했습니다. 정산이 생성된 건은 되돌릴 수 없습니다.",
+            en: "Could not undo. Applications with a settlement cannot be restored.",
+            ja: "取り消せませんでした。精算が作成された応募は戻せません。",
+          },
           status: {
             applied: { ko: "승인 대기", en: "Pending approval", ja: "承認待ち" },
             approved: { ko: "승인", en: "Approved", ja: "承認済み" },

@@ -158,6 +158,20 @@ export class AdminApplicationsController {
     return this.svc.forceCancel(id, req.user, body.reason.trim());
   }
 
+  /**
+   * 강제 취소 되돌리기 — 취소 직전 상태로 복원한다.
+   * 실수로 취소한 건을 운영자가 직접 되살릴 수 있게 한다 (복원 대상 상태는
+   * 취소 시 감사 로그에 남긴 previousStatus).
+   */
+  @Post(":id/restore-cancel")
+  @HttpCode(200)
+  restoreCancel(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+  ): Promise<AdminApplication> {
+    return this.svc.restoreFromForceCancel(id, req.user);
+  }
+
   @Post(":id/submission/approve")
   @HttpCode(200)
   approveSubmission(

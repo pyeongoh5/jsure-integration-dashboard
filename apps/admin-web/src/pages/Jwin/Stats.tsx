@@ -1,15 +1,9 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui";
+import { useState } from "react";
 import { ScrollTable } from "@/components/composites";
 import { FollowerTrendChart, StatsTab } from "@/components/JwinCampaignForm";
 import { useJwinBrandMetrics } from "@/components/JwinCampaignForm/useJwinBrandMetrics";
-import {
-  buildJwinMetricsCsv,
-  jwinMetricsCsvFilename,
-} from "@/components/JwinCampaigns/buildJwinMetricsCsv";
 import { useJwinBrandCampaignsData, useJwinCampaignsData } from "@/components/JwinCampaigns";
-import { triggerCsvDownload } from "@/domains/application";
-import { fetchCampaignMetricsExport, jwinErrorMessage } from "@/domains/jwin";
+import { resolveSelectedId } from "@/components/JwinCampaigns/resolveSelectedId";
 import type { AdminMetricSnapshot } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import styles from "./JwinStats.module.css";
@@ -34,52 +28,28 @@ function DeltaCell({ current, previous }: { current: number | null; previous: nu
 
 /**
  * 캠페인 통계 — 캠페인·브랜드를 셀렉트로 고르고,
+ *
+ * 지표 CSV 다운로드 버튼은 요건 재확인까지 화면에서만 내렸다. 서버 라우트
+ * (`/admin/campaigns/:id/metrics-export`)·`buildJwinMetricsCsv`·i18n 키는 그대로 있으니
+ * 되살릴 때 버튼 JSX 와 핸들러만 다시 붙이면 된다.
+ *
  * 상단: 팔로워 추이(전폭 라인 차트)
  * 하단: 데일리 테이블(전일 대비 증감 병기) + 운영 현황(응모자·당첨·재고).
  */
 export function JwinStats() {
   const t = useT();
   const campaigns = useJwinCampaignsData();
-  const [campaignId, setCampaignId] = useState<string | null>(null);
-  const [brandCampaignId, setBrandCampaignId] = useState<string | null>(null);
-  const brandCampaigns = useJwinBrandCampaignsData(campaignId);
-  const metrics = useJwinBrandMetrics(brandCampaignId);
-  const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
+  const [pickedCampaignId, setPickedCampaignId] = useState<string | null>(null);
+  const [pickedBrandCampaignId, setPickedBrandCampaignId] = useState<string | null>(null);
 
   const campaignRows = campaigns.state.kind === "ready" ? campaigns.rows : [];
 
-  // 첫 시즌·첫 브랜드 자동 선택 — 빈 화면으로 시작하지 않게
-  useEffect(() => {
-    if (!campaignId && campaignRows.length > 0) {
-      setCampaignId(campaignRows[0]?.id ?? null);
-    }
-  }, [campaignId, campaignRows]);
-
-  useEffect(() => {
-    if (!brandCampaignId && brandCampaigns.rows.length > 0) {
-      setBrandCampaignId(brandCampaigns.rows[0]?.id ?? null);
-    }
-  }, [brandCampaignId, brandCampaigns.rows]);
-
-  const selectedCampaignRow = campaignRows.find((campaign) => campaign.id === campaignId);
-
-  const handleExport = async () => {
-    if (!campaignId || !selectedCampaignRow) return;
-    setExporting(true);
-    setExportError(null);
-    try {
-      const data = await fetchCampaignMetricsExport(campaignId);
-      triggerCsvDownload(
-        jwinMetricsCsvFilename(selectedCampaignRow.slug, new Date().toISOString().slice(0, 10)),
-        buildJwinMetricsCsv(data),
-      );
-    } catch (error: unknown) {
-      setExportError(jwinErrorMessage(error, t("jwin.statsPage.exportFailed")));
-    } finally {
-      setExporting(false);
-    }
-  };
+  // 조회 키는 목록에서 파생한다 (기본값 = 첫 항목). 선택 상태를 따로 들고 있으면
+  // 목록이 바뀌는 사이 다른 시즌의 id 가 남아 "셀렉트는 A, 데이터는 B" 가 된다.
+  const campaignId = resolveSelectedId(campaignRows, pickedCampaignId);
+  const brandCampaigns = useJwinBrandCampaignsData(campaignId);
+  const brandCampaignId = resolveSelectedId(brandCampaigns.rows, pickedBrandCampaignId);
+  const metrics = useJwinBrandMetrics(brandCampaignId);
 
   const snapshots = metrics.data.snapshots;
   const previousOf = (index: number): AdminMetricSnapshot | null =>
@@ -96,8 +66,8 @@ export function JwinStats() {
             className={styles.select}
             value={campaignId ?? ""}
             onChange={(event) => {
-              setCampaignId(event.target.value || null);
-              setBrandCampaignId(null);
+              setPickedCampaignId(event.target.value || null);
+              setPickedBrandCampaignId(null);
             }}
           >
             {campaignRows.map((campaign) => (
@@ -113,7 +83,7 @@ export function JwinStats() {
           <select
             className={styles.select}
             value={brandCampaignId ?? ""}
-            onChange={(event) => setBrandCampaignId(event.target.value || null)}
+            onChange={(event) => setPickedBrandCampaignId(event.target.value || null)}
             disabled={brandCampaigns.rows.length === 0}
           >
             {brandCampaigns.rows.length === 0 && (
@@ -127,25 +97,12 @@ export function JwinStats() {
           </select>
         </label>
 
-        <div className={styles.exportSlot}>
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={() => void handleExport()}
-            disabled={exporting || !campaignId}
-          >
-            <i className="fa-solid fa-download" aria-hidden="true" />{" "}
-            {exporting ? t("jwin.statsPage.exporting") : t("jwin.statsPage.exportCsv")}
-          </Button>
-        </div>
       </div>
 
       {campaigns.state.kind === "error" && (
         <div className={styles.empty}>{campaigns.state.message}</div>
       )}
-      {(metrics.loadError || exportError) && (
-        <div className={styles.empty}>{metrics.loadError ?? exportError}</div>
-      )}
+      {metrics.loadError && <div className={styles.empty}>{metrics.loadError}</div>}
 
       {brandCampaignId && (
         <>

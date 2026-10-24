@@ -29,6 +29,9 @@ export function useJwinBrandCampaignsData(
     let cancelled = false;
     setLoading(true);
     setLoadError(null);
+    // 시즌이 바뀌면 이전 시즌 목록을 즉시 버린다 — 남겨두면 호출부의 "첫 브랜드
+    // 자동 선택"이 이전 시즌 브랜드를 집어 조회 키와 화면 선택이 어긋난다.
+    setRows([]);
     fetchBrandCampaigns(campaignId)
       .then((result) => {
         if (!cancelled) setRows(result.brandCampaigns);

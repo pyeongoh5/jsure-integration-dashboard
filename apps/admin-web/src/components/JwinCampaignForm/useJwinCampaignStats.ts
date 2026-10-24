@@ -22,6 +22,7 @@ export function useJwinCampaignStats(campaignId: string): UseJwinCampaignStatsRe
     let cancelled = false;
     setLoading(true);
     setLoadError(null);
+    setStats(null); // 대상이 바뀌면 이전 브랜드 숫자를 남기지 않는다
     fetchCampaignStats(campaignId)
       .then((result) => {
         if (!cancelled) setStats(result);

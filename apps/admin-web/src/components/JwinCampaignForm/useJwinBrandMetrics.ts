@@ -29,6 +29,7 @@ export function useJwinBrandMetrics(brandCampaignId: string | null): UseJwinBran
     let cancelled = false;
     setLoading(true);
     setLoadError(null);
+    setData(EMPTY); // 대상이 바뀌면 이전 브랜드 지표를 남기지 않는다
     fetchBrandMetrics(brandCampaignId)
       .then((result) => {
         if (!cancelled) setData(result);

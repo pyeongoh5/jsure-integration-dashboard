@@ -5,13 +5,13 @@ import { formatCoverageGaps, type PostTemplateCoverage } from "./postTemplateCov
 
 /**
  * SETUP → ACTIVE 발행 전 체크리스트 (설계 §3 상태 전환).
- * 4항목을 전부 충족해야 전환 버튼이 열린다. 여기서 놓치면 미비된 캠페인이 ACTIVE 로
- * 올라가 매일 게시가 조용히 실패한다.
+ * 5항목을 전부 충족해야 전환 버튼이 열린다. 여기서 놓치면 미비된 캠페인이 ACTIVE 로
+ * 올라가 매일 게시가 조용히 실패하거나, 당첨이 한 건도 나가지 않는다.
  *
  * 순수 함수라 문자열을 만들지 않는다 — 번역 키와 파라미터만 돌려주고 렌더는 화면이 한다.
  */
 
-export type ActivationCheckKey = "account" | "prize" | "coverage" | "dmCode";
+export type ActivationCheckKey = "account" | "prize" | "probability" | "coverage" | "dmCode";
 
 export type ActivationCheck = {
   key: ActivationCheckKey;
@@ -37,6 +37,15 @@ function prizeCheck(prizes: AdminPrize[]): ActivationCheck {
     return { key: "prize", labelKey, ok: false, reasonKey: "jwin.checklist.prizeEmpty" };
   }
   return { key: "prize", labelKey, ok: true, reasonKey: null };
+}
+
+/** 확률이 0이면 추첨이 돌아도 당첨이 한 건도 나가지 않는다. */
+function probabilityCheck(detail: AdminBrandCampaignDetail): ActivationCheck {
+  const labelKey: AdminTranslationKey = "jwin.checklist.probability";
+  if (detail.winProbability <= 0) {
+    return { key: "probability", labelKey, ok: false, reasonKey: "jwin.checklist.probabilityZero" };
+  }
+  return { key: "probability", labelKey, ok: true, reasonKey: null };
 }
 
 function coverageCheck(coverage: PostTemplateCoverage): ActivationCheck {
@@ -78,6 +87,7 @@ export function activationChecklist(input: {
   return [
     accountCheck(input.detail),
     prizeCheck(input.prizes),
+    probabilityCheck(input.detail),
     coverageCheck(input.coverage),
     dmCodeCheck(input.prizes, input.detail.dmTemplate),
   ];

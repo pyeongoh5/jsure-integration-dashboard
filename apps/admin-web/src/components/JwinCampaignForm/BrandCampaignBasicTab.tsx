@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui";
-import type { AdminBrandCampaignDetail } from "@/domains/jwin";
+import { MAX_WIN_PROBABILITY, type AdminBrandCampaignDetail } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
 import { utcIsoToJstLocal } from "./jwinDateTime";
 import type { JwinBrandCampaignFormValues } from "./useJwinBrandCampaign";
@@ -36,14 +36,17 @@ export function BrandCampaignBasicTab({ detail, values, setField }: Props) {
       </div>
 
       <label className={styles.field}>
-        <span className={styles.label}>{t("jwin.basic.dailyWinCap")}</span>
+        <span className={styles.label}>{t("jwin.basic.winProbability")}</span>
         <Input
           type="number"
-          min={1}
-          value={values.dailyWinCap}
-          onChange={(value) => setField("dailyWinCap", value)}
-          placeholder={t("jwin.basic.dailyWinCapPlaceholder")}
+          step="0.01"
+          min={0}
+          max={MAX_WIN_PROBABILITY * 100}
+          value={values.winProbabilityPercent}
+          onChange={(value) => setField("winProbabilityPercent", value)}
+          placeholder="0.5"
         />
+        <span className={styles.hint}>{t("jwin.basic.winProbabilityHint")}</span>
       </label>
     </div>
   );

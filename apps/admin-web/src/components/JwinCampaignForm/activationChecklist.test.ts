@@ -27,7 +27,7 @@ const BASE_DETAIL: AdminBrandCampaignDetail = {
     startsAt: "2026-08-31T15:00:00.000Z",
     endsAt: "2026-09-05T14:59:00.000Z",
   },
-  dailyWinCap: null,
+  winProbability: 0.005,
   cardImageUrl: null,
   rulesUrl: null,
   prUrl: null,
@@ -42,10 +42,8 @@ const CODE_PRIZE: AdminPrize = {
   id: "prize-1",
   type: "CODE",
   name: "기프트카드",
-  tier: 1,
   totalQty: 10,
   remainingQty: 10,
-  winProbability: 0.1,
   availableCodeCount: 10,
 };
 
@@ -68,13 +66,13 @@ function checkOf(checks: ActivationCheck[], key: string): ActivationCheck {
 }
 
 describe("activationChecklist", () => {
-  it("모두 충족하면 4항목 전부 ok이고 사유가 없다", () => {
+  it("모두 충족하면 5항목 전부 ok이고 사유가 없다", () => {
     const checks = activationChecklist({
       detail: BASE_DETAIL,
       prizes: [PHYSICAL_PRIZE],
       coverage: FULL_COVERAGE,
     });
-    expect(checks).toHaveLength(4);
+    expect(checks).toHaveLength(5);
     expect(canActivate(checks)).toBe(true);
     expect(checks.every((check) => check.reasonKey === null)).toBe(true);
   });
@@ -88,9 +86,21 @@ describe("activationChecklist", () => {
     expect(checks.map((check) => check.labelKey)).toEqual([
       "jwin.checklist.account",
       "jwin.checklist.prize",
+      "jwin.checklist.probability",
       "jwin.checklist.coverage",
       "jwin.checklist.dmCode",
     ]);
+  });
+
+  it("당첨확률이 0이면 통과하지 못한다", () => {
+    const checks = activationChecklist({
+      detail: { ...BASE_DETAIL, winProbability: 0 },
+      prizes: [PHYSICAL_PRIZE],
+      coverage: FULL_COVERAGE,
+    });
+    expect(checkOf(checks, "probability").ok).toBe(false);
+    expect(checkOf(checks, "probability").reasonKey).toBe("jwin.checklist.probabilityZero");
+    expect(canActivate(checks)).toBe(false);
   });
 
   it("연동 전(PENDING) 브랜드는 통과하지 못한다", () => {

@@ -247,11 +247,11 @@ export const adminMessages = {
         en: "Every brand in this campaign posts at the same time.",
         ja: "このキャンペーンに参加する全ブランドが同じ時刻に投稿されます。",
       },
-      dailyWinCap: { ko: "일일 당첨 상한", en: "Daily win cap", ja: "1日の当選上限" },
-      dailyWinCapPlaceholder: {
-        ko: "비우면 무제한",
-        en: "Leave empty for no cap",
-        ja: "空欄で無制限",
+      winProbability: { ko: "당첨확률 (%)", en: "Win probability (%)", ja: "当選確率 (%)" },
+      winProbabilityHint: {
+        ko: "응모 1회당 기준 확률입니다. 경품 소진이 계획보다 느리면 자동으로 상향 보정됩니다.",
+        en: "Base probability per entry. It is raised automatically when prizes run behind schedule.",
+        ja: "応募1回あたりの基準確率です。景品の消化が計画より遅れると自動で引き上げられます。",
       },
       error: {
         brandNameRequired: {
@@ -294,10 +294,10 @@ export const adminMessages = {
           en: "Enter the daily post time.",
           ja: "毎日の投稿時刻を入力してください。",
         },
-        dailyWinCapInvalid: {
-          ko: "1 이상의 정수를 입력하세요.",
-          en: "Enter a whole number of 1 or more.",
-          ja: "1以上の整数を入力してください。",
+        winProbabilityInvalid: {
+          ko: "0 이상 {max} 이하의 값을 입력하세요.",
+          en: "Enter a value between 0 and {max}.",
+          ja: "0以上{max}以下の値を入力してください。",
         },
       },
     },
@@ -469,6 +469,12 @@ export const adminMessages = {
         en: "Register at least one prize on the Prizes tab.",
         ja: "景品タブで景品を1件以上登録してください。",
       },
+      probability: { ko: "당첨확률 설정", en: "Win probability set", ja: "当選確率の設定" },
+      probabilityZero: {
+        ko: "당첨확률이 0입니다. 기본 탭에서 0보다 큰 값을 설정하세요 — 그대로 두면 당첨이 한 건도 나가지 않습니다.",
+        en: "The win probability is 0. Set a value above 0 on the Basic tab, otherwise nobody will ever win.",
+        ja: "当選確率が0です。基本タブで0より大きい値を設定してください。このままでは当選が1件も出ません。",
+      },
       coverage: {
         ko: "기간 전체를 덮는 포스트",
         en: "Posts covering the whole period",
@@ -543,17 +549,11 @@ export const adminMessages = {
         en: "Could not load prizes.",
         ja: "景品一覧を読み込めませんでした。",
       },
-      probabilityOverflow: {
-        ko: "확률 합계가 {sum}로 100%를 넘습니다. 티어 순서대로 판정하므로 동작은 하지만, 뒤쪽 티어 경품은 의도한 확률보다 적게 나갑니다.",
-        en: "Probabilities add up to {sum}, over 100%. Draws still work because tiers are evaluated in order, but lower tiers will win less often than intended.",
-        ja: "確率の合計が {sum} で100%を超えています。ティア順に判定するため動作はしますが、後ろのティアの景品は想定より当たりにくくなります。",
-      },
       columns: {
         name: { ko: "이름", en: "Name", ja: "名前" },
         type: { ko: "유형", en: "Type", ja: "種別" },
-        tier: { ko: "티어", en: "Tier", ja: "ティア" },
         quantity: { ko: "수량 (잔여/전체)", en: "Qty (left/total)", ja: "数量（残り/全体）" },
-        probability: { ko: "확률", en: "Probability", ja: "確率" },
+        share: { ko: "수량 비율", en: "Share of stock", ja: "数量比率" },
         codeStock: { ko: "코드 재고", en: "Code stock", ja: "コード在庫" },
         actions: { ko: "관리", en: "Actions", ja: "操作" },
       },
@@ -574,9 +574,7 @@ export const adminMessages = {
       field: {
         type: { ko: "유형", en: "Type", ja: "種別" },
         name: { ko: "이름", en: "Name", ja: "名前" },
-        tier: { ko: "티어", en: "Tier", ja: "ティア" },
         quantity: { ko: "수량", en: "Quantity", ja: "数量" },
-        probability: { ko: "당첨 확률", en: "Win probability", ja: "当選確率" },
         codes: { ko: "기프트코드", en: "Gift codes", ja: "ギフトコード" },
         codesAppend: {
           ko: "추가할 기프트코드",
@@ -618,12 +616,11 @@ export const adminMessages = {
         },
       },
       hint: {
-        tier: {
-          ko: "숫자가 작을수록 먼저 판정합니다.",
-          en: "Lower numbers are evaluated first.",
-          ja: "数字が小さいほど先に判定します。",
+        quantityShare: {
+          ko: "당첨 시 어떤 경품이 나갈지는 남은 수량 비례로 정해집니다.",
+          en: "When someone wins, the prize is drawn in proportion to remaining stock.",
+          ja: "当選時にどの景品が出るかは、残り数量に比例して決まります。",
         },
-        probability: { ko: "0 초과 1 미만. 0.05 = 5%", en: "Between 0 and 1. 0.05 = 5%", ja: "0より大きく1未満。0.05 = 5%" },
         codeCount: {
           ko: "입력 {count}건 / 수량 {quantity} — 개수가 같아야 등록됩니다.",
           en: "{count} entered / quantity {quantity} — the counts must match to register.",
@@ -663,16 +660,6 @@ export const adminMessages = {
           ko: "수량은 1 이상의 정수여야 합니다.",
           en: "Quantity must be a whole number of 1 or more.",
           ja: "数量は1以上の整数にしてください。",
-        },
-        tierInvalid: {
-          ko: "티어는 1 이상의 정수여야 합니다.",
-          en: "Tier must be a whole number of 1 or more.",
-          ja: "ティアは1以上の整数にしてください。",
-        },
-        probabilityInvalid: {
-          ko: "확률은 0보다 크고 1보다 작아야 합니다.",
-          en: "Probability must be greater than 0 and less than 1.",
-          ja: "確率は0より大きく1未満にしてください。",
         },
         duplicateCodes: {
           ko: "중복된 코드가 있습니다: {codes}",

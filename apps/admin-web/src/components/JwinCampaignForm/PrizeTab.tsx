@@ -4,11 +4,7 @@ import { ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
 import type { AdminPrize, AdminPrizeCreate, AdminPrizePatch } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
-import {
-  formatProbabilityPercent,
-  isProbabilityOverflow,
-  probabilitySum,
-} from "./prizeProbability";
+import { formatProbabilityPercent, prizeShare } from "./winProbability";
 import { PrizeAddDialog } from "./PrizeAddDialog";
 import { PrizeEditDialog } from "./PrizeEditDialog";
 import styles from "./JwinCampaignTabs.module.css";
@@ -41,14 +37,6 @@ export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCo
         </Button>
       </div>
 
-      {isProbabilityOverflow(prizes) && (
-        <div className={styles.warning}>
-          {t("jwin.prize.probabilityOverflow", {
-            sum: formatProbabilityPercent(probabilitySum(prizes)),
-          })}
-        </div>
-      )}
-
       {loadError && <div className={styles.errorText}>{loadError}</div>}
       {loading && <div className={styles.empty}>{t("jwin.common.loading")}</div>}
 
@@ -63,9 +51,8 @@ export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCo
               <tr>
                 <th>{t("jwin.prize.columns.name")}</th>
                 <th>{t("jwin.prize.columns.type")}</th>
-                <th className={styles.num}>{t("jwin.prize.columns.tier")}</th>
                 <th className={styles.num}>{t("jwin.prize.columns.quantity")}</th>
-                <th className={styles.num}>{t("jwin.prize.columns.probability")}</th>
+                <th className={styles.num}>{t("jwin.prize.columns.share")}</th>
                 <th className={styles.num}>{t("jwin.prize.columns.codeStock")}</th>
                 <th className={styles.actionsHead}>{t("jwin.prize.columns.actions")}</th>
               </tr>
@@ -75,11 +62,12 @@ export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCo
                 <tr key={prize.id}>
                   <td>{prize.name}</td>
                   <td>{t(TYPE_LABEL_KEY[prize.type])}</td>
-                  <td className={styles.num}>{prize.tier}</td>
                   <td className={styles.num}>
                     {prize.remainingQty} / {prize.totalQty}
                   </td>
-                  <td className={styles.num}>{formatProbabilityPercent(prize.winProbability)}</td>
+                  <td className={styles.num}>
+                    {formatProbabilityPercent(prizeShare(prize, prizes))}
+                  </td>
                   <td className={styles.num}>
                     {prize.type === "CODE" ? prize.availableCodeCount : t("jwin.common.dash")}
                   </td>

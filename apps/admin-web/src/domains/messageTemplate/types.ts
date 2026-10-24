@@ -22,6 +22,8 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, AdminTranslationKey> = {
     "domains.messageTemplate.triggerLabels.snsApplicationReceiptConfirmed",
   SNS_POST_SUBMITTED: "domains.messageTemplate.triggerLabels.snsPostSubmitted",
   SNS_POST_DEADLINE_REMINDER: "domains.messageTemplate.triggerLabels.snsPostDeadlineReminder",
+  SNS_POST_FINAL_DEADLINE_REMINDER:
+    "domains.messageTemplate.triggerLabels.snsPostFinalDeadlineReminder",
   SNS_POST_OVERDUE_REMINDER: "domains.messageTemplate.triggerLabels.snsPostOverdueReminder",
   SNS_POST_APPROVED: "domains.messageTemplate.triggerLabels.snsPostApproved",
   SNS_POST_REJECTED: "domains.messageTemplate.triggerLabels.snsPostRejected",
@@ -51,6 +53,8 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, AdminTranslationKey> = {
     "domains.messageTemplate.triggerLabels.fakePurchaseReviewRejected",
   FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER:
     "domains.messageTemplate.triggerLabels.fakePurchaseReviewDeadlineReminder",
+  FAKE_PURCHASE_REVIEW_FINAL_DEADLINE_REMINDER:
+    "domains.messageTemplate.triggerLabels.fakePurchaseReviewFinalDeadlineReminder",
   FAKE_PURCHASE_REVIEW_OVERDUE_REMINDER:
     "domains.messageTemplate.triggerLabels.fakePurchaseReviewOverdueReminder",
   FAKE_PURCHASE_SETTLEMENT_COMPLETED:
@@ -72,6 +76,8 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, AdminTranslationKey> = {
   SIMPLE_REVIEW_SUBMITTED: "domains.messageTemplate.triggerLabels.simpleReviewSubmitted",
   SIMPLE_REVIEW_DEADLINE_REMINDER:
     "domains.messageTemplate.triggerLabels.simpleReviewDeadlineReminder",
+  SIMPLE_REVIEW_FINAL_DEADLINE_REMINDER:
+    "domains.messageTemplate.triggerLabels.simpleReviewFinalDeadlineReminder",
   SIMPLE_REVIEW_OVERDUE_REMINDER:
     "domains.messageTemplate.triggerLabels.simpleReviewOverdueReminder",
   SIMPLE_REVIEW_APPROVED: "domains.messageTemplate.triggerLabels.simpleReviewApproved",
@@ -96,7 +102,9 @@ export const TRIGGER_DESCRIPTIONS: Partial<Record<LineTriggerKey, AdminTranslati
   SNS_APPLICATION_DELIVERY_REMINDER:
     "domains.messageTemplate.triggerDescriptions.deliveryReminder",
   SNS_POST_DEADLINE_REMINDER:
-    "domains.messageTemplate.triggerDescriptions.postDeadlineReminder",
+    "domains.messageTemplate.triggerDescriptions.postDeadlineReminderD3",
+  SNS_POST_FINAL_DEADLINE_REMINDER:
+    "domains.messageTemplate.triggerDescriptions.postDeadlineReminderD1",
   SNS_POST_OVERDUE_REMINDER: "domains.messageTemplate.triggerDescriptions.postOverdueReminder",
   SNS_POST_REJECTION_REMINDER:
     "domains.messageTemplate.triggerDescriptions.postRejectionReminder",
@@ -107,13 +115,17 @@ export const TRIGGER_DESCRIPTIONS: Partial<Record<LineTriggerKey, AdminTranslati
     "domains.messageTemplate.triggerDescriptions.orderDeadlineReminder",
   FAKE_PURCHASE_ORDER_EXPIRED: "domains.messageTemplate.triggerDescriptions.orderExpired",
   FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER:
-    "domains.messageTemplate.triggerDescriptions.reviewDeadlineReminder",
+    "domains.messageTemplate.triggerDescriptions.reviewDeadlineReminderD3",
+  FAKE_PURCHASE_REVIEW_FINAL_DEADLINE_REMINDER:
+    "domains.messageTemplate.triggerDescriptions.reviewDeadlineReminderD1",
   FAKE_PURCHASE_REVIEW_OVERDUE_REMINDER:
     "domains.messageTemplate.triggerDescriptions.reviewOverdueReminder",
   SIMPLE_REVIEW_APPLICATION_DELIVERY_REMINDER:
     "domains.messageTemplate.triggerDescriptions.deliveryReminder",
   SIMPLE_REVIEW_DEADLINE_REMINDER:
-    "domains.messageTemplate.triggerDescriptions.reviewDeadlineReminder",
+    "domains.messageTemplate.triggerDescriptions.reviewDeadlineReminderD3",
+  SIMPLE_REVIEW_FINAL_DEADLINE_REMINDER:
+    "domains.messageTemplate.triggerDescriptions.reviewDeadlineReminderD1",
   SIMPLE_REVIEW_OVERDUE_REMINDER:
     "domains.messageTemplate.triggerDescriptions.reviewOverdueReminder",
   SIMPLE_REVIEW_REJECTION_REMINDER:

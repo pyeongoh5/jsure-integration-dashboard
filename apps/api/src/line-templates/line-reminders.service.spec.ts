@@ -391,14 +391,23 @@ describe("reminderTriggerKeyFor", () => {
     expect(reminderTriggerKeyFor(-1, config)).toBe("SIMPLE_REVIEW_OVERDUE_REMINDER");
   });
 
-  it("마감 3일 전·1일 전은 마감 리마인더 트리거를 고른다", () => {
+  it("마감 3일 전은 3일 전 전용 트리거를 고른다", () => {
     expect(reminderTriggerKeyFor(3, config)).toBe("SIMPLE_REVIEW_DEADLINE_REMINDER");
-    expect(reminderTriggerKeyFor(1, config)).toBe("SIMPLE_REVIEW_DEADLINE_REMINDER");
+  });
+
+  it("마감 1일 전은 1일 전 전용 트리거를 고른다", () => {
+    expect(reminderTriggerKeyFor(1, config)).toBe("SIMPLE_REVIEW_FINAL_DEADLINE_REMINDER");
+  });
+
+  it("3일 전과 1일 전은 서로 다른 트리거를 쓴다", () => {
+    expect(reminderTriggerKeyFor(3, config)).not.toBe(reminderTriggerKeyFor(1, config));
   });
 
   it("그 밖의 날에는 아무것도 보내지 않는다", () => {
     // 0 = 마감 당일, -2 = 독촉 이후(1회만 보내므로 재발송 없음), 5 = 아직 이름.
+    // 2 = 3일 전과 1일 전 사이 — 분리 후에도 그 사이 날에는 보내지 않는다.
     expect(reminderTriggerKeyFor(0, config)).toBeNull();
+    expect(reminderTriggerKeyFor(2, config)).toBeNull();
     expect(reminderTriggerKeyFor(-2, config)).toBeNull();
     expect(reminderTriggerKeyFor(5, config)).toBeNull();
   });
@@ -406,6 +415,9 @@ describe("reminderTriggerKeyFor", () => {
   it("설정은 카테고리마다 서로 다른 트리거 키를 갖는다", () => {
     const overdueKeys = DEADLINE_REMINDER_CONFIGS.map((entry) => entry.overdueTriggerKey);
     expect(new Set(overdueKeys).size).toBe(DEADLINE_REMINDER_CONFIGS.length);
+
+    const finalKeys = DEADLINE_REMINDER_CONFIGS.map((entry) => entry.finalDeadlineTriggerKey);
+    expect(new Set(finalKeys).size).toBe(DEADLINE_REMINDER_CONFIGS.length);
   });
 });
 

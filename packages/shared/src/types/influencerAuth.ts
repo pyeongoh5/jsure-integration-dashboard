@@ -108,6 +108,10 @@ export const UpdateInfluencerProfileRequestSchema = z.object({
   name: z.string().min(1).max(50),
   nameKana: z.string().min(1).regex(KANA_RE),
   phone: z.string().min(10).max(20),
+  /** 구버전 클라이언트는 보내지 않는다 — 생략하면 기존 값을 유지한다. */
+  email: z.string().email().optional(),
+  /** 구버전 클라이언트는 보내지 않는다 — 생략하면 기존 값을 유지한다. */
+  birthDate: BirthDateSchema.optional(),
 });
 export type UpdateInfluencerProfileRequest = z.infer<
   typeof UpdateInfluencerProfileRequestSchema

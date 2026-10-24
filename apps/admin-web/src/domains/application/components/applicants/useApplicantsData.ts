@@ -1,8 +1,16 @@
 import { useCallback, useMemo } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import { translate, type AdminLanguage } from "@i18n/admin";
 import { getStoredLanguage, useLanguage } from "@/lib/i18n";
-import type { AdminApplication, ApplicantFilter } from "@jsure/shared";
+import type {
+  AdminApplicantPageResponse,
+  AdminApplication,
+  ApplicantFilter,
+} from "@jsure/shared";
 import { listApplicantsPage } from "../api";
 import { toApplicant } from "./applicantTransform";
 import type { Applicant } from "./types";
@@ -24,6 +32,11 @@ export type UseApplicantsDataResult = {
   loadingMore: boolean;
   loadMore: () => void;
   reload: () => void;
+  /**
+   * 메모 팝업에서 바꾼 관리자 태그를 목록에 즉시 반영한다. 목록을 다시 부르지
+   * 않고 캐시의 해당 행만 갈아끼우므로 표가 깜빡이지 않는다.
+   */
+  patchInfluencerTags: (influencerId: string, tags: string[]) => void;
 };
 
 export const applicantsQueryKey = (filter: ApplicantFilter) =>
@@ -89,6 +102,31 @@ export function useApplicantsData(
     void refetch();
   }, [refetch]);
 
+  const queryClient = useQueryClient();
+  const patchInfluencerTags = useCallback(
+    (influencerId: string, tags: string[]) => {
+      queryClient.setQueryData<InfiniteData<AdminApplicantPageResponse>>(
+        applicantsQueryKey(filter),
+        (current) =>
+          current && {
+            ...current,
+            pages: current.pages.map((page) => ({
+              ...page,
+              applications: page.applications.map((application) =>
+                application.influencer.id === influencerId
+                  ? {
+                      ...application,
+                      influencer: { ...application.influencer, tags },
+                    }
+                  : application,
+              ),
+            })),
+          },
+      );
+    },
+    [queryClient, filter],
+  );
+
   return {
     state,
     applicants,
@@ -97,5 +135,6 @@ export function useApplicantsData(
     loadingMore: isFetchingNextPage,
     loadMore,
     reload,
+    patchInfluencerTags,
   };
 }

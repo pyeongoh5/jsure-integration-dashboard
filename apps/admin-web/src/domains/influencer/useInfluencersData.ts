@@ -1,9 +1,17 @@
 import { useCallback } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import { translate } from "@i18n/admin";
 import type { AdminLanguage } from "@i18n/admin";
 import { getStoredLanguage } from "@/lib/i18n";
-import type { AdminInfluencer, InfluencerFilter } from "@jsure/shared";
+import type {
+  AdminInfluencer,
+  AdminInfluencerPageResponse,
+  InfluencerFilter,
+} from "@jsure/shared";
 import { listInfluencersPage } from "./api";
 
 /** 한 번에 불러오는 인플루언서 수. 무한 스크롤 한 페이지 분량. */
@@ -23,6 +31,11 @@ export type UseInfluencersDataResult = {
   loadingMore: boolean;
   loadMore: () => void;
   reload: () => void;
+  /**
+   * 메모 팝업에서 바꾼 관리자 태그를 목록에 즉시 반영한다. 목록을 다시 부르지
+   * 않고 캐시의 해당 행만 갈아끼우므로 표가 깜빡이지 않는다.
+   */
+  patchInfluencerTags: (influencerId: string, tags: string[]) => void;
 };
 
 export const influencersQueryKey = (filter: InfluencerFilter) =>
@@ -71,6 +84,28 @@ export function useInfluencersData(
     void refetch();
   }, [refetch]);
 
+  const queryClient = useQueryClient();
+  const patchInfluencerTags = useCallback(
+    (influencerId: string, tags: string[]) => {
+      queryClient.setQueryData<InfiniteData<AdminInfluencerPageResponse>>(
+        influencersQueryKey(filter),
+        (current) =>
+          current && {
+            ...current,
+            pages: current.pages.map((page) => ({
+              ...page,
+              influencers: page.influencers.map((influencer) =>
+                influencer.id === influencerId
+                  ? { ...influencer, tags }
+                  : influencer,
+              ),
+            })),
+          },
+      );
+    },
+    [queryClient, filter],
+  );
+
   return {
     state: toLoadState(query.isPending, query.isError, query.error),
     influencers: query.data?.pages.flatMap((page) => page.influencers) ?? [],
@@ -79,5 +114,6 @@ export function useInfluencersData(
     loadingMore: isFetchingNextPage,
     loadMore,
     reload,
+    patchInfluencerTags,
   };
 }

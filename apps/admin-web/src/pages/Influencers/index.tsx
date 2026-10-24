@@ -115,7 +115,16 @@ export function Influencers() {
     [snsFilter, debouncedQuery],
   );
 
-  const { state, influencers, total, hasMore, loadingMore, loadMore, reload } =
+  const {
+    state,
+    influencers,
+    total,
+    hasMore,
+    loadingMore,
+    loadMore,
+    reload,
+    patchInfluencerTags,
+  } =
     useInfluencersData(filter);
 
   // 목록 끝 감시자가 보이면 다음 페이지를 이어 붙인다. 이 화면은 응모자 목록과 달리
@@ -399,6 +408,7 @@ export function Influencers() {
           influencerName={notesTarget.name}
           onClose={() => setNotesTarget(null)}
           onChanged={reload}
+          onTagsChanged={(tags) => patchInfluencerTags(notesTarget.id, tags)}
         />
       )}
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AdminSubmission } from "@jsure/shared";
 import { translate } from "@i18n/admin";
 import { getStoredLanguage, useLanguage } from "@/lib/i18n";
@@ -15,6 +15,11 @@ export type UseDraftReviewsDataResult = {
   state: DraftReviewsLoadState;
   drafts: DraftReview[];
   reload: () => void;
+  /**
+   * 메모 팝업에서 바꾼 관리자 태그를 목록에 즉시 반영한다. 목록을 다시 부르지
+   * 않고 들고 있는 행만 갈아끼우므로 표가 깜빡이지 않는다.
+   */
+  patchInfluencerTags: (influencerId: string, tags: string[]) => void;
 };
 
 export function useDraftReviewsData(): UseDraftReviewsDataResult {
@@ -58,9 +63,31 @@ export function useDraftReviewsData(): UseDraftReviewsDataResult {
     return state.rows.map((submission) => toDraftReview(submission, now, language));
   }, [state, now, language]);
 
+  const patchInfluencerTags = useCallback(
+    (influencerId: string, tags: string[]) => {
+      setState((current) =>
+        current.kind !== "ready"
+          ? current
+          : {
+              ...current,
+              rows: current.rows.map((submission) =>
+                submission.influencer.id === influencerId
+                  ? {
+                      ...submission,
+                      influencer: { ...submission.influencer, tags },
+                    }
+                  : submission,
+              ),
+            },
+      );
+    },
+    [],
+  );
+
   return {
     state,
     drafts,
     reload: () => setReloadKey((current) => current + 1),
+    patchInfluencerTags,
   };
 }

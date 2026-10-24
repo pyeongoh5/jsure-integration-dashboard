@@ -47,7 +47,7 @@ export function Drafts() {
   const [insightView, setInsightView] = useState<DraftReview | null>(null);
   const [notesTarget, setNotesTarget] = useState<DraftReview | null>(null);
   const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(null);
-  const { state, drafts, reload } = useDraftReviewsData();
+  const { state, drafts, reload, patchInfluencerTags } = useDraftReviewsData();
   const {
     campaignOptions,
     campaignTitleById,
@@ -170,6 +170,9 @@ export function Drafts() {
           currentCampaignId={notesTarget.campaignId}
           onClose={() => setNotesTarget(null)}
           onChanged={reload}
+          onTagsChanged={(tags) =>
+            patchInfluencerTags(notesTarget.influencerId, tags)
+          }
         />
       )}
     </div>

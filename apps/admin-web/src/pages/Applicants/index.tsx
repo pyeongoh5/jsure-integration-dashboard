@@ -79,7 +79,16 @@ export function Applicants() {
     ],
   );
 
-  const { state, applicants, total, hasMore, loadingMore, loadMore, reload } =
+  const {
+    state,
+    applicants,
+    total,
+    hasMore,
+    loadingMore,
+    loadMore,
+    reload,
+    patchInfluencerTags,
+  } =
     useApplicantsData(filter);
   const {
     campaignOptions,
@@ -288,6 +297,9 @@ export function Applicants() {
           currentCampaignId={notesTarget.campaignId}
           onClose={() => setNotesTarget(null)}
           onChanged={reload}
+          onTagsChanged={(tags) =>
+            patchInfluencerTags(notesTarget.influencerId, tags)
+          }
         />
       )}
 

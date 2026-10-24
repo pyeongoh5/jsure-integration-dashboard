@@ -1252,9 +1252,9 @@ export const adminMessages = {
             ja: "処理に失敗しました。",
           },
           trackingRequired: {
-            ko: "택배사와 운송장 번호를 입력하세요.",
-            en: "Enter the carrier and tracking number.",
-            ja: "配送業者と送り状番号を入力してください。",
+            ko: "택배사를 선택하세요.",
+            en: "Select the carrier.",
+            ja: "配送業者を選択してください。",
           },
         },
         table: {

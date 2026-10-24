@@ -90,11 +90,12 @@ export function useApplicantMutations(
           await undoApplication(id);
           break;
         case "ship": {
+          // 운송장 번호는 선택 — 송장 채번 전 선발송을 허용한다.
+          // 사후 등록(이미 배송중인 건)의 번호 필수 여부는 서버가 막는다.
           if (
             typeof input !== "object" ||
             input === null ||
-            !input.trackingCarrier?.trim() ||
-            !input.trackingNumber?.trim()
+            !input.trackingCarrier?.trim()
           ) {
             setError(
               translate(
@@ -107,7 +108,7 @@ export function useApplicantMutations(
           await shipApplication(
             id,
             input.trackingCarrier.trim(),
-            input.trackingNumber.trim(),
+            input.trackingNumber?.trim() ?? "",
           );
           break;
         }

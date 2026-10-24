@@ -226,22 +226,11 @@ export class InfluencersService {
       include: { campaign: { select: { id: true, title: true } } },
     });
 
-    const adminIds = Array.from(
-      new Set(
-        memoRows
-          .map((memo) => memo.createdById)
-          .filter((id): id is string => id !== null),
-      ),
+    const adminById = await this.adminNamesById(
+      memoRows.map((memo) => memo.createdById),
     );
-    const admins = adminIds.length
-      ? await this.prisma.adminUser.findMany({
-          where: { id: { in: adminIds } },
-          select: { id: true, name: true },
-        })
-      : [];
-    const adminById = new Map(admins.map((user) => [user.id, user]));
     const toActor = (id: string | null) =>
-      id ? { id, name: adminById.get(id)?.name ?? null } : null;
+      id ? { id, name: adminById.get(id) ?? null } : null;
 
     return {
       memos: memoRows.map((memo) => ({
@@ -282,6 +271,9 @@ export class InfluencersService {
         appliedAt: true,
         orderSubmittedAt: true,
         receivedAt: true,
+        // 감사 로그 이전 반려 건의 처리자·시각 복원용 (influencer-history 참조)
+        reviewedAt: true,
+        reviewedById: true,
         campaign: { select: { id: true, title: true } },
         posts: {
           select: {
@@ -308,7 +300,39 @@ export class InfluencersService {
       },
     });
 
-    return { groups: influencerHistoryGroups(applications, logs) };
+    const reviewerById = await this.adminNamesById(
+      applications.map((application) => application.reviewedById),
+    );
+
+    return {
+      groups: influencerHistoryGroups(
+        applications.map((application) => ({
+          ...application,
+          reviewedBy: application.reviewedById
+            ? {
+                id: application.reviewedById,
+                name: reviewerById.get(application.reviewedById) ?? null,
+              }
+            : null,
+        })),
+        logs,
+      ),
+    };
+  }
+
+  /** 어드민 id 목록 → 이름 맵. null·중복은 버린다. */
+  private async adminNamesById(
+    ids: (string | null)[],
+  ): Promise<Map<string, string | null>> {
+    const unique = Array.from(
+      new Set(ids.filter((id): id is string => id !== null)),
+    );
+    if (unique.length === 0) return new Map();
+    const admins = await this.prisma.adminUser.findMany({
+      where: { id: { in: unique } },
+      select: { id: true, name: true },
+    });
+    return new Map(admins.map((user) => [user.id, user.name]));
   }
 
   async createMemo(

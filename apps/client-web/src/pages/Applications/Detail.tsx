@@ -203,7 +203,8 @@ export function ApplicationDetail() {
                 {t("pages.applications.detail.trackingNumber")}
               </div>
               <div className={styles.trackingValue}>
-                {data.trackingNumber ?? "—"}
+                {data.trackingNumber?.trim() ||
+                  t("pages.applications.detail.trackingPending")}
               </div>
             </div>
             <p className={styles.msg}>{t("pages.applications.detail.msgShipped")}</p>
@@ -223,7 +224,8 @@ export function ApplicationDetail() {
                 {t("pages.applications.detail.trackingNumber")}
               </div>
               <div className={styles.trackingValue}>
-                {data.trackingNumber ?? "—"}
+                {data.trackingNumber?.trim() ||
+                  t("pages.applications.detail.trackingPending")}
               </div>
             </div>
             {publishWindow.state === "NONE" ? (

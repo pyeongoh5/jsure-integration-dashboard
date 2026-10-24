@@ -45,12 +45,20 @@ export function ApplicantShipDialog({ applicant, mutating, error, onConfirm, onC
       ? customLabel.trim()
       : (CARRIERS.find((c) => c.id === carrierId)?.label ?? "");
   const trimmedNumber = trackingNumber.trim();
-  const canSubmit = !!resolvedCarrier && !!trimmedNumber;
+  // 이미 배송 시작된 건(사후 등록)은 번호를 넣으러 여는 팝업이라 번호가 필수다.
+  // 배송 시작 단계에서는 송장 채번 전 선발송을 허용한다.
+  const isLateTrackingEntry = applicant.status === "SHIPPING";
+  const canSubmit =
+    !!resolvedCarrier && (isLateTrackingEntry ? !!trimmedNumber : true);
 
   return (
     <ConfirmDialog
       open
-      title={t("domains.application.applicants.shipDialog.title")}
+      title={t(
+        isLateTrackingEntry
+          ? "domains.application.applicants.shipDialog.lateTitle"
+          : "domains.application.applicants.shipDialog.title",
+      )}
       subtitle={
         <div className={styles.shipForm}>
           <div className={styles.shipField}>
@@ -96,12 +104,21 @@ export function ApplicantShipDialog({ applicant, mutating, error, onConfirm, onC
               disabled={mutating}
               autoFocus
             />
+            {!isLateTrackingEntry && (
+              <p className={styles.shipHelp}>
+                {t("domains.application.applicants.shipDialog.trackingOptionalHelp")}
+              </p>
+            )}
           </div>
 
           {error && <div className={styles.mutationError}>{error}</div>}
         </div>
       }
-      confirmLabel={t("domains.application.applicants.shipDialog.confirm")}
+      confirmLabel={t(
+        isLateTrackingEntry
+          ? "domains.application.applicants.shipDialog.lateConfirm"
+          : "domains.application.applicants.shipDialog.confirm",
+      )}
       cancelLabel={t("common.cancel")}
       tone="primary"
       busy={mutating}

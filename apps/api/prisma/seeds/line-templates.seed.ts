@@ -8,6 +8,8 @@ type SeedRow = {
     | "SNS_APPLICATION_APPROVED"
     | "SNS_APPLICATION_REJECTED"
     | "SNS_APPLICATION_SHIPPED"
+    | "SNS_APPLICATION_SHIPPED_TRACKING_PENDING"
+    | "SNS_APPLICATION_TRACKING_REGISTERED"
     | "SNS_APPLICATION_DELIVERED"
     | "SNS_APPLICATION_RECEIPT_CONFIRMED"
     | "SNS_POST_SUBMITTED"
@@ -41,6 +43,8 @@ type SimpleReviewTriggerKey =
   | "SIMPLE_REVIEW_APPLICATION_APPROVED"
   | "SIMPLE_REVIEW_APPLICATION_REJECTED"
   | "SIMPLE_REVIEW_APPLICATION_SHIPPED"
+  | "SIMPLE_REVIEW_APPLICATION_SHIPPED_TRACKING_PENDING"
+  | "SIMPLE_REVIEW_APPLICATION_TRACKING_REGISTERED"
   | "SIMPLE_REVIEW_APPLICATION_DELIVERED"
   | "SIMPLE_REVIEW_APPLICATION_RECEIPT_CONFIRMED"
   | "SIMPLE_REVIEW_SUBMITTED"
@@ -113,6 +117,42 @@ const SHIPPED = `📦【発送完了】キャンペーン商品発送のお知�
 
 ※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
 ※システムの行き違いで重複して届いた場合はご容赦ください。
+🕐 運営:平日 10:00〜20:00`;
+
+// 송장 채번 전에 먼저 출고한 경우 — 번호 자리에 "확인 중" 을 넣는다.
+const SHIPPED_TRACKING_PENDING = `📦【発送完了】キャンペーン商品発送のお知らせ 📦
+
+お世話になっております！
+お待ちかねの「{{campaignTitle}}」のキャンペーン商品が、本日無事に発送されました！🎉
+
+🚚 配送情報のご案内
+- 送り状番号:ただいま確認中です。番号が分かり次第、あらためてご案内いたします。
+
+💡 お届け期間に関するご案内
+- 日本国内から発送の場合:発送後、約2日でお届け
+- 韓国から発送の場合:発送後、約7日でお届け
+
+✨ お願い:商品が到着いたしましたら、必ず【応募履歴 - 受取確認】ボタンを押してください！
+
+それでは、商品の到着まで今しばらくお待ちください。よろしくお願いいたします！
+
+※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
+🕐 運営:平日 10:00〜20:00`;
+
+// 위 안내 이후 번호를 확보했을 때 보내는 후속 안내.
+const TRACKING_REGISTERED = `🚚【送り状番号のご案内】📦
+
+お世話になっております！
+先日発送いたしました「{{campaignTitle}}」のキャンペーン商品について、送り状番号が確定いたしましたのでご案内いたします。
+
+- 配送業者:{{trackingCarrier}}
+- 追跡番号:{{trackingNumber}}
+
+※通関等の事情により、システムへの追跡情報の反映に遅れが生じる場合がございます。何卒ご理解いただけますようお願いいたします。
+
+✨ お願い:商品が到着いたしましたら、必ず【応募履歴 - 受取確認】ボタンを押してください！
+
+※自動送信のため返信不要。ご不明な点はお気軽にお問い合わせください。
 🕐 運営:平日 10:00〜20:00`;
 
 const DELIVERED = `🎁【配達完了】商品は無事に届きましたでしょうか？ 🎁
@@ -313,6 +353,16 @@ const SEED_ROWS: SeedRow[] = [
   { triggerKey: "SNS_APPLICATION_APPROVED", enabled: true, body: APPROVED },
   { triggerKey: "SNS_APPLICATION_REJECTED", enabled: false, body: "" },
   { triggerKey: "SNS_APPLICATION_SHIPPED", enabled: true, body: SHIPPED },
+  {
+    triggerKey: "SNS_APPLICATION_SHIPPED_TRACKING_PENDING",
+    enabled: true,
+    body: SHIPPED_TRACKING_PENDING,
+  },
+  {
+    triggerKey: "SNS_APPLICATION_TRACKING_REGISTERED",
+    enabled: true,
+    body: TRACKING_REGISTERED,
+  },
   { triggerKey: "SNS_APPLICATION_DELIVERED", enabled: true, body: DELIVERED },
   { triggerKey: "SNS_APPLICATION_RECEIPT_CONFIRMED", enabled: false, body: "" },
   { triggerKey: "SNS_POST_SUBMITTED", enabled: false, body: "" },
@@ -356,6 +406,16 @@ const SR_SEED_ROWS: SeedRowSimpleReview[] = [
   { triggerKey: "SIMPLE_REVIEW_APPLICATION_APPROVED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_APPLICATION_REJECTED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_APPLICATION_SHIPPED", enabled: false, body: "" },
+  {
+    triggerKey: "SIMPLE_REVIEW_APPLICATION_SHIPPED_TRACKING_PENDING",
+    enabled: false,
+    body: "",
+  },
+  {
+    triggerKey: "SIMPLE_REVIEW_APPLICATION_TRACKING_REGISTERED",
+    enabled: false,
+    body: "",
+  },
   { triggerKey: "SIMPLE_REVIEW_APPLICATION_DELIVERED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_APPLICATION_RECEIPT_CONFIRMED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_SUBMITTED", enabled: false, body: "" },

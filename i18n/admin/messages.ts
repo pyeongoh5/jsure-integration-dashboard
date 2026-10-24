@@ -1334,7 +1334,18 @@ export const adminMessages = {
             ja: "配送業者名を直接入力",
           },
           trackingNumber: { ko: "운송장 번호", en: "Tracking number", ja: "送り状番号" },
+          trackingOptionalHelp: {
+            ko: "운송장 번호 없이 진행하면 인플루언서에게 “송장 번호 확인 중(추후 안내)” 내용으로 발송 안내가 전달됩니다. 번호는 나중에 [운송장 입력] 으로 등록할 수 있습니다.",
+            en: "If you proceed without a tracking number, the influencer is told the number is still being confirmed. You can register it later from [Enter tracking].",
+            ja: "送り状番号なしで進めると、インフルエンサーには「送り状番号を確認中（追ってご案内）」として発送案内が届きます。番号は後から［送り状入力］で登録できます。",
+          },
           confirm: { ko: "배송 시작", en: "Start shipping", ja: "配送開始" },
+          lateTitle: {
+            ko: "운송장 번호를 등록하세요",
+            en: "Register the tracking number",
+            ja: "送り状番号を登録してください",
+          },
+          lateConfirm: { ko: "운송장 등록", en: "Register", ja: "登録する" },
         },
         deliverDialog: {
           title: {
@@ -2484,6 +2495,16 @@ export const adminMessages = {
           en: "3. Product shipped",
           ja: "3. 商品発送",
         },
+        snsApplicationShippedTrackingPending: {
+          ko: "3. 상품 발송 (송장 준비 중)",
+          en: "3. Product shipped (tracking pending)",
+          ja: "3. 商品発送（送り状準備中）",
+        },
+        snsApplicationTrackingRegistered: {
+          ko: "3-1. 운송장 번호 안내",
+          en: "3-1. Tracking number notice",
+          ja: "3-1. 送り状番号のご案内",
+        },
         snsApplicationDelivered: {
           ko: "4. 배송 완료",
           en: "4. Delivered",
@@ -2643,6 +2664,16 @@ export const adminMessages = {
           ko: "3. 상품 발송",
           en: "3. Product shipped",
           ja: "3. 商品発送",
+        },
+        simpleReviewApplicationShippedTrackingPending: {
+          ko: "3. 상품 발송 (송장 준비 중)",
+          en: "3. Product shipped (tracking pending)",
+          ja: "3. 商品発送（送り状準備中）",
+        },
+        simpleReviewApplicationTrackingRegistered: {
+          ko: "3-1. 운송장 번호 안내",
+          en: "3-1. Tracking number notice",
+          ja: "3-1. 送り状番号のご案内",
         },
         simpleReviewApplicationDelivered: {
           ko: "4. 배송 완료",

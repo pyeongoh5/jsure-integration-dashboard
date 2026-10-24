@@ -345,3 +345,11 @@
   font-weight: 600;
 }
 
+
+/* 송장 없이 배송 시작할 때의 안내 — 팝업 입력란 아래 */
+.shipHelp {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--color-text-muted, #6b7280);
+}

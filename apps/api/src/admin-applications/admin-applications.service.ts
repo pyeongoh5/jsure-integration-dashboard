@@ -30,6 +30,7 @@ import {
   RESTORE_CANCEL_BLOCK_MESSAGE,
   restoreCancelBlockedReason,
 } from "./restore-cancel";
+import { shipTriggerKey } from "./ship-trigger";
 import {
   buildInsightChanges,
   buildInsightUpdateData,
@@ -384,16 +385,25 @@ export class AdminApplicationsService {
     if (existing.campaign.category !== "SNS" && existing.campaign.category !== "SIMPLE_REVIEW") {
       throw new BadRequestException("이 카테고리 캠페인에서는 발송 조작을 사용할 수 없습니다");
     }
-    if (existing.status !== "APPROVED") {
+    // APPROVED = 배송 시작, SHIPPED = 사후 송장 등록(선발송으로 번호 없이 나간 건).
+    // 송장 채번이 늦어도 출고 사실을 먼저 알리기 위해 두 경로를 모두 연다.
+    const isLateTrackingEntry = existing.status === "SHIPPED";
+    if (existing.status !== "APPROVED" && !isLateTrackingEntry) {
       throw new BadRequestException(`현재 상태(${existing.status})에서는 발송 처리를 할 수 없습니다`);
     }
+    const number = trackingNumber.trim();
+    if (isLateTrackingEntry && !number) {
+      throw new BadRequestException("운송장 번호를 입력하세요");
+    }
+
     await this.prisma.campaignApplication.update({
       where: { id },
       data: {
         status: "SHIPPED",
         trackingCarrier,
-        trackingNumber,
-        shippedAt: new Date(),
+        trackingNumber: number,
+        // 사후 등록은 출고 시각을 바꾸지 않는다 — 실제 출고는 이미 일어났다
+        ...(isLateTrackingEntry ? {} : { shippedAt: new Date() }),
       },
     });
     await this.audit.record({
@@ -401,15 +411,24 @@ export class AdminApplicationsService {
       actor,
       applicationId: id,
       campaignId: existing.campaignId,
-      metadata: { trackingCarrier, trackingNumber },
+      metadata: {
+        trackingCarrier,
+        trackingNumber: number,
+        ...(isLateTrackingEntry ? { lateTrackingEntry: true } : {}),
+      },
     });
-    const shippedTriggerKey =
-      existing.campaign.category === "SIMPLE_REVIEW"
-        ? "SIMPLE_REVIEW_APPLICATION_SHIPPED"
-        : "SNS_APPLICATION_SHIPPED";
-    void this.dispatcher.dispatch(shippedTriggerKey, {
-      application: { ...existing, trackingCarrier, trackingNumber },
+
+    const triggerKey = shipTriggerKey({
+      category: existing.campaign.category === "SIMPLE_REVIEW" ? "SIMPLE_REVIEW" : "SNS",
+      isLateTrackingEntry,
+      hadTrackingNumber: Boolean(existing.trackingNumber?.trim()),
+      hasTrackingNumber: Boolean(number),
     });
+    if (triggerKey) {
+      void this.dispatcher.dispatch(triggerKey, {
+        application: { ...existing, trackingCarrier, trackingNumber: number },
+      });
+    }
     return this.fetch(id);
   }
 

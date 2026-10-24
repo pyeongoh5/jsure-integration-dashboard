@@ -180,7 +180,11 @@ export type RejectApplicationRequest = z.infer<
 
 export const ShipApplicationRequestSchema = z.object({
   trackingCarrier: z.string().min(1, "택배사를 입력하세요").max(50),
-  trackingNumber: z.string().min(1, "운송장 번호를 입력하세요").max(100),
+  /**
+   * 운송장 번호. 송장 채번이 늦어지는 선발송을 지원하기 위해 비울 수 있다 —
+   * 비우고 배송 시작하면 "송장 준비 중" 안내가, 나중에 채우면 "송장번호 안내"가 나간다.
+   */
+  trackingNumber: z.string().max(100).default(""),
 });
 export type ShipApplicationRequest = z.infer<
   typeof ShipApplicationRequestSchema

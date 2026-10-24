@@ -97,6 +97,12 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
     case "SHIPPING":
       return (
         <div className={styles.actions}>
+          {/* 송장 없이 선발송한 건 — 번호를 확보하면 여기서 사후 등록한다 */}
+          {hasShipping && !applicant.trackingNumber?.trim() && (
+            <Button variant="secondary" size="sm" onClick={() => handlers.onShip(applicant)}>
+              {t("domains.application.applicants.actions.enterTracking")}
+            </Button>
+          )}
           {hasShipping && (
             <Button variant="primary" size="sm" onClick={() => handlers.onDeliver(applicant)}>
               {t("domains.application.applicants.actions.deliver")}

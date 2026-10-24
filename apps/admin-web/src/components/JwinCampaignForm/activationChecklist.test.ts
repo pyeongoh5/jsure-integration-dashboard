@@ -45,6 +45,7 @@ const CODE_PRIZE: AdminPrize = {
   totalQty: 10,
   remainingQty: 10,
   availableCodeCount: 10,
+  codeStatusCounts: { available: 10, assigned: 0, sent: 0, revoked: 0 },
 };
 
 const PHYSICAL_PRIZE: AdminPrize = {

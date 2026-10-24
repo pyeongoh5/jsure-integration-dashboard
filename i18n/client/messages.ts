@@ -713,6 +713,11 @@ export const messages = {
         msgApproved: { jp: "JSUREで発送準備中です。", kr: "JSURE에서 발송 준비 중입니다." },
         trackingCarrier: { jp: "配送業者", kr: "배송업체" },
         trackingNumber: { jp: "運送番号", kr: "운송장 번호" },
+        // new — 송장 없이 선발송된 건
+        trackingPending: {
+          jp: "配送情報を確認中（送り状番号は追ってご案内します）",
+          kr: "배송 정보 확인 중 (송장 번호 준비 중)",
+        },
         msgShipped: { jp: "配送状況を確認しています。", kr: "배송 상황을 확인하고 있습니다." },
         awaitingReceiptPrefix: {
           jp: "商品が届きましたか？受領を確認すると投稿期間（",

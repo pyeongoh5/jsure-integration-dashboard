@@ -466,6 +466,16 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     category: "SNS",
     variables: withBase(trackingCarrier, trackingNumber, applicationShippedDate),
   },
+  // 송장 채번 전 선발송 — 번호가 없으므로 번호 변수를 주지 않는다
+  SNS_APPLICATION_SHIPPED_TRACKING_PENDING: {
+    category: "SNS",
+    variables: withBase(applicationShippedDate),
+  },
+  // 사후 송장 등록 안내 — 번호가 비어 있다가 처음 채워진 시점에만 나간다
+  SNS_APPLICATION_TRACKING_REGISTERED: {
+    category: "SNS",
+    variables: withBase(trackingCarrier, trackingNumber, applicationShippedDate),
+  },
   SNS_APPLICATION_DELIVERED: {
     category: "SNS",
     variables: withBase(
@@ -605,6 +615,14 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
     variables: withBase(rejectReason),
   },
   SIMPLE_REVIEW_APPLICATION_SHIPPED: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(trackingCarrier, trackingNumber, applicationShippedDate),
+  },
+  SIMPLE_REVIEW_APPLICATION_SHIPPED_TRACKING_PENDING: {
+    category: "SIMPLE_REVIEW",
+    variables: withBase(applicationShippedDate),
+  },
+  SIMPLE_REVIEW_APPLICATION_TRACKING_REGISTERED: {
     category: "SIMPLE_REVIEW",
     variables: withBase(trackingCarrier, trackingNumber, applicationShippedDate),
   },

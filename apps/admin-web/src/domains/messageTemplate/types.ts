@@ -15,6 +15,10 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, AdminTranslationKey> = {
   SNS_APPLICATION_APPROVED: "domains.messageTemplate.triggerLabels.snsApplicationApproved",
   SNS_APPLICATION_REJECTED: "domains.messageTemplate.triggerLabels.snsApplicationRejected",
   SNS_APPLICATION_SHIPPED: "domains.messageTemplate.triggerLabels.snsApplicationShipped",
+  SNS_APPLICATION_SHIPPED_TRACKING_PENDING:
+    "domains.messageTemplate.triggerLabels.snsApplicationShippedTrackingPending",
+  SNS_APPLICATION_TRACKING_REGISTERED:
+    "domains.messageTemplate.triggerLabels.snsApplicationTrackingRegistered",
   SNS_APPLICATION_DELIVERED: "domains.messageTemplate.triggerLabels.snsApplicationDelivered",
   SNS_APPLICATION_DELIVERY_REMINDER:
     "domains.messageTemplate.triggerLabels.snsApplicationDeliveryReminder",
@@ -67,6 +71,10 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, AdminTranslationKey> = {
     "domains.messageTemplate.triggerLabels.simpleReviewApplicationRejected",
   SIMPLE_REVIEW_APPLICATION_SHIPPED:
     "domains.messageTemplate.triggerLabels.simpleReviewApplicationShipped",
+  SIMPLE_REVIEW_APPLICATION_SHIPPED_TRACKING_PENDING:
+    "domains.messageTemplate.triggerLabels.simpleReviewApplicationShippedTrackingPending",
+  SIMPLE_REVIEW_APPLICATION_TRACKING_REGISTERED:
+    "domains.messageTemplate.triggerLabels.simpleReviewApplicationTrackingRegistered",
   SIMPLE_REVIEW_APPLICATION_DELIVERED:
     "domains.messageTemplate.triggerLabels.simpleReviewApplicationDelivered",
   SIMPLE_REVIEW_APPLICATION_DELIVERY_REMINDER:

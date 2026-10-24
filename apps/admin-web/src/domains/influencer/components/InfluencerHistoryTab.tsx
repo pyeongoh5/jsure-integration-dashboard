@@ -86,6 +86,21 @@ const REJECTION_ACTIONS: AdminActivityLog["action"][] = [
   "SUBMISSION_REJECT",
 ];
 
+/**
+ * 반려 사유. 로그 metadata 의 reason 이 그 이벤트의 사유라 가장 정확하다 —
+ * group.rejectReason 은 응모 반려 사유뿐이라 제출물 반려에는 맞지 않는다.
+ * metadata 가 없는 옛 로그를 위해 응모 반려에 한해 컬럼으로 되돌아간다.
+ */
+function rejectReasonOf(
+  event: AdminActivityLog,
+  groupRejectReason: string | null,
+): string | null {
+  if (!REJECTION_ACTIONS.includes(event.action)) return null;
+  const reason = event.metadata?.reason;
+  if (typeof reason === "string" && reason.trim()) return reason;
+  return event.action === "APPLICATION_REJECT" ? groupRejectReason : null;
+}
+
 function matchesFilter(
   group: InfluencerActivityGroup,
   filter: HistoryFilter,
@@ -116,9 +131,7 @@ function toRows(
         subTypes: group.subTypes,
         status: group.status,
         event,
-        rejectReason: REJECTION_ACTIONS.includes(event.action)
-          ? group.rejectReason
-          : null,
+        rejectReason: rejectReasonOf(event, group.rejectReason),
         restorableApplicationId:
           event.id === latestCancelEventId ? group.applicationId : null,
       });

@@ -239,3 +239,20 @@ describe('decryptShipping / toWinnerExportRow', () => {
     expect(toWinnerExportRow(winnerRow(null)).shipping).toBeNull();
   });
 });
+
+describe('toPrize — 코드 상태별 현황', () => {
+  const prizeRow = {
+    id: 'p1',
+    type: 'CODE',
+    name: '아마존 기프트권',
+    totalQty: 20,
+    remainingQty: 8,
+  };
+
+  it('상태별 카운트를 그대로 싣고, availableCodeCount 는 미사용 수와 같다', async () => {
+    const { toPrize } = await import('./adminMappers');
+    const prize = toPrize(prizeRow, { available: 12, assigned: 1, sent: 6, revoked: 1 });
+    expect(prize.codeStatusCounts).toEqual({ available: 12, assigned: 1, sent: 6, revoked: 1 });
+    expect(prize.availableCodeCount).toBe(12);
+  });
+});

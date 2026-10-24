@@ -208,7 +208,7 @@ export function toPrize(
     totalQty: number;
     remainingQty: number;
   },
-  availableCodeCount: number,
+  codeStatusCounts: AdminPrize['codeStatusCounts'],
 ): AdminPrize {
   return {
     id: prize.id,
@@ -216,7 +216,8 @@ export function toPrize(
     name: prize.name,
     totalQty: prize.totalQty,
     remainingQty: prize.remainingQty,
-    availableCodeCount,
+    availableCodeCount: codeStatusCounts.available,
+    codeStatusCounts,
   };
 }
 

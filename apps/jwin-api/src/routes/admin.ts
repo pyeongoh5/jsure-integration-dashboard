@@ -12,6 +12,7 @@ import {
   dateJst,
   parseCodesInput,
   POST_MEDIA_MAX,
+  type AdminPrize,
   type AdminWinnerFilter,
 } from '@jsure/jwin-shared';
 import { config } from '../config';
@@ -65,8 +66,40 @@ function toMediaCheckInput(template: {
   };
 }
 
+const EMPTY_CODE_STATUS_COUNTS: AdminPrize['codeStatusCounts'] = {
+  available: 0,
+  assigned: 0,
+  sent: 0,
+  revoked: 0,
+};
+
 export async function adminRoutes(app: FastifyInstance) {
   const prisma = getPrisma();
+
+  /** 경품별 상태별 코드 수 집계 — 미사용 코드 현황용. 경품 수와 무관하게 쿼리 1번. */
+  async function loadCodeStatusCounts(
+    prizeIds: string[],
+  ): Promise<Map<string, AdminPrize['codeStatusCounts']>> {
+    const map = new Map<string, AdminPrize['codeStatusCounts']>();
+    if (prizeIds.length === 0) return map;
+    const grouped = await prisma.prizeCode.groupBy({
+      by: ['prizeId', 'status'],
+      where: { prizeId: { in: prizeIds } },
+      _count: { _all: true },
+    });
+    const keyByStatus = {
+      AVAILABLE: 'available',
+      ASSIGNED: 'assigned',
+      SENT: 'sent',
+      REVOKED: 'revoked',
+    } as const;
+    for (const row of grouped) {
+      const counts = map.get(row.prizeId) ?? { ...EMPTY_CODE_STATUS_COUNTS };
+      counts[keyByStatus[row.status]] = row._count._all;
+      map.set(row.prizeId, counts);
+    }
+    return map;
+  }
 
   function requireAdmin(req: FastifyRequest, reply: FastifyReply): AdminIdentity | null {
     const admin = getAdminIdentity(req);
@@ -497,16 +530,12 @@ export async function adminRoutes(app: FastifyInstance) {
       where: { campaignId: req.params.id },
       orderBy: { createdAt: 'asc' },
     });
-    const withCounts = await Promise.all(
-      prizes.map(async (prize) => {
-        const availableCodeCount =
-          prize.type === 'CODE'
-            ? await prisma.prizeCode.count({ where: { prizeId: prize.id, status: 'AVAILABLE' } })
-            : 0;
-        return toPrize(prize, availableCodeCount);
-      }),
-    );
-    return { prizes: withCounts };
+    const countsByPrize = await loadCodeStatusCounts(prizes.map((prize) => prize.id));
+    return {
+      prizes: prizes.map((prize) =>
+        toPrize(prize, countsByPrize.get(prize.id) ?? EMPTY_CODE_STATUS_COUNTS),
+      ),
+    };
   });
 
   // ④ 포스트 소재 목록 — 커버리지 검사·삭제 가능 여부(used)용
@@ -862,11 +891,8 @@ export async function adminRoutes(app: FastifyInstance) {
     });
     await audit(admin, 'prize.update', prize.id, parsed.data);
 
-    const availableCodeCount =
-      updated.type === 'CODE'
-        ? await prisma.prizeCode.count({ where: { prizeId: updated.id, status: 'AVAILABLE' } })
-        : 0;
-    return toPrize(updated, availableCodeCount);
+    const countsByPrize = await loadCodeStatusCounts([updated.id]);
+    return toPrize(updated, countsByPrize.get(updated.id) ?? EMPTY_CODE_STATUS_COUNTS);
   });
 
   /**

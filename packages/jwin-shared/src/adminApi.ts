@@ -234,8 +234,21 @@ export const AdminPrizeSchema = z.object({
   remainingQty: z.number().int(),
   /** CODE 경품의 사용 가능한 코드 재고 수 (PHYSICAL은 0) */
   availableCodeCount: z.number().int(),
+  /**
+   * 상태별 코드 수 — 미사용(available)·할당(assigned)·발송(sent)·회수(revoked).
+   * PHYSICAL 은 모두 0. default 는 이 필드를 아직 안 주는 구 API 대비.
+   */
+  codeStatusCounts: z
+    .object({
+      available: z.number().int(),
+      assigned: z.number().int(),
+      sent: z.number().int(),
+      revoked: z.number().int(),
+    })
+    .default({ available: 0, assigned: 0, sent: 0, revoked: 0 }),
 });
 export type AdminPrize = z.infer<typeof AdminPrizeSchema>;
+export type AdminPrizeCodeStatusCounts = AdminPrize['codeStatusCounts'];
 
 export const AdminPrizeListSchema = z.object({ prizes: z.array(AdminPrizeSchema) });
 export type AdminPrizeList = z.infer<typeof AdminPrizeListSchema>;

@@ -23,6 +23,33 @@ const TYPE_LABEL_KEY: Record<AdminPrize["type"], AdminTranslationKey> = {
   CODE: "jwin.prize.type.code",
 };
 
+const CODE_STATUS_LABEL_KEY: Record<
+  keyof AdminPrize["codeStatusCounts"],
+  AdminTranslationKey
+> = {
+  available: "jwin.prize.codeStatus.available",
+  assigned: "jwin.prize.codeStatus.assigned",
+  sent: "jwin.prize.codeStatus.sent",
+  revoked: "jwin.prize.codeStatus.revoked",
+};
+
+/** 코드 현황 요약 — 미사용은 항상, 나머지 상태는 1개 이상일 때만 표기. */
+function codeStatusSummary(
+  counts: AdminPrize["codeStatusCounts"],
+  t: (key: AdminTranslationKey) => string,
+): string {
+  const statuses: (keyof AdminPrize["codeStatusCounts"])[] = [
+    "available",
+    "assigned",
+    "sent",
+    "revoked",
+  ];
+  return statuses
+    .filter((status) => status === "available" || counts[status] > 0)
+    .map((status) => `${t(CODE_STATUS_LABEL_KEY[status])} ${counts[status]}`)
+    .join(" · ");
+}
+
 export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCodes }: Props) {
   const t = useT();
   const [addOpen, setAddOpen] = useState(false);
@@ -69,7 +96,9 @@ export function PrizeTab({ prizes, loading, loadError, onAdd, onEdit, onAppendCo
                     {formatProbabilityPercent(prizeShare(prize, prizes))}
                   </td>
                   <td className={styles.num}>
-                    {prize.type === "CODE" ? prize.availableCodeCount : t("jwin.common.dash")}
+                    {prize.type === "CODE"
+                      ? codeStatusSummary(prize.codeStatusCounts, t)
+                      : t("jwin.common.dash")}
                   </td>
                   <td className={styles.actionsCell}>
                     <div className={styles.rowActions}>

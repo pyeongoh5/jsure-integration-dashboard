@@ -554,7 +554,7 @@ export const adminMessages = {
         type: { ko: "유형", en: "Type", ja: "種別" },
         quantity: { ko: "수량 (잔여/전체)", en: "Qty (left/total)", ja: "数量（残り/全体）" },
         share: { ko: "수량 비율", en: "Share of stock", ja: "数量比率" },
-        codeStock: { ko: "코드 재고", en: "Code stock", ja: "コード在庫" },
+        codeStock: { ko: "코드 현황", en: "Code status", ja: "コード状況" },
         actions: { ko: "관리", en: "Actions", ja: "操作" },
       },
       type: {

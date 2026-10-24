@@ -103,33 +103,42 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
         )}
       </label>
 
-      <div className={styles.row2}>
-        <div className={styles.field}>
-          <JwinMediaUpload
-            labelKey="jwin.basic.keyVisual"
-            value={values.keyVisualUrl}
-            onChange={(url) => setField("keyVisualUrl", url)}
-          />
-          <span className={styles.hint}>{t("jwin.basic.keyVisualHint")}</span>
+      {/* 이미지 설정 — 어느 화면에 나오는지(시즌 LP / 응모 페이지) 단위로 묶는다 */}
+      <section className={styles.imageSection}>
+        <span className={styles.imageSectionTitle}>{t("jwin.basic.lpSectionTitle")}</span>
+        <p className={styles.imageSectionDesc}>{t("jwin.basic.lpSectionDesc")}</p>
+        <div className={styles.row2}>
+          <div className={styles.field}>
+            <JwinMediaUpload
+              labelKey="jwin.basic.keyVisual"
+              value={values.keyVisualUrl}
+              onChange={(url) => setField("keyVisualUrl", url)}
+            />
+            <span className={styles.hint}>{t("jwin.basic.keyVisualHint")}</span>
+          </div>
+          <div className={styles.field}>
+            <JwinMediaUpload
+              labelKey="jwin.basic.listBackground"
+              value={values.listBackgroundUrl}
+              onChange={(url) => setField("listBackgroundUrl", url)}
+            />
+            <span className={styles.hint}>{t("jwin.basic.listBackgroundHint")}</span>
+          </div>
         </div>
-        <div className={styles.field}>
-          <JwinMediaUpload
-            labelKey="jwin.basic.listBackground"
-            value={values.listBackgroundUrl}
-            onChange={(url) => setField("listBackgroundUrl", url)}
-          />
-          <span className={styles.hint}>{t("jwin.basic.listBackgroundHint")}</span>
-        </div>
-      </div>
+      </section>
 
-      <div className={styles.field}>
-        <JwinMediaUpload
-          labelKey="jwin.basic.thumbnail"
-          value={values.thumbnailUrl}
-          onChange={(url) => setField("thumbnailUrl", url)}
-        />
-        <span className={styles.hint}>{t("jwin.basic.thumbnailHint")}</span>
-      </div>
+      <section className={styles.imageSection}>
+        <span className={styles.imageSectionTitle}>{t("jwin.basic.entrySectionTitle")}</span>
+        <p className={styles.imageSectionDesc}>{t("jwin.basic.entrySectionDesc")}</p>
+        <div className={styles.field}>
+          <JwinMediaUpload
+            labelKey="jwin.basic.thumbnail"
+            value={values.thumbnailUrl}
+            onChange={(url) => setField("thumbnailUrl", url)}
+          />
+          <span className={styles.hint}>{t("jwin.basic.thumbnailHint")}</span>
+        </div>
+      </section>
     </div>
   );
 }

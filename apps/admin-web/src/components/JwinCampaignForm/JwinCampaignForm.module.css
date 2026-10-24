@@ -38,6 +38,29 @@
   gap: 14px;
 }
 
+/* 이미지 설정 — 노출 화면(시즌 LP / 응모 페이지) 단위 구분 */
+
+.imageSection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+}
+
+.imageSectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.imageSectionDesc {
+  font-size: 12px;
+  color: var(--c-muted);
+  margin: -8px 0 0;
+}
+
 /* 연동 탭 */
 
 .accountSelect {

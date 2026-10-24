@@ -337,7 +337,7 @@ export function ApplicationDetail() {
               await insight.mutateAsync(insights);
             }}
             submitting={insight.isPending}
-            postSubmittedAt={data.reviewSubmittedAt ?? data.posts[0]!.submittedAt}
+            insightDueAt={data.insightDueAt}
           />
         )}
 

@@ -277,8 +277,36 @@ model Influencer {
   sessions     InfluencerSession[]
   memos        InfluencerMemo[]
   campaignViews CampaignView[]
+  tagAssignments InfluencerTagAssignment[]
 
   @@map("influencers")
+}
+
+/// 어드민 전용 인플루언서 관리 태그 마스터(거주지·퀄리티 등). 인플루언서 화면에는 노출하지 않는다.
+model InfluencerTag {
+  id          String   @id @default(cuid())
+  label       String   @unique
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  assignments InfluencerTagAssignment[]
+
+  @@map("influencer_tags")
+}
+
+/// 인플루언서 ↔ 태그 연결. 같은 태그를 두 번 달 수 없도록 복합 PK 로 보장한다.
+model InfluencerTagAssignment {
+  influencerId String
+  tagId        String
+  createdAt    DateTime @default(now())
+  createdById  String?
+
+  influencer Influencer    @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  tag        InfluencerTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([influencerId, tagId])
+  @@index([tagId])
+  @@map("influencer_tag_assignments")
 }
 
 model InfluencerMemo {

@@ -591,3 +591,85 @@ describe("LineRemindersService - 게시 기간이 설정된 캠페인", () => {
     );
   });
 });
+
+describe("LineRemindersService - SNS 인사이트 리마인더", () => {
+  const snsCampaign = {
+    id: "c2",
+    title: "SNS 캠페인",
+    category: "SNS",
+    postingPeriodDays: 14,
+    recruits: [{ subType: "INSTAGRAM", insightRequired: true }],
+  };
+
+  /**
+   * 인사이트 미제출 SNS 응모. 게시물 제출은 검토보다 3일 앞섰으므로, 기한을
+   * 제출일 기준으로 세면 검토 완료일 기준과 3일 어긋난다.
+   */
+  function insightPending(
+    now: number,
+    reviewedDaysAgo: number | null,
+    submissionReviewStatus: "PENDING" | "APPROVED" = "APPROVED",
+  ) {
+    return {
+      id: "insight",
+      status: "REVIEW_SUBMITTED",
+      reviewedAt: null,
+      receivedAt: null,
+      reviewSubmittedAt: new Date(now - ((reviewedDaysAgo ?? 0) + 3) * DAY_MS),
+      submissionReviewStatus,
+      submissionReviewedAt:
+        reviewedDaysAgo === null ? null : new Date(now - reviewedDaysAgo * DAY_MS),
+      subTypes: ["INSTAGRAM"],
+      posts: [{ subType: "INSTAGRAM", insightSubmittedAt: null }],
+      campaign: snsCampaign,
+    };
+  }
+
+  function runWith(row: Record<string, unknown>, dispatch: jest.Mock) {
+    return new LineRemindersService(makePrismaMock([row]), {
+      dispatch,
+    } as unknown as LineDispatcherService).runNow();
+  }
+
+  it("검토 완료 7일 후에 인사이트 제출 안내를 보낸다", async () => {
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+
+    await runWith(insightPending(Date.now(), 7), dispatch);
+
+    expect(dispatch).toHaveBeenCalledWith(
+      "SNS_INSIGHT_REMINDER",
+      expect.objectContaining({
+        application: expect.objectContaining({ id: "insight" }),
+      }),
+    );
+  });
+
+  it("게시물 제출 7일 후라도 검토 완료가 4일 전이면 보내지 않는다", async () => {
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+
+    await runWith(insightPending(Date.now(), 4), dispatch);
+
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("검토 완료 8일 후에는 독촉을 보낸다", async () => {
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+
+    await runWith(insightPending(Date.now(), 8), dispatch);
+
+    expect(dispatch).toHaveBeenCalledWith(
+      "SNS_INSIGHT_OVERDUE_REMINDER",
+      expect.objectContaining({
+        application: expect.objectContaining({ id: "insight" }),
+      }),
+    );
+  });
+
+  it("아직 검토 대기 중이면 기한이 시작되지 않아 보내지 않는다", async () => {
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+
+    await runWith(insightPending(Date.now(), null, "PENDING"), dispatch);
+
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});

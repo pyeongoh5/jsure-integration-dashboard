@@ -14,8 +14,11 @@ import type {
   InfluencerFilter,
   InfluencerNotesResponse,
   InfluencerMemoEntry,
+  InfluencerTagListResponse,
+  UpdateInfluencerTagsResponse,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { INFLUENCER_TAG_INCLUDE, toTagLabels } from "./influencer-tags";
 import { AuditService } from "../audit/audit.service";
 import type { AuditActor } from "../audit/audit.service";
 import { influencerHistoryGroups } from "../audit/influencer-history";
@@ -28,6 +31,7 @@ const ADMIN_INFLUENCER_INCLUDE = {
     select: { snsType: true, handle: true, followerCount: true },
     orderBy: { snsType: "asc" as const },
   },
+  tagAssignments: INFLUENCER_TAG_INCLUDE,
 } as const;
 
 type AdminInfluencerRow = {
@@ -51,6 +55,7 @@ type AdminInfluencerRow = {
     handle: string;
     followerCount: number;
   }[];
+  tagAssignments: { tag: { label: string } }[];
 };
 
 function toAdminResponse(
@@ -66,6 +71,7 @@ function toAdminResponse(
     status: row.status,
     memo: row.memo,
     flagged: row.flaggedAt !== null,
+    tags: toTagLabels(row.tagAssignments),
     snsAccounts: row.snsAccounts.map((s) => ({
       snsType: s.snsType as AdminInfluencer["snsAccounts"][number]["snsType"],
       handle: s.handle,
@@ -216,7 +222,11 @@ export class InfluencersService {
   async getNotes(influencerId: string): Promise<InfluencerNotesResponse> {
     const influencer = await this.prisma.influencer.findUnique({
       where: { id: influencerId },
-      select: { id: true, flaggedAt: true },
+      select: {
+        id: true,
+        flaggedAt: true,
+        tagAssignments: INFLUENCER_TAG_INCLUDE,
+      },
     });
     if (!influencer) throw new NotFoundException("Influencer not found");
 
@@ -247,6 +257,7 @@ export class InfluencersService {
       applicationRejections: [],
       postRejections: [],
       flaggedAt: influencer.flaggedAt ? influencer.flaggedAt.toISOString() : null,
+      tags: toTagLabels(influencer.tagAssignments),
     };
   }
 
@@ -372,6 +383,70 @@ export class InfluencersService {
       campaignId: created.campaign?.id ?? null,
       campaignTitle: created.campaign?.title ?? null,
     };
+  }
+
+  /** 태그 마스터 전체 — 자동완성 후보. 연결이 끊긴 태그도 후보로 남긴다. */
+  async listTags(): Promise<InfluencerTagListResponse> {
+    const tags = await this.prisma.influencerTag.findMany({
+      orderBy: { label: "asc" },
+      select: { id: true, label: true },
+    });
+    return { tags };
+  }
+
+  /**
+   * 한 인플루언서의 태그를 통째로 교체한다. 마스터에 없는 라벨은 여기서 만들고,
+   * 빠진 태그는 연결만 끊는다 — 마스터 행은 다른 인플루언서와 자동완성이 계속 쓴다.
+   */
+  async updateTags(
+    influencerId: string,
+    actor: AuditActor,
+    labels: string[],
+  ): Promise<UpdateInfluencerTagsResponse> {
+    const influencer = await this.prisma.influencer.findUnique({
+      where: { id: influencerId },
+      select: { id: true },
+    });
+    if (!influencer) throw new NotFoundException("인플루언서를 찾을 수 없습니다");
+
+    // 같은 라벨이 두 번 와도 한 번만 단다.
+    const uniqueLabels = Array.from(new Set(labels));
+
+    const tags = await this.prisma.$transaction(async (tx) => {
+      const resolved = await Promise.all(
+        uniqueLabels.map((label) =>
+          tx.influencerTag.upsert({
+            where: { label },
+            update: {},
+            create: { label, createdById: actor.id },
+            select: { id: true, label: true },
+          }),
+        ),
+      );
+      const tagIds = resolved.map((tag) => tag.id);
+      // 남길 태그를 제외하고 지운다 — 유지되는 태그의 부착 시점을 보존하기 위해.
+      await tx.influencerTagAssignment.deleteMany({
+        where: { influencerId, NOT: { tagId: { in: tagIds } } },
+      });
+      await tx.influencerTagAssignment.createMany({
+        data: tagIds.map((tagId) => ({
+          influencerId,
+          tagId,
+          createdById: actor.id,
+        })),
+        skipDuplicates: true,
+      });
+      return resolved;
+    });
+
+    const assignedLabels = tags.map((tag) => tag.label).sort();
+    await this.audit.record({
+      action: "INFLUENCER_TAGS_UPDATE",
+      actor,
+      influencerId,
+      metadata: { tags: assignedLabels },
+    });
+    return { tags: assignedLabels };
   }
 
   async setFlagged(

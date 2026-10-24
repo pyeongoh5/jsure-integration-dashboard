@@ -71,6 +71,7 @@ export function toDraftReview(
       ? { snsType: representative.snsType, handle: representative.handle }
       : null,
     influencerFlagged: submission.influencer.flagged,
+    influencerTags: submission.influencer.tags,
     campaignId: submission.campaign.id,
     campaignTitle: submission.campaign.title,
     campaignThumbnailUrl: submission.campaign.thumbnailUrl,

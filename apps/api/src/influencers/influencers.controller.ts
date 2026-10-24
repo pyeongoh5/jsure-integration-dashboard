@@ -7,12 +7,14 @@ import {
   HttpCode,
   Param,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
 } from "@nestjs/common";
 import {
   CreateInfluencerMemoRequestSchema,
+  UpdateInfluencerTagsRequestSchema,
   parseInfluencerFilterParams,
   type AdminInfluencerExportResponse,
   type AdminInfluencerPageResponse,
@@ -20,6 +22,9 @@ import {
   type InfluencerActivityResponse,
   type InfluencerMemoEntry,
   type InfluencerNotesResponse,
+  type InfluencerTagListResponse,
+  type UpdateInfluencerTagsRequest,
+  type UpdateInfluencerTagsResponse,
 } from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
@@ -50,6 +55,12 @@ export class InfluencersController {
     return this.svc.exportForAdmin(parseInfluencerFilterParams(query));
   }
 
+  /** 태그 마스터 전체 — 메모 팝업의 자동완성 후보. */
+  @Get("tags")
+  listTags(): Promise<InfluencerTagListResponse> {
+    return this.svc.listTags();
+  }
+
   @Get(":id/notes")
   notes(@Param("id") id: string): Promise<InfluencerNotesResponse> {
     return this.svc.getNotes(id);
@@ -74,6 +85,17 @@ export class InfluencersController {
       body.comment.trim(),
       body.campaignId ?? null,
     );
+  }
+
+  /** 태그 전체 교체 — 마스터에 없는 라벨은 서버가 생성한다. */
+  @Put(":id/tags")
+  updateTags(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(UpdateInfluencerTagsRequestSchema))
+    body: UpdateInfluencerTagsRequest,
+  ): Promise<UpdateInfluencerTagsResponse> {
+    return this.svc.updateTags(id, req.user, body.labels);
   }
 
   /**

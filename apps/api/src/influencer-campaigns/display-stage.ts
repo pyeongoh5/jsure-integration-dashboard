@@ -5,7 +5,7 @@ import type {
 } from "@jsure/shared";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-// 운영: 투고 7일 후 인사이트 제출 가능. 로컬/개발: 즉시 제출 가능(테스트 편의).
+// 운영: 제출물 검토 완료 7일 후 인사이트 제출 가능. 로컬/개발: 즉시(테스트 편의).
 const INSIGHT_DUE_DAYS = process.env.NODE_ENV === "production" ? 7 : 0;
 
 /** JST 기준 그 날 00:00 UTC 타임스탬프 (ms). */
@@ -22,10 +22,11 @@ interface DisplayStageInput {
   receivedAt: Date | null;
   /** 제출물(전체) 검토 상태 — 응모 단위. */
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
+  /** 제출물 검토 완료 시각 — 인사이트 제출 기한의 기준. 검토 전이면 null. */
+  submissionReviewedAt: Date | null;
   /** 응모 단위 정산 상태. 정산 미생성이면 null. */
   settlementStatus: "PENDING" | "COMPLETED" | null;
   posts: {
-    submittedAt: Date;
     insightSubmittedAt: Date | null;
     /** 이 SNS 슬롯이 인사이트 제출을 요구하는지. 기본 true(기존 동작 유지). */
     insightRequired?: boolean;
@@ -97,6 +98,7 @@ function deriveSnsStage(input: DisplayStageInput): ApplicationDisplayStage {
     receivedAt,
     posts,
     submissionReviewStatus,
+    submissionReviewedAt,
     settlementStatus,
   } = input;
   const now = input.now ?? new Date();
@@ -128,16 +130,11 @@ function deriveSnsStage(input: DisplayStageInput): ApplicationDisplayStage {
       return submissionReviewStatus === "APPROVED" ? "COMPLETED" : "REVIEWING";
     }
 
-    const first = posts[0]!.submittedAt;
-    const earliest = posts.reduce(
-      (acc, post) => (post.submittedAt < acc ? post.submittedAt : acc),
-      first,
-    );
-    // JST 일자 기준으로 N일째 되는 날(자정 이후)에 INSIGHT_DUE 로 전환.
-    const daysPassed = Math.round(
-      (startOfJstDay(now) - startOfJstDay(earliest)) / DAY_MS,
-    );
-    return daysPassed >= INSIGHT_DUE_DAYS ? "INSIGHT_DUE" : "POSTED";
+    // 검토가 끝나야 기한이 시작된다 — 검토 대기 중이면 아직 POSTED.
+    const dueAt = insightDueAt(submissionReviewedAt);
+    if (!dueAt) return "POSTED";
+    // JST 일자 기준으로 기한일(자정 이후)에 INSIGHT_DUE 로 전환.
+    return startOfJstDay(now) >= startOfJstDay(dueAt) ? "INSIGHT_DUE" : "POSTED";
   }
 
   return "APPLIED";
@@ -154,4 +151,13 @@ export function deadlineFrom(
 ): Date | null {
   if (!anchor || periodDays == null) return null;
   return new Date(anchor.getTime() + periodDays * DAY_MS);
+}
+
+/**
+ * 인사이트 제출 기한 — 제출물 검토 완료 + INSIGHT_DUE_DAYS.
+ * 화면 표시(기한 안내)와 INSIGHT_DUE 전환이 같은 값을 쓰도록 여기 하나만 둔다.
+ * 아직 검토가 끝나지 않았으면 기한이 시작되지 않은 것이므로 null.
+ */
+export function insightDueAt(submissionReviewedAt: Date | null): Date | null {
+  return deadlineFrom(submissionReviewedAt, INSIGHT_DUE_DAYS);
 }

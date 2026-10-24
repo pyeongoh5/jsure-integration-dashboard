@@ -43,6 +43,7 @@ import {
 } from "./applicant-filter.sql";
 import { bucketMonthlyCounts, monthStartUtc9 } from "./monthly-counts";
 import { PrismaService } from "../prisma/prisma.service";
+import { parseApplicationProductOptions } from "../common/product-options";
 import { INFLUENCER_TAG_INCLUDE, toTagLabels } from "../influencers/influencer-tags";
 import { toActivityLog } from "../audit/application-activity";
 import { influencerActivityEntries } from "../audit/influencer-activity";
@@ -79,6 +80,7 @@ type AdminApplicationRow = {
   completedAt: Date | null;
   subTypes: CampaignSubType[];
   options: { subType: CampaignSubType; option: string }[];
+  productOptions: unknown;
   orderNumber: string | null;
   orderSubmittedAt: Date | null;
   reviewSubmittedAt: Date | null;
@@ -111,6 +113,7 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
       subType: entry.subType,
       option: entry.option,
     })),
+    productOptions: parseApplicationProductOptions(row.productOptions),
     orderNumber: row.orderNumber,
     orderSubmittedAt: row.orderSubmittedAt ? row.orderSubmittedAt.toISOString() : null,
     reviewSubmittedAt: row.reviewSubmittedAt ? row.reviewSubmittedAt.toISOString() : null,
@@ -1300,6 +1303,7 @@ export class AdminApplicationsService {
         id: true,
         subTypes: true,
         options: { select: { subType: true, option: true } },
+        productOptions: true,
         appliedAt: true,
         influencer: {
           select: {
@@ -1328,6 +1332,7 @@ export class AdminApplicationsService {
         name: row.influencer.name,
         nameKana: row.influencer.nameKana,
         channels: buildExportChannels(row),
+        productOptions: parseApplicationProductOptions(row.productOptions),
         phone: row.influencer.phone,
         postalCode: row.influencer.postalCode,
         address: joinAddress(row.influencer),
@@ -1459,6 +1464,7 @@ const APPLICANT_EXPORT_SELECT = {
   id: true,
   subTypes: true,
   options: { select: { subType: true, option: true } },
+  productOptions: true,
   appliedAt: true,
   status: true,
   receivedAt: true,
@@ -1491,6 +1497,7 @@ type ApplicantExportPrismaRow = {
   id: string;
   subTypes: CampaignSubType[];
   options: { subType: CampaignSubType; option: string }[];
+  productOptions: unknown;
   appliedAt: Date;
   status: ApplicationStatus;
   receivedAt: Date | null;
@@ -1525,6 +1532,7 @@ function toApplicantExportRow(
     name: row.influencer.name,
     nameKana: row.influencer.nameKana,
     channels: buildExportChannels(row),
+    productOptions: parseApplicationProductOptions(row.productOptions),
     phone: row.influencer.phone,
     postalCode: row.influencer.postalCode,
     address: joinAddress(row.influencer),

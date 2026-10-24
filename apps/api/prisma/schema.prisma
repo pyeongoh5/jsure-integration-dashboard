@@ -146,6 +146,9 @@ model Campaign {
   /// 리마인더도 자동 취소도 동작하지 않는다.
   orderPeriodDays    Int?
   productSummary     String
+  /// 응모 시 선택받을 제품 옵션 그룹 — [{ name: "호수", values: ["21호", "23호"] }].
+  /// 빈 배열이면 옵션 미사용. 게시물 타입(subTypeOptions)과는 다른 축이다.
+  productOptions     Json      @default("[]")
   productDetailUrls  String[]
   guideline          String
   referenceMediaUrls String[]
@@ -403,6 +406,9 @@ model CampaignApplication {
   /// 이 응모가 참여하는 서브타입 목록.
   subTypes     CampaignSubType[]
   status       ApplicationStatus @default(APPLIED)
+  /// 응모 시 선택한 제품 옵션 — [{ name: "호수", value: "21호" }]. 응모 후 변경 불가.
+  /// 캠페인 옵션 설정이 나중에 바뀌어도 이력이 남도록 선택 시점 값을 그대로 보관한다.
+  productOptions Json            @default("[]")
 
   appliedAt    DateTime  @default(now())
   reviewedAt   DateTime?

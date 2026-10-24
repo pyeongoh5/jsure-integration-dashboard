@@ -2,6 +2,7 @@ import {
   SUB_TYPE_LABEL,
   SUB_TYPE_OPTION_LABEL,
   deriveApplicantViewStatus,
+  formatProductOptions,
   type ApplicantExportRow,
 } from "@jsure/shared";
 import { translate, type AdminTranslationKey } from "@i18n/admin";
@@ -23,6 +24,7 @@ const APPLICANT_EXPORT_HEADER_KEYS = [
   "domains.application.export.sns",
   "domains.application.export.snsId",
   "domains.application.export.profileUrl",
+  "domains.application.export.productOptions",
   "domains.application.applicants.table.followers",
   "domains.application.export.phone",
   "domains.application.export.postalCode",
@@ -83,6 +85,7 @@ function formatRow(
       .map((channel) => channel.profileUrl)
       .filter((profileUrl) => profileUrl !== "")
       .join(" / "),
+    formatProductOptions(row.productOptions),
     String(row.followers),
     row.phone,
     row.postalCode,

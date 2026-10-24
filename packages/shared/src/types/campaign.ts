@@ -56,6 +56,55 @@ export const OPTION_SELECTABLE_SUB_TYPES: readonly CampaignSubType[] = [
 ];
 
 /**
+ * 제품 옵션 그룹 — 응모 시 인플루언서가 그룹마다 값 1개를 고른다. (호수/사이즈/방문일시 등)
+ * 게시물 타입(subTypeOptions)과는 다른 축이며 서브타입과 무관하게 캠페인 단위로 적용된다.
+ */
+export const CampaignProductOptionSchema = z.object({
+  name: z.string().trim().min(1, "옵션명을 입력해주세요").max(30),
+  values: z
+    .array(z.string().trim().min(1).max(50))
+    .min(1, "옵션값을 1개 이상 입력해주세요")
+    .max(30, "옵션값은 30개까지 입력할 수 있습니다"),
+});
+export type CampaignProductOption = z.infer<typeof CampaignProductOptionSchema>;
+
+function refineProductOptions(
+  productOptions: CampaignProductOption[],
+  ctx: z.RefinementCtx,
+): void {
+  const names = productOptions.map((group) => group.name);
+  if (new Set(names).size !== names.length) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "옵션명이 중복되었습니다",
+    });
+  }
+  productOptions.forEach((group, index) => {
+    if (new Set(group.values).size !== group.values.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [index, "values"],
+        message: "옵션값이 중복되었습니다",
+      });
+    }
+  });
+}
+
+/** 입력용 — 중복 검증까지 건다. */
+export const CampaignProductOptionsInputSchema = z
+  .array(CampaignProductOptionSchema)
+  .max(10, "옵션은 10개까지 추가할 수 있습니다")
+  .superRefine(refineProductOptions);
+
+/**
+ * 응답 파싱용 — 임시저장 왕복(빈 옵션명/값)을 허용하려고 느슨하다.
+ * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
+ */
+export const CampaignProductOptionsResponseSchema = z
+  .array(z.object({ name: z.string(), values: z.array(z.string()) }))
+  .default([]);
+
+/**
  * recruit 옵션 세부 설정 — 옵션 행 집합은 subTypeOptions 전체와 1:1 이어야 하고,
  * recruitCount(정원 분리)·rewardJpy(보수 분리)는 속성별 all-or-nothing.
  * 보수 분리 시 부모 recruit.rewardJpy 는 null 강제.
@@ -602,6 +651,8 @@ export const CampaignFormSchema = z
       .nullable()
       .optional(),
     recruits: CampaignRecruitInputArray,
+    /** 응모 시 선택받을 제품 옵션 그룹. 빈 배열이면 옵션 미사용. */
+    productOptions: CampaignProductOptionsInputSchema.default([]),
     // HTML 본문 (tiptap) 을 저장하므로 길이 제한을 크게 둠.
     productSummary: z.string().max(50000),
     productDetailUrls: z
@@ -663,6 +714,7 @@ export const UpdateCampaignRequestSchema = z
     publishEndDateTime: JstDateTime.nullable().optional(),
     orderPeriodDays: z.number().int().min(1).max(365).nullable().optional(),
     recruits: CampaignRecruitInputArray.optional(),
+    productOptions: CampaignProductOptionsInputSchema.optional(),
     productSummary: z.string().max(50000).optional(),
     productDetailUrls: z
       .array(z.string().url("URL 형식이어야 합니다"))
@@ -772,6 +824,16 @@ export const CampaignDraftRequestSchema = z.object({
     .nullable()
     .optional(),
   recruits: z.array(CampaignRecruitDraftSchema).max(10).optional(),
+  // 작성 중에는 옵션명·옵션값이 비어 있을 수 있으므로 길이 제한만 둔다.
+  productOptions: z
+    .array(
+      z.object({
+        name: z.string().max(30),
+        values: z.array(z.string().max(50)).max(30),
+      }),
+    )
+    .max(10)
+    .optional(),
   productSummary: z.string().max(50000).optional(),
   productDetailUrls: z.array(z.string().max(2000)).max(10).optional(),
   guideline: z.string().max(50000).optional(),
@@ -818,6 +880,8 @@ export const CampaignResponseSchema = z.object({
   publishState: CampaignPublishStateSchema,
   status: CampaignListStatusSchema,
   recruits: z.array(CampaignRecruitResponseSchema),
+  /** 제품 옵션 그룹. 빈 배열이면 옵션 미사용. */
+  productOptions: CampaignProductOptionsResponseSchema,
   recruitStartDate: DateOnly,
   recruitEndDate: DateOnly,
   recruitStartAt: z.string().datetime(),
@@ -904,6 +968,8 @@ export const InfluencerCampaignDetailSchema =
       .array(z.object({ subType: CampaignSubTypeSchema, option: z.string() }))
       // 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
       .default([]),
+    /** 응모 시 선택해야 하는 제품 옵션 그룹. 빈 배열이면 선택 단계가 없다. */
+    productOptions: CampaignProductOptionsResponseSchema,
     /** 게시(투고) 기간. null 이면 투고 시점 제약이 없다. */
     publishStartAt: z.string().datetime().nullable().default(null),
     publishEndAt: z.string().datetime().nullable().default(null),

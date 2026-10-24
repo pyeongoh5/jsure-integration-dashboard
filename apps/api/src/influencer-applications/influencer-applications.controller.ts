@@ -59,6 +59,7 @@ export class InfluencerApplicationsController {
       dto.campaignId,
       dto.subTypes,
       dto.options,
+      dto.productOptions,
     );
   }
 

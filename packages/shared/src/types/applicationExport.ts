@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { CampaignSubTypeSchema } from "./influencer.js";
-import { ApplicationStatusSchema } from "./application.js";
+import {
+  ApplicationProductOptionsResponseSchema,
+  ApplicationStatusSchema,
+} from "./application.js";
 import { CampaignCategorySchema } from "./campaign.js";
 
 export const ApprovedApplicantExportRowSchema = z.object({
@@ -18,6 +21,8 @@ export const ApprovedApplicantExportRowSchema = z.object({
       profileUrl: z.string(),
     }),
   ),
+  /** 응모 시 선택한 제품 옵션 (호수/사이즈 등). 발송 리스트용. */
+  productOptions: ApplicationProductOptionsResponseSchema,
   phone: z.string(),
   postalCode: z.string(),
   address: z.string(),

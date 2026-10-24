@@ -1,4 +1,5 @@
 import {
+  formatProductOptions,
   SUB_TYPE_LABEL,
   type ApprovedApplicantExportResponse,
   type ApprovedApplicantExportRow,
@@ -13,6 +14,7 @@ export const APPROVED_APPLICANT_EXPORT_HEADER_KEYS = [
   "domains.application.export.sns",
   "domains.application.export.snsId",
   "domains.application.export.profileUrl",
+  "domains.application.export.productOptions",
   "domains.application.export.phone",
   "domains.application.export.postalCode",
   "domains.application.export.address",
@@ -52,6 +54,7 @@ function formatRow(
       .map((channel) => channel.profileUrl)
       .filter((profileUrl) => profileUrl !== "")
       .join(" / "),
+    formatProductOptions(row.productOptions),
     row.phone,
     row.postalCode,
     row.address,

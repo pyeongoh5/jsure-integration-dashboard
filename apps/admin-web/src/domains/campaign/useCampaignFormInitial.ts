@@ -35,6 +35,7 @@ function toFormValues(campaign: CampaignResponse): Values {
     recruits: campaign.recruits,
     productSummary: campaign.productSummary,
     productDetailUrls: campaign.productDetailUrls,
+    productOptions: campaign.productOptions,
     guideline: campaign.guideline,
     referenceMediaUrls: campaign.referenceMediaUrls,
     cautions: campaign.cautions,

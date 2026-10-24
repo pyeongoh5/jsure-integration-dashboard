@@ -2,6 +2,7 @@ import {
   InfluencerApplicationListResponseSchema,
   InfluencerApplicationSchema,
   type ApplicationOption,
+  type ApplicationProductOption,
   type AttachmentUploadInput,
   type InfluencerApplication,
   type CampaignSubType,
@@ -25,11 +26,13 @@ export async function createApplication(
   campaignId: string,
   subTypes: CampaignSubType[],
   options: ApplicationOption[], // 서브타입 옵션 선택 (구 instagramPostType 일반화)
+  productOptions: ApplicationProductOption[], // 제품 옵션 선택 (호수/사이즈 등)
 ): Promise<InfluencerApplication> {
   const res = await api.post("/influencer/applications", {
     campaignId,
     subTypes,
     options,
+    productOptions,
   });
   return InfluencerApplicationSchema.parse(res.data);
 }

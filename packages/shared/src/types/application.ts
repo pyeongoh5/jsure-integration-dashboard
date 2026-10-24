@@ -245,6 +245,32 @@ export const ApplicationOptionSchema = z.object({
 });
 export type ApplicationOption = z.infer<typeof ApplicationOptionSchema>;
 
+/**
+ * 응모가 선택한 제품 옵션 (캠페인 productOptions 의 그룹명 ↔ 고른 값).
+ * 캠페인 설정이 나중에 바뀌어도 이력이 남도록 선택 시점 문자열을 그대로 담는다.
+ */
+export const ApplicationProductOptionSchema = z.object({
+  name: z.string().min(1),
+  value: z.string().min(1),
+});
+export type ApplicationProductOption = z.infer<
+  typeof ApplicationProductOptionSchema
+>;
+
+/** 응답 파싱용 — 구 API 배포 갭 대비 기본값. */
+export const ApplicationProductOptionsResponseSchema = z
+  .array(ApplicationProductOptionSchema)
+  .default([]);
+
+/** "호수: 21호 / 사이즈: M" 형태의 1줄 표기 — 목록·CSV 가 함께 쓴다. */
+export function formatProductOptions(
+  productOptions: ApplicationProductOption[],
+): string {
+  return productOptions
+    .map((entry) => `${entry.name}: ${entry.value}`)
+    .join(" / ");
+}
+
 export const CreateApplicationRequestSchema = z
   .object({
     campaignId: z.string().min(1),
@@ -257,8 +283,18 @@ export const CreateApplicationRequestSchema = z
       ),
     /** 옵션 선택형 서브타입(INSTAGRAM)의 선택 옵션. 서브타입당 1개. */
     options: z.array(ApplicationOptionSchema).default([]),
+    /** 제품 옵션 선택값. 캠페인이 요구하는 그룹 전체를 채워야 하며 검증은 서버가 한다. */
+    productOptions: z.array(ApplicationProductOptionSchema).max(10).default([]),
   })
   .superRefine((dto, ctx) => {
+    const productOptionNames = dto.productOptions.map((entry) => entry.name);
+    if (new Set(productOptionNames).size !== productOptionNames.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["productOptions"],
+        message: "オプションごとに選択できる値は1つです",
+      });
+    }
     const optionSubTypes = dto.options.map((entry) => entry.subType);
     if (new Set(optionSubTypes).size !== optionSubTypes.length) {
       ctx.addIssue({
@@ -323,6 +359,8 @@ export const InfluencerApplicationSchema = z.object({
   subTypes: z.array(CampaignSubTypeSchema),
   /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS 1개). */
   selectedOptions: z.array(ApplicationOptionSchema),
+  /** 응모 시 선택한 제품 옵션 (호수/사이즈 등). 응모 후 변경 불가. */
+  productOptions: ApplicationProductOptionsResponseSchema,
   /** 제출물(전체) 검토 상태 — 응모 단위 전체 승인/반려. */
   submissionReviewStatus: PostReviewStatusSchema,
   /** 제출물 반려 시 최신 반려 코멘트. */

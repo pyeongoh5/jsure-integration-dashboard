@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { InstagramPostType, CampaignSubType } from "@jsure/shared";
+import type {
+  ApplicationProductOption,
+  InstagramPostType,
+  CampaignSubType,
+} from "@jsure/shared";
 import {
   useCampaign,
   formatYen,
@@ -102,6 +106,10 @@ export function Apply() {
   const [agreed, setAgreed] = useState<Set<string>>(new Set());
   const [selectedSns, setSelectedSns] = useState<Set<CampaignSubType>>(new Set());
   const [instagramPostType, setInstagramPostType] = useState<InstagramPostType | null>(null);
+  // 제품 옵션 선택값 — 옵션명 → 선택한 값.
+  const [productOptionValues, setProductOptionValues] = useState<
+    Record<string, string>
+  >({});
   const [error, setError] = useState<string | null>(null);
   const [addressConfirmed, setAddressConfirmed] = useState(false);
 
@@ -188,6 +196,17 @@ export function Apply() {
   }, [campaign.data]);
   const instagramPostTypeMissing = wantsInstagram && !instagramPostType;
 
+  // 제품 옵션(호수/사이즈 등) — 캠페인이 요구하는 그룹마다 1개씩 고른다.
+  const productOptionGroups = campaign.data?.productOptions ?? [];
+  const productOptions = useMemo<ApplicationProductOption[]>(() => {
+    return productOptionGroups.flatMap((group) => {
+      const value = productOptionValues[group.name];
+      return value ? [{ name: group.name, value }] : [];
+    });
+  }, [productOptionGroups, productOptionValues]);
+  const productOptionMissing =
+    productOptions.length !== productOptionGroups.length;
+
   // 옵션 선택은 (subType, option) 배열로 전송 — 보수 계산에도 동일 형태를 사용.
   const selectedOptions = useMemo<{ subType: CampaignSubType; option: string }[]>(() => {
     return wantsInstagram && instagramPostType
@@ -202,7 +221,8 @@ export function Apply() {
   }, [campaign.data, selectedSns, selectedOptions]);
 
   const apply = useMutation({
-    mutationFn: () => createApplication(id, Array.from(selectedSns), selectedOptions),
+    mutationFn: () =>
+      createApplication(id, Array.from(selectedSns), selectedOptions, productOptions),
     onSuccess: () => nav("/applications", { replace: true }),
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { message?: string } } };
@@ -441,6 +461,51 @@ export function Apply() {
           </section>
         )}
 
+        {productOptionGroups.length > 0 && (
+          <section className={styles.sec}>
+            <h3>{t("pages.apply.productOptionsTitle")}</h3> {/* new */}
+            {productOptionGroups.map((group) => (
+              <div key={group.name}>
+                <div className={styles.snsCond}>{group.name}</div>
+                <ul className={styles.snsPick}>
+                  {group.values.map((value) => {
+                    const isSelected = productOptionValues[group.name] === value;
+                    return (
+                      <li key={value}>
+                        <label
+                          className={`${styles.snsItem} ${
+                            isSelected ? styles.snsItemSelected : ""
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={`product-option-${group.name}`}
+                            checked={isSelected}
+                            onChange={() =>
+                              setProductOptionValues((prev) => ({
+                                ...prev,
+                                [group.name]: value,
+                              }))
+                            }
+                          />
+                          <div className={styles.snsInfo}>
+                            <div className={styles.snsName}>{value}</div>
+                          </div>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+            {productOptionMissing && (
+              <p style={{ color: "#ef4444", fontSize: 13 }}>
+                {t("pages.apply.selectProductOption")} {/* new */}
+              </p>
+            )}
+          </section>
+        )}
+
         {!isFakePurchaseCampaign && ( // SNS/단순 리뷰: 배송이 있으므로 주소 확인 노출
           <section className={styles.sec}>
             <h3>{t("pages.apply.addressTitle")}</h3>
@@ -509,6 +574,7 @@ export function Apply() {
             !allAgreed ||
             !hasSelection ||
             instagramPostTypeMissing ||
+            productOptionMissing ||
             qualifying.length === 0 ||
             requiredNotQualified.length > 0 || // 필수 서브타입 자격 미달 시 응모 자체 불가
             (!isFakePurchaseCampaign && (!me.data?.address || !addressConfirmed)) ||

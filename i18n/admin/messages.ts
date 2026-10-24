@@ -1262,6 +1262,11 @@ export const adminMessages = {
           campaign: { ko: "캠페인", en: "Campaign", ja: "キャンペーン" },
           category: { ko: "카테고리", en: "Category", ja: "カテゴリー" },
           subType: { ko: "서브타입", en: "Sub-type", ja: "サブタイプ" },
+          productOptions: {
+            ko: "선택 옵션",
+            en: "Selected options",
+            ja: "選択オプション",
+          },
           followers: { ko: "팔로워", en: "Followers", ja: "フォロワー" },
           appliedAt: { ko: "응모 시각", en: "Applied at", ja: "応募日時" },
           status: { ko: "상태", en: "Status", ja: "ステータス" },
@@ -1797,6 +1802,11 @@ export const adminMessages = {
         sns: { ko: "SNS", en: "SNS", ja: "SNS" },
         snsId: { ko: "SNS ID", en: "SNS ID", ja: "SNS ID" },
         profileUrl: { ko: "프로필 URL", en: "Profile URL", ja: "プロフィールURL" },
+        productOptions: {
+          ko: "선택 옵션",
+          en: "Selected options",
+          ja: "選択オプション",
+        },
         phone: { ko: "전화번호", en: "Phone", ja: "電話番号" },
         postalCode: { ko: "우편번호", en: "Postal code", ja: "郵便番号" },
         address: { ko: "주소", en: "Address", ja: "住所" },
@@ -2169,6 +2179,16 @@ export const adminMessages = {
           en: "Product detail URL (qoo10)",
           ja: "商品詳細URL（qoo10）",
         },
+        sectionProductOptions: {
+          ko: "제품 옵션 설정",
+          en: "Product options",
+          ja: "商品オプション設定",
+        },
+        productOptionsHint: {
+          ko: "호수·사이즈처럼 응모 시 선택받을 옵션입니다. 추가하면 인플루언서가 응모할 때 반드시 하나를 골라야 합니다.",
+          en: "Options the influencer must choose when applying (shade, size, etc.). Adding one makes the selection required.",
+          ja: "号数・サイズなど応募時に選んでもらうオプションです。追加するとインフルエンサーは応募時に必ず1つ選択します。",
+        },
         sectionGuideline: { ko: "가이드라인", en: "Guidelines", ja: "ガイドライン" },
         guidelineLabel: {
           ko: "안건 개요 (투고 가이드라인)",
@@ -2245,6 +2265,41 @@ export const adminMessages = {
           ko: "리뷰 채널 (선택)",
           en: "Review channels (optional)",
           ja: "レビューチャネル（任意）",
+        },
+      },
+      productOptions: {
+        nameLabel: { ko: "옵션명", en: "Option name", ja: "オプション名" },
+        namePlaceholder: {
+          ko: "예시: 호수, 사이즈, 방문 일시",
+          en: "e.g. Shade, Size, Visit date",
+          ja: "例: 号数、サイズ、訪問日時",
+        },
+        valuesLabel: { ko: "옵션값", en: "Option values", ja: "オプション値" },
+        valuesPlaceholder: {
+          ko: "예시: 19호, 21호, 23호",
+          en: "e.g. No.19, No.21, No.23",
+          ja: "例: 19号, 21号, 23号",
+        },
+        valuesHint: {
+          ko: "쉼표(,)로 구분해 입력합니다.",
+          en: "Separate values with commas (,).",
+          ja: "カンマ（,）で区切って入力します。",
+        },
+        removeAria: {
+          ko: "옵션 {index} 삭제",
+          en: "Delete option {index}",
+          ja: "オプション{index}を削除",
+        },
+        remove: { ko: "삭제", en: "Delete", ja: "削除" },
+        add: {
+          ko: "옵션 추가 ({count}/{max})",
+          en: "Add option ({count}/{max})",
+          ja: "オプション追加（{count}/{max}）",
+        },
+        none: {
+          ko: "설정된 옵션이 없습니다. 추가하지 않으면 응모 시 옵션 선택 단계가 없습니다.",
+          en: "No options set. Without one, applicants skip the option step.",
+          ja: "設定されたオプションはありません。追加しない場合、応募時のオプション選択はありません。",
         },
       },
       referenceUrlList: {

@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import {
+  formatProductOptions,
   formatTitleWithTags,
   type ApprovedApplicantExportResponse,
   type CampaignResponse,
@@ -212,6 +213,7 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
                         .filter((profileUrl) => profileUrl !== "")
                         .join(" / ")}
                     </td>
+                    <td>{formatProductOptions(row.productOptions)}</td>
                     <td>{row.phone}</td>
                     <td>{row.postalCode}</td>
                     <td>{row.address}</td>

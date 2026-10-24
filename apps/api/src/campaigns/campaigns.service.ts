@@ -22,6 +22,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import type { AuditActor } from "../audit/audit.service";
 import { UploadsService } from "../uploads/uploads.service";
+import { parseCampaignProductOptions } from "../common/product-options";
 import { PUBLISHED_CAMPAIGN_WHERE } from "./published-campaign";
 import {
   CAMPAIGN_STATUS_ORDER,
@@ -366,6 +367,7 @@ type CampaignRow = {
   publishEndAt: Date | null;
   orderPeriodDays: number | null;
   productSummary: string;
+  productOptions: unknown;
   productDetailUrls: string[];
   guideline: string;
   referenceMediaUrls: string[];
@@ -448,6 +450,7 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
       : null,
     orderPeriodDays: row.orderPeriodDays,
     productSummary: row.productSummary,
+    productOptions: parseCampaignProductOptions(row.productOptions),
     productDetailUrls: row.productDetailUrls,
     guideline: row.guideline,
     referenceMediaUrls: row.referenceMediaUrls,
@@ -517,6 +520,7 @@ function toDraftCampaignData(input: CampaignDraftRequest, now: Date) {
       : null,
     orderPeriodDays: input.orderPeriodDays ?? null,
     productSummary: input.productSummary ?? "",
+    productOptions: input.productOptions ?? [],
     productDetailUrls: input.productDetailUrls ?? [],
     guideline: input.guideline ?? "",
     referenceMediaUrls: input.referenceMediaUrls ?? [],
@@ -674,6 +678,7 @@ export class CampaignsService {
           : null,
         orderPeriodDays: input.orderPeriodDays ?? null,
         productSummary: input.productSummary,
+        productOptions: input.productOptions,
         productDetailUrls: input.productDetailUrls,
         guideline: input.guideline,
         referenceMediaUrls: input.referenceMediaUrls,
@@ -903,6 +908,7 @@ export class CampaignsService {
       data.orderPeriodDays = input.orderPeriodDays;
     }
     if (input.productSummary !== undefined) data.productSummary = input.productSummary;
+    if (input.productOptions !== undefined) data.productOptions = input.productOptions;
     if (input.productDetailUrls !== undefined) data.productDetailUrls = input.productDetailUrls;
     if (input.guideline !== undefined) data.guideline = input.guideline;
     if (input.referenceMediaUrls !== undefined) data.referenceMediaUrls = input.referenceMediaUrls;

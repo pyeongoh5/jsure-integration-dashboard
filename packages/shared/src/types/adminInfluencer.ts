@@ -7,6 +7,7 @@ import {
 import { CampaignCategorySchema } from "./campaign.js";
 import {
   ApplicationOptionSchema,
+  ApplicationProductOptionsResponseSchema,
   ApplicationStatusSchema,
   CrossPostSchema,
   PostReviewStatusSchema,
@@ -103,6 +104,8 @@ export const AdminApplicationSchema = z.object({
   subTypes: z.array(CampaignSubTypeSchema),
   /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS 1개). */
   selectedOptions: z.array(ApplicationOptionSchema),
+  /** 응모 시 선택한 제품 옵션 (호수/사이즈 등). */
+  productOptions: ApplicationProductOptionsResponseSchema,
   orderNumber: z.string().nullable(),
   orderSubmittedAt: z.string().datetime().nullable(),
   reviewSubmittedAt: z.string().datetime().nullable(),

@@ -14,6 +14,7 @@ import {
   SUB_TYPE_OPTION_LABEL,
   usesOptionCountSplit,
   type ApplicationOption,
+  type ApplicationProductOption,
   type ApplicationStatus,
   type AttachmentUploadInput,
   type CampaignCategory,
@@ -41,6 +42,11 @@ import { LineMessagingService } from "../influencer-auth/line-messaging.service"
 import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
 import { DISPATCH_APPLICATION_INCLUDE } from "../line-templates/trigger-meta";
 import { AuditService } from "../audit/audit.service";
+import {
+  parseApplicationProductOptions,
+  parseCampaignProductOptions,
+  selectProductOptions,
+} from "../common/product-options";
 
 /** 응모 후 인플루언서가 직접 취소할 수 있는 기간(2일, 밀리초). */
 const CANCEL_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
@@ -86,6 +92,7 @@ type ApplicationRow = {
   completedAt: Date | null;
   subTypes: CampaignSubType[];
   options: { subType: CampaignSubType; option: string }[];
+  productOptions: unknown;
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
   submissionReviewedAt: Date | null;
   submissionRejections: { comment: string; rejectedAt: Date }[];
@@ -215,6 +222,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
       subType: entry.subType,
       option: entry.option,
     })),
+    productOptions: parseApplicationProductOptions(row.productOptions),
     submissionReviewStatus: row.submissionReviewStatus,
     lastRejectionComment: latestRejection ? latestRejection.comment : null,
     posts: row.posts.map(toPost),
@@ -333,6 +341,7 @@ export class InfluencerApplicationsService {
     campaignId: string,
     subTypesInput: CampaignSubType[],
     optionsInput: ApplicationOption[],
+    productOptionsInput: ApplicationProductOption[],
   ): Promise<InfluencerApplication> {
     let subTypes = subTypesInput;
     const now = new Date();
@@ -586,6 +595,11 @@ export class InfluencerApplicationsService {
       });
     }
 
+    const productOptions = selectProductOptions(
+      parseCampaignProductOptions(campaign.productOptions),
+      productOptionsInput,
+    );
+
     const blockedByExclusion = subTypes.filter((subType) =>
       excludedCampaignSubTypes.has(subType),
     );
@@ -603,6 +617,7 @@ export class InfluencerApplicationsService {
         influencerId,
         subTypes,
         status: "APPLIED",
+        productOptions,
         options:
           normalizedOptions.length > 0
             ? {

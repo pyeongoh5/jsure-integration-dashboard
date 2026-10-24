@@ -9,6 +9,7 @@ import {
 import { RecruitList } from "./RecruitList";
 import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
 import { ExcludedCampaignsPicker } from "./ExcludedCampaignsPicker";
+import { ProductOptionsEditor } from "./ProductOptionsEditor";
 import { TagsInput } from "@/components/composites";
 import { uploadCampaignThumbnail, UploadError } from "@/lib/uploads";
 import { listCampaigns } from "../api";
@@ -41,6 +42,7 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   recruits: [],
   productSummary: "",
   productDetailUrls: [""],
+  productOptions: [],
   guideline: "",
   referenceMediaUrls: [],
   cautions: "",
@@ -947,6 +949,27 @@ export function CampaignForm({
               <div className={styles.error}>{rootError("productDetailUrls")}</div>
             )}
           </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            {t("domains.campaign.form.sectionProductOptions")}
+          </h2>
+          <p className={styles.subLabel}>{t("domains.campaign.form.productOptionsHint")}</p>
+          <Controller
+            control={methods.control}
+            name="productOptions"
+            render={({ field }) => (
+              <ProductOptionsEditor
+                value={field.value ?? []}
+                onChange={field.onChange}
+                disabled={submitting}
+              />
+            )}
+          />
+          {rootError("productOptions") && (
+            <div className={styles.error}>{rootError("productOptions")}</div>
+          )}
         </section>
 
         <section className={styles.section}>

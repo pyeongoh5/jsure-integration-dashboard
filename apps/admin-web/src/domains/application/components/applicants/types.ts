@@ -3,6 +3,7 @@ import type {
   ApplicantMediaFilterKey,
   ApplicantViewStatus,
   ApplicationOption,
+  ApplicationProductOption,
   ApplicationStatus,
   CampaignCategory,
   CampaignSubType,
@@ -69,6 +70,8 @@ export type Applicant = {
   media: Media[];
   /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS). */
   selectedOptions: ApplicationOption[];
+  /** 응모 시 선택한 제품 옵션 (호수/사이즈 등). */
+  productOptions: ApplicationProductOption[];
   followers: number;
   /** 참여 서브타입별 팔로워 수 — 다중 참여 시 세로 나열 표시용. */
   followersBySubType: { subType: CampaignSubType; followerCount: number }[];

@@ -21,6 +21,7 @@ import {
   subTypesWithAllOptionsFull,
 } from "../campaigns/option-capacity";
 import { VISIBLE_PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
+import { parseCampaignProductOptions } from "../common/product-options";
 
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -334,6 +335,7 @@ export class InfluencerCampaignsService {
     return {
       ...card,
       productDetailUrls: row.productDetailUrls,
+      productOptions: parseCampaignProductOptions(row.productOptions),
       guideline,
       referenceMediaUrls: row.referenceMediaUrls,
       cautions,

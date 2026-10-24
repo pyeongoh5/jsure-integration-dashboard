@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { SUB_TYPE_LABEL } from "@jsure/shared";
+import { formatProductOptions, SUB_TYPE_LABEL } from "@jsure/shared";
 import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
 import {
   ScrollTable,
@@ -282,6 +282,7 @@ export function ApplicantTable({
               <th>{t("domains.application.applicants.table.campaign")}</th>
               <th>{t("domains.application.applicants.table.category")}</th>
               <th>{t("domains.application.applicants.table.subType")}</th>
+              <th>{t("domains.application.applicants.table.productOptions")}</th>
               <th>{t("domains.application.applicants.table.followers")}</th>
               <th>{t("domains.application.applicants.table.appliedAt")}</th>
               <th style={{ textAlign: "center" }}>{t("domains.application.applicants.table.status")}</th>
@@ -364,6 +365,7 @@ export function ApplicantTable({
                     )}
                   </div>
                 </td>
+                <td>{formatProductOptions(applicant.productOptions)}</td>
                 <td className={styles.num}>
                   {applicant.followersBySubType.length > 1 ? (
                     <div className={styles.followerList}>

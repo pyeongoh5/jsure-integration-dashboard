@@ -590,6 +590,11 @@ export const messages = {
       notRegistered: { jp: "（アカウント未登録）", kr: " (계정 미등록)" },
       instagramPostTypeTitle: { jp: "Instagram 投稿タイプ", kr: "Instagram 게시 유형" },
       selectPostType: { jp: "投稿タイプを選択してください", kr: "게시 유형을 선택해 주세요" },
+      productOptionsTitle: { jp: "商品オプション", kr: "제품 옵션" }, // new
+      selectProductOption: {
+        jp: "オプションを選択してください",
+        kr: "옵션을 선택해 주세요",
+      }, // new
       addressTitle: { jp: "お届け先住所", kr: "배송지 주소" },
       confirmAddress: { jp: "この住所で受け取ります", kr: "이 주소로 수령합니다" },
       editAddress: { jp: "住所を修正する", kr: "주소 수정" },
@@ -711,6 +716,7 @@ export const messages = {
         loadError: { jp: "読み込みに失敗しました", kr: "불러오지 못했습니다" },
         msgApplied: { jp: "承認をお待ちください。", kr: "승인을 기다려 주세요." },
         msgApproved: { jp: "JSUREで発送準備中です。", kr: "JSURE에서 발송 준비 중입니다." },
+        productOptions: { jp: "選択オプション", kr: "선택 옵션" }, // new
         trackingCarrier: { jp: "配送業者", kr: "배송업체" },
         trackingNumber: { jp: "運送番号", kr: "운송장 번호" },
         // new — 송장 없이 선발송된 건

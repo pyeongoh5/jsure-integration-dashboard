@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  formatProductOptions,
   SUB_TYPE_LABEL,
   type CampaignSubType,
   type CrossPostInput,
@@ -178,6 +179,12 @@ export function ApplicationDetail() {
           <StageBadge stage={stage} />
         </div>
         <div className={styles.reward}>¥{data.rewardJpy.toLocaleString("ja-JP")}</div>
+        {data.productOptions.length > 0 && (
+          <div className={styles.msg}>
+            {t("pages.applications.detail.productOptions")}:{" "}
+            {formatProductOptions(data.productOptions)} {/* new */}
+          </div>
+        )}
         <div className={styles.stepper}>
           <ApplicationStepper stage={stage} category={data.campaignCategory} />
         </div>

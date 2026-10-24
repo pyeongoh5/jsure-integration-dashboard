@@ -55,7 +55,8 @@ export function useJwinBrandCampaign(brandCampaignId: string): UseJwinBrandCampa
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  // "저장 중" = 입력이 저장값과 달라진 뒤 자동 저장이 끝날 때까지 (디바운스 대기 포함)
+  const [pendingSave, setPendingSave] = useState(false);
   const [saved, setSaved] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -108,6 +109,7 @@ export function useJwinBrandCampaign(brandCampaignId: string): UseJwinBrandCampa
       MAX_WIN_PROBABILITY,
     );
     if (decision.kind === "invalid") {
+      setPendingSave(false);
       setError(
         t("jwin.basic.error.winProbabilityInvalid", {
           max: formatProbabilityPercent(MAX_WIN_PROBABILITY),
@@ -116,20 +118,25 @@ export function useJwinBrandCampaign(brandCampaignId: string): UseJwinBrandCampa
       return;
     }
     setError(null);
-    if (decision.kind === "skip") return;
+    if (decision.kind === "skip") {
+      setPendingSave(false);
+      return;
+    }
+    // 디바운스 대기 중에도 "저장 중" 으로 보여준다 — 변경이 아직 서버에
+    // 닿지 않았다는 사실이 사용자에게 중요하지, 타이머/요청 구분은 중요하지 않다.
+    setPendingSave(true);
     const timer = window.setTimeout(() => {
-      setSaving(true);
       updateBrandCampaign(detail.id, { winProbability: decision.winProbability })
         .then((updated) => {
+          // detail 갱신 → 이 effect 가 skip 으로 재평가되며 pendingSave 가 풀린다
           setDetail(updated);
           setSaved(true);
           window.setTimeout(() => setSaved(false), 2000);
         })
         .catch((caught: unknown) => {
+          // 실패 시 재시도 루프를 돌지 않도록 pending 만 내린다 (다시 입력하면 재시도)
+          setPendingSave(false);
           setError(jwinErrorMessage(caught, t("jwin.common.saveFailed")));
-        })
-        .finally(() => {
-          setSaving(false);
         });
     }, AUTOSAVE_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
@@ -142,7 +149,7 @@ export function useJwinBrandCampaign(brandCampaignId: string): UseJwinBrandCampa
     values,
     setField,
     error,
-    saving,
+    saving: pendingSave,
     saved,
     applyDetail,
     reload: () => setReloadKey((current) => current + 1),

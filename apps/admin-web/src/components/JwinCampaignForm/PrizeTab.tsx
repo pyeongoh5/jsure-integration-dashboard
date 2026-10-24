@@ -100,7 +100,7 @@ export function PrizeTab({
           {winProbabilitySaving && (
             <span className={styles.fieldHint}>{t("jwin.common.saving")}</span>
           )}
-          {winProbabilitySaved && (
+          {!winProbabilitySaving && winProbabilitySaved && (
             <span className={styles.savedText}>{t("jwin.common.saved")}</span>
           )}
         </div>

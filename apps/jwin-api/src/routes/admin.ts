@@ -495,7 +495,7 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!requireAdmin(req, reply)) return;
     const prizes = await prisma.prize.findMany({
       where: { campaignId: req.params.id },
-      orderBy: { tier: 'asc' },
+      orderBy: { createdAt: 'asc' },
     });
     const withCounts = await Promise.all(
       prizes.map(async (prize) => {
@@ -727,9 +727,7 @@ export async function adminRoutes(app: FastifyInstance) {
     campaignId: z.string(),
     type: z.enum(['PHYSICAL', 'CODE']),
     name: z.string().min(1),
-    tier: z.number().int().min(1).default(1),
     totalQty: z.number().int().positive(),
-    winProbability: z.number().gt(0).lt(1),
     /** CODE 경품: 발송할 코드 원문 (엑셀 붙여넣기 — 개행/탭/쉼표 구분) */
     codesText: z.string().optional(),
   });
@@ -826,16 +824,14 @@ export async function adminRoutes(app: FastifyInstance) {
     return { imported: codes.length };
   });
 
-  // ③ 경품 정정 (확률·수량·이름·티어). 수량을 줄일 때 잔여 재고가 음수가 되지 않도록 검증.
+  // ③ 경품 정정 (수량·이름). 수량을 줄일 때 잔여 재고가 음수가 되지 않도록 검증.
   app.patch<{ Params: { id: string } }>('/admin/prizes/:id', async (req, reply) => {
     const admin = requireAdmin(req, reply);
     if (!admin) return;
     const parsed = z
       .object({
         name: z.string().min(1).optional(),
-        tier: z.number().int().min(1).optional(),
         totalQty: z.number().int().positive().optional(),
-        winProbability: z.number().gt(0).lt(1).optional(),
       })
       .safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });

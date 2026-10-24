@@ -99,7 +99,7 @@ describe('시즌·참여 매퍼', () => {
       {
         id: 'bc-1',
         status: 'ACTIVE',
-        dailyWinCap: null,
+        winProbability: 0.005,
         cardImageUrl: null,
         rulesUrl: null,
         prUrl: null,

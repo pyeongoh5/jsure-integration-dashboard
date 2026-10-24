@@ -154,10 +154,17 @@ export const AdminBrandCampaignCreateSchema = z.object({
 });
 export type AdminBrandCampaignCreate = z.infer<typeof AdminBrandCampaignCreateSchema>;
 
+/**
+ * 기준 당첨확률의 상한. 소진 페이싱의 적용 확률 상한과 같은 값이다 — 기준이 이보다
+ * 높으면 보정 배수의 유효 범위가 빈 구간이 된다.
+ * 설계: docs/superpowers/specs/2026-10-24-jwin-instant-win-pacing-design.md
+ */
+export const MAX_WIN_PROBABILITY = 0.5;
+
 /** PATCH /admin/brand-campaigns/:id (요청) — 게시 설정·결과화면·상태 전환 */
 export const AdminBrandCampaignPatchSchema = z.object({
   status: CampaignStatusSchema.optional(),
-  dailyWinCap: z.number().int().positive().nullable().optional(),
+  winProbability: z.number().min(0).max(MAX_WIN_PROBABILITY).optional(),
   /** 링크 카드 이미지 (LP 의 og:image) */
   cardImageUrl: z.string().url().nullable().optional(),
   /** 이벤트 규칙 가이드 URL — 포스트 본문에 텍스트 링크로 나간다 */
@@ -203,7 +210,8 @@ export type AdminCampaignSummary = z.infer<typeof AdminCampaignSummarySchema>;
 export const AdminBrandCampaignDetailSchema = z.object({
   id: z.string(),
   status: CampaignStatusSchema,
-  dailyWinCap: z.number().int().nullable(),
+  /** 응모 1회당 기준 당첨확률 (0~0.5). 소진 페이싱이 여기에 보정 배수를 곱해 적용한다. */
+  winProbability: z.number(),
   cardImageUrl: z.string().nullable(),
   rulesUrl: z.string().nullable(),
   prUrl: z.string().nullable(),
@@ -221,10 +229,9 @@ export const AdminPrizeSchema = z.object({
   id: z.string(),
   type: PrizeTypeSchema,
   name: z.string(),
-  tier: z.number().int(),
   totalQty: z.number().int(),
+  /** 당첨 시 이 경품이 뽑힐 가중치이기도 하다 — 캠페인 전체 남은 수량 대비 비율. */
   remainingQty: z.number().int(),
-  winProbability: z.number(),
   /** CODE 경품의 사용 가능한 코드 재고 수 (PHYSICAL은 0) */
   availableCodeCount: z.number().int(),
 });
@@ -248,12 +255,10 @@ export type AdminPrizeCode = z.infer<typeof AdminPrizeCodeSchema>;
 export const AdminPrizeCodeListSchema = z.object({ codes: z.array(AdminPrizeCodeSchema) });
 export type AdminPrizeCodeList = z.infer<typeof AdminPrizeCodeListSchema>;
 
-/** ③ PATCH /admin/prizes/:id (요청) — 확률·수량 정정 */
+/** ③ PATCH /admin/prizes/:id (요청) — 수량 정정 */
 export const AdminPrizePatchSchema = z.object({
   name: z.string().min(1).optional(),
-  tier: z.number().int().min(1).optional(),
   totalQty: z.number().int().positive().optional(),
-  winProbability: z.number().gt(0).lt(1).optional(),
 });
 export type AdminPrizePatch = z.infer<typeof AdminPrizePatchSchema>;
 
@@ -291,9 +296,7 @@ export const AdminPrizeCreateSchema = z.object({
   campaignId: z.string(),
   type: PrizeTypeSchema,
   name: z.string().min(1),
-  tier: z.number().int().min(1),
   totalQty: z.number().int().positive(),
-  winProbability: z.number().gt(0).lt(1),
   /** CODE 경품: 엑셀 붙여넣기 원문(개행/탭/쉼표 구분). 코드 개수는 totalQty 와 같아야 한다 */
   codesText: z.string().optional(),
 });

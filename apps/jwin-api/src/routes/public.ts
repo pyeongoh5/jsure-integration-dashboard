@@ -59,7 +59,7 @@ export async function publicRoutes(app: FastifyInstance) {
         brands: {
           where: { status: { in: ['ACTIVE', 'PAUSED', 'ENDED'] } },
           include: {
-            prizes: { orderBy: { tier: 'asc' } },
+            prizes: { orderBy: { createdAt: 'asc' } },
             brandAccount: { select: { label: true, slug: true, logoUrl: true, xUsername: true } },
           },
           orderBy: { createdAt: 'asc' },
@@ -98,7 +98,7 @@ export async function publicRoutes(app: FastifyInstance) {
         },
         include: {
           campaign: true,
-          prizes: { orderBy: { tier: 'asc' } },
+          prizes: { orderBy: { createdAt: 'asc' } },
           posts: { where: { dateJst: dateJst(), status: 'POSTED' } },
           brandAccount: { select: { label: true, slug: true, logoUrl: true, xUsername: true } },
         },

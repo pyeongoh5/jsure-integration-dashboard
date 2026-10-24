@@ -1,0 +1,7 @@
+-- 마감 1일 전 리마인더 트리거 3종 추가. 기존 *_DEADLINE_REMINDER 는 마감 3일 전 전용이 된다.
+-- enum 값 추가는 additive 라 기존 row·구 코드에 영향이 없다.
+-- 본문 복사는 다음 마이그레이션에서 한다 — PostgreSQL 은 enum 값을 추가한 트랜잭션 안에서
+-- 그 값을 사용할 수 없다.
+ALTER TYPE "LineTriggerKey" ADD VALUE 'SNS_POST_FINAL_DEADLINE_REMINDER' AFTER 'SNS_POST_DEADLINE_REMINDER';
+ALTER TYPE "LineTriggerKey" ADD VALUE 'FAKE_PURCHASE_REVIEW_FINAL_DEADLINE_REMINDER' AFTER 'FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER';
+ALTER TYPE "LineTriggerKey" ADD VALUE 'SIMPLE_REVIEW_FINAL_DEADLINE_REMINDER' AFTER 'SIMPLE_REVIEW_DEADLINE_REMINDER';

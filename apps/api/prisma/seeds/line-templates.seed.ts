@@ -317,6 +317,12 @@ const SEED_ROWS: SeedRow[] = [
   { triggerKey: "SNS_APPLICATION_RECEIPT_CONFIRMED", enabled: false, body: "" },
   { triggerKey: "SNS_POST_SUBMITTED", enabled: false, body: "" },
   { triggerKey: "SNS_POST_DEADLINE_REMINDER", enabled: true, body: POST_DEADLINE_REMINDER },
+  // 1일 전 긴급 톤 문구는 운영자가 어드민에서 작성한다. 초기값은 3일 전 본문과 동일.
+  {
+    triggerKey: "SNS_POST_FINAL_DEADLINE_REMINDER",
+    enabled: true,
+    body: POST_DEADLINE_REMINDER,
+  },
   { triggerKey: "SNS_POST_APPROVED", enabled: false, body: "" },
   { triggerKey: "SNS_POST_REJECTED", enabled: true, body: POST_REJECTED },
   { triggerKey: "SNS_POST_REJECTION_REMINDER", enabled: true, body: POST_REJECTION_REMINDER },
@@ -336,6 +342,11 @@ const FP_SEED_ROWS: SeedRowFakePurchase[] = [
   { triggerKey: "FAKE_PURCHASE_REVIEW_APPROVED", enabled: false, body: "" },
   { triggerKey: "FAKE_PURCHASE_REVIEW_REJECTED", enabled: true, body: FP_REVIEW_REJECTED },
   { triggerKey: "FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER", enabled: true, body: FP_REVIEW_REMINDER },
+  {
+    triggerKey: "FAKE_PURCHASE_REVIEW_FINAL_DEADLINE_REMINDER",
+    enabled: true,
+    body: FP_REVIEW_REMINDER,
+  },
   { triggerKey: "FAKE_PURCHASE_SETTLEMENT_COMPLETED", enabled: true, body: FP_SETTLEMENT },
   { triggerKey: "FAKE_PURCHASE_CAMPAIGN_COMPLETED", enabled: false, body: "" },
 ];
@@ -351,6 +362,7 @@ const SR_SEED_ROWS: SeedRowSimpleReview[] = [
   { triggerKey: "SIMPLE_REVIEW_APPROVED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_REJECTED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_DEADLINE_REMINDER", enabled: false, body: "" },
+  { triggerKey: "SIMPLE_REVIEW_FINAL_DEADLINE_REMINDER", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_REJECTION_REMINDER", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_SETTLEMENT_COMPLETED", enabled: false, body: "" },
   { triggerKey: "SIMPLE_REVIEW_CAMPAIGN_COMPLETED", enabled: false, body: "" },

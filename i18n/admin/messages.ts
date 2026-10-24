@@ -2505,9 +2505,14 @@ export const adminMessages = {
           ja: "6. 投稿提出",
         },
         snsPostDeadlineReminder: {
-          ko: "6-R. 게시 마감 리마인더",
-          en: "6-R. Post deadline reminder",
-          ja: "6-R. 投稿締切リマインダー",
+          ko: "6-R-1. 게시 마감 3일 전 리마인더",
+          en: "6-R-1. Post deadline reminder (3 days before)",
+          ja: "6-R-1. 投稿締切3日前リマインダー",
+        },
+        snsPostFinalDeadlineReminder: {
+          ko: "6-R-2. 게시 마감 1일 전 리마인더",
+          en: "6-R-2. Post deadline reminder (1 day before)",
+          ja: "6-R-2. 投稿締切1日前リマインダー",
         },
         snsPostOverdueReminder: {
           ko: "6-r. 게시 마감 다음날 독촉",
@@ -2600,9 +2605,14 @@ export const adminMessages = {
           ja: "5-b. レビュー却下",
         },
         fakePurchaseReviewDeadlineReminder: {
-          ko: "5-R. 리뷰 마감 리마인더",
-          en: "5-R. Review deadline reminder",
-          ja: "5-R. レビュー締切リマインダー",
+          ko: "5-R-1. 리뷰 마감 3일 전 리마인더",
+          en: "5-R-1. Review deadline reminder (3 days before)",
+          ja: "5-R-1. レビュー締切3日前リマインダー",
+        },
+        fakePurchaseReviewFinalDeadlineReminder: {
+          ko: "5-R-2. 리뷰 마감 1일 전 리마인더",
+          en: "5-R-2. Review deadline reminder (1 day before)",
+          ja: "5-R-2. レビュー締切1日前リマインダー",
         },
         fakePurchaseReviewOverdueReminder: {
           ko: "5-r. 리뷰 마감 다음날 독촉",
@@ -2655,9 +2665,14 @@ export const adminMessages = {
           ja: "6. レビュー提出",
         },
         simpleReviewDeadlineReminder: {
-          ko: "6-R. 리뷰 마감 리마인더",
-          en: "6-R. Review deadline reminder",
-          ja: "6-R. レビュー締切リマインダー",
+          ko: "6-R-1. 리뷰 마감 3일 전 리마인더",
+          en: "6-R-1. Review deadline reminder (3 days before)",
+          ja: "6-R-1. レビュー締切3日前リマインダー",
+        },
+        simpleReviewFinalDeadlineReminder: {
+          ko: "6-R-2. 리뷰 마감 1일 전 리마인더",
+          en: "6-R-2. Review deadline reminder (1 day before)",
+          ja: "6-R-2. レビュー締切1日前リマインダー",
         },
         simpleReviewOverdueReminder: {
           ko: "6-r. 리뷰 마감 다음날 독촉",
@@ -2696,10 +2711,15 @@ export const adminMessages = {
           en: "Sent the day after delivery (recipients who have not confirmed receipt)",
           ja: "配送完了翌日に送信（受取確認未完了者）",
         },
-        postDeadlineReminder: {
-          ko: "게시 마감 3일 전·1일 전 발송",
-          en: "Sent 3 days and 1 day before the post deadline",
-          ja: "投稿締切3日前・1日前に送信",
+        postDeadlineReminderD3: {
+          ko: "게시 마감 3일 전 발송 (사전 점검·작성 독려)",
+          en: "Sent 3 days before the post deadline (pre-check and drafting reminder)",
+          ja: "投稿締切3日前に送信（事前チェック・作成のご案内）",
+        },
+        postDeadlineReminderD1: {
+          ko: "게시 마감 1일 전 발송 (마감 임박 긴급 안내)",
+          en: "Sent 1 day before the post deadline (urgent final notice)",
+          ja: "投稿締切1日前に送信（締切間近の緊急ご案内）",
         },
         postOverdueReminder: {
           ko: "게시 마감 다음날 발송 (미제출자 독촉)",
@@ -2731,10 +2751,15 @@ export const adminMessages = {
           en: "Sent when automatically cancelled the day after the order deadline",
           ja: "注文締切翌日の自動キャンセル時に送信",
         },
-        reviewDeadlineReminder: {
-          ko: "리뷰 마감 3일 전·1일 전 발송",
-          en: "Sent 3 days and 1 day before the review deadline",
-          ja: "レビュー締切3日前・1日前に送信",
+        reviewDeadlineReminderD3: {
+          ko: "리뷰 마감 3일 전 발송 (사전 점검·작성 독려)",
+          en: "Sent 3 days before the review deadline (pre-check and drafting reminder)",
+          ja: "レビュー締切3日前に送信（事前チェック・作成のご案内）",
+        },
+        reviewDeadlineReminderD1: {
+          ko: "리뷰 마감 1일 전 발송 (마감 임박 긴급 안내)",
+          en: "Sent 1 day before the review deadline (urgent final notice)",
+          ja: "レビュー締切1日前に送信（締切間近の緊急ご案内）",
         },
         reviewOverdueReminder: {
           ko: "리뷰 마감 다음날 발송 (미제출자 독촉)",

@@ -14,7 +14,10 @@ import { LineDispatcherService } from "./line-dispatcher.service";
 import { DISPATCH_APPLICATION_INCLUDE } from "./trigger-meta";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const POSTING_REMINDER_DAYS = [3, 1];
+/** 마감 3일 전. 사전 점검·작성 독려 톤. */
+const POSTING_REMINDER_DAY = 3;
+/** 마감 1일 전. 마감 임박 긴급 제출 촉구 톤 — 별도 템플릿으로 발송한다. */
+const POSTING_FINAL_REMINDER_DAY = 1;
 /** 마감 다음날. 미제출자 독촉을 1회만 보내기 위해 동등 비교로 쓴다. */
 const OVERDUE_REMINDER_DAY = -1;
 const INSIGHT_REMINDER_DAY_AFTER_REVIEW = 7;
@@ -47,7 +50,10 @@ type DeadlineReminderConfig = {
   /** 마감 계산 기준 시각 필드. SNS·단순리뷰는 수령 확인, 가구매는 주문 제출. */
   anchor: "receivedAt" | "orderSubmittedAt";
   statuses: ApplicationStatus[];
+  /** 마감 3일 전 발송 트리거. */
   deadlineTriggerKey: LineTriggerKey;
+  /** 마감 1일 전 발송 트리거. */
+  finalDeadlineTriggerKey: LineTriggerKey;
   overdueTriggerKey: LineTriggerKey;
 };
 
@@ -57,6 +63,7 @@ export const DEADLINE_REMINDER_CONFIGS: DeadlineReminderConfig[] = [
     anchor: "receivedAt",
     statuses: ["SHIPPED", "DELIVERED"],
     deadlineTriggerKey: "SNS_POST_DEADLINE_REMINDER",
+    finalDeadlineTriggerKey: "SNS_POST_FINAL_DEADLINE_REMINDER",
     overdueTriggerKey: "SNS_POST_OVERDUE_REMINDER",
   },
   {
@@ -64,6 +71,7 @@ export const DEADLINE_REMINDER_CONFIGS: DeadlineReminderConfig[] = [
     anchor: "orderSubmittedAt",
     statuses: ["ORDER_SUBMITTED"],
     deadlineTriggerKey: "FAKE_PURCHASE_REVIEW_DEADLINE_REMINDER",
+    finalDeadlineTriggerKey: "FAKE_PURCHASE_REVIEW_FINAL_DEADLINE_REMINDER",
     overdueTriggerKey: "FAKE_PURCHASE_REVIEW_OVERDUE_REMINDER",
   },
   {
@@ -71,6 +79,7 @@ export const DEADLINE_REMINDER_CONFIGS: DeadlineReminderConfig[] = [
     anchor: "receivedAt",
     statuses: ["SHIPPED", "DELIVERED"],
     deadlineTriggerKey: "SIMPLE_REVIEW_DEADLINE_REMINDER",
+    finalDeadlineTriggerKey: "SIMPLE_REVIEW_FINAL_DEADLINE_REMINDER",
     overdueTriggerKey: "SIMPLE_REVIEW_OVERDUE_REMINDER",
   },
 ];
@@ -115,7 +124,8 @@ export function reminderTriggerKeyFor(
   config: DeadlineReminderConfig,
 ): LineTriggerKey | null {
   if (remainingDays === OVERDUE_REMINDER_DAY) return config.overdueTriggerKey;
-  if (POSTING_REMINDER_DAYS.includes(remainingDays)) return config.deadlineTriggerKey;
+  if (remainingDays === POSTING_REMINDER_DAY) return config.deadlineTriggerKey;
+  if (remainingDays === POSTING_FINAL_REMINDER_DAY) return config.finalDeadlineTriggerKey;
   return null;
 }
 
@@ -244,7 +254,8 @@ export class LineRemindersService {
   }
 
   /**
-   * 제출 마감 리마인더 — 마감 3일 전·1일 전 독려와 마감 다음날 독촉을 함께 처리한다.
+   * 제출 마감 리마인더 — 마감 3일 전 독려, 1일 전 긴급 촉구, 마감 다음날 독촉을
+   * 함께 처리한다. 시점마다 쓰는 템플릿이 다르다.
    * 아직 제출물이 없는 응모만 대상이며, 각 시점에 1회만 발송된다.
    */
   private async runDeadlineReminders(config: DeadlineReminderConfig): Promise<void> {

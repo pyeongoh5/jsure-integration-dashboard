@@ -30,7 +30,8 @@ describe('activationBlockers', () => {
         campaign: CAMPAIGN,
         brandAccount: CONNECTED_ACCOUNT,
         prizes: [PHYSICAL_PRIZE],
-        postTemplates: [FULL_TEMPLATE],
+        winProbability: 0.005,
+      postTemplates: [FULL_TEMPLATE],
       }),
     ).toEqual([]);
   });
@@ -40,6 +41,7 @@ describe('activationBlockers', () => {
       campaign: CAMPAIGN,
       brandAccount: null,
       prizes: [PHYSICAL_PRIZE],
+      winProbability: 0.005,
       postTemplates: [FULL_TEMPLATE],
     });
     expect(blockers).toHaveLength(1);
@@ -51,6 +53,7 @@ describe('activationBlockers', () => {
       campaign: CAMPAIGN,
       brandAccount: { xUserId: null, encryptedAccessToken: null, refreshFailedAt: null },
       prizes: [PHYSICAL_PRIZE],
+      winProbability: 0.005,
       postTemplates: [FULL_TEMPLATE],
     });
     expect(blockers).toHaveLength(1);
@@ -61,6 +64,7 @@ describe('activationBlockers', () => {
       campaign: CAMPAIGN,
       brandAccount: { ...CONNECTED_ACCOUNT, refreshFailedAt: new Date() },
       prizes: [PHYSICAL_PRIZE],
+      winProbability: 0.005,
       postTemplates: [FULL_TEMPLATE],
     });
     expect(blockers).toHaveLength(1);
@@ -71,6 +75,7 @@ describe('activationBlockers', () => {
       campaign: CAMPAIGN,
       brandAccount: CONNECTED_ACCOUNT,
       prizes: [],
+      winProbability: 0.005,
       postTemplates: [FULL_TEMPLATE],
     });
     expect(blockers.some((blocker) => blocker.includes('경품'))).toBe(true);
@@ -81,6 +86,7 @@ describe('activationBlockers', () => {
       campaign: CAMPAIGN,
       brandAccount: CONNECTED_ACCOUNT,
       prizes: [PHYSICAL_PRIZE],
+      winProbability: 0.005,
       postTemplates: [
         {
           activeFrom: new Date('2026-08-31T15:00:00.000Z'),
@@ -96,6 +102,7 @@ describe('activationBlockers', () => {
       campaign: CAMPAIGN,
       brandAccount: CONNECTED_ACCOUNT,
       prizes: [PHYSICAL_PRIZE],
+      winProbability: 0.005,
       postTemplates: [],
     });
     expect(blockers.some((blocker) => blocker.includes('소재'))).toBe(true);
@@ -106,6 +113,7 @@ describe('activationBlockers', () => {
       campaign: { ...CAMPAIGN, dmTemplate: 'おめでとうございます！' },
       brandAccount: CONNECTED_ACCOUNT,
       prizes: [CODE_PRIZE],
+      winProbability: 0.005,
       postTemplates: [FULL_TEMPLATE],
     });
     expect(blockers.some((blocker) => blocker.includes('{{CODE}}'))).toBe(true);
@@ -117,7 +125,8 @@ describe('activationBlockers', () => {
         campaign: { ...CAMPAIGN, dmTemplate: null },
         brandAccount: CONNECTED_ACCOUNT,
         prizes: [CODE_PRIZE],
-        postTemplates: [FULL_TEMPLATE],
+        winProbability: 0.005,
+      postTemplates: [FULL_TEMPLATE],
       }),
     ).toEqual([]);
   });
@@ -128,7 +137,8 @@ describe('activationBlockers', () => {
         campaign: { ...CAMPAIGN, dmTemplate: '코드 없는 문구' },
         brandAccount: CONNECTED_ACCOUNT,
         prizes: [PHYSICAL_PRIZE],
-        postTemplates: [FULL_TEMPLATE],
+        winProbability: 0.005,
+      postTemplates: [FULL_TEMPLATE],
       }),
     ).toEqual([]);
   });
@@ -138,6 +148,7 @@ describe('activationBlockers', () => {
       campaign: CAMPAIGN,
       brandAccount: null,
       prizes: [],
+      winProbability: 0.005,
       postTemplates: [],
     });
     expect(blockers.length).toBeGreaterThanOrEqual(3);
@@ -179,5 +190,29 @@ describe('resolveAccountForActivationCheck', () => {
       null,
     );
     expect(resolved).toBe(CONNECTED_ACCOUNT);
+  });
+});
+
+describe('activationBlockers — 당첨확률', () => {
+  it('당첨확률이 0이면 막는다 (ACTIVE 후 당첨이 한 건도 안 나간다)', () => {
+    const blockers = activationBlockers({
+      campaign: CAMPAIGN,
+      brandAccount: CONNECTED_ACCOUNT,
+      prizes: [PHYSICAL_PRIZE],
+      postTemplates: [FULL_TEMPLATE],
+      winProbability: 0,
+    });
+    expect(blockers.some((blocker) => blocker.includes('당첨확률'))).toBe(true);
+  });
+
+  it('당첨확률이 0보다 크면 통과', () => {
+    const blockers = activationBlockers({
+      campaign: CAMPAIGN,
+      brandAccount: CONNECTED_ACCOUNT,
+      prizes: [PHYSICAL_PRIZE],
+      postTemplates: [FULL_TEMPLATE],
+      winProbability: 0.005,
+    });
+    expect(blockers).toEqual([]);
   });
 });

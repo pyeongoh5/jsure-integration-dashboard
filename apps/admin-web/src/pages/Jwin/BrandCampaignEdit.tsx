@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { JwinAccountStatusBadge } from "@/components/composites";
-import { Button } from "@/components/ui";
 import { SegmentedTabs } from "@/components/composites/SegmentedTabs";
 import {
   useJwinBrandCampaign,
@@ -9,6 +8,7 @@ import {
   useJwinPostTemplates,
   useJwinStatusTransition,
   activationChecklist,
+  percentToProbability,
   postTemplateCoverage,
   PrizeTab,
   PostTemplateTab,
@@ -80,19 +80,10 @@ export function JwinBrandCampaignEdit() {
           </div>
         </div>
         <div className={styles.saveRow}>
-          {form.saved && <span className={styles.saved}>{t("jwin.common.saved")}</span>}
-          {form.error && <span className={styles.saveError}>{form.error}</span>}
-          {/* detail 이 있는 상태에서의 loadError 는 백그라운드 재조회 실패이므로
+          {/* 저장 버튼은 유일한 폼 값(당첨확률) 입력 옆(경품 탭)으로 이동.
+              detail 이 있는 상태에서의 loadError 는 백그라운드 재조회 실패이므로
               전체화면 대신 여기서 인라인으로 보여준다 (실패를 조용히 삼키지 않기 위함) */}
           {form.loadError && <span className={styles.saveError}>{form.loadError}</span>}
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => void form.save()}
-            loading={form.saving}
-          >
-            {t("jwin.common.save")}
-          </Button>
         </div>
       </div>
 
@@ -116,6 +107,10 @@ export function JwinBrandCampaignEdit() {
           onDetailChanged={form.reload}
           winProbabilityPercent={form.values.winProbabilityPercent}
           onWinProbabilityChange={(value) => form.setField("winProbabilityPercent", value)}
+          onWinProbabilitySave={() => void form.save()}
+          winProbabilitySaving={form.saving}
+          winProbabilitySaved={form.saved}
+          winProbabilityError={form.error}
         />
       </div>
     </div>
@@ -133,6 +128,10 @@ function BrandCampaignEditBody({
   onDetailChanged,
   winProbabilityPercent,
   onWinProbabilityChange,
+  onWinProbabilitySave,
+  winProbabilitySaving,
+  winProbabilitySaved,
+  winProbabilityError,
 }: {
   brandCampaignId: string;
   detail: AdminBrandCampaignDetail;
@@ -140,21 +139,26 @@ function BrandCampaignEditBody({
   onDetailChanged: () => void;
   winProbabilityPercent: string;
   onWinProbabilityChange: (value: string) => void;
+  onWinProbabilitySave: () => void;
+  winProbabilitySaving: boolean;
+  winProbabilitySaved: boolean;
+  winProbabilityError: string | null;
 }) {
   const prizes = useJwinPrizes(brandCampaignId);
   const postTemplates = useJwinPostTemplates(brandCampaignId);
   const transition = useJwinStatusTransition(brandCampaignId, onDetailChanged);
 
-  const checks = useMemo(
-    () =>
-      activationChecklist({
-        detail,
-        prizes: prizes.prizes,
-        // 커버리지는 시즌 기간을 기준으로 판정한다
-        coverage: postTemplateCoverage(detail.campaign, postTemplates.templates),
-      }),
-    [detail, prizes.prizes, postTemplates.templates],
-  );
+  const checks = useMemo(() => {
+    // 당첨확률은 저장값이 아니라 입력 중인 값 기준으로 판정 — 입력 직후에도
+    // 체크리스트 피드백이 맞도록. 최종 방어는 서버 전환 게이트(저장값)가 한다.
+    const inputProbability = percentToProbability(winProbabilityPercent) ?? 0;
+    return activationChecklist({
+      detail: { ...detail, winProbability: inputProbability },
+      prizes: prizes.prizes,
+      // 커버리지는 시즌 기간을 기준으로 판정한다
+      coverage: postTemplateCoverage(detail.campaign, postTemplates.templates),
+    });
+  }, [detail, prizes.prizes, postTemplates.templates, winProbabilityPercent]);
 
   const hasCodePrize = prizes.prizes.some((prize) => prize.type === "CODE");
   // 상태 전환은 모든 탭 위에 걸리고, 본문 탭만 카드로 감싼다.
@@ -167,7 +171,6 @@ function BrandCampaignEditBody({
           detail={detail}
           checks={checks}
           changing={transition.changing}
-          checksStale={prizes.loading || postTemplates.loading}
           error={transition.error}
           onChange={transition.change}
         />
@@ -185,6 +188,10 @@ function BrandCampaignEditBody({
               onAppendCodes={prizes.appendCodes}
               winProbabilityPercent={winProbabilityPercent}
               onWinProbabilityChange={onWinProbabilityChange}
+              onWinProbabilitySave={onWinProbabilitySave}
+              winProbabilitySaving={winProbabilitySaving}
+              winProbabilitySaved={winProbabilitySaved}
+              winProbabilityError={winProbabilityError}
             />
           )}
 

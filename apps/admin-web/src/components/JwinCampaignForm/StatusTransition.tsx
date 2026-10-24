@@ -3,7 +3,7 @@ import { JwinStatusBadge } from "@/components/composites";
 import { Button } from "@/components/ui";
 import type { AdminBrandCampaignDetail } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
-import { canActivate, type ActivationCheck } from "./activationChecklist";
+import type { ActivationCheck } from "./activationChecklist";
 import { PauseCampaignDialog } from "./PauseCampaignDialog";
 import { ResumeCampaignDialog } from "./ResumeCampaignDialog";
 import { EndCampaignDialog } from "./EndCampaignDialog";
@@ -14,9 +14,6 @@ type Props = {
   detail: AdminBrandCampaignDetail;
   checks: ActivationCheck[];
   changing: boolean;
-  // 체크리스트가 참조하는 경품·소재 데이터가 재조회 중이면 ACTIVE 버튼을 잠가
-  // 삭제 직후 stale 데이터로 체크리스트가 통과된 것처럼 보이는 창을 막는다.
-  checksStale: boolean;
   error: string | null;
   onChange: (status: JwinCampaignStatus) => void;
 };
@@ -49,10 +46,10 @@ function ChecklistView({ checks }: { checks: ActivationCheck[] }) {
 }
 
 /**
- * 상태 배지 + 전환 버튼. SETUP 에서는 발행 전 체크리스트를 함께 보여주고,
- * 4항목을 전부 충족해야 ACTIVE 전환 버튼이 열린다.
+ * 상태 배지 + 전환 버튼. SETUP 에서는 발행 전 체크리스트만 보여준다 —
+ * 캠페인 시작은 설정 화면이 아니라 시즌 상세에서 일괄 실행한다 (서버가 최종 검증).
  */
-export function StatusTransition({ detail, checks, changing, checksStale, error, onChange }: Props) {
+export function StatusTransition({ detail, checks, changing, error, onChange }: Props) {
   const t = useT();
   // 시작 전에는 펼쳐 두고, 이미 시작한 캠페인에서는 접어 둔다.
   const [checklistOpen, setChecklistOpen] = useState(detail.status === "SETUP");
@@ -90,14 +87,7 @@ export function StatusTransition({ detail, checks, changing, checksStale, error,
 
         <div className={styles.transitionButtons}>
           {detail.status === "SETUP" && (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => onChange("ACTIVE")}
-              disabled={changing || checksStale || !canActivate(checks)}
-            >
-              {changing ? t("jwin.status.changing") : t("jwin.status.start")}
-            </Button>
+            <span className={styles.fieldHint}>{t("jwin.status.startFromSeason")}</span>
           )}
 
           {detail.status === "ACTIVE" && (

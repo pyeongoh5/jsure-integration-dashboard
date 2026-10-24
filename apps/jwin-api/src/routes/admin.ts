@@ -380,6 +380,7 @@ export async function adminRoutes(app: FastifyInstance) {
               brandAccount: brandCampaign.brandAccount,
               prizes: brandCampaign.prizes,
               postTemplates: brandCampaign.postTemplates,
+              winProbability: brandCampaign.winProbability,
             }),
             // 게이트 ⑤ — 소재 미디어가 X 가 받는 포맷인지 실물(바이트)로 확인
             ...(await mediaFormatBlockers(brandCampaign.postTemplates.map(toMediaCheckInput))),
@@ -585,6 +586,8 @@ export async function adminRoutes(app: FastifyInstance) {
         brandAccount: current.brandAccount,
         prizes: current.prizes,
         postTemplates: current.postTemplates,
+        // 같은 요청이 확률을 함께 바꿀 수 있으므로 요청 값을 우선한다
+        winProbability: parsed.data.winProbability ?? current.winProbability,
       });
       // 게이트 ⑤ — 소재 미디어가 X 가 받는 포맷인지 실물(바이트)로 확인
       blockers.push(...(await mediaFormatBlockers(current.postTemplates.map(toMediaCheckInput))));

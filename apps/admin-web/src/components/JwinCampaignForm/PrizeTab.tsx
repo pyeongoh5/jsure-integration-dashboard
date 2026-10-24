@@ -5,7 +5,7 @@ import { Button, Input } from "@/components/ui";
 import { MAX_WIN_PROBABILITY } from "@/domains/jwin";
 import type { AdminPrize, AdminPrizeCreate, AdminPrizePatch } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
-import { formatProbabilityPercent, prizeShare } from "./winProbability";
+import { formatProbabilityPercent, percentToProbability, prizeShare } from "./winProbability";
 import { PrizeAddDialog } from "./PrizeAddDialog";
 import { PrizeEditDialog } from "./PrizeEditDialog";
 import styles from "./JwinCampaignTabs.module.css";
@@ -20,6 +20,11 @@ type Props = {
   /** 기준 당첨확률(% 입력) — 추첨 설정이라 경품과 같은 탭에 둔다 */
   winProbabilityPercent: string;
   onWinProbabilityChange: (value: string) => void;
+  /** 확률 저장 — 저장 버튼을 입력 옆에 두어 미저장 상태를 방지한다 */
+  onWinProbabilitySave: () => void;
+  winProbabilitySaving: boolean;
+  winProbabilitySaved: boolean;
+  winProbabilityError: string | null;
 };
 
 const TYPE_LABEL_KEY: Record<AdminPrize["type"], AdminTranslationKey> = {
@@ -63,10 +68,15 @@ export function PrizeTab({
   onAppendCodes,
   winProbabilityPercent,
   onWinProbabilityChange,
+  onWinProbabilitySave,
+  winProbabilitySaving,
+  winProbabilitySaved,
+  winProbabilityError,
 }: Props) {
   const t = useT();
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<AdminPrize | null>(null);
+  const inputProbability = percentToProbability(winProbabilityPercent);
 
   return (
     <div className={styles.tab}>
@@ -79,16 +89,42 @@ export function PrizeTab({
 
       <div className={styles.field}>
         <span className={styles.fieldLabel}>{t("jwin.basic.winProbability")}</span>
-        <Input
-          type="number"
-          step="0.01"
-          min={0}
-          max={MAX_WIN_PROBABILITY * 100}
-          value={winProbabilityPercent}
-          onChange={onWinProbabilityChange}
-          placeholder="0.5"
-        />
-        <span className={styles.fieldHint}>{t("jwin.basic.winProbabilityHint")}</span>
+        <div className={styles.inlineControls}>
+          <Input
+            type="number"
+            step="0.01"
+            min={0}
+            max={MAX_WIN_PROBABILITY * 100}
+            value={winProbabilityPercent}
+            onChange={onWinProbabilityChange}
+            placeholder="0.5"
+          />
+          <Button
+            variant="primary"
+            size="md"
+            onClick={onWinProbabilitySave}
+            loading={winProbabilitySaving}
+          >
+            {t("jwin.common.save")}
+          </Button>
+          {winProbabilitySaved && (
+            <span className={styles.savedText}>{t("jwin.common.saved")}</span>
+          )}
+        </div>
+        {winProbabilityError ? (
+          <span className={styles.errorText}>{winProbabilityError}</span>
+        ) : (
+          <span className={styles.fieldHint}>{t("jwin.basic.winProbabilityHint")}</span>
+        )}
+        {/* "%인지 0~1인지" 혼동 방지 — 입력값을 응모 횟수로 즉시 환산해 보여준다 */}
+        {inputProbability !== null && inputProbability > 0 && (
+          <span className={styles.probabilityPreview}>
+            {t("jwin.basic.winProbabilityPreview", {
+              percent: winProbabilityPercent,
+              per: Math.max(1, Math.round(1 / inputProbability)).toLocaleString(),
+            })}
+          </span>
+        )}
       </div>
 
 

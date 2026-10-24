@@ -28,11 +28,17 @@ export type ActivationInput = {
   brandAccount: ActivationAccount | null;
   prizes: { type: 'PHYSICAL' | 'CODE' }[];
   postTemplates: { activeFrom: Date; activeTo: Date }[];
+  /** 참여(BrandCampaign)의 기준 당첨확률 — 0이면 당첨이 한 건도 나가지 않는다. */
+  winProbability: number;
 };
 
 /** 미충족 사유(한국어). 빈 배열이면 전환 가능. */
 export function activationBlockers(input: ActivationInput): string[] {
   const blockers: string[] = [];
+
+  if (input.winProbability <= 0) {
+    blockers.push('당첨확률이 0입니다. 0보다 큰 값을 저장하세요');
+  }
 
   if (!input.brandAccount) {
     blockers.push('브랜드 계정이 연결되지 않았습니다');

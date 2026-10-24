@@ -252,9 +252,14 @@ export const adminMessages = {
       },
       winProbability: { ko: "당첨확률 (%)", en: "Win probability (%)", ja: "当選確率 (%)" },
       winProbabilityHint: {
-        ko: "응모 1회당 기준 확률입니다. 경품 소진이 계획보다 느리면 자동으로 상향 보정됩니다.",
-        en: "Base probability per entry. It is raised automatically when prizes run behind schedule.",
-        ja: "応募1回あたりの基準確率です。景品の消化が計画より遅れると自動で引き上げられます。",
+        ko: "퍼센트(%) 단위로 입력합니다 — 예: 0.5 입력 = 0.5% = 응모 200회당 1회. 응모 1회당 기준 확률이며, 경품 소진이 계획보다 느리면 자동으로 상향 보정됩니다.",
+        en: "Enter as a percentage — e.g. 0.5 means 0.5%, about 1 win per 200 entries. Base probability per entry; raised automatically when prizes run behind schedule.",
+        ja: "パーセント(%)で入力します — 例: 0.5 入力 = 0.5% = 応募200回に1回。応募1回あたりの基準確率で、景品の消化が計画より遅れると自動で引き上げられます。",
+      },
+      winProbabilityPreview: {
+        ko: "{percent}% = 응모 약 {per}회당 1회 당첨",
+        en: "{percent}% = about 1 win per {per} entries",
+        ja: "{percent}% = 応募約{per}回に1回当選",
       },
       lpSectionTitle: {
         ko: "시즌 LP 화면 — 참여 브랜드 목록",
@@ -460,6 +465,11 @@ export const adminMessages = {
       paused: { ko: "일시중지", en: "Paused", ja: "一時停止" },
       ended: { ko: "종료", en: "Ended", ja: "終了" },
       start: { ko: "캠페인 시작", en: "Start campaign", ja: "キャンペーン開始" },
+      startFromSeason: {
+        ko: "캠페인 시작은 시즌 상세 화면에서 일괄 실행합니다.",
+        en: "Campaigns are started in bulk from the season detail page.",
+        ja: "キャンペーンの開始はシーズン詳細画面で一括実行します。",
+      },
       checklistTitle: {
         ko: "캠페인 시작 조건",
         en: "Requirements to start",
@@ -524,9 +534,9 @@ export const adminMessages = {
       },
       probability: { ko: "당첨확률 설정", en: "Win probability set", ja: "当選確率の設定" },
       probabilityZero: {
-        ko: "당첨확률이 0입니다. 기본 탭에서 0보다 큰 값을 설정하세요 — 그대로 두면 당첨이 한 건도 나가지 않습니다.",
-        en: "The win probability is 0. Set a value above 0 on the Basic tab, otherwise nobody will ever win.",
-        ja: "当選確率が0です。基本タブで0より大きい値を設定してください。このままでは当選が1件も出ません。",
+        ko: "당첨확률이 0입니다. 경품 탭 상단에서 0보다 큰 값을 입력하고 저장하세요 — 그대로 두면 당첨이 한 건도 나가지 않습니다.",
+        en: "The win probability is 0. Enter a value above 0 at the top of the Prizes tab and save, otherwise nobody will ever win.",
+        ja: "当選確率が0です。景品タブ上部で0より大きい値を入力して保存してください。このままでは当選が1件も出ません。",
       },
       coverage: {
         ko: "기간 전체를 덮는 포스트",

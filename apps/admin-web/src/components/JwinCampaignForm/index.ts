@@ -35,3 +35,4 @@ export { useJwinStatusTransition } from "./useJwinStatusTransition";
 export type { JwinCampaignStatus } from "./useJwinStatusTransition";
 export { activationChecklist, canActivate } from "./activationChecklist";
 export type { ActivationCheck, ActivationCheckKey } from "./activationChecklist";
+export { percentToProbability } from "./winProbability";

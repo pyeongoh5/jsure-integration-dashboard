@@ -18,9 +18,18 @@ function makeApplication(
     orderSubmittedAt: null,
     receivedAt: null,
     posts: [],
+    reviewedAt: null,
+    reviewedBy: null,
     ...overrides,
   };
 }
+
+const REJECTED = {
+  status: "REJECTED",
+  rejectReason: "前回落選",
+  reviewedAt: new Date("2026-08-03T00:00:00.000Z"),
+  reviewedBy: { id: "admin-9", name: "카린" },
+} satisfies Partial<InfluencerHistoryApplicationRow>;
 
 function makeLog(
   overrides: Partial<InfluencerHistoryLogRow> = {},
@@ -107,6 +116,80 @@ describe("influencerHistoryGroups", () => {
     );
 
     expect(groups.map((group) => group.applicationId)).toEqual(["recent", "old"]);
+  });
+
+  it("감사 로그 이전 반려 건은 reviewedAt/reviewedBy 로 반려 이벤트를 복원한다", () => {
+    const groups = influencerHistoryGroups([makeApplication(REJECTED)], []);
+
+    const reject = groups[0]!.events.find(
+      (event) => event.action === "APPLICATION_REJECT",
+    );
+    expect(reject).toBeDefined();
+    expect(reject!.origin).toBe("ADMIN");
+    expect(reject!.actor).toEqual({ id: "admin-9", name: "카린" });
+    expect(reject!.metadata).toEqual({ reason: "前回落選" });
+    expect(reject!.createdAt).toBe("2026-08-03T00:00:00.000Z");
+  });
+
+  it("처리자를 모르는 옛 반려 건은 시스템 처리로 복원한다", () => {
+    const groups = influencerHistoryGroups(
+      [makeApplication({ ...REJECTED, reviewedBy: null, rejectReason: null })],
+      [],
+    );
+
+    const reject = groups[0]!.events.find(
+      (event) => event.action === "APPLICATION_REJECT",
+    )!;
+    expect(reject.origin).toBe("SYSTEM");
+    expect(reject.actor).toBeNull();
+    expect(reject.metadata).toBeNull();
+  });
+
+  it("반려 로그가 이미 있으면 합성하지 않는다", () => {
+    const groups = influencerHistoryGroups(
+      [makeApplication(REJECTED)],
+      [makeLog({ action: "APPLICATION_REJECT" })],
+    );
+
+    const rejects = groups[0]!.events.filter(
+      (event) => event.action === "APPLICATION_REJECT",
+    );
+    expect(rejects).toHaveLength(1);
+    expect(rejects[0]!.id).toBe("log-1");
+  });
+
+  it("반려가 아니면 검토 시각이 있어도 합성하지 않는다", () => {
+    const groups = influencerHistoryGroups(
+      [makeApplication({ ...REJECTED, status: "APPROVED" })],
+      [],
+    );
+
+    expect(groups[0]!.events.map((event) => event.action)).toEqual([
+      "APPLICATION_APPLY",
+    ]);
+  });
+
+  // 화면이 이벤트 id 를 React key 로 쓴다 — 한 그룹 안에서 겹치면 행이 사라진다.
+  it("합성 항목이 모두 들어찬 그룹에서도 이벤트 id 는 겹치지 않는다", () => {
+    const at = new Date("2026-08-05T00:00:00.000Z");
+    const groups = influencerHistoryGroups(
+      [
+        makeApplication({
+          ...REJECTED,
+          orderSubmittedAt: at,
+          receivedAt: at,
+          posts: [
+            { subType: "INSTAGRAM", submittedAt: at, insightSubmittedAt: at },
+            { subType: "TIKTOK", submittedAt: at, insightSubmittedAt: at },
+          ],
+        }),
+      ],
+      [makeLog(), makeLog({ id: "log-2", action: "APPLICATION_SHIP" })],
+    );
+
+    const ids = groups[0]!.events.map((event) => event.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toContain("synthetic-application-reject");
   });
 
   it("취소는 세부 탭에 걸리지 않고, 진행 중 상태는 응모 탭에 묶인다", () => {

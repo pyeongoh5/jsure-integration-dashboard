@@ -1,6 +1,7 @@
 import {
   ApplicationStatusSchema,
   CampaignSubTypeSchema,
+  type AdminActivityLog,
   type InfluencerActivityGroup,
 } from "@jsure/shared";
 import { toActivityLog, type ActivityLogRow } from "./application-activity";
@@ -16,6 +17,9 @@ export type InfluencerHistoryApplicationRow = InfluencerActivitySource & {
   rejectReason: string | null;
   subTypes: string[];
   campaign: { id: string; title: string };
+  /** 응모 검토(승인·반려) 시각과 처리자. 반려 이벤트 합성에만 쓴다. */
+  reviewedAt: Date | null;
+  reviewedBy: { id: string; name: string | null } | null;
 };
 
 /** 여러 응모를 한 번에 읽으므로 어느 응모의 로그인지 알아야 한다. */
@@ -25,6 +29,33 @@ export type InfluencerHistoryLogRow = ActivityLogRow & {
 
 function newestEventAt(group: InfluencerActivityGroup): string {
   return group.events[0]?.createdAt ?? "";
+}
+
+/**
+ * 감사 로그 도입(20260810010000_admin_activity_log) 이전에 반려된 응모는
+ * APPLICATION_REJECT 로그가 없어 히스토리에서 반려 사실 자체가 사라진다.
+ * reviewedAt/reviewedById 컬럼에 시각과 처리자가 남아 있으므로 여기서 되살린다.
+ *
+ * 로그가 있는 건은 그쪽이 원본이므로 합성하지 않는다 — 같은 반려가 두 줄이 된다.
+ */
+function syntheticRejectEntry(
+  application: InfluencerHistoryApplicationRow,
+  logs: AdminActivityLog[],
+): AdminActivityLog | null {
+  if (application.status !== "REJECTED") return null;
+  if (!application.reviewedAt) return null;
+  if (logs.some((log) => log.action === "APPLICATION_REJECT")) return null;
+  return {
+    id: "synthetic-application-reject",
+    action: "APPLICATION_REJECT",
+    // 처리자를 모르면(옛 데이터) 시스템 처리로 보이게 둔다.
+    origin: application.reviewedBy ? "ADMIN" : "SYSTEM",
+    actor: application.reviewedBy,
+    metadata: application.rejectReason
+      ? { reason: application.rejectReason }
+      : null,
+    createdAt: application.reviewedAt.toISOString(),
+  };
 }
 
 /**
@@ -49,20 +80,27 @@ export function influencerHistoryGroups(
     logsByApplication.set(log.applicationId, [log]);
   }
 
-  const groups = applications.map((application) => ({
-    applicationId: application.id,
-    campaignId: application.campaign.id,
-    campaignTitle: application.campaign.title,
-    subTypes: application.subTypes.map((subType) =>
-      CampaignSubTypeSchema.parse(subType),
-    ),
-    status: ApplicationStatusSchema.parse(application.status),
-    rejectReason: application.rejectReason,
-    events: [
-      ...(logsByApplication.get(application.id) ?? []).map(toActivityLog),
-      ...influencerActivityEntries(application),
-    ].sort((left, right) => (left.createdAt < right.createdAt ? 1 : -1)),
-  }));
+  const groups = applications.map((application) => {
+    const logs = (logsByApplication.get(application.id) ?? []).map(
+      toActivityLog,
+    );
+    const synthesized = syntheticRejectEntry(application, logs);
+    return {
+      applicationId: application.id,
+      campaignId: application.campaign.id,
+      campaignTitle: application.campaign.title,
+      subTypes: application.subTypes.map((subType) =>
+        CampaignSubTypeSchema.parse(subType),
+      ),
+      status: ApplicationStatusSchema.parse(application.status),
+      rejectReason: application.rejectReason,
+      events: [
+        ...logs,
+        ...influencerActivityEntries(application),
+        ...(synthesized ? [synthesized] : []),
+      ].sort((left, right) => (left.createdAt < right.createdAt ? 1 : -1)),
+    };
+  });
 
   return groups.sort((left, right) =>
     newestEventAt(left) < newestEventAt(right) ? 1 : -1,

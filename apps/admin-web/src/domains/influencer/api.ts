@@ -4,6 +4,8 @@ import {
   InfluencerActivityResponseSchema,
   InfluencerMemoEntrySchema,
   InfluencerNotesResponseSchema,
+  InfluencerTagListResponseSchema,
+  UpdateInfluencerTagsResponseSchema,
   influencerFilterToParams,
   type AdminInfluencerExportResponse,
   type AdminInfluencerPageResponse,
@@ -11,6 +13,7 @@ import {
   type InfluencerFilter,
   type InfluencerMemoEntry,
   type InfluencerNotesResponse,
+  type InfluencerTag,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
@@ -64,6 +67,24 @@ export async function createInfluencerMemo(
     { comment, campaignId },
   );
   return InfluencerMemoEntrySchema.parse(res.data);
+}
+
+/** 태그 마스터 전체 — 메모 팝업 태그 입력의 자동완성 후보. */
+export async function listInfluencerTags(): Promise<InfluencerTag[]> {
+  const res = await api.get("/influencers/tags");
+  return InfluencerTagListResponseSchema.parse(res.data).tags;
+}
+
+/** 태그 전체 교체. 마스터에 없는 라벨은 서버가 만든다. */
+export async function updateInfluencerTags(
+  influencerId: string,
+  labels: string[],
+): Promise<string[]> {
+  const res = await api.put(
+    `/influencers/${encodeURIComponent(influencerId)}/tags`,
+    { labels },
+  );
+  return UpdateInfluencerTagsResponseSchema.parse(res.data).tags;
 }
 
 export async function flagInfluencer(

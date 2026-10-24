@@ -42,6 +42,7 @@ import {
 } from "./applicant-filter.sql";
 import { bucketMonthlyCounts, monthStartUtc9 } from "./monthly-counts";
 import { PrismaService } from "../prisma/prisma.service";
+import { INFLUENCER_TAG_INCLUDE, toTagLabels } from "../influencers/influencer-tags";
 import { toActivityLog } from "../audit/application-activity";
 import { influencerActivityEntries } from "../audit/influencer-activity";
 import { POST_REJECTION_RESUBMIT_DAYS } from "../common/resubmit-deadline";
@@ -86,6 +87,7 @@ type AdminApplicationRow = {
     name: string;
     email: string;
     flaggedAt: Date | null;
+    tagAssignments: { tag: { label: string } }[];
     snsAccounts: { snsType: string; handle: string; followerCount: number }[];
   };
 };
@@ -117,6 +119,7 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
       name: row.influencer.name,
       email: row.influencer.email,
       flagged: row.influencer.flaggedAt !== null,
+      tags: toTagLabels(row.influencer.tagAssignments),
       snsAccounts: row.influencer.snsAccounts.map((account) => ({
         snsType:
           account.snsType as AdminApplication["influencer"]["snsAccounts"][number]["snsType"],
@@ -146,6 +149,7 @@ const APPLICATION_INCLUDE = {
       name: true,
       email: true,
       flaggedAt: true,
+      tagAssignments: INFLUENCER_TAG_INCLUDE,
       snsAccounts: {
         select: { snsType: true, handle: true, followerCount: true },
         orderBy: { snsType: "asc" as const },
@@ -1563,6 +1567,7 @@ const SUBMISSION_INCLUDE = {
       id: true,
       name: true,
       flaggedAt: true,
+      tagAssignments: INFLUENCER_TAG_INCLUDE,
       snsAccounts: {
         select: {
           snsType: true,
@@ -1634,6 +1639,7 @@ type SubmissionRow = {
     id: string;
     name: string;
     flaggedAt: Date | null;
+    tagAssignments: { tag: { label: string } }[];
     snsAccounts: {
       snsType: string;
       handle: string;
@@ -1751,6 +1757,7 @@ async function toSubmissionResponse(
       id: row.influencer.id,
       name: row.influencer.name,
       flagged: row.influencer.flaggedAt !== null,
+      tags: toTagLabels(row.influencer.tagAssignments),
       snsAccounts: row.influencer.snsAccounts.map((account) => ({
         snsType:
           account.snsType as AdminSubmission["influencer"]["snsAccounts"][number]["snsType"],

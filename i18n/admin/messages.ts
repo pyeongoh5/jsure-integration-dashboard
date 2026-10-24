@@ -3,6 +3,7 @@ export const adminMessages = {
     languageName: { ko: "한국어", en: "English", ja: "日本語" },
     cancel: { ko: "취소", en: "Cancel", ja: "キャンセル" },
     close: { ko: "닫기", en: "Close", ja: "閉じる" },
+    removeTag: { ko: "태그 삭제", en: "Remove tag", ja: "タグを削除" },
     loading: { ko: "불러오는 중…", en: "Loading…", ja: "読み込み中…" },
     itemCount: { ko: "{count}건", en: "{count} items", ja: "{count}件" },
     apply: { ko: "적용", en: "Apply", ja: "適用" },
@@ -1715,6 +1716,11 @@ export const adminMessages = {
             en: "Influencer flag cleared",
             ja: "インフルエンサーフラグ解除",
           },
+          influencerTagsUpdate: {
+            ko: "관리자 태그 변경",
+            en: "Admin tags updated",
+            ja: "管理者タグ変更",
+          },
           influencerWithdraw: {
             ko: "인플루언서 탈퇴 처리",
             en: "Influencer withdrawn",
@@ -1993,11 +1999,6 @@ export const adminMessages = {
           ko: "어드민 화면에서만 캠페인 제목 앞에 표시됩니다. 인플루언서에게는 노출되지 않습니다.",
           en: "Shown before the campaign title only in the admin screens. Never visible to influencers.",
           ja: "管理者画面でのみキャンペーンタイトルの前に表示されます。インフルエンサーには表示されません。",
-        },
-        tagsRemoveAria: {
-          ko: "태그 삭제",
-          en: "Remove tag",
-          ja: "タグを削除",
         },
         rewardTypeLabel: { ko: "보수 체계", en: "Reward structure", ja: "報酬体系" },
         rewardUnified: {
@@ -2777,6 +2778,22 @@ export const adminMessages = {
         },
         unflag: { ko: "대상외 해제", en: "Remove excluded flag", ja: "対象外を解除" },
         flag: { ko: "대상외 지정", en: "Mark as excluded", ja: "対象外に指定" },
+        tagsTitle: { ko: "관리자 태그", en: "Admin tags", ja: "管理者タグ" },
+        tagsPlaceholder: {
+          ko: "예시: 한국거주, 고퀄리티 — 엔터/스페이스/콤마로 추가",
+          en: "e.g. lives in Korea, high quality — press Enter/Space/Comma to add",
+          ja: "例: 韓国在住, 高クオリティ — Enter/スペース/カンマで追加",
+        },
+        tagsHint: {
+          ko: "어드민 목록에만 표시됩니다. 인플루언서에게는 노출되지 않습니다.",
+          en: "Shown only in the admin lists. Never visible to influencers.",
+          ja: "管理者の一覧にのみ表示されます。インフルエンサーには表示されません。",
+        },
+        tagsSaveFailed: {
+          ko: "태그를 저장할 수 없습니다.",
+          en: "Could not save the tags.",
+          ja: "タグを保存できませんでした。",
+        },
         addMemoTitle: { ko: "메모 추가", en: "Add memo", ja: "メモを追加" },
         memoPlaceholder: {
           ko: "이 인플루언서에 대한 메모를 입력하세요.",

@@ -9,7 +9,7 @@ import {
 import { RecruitList } from "./RecruitList";
 import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
 import { ExcludedCampaignsPicker } from "./ExcludedCampaignsPicker";
-import { CampaignTagsInput } from "./CampaignTagsInput";
+import { TagsInput } from "@/components/composites";
 import { uploadCampaignThumbnail, UploadError } from "@/lib/uploads";
 import { listCampaigns } from "../api";
 import { RichTextEditor } from "@/components/composites/RichTextEditor/RichTextEditor";
@@ -496,9 +496,11 @@ export function CampaignForm({
               control={methods.control}
               name="tags"
               render={({ field }) => (
-                <CampaignTagsInput
+                <TagsInput
                   value={field.value}
                   onChange={field.onChange}
+                  placeholder={t("domains.campaign.form.tagsPlaceholder")}
+                  hint={t("domains.campaign.form.tagsHint")}
                   disabled={submitting}
                 />
               )}

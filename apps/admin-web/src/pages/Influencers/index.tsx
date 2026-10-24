@@ -21,7 +21,7 @@ import {
 import { triggerCsvDownload } from "@/domains/application";
 import { getStoredUser } from "@/domains/auth";
 import { BroadcastDialog } from "@/domains/broadcast";
-import { ScrollTable, SnsProfileLink } from "@/components/composites";
+import { ScrollTable, SnsProfileLink, TagChipList } from "@/components/composites";
 import {
   FilterChipBar,
   MultiSelectFilterChip,
@@ -304,6 +304,7 @@ export function Influencers() {
                                 {t("domains.application.applicants.table.flagged")}
                               </span>
                             )}
+                            <TagChipList tags={r.tags} />
                           </div>
                           {r.nameKana && <div className={styles.nameSub}>{r.nameKana}</div>}
                         </div>

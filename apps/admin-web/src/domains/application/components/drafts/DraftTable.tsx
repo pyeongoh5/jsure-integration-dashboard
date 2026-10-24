@@ -6,6 +6,7 @@ import {
   SnsProfileLink,
   SubTypeIcon,
   SubTypePill,
+  TagChipList,
 } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { useT } from "@/lib/i18n";
@@ -289,6 +290,7 @@ export function DraftTable({
                               }
                               representative={draft.representativeSns}
                             />
+                            <TagChipList tags={draft.influencerTags} />
                           </div>
                         </div>
                       </div>

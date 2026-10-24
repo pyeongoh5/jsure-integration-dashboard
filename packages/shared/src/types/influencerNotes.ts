@@ -51,6 +51,8 @@ export const InfluencerNotesResponseSchema = z.object({
   applicationRejections: z.array(InfluencerApplicationRejectionEntrySchema),
   postRejections: z.array(InfluencerPostRejectionEntrySchema),
   flaggedAt: z.string().datetime().nullable(),
+  /** 어드민 전용 관리 태그 라벨. default 는 이 필드가 없는 구 API 와의 배포 갭 대비. */
+  tags: z.array(z.string()).default([]),
 });
 export type InfluencerNotesResponse = z.infer<
   typeof InfluencerNotesResponseSchema

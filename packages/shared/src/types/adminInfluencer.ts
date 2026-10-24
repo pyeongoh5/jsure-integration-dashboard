@@ -49,6 +49,8 @@ export const AdminInfluencerSchema = z.object({
   status: z.enum(["ACTIVE", "SUSPENDED"]),
   memo: z.string().nullable(),
   flagged: z.boolean(),
+  /** 어드민 전용 관리 태그 라벨. default 는 이 필드가 없는 구 API 와의 배포 갭 대비. */
+  tags: z.array(z.string()).default([]),
   snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   address: AdminInfluencerAddressSchema,
   /**
@@ -117,6 +119,7 @@ export const AdminApplicationSchema = z.object({
     // AdminInfluencerSchema.email 과 같은 이유로 형식 검증 없음
     email: z.string(),
     flagged: z.boolean(),
+    tags: z.array(z.string()).default([]),
     snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   }),
 });
@@ -256,6 +259,7 @@ export const AdminSubmissionSchema = z.object({
     id: z.string(),
     name: z.string(),
     flagged: z.boolean(),
+    tags: z.array(z.string()).default([]),
     snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   }),
 });

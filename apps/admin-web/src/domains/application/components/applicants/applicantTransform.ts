@@ -92,6 +92,7 @@ export function toApplicant(
       ? { snsType: representative.snsType, handle: representative.handle }
       : null,
     flagged: application.influencer.flagged,
+    tags: application.influencer.tags,
     campaignId: application.campaign.id,
     campaign: application.campaign.title,
     category: application.campaign.category,

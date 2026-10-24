@@ -66,6 +66,8 @@ export type DraftReview = {
   /** 응모 SNS 핸들이 없을 때(가구매·단순리뷰) 표기할 대표 SNS. 우선순위 Instagram→X→TikTok. */
   representativeSns: { snsType: SnsAccountSubType; handle: string } | null;
   influencerFlagged: boolean;
+  /** 어드민 전용 관리 태그 라벨. */
+  influencerTags: string[];
   campaignId: string;
   campaignTitle: string;
   campaignThumbnailUrl: string | null;

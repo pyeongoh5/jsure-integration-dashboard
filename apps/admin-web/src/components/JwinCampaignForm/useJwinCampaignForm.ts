@@ -8,13 +8,13 @@ import {
   type AdminCampaignDetail,
 } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
-import { utcIsoToJstLocal, jstLocalToUtcIso } from "./jwinDateTime";
+import { utcIsoToJstDate, jstDateStartUtcIso, jstDateEndUtcIso } from "./jwinDateTime";
 
 /** 시즌 캠페인 폼 — 이름·slug·기간·게시 시각. 상태는 참여(BrandCampaign)가 갖는다. */
 export type JwinCampaignFormValues = {
   name: string;
   slug: string;
-  /** JST datetime-local "YYYY-MM-DDTHH:mm" */
+  /** JST 날짜 "YYYY-MM-DD" — 기간은 시작일 0시 ~ 종료일 23:59:59 (JST)로 고정 */
   startsAt: string;
   endsAt: string;
   /** 매일 게시 시각 (JST "HH:mm") — 전 참여 브랜드 공통 */
@@ -37,8 +37,8 @@ function toFormValues(detail: AdminCampaignDetail): JwinCampaignFormValues {
   return {
     name: detail.name,
     slug: detail.slug,
-    startsAt: utcIsoToJstLocal(detail.startsAt),
-    endsAt: utcIsoToJstLocal(detail.endsAt),
+    startsAt: utcIsoToJstDate(detail.startsAt),
+    endsAt: utcIsoToJstDate(detail.endsAt),
     dailyPostTime: detail.dailyPostTime,
   };
 }
@@ -53,7 +53,8 @@ function validate(values: JwinCampaignFormValues): JwinCampaignFormErrorKeys {
   if (!/^\d{2}:\d{2}$/.test(values.dailyPostTime)) {
     errorKeys.dailyPostTime = "jwin.basic.error.dailyPostTimeRequired";
   }
-  if (values.startsAt && values.endsAt && values.endsAt <= values.startsAt) {
+  // 날짜만 비교 — 당일(시작일 === 종료일) 캠페인은 허용한다.
+  if (values.startsAt && values.endsAt && values.endsAt < values.startsAt) {
     errorKeys.endsAt = "jwin.basic.error.endsAtOrder";
   }
   return errorKeys;
@@ -125,8 +126,8 @@ export function useJwinCampaignForm(campaignId: string | undefined): UseJwinCamp
     const body = {
       name: values.name.trim(),
       slug: values.slug.trim(),
-      startsAt: jstLocalToUtcIso(values.startsAt),
-      endsAt: jstLocalToUtcIso(values.endsAt),
+      startsAt: jstDateStartUtcIso(values.startsAt),
+      endsAt: jstDateEndUtcIso(values.endsAt),
       dailyPostTime: values.dailyPostTime,
     };
 

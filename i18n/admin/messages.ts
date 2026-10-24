@@ -1335,9 +1335,14 @@ export const adminMessages = {
           },
           trackingNumber: { ko: "운송장 번호", en: "Tracking number", ja: "送り状番号" },
           trackingOptionalHelp: {
-            ko: "운송장 번호 없이 진행하면 인플루언서에게 “송장 번호 확인 중(추후 안내)” 내용으로 발송 안내가 전달됩니다. 번호는 나중에 [운송장 입력] 으로 등록할 수 있습니다.",
-            en: "If you proceed without a tracking number, the influencer is told the number is still being confirmed. You can register it later from [Enter tracking].",
-            ja: "送り状番号なしで進めると、インフルエンサーには「送り状番号を確認中（追ってご案内）」として発送案内が届きます。番号は後から［送り状入力］で登録できます。",
+            ko: "송장 번호가 아직 없다면 [운송장 없이 배송 시작] 으로 진행하세요. 인플루언서에게는 “송장 번호 확인 중(추후 안내)” 으로 발송 안내가 전달되고, 번호는 나중에 [운송장 입력] 으로 등록할 수 있습니다.",
+            en: "No tracking number yet? Use [Ship without tracking]. The influencer is told the number is still being confirmed, and you can register it later from [Enter tracking].",
+            ja: "送り状番号がまだ無い場合は［送り状なしで発送開始］で進めてください。インフルエンサーには「送り状番号を確認中（追ってご案内）」として発送案内が届き、番号は後から［送り状入力］で登録できます。",
+          },
+          shipWithoutTracking: {
+            ko: "운송장 없이 배송 시작",
+            en: "Ship without tracking",
+            ja: "送り状なしで発送開始",
           },
           confirm: { ko: "배송 시작", en: "Start shipping", ja: "配送開始" },
           lateTitle: {

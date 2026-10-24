@@ -42,6 +42,11 @@
   margin-top: var(--space-5);
 }
 
+/* 보조 액션은 확인/취소와 떨어뜨려 왼쪽 끝에 둔다 */
+.secondaryAction {
+  margin-right: auto;
+}
+
 .btn {
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-4);

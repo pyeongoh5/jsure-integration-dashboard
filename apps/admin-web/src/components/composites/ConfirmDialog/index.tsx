@@ -14,6 +14,8 @@ type ConfirmDialogProps = {
   busy?: boolean;
   /** 입력 미충족 등으로 확인 버튼만 비활성화. 취소 버튼/Escape/배경 클릭에는 영향 없음. */
   confirmDisabled?: boolean;
+  /** 확인/취소 외의 보조 액션. 액션 줄 왼쪽 끝에 붙는다. */
+  secondaryAction?: ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -27,6 +29,7 @@ export function ConfirmDialog({
   tone = "primary",
   busy = false,
   confirmDisabled = false,
+  secondaryAction,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -70,6 +73,9 @@ export function ConfirmDialog({
           <p className={styles.subtitle}>{subtitle}</p>
         )}
         <div className={styles.actions}>
+          {secondaryAction !== undefined && (
+            <div className={styles.secondaryAction}>{secondaryAction}</div>
+          )}
           <Button
             variant="secondary"
             size="md"

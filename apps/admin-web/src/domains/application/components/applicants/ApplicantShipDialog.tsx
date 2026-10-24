@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import { Button } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 import styles from "@/pages/Applicants/Applicants.module.css";
 import type { Applicant } from "./types";
@@ -48,8 +49,10 @@ export function ApplicantShipDialog({ applicant, mutating, error, onConfirm, onC
   // 이미 배송 시작된 건(사후 등록)은 번호를 넣으러 여는 팝업이라 번호가 필수다.
   // 배송 시작 단계에서는 송장 채번 전 선발송을 허용한다.
   const isLateTrackingEntry = applicant.status === "SHIPPING";
-  const canSubmit =
-    !!resolvedCarrier && (isLateTrackingEntry ? !!trimmedNumber : true);
+  // 번호 없이 보내는 길은 별도 버튼으로 분리한다 — 빈 칸으로 확인을 누르는
+  // 실수와 의도한 선발송을 구분하기 위해.
+  const canSubmit = !!resolvedCarrier && !!trimmedNumber;
+  const canShipWithoutTracking = !!resolvedCarrier && !trimmedNumber;
 
   return (
     <ConfirmDialog
@@ -120,6 +123,18 @@ export function ApplicantShipDialog({ applicant, mutating, error, onConfirm, onC
           : "domains.application.applicants.shipDialog.confirm",
       )}
       cancelLabel={t("common.cancel")}
+      secondaryAction={
+        isLateTrackingEntry ? undefined : (
+          <Button
+            variant="secondary"
+            size="md"
+            disabled={mutating || !canShipWithoutTracking}
+            onClick={() => onConfirm(resolvedCarrier, "")}
+          >
+            {t("domains.application.applicants.shipDialog.shipWithoutTracking")}
+          </Button>
+        )
+      }
       tone="primary"
       busy={mutating}
       confirmDisabled={!canSubmit}

@@ -11,16 +11,20 @@ function makeMocks(influencerExists = true) {
   );
   const deleteMany = jest.fn().mockResolvedValue({ count: 0 });
   const createMany = jest.fn().mockResolvedValue({ count: 0 });
+  // 트랜잭션 콜백이 받는 클라이언트 — 바깥 prisma 와 같은 mock 을 공유한다.
+  const tx = {
+    influencerTag: { upsert, findMany: jest.fn().mockResolvedValue([]) },
+    influencerTagAssignment: { deleteMany, createMany },
+  };
   const prisma = {
     influencer: {
       findUnique: jest
         .fn()
         .mockResolvedValue(influencerExists ? { id: "inf-1" } : null),
     },
-    influencerTag: { upsert, findMany: jest.fn().mockResolvedValue([]) },
-    influencerTagAssignment: { deleteMany, createMany },
-    $transaction: jest.fn(
-      (run: (tx: unknown) => Promise<unknown>) => run(prisma),
+    ...tx,
+    $transaction: jest.fn((run: (client: typeof tx) => Promise<unknown>) =>
+      run(tx),
     ),
   };
   const audit = { record: jest.fn().mockResolvedValue(undefined) };

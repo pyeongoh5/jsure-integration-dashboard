@@ -1,52 +1,28 @@
 import { describe, expect, it } from "vitest";
-import {
-  formatProbabilityPercent,
-  percentToProbability,
-  prizeShare,
-  probabilityToPercentInput,
-} from "./winProbability";
+import { winProbabilityAutosave } from "./winProbability";
 
-describe("formatProbabilityPercent", () => {
-  it("저장 값을 퍼센트 문자열로 바꾼다", () => {
-    expect(formatProbabilityPercent(0.05)).toBe("5%");
-    expect(formatProbabilityPercent(0.005)).toBe("0.5%");
-    expect(formatProbabilityPercent(0.9999)).toBe("99.99%");
+const MAX = 0.5;
+
+describe("winProbabilityAutosave — 디바운스 자동 저장 판정", () => {
+  it("유효하고 저장값과 다르면 저장", () => {
+    expect(winProbabilityAutosave("0.05", 0, MAX)).toEqual({
+      kind: "save",
+      winProbability: 0.0005,
+    });
   });
 
-  it("부동소수 잔재를 남기지 않는다", () => {
-    expect(formatProbabilityPercent(0.1 + 0.2)).toBe("30%");
-  });
-});
-
-describe("percentToProbability", () => {
-  it("퍼센트 입력을 저장 값으로 바꾼다", () => {
-    expect(percentToProbability("0.5")).toBeCloseTo(0.005, 10);
-    expect(percentToProbability(" 50 ")).toBe(0.5);
-    expect(percentToProbability("0")).toBe(0);
+  it("저장값과 같으면 스킵 (불필요한 PATCH 방지)", () => {
+    expect(winProbabilityAutosave("5", 0.05, MAX)).toEqual({ kind: "skip" });
   });
 
-  it("빈 값·숫자 아님·음수는 null", () => {
-    expect(percentToProbability("")).toBeNull();
-    expect(percentToProbability("abc")).toBeNull();
-    expect(percentToProbability("-1")).toBeNull();
+  it("빈 입력은 스킵 — 지우고 다시 입력하는 중에 0 을 저장하지 않는다", () => {
+    expect(winProbabilityAutosave("", 0.05, MAX)).toEqual({ kind: "skip" });
+    expect(winProbabilityAutosave("  ", 0.05, MAX)).toEqual({ kind: "skip" });
   });
 
-  it("입력 변환과 표기 변환이 왕복한다", () => {
-    expect(percentToProbability(probabilityToPercentInput(0.005))).toBeCloseTo(0.005, 10);
-  });
-});
-
-describe("prizeShare", () => {
-  const prizes = [{ remainingQty: 10 }, { remainingQty: 30 }, { remainingQty: 1 }];
-
-  it("남은 수량 비율을 돌려준다", () => {
-    expect(prizeShare(prizes[0]!, prizes)).toBeCloseTo(10 / 41, 10);
-    expect(prizeShare(prizes[1]!, prizes)).toBeCloseTo(30 / 41, 10);
-    expect(prizeShare(prizes[2]!, prizes)).toBeCloseTo(1 / 41, 10);
-  });
-
-  it("전체 재고가 없으면 0", () => {
-    expect(prizeShare({ remainingQty: 0 }, [{ remainingQty: 0 }])).toBe(0);
-    expect(prizeShare({ remainingQty: 0 }, [])).toBe(0);
+  it("숫자가 아니거나 상한 초과면 invalid", () => {
+    expect(winProbabilityAutosave("abc", 0, MAX)).toEqual({ kind: "invalid" });
+    expect(winProbabilityAutosave("60", 0, MAX)).toEqual({ kind: "invalid" });
+    expect(winProbabilityAutosave("-1", 0, MAX)).toEqual({ kind: "invalid" });
   });
 });

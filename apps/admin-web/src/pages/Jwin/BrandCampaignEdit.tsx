@@ -107,7 +107,6 @@ export function JwinBrandCampaignEdit() {
           onDetailChanged={form.reload}
           winProbabilityPercent={form.values.winProbabilityPercent}
           onWinProbabilityChange={(value) => form.setField("winProbabilityPercent", value)}
-          onWinProbabilitySave={() => void form.save()}
           winProbabilitySaving={form.saving}
           winProbabilitySaved={form.saved}
           winProbabilityError={form.error}
@@ -128,7 +127,6 @@ function BrandCampaignEditBody({
   onDetailChanged,
   winProbabilityPercent,
   onWinProbabilityChange,
-  onWinProbabilitySave,
   winProbabilitySaving,
   winProbabilitySaved,
   winProbabilityError,
@@ -139,7 +137,6 @@ function BrandCampaignEditBody({
   onDetailChanged: () => void;
   winProbabilityPercent: string;
   onWinProbabilityChange: (value: string) => void;
-  onWinProbabilitySave: () => void;
   winProbabilitySaving: boolean;
   winProbabilitySaved: boolean;
   winProbabilityError: string | null;
@@ -188,7 +185,6 @@ function BrandCampaignEditBody({
               onAppendCodes={prizes.appendCodes}
               winProbabilityPercent={winProbabilityPercent}
               onWinProbabilityChange={onWinProbabilityChange}
-              onWinProbabilitySave={onWinProbabilitySave}
               winProbabilitySaving={winProbabilitySaving}
               winProbabilitySaved={winProbabilitySaved}
               winProbabilityError={winProbabilityError}

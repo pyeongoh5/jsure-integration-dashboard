@@ -9,9 +9,12 @@ import {
 import { useT } from "@/lib/i18n";
 import {
   formatProbabilityPercent,
-  percentToProbability,
   probabilityToPercentInput,
+  winProbabilityAutosave,
 } from "./winProbability";
+
+/** 입력이 멈춘 뒤 자동 저장까지의 대기 시간. */
+const AUTOSAVE_DEBOUNCE_MS = 800;
 
 /**
  * 참여(BrandCampaign) 상세 로드 + 추첨 설정 저장.
@@ -34,7 +37,6 @@ export type UseJwinBrandCampaignResult = {
   error: string | null;
   saving: boolean;
   saved: boolean;
-  save: () => Promise<void>;
   /** 다른 탭이 PATCH 로 갱신했을 때 상세를 갈아끼운다 */
   applyDetail: (updated: AdminBrandCampaignDetail) => void;
   reload: () => void;
@@ -96,10 +98,16 @@ export function useJwinBrandCampaign(brandCampaignId: string): UseJwinBrandCampa
     setValues(toValues(updated));
   }, []);
 
-  const save = useCallback(async () => {
+  // 디바운스 자동 저장 — 입력이 멈춘 뒤 유효하고 저장값과 다를 때만 PATCH.
+  // 저장 후 values 는 건드리지 않는다(입력 중인 값을 서버 응답으로 덮지 않기 위함).
+  useEffect(() => {
     if (!detail) return;
-    const winProbability = percentToProbability(values.winProbabilityPercent);
-    if (winProbability === null || winProbability > MAX_WIN_PROBABILITY) {
+    const decision = winProbabilityAutosave(
+      values.winProbabilityPercent,
+      detail.winProbability,
+      MAX_WIN_PROBABILITY,
+    );
+    if (decision.kind === "invalid") {
       setError(
         t("jwin.basic.error.winProbabilityInvalid", {
           max: formatProbabilityPercent(MAX_WIN_PROBABILITY),
@@ -107,19 +115,25 @@ export function useJwinBrandCampaign(brandCampaignId: string): UseJwinBrandCampa
       );
       return;
     }
-    setSaving(true);
     setError(null);
-    try {
-      const updated = await updateBrandCampaign(detail.id, { winProbability });
-      applyDetail(updated);
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 2000);
-    } catch (caught: unknown) {
-      setError(jwinErrorMessage(caught, t("jwin.common.saveFailed")));
-    } finally {
-      setSaving(false);
-    }
-  }, [applyDetail, detail, values, t]);
+    if (decision.kind === "skip") return;
+    const timer = window.setTimeout(() => {
+      setSaving(true);
+      updateBrandCampaign(detail.id, { winProbability: decision.winProbability })
+        .then((updated) => {
+          setDetail(updated);
+          setSaved(true);
+          window.setTimeout(() => setSaved(false), 2000);
+        })
+        .catch((caught: unknown) => {
+          setError(jwinErrorMessage(caught, t("jwin.common.saveFailed")));
+        })
+        .finally(() => {
+          setSaving(false);
+        });
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [detail, values.winProbabilityPercent, t]);
 
   return {
     loading,
@@ -130,7 +144,6 @@ export function useJwinBrandCampaign(brandCampaignId: string): UseJwinBrandCampa
     error,
     saving,
     saved,
-    save,
     applyDetail,
     reload: () => setReloadKey((current) => current + 1),
   };

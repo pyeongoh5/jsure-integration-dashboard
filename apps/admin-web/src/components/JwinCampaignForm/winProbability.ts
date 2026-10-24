@@ -24,6 +24,29 @@ export function probabilityToPercentInput(value: number): string {
   return String(Number((value * 100).toFixed(4)));
 }
 
+export type WinProbabilityAutosave =
+  | { kind: "save"; winProbability: number }
+  | { kind: "skip" }
+  | { kind: "invalid" };
+
+/**
+ * 디바운스 자동 저장 판정.
+ * - 빈 입력은 스킵 — 지우고 다시 입력하는 중에 0 을 저장하면 안 된다.
+ * - 숫자가 아니거나 범위(0~max) 밖이면 invalid — 저장하지 않고 에러 표시.
+ * - 저장값과 같으면 스킵 — 불필요한 PATCH 방지.
+ */
+export function winProbabilityAutosave(
+  input: string,
+  savedProbability: number,
+  max: number,
+): WinProbabilityAutosave {
+  if (input.trim() === "") return { kind: "skip" };
+  const probability = percentToProbability(input);
+  if (probability === null || probability > max) return { kind: "invalid" };
+  if (probability === savedProbability) return { kind: "skip" };
+  return { kind: "save", winProbability: probability };
+}
+
 /** 당첨 시 이 경품이 뽑힐 비율 — 남은 수량 ÷ 캠페인 전체 남은 수량. */
 export function prizeShare(
   prize: { remainingQty: number },

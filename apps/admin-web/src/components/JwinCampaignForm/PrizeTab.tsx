@@ -17,11 +17,9 @@ type Props = {
   onAdd: (body: Omit<AdminPrizeCreate, "campaignId">) => Promise<string | null>;
   onEdit: (prizeId: string, body: AdminPrizePatch) => Promise<string | null>;
   onAppendCodes: (prizeId: string, codesText: string) => Promise<string | null>;
-  /** 기준 당첨확률(% 입력) — 추첨 설정이라 경품과 같은 탭에 둔다 */
+  /** 기준 당첨확률(% 입력) — 추첨 설정이라 경품과 같은 탭에 둔다. 디바운스 자동 저장. */
   winProbabilityPercent: string;
   onWinProbabilityChange: (value: string) => void;
-  /** 확률 저장 — 저장 버튼을 입력 옆에 두어 미저장 상태를 방지한다 */
-  onWinProbabilitySave: () => void;
   winProbabilitySaving: boolean;
   winProbabilitySaved: boolean;
   winProbabilityError: string | null;
@@ -68,7 +66,6 @@ export function PrizeTab({
   onAppendCodes,
   winProbabilityPercent,
   onWinProbabilityChange,
-  onWinProbabilitySave,
   winProbabilitySaving,
   winProbabilitySaved,
   winProbabilityError,
@@ -99,14 +96,10 @@ export function PrizeTab({
             onChange={onWinProbabilityChange}
             placeholder="0.5"
           />
-          <Button
-            variant="primary"
-            size="md"
-            onClick={onWinProbabilitySave}
-            loading={winProbabilitySaving}
-          >
-            {t("jwin.common.save")}
-          </Button>
+          {/* 디바운스 자동 저장 — 입력을 멈추면 저장되고 상태만 표시한다 */}
+          {winProbabilitySaving && (
+            <span className={styles.fieldHint}>{t("jwin.common.saving")}</span>
+          )}
           {winProbabilitySaved && (
             <span className={styles.savedText}>{t("jwin.common.saved")}</span>
           )}

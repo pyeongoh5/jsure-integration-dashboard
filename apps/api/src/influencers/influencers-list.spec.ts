@@ -65,6 +65,7 @@ function makeRow(id: string) {
     addressLine1: "1-1",
     addressLine2: "",
     snsAccounts: [{ snsType: "INSTAGRAM", handle: id, followerCount: 100 }],
+    tagAssignments: [],
   };
 }
 

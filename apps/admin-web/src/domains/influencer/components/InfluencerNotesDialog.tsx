@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import type { InfluencerNotesResponse } from "@jsure/shared";
 import type { AdminTranslationKey } from "@i18n/admin";
-import { SegmentedTabs } from "@/components/composites";
+import { SegmentedTabs, TagsInput } from "@/components/composites";
 import {
   createInfluencerMemo,
   fetchInfluencerNotes,
   flagInfluencer,
   unflagInfluencer,
+  updateInfluencerTags,
 } from "../api";
 import { formatDateTime } from "../formatDateTime";
+import { useInfluencerTagOptions } from "../useInfluencerTagOptions";
 import { useT } from "@/lib/i18n";
 import { InfluencerHistoryTab } from "./InfluencerHistoryTab";
 import styles from "./InfluencerNotesDialog.module.css";
@@ -49,7 +51,9 @@ export function InfluencerNotesDialog({
   const [memoDraft, setMemoDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [savingTags, setSavingTags] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const tagOptions = useInfluencerTagOptions();
 
   useEffect(() => {
     let cancelled = false;
@@ -102,6 +106,37 @@ export function InfluencerNotesDialog({
       );
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleTagsChange(nextTags: string[]) {
+    if (state.kind !== "ready") return;
+    const previousTags = state.data.tags;
+    // 칩은 즉시 반영하고, 저장이 실패하면 서버 상태로 되돌린다.
+    setState({ kind: "ready", data: { ...state.data, tags: nextTags } });
+    setSavingTags(true);
+    setError(null);
+    try {
+      const savedTags = await updateInfluencerTags(influencerId, nextTags);
+      setState((current) =>
+        current.kind === "ready"
+          ? { kind: "ready", data: { ...current.data, tags: savedTags } }
+          : current,
+      );
+      onChanged?.();
+    } catch (cause) {
+      setState((current) =>
+        current.kind === "ready"
+          ? { kind: "ready", data: { ...current.data, tags: previousTags } }
+          : current,
+      );
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : t("domains.influencer.notesDialog.tagsSaveFailed"),
+      );
+    } finally {
+      setSavingTags(false);
     }
   }
 
@@ -188,6 +223,23 @@ export function InfluencerNotesDialog({
               : t("domains.influencer.notesDialog.flag")}
           </button>
         </div>
+
+        {/* 태그도 탭과 무관한 인플루언서 단위 데이터라 탭 위에 둔다. */}
+        {state.kind === "ready" && (
+          <section className={styles.tagSection}>
+            <h3 className={styles.sectionTitle}>
+              {t("domains.influencer.notesDialog.tagsTitle")}
+            </h3>
+            <TagsInput
+              value={state.data.tags}
+              onChange={handleTagsChange}
+              placeholder={t("domains.influencer.notesDialog.tagsPlaceholder")}
+              hint={t("domains.influencer.notesDialog.tagsHint")}
+              suggestions={tagOptions}
+              disabled={savingTags}
+            />
+          </section>
+        )}
 
         <SegmentedTabs
           className={styles.mainTabs}

@@ -7,6 +7,7 @@ import {
   SnsProfileLink,
   SubTypeIcon,
   SubTypePill,
+  TagChipList,
 } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { useT } from "@/lib/i18n";
@@ -316,6 +317,7 @@ export function ApplicantTable({
                           }
                           representative={applicant.representativeSns}
                         />
+                        <TagChipList tags={applicant.tags} />
                       </div>
                     </div>
                   </div>

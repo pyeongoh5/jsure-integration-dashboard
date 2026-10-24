@@ -8,3 +8,5 @@ export { SnsHandleCell, type SnsAccountRef } from "./SnsHandleCell";
 export { SubTypeIcon } from "./SubTypeIcon";
 export { SubTypePill } from "./SubTypePill";
 export { TagChip } from "./TagChip";
+export { TagChipList } from "./TagChipList";
+export { TagsInput } from "./TagsInput";

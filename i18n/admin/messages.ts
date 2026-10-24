@@ -232,9 +232,9 @@ export const adminMessages = {
       slug: { ko: "slug", en: "Slug", ja: "slug" },
       slugPlaceholder: { ko: "2026-09", en: "2026-09", ja: "2026-09" },
       slugHint: {
-        ko: "LP 링크에 사용됩니다. 영소문자·숫자·하이픈만.",
-        en: "Used in the landing page URL. Lowercase letters, digits and hyphens only.",
-        ja: "LPリンクに使われます。英小文字・数字・ハイフンのみ。",
+        ko: "시즌·응모 페이지 주소(URL)에 들어갑니다. 영소문자·숫자·하이픈만.",
+        en: "Becomes part of the season/entry page URL. Lowercase letters, digits and hyphens only.",
+        ja: "シーズン・応募ページのURLに使われます。英小文字・数字・ハイフンのみ。",
       },
       slugLockedHint: {
         ko: "ACTIVE 전환 후에는 게시된 링크 보호를 위해 수정할 수 없습니다.",
@@ -262,9 +262,9 @@ export const adminMessages = {
         ja: "{percent}% = 応募約{per}回に1回当選",
       },
       lpSectionTitle: {
-        ko: "시즌 LP 화면 — 참여 브랜드 목록",
-        en: "Season LP — participating brand list page",
-        ja: "シーズンLP画面 — 参加ブランド一覧",
+        ko: "시즌 페이지 — 참여 브랜드 목록 화면",
+        en: "Season page — participating brand list screen",
+        ja: "シーズンページ — 参加ブランド一覧画面",
       },
       lpSectionDesc: {
         ko: "응모자가 이번 시즌의 참여 브랜드를 한눈에 둘러보는 대표 페이지입니다. 응모 페이지 하단 배너를 누르면 이 화면으로 옵니다.",
@@ -287,9 +287,9 @@ export const adminMessages = {
         ja: "キービジュアル（ページ最上部）",
       },
       keyVisualHint: {
-        ko: "시즌 LP 맨 위에 전체 폭으로 들어가는 대표 이미지로, 트윗 공유 미리보기(og:image)에도 쓰입니다. 올린 비율 그대로 표시되므로 16:9~3:2 권장 (1200×675 ~ 1200×800px). 세로로 길수록 모바일 첫 화면에서 브랜드 목록이 아래로 밀립니다.",
-        en: "Hero image shown full-width at the very top of the season LP; also used as the share preview (og:image). Displayed at its original ratio, so use 16:9–3:2 (1200×675 to 1200×800px). The taller it is, the further the brand list is pushed below the fold on mobile.",
-        ja: "シーズンLP最上部に全幅で入るメイン画像で、ツイート共有プレビュー（og:image）にも使われます。アップした比率のまま表示されるため16:9〜3:2推奨（1200×675〜1200×800px）。縦に長いほどモバイルの初期画面でブランド一覧が下に押し下げられます。",
+        ko: "시즌 페이지 맨 위에 전체 폭으로 들어가는 대표 이미지로, 트윗 공유 미리보기(og:image)에도 쓰입니다. 올린 비율 그대로 표시되므로 16:9~3:2 권장 (1200×675 ~ 1200×800px). 세로로 길수록 모바일 첫 화면에서 브랜드 목록이 아래로 밀립니다.",
+        en: "Hero image shown full-width at the very top of the season page; also used as the share preview (og:image). Displayed at its original ratio, so use 16:9–3:2 (1200×675 to 1200×800px). The taller it is, the further the brand list is pushed below the fold on mobile.",
+        ja: "シーズンページ最上部に全幅で入るメイン画像で、ツイート共有プレビュー（og:image）にも使われます。アップした比率のまま表示されるため16:9〜3:2推奨（1200×675〜1200×800px）。縦に長いほどモバイルの初期画面でブランド一覧が下に押し下げられます。",
       },
       listBackground: {
         ko: "브랜드 목록 배경 (키비주얼 아래)",
@@ -302,14 +302,14 @@ export const adminMessages = {
         ja: "キービジュアルの下、ブランドカード一覧エリア全体に敷かれる背景です。画面を覆うようにクロップされるため縦長画像推奨 — 1080×1920px目安。",
       },
       thumbnail: {
-        ko: "시즌 LP 이동 배너 (페이지 하단)",
-        en: "Season LP banner (bottom of page)",
-        ja: "シーズンLP誘導バナー（ページ下部）",
+        ko: "시즌 페이지 이동 배너 (페이지 하단)",
+        en: "Season page banner (bottom of page)",
+        ja: "シーズンページ誘導バナー（ページ下部）",
       },
       thumbnailHint: {
-        ko: "응모 페이지 하단에 표시되는 배너로, 누르면 시즌 LP(브랜드 목록)로 이동합니다. 16:9로 크롭됩니다 — 1280×720px 권장.",
-        en: "Banner at the bottom of each entry page; tapping it opens the season LP (brand list). Cropped to 16:9 — 1280×720px recommended.",
-        ja: "応募ページ下部に表示されるバナーで、タップするとシーズンLP（ブランド一覧）に移動します。16:9にクロップされます — 1280×720px推奨。",
+        ko: "응모 페이지 하단에 표시되는 배너로, 누르면 시즌 페이지(참여 브랜드 목록)로 이동합니다. 16:9로 크롭됩니다 — 1280×720px 권장.",
+        en: "Banner at the bottom of each entry page; tapping it opens the season page (brand list). Cropped to 16:9 — 1280×720px recommended.",
+        ja: "応募ページ下部に表示されるバナーで、タップするとシーズンページ（参加ブランド一覧）に移動します。16:9にクロップされます — 1280×720px推奨。",
       },
       error: {
         brandNameRequired: {
@@ -761,19 +761,19 @@ export const adminMessages = {
       title: { ko: "결과화면 / DM", en: "Result screen / DM", ja: "結果画面 / DM" },
       prUrl: { ko: "브랜드 사이트 URL", en: "Brand site URL", ja: "ブランドサイトURL" },
       prBanner: {
-        ko: "브랜드 배너 (LP 하단)",
-        en: "Brand banner (bottom of LP)",
-        ja: "ブランドバナー（LP下部）",
+        ko: "브랜드 배너 (응모 페이지 하단)",
+        en: "Brand banner (bottom of entry page)",
+        ja: "ブランドバナー（応募ページ下部）",
       },
       prBannerHint: {
-        ko: "응모 페이지 하단에 표시되고, 클릭하면 위의 PR URL로 이동합니다. 16:9 가로 배너 권장 (예: 750×422).",
-        en: "Shown at the bottom of the entry page; tapping opens the PR URL above. 16:9 recommended (e.g. 750×422).",
-        ja: "応募ページ下部に表示され、タップすると上記のPR URLに移動します。16:9推奨（例: 750×422）。",
+        ko: "응모 페이지 하단에 표시되는 배너로, 누르면 위에 입력한 브랜드 사이트 URL로 이동합니다. 배너와 URL이 모두 있어야 표시됩니다. 16:9 가로 배너 권장 (예: 750×422px).",
+        en: "Banner at the bottom of the entry page; tapping it opens the brand site URL above. Shown only when both the banner and the URL are set. 16:9 recommended (e.g. 750×422px).",
+        ja: "応募ページ下部に表示されるバナーで、タップすると上で入力したブランドサイトURLに移動します。バナーとURLの両方があるときのみ表示されます。16:9推奨（例: 750×422px）。",
       },
       prUrlHint: {
-        ko: "결과 화면의 유도 버튼에 씁니다. 비우면 버튼이 나오지 않습니다.",
-        en: "Used for the call-to-action button on the result screen. Leave empty to hide the button.",
-        ja: "結果画面の誘導ボタンに使います。空欄にするとボタンは表示されません。",
+        ko: "브랜드 홈페이지·제품 페이지 등 유도할 주소입니다. 당첨/낙첨 결과 화면의 버튼과 아래 브랜드 배너가 이 주소로 이동합니다. 비우면 버튼이 나오지 않습니다.",
+        en: "Destination such as the brand's site or product page. The result-screen button and the brand banner below both open this URL. Leave empty to hide the button.",
+        ja: "ブランドサイトや商品ページなど誘導先のURLです。結果画面のボタンと下のブランドバナーがこのURLに移動します。空欄にするとボタンは表示されません。",
       },
       dmTemplate: { ko: "당첨 DM 문구", en: "Winner DM text", ja: "当選DM文面" },
       dmTemplatePlaceholder: {

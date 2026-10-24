@@ -9,6 +9,8 @@ interface Props {
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
+  /** false 면 배경(바깥) 클릭으로 닫히지 않는다 — 입력 중 실수 방지용. 기본 true. */
+  closeOnBackdrop?: boolean;
 }
 
 export function Dialog({
@@ -18,6 +20,7 @@ export function Dialog({
   children,
   footer,
   className,
+  closeOnBackdrop = true,
 }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
 
@@ -34,7 +37,7 @@ export function Dialog({
       className={[styles.dialog, className ?? ""].filter(Boolean).join(" ")}
       onClose={onClose}
       onClick={(e) => {
-        if (e.target === ref.current) onClose();
+        if (closeOnBackdrop && e.target === ref.current) onClose();
       }}
     >
       {title && <header className={styles.header}>{title}</header>}

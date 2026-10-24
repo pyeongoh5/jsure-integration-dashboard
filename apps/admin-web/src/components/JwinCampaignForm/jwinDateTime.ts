@@ -13,3 +13,23 @@ export function utcIsoToJstLocal(iso: string): string {
 export function jstLocalToUtcIso(local: string): string {
   return new Date(`${local}:00+09:00`).toISOString();
 }
+
+/**
+ * 캠페인 기간은 일 단위 — 시작일 JST 0시 ~ 종료일 JST 23:59:59 로 고정하고
+ * 폼에서는 날짜("YYYY-MM-DD")만 입력받는다.
+ */
+
+/** UTC ISO → JST 달력 날짜 ("YYYY-MM-DD") */
+export function utcIsoToJstDate(iso: string): string {
+  return utcIsoToJstLocal(iso).slice(0, 10);
+}
+
+/** JST 날짜 → 그날 0시(JST)의 UTC ISO */
+export function jstDateStartUtcIso(date: string): string {
+  return new Date(`${date}T00:00:00+09:00`).toISOString();
+}
+
+/** JST 날짜 → 그날 23:59:59(JST)의 UTC ISO */
+export function jstDateEndUtcIso(date: string): string {
+  return new Date(`${date}T23:59:59+09:00`).toISOString();
+}

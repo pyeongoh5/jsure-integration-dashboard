@@ -90,6 +90,7 @@ export function PrizeAddDialog({ open, onClose, onAdd }: Props) {
     <Dialog
       open={open}
       onClose={handleClose}
+      closeOnBackdrop={false}
       title={t("jwin.prize.add")}
       footer={
         <>

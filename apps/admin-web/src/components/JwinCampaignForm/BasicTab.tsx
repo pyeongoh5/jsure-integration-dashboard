@@ -62,7 +62,7 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
             <span className={styles.required}>*</span>
           </span>
           <Input
-            type="datetime-local"
+            type="date"
             value={values.startsAt}
             onChange={(value) => setField("startsAt", value)}
             error={!!errors.startsAt}
@@ -76,7 +76,7 @@ export function BasicTab({ values, errors, setField, slugLocked }: Props) {
             <span className={styles.required}>*</span>
           </span>
           <Input
-            type="datetime-local"
+            type="date"
             value={values.endsAt}
             onChange={(value) => setField("endsAt", value)}
             error={!!errors.endsAt}

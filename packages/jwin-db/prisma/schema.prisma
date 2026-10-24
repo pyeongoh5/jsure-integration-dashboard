@@ -19,11 +19,11 @@ datasource db {
 /// 시즌 캠페인 — "9월 캠페인" 처럼 기간 단위 묶음. 브랜드들이 여기에 참여한다.
 /// 기간은 시즌이 갖고, 진행 상태는 참여(BrandCampaign)가 갖는다.
 model Campaign {
-  id        String   @id @default(cuid())
-  name      String // "9月キャンペーン"
-  slug      String   @unique // 시즌 LP URL: /c/{slug}
-  startsAt  DateTime // JST 기준 입력, UTC 저장
-  endsAt    DateTime // 종료 시점 = 배송지 입력 마감 (F-6.3)
+  id            String   @id @default(cuid())
+  name          String // "9月キャンペーン"
+  slug          String   @unique // 시즌 LP URL: /c/{slug}
+  startsAt      DateTime // JST 기준 입력, UTC 저장
+  endsAt        DateTime // 종료 시점 = 배송지 입력 마감 (F-6.3)
   // 게시 스케줄: 매일 1회, JST 시각 "HH:mm". 시즌의 전 브랜드가 같은 시각에 게시된다
   dailyPostTime String @default("11:00")
   /// 시즌 LP 상단 키비주얼 이미지
@@ -42,7 +42,7 @@ model Campaign {
 }
 
 enum CampaignStatus {
-  SETUP  // 계정 연동 대기 등 준비 중
+  SETUP // 계정 연동 대기 등 준비 중
   ACTIVE // 기간(startsAt~endsAt) 내에서만 포스팅·응모 동작
   PAUSED // 도중 중지 → LP 비노출, 데이터 보존
   ENDED
@@ -51,14 +51,20 @@ enum CampaignStatus {
 /// 브랜드가 시즌 캠페인에 참여한 단위. 게시·경품·응모·추첨이 모두 여기에 걸린다.
 /// 브랜드 간에는 상관관계가 없다 — 응모 하루 1회 제한도 참여 단위다.
 model BrandCampaign {
-  id            String         @id @default(cuid())
-  campaignId    String
-  campaign      Campaign       @relation(fields: [campaignId], references: [id])
-  status        CampaignStatus @default(SETUP)
-  // 추첨 설정
-  dailyWinCap   Int? // 일별 당첨 상한 (null = 무제한, 재고만 따름)
+  id               String         @id @default(cuid())
+  campaignId       String
+  campaign         Campaign       @relation(fields: [campaignId], references: [id])
+  status           CampaignStatus @default(SETUP)
+  // 추첨 설정 — 응모 1회당 당첨 확률 (0~1). 경품 종류와 무관한 캠페인 단위 값이다.
+  winProbability   Float          @default(0)
+  // 소진 페이싱 보정 — 적용 확률 = winProbability × paceMultiplier.
+  // 구간(window)마다 계획량 미달이면 ×1.5, 충족이면 ×0.5 로 갱신된다.
+  paceMultiplier   Float          @default(1)
+  windowStartedAt  DateTime? // 현재 구간 시작 시각. null 이면 campaign.startsAt 부터
+  windowWinCount   Int            @default(0)
+  windowEntryCount Int            @default(0)
   /// 이벤트 규칙 가이드 URL — 포스트 본문에 텍스트 링크로 함께 나간다.
-  rulesUrl      String?
+  rulesUrl         String?
   // 결과 화면 (F-6.5)
   prUrl         String? // PR 전환 대상 URL — 결과 화면·LP 하단 배너에서 브랜드 사이트로 유도
   /// LP 하단 브랜드 배너 이미지 (16:9 권장) — 클릭하면 prUrl 로 이동
@@ -66,9 +72,9 @@ model BrandCampaign {
   winMediaUrl   String? // 당첨 결과 이미지/동영상
   loseMediaUrl  String? // 낙첨 결과 이미지/동영상
   // 당첨 DM 문구 (F-6.1) — 플레이스홀더: {{CODE}} {{PRIZE_NAME}} {{USERNAME}} {{BRAND_NAME}}
-  dmTemplate    String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  dmTemplate       String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   brandAccountId String
   brandAccount   BrandXAccount @relation(fields: [brandAccountId], references: [id])
@@ -86,7 +92,7 @@ model BrandCampaign {
 /// 브랜드. X 계정 토큰을 함께 들고 있으며 시즌을 건너뛰어 재사용된다 (D-13).
 model BrandXAccount {
   id                    String    @id @default(cuid())
-  label                 String    // 브랜드 표시명 (예: "코카콜라 재팬 공식")
+  label                 String // 브랜드 표시명 (예: "코카콜라 재팬 공식")
   /// 참여 LP URL 조각: /c/{campaignSlug}/{slug}
   slug                  String    @unique
   /// 시즌 LP 의 브랜드 카드에 쓰는 로고
@@ -109,24 +115,24 @@ model BrandXAccount {
 
 // 주 단위 소재 교체. activeFrom~activeTo 구간에 유효한 소재.
 model PostTemplate {
-  id         String        @id @default(cuid())
-  campaignId String
-  campaign   BrandCampaign @relation(fields: [campaignId], references: [id])
-  label      String // 예: "1주차"
-  bodyText   String // LP 링크는 게시 시점에 자동 삽입 ({{LP_URL}} 플레이스홀더)
+  id              String        @id @default(cuid())
+  campaignId      String
+  campaign        BrandCampaign @relation(fields: [campaignId], references: [id])
+  label           String // 예: "1주차"
+  bodyText        String // LP 링크는 게시 시점에 자동 삽입 ({{LP_URL}} 플레이스홀더)
   /// @deprecated mediaUrls 로 대체. 기존 행 호환을 위해 남겨 둔다 — 새 코드는 쓰지 않는다.
-  mediaUrl   String?
+  mediaUrl        String?
   /// 첨부 이미지/동영상 URL 목록 (최대 4장) — 게시 시 X media upload 후 첨부 (F-2.3)
-  mediaUrls  String[]      @default([])
+  mediaUrls       String[]      @default([])
   /// 캐러셀 카드 헤드라인. 값이 있고 mediaUrls 2장 이상이면 미디어 첨부 대신
   /// 카드(IMAGE_CAROUSEL_WEBSITE)로 게시한다 — docs/jwin/CAROUSEL_CARD.md
-  cardTitle  String?
+  cardTitle       String?
   /// 게시 시점에 생성한 카드 캐시. 구성(fingerprint)이 같으면 재사용해 매일 재생성을 피한다
   cardId          String?
   cardFingerprint String?
-  activeFrom DateTime
-  activeTo   DateTime
-  createdAt  DateTime      @default(now())
+  activeFrom      DateTime
+  activeTo        DateTime
+  createdAt       DateTime      @default(now())
 
   posts CampaignPost[]
 
@@ -166,22 +172,20 @@ model CampaignPost {
 
 enum PrizeType {
   PHYSICAL // 현물 → 배송지 입력
-  CODE     // 기프트코드 → DM 발송
+  CODE // 기프트코드 → DM 발송
 }
 
 model Prize {
-  id             String        @id @default(cuid())
-  campaignId     String
-  campaign       BrandCampaign @relation(fields: [campaignId], references: [id])
-  type           PrizeType
-  name           String // 예: "아마존 기프트권 1만엔"
-  tier           Int           @default(1) // 표시·정렬용 등급
-  totalQty       Int
-  remainingQty   Int // 원자적 차감 대상 (조건부 UPDATE)
-  // 응모 1회당 이 경품에 당첨될 확률 (0~1). 여러 경품이 있으면 순차 판정.
-  winProbability Float
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id           String        @id @default(cuid())
+  campaignId   String
+  campaign     BrandCampaign @relation(fields: [campaignId], references: [id])
+  type         PrizeType
+  name         String // 예: "아마존 기프트권 1만엔"
+  totalQty     Int
+  // 원자적 차감 대상 (조건부 UPDATE). 당첨 시 상품 선택의 가중치이기도 하다.
+  remainingQty Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   codes   PrizeCode[]
   winners Winner[]
@@ -231,7 +235,7 @@ model User {
 
 enum EntryResult {
   LOSE
-  WIN_PENDING   // 당첨 후보 — 검증 대기 (lazy 검증, D-2 개정: 몰수·재고 회수 없음)
+  WIN_PENDING // 당첨 후보 — 검증 대기 (lazy 검증, D-2 개정: 몰수·재고 회수 없음)
   WIN_CONFIRMED // 검증 통과 → 당첨 확정
 }
 
@@ -255,18 +259,18 @@ model Entry {
 }
 
 enum VerificationStatus {
-  PENDING       // 아직 미검증 — 당일 내 미완료 시 그대로 미이행 종료 (몰수 없음)
+  PENDING // 아직 미검증 — 당일 내 미완료 시 그대로 미이행 종료 (몰수 없음)
   FOLLOW_FAILED
   REPOST_FAILED
   PASSED
 }
 
 enum FulfillmentStatus {
-  NOT_READY      // 검증 전
-  AWAITING_INFO  // 현물: 배송지 입력 대기 (캠페인 종료 시점까지)
-  READY          // 이행 가능 (배송 준비 / 코드 할당됨)
-  DM_SENT        // 코드 DM 발송 완료
-  SHIPPED        // 현물 발송 완료 (어드민 수동 처리)
+  NOT_READY // 검증 전
+  AWAITING_INFO // 현물: 배송지 입력 대기 (캠페인 종료 시점까지)
+  READY // 이행 가능 (배송 준비 / 코드 할당됨)
+  DM_SENT // 코드 DM 발송 완료
+  SHIPPED // 현물 발송 완료 (어드민 수동 처리)
   FAILED
 }
 
@@ -301,9 +305,9 @@ model Winner {
 
 // 어드민 조작 감사 로그 (F-7.5)
 model AuditLog {
-  id String @id @default(cuid())
+  id         String   @id @default(cuid())
   /// 대시보드 AdminUser.id (JWT payload.sub) — DB가 달라 FK를 걸지 않는다
-  adminId String?
+  adminId    String?
   /// 조작 시점의 이메일 스냅샷 (대시보드 계정이 바뀌어도 추적 가능하도록)
   adminEmail String?
   action     String // 예: "campaign.create", "prize.codes_import"

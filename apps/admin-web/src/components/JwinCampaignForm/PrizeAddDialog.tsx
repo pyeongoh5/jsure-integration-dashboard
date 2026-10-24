@@ -19,14 +19,11 @@ export function PrizeAddDialog({ open, onClose, onAdd }: Props) {
   const t = useT();
   const [type, setType] = useState<PrizeType>("PHYSICAL");
   const [name, setName] = useState("");
-  const [tier, setTier] = useState("1");
   const [totalQty, setTotalQty] = useState("");
-  const [winProbability, setWinProbability] = useState("");
   const [codesText, setCodesText] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const probability = Number(winProbability);
   const codeSummary = summarizeCodeInput(codesText);
   // CODE 경품은 수량을 따로 받지 않는다 — 붙여넣은 코드 수가 곧 수량이다
   const quantity = type === "CODE" ? codeSummary.count : Number(totalQty);
@@ -34,9 +31,7 @@ export function PrizeAddDialog({ open, onClose, onAdd }: Props) {
   const handleClose = () => {
     setType("PHYSICAL");
     setName("");
-    setTier("1");
     setTotalQty("");
-    setWinProbability("");
     setCodesText("");
     setSaving(false);
     setError(null);
@@ -45,8 +40,6 @@ export function PrizeAddDialog({ open, onClose, onAdd }: Props) {
 
   const validationError = (): string | null => {
     if (!name.trim()) return t("jwin.prize.error.nameRequired");
-    if (!Number.isInteger(Number(tier)) || Number(tier) < 1) return t("jwin.prize.error.tierInvalid");
-    if (!(probability > 0 && probability < 1)) return t("jwin.prize.error.probabilityInvalid");
     if (type !== "CODE") {
       if (!Number.isInteger(quantity) || quantity <= 0) {
         return t("jwin.prize.error.quantityInvalid");
@@ -73,9 +66,7 @@ export function PrizeAddDialog({ open, onClose, onAdd }: Props) {
     const failure = await onAdd({
       type,
       name: name.trim(),
-      tier: Number(tier),
       totalQty: quantity,
-      winProbability: probability,
       codesText: type === "CODE" ? codesText : undefined,
     });
     setSaving(false);
@@ -133,33 +124,13 @@ export function PrizeAddDialog({ open, onClose, onAdd }: Props) {
           <Input value={name} onChange={setName} placeholder={t("jwin.prize.placeholder.name")} />
         </div>
 
-        <div className={styles.row2}>
+        {type === "PHYSICAL" && (
           <div className={styles.field}>
-            <span className={styles.fieldLabel}>{t("jwin.prize.field.tier")}</span>
-            <Input type="number" min={1} value={tier} onChange={setTier} />
-            <span className={styles.fieldHint}>{t("jwin.prize.hint.tier")}</span>
+            <span className={styles.fieldLabel}>{t("jwin.prize.field.quantity")}</span>
+            <Input type="number" min={1} value={totalQty} onChange={setTotalQty} placeholder="10" />
+            <span className={styles.fieldHint}>{t("jwin.prize.hint.quantityShare")}</span>
           </div>
-          {type === "PHYSICAL" && (
-            <div className={styles.field}>
-              <span className={styles.fieldLabel}>{t("jwin.prize.field.quantity")}</span>
-              <Input type="number" min={1} value={totalQty} onChange={setTotalQty} placeholder="10" />
-            </div>
-          )}
-        </div>
-
-        <div className={styles.field}>
-          <span className={styles.fieldLabel}>{t("jwin.prize.field.probability")}</span>
-          <Input
-            type="number"
-            step="0.001"
-            min={0}
-            max={1}
-            value={winProbability}
-            onChange={setWinProbability}
-            placeholder="0.05"
-          />
-          <span className={styles.fieldHint}>{t("jwin.prize.hint.probability")}</span>
-        </div>
+        )}
 
         {type === "CODE" && (
           <div className={styles.field}>

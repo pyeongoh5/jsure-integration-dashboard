@@ -28,16 +28,14 @@ const CODE_STATUS_LABEL: Record<AdminPrizeCode["status"], AdminTranslationKey> =
 };
 
 /**
- * 경품 정정 (이름·티어·수량·확률). CODE 경품이면 등록된 코드 원문을 함께 보여주고
+ * 경품 정정 (이름·수량). CODE 경품이면 등록된 코드 원문을 함께 보여주고
  * 같은 모달에서 코드를 추가한다 — 정정과 코드 추가를 따로 열지 않는다.
  * CODE 경품의 수량은 서버가 PATCH 를 거부한다(유령 재고 방지) — 입력을 잠그고 안내한다.
  */
 export function PrizeEditDialog({ prize, onClose, onEdit, onAppendCodes }: Props) {
   const t = useT();
   const [name, setName] = useState("");
-  const [tier, setTier] = useState("1");
   const [totalQty, setTotalQty] = useState("");
-  const [winProbability, setWinProbability] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [codesText, setCodesText] = useState("");
@@ -49,9 +47,7 @@ export function PrizeEditDialog({ prize, onClose, onEdit, onAppendCodes }: Props
   useEffect(() => {
     if (!prize) return;
     setName(prize.name);
-    setTier(String(prize.tier));
     setTotalQty(String(prize.totalQty));
-    setWinProbability(String(prize.winProbability));
     setError(null);
     setCodesText("");
   }, [prize]);
@@ -83,20 +79,11 @@ export function PrizeEditDialog({ prize, onClose, onEdit, onAppendCodes }: Props
   const handleSubmit = async () => {
     if (!prize) return;
     const quantity = Number(totalQty);
-    const probability = Number(winProbability);
     if (!name.trim()) {
       setError(t("jwin.prize.error.nameRequired"));
       return;
     }
-    if (!(probability > 0 && probability < 1)) {
-      setError(t("jwin.prize.error.probabilityInvalid"));
-      return;
-    }
-    const body: AdminPrizePatch = {
-      name: name.trim(),
-      tier: Number(tier),
-      winProbability: probability,
-    };
+    const body: AdminPrizePatch = { name: name.trim() };
     // CODE 경품은 수량을 보내지 않는다 — 서버가 거부한다
     if (prize.type !== "CODE") body.totalQty = quantity;
 
@@ -152,35 +139,18 @@ export function PrizeEditDialog({ prize, onClose, onEdit, onAppendCodes }: Props
           <span className={styles.fieldLabel}>{t("jwin.prize.field.name")}</span>
           <Input value={name} onChange={setName} />
         </div>
-        <div className={styles.row2}>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>{t("jwin.prize.field.tier")}</span>
-            <Input type="number" min={1} value={tier} onChange={setTier} />
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>{t("jwin.prize.field.quantity")}</span>
-            <Input
-              type="number"
-              min={1}
-              value={totalQty}
-              onChange={setTotalQty}
-              disabled={prize?.type === "CODE"}
-            />
-            {prize?.type === "CODE" && (
-              <span className={styles.fieldHint}>{t("jwin.prize.hint.codeQtyLocked")}</span>
-            )}
-          </div>
-        </div>
         <div className={styles.field}>
-          <span className={styles.fieldLabel}>{t("jwin.prize.field.probability")}</span>
+          <span className={styles.fieldLabel}>{t("jwin.prize.field.quantity")}</span>
           <Input
             type="number"
-            step="0.001"
-            min={0}
-            max={1}
-            value={winProbability}
-            onChange={setWinProbability}
+            min={1}
+            value={totalQty}
+            onChange={setTotalQty}
+            disabled={prize?.type === "CODE"}
           />
+          {prize?.type === "CODE" && (
+            <span className={styles.fieldHint}>{t("jwin.prize.hint.codeQtyLocked")}</span>
+          )}
         </div>
         {isCodePrize && (
           <>

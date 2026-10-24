@@ -2,13 +2,10 @@ import { useState } from "react";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { ScrollTable } from "@/components/composites";
 import { Button, Input } from "@/components/ui";
+import { MAX_WIN_PROBABILITY } from "@/domains/jwin";
 import type { AdminPrize, AdminPrizeCreate, AdminPrizePatch } from "@/domains/jwin";
 import { useT } from "@/lib/i18n";
-import {
-  formatProbabilityPercent,
-  isProbabilityOverflow,
-  probabilitySum,
-} from "./prizeProbability";
+import { formatProbabilityPercent, prizeShare } from "./winProbability";
 import { PrizeAddDialog } from "./PrizeAddDialog";
 import { PrizeEditDialog } from "./PrizeEditDialog";
 import styles from "./JwinCampaignTabs.module.css";
@@ -20,15 +17,42 @@ type Props = {
   onAdd: (body: Omit<AdminPrizeCreate, "campaignId">) => Promise<string | null>;
   onEdit: (prizeId: string, body: AdminPrizePatch) => Promise<string | null>;
   onAppendCodes: (prizeId: string, codesText: string) => Promise<string | null>;
-  /** 일일 당첨 상한 — 추첨 설정이라 경품과 같은 탭에 둔다 ("" = 무제한) */
-  dailyWinCap: string;
-  onDailyWinCapChange: (value: string) => void;
+  /** 기준 당첨확률(% 입력) — 추첨 설정이라 경품과 같은 탭에 둔다 */
+  winProbabilityPercent: string;
+  onWinProbabilityChange: (value: string) => void;
 };
 
 const TYPE_LABEL_KEY: Record<AdminPrize["type"], AdminTranslationKey> = {
   PHYSICAL: "jwin.prize.type.physical",
   CODE: "jwin.prize.type.code",
 };
+
+const CODE_STATUS_LABEL_KEY: Record<
+  keyof AdminPrize["codeStatusCounts"],
+  AdminTranslationKey
+> = {
+  available: "jwin.prize.codeStatus.available",
+  assigned: "jwin.prize.codeStatus.assigned",
+  sent: "jwin.prize.codeStatus.sent",
+  revoked: "jwin.prize.codeStatus.revoked",
+};
+
+/** 코드 현황 요약 — 미사용은 항상, 나머지 상태는 1개 이상일 때만 표기. */
+function codeStatusSummary(
+  counts: AdminPrize["codeStatusCounts"],
+  t: (key: AdminTranslationKey) => string,
+): string {
+  const statuses: (keyof AdminPrize["codeStatusCounts"])[] = [
+    "available",
+    "assigned",
+    "sent",
+    "revoked",
+  ];
+  return statuses
+    .filter((status) => status === "available" || counts[status] > 0)
+    .map((status) => `${t(CODE_STATUS_LABEL_KEY[status])} ${counts[status]}`)
+    .join(" · ");
+}
 
 export function PrizeTab({
   prizes,
@@ -37,8 +61,8 @@ export function PrizeTab({
   onAdd,
   onEdit,
   onAppendCodes,
-  dailyWinCap,
-  onDailyWinCapChange,
+  winProbabilityPercent,
+  onWinProbabilityChange,
 }: Props) {
   const t = useT();
   const [addOpen, setAddOpen] = useState(false);
@@ -54,24 +78,19 @@ export function PrizeTab({
       </div>
 
       <div className={styles.field}>
-        <span className={styles.fieldLabel}>{t("jwin.basic.dailyWinCap")}</span>
+        <span className={styles.fieldLabel}>{t("jwin.basic.winProbability")}</span>
         <Input
           type="number"
-          min={1}
-          value={dailyWinCap}
-          onChange={onDailyWinCapChange}
-          placeholder={t("jwin.basic.dailyWinCapPlaceholder")}
+          step="0.01"
+          min={0}
+          max={MAX_WIN_PROBABILITY * 100}
+          value={winProbabilityPercent}
+          onChange={onWinProbabilityChange}
+          placeholder="0.5"
         />
-        <span className={styles.fieldHint}>{t("jwin.prize.dailyWinCapHint")}</span>
+        <span className={styles.fieldHint}>{t("jwin.basic.winProbabilityHint")}</span>
       </div>
 
-      {isProbabilityOverflow(prizes) && (
-        <div className={styles.warning}>
-          {t("jwin.prize.probabilityOverflow", {
-            sum: formatProbabilityPercent(probabilitySum(prizes)),
-          })}
-        </div>
-      )}
 
       {loadError && <div className={styles.errorText}>{loadError}</div>}
       {loading && <div className={styles.empty}>{t("jwin.common.loading")}</div>}
@@ -87,9 +106,8 @@ export function PrizeTab({
               <tr>
                 <th>{t("jwin.prize.columns.name")}</th>
                 <th>{t("jwin.prize.columns.type")}</th>
-                <th className={styles.num}>{t("jwin.prize.columns.tier")}</th>
                 <th className={styles.num}>{t("jwin.prize.columns.quantity")}</th>
-                <th className={styles.num}>{t("jwin.prize.columns.probability")}</th>
+                <th className={styles.num}>{t("jwin.prize.columns.share")}</th>
                 <th className={styles.num}>{t("jwin.prize.columns.codeStock")}</th>
                 <th className={styles.actionsHead}>{t("jwin.prize.columns.actions")}</th>
               </tr>
@@ -99,13 +117,16 @@ export function PrizeTab({
                 <tr key={prize.id}>
                   <td>{prize.name}</td>
                   <td>{t(TYPE_LABEL_KEY[prize.type])}</td>
-                  <td className={styles.num}>{prize.tier}</td>
                   <td className={styles.num}>
                     {prize.remainingQty} / {prize.totalQty}
                   </td>
-                  <td className={styles.num}>{formatProbabilityPercent(prize.winProbability)}</td>
                   <td className={styles.num}>
-                    {prize.type === "CODE" ? prize.availableCodeCount : t("jwin.common.dash")}
+                    {formatProbabilityPercent(prizeShare(prize, prizes))}
+                  </td>
+                  <td className={styles.num}>
+                    {prize.type === "CODE"
+                      ? codeStatusSummary(prize.codeStatusCounts, t)
+                      : t("jwin.common.dash")}
                   </td>
                   <td className={styles.actionsCell}>
                     <div className={styles.rowActions}>

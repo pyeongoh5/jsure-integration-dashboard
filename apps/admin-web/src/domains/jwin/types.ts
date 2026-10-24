@@ -40,6 +40,7 @@ export {
   VerificationStatusSchema,
   FulfillmentStatusSchema,
   PrizeTypeSchema,
+  MAX_WIN_PROBABILITY,
 } from "@jsure/jwin-shared";
 export type {
   AdminCampaignListItem,

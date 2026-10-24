@@ -138,7 +138,7 @@ export async function publicRoutes(app: FastifyInstance) {
         },
         include: {
           campaign: true,
-          prizes: { orderBy: { tier: 'asc' } },
+          prizes: { orderBy: { createdAt: 'asc' } },
           posts: { where: { dateJst: dateJst(), status: 'POSTED' }, include: { template: true } },
           postTemplates: true,
           brandAccount: { select: { label: true, slug: true, logoUrl: true, xUsername: true } },

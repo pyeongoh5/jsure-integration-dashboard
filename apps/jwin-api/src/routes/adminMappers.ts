@@ -35,7 +35,7 @@ export function canTransitionFulfillment(
 export type BrandCampaignRow = {
   id: string;
   status: string;
-  dailyWinCap: number | null;
+  winProbability: number;
   rulesUrl: string | null;
   prUrl: string | null;
   prBannerUrl: string | null;
@@ -76,7 +76,7 @@ export function toBrandCampaignDetail(
   return {
     id: brandCampaign.id,
     status: brandCampaign.status as AdminBrandCampaignDetail['status'],
-    dailyWinCap: brandCampaign.dailyWinCap,
+    winProbability: brandCampaign.winProbability,
     rulesUrl: brandCampaign.rulesUrl,
     prUrl: brandCampaign.prUrl,
     prBannerUrl: brandCampaign.prBannerUrl,
@@ -211,22 +211,19 @@ export function toPrize(
     id: string;
     type: string;
     name: string;
-    tier: number;
     totalQty: number;
     remainingQty: number;
-    winProbability: number;
   },
-  availableCodeCount: number,
+  codeStatusCounts: AdminPrize['codeStatusCounts'],
 ): AdminPrize {
   return {
     id: prize.id,
     type: prize.type as AdminPrize['type'],
     name: prize.name,
-    tier: prize.tier,
     totalQty: prize.totalQty,
     remainingQty: prize.remainingQty,
-    winProbability: prize.winProbability,
-    availableCodeCount,
+    availableCodeCount: codeStatusCounts.available,
+    codeStatusCounts,
   };
 }
 

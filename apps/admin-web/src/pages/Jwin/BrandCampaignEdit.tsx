@@ -114,8 +114,8 @@ export function JwinBrandCampaignEdit() {
           detail={detail}
           tab={tab}
           onDetailChanged={form.reload}
-          dailyWinCap={form.values.dailyWinCap}
-          onDailyWinCapChange={(value) => form.setField("dailyWinCap", value)}
+          winProbabilityPercent={form.values.winProbabilityPercent}
+          onWinProbabilityChange={(value) => form.setField("winProbabilityPercent", value)}
         />
       </div>
     </div>
@@ -131,15 +131,15 @@ function BrandCampaignEditBody({
   detail,
   tab,
   onDetailChanged,
-  dailyWinCap,
-  onDailyWinCapChange,
+  winProbabilityPercent,
+  onWinProbabilityChange,
 }: {
   brandCampaignId: string;
   detail: AdminBrandCampaignDetail;
   tab: TabKey;
   onDetailChanged: () => void;
-  dailyWinCap: string;
-  onDailyWinCapChange: (value: string) => void;
+  winProbabilityPercent: string;
+  onWinProbabilityChange: (value: string) => void;
 }) {
   const prizes = useJwinPrizes(brandCampaignId);
   const postTemplates = useJwinPostTemplates(brandCampaignId);
@@ -183,8 +183,8 @@ function BrandCampaignEditBody({
               onAdd={prizes.add}
               onEdit={prizes.edit}
               onAppendCodes={prizes.appendCodes}
-              dailyWinCap={dailyWinCap}
-              onDailyWinCapChange={onDailyWinCapChange}
+              winProbabilityPercent={winProbabilityPercent}
+              onWinProbabilityChange={onWinProbabilityChange}
             />
           )}
 

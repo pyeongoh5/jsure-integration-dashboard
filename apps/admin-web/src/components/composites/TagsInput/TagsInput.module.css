@@ -1,53 +1,118 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
+}
+
+.fieldWrap {
+  position: relative;
+}
+
+/* 칩과 입력란을 한 상자 안에 담아 하나의 필드처럼 보이게 한다. */
+.field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 36px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  cursor: text;
+}
+
+.field:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(29, 108, 243, 0.12);
+}
+
+.fieldDisabled {
+  background: var(--color-bg-muted);
+  cursor: default;
 }
 
 .input {
-  height: 34px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0 12px;
-  font-size: 13px;
+  flex: 1;
+  min-width: 120px;
+  height: 26px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--font-size-md);
   font-family: inherit;
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.input::placeholder {
+  color: var(--color-text-subtle);
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: var(--space-1);
+  height: 24px;
+  padding: 0 var(--space-1) 0 var(--space-2);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-full);
   background: #eff6ff;
   color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-  border-radius: 10px;
-  padding: 4px 10px;
-  height: 30px;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
 }
 
 .chipRemove {
-  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
   border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
   color: #1d4ed8;
-  cursor: pointer;
-  font-size: 12px;
-  padding: 0 2px;
+  font-size: 10px;
   line-height: 1;
+  cursor: pointer;
 }
 
-.chipRemove:hover {
-  color: #1e40af;
+.chipRemove:hover:not(:disabled) {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+/* 등록된 태그 추천 — 필드 바로 아래에 겹쳐 띄운다. */
+.suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-md);
+}
+
+.suggestion {
+  padding: 6px var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+}
+
+.suggestionActive {
+  background: var(--color-bg-muted);
 }
 
 .hint {
   margin: 0;
-  font-size: 12px;
-  color: #6b7280;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
 }

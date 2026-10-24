@@ -801,7 +801,11 @@ export const messages = {
         nameKanaLabel: { jp: "お名前 (カナ)", kr: "이름 (가타카나)" },
         phoneLabel: { jp: "電話番号", kr: "전화번호" },
         emailLabel: { jp: "メールアドレス", kr: "이메일 주소" },
+        emailError: { jp: "メールアドレスの形式が正しくありません", kr: "이메일 주소 형식이 올바르지 않습니다" }, // new
         birthDateLabel: { jp: "生年月日", kr: "생년월일" },
+        birthDateError: { jp: "生年月日を入力してください", kr: "생년월일을 입력해 주세요" }, // new
+        emailNotice: { jp: "メールアドレスはログインIDです", kr: "이메일 주소는 로그인 ID입니다" }, // new
+        saveFailed: { jp: "保存に失敗しました", kr: "저장에 실패했습니다" }, // new
         saving: { jp: "保存中…", kr: "저장 중…" },
         save: { jp: "保存", kr: "저장" },
       },

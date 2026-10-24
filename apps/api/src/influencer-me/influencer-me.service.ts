@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import type {
   InfluencerBankAccount,
   InfluencerSnsAccountInput,
@@ -21,14 +23,32 @@ export class InfluencerMeService {
     influencerId: string,
     input: UpdateInfluencerProfileRequest,
   ): Promise<void> {
-    await this.prisma.influencer.update({
-      where: { id: influencerId },
-      data: {
-        name: input.name,
-        nameKana: input.nameKana,
-        phone: input.phone,
-      },
-    });
+    try {
+      await this.prisma.influencer.update({
+        where: { id: influencerId },
+        data: {
+          name: input.name,
+          nameKana: input.nameKana,
+          phone: input.phone,
+          // 생략한 필드는 구버전 클라이언트의 요청이므로 기존 값을 유지한다.
+          ...(input.email === undefined ? {} : { email: input.email }),
+          ...(input.birthDate === undefined
+            ? {}
+            : { birthDate: new Date(`${input.birthDate}T00:00:00Z`) }),
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw new ConflictException({
+          code: "EMAIL_TAKEN",
+          message: "이미 사용 중인 이메일입니다",
+        });
+      }
+      throw error;
+    }
   }
 
   async updateAddress(

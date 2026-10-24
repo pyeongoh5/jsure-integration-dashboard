@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { InfluencerNotesResponse } from "@jsure/shared";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { SegmentedTabs, TagsInput } from "@/components/composites";
@@ -54,6 +54,14 @@ export function InfluencerNotesDialog({
   const [savingTags, setSavingTags] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const tagOptions = useInfluencerTagOptions();
+  // 태그는 칩 하나 누를 때마다 저장된다. 그때마다 목록을 다시 부르면 뒷단 표가
+  // 매번 통째로 갈아끼워지므로, 목록 갱신은 팝업을 닫을 때 한 번만 한다.
+  const tagsChanged = useRef(false);
+
+  function handleClose() {
+    if (tagsChanged.current) onChanged?.();
+    onClose();
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -123,7 +131,7 @@ export function InfluencerNotesDialog({
           ? { kind: "ready", data: { ...current.data, tags: savedTags } }
           : current,
       );
-      onChanged?.();
+      tagsChanged.current = true;
     } catch (cause) {
       setState((current) =>
         current.kind === "ready"
@@ -179,7 +187,7 @@ export function InfluencerNotesDialog({
   const flagged = state.kind === "ready" && state.data.flaggedAt !== null;
 
   return (
-    <div className={styles.overlay} onClick={onClose} role="presentation">
+    <div className={styles.overlay} onClick={handleClose} role="presentation">
       <div
         className={styles.panel}
         role="dialog"
@@ -203,7 +211,7 @@ export function InfluencerNotesDialog({
           <button
             type="button"
             className={styles.close}
-            onClick={onClose}
+            onClick={handleClose}
             aria-label={t("common.close")}
           >
             ×

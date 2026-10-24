@@ -24,7 +24,11 @@ export function useDraftReviewsData(): UseDraftReviewsDataResult {
 
   useEffect(() => {
     let cancelled = false;
-    setState({ kind: "loading" });
+    // 재조회 중에는 이전 목록을 그대로 둔다 — 로딩 화면으로 바꾸면 갱신할 때마다
+    // 표가 통째로 사라졌다 나타난다(깜빡임). 로딩은 보여줄 게 없는 첫 로드뿐.
+    setState((current) =>
+      current.kind === "ready" ? current : { kind: "loading" },
+    );
     listSubmissions()
       .then((rows) => {
         if (!cancelled) setState({ kind: "ready", rows });

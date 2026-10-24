@@ -31,6 +31,7 @@ import { UploadsService } from "../uploads/uploads.service";
 import {
   deriveDisplayStage,
   deadlineFrom,
+  insightDueAt,
 } from "../influencer-campaigns/display-stage";
 import {
   applicationRewardJpy,
@@ -86,6 +87,7 @@ type ApplicationRow = {
   subTypes: CampaignSubType[];
   options: { subType: CampaignSubType; option: string }[];
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
+  submissionReviewedAt: Date | null;
   submissionRejections: { comment: string; rejectedAt: Date }[];
   orderNumber: string | null;
   orderSubmittedAt: Date | null;
@@ -164,6 +166,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
   });
   // 가구매 주문 마감 — 승인일 + 캠페인 orderPeriodDays. 마감 미설정이면 null.
   const orderDeadline = deadlineFrom(row.reviewedAt, row.campaign.orderPeriodDays);
+  const insightDue = insightDueAt(row.submissionReviewedAt);
   const settlement = row.settlement
     ? {
         status: row.settlement.status,
@@ -190,9 +193,9 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
       category: row.campaign.category,
       receivedAt: row.receivedAt,
       submissionReviewStatus: row.submissionReviewStatus,
+      submissionReviewedAt: row.submissionReviewedAt,
       settlementStatus: row.settlement?.status ?? null,
       posts: row.posts.map((post) => ({
-        submittedAt: post.submittedAt,
         insightSubmittedAt: post.insightSubmittedAt,
         insightRequired:
           row.campaign.recruits.find(
@@ -229,6 +232,7 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     orderSubmittedAt: row.orderSubmittedAt ? row.orderSubmittedAt.toISOString() : null,
     orderDeadlineAt: orderDeadline ? orderDeadline.toISOString() : null,
     reviewSubmittedAt: row.reviewSubmittedAt ? row.reviewSubmittedAt.toISOString() : null,
+    insightDueAt: insightDue ? insightDue.toISOString() : null,
   };
 }
 

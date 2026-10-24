@@ -4,6 +4,7 @@ const NOW = new Date("2026-06-01T00:00:00Z");
 
 const NO_REVIEW = {
   submissionReviewStatus: "PENDING" as const,
+  submissionReviewedAt: null,
   settlementStatus: null,
 };
 
@@ -73,39 +74,31 @@ describe("deriveDisplayStage", () => {
     ).toBe("POSTING");
   });
 
-  it("REVIEW_SUBMITTED, post submitted same JST day → POSTED", () => {
-    expect(
-      deriveDisplayStage({
-        status: "REVIEW_SUBMITTED",
-        category: "SNS",
-        receivedAt: new Date(NOW.getTime() - 3 * 86400000),
-        posts: [
-          {
-            // 같은 JST 일자 안에서 제출된 경우 daysPassed=0 → POSTED
-            // (INSIGHT_DUE_DAYS=0 테스트 설정에서는 INSIGHT_DUE 로 즉시 전환)
-            submittedAt: new Date(NOW.getTime() - 60 * 60 * 1000),
-            insightSubmittedAt: null,
-          },
-        ],
-        ...NO_REVIEW,
-        now: NOW,
-      }),
-    ).toBe("INSIGHT_DUE");
-  });
-
-  it("REVIEW_SUBMITTED, post submitted ≥7d, no insight → INSIGHT_DUE", () => {
+  it("REVIEW_SUBMITTED, 검토 대기 중이면 기한이 시작되지 않아 POSTED", () => {
     expect(
       deriveDisplayStage({
         status: "REVIEW_SUBMITTED",
         category: "SNS",
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
-        posts: [
-          {
-            submittedAt: new Date(NOW.getTime() - 8 * 86400000),
-            insightSubmittedAt: null,
-          },
-        ],
+        posts: [{ insightSubmittedAt: null }],
+        // 제출한 지 8일이 지났어도 검토가 끝나지 않았으면 인사이트 단계가 아니다.
         ...NO_REVIEW,
+        now: NOW,
+      }),
+    ).toBe("POSTED");
+  });
+
+  it("REVIEW_SUBMITTED, 검토 완료 후 기한 도래 + 인사이트 미제출 → INSIGHT_DUE", () => {
+    expect(
+      deriveDisplayStage({
+        status: "REVIEW_SUBMITTED",
+        category: "SNS",
+        receivedAt: new Date(NOW.getTime() - 10 * 86400000),
+        posts: [{ insightSubmittedAt: null }],
+        submissionReviewStatus: "APPROVED",
+        // INSIGHT_DUE_DAYS=0 인 테스트 설정에서는 검토 완료 즉시 전환.
+        submissionReviewedAt: new Date(NOW.getTime() - 86400000),
+        settlementStatus: null,
         now: NOW,
       }),
     ).toBe("INSIGHT_DUE");
@@ -119,11 +112,11 @@ describe("deriveDisplayStage", () => {
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
-            submittedAt: new Date(NOW.getTime() - 9 * 86400000),
             insightSubmittedAt: new Date(NOW.getTime() - 1 * 86400000),
           },
         ],
         submissionReviewStatus: "PENDING",
+        submissionReviewedAt: null,
         settlementStatus: null,
         now: NOW,
       }),
@@ -138,12 +131,12 @@ describe("deriveDisplayStage", () => {
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
-            submittedAt: new Date(NOW.getTime() - 8 * 86400000),
             insightSubmittedAt: null,
             insightRequired: false,
           },
         ],
         submissionReviewStatus: "APPROVED",
+        submissionReviewedAt: new Date(NOW.getTime() - 86400000),
         settlementStatus: null,
         now: NOW,
       }),
@@ -158,11 +151,11 @@ describe("deriveDisplayStage", () => {
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
-            submittedAt: new Date(NOW.getTime() - 9 * 86400000),
             insightSubmittedAt: new Date(NOW.getTime() - 1 * 86400000),
           },
         ],
         submissionReviewStatus: "APPROVED",
+        submissionReviewedAt: new Date(NOW.getTime() - 86400000),
         settlementStatus: "PENDING",
         now: NOW,
       }),
@@ -177,11 +170,11 @@ describe("deriveDisplayStage", () => {
         receivedAt: new Date(NOW.getTime() - 10 * 86400000),
         posts: [
           {
-            submittedAt: new Date(NOW.getTime() - 8 * 86400000),
             insightSubmittedAt: null,
           },
         ],
         submissionReviewStatus: "APPROVED",
+        submissionReviewedAt: new Date(NOW.getTime() - 86400000),
         settlementStatus: "COMPLETED",
         now: NOW,
       }),
@@ -196,11 +189,11 @@ describe("deriveDisplayStage", () => {
         receivedAt: new Date(NOW.getTime() - 3 * 86400000),
         posts: [
           {
-            submittedAt: new Date(NOW.getTime() - 2 * 86400000),
             insightSubmittedAt: null,
           },
         ],
         submissionReviewStatus: "REJECTED",
+        submissionReviewedAt: new Date(NOW.getTime() - 86400000),
         settlementStatus: null,
         now: NOW,
       }),
@@ -293,6 +286,7 @@ describe("deriveDisplayStage — 가구매 카테고리", () => {
         status: "REVIEW_SUBMITTED",
         category: "FAKE_PURCHASE",
         submissionReviewStatus: "APPROVED",
+        submissionReviewedAt: new Date(NOW.getTime() - 86400000),
         settlementStatus: "PENDING",
       }),
     ).toBe("COMPLETED");
@@ -305,6 +299,7 @@ describe("deriveDisplayStage — 가구매 카테고리", () => {
         status: "REVIEW_SUBMITTED",
         category: "FAKE_PURCHASE",
         submissionReviewStatus: "APPROVED",
+        submissionReviewedAt: new Date(NOW.getTime() - 86400000),
         settlementStatus: "COMPLETED",
       }),
     ).toBe("SETTLED");
@@ -317,6 +312,7 @@ describe("deriveDisplayStage — 가구매 카테고리", () => {
         status: "COMPLETED",
         category: "FAKE_PURCHASE",
         submissionReviewStatus: "APPROVED",
+        submissionReviewedAt: new Date(NOW.getTime() - 86400000),
         settlementStatus: "COMPLETED",
       }),
     ).toBe("SETTLED");

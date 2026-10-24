@@ -350,6 +350,12 @@ export const InfluencerApplicationSchema = z.object({
   orderDeadlineAt: z.string().datetime().nullable(),
   /** 가구매 캠페인용: 리뷰 제출 시각. */
   reviewSubmittedAt: z.string().datetime().nullable(),
+  /**
+   * SNS 캠페인용: 인사이트 제출 기한 (제출물 검토 완료일 + 7일).
+   * 아직 검토가 끝나지 않았으면 null. default 는 이 필드를 아직 내려주지 않는
+   * 구 API 와의 배포 갭 대비.
+   */
+  insightDueAt: z.string().datetime().nullable().default(null),
 });
 export type InfluencerApplication = z.infer<typeof InfluencerApplicationSchema>;
 

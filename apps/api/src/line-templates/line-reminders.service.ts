@@ -17,8 +17,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const POSTING_REMINDER_DAYS = [3, 1];
 /** 마감 다음날. 미제출자 독촉을 1회만 보내기 위해 동등 비교로 쓴다. */
 const OVERDUE_REMINDER_DAY = -1;
-const INSIGHT_REMINDER_DAY_AFTER_POST = 7;
-const INSIGHT_OVERDUE_REMINDER_DAY_AFTER_POST = 8;
+const INSIGHT_REMINDER_DAY_AFTER_REVIEW = 7;
+const INSIGHT_OVERDUE_REMINDER_DAY_AFTER_REVIEW = 8;
 const JST_TZ = "Asia/Tokyo";
 
 /**
@@ -325,8 +325,10 @@ export class LineRemindersService {
   }
 
   /**
-   * SNS: 인사이트 미제출 응모 대상. 제출일(reviewSubmittedAt)의 JST 기준 일자가
-   * 정확히 N일 전인 응모만 대상 (그 이후엔 매일 보내지 않도록 == 검사).
+   * SNS: 인사이트 미제출 응모 대상. 기한은 제출물 검토 완료일(submissionReviewedAt)
+   * 부터 센다 — 검토가 끝나야 인사이트 제출 단계가 열리기 때문이다(display-stage 와
+   * 같은 기준). 검토 완료일의 JST 기준 일자가 정확히 N일 전인 응모만 대상
+   * (그 이후엔 매일 보내지 않도록 == 검사).
    */
   private async collectSnsInsightPendingApplications(elapsedTarget: number) {
     const todayStart = startOfJstDay(new Date());
@@ -334,8 +336,8 @@ export class LineRemindersService {
     const applications = await this.prisma.campaignApplication.findMany({
       where: {
         status: "REVIEW_SUBMITTED",
-        reviewSubmittedAt: { not: null },
-        submissionReviewStatus: { in: ["PENDING", "APPROVED"] },
+        submissionReviewStatus: "APPROVED",
+        submissionReviewedAt: { not: null },
         posts: { some: { insightSubmittedAt: null } },
         campaign: activeCampaign("SNS"),
       },
@@ -346,19 +348,19 @@ export class LineRemindersService {
     });
 
     return applications.filter((application) => {
-      if (!application.reviewSubmittedAt) return false;
+      if (!application.submissionReviewedAt) return false;
       // 정산을 막고 있는 사유가 인사이트일 때만 독촉한다. insightRequired 가
       // 꺼진 서브타입이나 이미 정산이 생성된 응모에는 보내지 않는다.
       if (!insightMissingForSettlement(application)) return false;
-      const submittedDayStart = startOfJstDay(application.reviewSubmittedAt);
-      const elapsedDays = Math.round((todayStart - submittedDayStart) / DAY_MS);
+      const reviewedDayStart = startOfJstDay(application.submissionReviewedAt);
+      const elapsedDays = Math.round((todayStart - reviewedDayStart) / DAY_MS);
       return elapsedDays === elapsedTarget;
     });
   }
 
   private async runSnsInsightReminders(): Promise<void> {
     const applications = await this.collectSnsInsightPendingApplications(
-      INSIGHT_REMINDER_DAY_AFTER_POST,
+      INSIGHT_REMINDER_DAY_AFTER_REVIEW,
     );
     for (const application of applications) {
       await this.dispatcher.dispatch("SNS_INSIGHT_REMINDER", { application });
@@ -368,7 +370,7 @@ export class LineRemindersService {
   /** SNS: 인사이트 제출 마감 다음날(day+1) 미제출 응모에 독촉 리마인더. */
   private async runSnsInsightOverdueReminders(): Promise<void> {
     const applications = await this.collectSnsInsightPendingApplications(
-      INSIGHT_OVERDUE_REMINDER_DAY_AFTER_POST,
+      INSIGHT_OVERDUE_REMINDER_DAY_AFTER_REVIEW,
     );
     for (const application of applications) {
       await this.dispatcher.dispatch("SNS_INSIGHT_OVERDUE_REMINDER", {

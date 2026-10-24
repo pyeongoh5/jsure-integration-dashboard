@@ -34,12 +34,12 @@ interface Props {
   targets: InsightTarget[]; // 참여한 모든 서브타입의 인사이트를 한 폼에서 일괄 제출
   onSubmit: (insights: InsightEntry[]) => Promise<void>;
   submitting: boolean;
-  postSubmittedAt: string;
+  /** 인사이트 제출 기한 — 서버가 검토 완료일 기준으로 계산해 내려준다. */
+  insightDueAt: string | null;
 }
 
 function formatInsightDueDate(iso: string): string {
   const date = new Date(iso);
-  date.setDate(date.getDate() + 7);
   return `${date.getMonth() + 1}${t("application.dateFormat.monthSuffix")}${date.getDate()}${t("application.dateFormat.daySuffix")}`;
 }
 
@@ -65,7 +65,7 @@ export function InsightSubmitForm({
   targets,
   onSubmit,
   submitting,
-  postSubmittedAt,
+  insightDueAt,
 }: Props) {
   const [stepIndex, setStepIndex] = useState(0);
   // 단계를 오갈 때 입력값을 보존하기 위한 서브타입별 스냅샷.
@@ -121,10 +121,12 @@ export function InsightSubmitForm({
     <div>
       <div className={styles.guidance}>
         {t("application.insightForm.guidance")}
-        <div className={styles.guidanceDue}>
-          {t("application.insightForm.dueLabelPrefix")}
-          {formatInsightDueDate(postSubmittedAt)}
-        </div>
+        {insightDueAt && (
+          <div className={styles.guidanceDue}>
+            {t("application.insightForm.dueLabelPrefix")}
+            {formatInsightDueDate(insightDueAt)}
+          </div>
+        )}
       </div>
 
       {targets.length > 1 && (

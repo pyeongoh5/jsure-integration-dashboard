@@ -425,8 +425,10 @@
   align-items: center;
 }
 
+/* 입력을 짧게 — 전폭이면 오른쪽 끝의 저장 상태 표시가 눈에 안 들어온다 */
 .inlineControls > :first-child {
-  flex: 1;
+  width: 250px;
+  flex: none;
 }
 
 .savedText {

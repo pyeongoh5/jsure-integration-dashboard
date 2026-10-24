@@ -155,7 +155,10 @@ export class AdminApplicationsController {
     @Body(new ZodValidationPipe(ForceCancelApplicationRequestSchema))
     body: ForceCancelApplicationRequest,
   ): Promise<AdminApplication> {
-    return this.svc.forceCancel(id, req.user, body.reason.trim());
+    return this.svc.forceCancel(id, req.user, {
+      category: body.reasonCategory,
+      detail: body.reason.trim(),
+    });
   }
 
   /**

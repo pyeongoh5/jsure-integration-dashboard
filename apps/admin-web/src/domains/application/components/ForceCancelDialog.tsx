@@ -1,8 +1,12 @@
 import { useState } from "react";
+import { CancelReasonCategorySchema, type CancelReasonCategory } from "@jsure/shared";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
 import { Checkbox } from "@/components/ui";
 import { useT } from "@/lib/i18n";
+import { CANCEL_REASON_CATEGORY_LABELS } from "../cancelReason";
 import styles from "./ForceCancelDialog.module.css";
+
+const CATEGORIES = CancelReasonCategorySchema.options;
 
 type Props = {
   /** 화면 상단에 보여줄 대상 — 인플루언서·캠페인·현재 단계 */
@@ -12,7 +16,7 @@ type Props = {
   statusLabel: string;
   mutating: boolean;
   error: string | null;
-  onConfirm: (reason: string) => void;
+  onConfirm: (reasonCategory: CancelReasonCategory, reason: string) => void;
   onCancel: () => void;
 };
 
@@ -31,6 +35,8 @@ export function ForceCancelDialog({
   onCancel,
 }: Props) {
   const t = useT();
+  const [reasonCategory, setReasonCategory] =
+    useState<CancelReasonCategory>("INFLUENCER_CIRCUMSTANCE");
   const [reason, setReason] = useState("");
   const [acknowledged, setAcknowledged] = useState(false);
 
@@ -53,6 +59,23 @@ export function ForceCancelDialog({
           <span className={styles.warning}>
             {t("domains.application.forceCancel.warning")}
           </span>
+          <select
+            className={styles.category}
+            value={reasonCategory}
+            onChange={(event) =>
+              setReasonCategory(
+                CancelReasonCategorySchema.parse(event.target.value),
+              )
+            }
+            disabled={mutating}
+            aria-label={t("domains.application.forceCancel.reasonCategoryLabel")}
+          >
+            {CATEGORIES.map((category) => (
+              <option key={category} value={category}>
+                {t(CANCEL_REASON_CATEGORY_LABELS[category])}
+              </option>
+            ))}
+          </select>
           <textarea
             className={styles.reason}
             placeholder={t("domains.application.forceCancel.reasonPlaceholder")}
@@ -76,7 +99,7 @@ export function ForceCancelDialog({
           : t("domains.application.forceCancel.confirm")
       }
       cancelLabel={t("common.cancel")}
-      onConfirm={() => onConfirm(reason.trim())}
+      onConfirm={() => onConfirm(reasonCategory, reason.trim())}
       onCancel={onCancel}
     />
   );

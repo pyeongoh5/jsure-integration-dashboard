@@ -104,6 +104,14 @@ enum PostReviewStatus {
   REJECTED
 }
 
+// 참여 취소 사유 대분류. 인플루언서 귀책과 브랜드·물류 귀책을 나누는 게 목적이다.
+enum CancelReasonCategory {
+  INFLUENCER_CIRCUMSTANCE
+  COMMUNICATION_ISSUE
+  PRODUCT_LOGISTICS_ISSUE
+  OTHER
+}
+
 // 보수 체계.
 // - UNIFIED: 참여 서브타입 수와 무관하게 Campaign.rewardJpy 고정 지급.
 // - PER_SUBTYPE: 참여한 서브타입별 CampaignRecruit.rewardJpy 합산 지급.
@@ -431,6 +439,12 @@ model CampaignApplication {
   submissionReviewStatus PostReviewStatus @default(PENDING)
   submissionReviewedAt   DateTime?
   submissionReviewedById String?
+
+  /// 참여 취소 사유. 현재 취소 상태인 건에만 값이 있고, 되돌리면 비워진다.
+  /// 이력은 감사 로그(APPLICATION_FORCE_CANCEL)가 보관하므로 여기는 현재 상태만 담는다.
+  /// 사유별 집계·필터를 위해 대분류를 컬럼으로 둔다.
+  cancelReasonCategory CancelReasonCategory?
+  cancelReasonDetail   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

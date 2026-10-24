@@ -1441,12 +1441,30 @@ export const adminMessages = {
           placeholder: { ko: "예: 10000", en: "e.g. 10000", ja: "例: 10000" },
         },
       },
+      cancelReason: {
+        influencerCircumstance: {
+          ko: "인플루언서 사정 (일정 불가, 개인 사정)",
+          en: "Influencer circumstances (schedule conflict, personal reasons)",
+          ja: "インフルエンサー都合（日程不可・個人事情）",
+        },
+        communicationIssue: {
+          ko: "소통 이슈 (연락 두절, 가이드 미협조)",
+          en: "Communication issue (unreachable, non-cooperation with guidelines)",
+          ja: "コミュニケーション課題（連絡不通・ガイド非協力）",
+        },
+        productLogisticsIssue: {
+          ko: "제품/물류 이슈 (파손, 오배송, 분실, 재고 부족)",
+          en: "Product/logistics issue (damage, misdelivery, loss, out of stock)",
+          ja: "商品・物流課題（破損・誤配送・紛失・在庫不足）",
+        },
+        other: { ko: "기타", en: "Other", ja: "その他" },
+      },
       forceCancel: {
-        action: { ko: "강제 취소", en: "Force cancel", ja: "強制キャンセル" },
+        action: { ko: "참여 취소", en: "Cancel participation", ja: "参加キャンセル" },
         title: {
-          ko: "이 응모를 강제 취소할까요?",
-          en: "Force cancel this application?",
-          ja: "この応募を強制キャンセルしますか？",
+          ko: "이 응모의 참여를 취소할까요?",
+          en: "Cancel participation for this application?",
+          ja: "この応募の参加をキャンセルしますか？",
         },
         currentStage: {
           ko: "현재 단계: {stage}",
@@ -1458,10 +1476,15 @@ export const adminMessages = {
           en: "This cannot be undone. The participation ends and one recruiting slot reopens. Submitted content is kept but excluded from review and report totals. No automatic notice is sent to the influencer — contact them separately.",
           ja: "元に戻せません。参加が終了し、募集枠が1名分再び空きます。提出物の記録は保存されますが、レビュー・レポート集計からは除外されます。インフルエンサーへの自動通知は送られないため、別途ご連絡ください。",
         },
+        reasonCategoryLabel: {
+          ko: "취소 사유 대분류",
+          en: "Cancellation reason category",
+          ja: "キャンセル理由の区分",
+        },
         reasonPlaceholder: {
-          ko: "취소 사유 (감사 로그에만 기록됩니다)",
-          en: "Reason (recorded in the audit log only)",
-          ja: "キャンセル理由（監査ログにのみ記録されます）",
+          ko: "상세 사유 (내부 관리용 — 인플루언서에게 전달되지 않습니다)",
+          en: "Details (internal only — not shared with the influencer)",
+          ja: "詳細理由（社内管理用 — インフルエンサーには共有されません）",
         },
         reasonRequired: {
           ko: "취소 사유를 입력하세요.",
@@ -1473,7 +1496,7 @@ export const adminMessages = {
           en: "I understand this cannot be undone",
           ja: "元に戻せないことを確認しました",
         },
-        confirm: { ko: "강제 취소", en: "Force cancel", ja: "強制キャンセル" },
+        confirm: { ko: "참여 취소", en: "Cancel participation", ja: "参加キャンセル" },
       },
       drafts: {
         status: {
@@ -2962,6 +2985,7 @@ export const adminMessages = {
           columnTime: { ko: "처리 일시", en: "Time", ja: "処理日時" },
           columnActor: { ko: "담당자", en: "Handled by", ja: "担当者" },
           rejectReason: { ko: "반려 사유", en: "Reject reason", ja: "却下理由" },
+          cancelReason: { ko: "취소 사유", en: "Cancel reason", ja: "キャンセル理由" },
           restore: { ko: "취소 되돌리기", en: "Undo cancel", ja: "キャンセルを取り消す" },
           restoring: { ko: "되돌리는 중…", en: "Undoing…", ja: "取り消し中…" },
           restoreHint: {

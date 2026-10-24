@@ -70,6 +70,7 @@ export {
   ACTIVITY_ACTION_LABEL,
   ACTIVITY_ORIGIN_BADGE,
 } from "./components/history/activityLabels";
+export { CANCEL_REASON_CATEGORY_LABELS } from "./cancelReason";
 export { useApplicationActivity } from "./components/history/useApplicationActivity";
 export type { ActivityState } from "./components/history/useApplicationActivity";
 export { ApplicationHistoryDialog } from "./components/history/ApplicationHistoryDialog";

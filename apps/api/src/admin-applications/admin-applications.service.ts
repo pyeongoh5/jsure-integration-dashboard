@@ -20,6 +20,7 @@ import {
   type ApprovedApplicantExportResponse,
   type CampaignCategory,
   type CampaignSubType,
+  type CancelReasonCategory,
   type CrossPostPlatform,
 } from "@jsure/shared";
 import {
@@ -676,7 +677,7 @@ export class AdminApplicationsService {
   async forceCancel(
     id: string,
     actor: AuditActor,
-    reason: string,
+    reason: { category: CancelReasonCategory; detail: string },
   ): Promise<AdminApplication> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id },
@@ -700,15 +701,24 @@ export class AdminApplicationsService {
 
     await this.prisma.campaignApplication.update({
       where: { id },
-      data: { status: "CANCELLED" },
+      data: {
+        status: "CANCELLED",
+        cancelReasonCategory: reason.category,
+        cancelReasonDetail: reason.detail,
+      },
     });
+    // 로그에도 사유를 남긴다 — 컬럼은 되돌리면 비워지지만 이력은 남아야 한다.
     await this.audit.record({
       action: "APPLICATION_FORCE_CANCEL",
       actor,
       applicationId: id,
       campaignId: existing.campaignId,
       influencerId: existing.influencerId,
-      metadata: { previousStatus: existing.status, reason },
+      metadata: {
+        previousStatus: existing.status,
+        reasonCategory: reason.category,
+        reason: reason.detail,
+      },
     });
     return this.fetch(id);
   }
@@ -755,7 +765,12 @@ export class AdminApplicationsService {
 
     await this.prisma.campaignApplication.update({
       where: { id },
-      data: { status: previousStatus as ApplicationStatus },
+      data: {
+        status: previousStatus as ApplicationStatus,
+        // 더 이상 취소 상태가 아니므로 사유를 비운다. 이력은 감사 로그에 남는다.
+        cancelReasonCategory: null,
+        cancelReasonDetail: null,
+      },
     });
     await this.audit.record({
       action: "APPLICATION_RESTORE",

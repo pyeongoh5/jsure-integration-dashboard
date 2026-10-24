@@ -8,9 +8,12 @@ import {
   settleSubmission,
   undoSubmissionReview,
 } from "../draftsApi";
+import { toCancelInput, type CancelInput } from "../../cancelReason";
 import type { DraftReview } from "./types";
 
 export type PendingDraftActionType = "approve" | "reject" | "undo" | "forceCancel";
+
+export type DraftConfirmInput = string | CancelInput;
 
 export type PendingDraftAction = {
   type: PendingDraftActionType;
@@ -27,7 +30,7 @@ export type UseDraftMutationsResult = {
   openForceCancel: (draft: DraftReview) => void;
   settle: (draft: DraftReview) => Promise<boolean>;
   cancel: () => void;
-  confirm: (input?: string) => Promise<boolean>;
+  confirm: (input?: DraftConfirmInput) => Promise<boolean>;
 };
 
 export function useDraftMutations(
@@ -47,7 +50,7 @@ export function useDraftMutations(
     setPending({ type, draft });
   };
 
-  const confirm = async (input?: string): Promise<boolean> => {
+  const confirm = async (input?: DraftConfirmInput): Promise<boolean> => {
     if (!pending || mutating) return false;
     setMutating(true);
     setError(null);
@@ -58,7 +61,7 @@ export function useDraftMutations(
           await approveSubmission(applicationId);
           break;
         case "reject": {
-          const comment = (input ?? "").trim();
+          const comment = typeof input === "string" ? input.trim() : "";
           if (comment === "") {
             setError(
               translate(
@@ -75,8 +78,8 @@ export function useDraftMutations(
           await undoSubmissionReview(applicationId);
           break;
         case "forceCancel": {
-          const reason = (input ?? "").trim();
-          if (reason === "") {
+          const cancelInput = toCancelInput(input);
+          if (!cancelInput) {
             setError(
               translate(
                 "domains.application.forceCancel.reasonRequired",
@@ -85,7 +88,11 @@ export function useDraftMutations(
             );
             return false;
           }
-          await forceCancelApplication(applicationId, reason);
+          await forceCancelApplication(
+            applicationId,
+            cancelInput.reasonCategory,
+            cancelInput.reason,
+          );
           break;
         }
       }

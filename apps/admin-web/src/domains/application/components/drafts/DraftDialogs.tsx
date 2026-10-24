@@ -4,13 +4,16 @@ import { DraftUndoDialog } from "./DraftUndoDialog";
 import { ForceCancelDialog } from "../ForceCancelDialog";
 import { useT } from "@/lib/i18n";
 import { DRAFT_STATUS_LABEL } from "./types";
-import type { PendingDraftAction } from "./useDraftMutations";
+import type {
+  DraftConfirmInput,
+  PendingDraftAction,
+} from "./useDraftMutations";
 
 type Props = {
   pending: PendingDraftAction | null;
   mutating: boolean;
   error: string | null;
-  onConfirm: (input?: string) => void;
+  onConfirm: (input?: DraftConfirmInput) => void;
   onCancel: () => void;
 };
 
@@ -46,7 +49,9 @@ export function DraftDialogs({
           statusLabel={t(DRAFT_STATUS_LABEL[pending.draft.status])}
           mutating={mutating}
           error={error}
-          onConfirm={(reason) => onConfirm(reason)}
+          onConfirm={(reasonCategory, reason) =>
+            onConfirm({ reasonCategory, reason })
+          }
           onCancel={onCancel}
         />
       );

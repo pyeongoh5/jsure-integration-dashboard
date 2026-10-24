@@ -287,10 +287,24 @@ export type RejectSubmissionRequest = z.infer<
 >;
 
 /**
+ * 취소 사유 대분류. 인플루언서 귀책(INFLUENCER_CIRCUMSTANCE·COMMUNICATION_ISSUE)과
+ * 브랜드·물류 귀책(PRODUCT_LOGISTICS_ISSUE)을 나누는 게 목적이다 — 차후 선정 검토에서
+ * 귀책 없는 취소에 불이익이 가지 않도록.
+ */
+export const CancelReasonCategorySchema = z.enum([
+  "INFLUENCER_CIRCUMSTANCE",
+  "COMMUNICATION_ISSUE",
+  "PRODUCT_LOGISTICS_ISSUE",
+  "OTHER",
+]);
+export type CancelReasonCategory = z.infer<typeof CancelReasonCategorySchema>;
+
+/**
  * 응모 강제 취소 — 단계와 무관하게 참여를 끝낸다.
- * 사유는 감사 로그에만 남고 인플루언서에게 전달되지 않는다.
+ * 사유는 감사 로그와 응모 컬럼에만 남고 인플루언서에게 전달되지 않는다.
  */
 export const ForceCancelApplicationRequestSchema = z.object({
+  reasonCategory: CancelReasonCategorySchema,
   reason: z.string().min(1, "취소 사유를 입력하세요").max(500),
 });
 export type ForceCancelApplicationRequest = z.infer<

@@ -114,6 +114,14 @@
   margin-right: var(--space-2);
 }
 
+/* 취소 사유 대분류 — 귀책 구분이 상세 문구보다 먼저 눈에 들어와야 한다 */
+.reasonCategory {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-right: var(--space-2);
+}
+
 /* 강제 취소 되돌리기 — 취소 기록 행에만 붙는다 */
 .restoreRow {
   display: flex;

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { translate } from "@i18n/admin";
+import type { CancelReasonCategory } from "@jsure/shared";
 import { extractApiErrorMessage } from "@/lib/api";
 import { getStoredLanguage } from "@/lib/i18n";
+import { toCancelInput } from "../../cancelReason";
 import {
   approveApplication,
   deliverApplication,
@@ -41,7 +43,8 @@ export type UseApplicantMutationsResult = {
 
 export type ConfirmInput =
   | string
-  | { trackingCarrier: string; trackingNumber: string };
+  | { trackingCarrier: string; trackingNumber: string }
+  | { reasonCategory: CancelReasonCategory; reason: string };
 
 function extractErrorMessage(err: unknown): string {
   return extractApiErrorMessage(
@@ -95,7 +98,8 @@ export function useApplicantMutations(
           if (
             typeof input !== "object" ||
             input === null ||
-            !input.trackingCarrier?.trim()
+            !("trackingCarrier" in input) ||
+            !input.trackingCarrier.trim()
           ) {
             setError(
               translate(
@@ -108,7 +112,7 @@ export function useApplicantMutations(
           await shipApplication(
             id,
             input.trackingCarrier.trim(),
-            input.trackingNumber?.trim() ?? "",
+            input.trackingNumber.trim(),
           );
           break;
         }
@@ -116,8 +120,8 @@ export function useApplicantMutations(
           await deliverApplication(id);
           break;
         case "forceCancel": {
-          const reason = typeof input === "string" ? input.trim() : "";
-          if (reason === "") {
+          const cancelInput = toCancelInput(input);
+          if (!cancelInput) {
             setError(
               translate(
                 "domains.application.forceCancel.reasonRequired",
@@ -126,7 +130,11 @@ export function useApplicantMutations(
             );
             return false;
           }
-          await forceCancelApplication(id, reason);
+          await forceCancelApplication(
+            id,
+            cancelInput.reasonCategory,
+            cancelInput.reason,
+          );
           break;
         }
       }

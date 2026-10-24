@@ -8,6 +8,7 @@ import {
   type AdminApplication,
   type ApplicantFilter,
   type ApplicationStatus,
+  type CancelReasonCategory,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
@@ -79,11 +80,12 @@ export async function undoApplication(id: string): Promise<AdminApplication> {
 /** 강제 취소 — 단계와 무관. 정산이 생성된 건은 서버가 400 으로 막는다. */
 export async function forceCancelApplication(
   id: string,
+  reasonCategory: CancelReasonCategory,
   reason: string,
 ): Promise<AdminApplication> {
   const res = await api.post(
     `/campaign-applications/${encodeURIComponent(id)}/force-cancel`,
-    { reason },
+    { reasonCategory, reason },
   );
   return AdminApplicationSchema.parse(res.data);
 }

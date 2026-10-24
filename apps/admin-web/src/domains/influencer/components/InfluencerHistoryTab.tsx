@@ -12,6 +12,7 @@ import { SegmentedTabs, SubTypeIcon } from "@/components/composites";
 import { Button } from "@/components/ui";
 import {
   ACTIVITY_ACTION_LABEL,
+  CANCEL_REASON_CATEGORY_LABELS,
   restoreCancelledApplication,
 } from "@/domains/application";
 import { useT } from "@/lib/i18n";
@@ -34,8 +35,8 @@ type HistoryRow = {
   subTypes: CampaignSubType[];
   status: ApplicationStatus;
   event: AdminActivityLog;
-  /** 반려 이벤트에만 채워진다. */
-  rejectReason: string | null;
+  /** 사유가 있는 이벤트(반려·취소)에만 채워진다. */
+  reason: EventReason | null;
   /** 되돌리기 대상 — 현재 취소 상태이고 이 행이 가장 최근 강제 취소일 때만 채워진다. */
   restorableApplicationId: string | null;
 };
@@ -81,24 +82,60 @@ const STATUS_BADGE_CLASS: Record<ApplicationStatus, string | undefined> = {
 };
 
 /** 반려 사유를 붙일 이벤트. 응모 반려와 제출물 반려 모두 사유가 의미 있다. */
-const REJECTION_ACTIONS: AdminActivityLog["action"][] = [
-  "APPLICATION_REJECT",
-  "SUBMISSION_REJECT",
-];
+/** 사유를 보여줄 액션과, 그 사유에 붙일 라벨. 여기 없는 액션은 사유를 그리지 않는다. */
+const REASON_LABEL: Partial<
+  Record<AdminActivityLog["action"], AdminTranslationKey>
+> = {
+  APPLICATION_REJECT: "domains.influencer.notesDialog.history.rejectReason",
+  SUBMISSION_REJECT: "domains.influencer.notesDialog.history.rejectReason",
+  APPLICATION_FORCE_CANCEL:
+    "domains.influencer.notesDialog.history.cancelReason",
+};
+
+/** 한 이벤트의 사유 — 라벨, 대분류(취소만), 상세 문구. */
+type EventReason = {
+  labelKey: AdminTranslationKey;
+  /** 취소 사유 대분류. 반려에는 없다. */
+  categoryKey: AdminTranslationKey | null;
+  text: string;
+};
 
 /**
- * 반려 사유. 로그 metadata 의 reason 이 그 이벤트의 사유라 가장 정확하다 —
+ * 이벤트 사유. 로그 metadata 의 reason 이 그 이벤트의 사유라 가장 정확하다 —
  * group.rejectReason 은 응모 반려 사유뿐이라 제출물 반려에는 맞지 않는다.
  * metadata 가 없는 옛 로그를 위해 응모 반려에 한해 컬럼으로 되돌아간다.
+ *
+ * 취소는 대분류를 함께 보여준다 — 인플루언서 귀책인지 브랜드·물류 귀책인지가
+ * 차후 선정 검토의 핵심이라 상세 문구만으로는 판별할 수 없다.
  */
-function rejectReasonOf(
+function eventReasonOf(
   event: AdminActivityLog,
   groupRejectReason: string | null,
-): string | null {
-  if (!REJECTION_ACTIONS.includes(event.action)) return null;
-  const reason = event.metadata?.reason;
-  if (typeof reason === "string" && reason.trim()) return reason;
-  return event.action === "APPLICATION_REJECT" ? groupRejectReason : null;
+): EventReason | null {
+  const labelKey = REASON_LABEL[event.action];
+  if (!labelKey) return null;
+
+  const raw = event.metadata?.reason;
+  const fallback =
+    event.action === "APPLICATION_REJECT" ? groupRejectReason : null;
+  const text = typeof raw === "string" && raw.trim() ? raw : (fallback ?? "");
+
+  const categoryKey = cancelCategoryKeyOf(event);
+  // 대분류만 있고 상세가 비어도 보여준다 — 귀책 구분이 상세보다 중요하다.
+  if (!text && !categoryKey) return null;
+  return { labelKey, categoryKey, text };
+}
+
+/** 취소 로그의 대분류 i18n 키. 대분류 도입 전 로그는 null. */
+function cancelCategoryKeyOf(
+  event: AdminActivityLog,
+): AdminTranslationKey | null {
+  if (event.action !== "APPLICATION_FORCE_CANCEL") return null;
+  const category = event.metadata?.reasonCategory;
+  if (typeof category !== "string") return null;
+  return CANCEL_REASON_CATEGORY_LABELS[
+    category as keyof typeof CANCEL_REASON_CATEGORY_LABELS
+  ] ?? null;
 }
 
 function matchesFilter(
@@ -131,7 +168,7 @@ function toRows(
         subTypes: group.subTypes,
         status: group.status,
         event,
-        rejectReason: rejectReasonOf(event, group.rejectReason),
+        reason: eventReasonOf(event, group.rejectReason),
         restorableApplicationId:
           event.id === latestCancelEventId ? group.applicationId : null,
       });
@@ -269,12 +306,15 @@ function HistoryEntry({ row, onRestored }: { row: HistoryRow; onRestored: () => 
         <span>{formatDateTime(row.event.createdAt)}</span>
         <span className={styles.actor}>{actorLabel(row.event, t)}</span>
       </div>
-      {row.rejectReason && (
+      {row.reason && (
         <div className={styles.reason}>
-          <span className={styles.reasonLabel}>
-            {t("domains.influencer.notesDialog.history.rejectReason")}
-          </span>
-          {row.rejectReason}
+          <span className={styles.reasonLabel}>{t(row.reason.labelKey)}</span>
+          {row.reason.categoryKey && (
+            <span className={styles.reasonCategory}>
+              {t(row.reason.categoryKey)}
+            </span>
+          )}
+          {row.reason.text}
         </div>
       )}
       {row.restorableApplicationId && (

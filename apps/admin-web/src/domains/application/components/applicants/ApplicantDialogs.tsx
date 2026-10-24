@@ -65,7 +65,9 @@ export function ApplicantDialogs({
           statusLabel={t(APPLICANT_STATUS_LABEL[pending.applicant.status])}
           mutating={mutating}
           error={error}
-          onConfirm={(reason) => onConfirm(reason)}
+          onConfirm={(reasonCategory, reason) =>
+            onConfirm({ reasonCategory, reason })
+          }
           onCancel={onCancel}
         />
       );

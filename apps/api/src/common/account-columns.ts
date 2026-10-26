@@ -1,3 +1,4 @@
+import { bankLabel } from "@jsure/shared";
 import type {
   AddressCountry,
   InfluencerAddress,
@@ -83,7 +84,8 @@ export function toBankAccountResponse(
 ): InfluencerBankAccountPublic {
   const common = {
     bankCode: row.bankCode,
-    bankName: row.bankName,
+    // 저장값이 아니라 코드로 찾은 현재 명칭을 싣는다 (상호 변경 대응)
+    bankName: bankLabel(row.bankCountry, row.bankCode, row.bankName),
     accountHolder: row.accountHolder,
     accountNumberMasked,
     accountNumber: row.accountNumber,

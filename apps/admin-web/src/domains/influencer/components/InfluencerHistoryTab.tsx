@@ -9,7 +9,7 @@ import {
 } from "@jsure/shared";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { SegmentedTabs, SubTypeIcon } from "@/components/composites";
-import { Button } from "@/components/ui";
+import { Button, Switch } from "@/components/ui";
 import {
   ACTIVITY_ACTION_LABEL,
   CANCEL_REASON_CATEGORY_LABELS,
@@ -187,6 +187,9 @@ export function InfluencerHistoryTab({ influencerId }: Props) {
   const t = useT();
   const [state, setState] = useState<ActivityState>({ kind: "loading" });
   const [filter, setFilter] = useState<HistoryFilter>("ALL");
+  // 기본은 최신 1건만. 대부분 "마지막에 무슨 일이 있었나"만 보므로 전체를 펼쳐
+  // 모달을 길게 만들 이유가 없다. 탭을 바꾸면 다시 접는다.
+  const [showAll, setShowAll] = useState(false);
   // 되돌리기 후 목록을 다시 읽는다 — 상태 뱃지와 버튼 노출이 함께 갱신돼야 한다
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -219,15 +222,36 @@ export function InfluencerHistoryTab({ influencerId }: Props) {
 
   return (
     <div>
-      <SegmentedTabs
-        className={styles.filterTabs}
-        items={FILTER_ORDER.map((key) => ({ key, label: t(FILTER_LABEL[key]) }))}
-        value={filter}
-        onChange={setFilter}
-      />
+      <div className={styles.filterRow}>
+        <SegmentedTabs
+          className={styles.filterTabs}
+          items={FILTER_ORDER.map((key) => ({ key, label: t(FILTER_LABEL[key]) }))}
+          value={filter}
+          onChange={(next) => {
+            setFilter(next);
+            setShowAll(false);
+          }}
+        />
+        {rows.length > 1 && (
+          <div className={styles.toggle}>
+            <span className={styles.toggleLabel}>
+              {t("domains.influencer.notesDialog.expandAll", {
+                count: rows.length,
+              })}
+            </span>
+            <Switch
+              checked={showAll}
+              onChange={setShowAll}
+              ariaLabel={t("domains.influencer.notesDialog.expandAll", {
+                count: rows.length,
+              })}
+            />
+          </div>
+        )}
+      </div>
       <HistoryBody
         state={state}
-        rows={rows}
+        rows={showAll ? rows : rows.slice(0, 1)}
         onRestored={() => setReloadKey((current) => current + 1)}
       />
     </div>

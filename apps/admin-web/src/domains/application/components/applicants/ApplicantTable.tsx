@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { formatProductOptions, SUB_TYPE_LABEL } from "@jsure/shared";
 import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
 import {
+  ActionMenu,
   ScrollTable,
   SnsHandleCell,
   SnsProfileLink,
@@ -35,29 +36,40 @@ type ActionHandlers = {
 };
 
 function renderActions(applicant: Applicant, handlers: ActionHandlers, t: TranslateFunction) {
-  const memoButton = (
-    <Button variant="secondary" size="sm" onClick={() => handlers.onMemo(applicant)}>
-      {t("domains.application.applicants.actions.memo")}
-    </Button>
-  );
   const detailButton =
     applicant.category === "FAKE_PURCHASE" ? (
       <Button variant="secondary" size="sm" onClick={() => handlers.onDetail(applicant)}>
         {t("domains.application.applicants.actions.detail")}
       </Button>
     ) : null;
-  const historyButton = (
-    <Button variant="secondary" size="sm" onClick={() => handlers.onHistory(applicant)}>
-      {t("domains.application.applicants.actions.history")}
-    </Button>
-  );
+  // 메모·이력·참여 취소는 자주 쓰지 않는데 자리를 많이 먹어 단계별 주요 액션을
+  // 가린다. 더보기로 접어 액션 칸에는 그 단계에서 실제로 누를 버튼만 남긴다.
+  //
   // 강제 취소는 모든 단계에서 가능하다 — 반려·재제출 대기 건도 정리해야 할 때가 있다.
   // 차단은 서버가 판단한다(이미 취소됨·정산 존재 — force-cancel.ts).
   // 이 목록에는 취소된 건이 오지 않으므로 화면에서 거를 상태가 없다.
-  const forceCancelButton = (
-    <Button variant="danger" size="sm" onClick={() => handlers.onForceCancel(applicant)}>
-      {t("domains.application.forceCancel.action")}
-    </Button>
+  const moreMenu = (
+    <ActionMenu
+      ariaLabel={t("domains.application.applicants.actions.more")}
+      items={[
+        {
+          key: "memo",
+          label: t("domains.application.applicants.actions.memo"),
+          onSelect: () => handlers.onMemo(applicant),
+        },
+        {
+          key: "history",
+          label: t("domains.application.applicants.actions.history"),
+          onSelect: () => handlers.onHistory(applicant),
+        },
+        {
+          key: "forceCancel",
+          label: t("domains.application.forceCancel.action"),
+          onSelect: () => handlers.onForceCancel(applicant),
+          danger: true,
+        },
+      ]}
+    />
   );
   const hasShipping = applicant.category === "SNS" || applicant.category === "SIMPLE_REVIEW";
 
@@ -72,9 +84,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
             {t("domains.application.applicants.actions.reject")}
           </Button>
           {detailButton}
-          {memoButton}
-          {historyButton}
-          {forceCancelButton}
+          {moreMenu}
         </div>
       );
     case "PRE_SHIP":
@@ -89,9 +99,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
             {t("domains.application.applicants.actions.undo")}
           </Button>
           {detailButton}
-          {memoButton}
-          {historyButton}
-          {forceCancelButton}
+          {moreMenu}
         </div>
       );
     case "SHIPPING":
@@ -109,9 +117,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
             </Button>
           )}
           {detailButton}
-          {memoButton}
-          {historyButton}
-          {forceCancelButton}
+          {moreMenu}
         </div>
       );
     case "DELIVERED":
@@ -121,9 +127,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
       return (
         <div className={styles.actions}>
           {detailButton}
-          {memoButton}
-          {historyButton}
-          {forceCancelButton}
+          {moreMenu}
         </div>
       );
     case "AWAITING_ORDER":
@@ -133,9 +137,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
             {t("domains.application.applicants.actions.undo")}
           </Button>
           {detailButton}
-          {memoButton}
-          {historyButton}
-          {forceCancelButton}
+          {moreMenu}
         </div>
       );
     case "REJECTED":
@@ -145,9 +147,7 @@ function renderActions(applicant: Applicant, handlers: ActionHandlers, t: Transl
             {t("domains.application.applicants.actions.undo")}
           </Button>
           {detailButton}
-          {memoButton}
-          {historyButton}
-          {forceCancelButton}
+          {moreMenu}
         </div>
       );
   }

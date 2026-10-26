@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { InfluencerNotesResponse } from "@jsure/shared";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { SegmentedTabs, TagsInput } from "@/components/composites";
+import { Switch } from "@/components/ui";
 import {
   createInfluencerMemo,
   fetchInfluencerNotes,
@@ -289,6 +290,8 @@ function MemoTab({
   onSubmitMemo: () => void;
 }) {
   const t = useT();
+  // 히스토리 탭과 같은 규칙 — 기본은 최신 1건, 스위치로 전체를 편다.
+  const [showAll, setShowAll] = useState(false);
 
   if (state.kind === "loading") {
     return <div className={styles.timelineEmpty}>{t("common.loading")}</div>;
@@ -324,16 +327,34 @@ function MemoTab({
       </section>
 
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>
-          {t("domains.influencer.notesDialog.memoListTitle")}
-        </h3>
+        <div className={styles.sectionTitleRow}>
+          <h3 className={styles.sectionTitle}>
+            {t("domains.influencer.notesDialog.memoListTitle")}
+          </h3>
+          {state.data.memos.length > 1 && (
+            <div className={styles.toggle}>
+              <span className={styles.toggleLabel}>
+                {t("domains.influencer.notesDialog.expandAll", {
+                  count: state.data.memos.length,
+                })}
+              </span>
+              <Switch
+                checked={showAll}
+                onChange={setShowAll}
+                ariaLabel={t("domains.influencer.notesDialog.expandAll", {
+                  count: state.data.memos.length,
+                })}
+              />
+            </div>
+          )}
+        </div>
         {state.data.memos.length === 0 ? (
           <div className={styles.timelineEmpty}>
             {t("domains.influencer.notesDialog.memoEmpty")}
           </div>
         ) : (
           <div className={styles.timeline}>
-            {state.data.memos.map((memo) => (
+            {(showAll ? state.data.memos : state.data.memos.slice(0, 1)).map((memo) => (
               <article key={memo.id} className={styles.entry}>
                 <div className={styles.entryHeader}>
                   {memo.campaignTitle && (

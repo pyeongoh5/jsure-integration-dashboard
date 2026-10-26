@@ -2957,6 +2957,12 @@ export const adminMessages = {
           ja: "このインフルエンサーに関するメモを入力してください。",
         },
         saving: { ko: "저장 중…", en: "Saving…", ja: "保存中…" },
+        /** 메모·히스토리 목록의 "최신 1건만 / 전체" 스위치 라벨 — 두 탭이 같이 쓴다. */
+        expandAll: {
+          ko: "전체 보기 ({count}건)",
+          en: "Show all ({count})",
+          ja: "すべて表示（{count}件）",
+        },
         tabMemo: { ko: "메모", en: "Memo", ja: "メモ" },
         tabHistory: { ko: "히스토리", en: "History", ja: "履歴" },
         memoListTitle: { ko: "작성된 메모", en: "Memos", ja: "メモ" },

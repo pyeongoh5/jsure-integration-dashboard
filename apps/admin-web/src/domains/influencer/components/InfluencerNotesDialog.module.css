@@ -213,3 +213,28 @@
   font-size: var(--font-size-sm);
   margin-bottom: var(--space-3);
 }
+
+/* 섹션 제목 줄 — 오른쪽 끝에 "전체 보기" 스위치를 둔다 (히스토리 탭과 같은 배치) */
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sectionTitleRow .sectionTitle {
+  margin-bottom: 10px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+  margin-bottom: 10px;
+}
+
+.toggleLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted, #6b7280);
+  white-space: nowrap;
+}

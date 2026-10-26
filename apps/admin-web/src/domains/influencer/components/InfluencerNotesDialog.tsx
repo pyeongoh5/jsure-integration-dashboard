@@ -11,7 +11,7 @@ import {
   updateInfluencerTags,
 } from "../api";
 import { formatDateTime } from "../formatDateTime";
-import { useInfluencerTagOptions } from "../useInfluencerTagOptions";
+import { useInfluencerTags } from "../useInfluencerTags";
 import { useT } from "@/lib/i18n";
 import { InfluencerHistoryTab } from "./InfluencerHistoryTab";
 import styles from "./InfluencerNotesDialog.module.css";
@@ -60,7 +60,7 @@ export function InfluencerNotesDialog({
   const [toggling, setToggling] = useState(false);
   const [savingTags, setSavingTags] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const tagOptions = useInfluencerTagOptions();
+  const tagSuggestions = useInfluencerTags().map((tag) => tag.label);
 
   useEffect(() => {
     let cancelled = false;
@@ -242,7 +242,7 @@ export function InfluencerNotesDialog({
               onChange={handleTagsChange}
               placeholder={t("domains.influencer.notesDialog.tagsPlaceholder")}
               hint={t("domains.influencer.notesDialog.tagsHint")}
-              suggestions={tagOptions}
+              suggestions={tagSuggestions}
               disabled={savingTags}
             />
           </section>

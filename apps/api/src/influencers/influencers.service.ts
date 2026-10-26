@@ -121,6 +121,10 @@ export class InfluencersService {
         snsAccounts: { some: { snsType: { in: filter.snsTypes } } },
       });
     }
+    // 태그는 조건을 하나씩 쌓는다 — 선택한 태그를 모두 보유해야 걸리도록(AND).
+    for (const tagId of filter.tagIds) {
+      conditions.push({ tagAssignments: { some: { tagId } } });
+    }
     const query = filter.query.trim();
     if (query) {
       conditions.push({

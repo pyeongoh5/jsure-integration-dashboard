@@ -6,6 +6,7 @@ import {
   SingleSelectFilterChip,
   MultiSelectFilterChip,
 } from "@/components/composites/FilterChip";
+import { InfluencerTagFilterChip } from "@/domains/influencer";
 import { CampaignFilterChip } from "./CampaignFilterChip";
 import { MinFollowersFilterChip } from "./MinFollowersFilterChip";
 import {
@@ -15,6 +16,9 @@ import {
   type Media,
   type MediaFilterKey,
 } from "./types";
+
+// 렌더마다 새 Set 을 만들지 않도록 기본값을 모듈 상수로 둔다.
+const EMPTY_TAG_FILTER: Set<string> = new Set();
 
 // 인스타그램은 응모 옵션(피드/릴스) 단위로 필터링할 수 있게 두 항목으로 나눈다.
 function buildMediaOptions(
@@ -60,6 +64,10 @@ type Props = {
   // 카테고리 필터도 응모 관리 페이지 전용. props 를 생략하면 칩이 사라진다.
   category?: CampaignCategory | null;
   onCategoryChange?: (category: CampaignCategory | null) => void;
+
+  // 어드민 관리 태그 필터도 응모 관리 페이지 전용. props 를 생략하면 칩이 사라진다.
+  tagFilter?: Set<string>;
+  onTagFilterChange?: (next: Set<string>) => void;
 };
 
 export function ApplicantFilters({
@@ -74,6 +82,8 @@ export function ApplicantFilters({
   onMinFollowersChange,
   category,
   onCategoryChange,
+  tagFilter,
+  onTagFilterChange,
 }: Props) {
   const t = useT();
   const categoryOptions = CATEGORY_FILTER_OPTIONS.map((option) => ({
@@ -119,6 +129,13 @@ export function ApplicantFilters({
         value={mediaFilter}
         onChange={onMediaChange}
       />
+
+      {onTagFilterChange && (
+        <InfluencerTagFilterChip
+          value={tagFilter ?? EMPTY_TAG_FILTER}
+          onChange={onTagFilterChange}
+        />
+      )}
     </FilterChipBar>
   );
 }

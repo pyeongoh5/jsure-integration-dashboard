@@ -49,6 +49,7 @@ export function Applicants() {
   );
   const [categoryFilter, setCategoryFilter] =
     useState<CampaignCategory | null>(null);
+  const [tagFilter, setTagFilter] = useState<Set<string>>(() => new Set());
   const [detailTarget, setDetailTarget] = useState<Applicant | null>(null);
   const [query, setQuery] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -67,6 +68,7 @@ export function Applicants() {
       viewStatuses: [...statusFilter].sort(),
       category: categoryFilter,
       minFollowers,
+      tagIds: [...tagFilter].sort(),
       query: debouncedQuery.trim(),
     }),
     [
@@ -75,6 +77,7 @@ export function Applicants() {
       statusFilter,
       categoryFilter,
       minFollowers,
+      tagFilter,
       debouncedQuery,
     ],
   );
@@ -213,6 +216,8 @@ export function Applicants() {
           onMinFollowersChange={setMinFollowers}
           category={categoryFilter}
           onCategoryChange={setCategoryFilter}
+          tagFilter={tagFilter}
+          onTagFilterChange={setTagFilter}
         />
         <ApplicantStatusFilter value={statusFilter} onChange={setStatusFilter} />
         <div className={styles.searchSpacer} />

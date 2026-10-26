@@ -98,6 +98,14 @@ export function buildApplicantWhereSql(filter: ApplicantFilter): Prisma.Sql {
     conditions.push(Prisma.sql`${applicantFollowersSql} >= ${filter.minFollowers}`);
   }
 
+  // 태그는 조건을 하나씩 쌓는다 — 선택한 태그를 모두 보유해야 걸리도록(AND).
+  for (const tagId of filter.tagIds) {
+    conditions.push(Prisma.sql`EXISTS (
+      SELECT 1 FROM influencer_tag_assignments ta
+      WHERE ta."influencerId" = i.id AND ta."tagId" = ${tagId}
+    )`);
+  }
+
   const query = filter.query.trim();
   if (query) {
     const pattern = likePattern(query);

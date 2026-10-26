@@ -1285,6 +1285,8 @@ export const adminMessages = {
         },
         actions: {
           memo: { ko: "메모", en: "Memo", ja: "メモ" },
+          /** 메모·이력·참여 취소를 접어두는 더보기 버튼의 스크린리더 라벨. */
+          more: { ko: "더보기", en: "More", ja: "その他" },
           detail: { ko: "상세", en: "Details", ja: "詳細" },
           history: { ko: "이력", en: "History", ja: "履歴" },
           approve: { ko: "승인", en: "Approve", ja: "承認" },

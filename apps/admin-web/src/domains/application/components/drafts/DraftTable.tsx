@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import type { AdminTranslationKey } from "@i18n/admin";
 import {
+  ActionMenu,
   ScrollTable,
   SnsHandleCell,
   SnsProfileLink,
@@ -106,24 +107,38 @@ function renderActions(
   handlers: ActionHandlers,
   t: TranslateFunction,
 ) {
-  const memoButton = (
-    <Button variant="secondary" size="sm" onClick={() => handlers.onMemo(draft)}>
-      {t("domains.application.applicants.actions.memo")}
-    </Button>
-  );
-  const historyButton = (
-    <Button variant="secondary" size="sm" onClick={() => handlers.onHistory(draft)}>
-      {t("domains.application.applicants.actions.history")}
-    </Button>
-  );
-  // 정산이 생긴 뒤에는 서버가 막으므로 버튼도 내린다.
+  // 메모·이력·참여 취소는 자주 쓰지 않는데 자리를 많이 먹어 단계별 주요 액션을
+  // 가린다. 더보기로 접어 액션 칸에는 그 단계에서 실제로 누를 버튼만 남긴다.
+  //
+  // 참여 취소는 정산이 생긴 뒤에는 서버가 막으므로 항목도 내린다.
   // 반려·재제출 대기 건은 취소할 수 있어야 한다 — 상태로는 막지 않는다.
-  const forceCancelButton =
-    draft.settlement !== null ? null : (
-      <Button variant="danger" size="sm" onClick={() => handlers.onForceCancel(draft)}>
-        {t("domains.application.forceCancel.action")}
-      </Button>
-    );
+  const moreMenu = (
+    <ActionMenu
+      ariaLabel={t("domains.application.applicants.actions.more")}
+      items={[
+        {
+          key: "memo",
+          label: t("domains.application.applicants.actions.memo"),
+          onSelect: () => handlers.onMemo(draft),
+        },
+        {
+          key: "history",
+          label: t("domains.application.applicants.actions.history"),
+          onSelect: () => handlers.onHistory(draft),
+        },
+        ...(draft.settlement !== null
+          ? []
+          : [
+              {
+                key: "forceCancel",
+                label: t("domains.application.forceCancel.action"),
+                onSelect: () => handlers.onForceCancel(draft),
+                danger: true,
+              },
+            ]),
+      ]}
+    />
+  );
 
   if (draft.status === "REVIEW_PENDING") {
     return (
@@ -134,9 +149,7 @@ function renderActions(
         <Button variant="danger" size="sm" onClick={() => handlers.onReject(draft)}>
           {t("domains.application.applicants.actions.reject")}
         </Button>
-        {memoButton}
-        {historyButton}
-        {forceCancelButton}
+        {moreMenu}
       </div>
     );
   }
@@ -150,9 +163,7 @@ function renderActions(
         <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(draft)}>
           {t("domains.application.applicants.actions.undo")}
         </Button>
-        {memoButton}
-        {historyButton}
-        {forceCancelButton}
+        {moreMenu}
       </div>
     );
   }
@@ -163,9 +174,7 @@ function renderActions(
         <Button variant="primary" size="sm" onClick={() => handlers.onSettle(draft)}>
           {t("domains.application.drafts.actions.settle")}
         </Button>
-        {memoButton}
-        {historyButton}
-        {forceCancelButton}
+        {moreMenu}
       </div>
     );
   }
@@ -176,9 +185,7 @@ function renderActions(
         <Button variant="secondary" size="sm" onClick={() => handlers.onUndo(draft)}>
           {t("domains.application.applicants.actions.undo")}
         </Button>
-        {memoButton}
-        {historyButton}
-        {forceCancelButton}
+        {moreMenu}
       </div>
     );
   }
@@ -186,9 +193,7 @@ function renderActions(
   // SETTLEMENT_PENDING / SETTLED / REJECTED_LOCKED — 추가 액션 없음(메모만).
   return (
     <div className={styles.actions}>
-      {memoButton}
-      {historyButton}
-      {forceCancelButton}
+      {moreMenu}
     </div>
   );
 }

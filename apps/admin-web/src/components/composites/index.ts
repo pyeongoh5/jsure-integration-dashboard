@@ -1,6 +1,7 @@
 export { FormField } from "./FormField";
 export { JwinAccountStatusBadge } from "./JwinAccountStatusBadge";
 export { JwinStatusBadge } from "./JwinStatusBadge";
+export { ActionMenu, type ActionMenuItem } from "./ActionMenu";
 export { ScrollTable } from "./ScrollTable";
 export { SegmentedTabs } from "./SegmentedTabs";
 export { SnsProfileLink } from "./SnsProfileLink";

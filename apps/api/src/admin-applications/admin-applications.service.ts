@@ -7,6 +7,7 @@ import {
   snsProfileUrlOrNull,
   type AddressCountry,
   type AdminActivityLog,
+  bankLabel,
   formatTitleWithTags,
   type AdminApplicantPageResponse,
   type AdminApplication,
@@ -1874,12 +1875,14 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
     (account) => row.application.subTypes.includes(account.snsType as CampaignSubType),
   );
   // 정산 생성 시점 스냅샷 우선. 스냅샷 도입 전 정산 건은 현재 계좌로 fallback.
+  const fallbackAccount = row.application.influencer.bankAccount;
   const bankAccount =
     row.bankCode !== null && row.accountNumber !== null
       ? {
           // 스냅샷 도입 전 행은 bankCountry 가 없다 — 당시엔 일본 계좌뿐이었다.
           bankCountry: row.bankCountry ?? "JP",
-          bankName: row.bankName ?? "",
+          // 스냅샷에 박힌 옛 이름 대신 코드로 찾은 현재 명칭 (상호 변경 대응)
+          bankName: bankLabel(row.bankCountry ?? "JP", row.bankCode, row.bankName ?? ""),
           bankCode: row.bankCode,
           branchName: row.branchName ?? "",
           branchCode: row.branchCode ?? "",
@@ -1887,7 +1890,14 @@ function toSettlementResponse(row: SettlementRow): AdminSettlement {
           accountHolder: row.accountHolder ?? "",
           invoiceRegistrationNumber: row.invoiceRegistrationNumber,
         }
-      : row.application.influencer.bankAccount;
+      : fallbackAccount && {
+          ...fallbackAccount,
+          bankName: bankLabel(
+            fallbackAccount.bankCountry,
+            fallbackAccount.bankCode,
+            fallbackAccount.bankName,
+          ),
+        };
   return {
     id: row.id,
     applicationId: row.applicationId,

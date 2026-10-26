@@ -3,6 +3,7 @@ import {
   usesOptionCountSplit,
   type ApprovedApplicantExportRow,
   type CampaignResponse,
+  type CampaignSubType,
 } from "@jsure/shared";
 import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
 import type { AdminTranslationKey } from "@i18n/admin";
@@ -12,6 +13,8 @@ export type CapacityChip = {
   label: string;
   approved: number;
   total: number;
+  /** 이 칩이 가리키는 승인 단위. null 이면 전체(필터 없음). */
+  match: { subType: CampaignSubType; option: string | null } | null;
 };
 
 type TranslateFunction = (key: AdminTranslationKey) => string;
@@ -30,7 +33,9 @@ export function buildCapacityChips(
   // 단순 리뷰는 모집 인원이 캠페인 공통 — 칩 하나로 충분.
   if (campaign.category === "SIMPLE_REVIEW") {
     const total = campaign.recruits[0]?.recruitCount ?? 0;
-    return [{ key: "all", label: capacityLabel, approved: rows.length, total }];
+    return [
+      { key: "all", label: capacityLabel, approved: rows.length, total, match: null },
+    ];
   }
   const channels = rows.flatMap((row) => row.channels);
   const units = campaign.recruits.flatMap((recruit): CapacityChip[] =>
@@ -44,6 +49,7 @@ export function buildCapacityChips(
               channel.option === optionConfig.option,
           ).length,
           total: optionConfig.recruitCount ?? 0,
+          match: { subType: recruit.subType, option: optionConfig.option },
         }))
       : [
           {
@@ -53,11 +59,13 @@ export function buildCapacityChips(
               (channel) => channel.subType === recruit.subType,
             ).length,
             total: recruit.recruitCount,
+            match: { subType: recruit.subType, option: null },
           },
         ],
   );
+  // 단위가 하나뿐이면 그 칩이 곧 전체 — 필터할 대상이 없다.
   if (units.length <= 1) {
-    return units.map((unit) => ({ ...unit, label: capacityLabel }));
+    return units.map((unit) => ({ ...unit, label: capacityLabel, match: null }));
   }
   const totalCapacity = campaign.recruits.reduce(
     (sum, recruit) => sum + recruit.recruitCount,
@@ -69,7 +77,29 @@ export function buildCapacityChips(
       label: translateLabel("pages.applicants.approvedDialog.total"),
       approved: rows.length,
       total: totalCapacity,
+      match: null,
     },
     ...units,
   ];
+}
+
+/**
+ * 선택한 칩에 해당하는 승인자만 남긴다.
+ * 피드·릴스를 함께 응모한 사람은 SNS 칸에 다른 타입이 섞이지 않도록 채널까지 좁히고,
+ * 남은 채널이 없으면 행 자체를 제외한다.
+ */
+export function filterRowsByCapacityChip(
+  rows: ApprovedApplicantExportRow[],
+  chip: CapacityChip | undefined,
+): ApprovedApplicantExportRow[] {
+  const match = chip?.match;
+  if (!match) return rows;
+  return rows.flatMap((row) => {
+    const channels = row.channels.filter(
+      (channel) =>
+        channel.subType === match.subType &&
+        (match.option === null || channel.option === match.option),
+    );
+    return channels.length > 0 ? [{ ...row, channels }] : [];
+  });
 }

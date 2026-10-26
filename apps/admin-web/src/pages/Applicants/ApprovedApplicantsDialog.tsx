@@ -20,7 +20,7 @@ import { Button } from "@/components/ui";
 import { SnsProfileLink } from "@/components/composites";
 import { translate } from "@i18n/admin";
 import { getStoredLanguage, useT } from "@/lib/i18n";
-import { buildCapacityChips } from "./buildCapacityChips";
+import { buildCapacityChips, filterRowsByCapacityChip } from "./buildCapacityChips";
 import styles from "./ApprovedApplicantsDialog.module.css";
 
 type Props = {
@@ -42,8 +42,11 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
   const [campaign, setCampaign] = useState<CampaignResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // null 이면 첫 칩(전체) 선택.
+  const [selectedChipKey, setSelectedChipKey] = useState<string | null>(null);
 
   useEffect(() => {
+    setSelectedChipKey(null);
     if (!selectedCampaignId) {
       setData(null);
       setCampaign(null);
@@ -85,10 +88,13 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
 
   const capacityChips =
     data && campaign ? buildCapacityChips(campaign, data.rows, t) : [];
+  const selectedChip =
+    capacityChips.find((chip) => chip.key === selectedChipKey) ?? capacityChips[0];
+  const visibleRows = filterRowsByCapacityChip(data?.rows ?? [], selectedChip);
 
   function handleDownload() {
     if (!data) return;
-    const csv = buildApprovedApplicantsCsv(data);
+    const csv = buildApprovedApplicantsCsv({ ...data, rows: visibleRows });
     triggerCsvDownload(approvedApplicantsCsvFilename(data.campaignTitle), csv);
   }
 
@@ -107,7 +113,7 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
               {data
                 ? t("pages.applicants.approvedDialog.subLoaded", {
                     campaignTitle: data.campaignTitle,
-                    count: data.rows.length,
+                    count: visibleRows.length,
                   })
                 : t("pages.applicants.approvedDialog.subEmpty")}
             </p>
@@ -154,12 +160,20 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
         {!loading && capacityChips.length > 0 && (
           <div className={styles.capacityRow}>
             {capacityChips.map((chip) => (
-              <span key={chip.key} className={styles.capacityChip}>
+              <button
+                key={chip.key}
+                type="button"
+                className={`${styles.capacityChip} ${
+                  chip.key === selectedChip?.key ? styles.capacityChipActive : ""
+                }`}
+                aria-pressed={chip.key === selectedChip?.key}
+                onClick={() => setSelectedChipKey(chip.key)}
+              >
                 {chip.label}{" "}
                 <strong>
                   {chip.approved}/{chip.total}
                 </strong>
-              </span>
+              </button>
             ))}
           </div>
         )}
@@ -171,7 +185,7 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
             <div className={styles.empty}>
               {t("pages.applicants.approvedDialog.selectCampaignFirst")}
             </div>
-          ) : !data || data.rows.length === 0 ? (
+          ) : visibleRows.length === 0 ? (
             <div className={styles.empty}>
               {t("pages.applicants.approvedDialog.noApproved")}
             </div>
@@ -185,7 +199,7 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
                 </tr>
               </thead>
               <tbody>
-                {data.rows.map((row) => (
+                {visibleRows.map((row) => (
                   <tr key={row.applicationId}>
                     <td>{row.name}</td>
                     <td>{row.nameKana ?? ""}</td>
@@ -233,7 +247,7 @@ export function ApprovedApplicantsDialog({ campaignId: fixedCampaignId, onClose 
             variant="success"
             size="md"
             onClick={handleDownload}
-            disabled={!data || data.rows.length === 0 || loading}
+            disabled={visibleRows.length === 0 || loading}
             iconLeft={<i className="fa-solid fa-file-excel" aria-hidden="true" />}
           >
             {t("pages.applicants.approvedDialog.csvDownload")}

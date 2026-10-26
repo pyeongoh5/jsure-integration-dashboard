@@ -6,6 +6,12 @@ import type { SnsAccountSubType } from "./influencer.js";
 export const InfluencerFilterSchema = z.object({
   /** 선택한 채널 중 하나라도 계정을 보유하면 포함(OR 매칭). 빈 배열이면 전체. */
   snsTypes: z.array(SnsAccountSubTypeSchema).default([]),
+  /**
+   * 어드민 관리 태그 id. 선택한 태그를 모두 보유해야 포함(AND 매칭) — 후보를
+   * 좁혀가는 용도라서다. 라벨이 아니라 id 인 이유는 라벨에 콤마가 들어가면
+   * 쿼리스트링 직렬화가 깨지고, 라벨을 고치면 저장된 URL 이 죽기 때문.
+   */
+  tagIds: z.array(z.string()).default([]),
   /** 이름·이메일·SNS 핸들 부분일치 검색어. */
   query: z.string().default(""),
 });
@@ -20,6 +26,7 @@ export function influencerFilterToParams(
 ): Record<string, string> {
   const params: Record<string, string> = {};
   if (filter.snsTypes.length > 0) params.sns = filter.snsTypes.join(",");
+  if (filter.tagIds.length > 0) params.tags = filter.tagIds.join(",");
   if (filter.query.trim()) params.q = filter.query.trim();
   return params;
 }
@@ -41,6 +48,7 @@ export function parseInfluencerFilterParams(
       (value): value is SnsAccountSubType =>
         SnsAccountSubTypeSchema.safeParse(value).success,
     ),
+    tagIds: splitList(raw.tags),
     query: typeof raw.q === "string" ? raw.q : "",
   });
 }

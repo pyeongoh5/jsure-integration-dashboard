@@ -2890,6 +2890,15 @@ export const adminMessages = {
       },
     },
     influencer: {
+      tagFilter: {
+        chipEmpty: { ko: "+ 태그", en: "+ Tag", ja: "+ タグ" },
+        prefix: { ko: "태그", en: "Tag", ja: "タグ" },
+        title: {
+          ko: "태그 선택 (복수 선택 시 모두 보유)",
+          en: "Select tags (must have all)",
+          ja: "タグ選択（複数選択時はすべて保有）",
+        },
+      },
       csv: {
         nameKana: { ko: "이름(카나)", en: "Name (kana)", ja: "名前（カナ）" },
         phone: { ko: "연락처", en: "Phone", ja: "電話番号" },

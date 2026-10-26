@@ -17,6 +17,7 @@ describe("influencer 필터 직렬화", () => {
     InfluencerFilterSchema.parse({ snsTypes: ["INSTAGRAM", "TIKTOK", "X"] }),
     InfluencerFilterSchema.parse({ query: "みか" }),
     InfluencerFilterSchema.parse({ snsTypes: ["X"], query: "handle" }),
+    InfluencerFilterSchema.parse({ tagIds: ["tag_kr", "tag_quality"] }),
   ];
 
   it.each(cases)("왕복해도 같은 필터가 된다: %j", (filter) => {
@@ -102,6 +103,24 @@ describe("InfluencersService.listForAdminPage", () => {
     expect(where).toEqual({
       AND: [{ snsAccounts: { some: { snsType: { in: ["INSTAGRAM", "X"] } } } }],
     });
+    expect(count.mock.calls[0]?.[0].where).toEqual(where);
+  });
+
+  it("태그를 여러 개 고르면 전부 보유한 인플루언서만 남긴다", async () => {
+    const { service, findMany, count } = makeService([]);
+    await service.listForAdminPage(
+      InfluencerFilterSchema.parse({ tagIds: ["tag_kr", "tag_quality"] }),
+      null,
+      30,
+    );
+    const where = findMany.mock.calls[0]?.[0].where;
+    expect(where).toEqual({
+      AND: [
+        { tagAssignments: { some: { tagId: "tag_kr" } } },
+        { tagAssignments: { some: { tagId: "tag_quality" } } },
+      ],
+    });
+    // 상단 총 건수도 같은 조건으로 센다 — CSV 와 어긋나지 않도록.
     expect(count.mock.calls[0]?.[0].where).toEqual(where);
   });
 

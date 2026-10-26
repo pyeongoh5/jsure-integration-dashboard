@@ -164,6 +164,8 @@ export const ApplicantFilterSchema = z.object({
   viewStatuses: z.array(ApplicantViewStatusSchema).default([]),
   category: CampaignCategorySchema.nullable().default(null),
   minFollowers: z.number().int().nonnegative().nullable().default(null),
+  /** 어드민 관리 태그 id — 전부 보유해야 포함(AND). 상세는 InfluencerFilterSchema.tagIds. */
+  tagIds: z.array(z.string()).default([]),
   /** 이름·인플루언서 id·SNS 핸들 부분일치 검색어. */
   query: z.string().default(""),
 });
@@ -186,6 +188,7 @@ export function applicantFilterToParams(
   if (filter.minFollowers !== null) {
     params.minFollowers = String(filter.minFollowers);
   }
+  if (filter.tagIds.length > 0) params.tags = filter.tagIds.join(",");
   if (filter.query.trim()) params.q = filter.query.trim();
   return params;
 }
@@ -220,6 +223,7 @@ export function parseApplicantFilterParams(
       Number.isFinite(minFollowers) && minFollowers >= 0
         ? Math.floor(minFollowers)
         : null,
+    tagIds: splitList(raw.tags),
     query: typeof raw.q === "string" ? raw.q : "",
   });
 }

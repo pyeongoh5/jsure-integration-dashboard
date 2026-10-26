@@ -12,6 +12,7 @@ import type {
 } from "@jsure/shared";
 import {
   InfluencerNotesDialog,
+  InfluencerTagFilterChip,
   InfluencerWithdrawDialog,
   buildInfluencersCsv,
   exportInfluencers,
@@ -92,6 +93,7 @@ export function Influencers() {
   const [snsFilter, setSnsFilter] = useState<Set<SnsAccountSubType>>(
     () => new Set(),
   );
+  const [tagFilter, setTagFilter] = useState<Set<string>>(() => new Set());
   const [broadcastCandidates, setBroadcastCandidates] = useState<
     AdminInfluencer[] | null
   >(null);
@@ -110,9 +112,10 @@ export function Influencers() {
     () =>
       InfluencerFilterSchema.parse({
         snsTypes: [...snsFilter].sort(),
+        tagIds: [...tagFilter].sort(),
         query: debouncedQuery,
       }),
-    [snsFilter, debouncedQuery],
+    [snsFilter, tagFilter, debouncedQuery],
   );
 
   const {
@@ -228,6 +231,7 @@ export function Influencers() {
             value={snsFilter}
             onChange={setSnsFilter}
           />
+          <InfluencerTagFilterChip value={tagFilter} onChange={setTagFilter} />
         </FilterChipBar>
         <div className={styles.headerActions}>
           <div className={styles.search}>

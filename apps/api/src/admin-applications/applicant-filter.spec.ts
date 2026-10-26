@@ -144,6 +144,16 @@ describe("buildApplicantWhereSql", () => {
     expect(sql.values).toContain(1000);
   });
 
+  it("태그를 여러 개 고르면 전부 보유한 응모자만 남긴다", () => {
+    const sql = buildApplicantWhereSql(
+      parseApplicantFilterParams({ tags: "tag_kr,tag_quality" }),
+    );
+    // 태그마다 EXISTS 가 하나씩 — AND 로 묶여 교집합이 된다.
+    expect(sql.sql.match(/influencer_tag_assignments/g)).toHaveLength(2);
+    expect(sql.values).toContain("tag_kr");
+    expect(sql.values).toContain("tag_quality");
+  });
+
   it("검색어는 이름·인플루언서 id·SNS 핸들을 함께 본다", () => {
     const sql = buildApplicantWhereSql(
       parseApplicantFilterParams({ q: "hana" }),

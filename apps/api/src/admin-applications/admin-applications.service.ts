@@ -13,6 +13,8 @@ import {
   type AdminApplication,
   type AdminSettlement,
   type AdminSubmission,
+  type AdminSubmissionPageResponse,
+  type SubmissionFilter,
   type AdminUpdateInsightRequest,
   type ApplicantExportResponse,
   type ApplicantExportRow,
@@ -43,6 +45,11 @@ import {
   applicantCursorSql,
   buildApplicantWhereSql,
 } from "./applicant-filter.sql";
+import {
+  SUBMISSION_FROM_SQL,
+  buildSubmissionWhereSql,
+  submissionCursorSql,
+} from "./submission-filter.sql";
 import { bucketMonthlyCounts, monthStartUtc9 } from "./monthly-counts";
 import { PrismaService } from "../prisma/prisma.service";
 import { parseApplicationProductOptions } from "../common/product-options";
@@ -516,16 +523,57 @@ export class AdminApplicationsService {
   }
 
   /**
-   * 제출물 검토 목록 — 제출 데이터가 있는 응모(Application) 단위.
-   * 강제 취소된 응모는 제출물이 남아 있어도 검수 대상이 아니다.
+   * 제출물 검토 목록 한 페이지.
+   *
+   * 화면의 모든 필터를 SQL 에서 처리하고 reviewSubmittedAt 내림차순 커서로 페이징한다.
+   * 정산 흐름에 들어간 건(검수 승인 + 정산 레코드 존재)은 상태 규칙 표에 없어
+   * 자동으로 빠진다 — 정산 관리 페이지가 다룬다.
+   *
+   * 예전엔 필터도 페이징도 없이 전량(1,918건 / 4.95MB)을 내려보내고 화면이 걸렀다.
+   * 그중 94%가 버려지는 데이터라 VPN 으로 들어오는 현지 담당자는 10초 타임아웃이 났다.
    */
-  async listSubmissions(): Promise<AdminSubmission[]> {
+  async listSubmissionsPage(
+    filter: SubmissionFilter,
+    cursor: string | null,
+    limit: number,
+  ): Promise<AdminSubmissionPageResponse> {
+    const where = buildSubmissionWhereSql(filter);
+    const cursorCondition = cursor
+      ? Prisma.sql`AND ${submissionCursorSql(cursor)}`
+      : Prisma.empty;
+
+    const [idRows, countRows] = await Promise.all([
+      this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT a.id ${SUBMISSION_FROM_SQL}
+        WHERE ${where} ${cursorCondition}
+        ORDER BY a."reviewSubmittedAt" DESC NULLS LAST, a.id DESC
+        LIMIT ${limit + 1}
+      `,
+      this.prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(*)::bigint AS count ${SUBMISSION_FROM_SQL}
+        WHERE ${where}
+      `,
+    ]);
+
+    const hasMore = idRows.length > limit;
+    const pageIds = idRows.slice(0, limit).map((row) => row.id);
     const rows = await this.prisma.campaignApplication.findMany({
-      where: { posts: { some: {} }, status: { not: "CANCELLED" } },
-      orderBy: { reviewSubmittedAt: { sort: "desc", nulls: "last" } },
+      where: { id: { in: pageIds } },
       include: SUBMISSION_INCLUDE,
     });
-    return Promise.all(rows.map((row) => toSubmissionResponse(row, this.r2)));
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    const ordered = pageIds.flatMap((id) => {
+      const row = byId.get(id);
+      return row ? [row] : [];
+    });
+
+    return {
+      submissions: await Promise.all(
+        ordered.map((row) => toSubmissionResponse(row, this.r2)),
+      ),
+      nextCursor: hasMore ? (pageIds[pageIds.length - 1] ?? null) : null,
+      total: Number(countRows[0]?.count ?? 0),
+    };
   }
 
   /**

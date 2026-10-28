@@ -1,18 +1,29 @@
 import {
   AdminSettlementListResponseSchema,
-  AdminSubmissionListResponseSchema,
+  AdminSubmissionPageResponseSchema,
   AdminSubmissionSchema,
+  submissionFilterToParams,
   AttachmentListResponseSchema,
   type AdminSettlement,
   type AdminSubmission,
+  type AdminSubmissionPageResponse,
   type AdminUpdateInsightRequest,
+  type SubmissionFilter,
   type Attachment,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
-export async function listSubmissions(): Promise<AdminSubmission[]> {
-  const res = await api.get("/campaign-applications/submissions");
-  return AdminSubmissionListResponseSchema.parse(res.data).submissions;
+/** 제출물 검토 목록 한 페이지. 필터는 서버가 적용한다. */
+export async function listSubmissionsPage(
+  filter: SubmissionFilter,
+  cursor: string | null,
+  limit: number,
+): Promise<AdminSubmissionPageResponse> {
+  const search = new URLSearchParams(submissionFilterToParams(filter));
+  if (cursor) search.set("cursor", cursor);
+  search.set("limit", String(limit));
+  const res = await api.get(`/campaign-applications/submissions?${search}`);
+  return AdminSubmissionPageResponseSchema.parse(res.data);
 }
 
 export async function fetchSubmittedPostAttachments(

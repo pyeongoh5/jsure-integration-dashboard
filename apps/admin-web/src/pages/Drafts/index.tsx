@@ -1,7 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import type { CampaignCategory } from "@jsure/shared";
+import type {
+  CampaignCategory,
+  DraftViewStatus,
+  SubmissionFilter,
+} from "@jsure/shared";
 import {
   ApplicantFilters,
   ApplicationHistoryDialog,
@@ -13,10 +17,8 @@ import {
   useCampaignOptions,
   useDraftMutations,
   useDraftReviewsData,
-  matchesMediaFilter,
   type MediaFilterKey,
   type DraftReview,
-  type DraftStatus,
   type HistoryTarget,
 } from "@/domains/application";
 import { InfluencerNotesDialog } from "@/domains/influencer";
@@ -39,7 +41,7 @@ export function Drafts() {
   const [mediaFilter, setMediaFilter] = useState<Set<MediaFilterKey>>(
     () => new Set(),
   );
-  const [statusFilter, setStatusFilter] = useState<Set<DraftStatus>>(
+  const [statusFilter, setStatusFilter] = useState<Set<DraftViewStatus>>(
     () => new Set(),
   );
   const [categoryFilter, setCategoryFilter] =
@@ -47,7 +49,27 @@ export function Drafts() {
   const [insightView, setInsightView] = useState<DraftReview | null>(null);
   const [notesTarget, setNotesTarget] = useState<DraftReview | null>(null);
   const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(null);
-  const { state, drafts, reload, patchInfluencerTags } = useDraftReviewsData();
+  // 서버 필터 조건. Set 은 정렬해서 담는다 — 선택 순서가 달라도 같은 쿼리로 취급하기 위해.
+  const filter = useMemo<SubmissionFilter>(
+    () => ({
+      campaignId,
+      mediaKeys: [...mediaFilter].sort(),
+      viewStatuses: [...statusFilter].sort(),
+      category: categoryFilter,
+    }),
+    [campaignId, mediaFilter, statusFilter, categoryFilter],
+  );
+
+  const {
+    state,
+    drafts,
+    total,
+    hasMore,
+    loadingMore,
+    loadMore,
+    reload,
+    patchInfluencerTags,
+  } = useDraftReviewsData(filter);
   const {
     campaignOptions,
     campaignTitleById,
@@ -58,22 +80,27 @@ export function Drafts() {
     qc.invalidateQueries({ queryKey: ["submitted-posts-pending-count"] });
   });
 
-  const visible = useMemo(
-    () =>
-      drafts.filter((draft) => {
-        // 정산 흐름에 들어간 항목은 정산 관리 페이지에서 다루므로 검토 페이지에서 제외.
-        if (draft.status === "SETTLEMENT_PENDING" || draft.status === "SETTLED") {
-          return false;
-        }
-        if (campaignId && draft.campaignId !== campaignId) return false;
-        if (!matchesMediaFilter(draft.media, draft.selectedOptions, mediaFilter))
-          return false;
-        if (statusFilter.size > 0 && !statusFilter.has(draft.status)) return false;
-        if (categoryFilter !== null && draft.category !== categoryFilter) return false;
-        return true;
-      }),
-    [drafts, campaignId, mediaFilter, statusFilter, categoryFilter],
-  );
+  // 목록 끝 감시자가 보이면 다음 페이지를 이어 붙인다. 감시자는 테이블의 스크롤
+  // 컨테이너 안에 렌더되고(DraftTable footer), root 도 그 컨테이너로 잡는다.
+  // 바깥에 두면 항상 화면에 보여 스크롤 없이도 계속 다음 페이지를 불러온다.
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // 콜백은 ref 로 갈아끼운다. loadMore 를 의존성에 두면 페치 상태가 토글될 때마다
+  // 감시자가 재등록되고, 이미 보이는 감시 영역에 대해 콜백이 즉시 다시 울려
+  // 페이지가 연달아 요청된다.
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMoreRef.current();
+      },
+      { root: node.closest("[data-scroll-root]"), rootMargin: "300px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, drafts.length]);
 
   return (
     <div className={styles.root}>
@@ -81,7 +108,7 @@ export function Drafts() {
         <h1 className={styles.title}>{t("pages.drafts.title")}</h1>
         <p className={styles.subtitle}>
           {state.kind === "ready"
-            ? t("common.itemCount", { count: visible.length })
+            ? t("common.itemCount", { count: total })
             : state.kind === "loading"
               ? t("common.loading")
               : ""}
@@ -115,7 +142,7 @@ export function Drafts() {
         </div>
       ) : (
         <DraftTable
-          items={visible}
+          items={drafts}
           showHistory={statusFilter.size === 0 || statusFilter.has("REVIEW_PENDING")}
           onApprove={mutations.openApprove}
           onReject={mutations.openReject}
@@ -136,6 +163,13 @@ export function Drafts() {
               influencerName: draft.influencerName,
               statusLabel: t(DRAFT_STATUS_LABEL[draft.status]),
             })
+          }
+          footer={
+            hasMore ? (
+              <div ref={sentinelRef} className={styles.loadMore}>
+                {loadingMore ? t("pages.applicants.loadingMore") : ""}
+              </div>
+            ) : null
           }
         />
       )}

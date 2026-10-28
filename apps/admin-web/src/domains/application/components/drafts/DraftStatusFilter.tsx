@@ -3,11 +3,12 @@ import {
   MultiSelectFilterChip,
 } from "@/components/composites/FilterChip";
 import { useT } from "@/lib/i18n";
-import { DRAFT_STATUS_OPTIONS, type DraftStatus } from "./types";
+import type { DraftViewStatus } from "@jsure/shared";
+import { DRAFT_STATUS_OPTIONS } from "./types";
 
 type Props = {
-  value: Set<DraftStatus>;
-  onChange: (next: Set<DraftStatus>) => void;
+  value: Set<DraftViewStatus>;
+  onChange: (next: Set<DraftViewStatus>) => void;
 };
 
 export function DraftStatusFilter({ value, onChange }: Props) {

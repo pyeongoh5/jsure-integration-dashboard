@@ -5,6 +5,7 @@ import type {
   CampaignCategory,
   CampaignSubType,
   CrossPost,
+  DraftViewStatus,
   PostReviewStatus,
   Attachment,
   SnsAccountSubType,
@@ -14,14 +15,14 @@ import type { HandleBySubType } from "@/domains/influencer/handleBySubType";
 export type Media = "ig" | "yt" | "tt" | "x" | "qoo10" | "lips" | "atcosme";
 
 // reviewStatus + 인사이트 제출 여부 + 정산 상태를 통합한 단일 상태값.
+/**
+ * 행의 상태. 검토 화면에 노출되는 5종(shared 의 DraftViewStatus)에,
+ * 정산 흐름에 들어가 검토 목록에서는 빠지는 2종을 더한 것.
+ */
 export type DraftStatus =
-  | "REVIEW_PENDING"
-  | "AWAITING_INSIGHT"
-  | "INSIGHT_SUBMITTED"
+  | DraftViewStatus
   | "SETTLEMENT_PENDING"
-  | "SETTLED"
-  | "REJECTED"
-  | "REJECTED_LOCKED";
+  | "SETTLED";
 
 export type RejectionEntry = {
   id: string;
@@ -132,7 +133,7 @@ export const DRAFT_STATUS_LABEL: Record<DraftStatus, AdminTranslationKey> = {
 
 // 검토 페이지에 노출되는 상태만. SETTLEMENT_PENDING/SETTLED 는 정산 관리 페이지에서 처리.
 export const DRAFT_STATUS_OPTIONS: {
-  key: DraftStatus;
+  key: DraftViewStatus;
   label: AdminTranslationKey;
 }[] = [
   { key: "REVIEW_PENDING", label: DRAFT_STATUS_LABEL.REVIEW_PENDING },

@@ -63,8 +63,6 @@ type ActionHandlers = {
   onMemo: (draft: DraftReview) => void;
   /** 감사 로그 다이얼로그 열기. showHistory(반려 이력 확장 행)와 다른 개념이다. */
   onHistory: (draft: DraftReview) => void;
-  /** 무한 스크롤 감시자 — 스크롤 컨테이너 안에 들어가야 한다. */
-  footer?: ReactNode;
 };
 
 function submissionButtonKey(draft: DraftReview): AdminTranslationKey {
@@ -212,6 +210,8 @@ type Props = {
   onMemo: (draft: DraftReview) => void;
   /** 감사 로그 다이얼로그 열기. showHistory(반려 이력 확장 행)와 다른 개념이다. */
   onHistory: (draft: DraftReview) => void;
+  /** 무한 스크롤 감시자 — 스크롤 컨테이너 안에 들어가야 한다. */
+  footer?: ReactNode;
 };
 
 export function DraftTable({

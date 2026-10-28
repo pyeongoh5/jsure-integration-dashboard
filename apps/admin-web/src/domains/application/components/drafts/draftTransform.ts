@@ -1,4 +1,5 @@
 import {
+  deriveDraftViewStatus,
   pickRepresentativeSnsAccount,
   postUrls,
   type AdminSubmission,
@@ -8,18 +9,25 @@ import { toHandleBySubType } from "@/domains/influencer/handleBySubType";
 import { formatRelative } from "../applicants/applicantTransform";
 import { SNS_TO_MEDIA, type DraftReview, type DraftStatus } from "./types";
 
+/**
+ * 화면 상태. 규칙은 shared 의 DRAFT_VIEW_STATUS_RULES 하나가 출처이고,
+ * 서버의 목록 필터(SQL)도 같은 표를 읽는다.
+ *
+ * 규칙에 안 맞는 건 = 정산 흐름 진입분. 서버가 목록에서 걸러 주므로 여기까지
+ * 오지 않지만, 정산 관리에서 같은 변환을 재사용할 때를 위해 분기는 남겨 둔다.
+ */
 function deriveStatus(
   reviewStatus: AdminSubmission["submissionReviewStatus"],
   insightSubmitted: boolean,
   settlementStatus: "PENDING" | "COMPLETED" | null,
 ): DraftStatus {
-  if (reviewStatus === "PENDING") return "REVIEW_PENDING";
-  if (reviewStatus === "REJECTED") {
-    return insightSubmitted ? "REJECTED_LOCKED" : "REJECTED";
-  }
-  if (settlementStatus === "COMPLETED") return "SETTLED";
-  if (settlementStatus === "PENDING") return "SETTLEMENT_PENDING";
-  return insightSubmitted ? "INSIGHT_SUBMITTED" : "AWAITING_INSIGHT";
+  const viewStatus = deriveDraftViewStatus({
+    reviewStatus,
+    insightSubmitted,
+    hasSettlement: settlementStatus !== null,
+  });
+  if (viewStatus) return viewStatus;
+  return settlementStatus === "COMPLETED" ? "SETTLED" : "SETTLEMENT_PENDING";
 }
 
 const REVIEW_URL_CHANNELS = ["LIPS", "ATCOSME"] as const;

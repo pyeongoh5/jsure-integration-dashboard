@@ -28,7 +28,8 @@ import {
   type AdminApplicationListResponse,
   type AdminSubmission,
   type AdminSettlementListResponse,
-  type AdminSubmissionListResponse,
+  type AdminSubmissionPageResponse,
+  parseSubmissionFilterParams,
   type AdminUpdateInsightRequest,
   type ForceCancelApplicationRequest,
   type ApprovedApplicantExportResponse,
@@ -63,10 +64,17 @@ export class AdminApplicationsController {
     return { counts };
   }
 
+  /** 제출물 검토 목록 — 화면 필터를 그대로 서버에서 적용하고 커서로 페이징한다. */
   @Get("submissions")
-  async submissions(): Promise<AdminSubmissionListResponse> {
-    const submissions = await this.svc.listSubmissions();
-    return { submissions };
+  submissions(
+    @Query() query: Record<string, string>,
+  ): Promise<AdminSubmissionPageResponse> {
+    const limit = Number(query.limit);
+    return this.svc.listSubmissionsPage(
+      parseSubmissionFilterParams(query),
+      query.cursor?.trim() || null,
+      Number.isFinite(limit) ? Math.min(Math.max(Math.floor(limit), 1), 100) : 30,
+    );
   }
 
   @Get("submissions/pending-count")

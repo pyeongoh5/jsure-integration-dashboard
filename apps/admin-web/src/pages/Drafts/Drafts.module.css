@@ -455,3 +455,13 @@
   min-height: 90px;
   margin-top: 10px;
 }
+
+/* 무한 스크롤 감시자 — 표의 스크롤 컨테이너 안에 놓인다.
+   min-height 가 없으면 높이 0이라 IntersectionObserver 가 울리지 않는다. */
+.loadMore {
+  padding: 16px;
+  text-align: center;
+  color: var(--c-muted);
+  font-size: 13px;
+  min-height: 32px;
+}

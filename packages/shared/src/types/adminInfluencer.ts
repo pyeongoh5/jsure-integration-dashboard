@@ -279,6 +279,19 @@ export type AdminSubmissionListResponse = z.infer<
   typeof AdminSubmissionListResponseSchema
 >;
 
+/**
+ * GET /campaign-applications/submissions — 커서 한 페이지.
+ * total 은 커서와 무관하게 필터 전체에 걸린 건수.
+ */
+export const AdminSubmissionPageResponseSchema = z.object({
+  submissions: z.array(AdminSubmissionSchema),
+  nextCursor: z.string().nullable(),
+  total: z.number().int().nonnegative(),
+});
+export type AdminSubmissionPageResponse = z.infer<
+  typeof AdminSubmissionPageResponseSchema
+>;
+
 export const RejectSubmissionRequestSchema = z.object({
   comment: z.string().min(1, "반려 사유를 입력하세요").max(1000),
 });

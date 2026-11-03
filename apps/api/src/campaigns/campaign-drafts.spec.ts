@@ -1,8 +1,12 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { BadRequestException } from "@nestjs/common";
-import { CampaignDraftRequestSchema } from "@jsure/shared";
+import {
+  CampaignDraftRequestSchema,
+  type CampaignDraftRequest,
+} from "@jsure/shared";
 import { CampaignsService } from "./campaigns.service";
+import { CampaignAudienceService } from "./campaign-audience.service";
 
 const TEST_ACTOR = { id: "admin-1", name: "테스트 어드민" };
 
@@ -23,6 +27,7 @@ function makeService(overrides: {
     category: "SNS",
     title: "제목",
     publishState: overrides.publishState ?? "DRAFT",
+    audienceMode: "PUBLIC",
     rewardType: "UNIFIED",
     rewardJpy: 0,
     recruitStartAt: new Date("2026-07-28T00:00:00Z"),
@@ -73,6 +78,12 @@ function makeService(overrides: {
     campaignView: {
       groupBy: async () => [],
     },
+    campaignAudience: {
+      groupBy: async () => [],
+      createMany: async () => ({ count: 0 }),
+    },
+    // 캠페인 저장은 모집·대상자 반영과 한 트랜잭션이다. 테스트에서는 같은 더블을 그대로 넘긴다.
+    $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),
     $queryRaw: async () => [],
   } as never;
   const uploads = {
@@ -83,7 +94,15 @@ function makeService(overrides: {
     record: jest.fn(),
     recordMany: jest.fn(),
   } as never;
-  return new CampaignsService(prisma, uploads, audit);
+  const audience = new CampaignAudienceService(prisma);
+  return new CampaignsService(prisma, uploads, audit, audience);
+}
+
+/** 임시저장 요청 더미 — 스키마를 거쳐 미입력 필드의 기본값을 채운다. */
+function draftRequest(
+  partial: Record<string, unknown>,
+): CampaignDraftRequest {
+  return CampaignDraftRequestSchema.parse(partial);
 }
 
 describe("임시저장 생성", () => {
@@ -95,7 +114,10 @@ describe("임시저장 생성", () => {
       },
     });
 
-    await service.createDraft({ title: "작성 중인 캠페인" }, TEST_ACTOR);
+    await service.createDraft(
+      draftRequest({ title: "작성 중인 캠페인" }),
+      TEST_ACTOR,
+    );
 
     const data = created!.data;
     expect(data.publishState).toBe("DRAFT");
@@ -119,10 +141,10 @@ describe("임시저장 생성", () => {
     });
 
     await service.createDraft(
-      {
+      draftRequest({
         title: "작성 중",
         recruits: [{ subType: "INSTAGRAM", recruitCount: null }],
-      },
+      }),
       TEST_ACTOR,
     );
 
@@ -135,7 +157,7 @@ describe("임시저장 생성", () => {
 describe("발행 상태 가드", () => {
   it("이미 발행된 캠페인은 임시저장 갱신/발행이 막힌다", async () => {
     const service = makeService({ publishState: "PUBLISHED" });
-    await expect(service.updateDraft("c1", { title: "x" }, TEST_ACTOR)).rejects.toThrow(
+    await expect(service.updateDraft("c1", draftRequest({ title: "x" }), TEST_ACTOR)).rejects.toThrow(
       BadRequestException,
     );
   });

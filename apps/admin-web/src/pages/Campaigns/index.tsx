@@ -104,6 +104,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
     description: stripHtml(c.productSummary),
     category: c.category,
     status,
+    isRestricted: c.audienceMode === "RESTRICTED",
     thumbIcon: "📋",
     thumbnailUrl: c.thumbnailUrl,
     period: formatDateRange(c.recruitStartDate, c.recruitEndDate),
@@ -283,7 +284,14 @@ export function Campaigns() {
               }}
             >
               <Card
-                title={<CampaignCardTitle dday={c.dday} status={c.status} category={c.category} />}
+                title={
+                  <CampaignCardTitle
+                    dday={c.dday}
+                    status={c.status}
+                    category={c.category}
+                    isRestricted={c.isRestricted}
+                  />
+                }
                 content={
                   <CampaignCardBody
                     thumbIcon={c.thumbIcon}

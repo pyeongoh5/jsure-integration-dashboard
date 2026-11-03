@@ -244,12 +244,19 @@ export function CampaignCard({ card, onSelect }: Props) {
       </div>
 
       <div className={styles.body}>
-        <span
-          className={styles.categoryBadge}
-          data-category={card.category}
-        >
-          {categoryLabel(card.category)}
-        </span>
+        <div className={styles.badgeRow}>
+          <span
+            className={styles.categoryBadge}
+            data-category={card.category}
+          >
+            {categoryLabel(card.category)}
+          </span>
+          {card.isRestricted && (
+            <span className={styles.restrictedBadge}>
+              {t("campaign.card.restricted")}
+            </span>
+          )}
+        </div>
         <h3 className={styles.title}>{card.title}</h3>
         <p className={styles.desc}>{stripHtml(card.productSummary)}</p>
 

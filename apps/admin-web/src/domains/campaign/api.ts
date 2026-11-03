@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
+  CampaignAudienceListResponseSchema,
   CampaignResponseSchema,
+  type CampaignAudienceEntry,
   type CampaignDraftRequest,
   type CampaignResponse,
   type CreateCampaignRequest,
@@ -106,6 +108,26 @@ export async function publishCampaignDraft(
 /** 임시저장은 물리 삭제, 발행된 캠페인은 종료와 함께 논리 삭제된다. */
 export async function deleteCampaign(id: string): Promise<void> {
   await api.delete(`/campaigns/${encodeURIComponent(id)}`);
+}
+
+/** 일부 공개 캠페인의 노출 대상자 목록. 전체 공개 캠페인이면 빈 배열이다. */
+export async function listCampaignAudience(
+  campaignId: string,
+): Promise<CampaignAudienceEntry[]> {
+  const res = await api.get(
+    `/campaigns/${encodeURIComponent(campaignId)}/audience`,
+  );
+  return CampaignAudienceListResponseSchema.parse(res.data).audience;
+}
+
+/** 대상자 1명 제외 — 캠페인을 다시 저장해도 되살아나지 않는다. */
+export async function removeCampaignAudience(
+  campaignId: string,
+  influencerId: string,
+): Promise<void> {
+  await api.delete(
+    `/campaigns/${encodeURIComponent(campaignId)}/audience/${encodeURIComponent(influencerId)}`,
+  );
 }
 
 /** 끌어올리기 — 인플루언서 목록에서 같은 상태 그룹 내 최상단으로 올린다. */

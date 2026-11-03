@@ -41,6 +41,12 @@ function toFormValues(campaign: CampaignResponse): Values {
     cautions: campaign.cautions,
     thumbnailUrl: campaign.thumbnailUrl,
     excludedCampaignIds: campaign.excludedCampaignIds,
+    audienceMode: campaign.audienceMode,
+    // 대상자 지정 입력은 "이번 저장에 추가할 분"만 담는 일회성 값이라 왕복하지 않는다.
+    // 이미 등록된 대상자는 폼이 아니라 대상자 목록 화면이 보여준다.
+    audienceCampaignIds: [],
+    audienceTagLabels: [],
+    audienceInfluencerIds: [],
   };
 }
 

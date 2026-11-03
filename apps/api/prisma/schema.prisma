@@ -126,6 +126,21 @@ enum CampaignPublishState {
   PUBLISHED
 }
 
+/// 캠페인 공개 범위. RESTRICTED 는 campaign_audiences 에 등록된 인플루언서에게만
+/// 노출·응모를 허용한다. 대상자가 0명이면 아무에게도 보이지 않는다(의도된 안전측 동작).
+enum CampaignAudienceMode {
+  PUBLIC
+  RESTRICTED
+}
+
+/// 대상자가 어떤 경로로 등록됐는지. 어드민 목록에서 출처를 보여주는 용도이며
+/// 노출 판정에는 쓰지 않는다 — 판정은 "행이 있는가" 하나로 끝난다.
+enum CampaignAudienceSource {
+  CAMPAIGN
+  TAG
+  MANUAL
+}
+
 model Campaign {
   id                 String           @id @default(cuid())
   category           CampaignCategory @default(SNS)
@@ -134,6 +149,9 @@ model Campaign {
   /// 인플루언서 응답에는 절대 포함하지 않는다.
   tags          String[] @default([])
   publishState       CampaignPublishState @default(PUBLISHED)
+  /// 공개 범위. RESTRICTED 로 바꿔도 audience 행은 지우지 않는다 — 다시 전체 공개로
+  /// 되돌렸다가 복구하는 왕복이 가능해야 한다.
+  audienceMode       CampaignAudienceMode @default(PUBLIC)
   rewardType         RewardType       @default(UNIFIED)
   /// UNIFIED 캠페인의 보수 금액. PER_SUBTYPE 캠페인에서는 사용하지 않는다.
   rewardJpy          Int
@@ -172,6 +190,7 @@ model Campaign {
   applications CampaignApplication[]
   influencerMemos InfluencerMemo[]
   views        CampaignView[]
+  audience     CampaignAudience[]
 
   // 이 캠페인이 "제외 대상" 으로 지정한 다른 캠페인들 (E → A,B)
   exclusionsAsExcluding CampaignExclusion[] @relation("excludingCampaign")
@@ -211,6 +230,25 @@ model CampaignExclusion {
   @@unique([campaignId, excludedCampaignId])
   @@index([excludedCampaignId])
   @@map("campaign_exclusions")
+}
+
+/// 비공개(RESTRICTED) 캠페인의 노출 대상자. 복합 PK 가 곧 중복 제거 장치라
+/// 같은 사람이 기존 승인자로도 태그로도 걸리면 1행이다(CampaignView 와 같은 패턴).
+/// 어드민이 개별 삭제할 수 있어야 해서, 조건으로 계산하지 않고 행으로 실체화한다.
+model CampaignAudience {
+  campaignId   String
+  influencerId String
+  source       CampaignAudienceSource
+  /// CAMPAIGN 이면 승인자를 불러온 캠페인 id, TAG 면 태그 id, MANUAL 이면 null.
+  sourceRefId  String?
+  createdAt    DateTime               @default(now())
+
+  campaign   Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, influencerId])
+  @@index([influencerId])
+  @@map("campaign_audiences")
 }
 
 model CampaignRecruit {
@@ -288,6 +326,7 @@ model Influencer {
   sessions     InfluencerSession[]
   memos        InfluencerMemo[]
   campaignViews CampaignView[]
+  campaignAudiences CampaignAudience[]
   tagAssignments InfluencerTagAssignment[]
 
   @@map("influencers")

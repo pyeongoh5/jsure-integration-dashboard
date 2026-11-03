@@ -13,6 +13,7 @@ import {
 import {
   CreateCampaignRequestSchema,
   UpdateCampaignRequestSchema,
+  type CampaignAudienceListResponse,
   type CampaignListResponse,
   type CampaignResponse,
   type CreateCampaignRequest,
@@ -22,11 +23,15 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import type { AuthenticatedUser } from "../auth/strategies/jwt.strategy";
 import { CampaignsService } from "./campaigns.service";
+import { CampaignAudienceService } from "./campaign-audience.service";
 
 @UseGuards(JwtAuthGuard)
 @Controller("campaigns")
 export class CampaignsController {
-  constructor(private readonly campaigns: CampaignsService) {}
+  constructor(
+    private readonly campaigns: CampaignsService,
+    private readonly audience: CampaignAudienceService,
+  ) {}
 
   @Post()
   create(
@@ -59,6 +64,24 @@ export class CampaignsController {
     body: UpdateCampaignRequest,
   ): Promise<CampaignResponse> {
     return this.campaigns.update(id, body, req.user);
+  }
+
+  /** 비공개 캠페인의 노출 대상자 목록. 전체 공개 캠페인이면 빈 배열이다. */
+  @Get(":id/audience")
+  async listAudience(
+    @Param("id") id: string,
+  ): Promise<CampaignAudienceListResponse> {
+    const audience = await this.audience.list(id);
+    return { audience };
+  }
+
+  /** 대상자 1명 제외 — 캠페인을 다시 저장해도 되살아나지 않는다(대상자는 추가만 한다). */
+  @Delete(":id/audience/:influencerId")
+  removeAudience(
+    @Param("id") id: string,
+    @Param("influencerId") influencerId: string,
+  ): Promise<void> {
+    return this.audience.remove(id, influencerId);
   }
 
   /** 끌어올리기 — 인플루언서 목록에서 같은 상태 그룹 내 최상단으로 올린다. */

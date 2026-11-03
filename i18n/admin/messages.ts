@@ -2343,6 +2343,139 @@ export const adminMessages = {
       snsTypeChips: {
         groupAria: { ko: "SNS 종류", en: "SNS types", ja: "SNS種類" },
       },
+      audience: {
+        restrictedBadge: {
+          ko: "일부 공개",
+          en: "Limited",
+          ja: "一部公開",
+        },
+        sectionTitle: {
+          ko: "공개 설정",
+          en: "Visibility",
+          ja: "公開設定",
+        },
+        modePublic: {
+          ko: "전체 공개",
+          en: "Public",
+          ja: "全体公開",
+        },
+        modePublicHint: {
+          ko: "모든 인플루언서에게 노출되고 응모할 수 있습니다.",
+          en: "Visible to every influencer and open for applications.",
+          ja: "すべてのインフルエンサーに表示され、応募できます。",
+        },
+        modeRestricted: {
+          ko: "일부 공개 (대상자 지정)",
+          en: "Limited (specific targets)",
+          ja: "一部公開（対象者指定）",
+        },
+        modeRestrictedHint: {
+          ko: "아래에서 지정한 대상자에게만 노출됩니다. 대상자가 아닌 인플루언서는 URL 로 접근해도 캠페인을 볼 수 없습니다.",
+          en: "Visible only to the targets set below. Others cannot see the campaign even with a direct URL.",
+          ja: "下記で指定した対象者にのみ表示されます。対象外のインフルエンサーはURLからもキャンペーンを閲覧できません。",
+        },
+        addHint: {
+          ko: "아래 세 가지를 함께 쓸 수 있고, 저장하면 대상자 목록에 합쳐서 추가됩니다. 제거는 대상자 목록에서만 합니다.",
+          en: "The three options below can be combined; saving adds them to the target list. Removal is done only from the target list.",
+          ja: "下記の3つは併用でき、保存すると対象者一覧にまとめて追加されます。削除は対象者一覧からのみ行います。",
+        },
+        fromCampaignsLabel: {
+          ko: "기존 캠페인 승인자 불러오기",
+          en: "Load approved influencers from past campaigns",
+          ja: "既存キャンペーンの承認者を読み込む",
+        },
+        fromCampaignsHint: {
+          ko: "선택한 캠페인에서 승인(선정)된 인플루언서가 대상자로 추가됩니다. 승인 후 취소된 인원은 제외됩니다.",
+          en: "Influencers approved in the selected campaigns are added as targets. Those cancelled after approval are excluded.",
+          ja: "選択したキャンペーンで承認（選定）されたインフルエンサーが対象者に追加されます。承認後にキャンセルした方は除外されます。",
+        },
+        fromTagsLabel: {
+          ko: "관리 태그로 지정",
+          en: "Target by admin tag",
+          ja: "管理タグで指定",
+        },
+        fromTagsHint: {
+          ko: "등록된 인플루언서 관리 태그만 사용할 수 있습니다. 해당 태그가 달린 인원이 대상자로 추가됩니다.",
+          en: "Only registered influencer tags can be used. Everyone carrying the tag is added as a target.",
+          ja: "登録済みのインフルエンサー管理タグのみ使用できます。そのタグが付いた方が対象者に追加されます。",
+        },
+        fromTagsPlaceholder: {
+          ko: "태그 입력 후 Enter",
+          en: "Type a tag and press Enter",
+          ja: "タグを入力してEnter",
+        },
+        fromInfluencersLabel: {
+          ko: "개별 인원 직접 지정",
+          en: "Pick individual influencers",
+          ja: "個別に直接指定",
+        },
+        fromInfluencersHint: {
+          ko: "이름·이메일·SNS 핸들로 검색해 한 명씩 추가합니다.",
+          en: "Search by name, email, or SNS handle and add one by one.",
+          ja: "名前・メール・SNSハンドルで検索して1人ずつ追加します。",
+        },
+        searchPlaceholder: {
+          ko: "이름, 이메일, SNS 핸들로 검색...",
+          en: "Search by name, email, or SNS handle...",
+          ja: "名前・メール・SNSハンドルで検索...",
+        },
+        searchNoResults: {
+          ko: "검색 결과가 없습니다.",
+          en: "No results.",
+          ja: "検索結果がありません。",
+        },
+        searchHintShort: {
+          ko: "두 글자 이상 입력해주세요.",
+          en: "Enter at least two characters.",
+          ja: "2文字以上入力してください。",
+        },
+        add: { ko: "추가", en: "Add", ja: "追加" },
+        added: { ko: "추가됨", en: "Added", ja: "追加済み" },
+        listTitle: {
+          ko: "현재 대상자",
+          en: "Current targets",
+          ja: "現在の対象者",
+        },
+        listCount: {
+          ko: "총 {count}명",
+          en: "{count} people",
+          ja: "計{count}名",
+        },
+        listEmpty: {
+          ko: "등록된 대상자가 없습니다.",
+          en: "No targets registered yet.",
+          ja: "登録された対象者はいません。",
+        },
+        listEmptyWarning: {
+          ko: "대상자가 0명이라 현재 아무에게도 노출되지 않습니다.",
+          en: "With zero targets this campaign is currently visible to nobody.",
+          ja: "対象者が0名のため、現在誰にも表示されません。",
+        },
+        listError: {
+          ko: "대상자 목록을 불러오지 못했습니다.",
+          en: "Failed to load the target list.",
+          ja: "対象者一覧を読み込めませんでした。",
+        },
+        sourceColumn: { ko: "출처", en: "Source", ja: "出所" },
+        sourceCampaign: {
+          ko: "기존 승인자",
+          en: "Past approval",
+          ja: "既存承認者",
+        },
+        sourceTag: { ko: "태그", en: "Tag", ja: "タグ" },
+        sourceManual: { ko: "직접 지정", en: "Manual", ja: "直接指定" },
+        remove: { ko: "제외", en: "Remove", ja: "除外" },
+        removeFailed: {
+          ko: "대상자를 제외하지 못했습니다.",
+          en: "Failed to remove the target.",
+          ja: "対象者を除外できませんでした。",
+        },
+        saveFirst: {
+          ko: "캠페인을 저장하면 대상자 목록이 여기에 표시됩니다.",
+          en: "The target list appears here once the campaign is saved.",
+          ja: "キャンペーンを保存すると、対象者一覧がここに表示されます。",
+        },
+      },
       excludedPicker: {
         loading: {
           ko: "캠페인 목록 불러오는 중…",

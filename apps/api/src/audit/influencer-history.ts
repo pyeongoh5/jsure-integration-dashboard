@@ -2,6 +2,7 @@ import {
   ApplicationStatusSchema,
   CampaignSubTypeSchema,
   type AdminActivityLog,
+  type ApplicationDisplayStage,
   type InfluencerActivityGroup,
 } from "@jsure/shared";
 import { toActivityLog, type ActivityLogRow } from "./application-activity";
@@ -14,6 +15,8 @@ import {
 export type InfluencerHistoryApplicationRow = InfluencerActivitySource & {
   id: string;
   status: string;
+  /** 정산 여부까지 반영한 표시 단계. 세부 탭 분류의 기준이라 호출부에서 미리 계산해 넘긴다. */
+  displayStage: ApplicationDisplayStage;
   rejectReason: string | null;
   subTypes: string[];
   campaign: { id: string; title: string };
@@ -93,6 +96,7 @@ export function influencerHistoryGroups(
         CampaignSubTypeSchema.parse(subType),
       ),
       status: ApplicationStatusSchema.parse(application.status),
+      displayStage: application.displayStage,
       rejectReason: application.rejectReason,
       events: [
         ...logs,

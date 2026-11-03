@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   INFLUENCER_HISTORY_TAB,
   type AdminActivityLog,
-  type ApplicationStatus,
+  type ApplicationDisplayStage,
   type CampaignSubType,
   type InfluencerActivityGroup,
   type InfluencerHistoryTab as HistoryStatusTab,
@@ -31,9 +31,11 @@ type ActivityState =
 /** 한 이벤트를 표시하는 데 필요한 값만 평탄화한 행. */
 type HistoryRow = {
   key: string;
+  /** 접힌 보기에서 캠페인(응모)당 최신 1건만 남기기 위한 식별자. */
+  applicationId: string;
   campaignTitle: string;
   subTypes: CampaignSubType[];
-  status: ApplicationStatus;
+  displayStage: ApplicationDisplayStage;
   event: AdminActivityLog;
   /** 사유가 있는 이벤트(반려·취소)에만 채워진다. */
   reason: EventReason | null;
@@ -44,6 +46,7 @@ type HistoryRow = {
 const FILTER_LABEL: Record<HistoryFilter, AdminTranslationKey> = {
   ALL: "domains.influencer.notesDialog.history.tabAll",
   APPLIED: "domains.influencer.notesDialog.history.tabApplied",
+  IN_PROGRESS: "domains.influencer.notesDialog.history.tabInProgress",
   COMPLETED: "domains.influencer.notesDialog.history.tabCompleted",
   REJECTED: "domains.influencer.notesDialog.history.tabRejected",
 };
@@ -51,32 +54,48 @@ const FILTER_LABEL: Record<HistoryFilter, AdminTranslationKey> = {
 const FILTER_ORDER: HistoryFilter[] = [
   "ALL",
   "APPLIED",
+  "IN_PROGRESS",
   "COMPLETED",
   "REJECTED",
 ];
 
-const STATUS_LABEL: Record<ApplicationStatus, AdminTranslationKey> = {
-  APPLIED: "domains.influencer.notesDialog.history.status.applied",
-  APPROVED: "domains.influencer.notesDialog.history.status.approved",
-  SHIPPED: "domains.influencer.notesDialog.history.status.shipped",
-  DELIVERED: "domains.influencer.notesDialog.history.status.delivered",
-  ORDER_SUBMITTED: "domains.influencer.notesDialog.history.status.orderSubmitted",
-  REVIEW_SUBMITTED:
-    "domains.influencer.notesDialog.history.status.reviewSubmitted",
-  COMPLETED: "domains.influencer.notesDialog.history.status.completed",
-  REJECTED: "domains.influencer.notesDialog.history.status.rejected",
-  CANCELLED: "domains.influencer.notesDialog.history.status.cancelled",
+const STAGE_LABEL: Record<ApplicationDisplayStage, AdminTranslationKey> = {
+  APPLIED: "domains.influencer.notesDialog.history.stage.applied",
+  APPROVED: "domains.influencer.notesDialog.history.stage.approved",
+  SHIPPED: "domains.influencer.notesDialog.history.stage.shipped",
+  AWAITING_RECEIPT: "domains.influencer.notesDialog.history.stage.awaitingReceipt",
+  AWAITING_ORDER: "domains.influencer.notesDialog.history.stage.awaitingOrder",
+  AWAITING_REVIEW: "domains.influencer.notesDialog.history.stage.awaitingReview",
+  POSTING: "domains.influencer.notesDialog.history.stage.posting",
+  POSTED: "domains.influencer.notesDialog.history.stage.posted",
+  INSIGHT_DUE: "domains.influencer.notesDialog.history.stage.insightDue",
+  REVIEWING: "domains.influencer.notesDialog.history.stage.reviewing",
+  REVIEW_PENDING: "domains.influencer.notesDialog.history.stage.reviewing",
+  REVIEW_REJECTED: "domains.influencer.notesDialog.history.stage.reviewRejected",
+  POST_REJECTED: "domains.influencer.notesDialog.history.stage.reviewRejected",
+  COMPLETED: "domains.influencer.notesDialog.history.stage.completed",
+  SETTLED: "domains.influencer.notesDialog.history.stage.settled",
+  REJECTED: "domains.influencer.notesDialog.history.stage.rejected",
+  CANCELLED: "domains.influencer.notesDialog.history.stage.cancelled",
 };
 
 /** 뱃지 색은 세부 탭 그룹을 따라간다 — 진행 중은 중립, 완료는 초록, 반려는 빨강. */
-const STATUS_BADGE_CLASS: Record<ApplicationStatus, string | undefined> = {
+const STAGE_BADGE_CLASS: Record<ApplicationDisplayStage, string | undefined> = {
   APPLIED: styles.badgeOpen,
   APPROVED: styles.badgeOpen,
   SHIPPED: styles.badgeOpen,
-  DELIVERED: styles.badgeOpen,
-  ORDER_SUBMITTED: styles.badgeOpen,
-  REVIEW_SUBMITTED: styles.badgeOpen,
+  AWAITING_RECEIPT: styles.badgeOpen,
+  AWAITING_ORDER: styles.badgeOpen,
+  AWAITING_REVIEW: styles.badgeOpen,
+  POSTING: styles.badgeOpen,
+  POSTED: styles.badgeOpen,
+  INSIGHT_DUE: styles.badgeOpen,
+  REVIEWING: styles.badgeOpen,
+  REVIEW_PENDING: styles.badgeOpen,
+  REVIEW_REJECTED: styles.badgeRejected,
+  POST_REJECTED: styles.badgeRejected,
   COMPLETED: styles.badgeCompleted,
+  SETTLED: styles.badgeCompleted,
   REJECTED: styles.badgeRejected,
   CANCELLED: styles.badgeCancelled,
 };
@@ -143,7 +162,21 @@ function matchesFilter(
   filter: HistoryFilter,
 ): boolean {
   if (filter === "ALL") return true;
-  return INFLUENCER_HISTORY_TAB[group.status] === filter;
+  return INFLUENCER_HISTORY_TAB[group.displayStage] === filter;
+}
+
+/**
+ * 접힌 보기 — 캠페인(응모)당 가장 최근 이벤트 1건만 남긴다.
+ * rows 는 최신순이므로 applicationId 당 처음 만나는 행이 그 건의 최신 이력이다.
+ * 진행 중인 캠페인이 여러 건일 때 하나만 보이던 문제를 막는다.
+ */
+function latestPerApplication(rows: HistoryRow[]): HistoryRow[] {
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    if (seen.has(row.applicationId)) return false;
+    seen.add(row.applicationId);
+    return true;
+  });
 }
 
 function toRows(
@@ -164,9 +197,10 @@ function toRows(
     for (const event of group.events) {
       rows.push({
         key: `${group.applicationId}-${event.id}`,
+        applicationId: group.applicationId,
         campaignTitle: group.campaignTitle,
         subTypes: group.subTypes,
-        status: group.status,
+        displayStage: group.displayStage,
         event,
         reason: eventReasonOf(event, group.rejectReason),
         restorableApplicationId:
@@ -219,6 +253,7 @@ export function InfluencerHistoryTab({ influencerId }: Props) {
     () => (state.kind === "ready" ? toRows(state.groups, filter) : []),
     [state, filter],
   );
+  const collapsedRows = useMemo(() => latestPerApplication(rows), [rows]);
 
   return (
     <div>
@@ -232,7 +267,7 @@ export function InfluencerHistoryTab({ influencerId }: Props) {
             setShowAll(false);
           }}
         />
-        {rows.length > 1 && (
+        {rows.length > collapsedRows.length && (
           <div className={styles.toggle}>
             <span className={styles.toggleLabel}>
               {t("domains.influencer.notesDialog.expandAll", {
@@ -251,7 +286,7 @@ export function InfluencerHistoryTab({ influencerId }: Props) {
       </div>
       <HistoryBody
         state={state}
-        rows={showAll ? rows : rows.slice(0, 1)}
+        rows={showAll ? rows : collapsedRows}
         onRestored={() => setReloadKey((current) => current + 1)}
       />
     </div>
@@ -312,9 +347,9 @@ function HistoryEntry({ row, onRestored }: { row: HistoryRow; onRestored: () => 
     <article className={styles.entry}>
       <div className={styles.entryTop}>
         <span
-          className={`${styles.badge} ${STATUS_BADGE_CLASS[row.status] ?? ""}`}
+          className={`${styles.badge} ${STAGE_BADGE_CLASS[row.displayStage] ?? ""}`}
         >
-          {t(STATUS_LABEL[row.status])}
+          {t(STAGE_LABEL[row.displayStage])}
         </span>
         <span className={styles.campaign}>{row.campaignTitle}</span>
         <span className={styles.subTypes}>

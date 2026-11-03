@@ -2375,9 +2375,9 @@ export const adminMessages = {
           ja: "下記で指定した対象者にのみ表示されます。対象外のインフルエンサーはURLからもキャンペーンを閲覧できません。",
         },
         addHint: {
-          ko: "아래 세 가지를 함께 쓸 수 있고, 저장하면 대상자 목록에 합쳐서 추가됩니다. 제거는 대상자 목록에서만 합니다.",
-          en: "The three options below can be combined; saving adds them to the target list. Removal is done only from the target list.",
-          ja: "下記の3つは併用でき、保存すると対象者一覧にまとめて追加されます。削除は対象者一覧からのみ行います。",
+          ko: "아래 세 가지를 함께 쓸 수 있습니다. 선택을 빼면 그 기준으로만 들어온 인원도 빠지고, 선택을 그대로 두면 아래 목록에서 개별 제외한 인원은 다시 추가되지 않습니다.",
+          en: "The three options below can be combined. Clearing a selection also drops people who came in only through it; keeping a selection unchanged means individually removed people are not re-added.",
+          ja: "下記の3つは併用できます。選択を外すと、その基準だけで入った方も外れます。選択をそのままにすれば、下の一覧で個別に除外した方が再追加されることはありません。",
         },
         fromCampaignsLabel: {
           ko: "기존 캠페인 승인자 불러오기",

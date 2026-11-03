@@ -34,6 +34,41 @@ type AudienceTx = Pick<
   | "campaignAudience"
 >;
 
+/** 이미 저장돼 있는 대상자 행 — 규칙 반영 시 변경분을 계산하는 기준. */
+type ExistingRow = {
+  influencerId: string;
+  source: CampaignAudienceSource;
+  sourceRefId: string | null;
+};
+
+type SelectedRules = {
+  campaignRefs: Set<string>;
+  tagRefs: Set<string>;
+  manualIds: Set<string>;
+};
+
+/** 해당 출처로 들어온 행들의 sourceRefId 집합. */
+function refSet(
+  rows: ExistingRow[],
+  source: CampaignAudienceSource,
+): Set<string> {
+  const refs = new Set<string>();
+  for (const row of rows) {
+    if (row.source === source && row.sourceRefId !== null) {
+      refs.add(row.sourceRefId);
+    }
+  }
+  return refs;
+}
+
+/** 이 행을 데려온 규칙이 아직 선택돼 있는가. */
+function isStillSelected(row: ExistingRow, selected: SelectedRules): boolean {
+  if (row.source === "MANUAL") return selected.manualIds.has(row.influencerId);
+  if (row.sourceRefId === null) return false;
+  if (row.source === "CAMPAIGN") return selected.campaignRefs.has(row.sourceRefId);
+  return selected.tagRefs.has(row.sourceRefId);
+}
+
 export function hasAudienceInput(input: CampaignAudienceInput): boolean {
   return (
     input.audienceCampaignIds.length > 0 ||
@@ -47,27 +82,142 @@ export class CampaignAudienceService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * 세 경로를 해석해 대상자 행을 **추가**한다(교체가 아니다).
+   * 규칙(피커 선택)을 대상자 행에 반영한다. input 이 null 이면 아무것도 건드리지 않는다.
    *
-   * 교체하지 않는 이유: 어드민이 대상자 목록에서 개별 삭제한 사람이 다음 저장 때
-   * 되살아나면 "뺐는데 다시 들어온다"가 된다. 제거는 목록 화면의 삭제로만 한다.
+   * 전체 교체가 아니라 **변경분만** 다루는 게 핵심이다:
+   * - 새로 들어온 규칙만 해석해서 추가한다. 그대로인 규칙은 다시 풀지 않으므로,
+   *   어드민이 목록에서 개별 제외한 사람이 재저장으로 되살아나지 않는다.
+   * - 빠진 규칙으로 들어왔던 사람은 지우되, 남아 있는 다른 규칙에도 걸리면 남긴다
+   *   (VIP 태그 + 과거 캠페인처럼 규칙이 겹치는 경우 조용히 빠지면 안 된다).
    */
-  async addFromInput(
+  async applyInput(
+    tx: AudienceTx,
+    campaignId: string,
+    input: CampaignAudienceInput | null,
+  ): Promise<void> {
+    if (input === null) return;
+
+    const existing = await tx.campaignAudience.findMany({
+      where: { campaignId },
+      select: { influencerId: true, source: true, sourceRefId: true },
+    });
+    const selectedTagIds = await this.tagIdsForLabels(tx, input.audienceTagLabels);
+
+    const selected = {
+      campaignRefs: new Set(
+        input.audienceCampaignIds.filter((id) => id !== campaignId),
+      ),
+      tagRefs: new Set(selectedTagIds),
+      manualIds: new Set(input.audienceInfluencerIds),
+    };
+    const existingRefs = {
+      campaign: refSet(existing, "CAMPAIGN"),
+      tag: refSet(existing, "TAG"),
+    };
+
+    await this.addNewRules(tx, campaignId, input, existing, existingRefs);
+    await this.dropUnselectedRules(tx, campaignId, input, existing, selected);
+  }
+
+  /** 선택에서 빠진 규칙으로만 들어온 대상자를 제거한다. */
+  private async dropUnselectedRules(
     tx: AudienceTx,
     campaignId: string,
     input: CampaignAudienceInput,
+    existing: ExistingRow[],
+    selected: SelectedRules,
   ): Promise<void> {
-    if (!hasAudienceInput(input)) return;
+    const orphaned = existing.filter((row) => !isStillSelected(row, selected));
+    if (orphaned.length === 0) return;
 
-    const { rows, unknownTagLabels } = await this.resolve(tx, campaignId, input);
+    // 남아 있는 규칙으로 여전히 걸리는 사람은 지우지 않는다.
+    const { rows: stillMatched } = await this.resolve(tx, campaignId, input);
+    const keep = new Set(stillMatched.map((row) => row.influencerId));
+    const removable = orphaned
+      .map((row) => row.influencerId)
+      .filter((influencerId) => !keep.has(influencerId));
+    if (removable.length === 0) return;
+
+    await tx.campaignAudience.deleteMany({
+      where: { campaignId, influencerId: { in: removable } },
+    });
+  }
+
+  /** 아직 해석된 적 없는 규칙만 골라 대상자를 추가한다. */
+  private async addNewRules(
+    tx: AudienceTx,
+    campaignId: string,
+    input: CampaignAudienceInput,
+    existing: ExistingRow[],
+    existingRefs: { campaign: Set<string>; tag: Set<string> },
+  ): Promise<void> {
+    const existingManualIds = new Set(
+      existing
+        .filter((row) => row.source === "MANUAL")
+        .map((row) => row.influencerId),
+    );
+    const addedInput: CampaignAudienceInput = {
+      audienceCampaignIds: input.audienceCampaignIds.filter(
+        (id) => !existingRefs.campaign.has(id),
+      ),
+      // 라벨은 그대로 넘긴다 — 미등록 라벨 검증을 건너뛰면 오타가 조용히 통과한다.
+      audienceTagLabels: input.audienceTagLabels,
+      audienceInfluencerIds: input.audienceInfluencerIds.filter(
+        (id) => !existingManualIds.has(id),
+      ),
+    };
+    const { rows, unknownTagLabels } = await this.resolve(
+      tx,
+      campaignId,
+      addedInput,
+    );
     if (unknownTagLabels.length > 0) {
       throw new NotFoundException(
         `등록되지 않은 인플루언서 태그입니다: ${unknownTagLabels.join(", ")}`,
       );
     }
+    // 이미 해석된 태그 규칙의 행은 복합 PK 로 걸러지므로 skipDuplicates 로 충분하다.
     if (rows.length === 0) return;
-
     await tx.campaignAudience.createMany({ data: rows, skipDuplicates: true });
+  }
+
+  /** 라벨 → 태그 id. 미등록 라벨은 여기서 거르지 않는다(추가 경로가 검증한다). */
+  private async tagIdsForLabels(
+    tx: AudienceTx,
+    labels: string[],
+  ): Promise<string[]> {
+    if (labels.length === 0) return [];
+    const tags = await tx.influencerTag.findMany({
+      where: { label: { in: Array.from(new Set(labels)) } },
+      select: { id: true },
+    });
+    return tags.map((tag) => tag.id);
+  }
+
+  /**
+   * 저장된 대상자에서 규칙을 거꾸로 복원한다 — 수정 화면의 피커 기선택용.
+   * 결과가 0명이었던 규칙은 남는 행이 없어 복원되지 않는다(프리뷰 인원수로 드러난다).
+   */
+  async selection(campaignId: string): Promise<CampaignAudienceInput> {
+    const rows = await this.prisma.campaignAudience.findMany({
+      where: { campaignId },
+      select: { influencerId: true, source: true, sourceRefId: true },
+    });
+    const tagIds = Array.from(refSet(rows, "TAG"));
+    const tags =
+      tagIds.length > 0
+        ? await this.prisma.influencerTag.findMany({
+            where: { id: { in: tagIds } },
+            select: { label: true },
+          })
+        : [];
+    return {
+      audienceCampaignIds: Array.from(refSet(rows, "CAMPAIGN")),
+      audienceTagLabels: tags.map((tag) => tag.label),
+      audienceInfluencerIds: rows
+        .filter((row) => row.source === "MANUAL")
+        .map((row) => row.influencerId),
+    };
   }
 
   /**

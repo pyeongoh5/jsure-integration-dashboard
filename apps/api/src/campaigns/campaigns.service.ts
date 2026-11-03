@@ -8,6 +8,7 @@ import {
   OPTION_SELECTABLE_SUB_TYPES,
   SLOT_CONSUMING_STATUSES,
   SUB_TYPE_LABEL,
+  audiencePatchToInput,
   type ApplicationStatus,
   type CampaignAudienceMode,
   type CampaignCategory,
@@ -721,7 +722,7 @@ export class CampaignsService {
         },
         include: RECRUITS_INCLUDE,
       });
-      await this.audience.addFromInput(tx, created.id, input);
+      await this.audience.applyInput(tx, created.id, input);
       return created;
     });
     await this.audit.record({
@@ -983,8 +984,8 @@ export class CampaignsService {
           });
         }
       }
-      // 대상자는 추가만 한다 — 목록 화면에서 지운 사람이 재저장으로 되살아나면 안 된다.
-      await this.audience.addFromInput(tx, id, input);
+      // 대상자 규칙 반영. 세 필드를 모두 보내지 않은 요청은 대상자를 건드리지 않는다.
+      await this.audience.applyInput(tx, id, audiencePatchToInput(input));
       return tx.campaign.update({
         where: { id },
         data,
@@ -1023,7 +1024,7 @@ export class CampaignsService {
         },
         include: RECRUITS_INCLUDE,
       });
-      await this.audience.addFromInput(tx, created.id, input);
+      await this.audience.applyInput(tx, created.id, audiencePatchToInput(input));
       return created;
     });
     await this.audit.record({
@@ -1032,9 +1033,11 @@ export class CampaignsService {
       campaignId: row.id,
       metadata: { title: row.title },
     });
-    const counts = hasAudienceInput(input)
-      ? await this.countsFor(row.id)
-      : EMPTY_COUNTS;
+    const draftAudience = audiencePatchToInput(input);
+    const counts =
+      draftAudience !== null && hasAudienceInput(draftAudience)
+        ? await this.countsFor(row.id)
+        : EMPTY_COUNTS;
     return this.withResolved(toResponse(row, counts));
   }
 
@@ -1065,7 +1068,7 @@ export class CampaignsService {
           })),
         });
       }
-      await this.audience.addFromInput(tx, id, input);
+      await this.audience.applyInput(tx, id, audiencePatchToInput(input));
       return tx.campaign.update({
         where: { id },
         data: toDraftCampaignData(input, new Date()),

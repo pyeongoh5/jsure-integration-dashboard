@@ -25,11 +25,11 @@ const SOURCE_LABEL: Record<CampaignAudienceSource, AdminTranslationKey> = {
 
 /**
  * 저장하면 최종적으로 대상이 될 인원을 실시간으로 보여준다.
- * 이미 저장된 행만 개별 제외할 수 있다 — 아직 추가 전인 행은 위 피커에서 빼면 된다.
+ * 읽기 전용이다 — 명단에서 빼려면 위 규칙(피커 선택)에서 빼야 한다.
  */
 export function CampaignAudienceList({ campaignId, input, isRestricted }: Props) {
   const t = useT();
-  const { state, removing, remove } = useCampaignAudience(campaignId, input);
+  const { state } = useCampaignAudience(campaignId, input);
 
   if (state.kind === "loading") {
     return <div className={styles.hint}>{t("common.loading")}</div>;
@@ -74,12 +74,7 @@ export function CampaignAudienceList({ campaignId, input, isRestricted }: Props)
           </div>
           <div className={styles.list}>
             {state.audience.map((entry) => (
-              <AudienceRow
-                key={entry.influencerId}
-                entry={entry}
-                removing={removing === entry.influencerId}
-                onRemove={() => void remove(entry.influencerId)}
-              />
+              <AudienceRow key={entry.influencerId} entry={entry} />
             ))}
           </div>
         </>
@@ -88,15 +83,7 @@ export function CampaignAudienceList({ campaignId, input, isRestricted }: Props)
   );
 }
 
-function AudienceRow({
-  entry,
-  removing,
-  onRemove,
-}: {
-  entry: CampaignAudienceEntry;
-  removing: boolean;
-  onRemove: () => void;
-}) {
+function AudienceRow({ entry }: { entry: CampaignAudienceEntry }) {
   const t = useT();
   return (
     <div className={`${styles.row} ${entry.pending ? styles.rowPending : ""}`}>
@@ -106,19 +93,10 @@ function AudienceRow({
         {t(SOURCE_LABEL[entry.source])}
         {entry.sourceLabel !== null && ` · ${entry.sourceLabel}`}
       </span>
-      {entry.pending ? (
+      {entry.pending && (
         <span className={styles.pendingBadge}>
           {t("domains.campaign.audience.pendingBadge")}
         </span>
-      ) : (
-        <button
-          type="button"
-          className={styles.remove}
-          onClick={onRemove}
-          disabled={removing}
-        >
-          {t("domains.campaign.audience.remove")}
-        </button>
       )}
     </div>
   );

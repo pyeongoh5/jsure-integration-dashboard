@@ -8,6 +8,7 @@ import {
   AUDIENCE_INPUT_SHAPE,
   AUDIENCE_PATCH_SHAPE,
   CampaignAudienceModeSchema,
+  audienceExclusionConflicts,
 } from "./campaignAudience.js";
 
 export { CampaignSubTypeSchema };
@@ -698,6 +699,14 @@ export const CampaignFormSchema = z
     },
   )
   .superRefine((form, ctx) => {
+    if (audienceExclusionConflicts(form).length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["excludedCampaignIds"],
+        message:
+          "같은 캠페인을 공개 대상과 참여 제외에 동시에 지정할 수 없습니다",
+      });
+    }
     refineRecruitsByCategory(form.category, form.recruits, ctx);
     refineRecruitsByRewardType(form.rewardType, form.recruits, ctx);
     refineRecruitOptionConfigs(form.rewardType, form.recruits, ctx);

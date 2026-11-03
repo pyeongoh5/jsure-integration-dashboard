@@ -119,7 +119,7 @@ export type CampaignAudienceSource = z.infer<
   typeof CampaignAudienceSourceSchema
 >;
 
-/** 어드민 대상자 목록 한 행. 누가 왜 대상인지 확인하고 지우기 위한 최소 정보만 담는다. */
+/** 대상자 명단 한 행. 누가 왜 대상인지 확인하기 위한 최소 정보만 담는다. */
 export const CampaignAudienceEntrySchema = z.object({
   influencerId: z.string(),
   name: z.string(),
@@ -131,12 +131,10 @@ export const CampaignAudienceEntrySchema = z.object({
    */
   sourceLabel: z.string().nullable(),
   /**
-   * 아직 저장되지 않은(이번 저장에서 추가될) 대상자. 프리뷰에서만 true 가 되며,
-   * 저장 전이라 개별 제외 대상이 아니다 — 위 피커에서 선택을 빼면 된다.
+   * 아직 저장되지 않은(이번 저장에서 새로 들어오는) 대상자. 저장하면 사라지는
+   * 구분이라 프리뷰에서만 의미가 있다.
    */
   pending: z.boolean().default(false),
-  /** 저장된 시각. pending 행은 아직 저장 전이라 null. */
-  createdAt: z.string().datetime().nullable(),
 });
 export type CampaignAudienceEntry = z.infer<typeof CampaignAudienceEntrySchema>;
 
@@ -152,3 +150,24 @@ export const CampaignAudienceListResponseSchema = z.object({
 export type CampaignAudienceListResponse = z.infer<
   typeof CampaignAudienceListResponseSchema
 >;
+
+/**
+ * 공개 대상과 참여 제외의 충돌 판정 — 서버와 어드민 폼이 **같은 함수**를 쓴다.
+ *
+ * 같은 캠페인을 "승인자를 대상자로 불러오기"와 "참여 제외 기준"에 동시에 지정하면
+ * 한쪽은 그 캠페인 참여자에게 열어주고 다른 쪽은 막는 설정이 된다. 서로 보는
+ * 단계가 조금 달라(승인 vs 제출물 승인) 전원이 막히지는 않지만, 의도한 설정일
+ * 수 없으므로 저장 전에 잡는다.
+ *
+ * 문구는 만들지 않고 충돌한 캠페인 id 만 돌려준다 — 서버는 고정 문자열,
+ * 화면은 i18n 을 쓰기 때문이다.
+ */
+export function audienceExclusionConflicts(values: {
+  audienceCampaignIds?: string[];
+  excludedCampaignIds?: string[];
+}): string[] {
+  const excluded = new Set(values.excludedCampaignIds ?? []);
+  return Array.from(new Set(values.audienceCampaignIds ?? [])).filter((id) =>
+    excluded.has(id),
+  );
+}

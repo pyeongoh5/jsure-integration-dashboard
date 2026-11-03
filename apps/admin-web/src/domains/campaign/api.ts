@@ -3,7 +3,6 @@ import {
   CampaignAudienceListResponseSchema,
   CampaignAudienceSelectionResponseSchema,
   CampaignResponseSchema,
-  type CampaignAudienceEntry,
   type CampaignAudienceListResponse,
   type CampaignAudiencePreviewRequest,
   type CampaignAudienceSelectionResponse,
@@ -114,16 +113,6 @@ export async function deleteCampaign(id: string): Promise<void> {
   await api.delete(`/campaigns/${encodeURIComponent(id)}`);
 }
 
-/** 일부 공개 캠페인의 노출 대상자 목록(저장된 것만). */
-export async function listCampaignAudience(
-  campaignId: string,
-): Promise<CampaignAudienceEntry[]> {
-  const res = await api.get(
-    `/campaigns/${encodeURIComponent(campaignId)}/audience`,
-  );
-  return CampaignAudienceListResponseSchema.parse(res.data).audience;
-}
-
 /** 저장된 대상자에서 복원한 규칙 — 수정 화면 피커의 기선택 값. */
 export async function getCampaignAudienceSelection(
   campaignId: string,
@@ -143,16 +132,6 @@ export async function previewCampaignAudience(
 ): Promise<CampaignAudienceListResponse> {
   const res = await api.post("/campaigns/audience/preview", input);
   return CampaignAudienceListResponseSchema.parse(res.data);
-}
-
-/** 대상자 1명 제외 — 캠페인을 다시 저장해도 되살아나지 않는다. */
-export async function removeCampaignAudience(
-  campaignId: string,
-  influencerId: string,
-): Promise<void> {
-  await api.delete(
-    `/campaigns/${encodeURIComponent(campaignId)}/audience/${encodeURIComponent(influencerId)}`,
-  );
 }
 
 /** 끌어올리기 — 인플루언서 목록에서 같은 상태 그룹 내 최상단으로 올린다. */

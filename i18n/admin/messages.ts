@@ -2375,9 +2375,9 @@ export const adminMessages = {
           ja: "下記で指定した対象者にのみ表示されます。対象外のインフルエンサーはURLからもキャンペーンを閲覧できません。",
         },
         addHint: {
-          ko: "아래 세 가지를 함께 쓸 수 있습니다. 선택을 빼면 그 기준으로만 들어온 인원도 빠지고, 선택을 그대로 두면 아래 목록에서 개별 제외한 인원은 다시 추가되지 않습니다.",
-          en: "The three options below can be combined. Clearing a selection also drops people who came in only through it; keeping a selection unchanged means individually removed people are not re-added.",
-          ja: "下記の3つは併用できます。選択を外すと、その基準だけで入った方も外れます。選択をそのままにすれば、下の一覧で個別に除外した方が再追加されることはありません。",
+          ko: "아래 세 가지를 함께 쓸 수 있습니다. 대상자 명단은 이 선택만으로 정해지며, 저장하면 아래 미리보기 그대로 반영됩니다. 빼려면 선택에서 빼주세요.",
+          en: "The three options below can be combined. The target list is determined solely by these selections and saving applies the preview below as-is. To drop someone, clear them from the selection.",
+          ja: "下記の3つは併用できます。対象者名簿はこの選択のみで決まり、保存すると下のプレビューがそのまま反映されます。外す場合は選択から外してください。",
         },
         fromCampaignsLabel: {
           ko: "기존 캠페인 승인자 불러오기",
@@ -2463,7 +2463,6 @@ export const adminMessages = {
         },
         sourceTag: { ko: "태그", en: "Tag", ja: "タグ" },
         sourceManual: { ko: "직접 지정", en: "Manual", ja: "直接指定" },
-        remove: { ko: "제외", en: "Remove", ja: "除外" },
         listPendingCount: {
           ko: "이번 저장에 {count}명 추가",
           en: "{count} to be added on save",

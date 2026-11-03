@@ -1,5 +1,8 @@
 import { NotFoundException } from "@nestjs/common";
-import { SLOT_CONSUMING_STATUSES } from "@jsure/shared";
+import {
+  SLOT_CONSUMING_STATUSES,
+  audienceExclusionConflicts,
+} from "@jsure/shared";
 import { audienceVisibleWhere } from "./campaign-audience";
 import { CampaignAudienceService } from "./campaign-audience.service";
 
@@ -59,10 +62,12 @@ function makeService(fixture: {
         return { count: args.data.length };
       },
       deleteMany: async (args: {
-        where: { influencerId?: { in: string[] } };
+        where: { influencerId?: { notIn?: string[] } };
       }) => {
-        deleted.push(...(args.where.influencerId?.in ?? []));
-        return { count: deleted.length };
+        // notIn 은 "이 사람들만 남긴다", 조건이 없으면 전체 삭제.
+        const keep = args.where.influencerId?.notIn;
+        deleted.push(...(keep ?? ["ALL"]));
+        return { count: 0 };
       },
     },
   } as never;
@@ -193,8 +198,8 @@ describe("대상자 해석", () => {
 });
 
 describe("저장 전 프리뷰", () => {
-  // 수정 화면 진입 직후 — 피커는 비어 있고 이미 저장된 대상자만 보여야 한다.
-  it("입력이 비어 있어도 이미 저장된 대상자는 그대로 보여준다", async () => {
+  // 프리뷰는 "저장하면 이렇게 된다" 다. 규칙이 비면 저장 시 명단도 비므로 0명이 맞다.
+  it("규칙이 비면 저장된 대상자가 있어도 빈 명단을 보여준다", async () => {
     const { service } = makeService({
       savedAudience: [
         {
@@ -209,18 +214,16 @@ describe("저장 전 프리뷰", () => {
 
     const result = await service.preview("camp-new", EMPTY_INPUT);
 
-    expect(result.audience).toHaveLength(1);
-    expect(result.audience[0]!.influencerId).toBe("inf-1");
-    expect(result.audience[0]!.pending).toBe(false);
+    expect(result.audience).toEqual([]);
   });
 
-  it("저장된 대상자 뒤에 이번에 추가될 인원을 pending 으로 붙인다", async () => {
+  it("이미 저장된 사람은 pending=false, 이번에 새로 들어오는 사람은 true", async () => {
     const { service } = makeService({
       approvedApplications: [
         { campaignId: "camp-1", influencerId: "inf-saved" },
         { campaignId: "camp-1", influencerId: "inf-new" },
       ],
-      influencers: [{ id: "inf-new" }],
+      influencers: [{ id: "inf-saved" }, { id: "inf-new" }],
       savedAudience: [
         {
           influencerId: "inf-saved",
@@ -259,22 +262,21 @@ describe("저장 전 프리뷰", () => {
 });
 
 describe("규칙 변경 반영", () => {
-  it("규칙이 그대로면 목록에서 개별 제외한 사람을 다시 추가하지 않는다", async () => {
-    // camp-1 승인자는 2명인데, 어드민이 inf-2 를 목록에서 제외해 1행만 남은 상태.
+  it("규칙에서 빠진 사람은 제거된다 — 명단은 규칙의 함수다", async () => {
+    const { service, prisma, deleted } = makeService({
+      approvedApplications: [{ campaignId: "camp-1", influencerId: "inf-1" }],
+    });
+
+    // 규칙이 비었으므로 기존 대상자는 전부 사라져야 한다.
+    await service.applyInput(prisma, "camp-new", EMPTY_INPUT);
+
+    // 남길 사람이 없으면 캠페인 전체 삭제로 간다(notIn: [] 를 피한다).
+    expect(deleted).toEqual(["ALL"]);
+  });
+
+  it("규칙에 남은 사람은 지우지 않고 유지한다", async () => {
     const { service, prisma, created, deleted } = makeService({
-      approvedApplications: [
-        { campaignId: "camp-1", influencerId: "inf-1" },
-        { campaignId: "camp-1", influencerId: "inf-2" },
-      ],
-      savedAudience: [
-        {
-          influencerId: "inf-1",
-          source: "CAMPAIGN",
-          sourceRefId: "camp-1",
-          createdAt: new Date("2026-11-01T00:00:00Z"),
-          influencer: { name: "남은 사람", email: "inf-1@example.com" },
-        },
-      ],
+      approvedApplications: [{ campaignId: "camp-1", influencerId: "inf-1" }],
     });
 
     await service.applyInput(prisma, "camp-new", {
@@ -282,50 +284,34 @@ describe("규칙 변경 반영", () => {
       audienceCampaignIds: ["camp-1"],
     });
 
-    expect(created).toEqual([]);
-    expect(deleted).toEqual([]);
-  });
-
-  it("규칙을 빼면 그 규칙으로만 들어온 사람이 제거된다", async () => {
-    const { service, prisma, deleted } = makeService({
-      savedAudience: [
-        {
-          influencerId: "inf-1",
-          source: "CAMPAIGN",
-          sourceRefId: "camp-1",
-          createdAt: new Date("2026-11-01T00:00:00Z"),
-          influencer: { name: "빠질 사람", email: "inf-1@example.com" },
-        },
-      ],
-    });
-
-    await service.applyInput(prisma, "camp-new", EMPTY_INPUT);
-
+    expect(created.map((row) => row.influencerId)).toEqual(["inf-1"]);
+    // inf-1 만 남기고 나머지를 지우는 형태여야 한다.
     expect(deleted).toEqual(["inf-1"]);
   });
+});
 
-  it("규칙을 빼도 남은 다른 규칙에 걸리면 제거하지 않는다", async () => {
-    const { service, prisma, deleted } = makeService({
-      tags: [{ id: "tag-1", label: "VIP" }],
-      tagAssignments: [{ influencerId: "inf-1", tagId: "tag-1" }],
-      influencers: [{ id: "inf-1" }],
-      savedAudience: [
-        {
-          influencerId: "inf-1",
-          source: "CAMPAIGN",
-          sourceRefId: "camp-1",
-          createdAt: new Date("2026-11-01T00:00:00Z"),
-          influencer: { name: "VIP 겸 승인자", email: "inf-1@example.com" },
-        },
-      ],
-    });
+describe("공개 대상 / 참여 제외 충돌", () => {
+  it("같은 캠페인이 양쪽에 지정되면 충돌로 잡는다", () => {
+    expect(
+      audienceExclusionConflicts({
+        audienceCampaignIds: ["camp-1", "camp-2"],
+        excludedCampaignIds: ["camp-2", "camp-3"],
+      }),
+    ).toEqual(["camp-2"]);
+  });
 
-    // camp-1 은 뺐지만 VIP 태그는 그대로 — inf-1 은 여전히 대상이어야 한다.
-    await service.applyInput(prisma, "camp-new", {
-      ...EMPTY_INPUT,
-      audienceTagLabels: ["VIP"],
-    });
+  it("겹치지 않으면 충돌이 없다", () => {
+    expect(
+      audienceExclusionConflicts({
+        audienceCampaignIds: ["camp-1"],
+        excludedCampaignIds: ["camp-2"],
+      }),
+    ).toEqual([]);
+  });
 
-    expect(deleted).toEqual([]);
+  it("한쪽이 비어 있으면 충돌이 없다", () => {
+    expect(audienceExclusionConflicts({ excludedCampaignIds: ["camp-1"] })).toEqual(
+      [],
+    );
   });
 });

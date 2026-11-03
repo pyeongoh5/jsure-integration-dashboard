@@ -34,17 +34,11 @@ type AudienceTx = Pick<
   | "campaignAudience"
 >;
 
-/** 이미 저장돼 있는 대상자 행 — 규칙 반영 시 변경분을 계산하는 기준. */
+/** 저장돼 있는 대상자 행 — 여기서 규칙(피커 선택)을 거꾸로 복원한다. */
 type ExistingRow = {
   influencerId: string;
   source: CampaignAudienceSource;
   sourceRefId: string | null;
-};
-
-type SelectedRules = {
-  campaignRefs: Set<string>;
-  tagRefs: Set<string>;
-  manualIds: Set<string>;
 };
 
 /** 해당 출처로 들어온 행들의 sourceRefId 집합. */
@@ -59,14 +53,6 @@ function refSet(
     }
   }
   return refs;
-}
-
-/** 이 행을 데려온 규칙이 아직 선택돼 있는가. */
-function isStillSelected(row: ExistingRow, selected: SelectedRules): boolean {
-  if (row.source === "MANUAL") return selected.manualIds.has(row.influencerId);
-  if (row.sourceRefId === null) return false;
-  if (row.source === "CAMPAIGN") return selected.campaignRefs.has(row.sourceRefId);
-  return selected.tagRefs.has(row.sourceRefId);
 }
 
 export function hasAudienceInput(input: CampaignAudienceInput): boolean {
@@ -84,11 +70,9 @@ export class CampaignAudienceService {
   /**
    * 규칙(피커 선택)을 대상자 행에 반영한다. input 이 null 이면 아무것도 건드리지 않는다.
    *
-   * 전체 교체가 아니라 **변경분만** 다루는 게 핵심이다:
-   * - 새로 들어온 규칙만 해석해서 추가한다. 그대로인 규칙은 다시 풀지 않으므로,
-   *   어드민이 목록에서 개별 제외한 사람이 재저장으로 되살아나지 않는다.
-   * - 빠진 규칙으로 들어왔던 사람은 지우되, 남아 있는 다른 규칙에도 걸리면 남긴다
-   *   (VIP 태그 + 과거 캠페인처럼 규칙이 겹치는 경우 조용히 빠지면 안 된다).
+   * 대상자 명단은 **규칙의 함수**다 — 규칙을 풀어 나온 명단으로 통째로 교체한다.
+   * 개별 제외 같은 두 번째 수단을 두면 "대상자는 무엇으로 정해지는가"의 답이 둘이
+   * 되고, 그때부터 변경분 추적이 필요해진다. 수단이 하나뿐이면 이 함수로 끝난다.
    */
   async applyInput(
     tx: AudienceTx,
@@ -97,101 +81,24 @@ export class CampaignAudienceService {
   ): Promise<void> {
     if (input === null) return;
 
-    const existing = await tx.campaignAudience.findMany({
-      where: { campaignId },
-      select: { influencerId: true, source: true, sourceRefId: true },
-    });
-    const selectedTagIds = await this.tagIdsForLabels(tx, input.audienceTagLabels);
-
-    const selected = {
-      campaignRefs: new Set(
-        input.audienceCampaignIds.filter((id) => id !== campaignId),
-      ),
-      tagRefs: new Set(selectedTagIds),
-      manualIds: new Set(input.audienceInfluencerIds),
-    };
-    const existingRefs = {
-      campaign: refSet(existing, "CAMPAIGN"),
-      tag: refSet(existing, "TAG"),
-    };
-
-    await this.addNewRules(tx, campaignId, input, existing, existingRefs);
-    await this.dropUnselectedRules(tx, campaignId, input, existing, selected);
-  }
-
-  /** 선택에서 빠진 규칙으로만 들어온 대상자를 제거한다. */
-  private async dropUnselectedRules(
-    tx: AudienceTx,
-    campaignId: string,
-    input: CampaignAudienceInput,
-    existing: ExistingRow[],
-    selected: SelectedRules,
-  ): Promise<void> {
-    const orphaned = existing.filter((row) => !isStillSelected(row, selected));
-    if (orphaned.length === 0) return;
-
-    // 남아 있는 규칙으로 여전히 걸리는 사람은 지우지 않는다.
-    const { rows: stillMatched } = await this.resolve(tx, campaignId, input);
-    const keep = new Set(stillMatched.map((row) => row.influencerId));
-    const removable = orphaned
-      .map((row) => row.influencerId)
-      .filter((influencerId) => !keep.has(influencerId));
-    if (removable.length === 0) return;
-
-    await tx.campaignAudience.deleteMany({
-      where: { campaignId, influencerId: { in: removable } },
-    });
-  }
-
-  /** 아직 해석된 적 없는 규칙만 골라 대상자를 추가한다. */
-  private async addNewRules(
-    tx: AudienceTx,
-    campaignId: string,
-    input: CampaignAudienceInput,
-    existing: ExistingRow[],
-    existingRefs: { campaign: Set<string>; tag: Set<string> },
-  ): Promise<void> {
-    const existingManualIds = new Set(
-      existing
-        .filter((row) => row.source === "MANUAL")
-        .map((row) => row.influencerId),
-    );
-    const addedInput: CampaignAudienceInput = {
-      audienceCampaignIds: input.audienceCampaignIds.filter(
-        (id) => !existingRefs.campaign.has(id),
-      ),
-      // 라벨은 그대로 넘긴다 — 미등록 라벨 검증을 건너뛰면 오타가 조용히 통과한다.
-      audienceTagLabels: input.audienceTagLabels,
-      audienceInfluencerIds: input.audienceInfluencerIds.filter(
-        (id) => !existingManualIds.has(id),
-      ),
-    };
-    const { rows, unknownTagLabels } = await this.resolve(
-      tx,
-      campaignId,
-      addedInput,
-    );
+    const { rows, unknownTagLabels } = await this.resolve(tx, campaignId, input);
     if (unknownTagLabels.length > 0) {
       throw new NotFoundException(
         `등록되지 않은 인플루언서 태그입니다: ${unknownTagLabels.join(", ")}`,
       );
     }
-    // 이미 해석된 태그 규칙의 행은 복합 PK 로 걸러지므로 skipDuplicates 로 충분하다.
+
+    // 규칙에서 빠진 사람은 지운다. 빈 명단에 notIn: [] 를 넘기면 조건이 모호해지므로
+    // 전체 삭제로 갈라 쓴다.
+    const keep = rows.map((row) => row.influencerId);
+    await tx.campaignAudience.deleteMany({
+      where:
+        keep.length > 0
+          ? { campaignId, influencerId: { notIn: keep } }
+          : { campaignId },
+    });
     if (rows.length === 0) return;
     await tx.campaignAudience.createMany({ data: rows, skipDuplicates: true });
-  }
-
-  /** 라벨 → 태그 id. 미등록 라벨은 여기서 거르지 않는다(추가 경로가 검증한다). */
-  private async tagIdsForLabels(
-    tx: AudienceTx,
-    labels: string[],
-  ): Promise<string[]> {
-    if (labels.length === 0) return [];
-    const tags = await tx.influencerTag.findMany({
-      where: { label: { in: Array.from(new Set(labels)) } },
-      select: { id: true },
-    });
-    return tags.map((tag) => tag.id);
   }
 
   /**
@@ -224,6 +131,11 @@ export class CampaignAudienceService {
    * 저장 전 프리뷰 — 이미 등록된 대상자와 이번에 추가될 인원을 합쳐 보여준다.
    * 저장과 같은 resolve() 를 쓰므로 "프리뷰에는 있는데 저장하면 없다"가 생기지 않는다.
    */
+  /**
+   * 저장 전 프리뷰 — **저장하면 대상자 명단이 이렇게 된다**를 그대로 보여준다.
+   * 저장과 같은 resolve() 를 쓰므로 "프리뷰에는 있는데 저장하면 없다"가 생기지 않는다.
+   * 선택에서 빠진 사람은 저장 시 빠지므로 여기서도 보이지 않는다.
+   */
   async preview(
     campaignId: string | null,
     input: CampaignAudienceInput,
@@ -231,34 +143,24 @@ export class CampaignAudienceService {
     audience: CampaignAudienceEntry[];
     unknownTagLabels: string[];
   }> {
-    const [saved, resolved] = await Promise.all([
-      campaignId ? this.loadSavedRows(campaignId) : Promise.resolve([]),
+    const [savedIds, resolved] = await Promise.all([
+      campaignId
+        ? this.savedInfluencerIds(campaignId)
+        : Promise.resolve(new Set<string>()),
       this.resolve(this.prisma, campaignId ?? "", input),
     ]);
 
-    const savedIds = new Set(saved.map((entry) => entry.influencerId));
-    const pendingRows = resolved.rows.filter(
-      (row) => !savedIds.has(row.influencerId),
-    );
-    const pendingEntries = await this.hydrate(pendingRows, true);
-
-    return {
-      // 저장된 대상자가 먼저 — 아래쪽에 "이번에 추가될 인원"이 쌓이는 모양이 읽기 쉽다.
-      audience: [...saved, ...pendingEntries],
-      unknownTagLabels: resolved.unknownTagLabels,
-    };
+    const audience = await this.hydrate(resolved.rows, savedIds);
+    return { audience, unknownTagLabels: resolved.unknownTagLabels };
   }
 
-  /** 어드민 대상자 목록(저장된 것만). */
-  async list(campaignId: string): Promise<CampaignAudienceEntry[]> {
-    return this.loadSavedRows(campaignId);
-  }
-
-  /** 대상자 1명 제외. 이미 없으면 조용히 끝낸다(중복 클릭 방어). */
-  async remove(campaignId: string, influencerId: string): Promise<void> {
-    await this.prisma.campaignAudience.deleteMany({
-      where: { campaignId, influencerId },
+  /** 이미 저장된 대상자 id — 프리뷰에서 "추가 예정" 여부를 가르는 데만 쓴다. */
+  private async savedInfluencerIds(campaignId: string): Promise<Set<string>> {
+    const rows = await this.prisma.campaignAudience.findMany({
+      where: { campaignId },
+      select: { influencerId: true },
     });
+    return new Set(rows.map((row) => row.influencerId));
   }
 
   /**
@@ -372,38 +274,10 @@ export class CampaignAudienceService {
     }));
   }
 
-  private async loadSavedRows(
-    campaignId: string,
-  ): Promise<CampaignAudienceEntry[]> {
-    const rows = await this.prisma.campaignAudience.findMany({
-      where: { campaignId },
-      orderBy: { createdAt: "asc" },
-      select: {
-        influencerId: true,
-        source: true,
-        sourceRefId: true,
-        createdAt: true,
-        influencer: { select: { name: true, email: true } },
-      },
-    });
-    const sourceLabels = await this.loadSourceLabels(rows);
-    return rows.map((row) => ({
-      influencerId: row.influencerId,
-      name: row.influencer.name,
-      email: row.influencer.email,
-      source: row.source,
-      sourceLabel: row.sourceRefId
-        ? (sourceLabels.get(row.sourceRefId) ?? null)
-        : null,
-      pending: false,
-      createdAt: row.createdAt.toISOString(),
-    }));
-  }
-
-  /** 아직 저장 전인 행에 표시용 이름·출처 라벨을 붙인다. */
+  /** 해석된 행에 표시용 이름·출처 라벨을 붙인다. savedIds 에 없으면 pending. */
   private async hydrate(
     rows: AudienceRow[],
-    pending: boolean,
+    savedIds: Set<string>,
   ): Promise<CampaignAudienceEntry[]> {
     if (rows.length === 0) return [];
     const [influencers, sourceLabels] = await Promise.all([
@@ -427,8 +301,7 @@ export class CampaignAudienceService {
           sourceLabel: row.sourceRefId
             ? (sourceLabels.get(row.sourceRefId) ?? null)
             : null,
-          pending,
-          createdAt: null,
+          pending: !savedIds.has(row.influencerId),
         },
       ];
     });

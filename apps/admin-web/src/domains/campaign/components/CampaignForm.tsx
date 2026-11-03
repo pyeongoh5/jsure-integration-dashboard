@@ -1210,6 +1210,9 @@ export function CampaignForm({
               />
             )}
           />
+          {rootError("excludedCampaignIds") && (
+            <div className={styles.error}>{rootError("excludedCampaignIds")}</div>
+          )}
         </section>
 
         <div className={styles.actions}>

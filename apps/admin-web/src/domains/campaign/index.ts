@@ -12,8 +12,8 @@ export {
   hideCampaign,
   unhideCampaign,
   deleteCampaign,
-  listCampaignAudience,
-  removeCampaignAudience,
+  getCampaignAudienceSelection,
+  previewCampaignAudience,
 } from "./api";
 
 // hooks

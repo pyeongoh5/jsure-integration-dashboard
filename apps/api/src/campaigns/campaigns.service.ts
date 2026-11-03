@@ -8,6 +8,7 @@ import {
   OPTION_SELECTABLE_SUB_TYPES,
   SLOT_CONSUMING_STATUSES,
   SUB_TYPE_LABEL,
+  audienceExclusionConflicts,
   audiencePatchToInput,
   type ApplicationStatus,
   type CampaignAudienceMode,
@@ -678,6 +679,7 @@ export class CampaignsService {
     input: CreateCampaignRequest,
     actor: AuditActor,
   ): Promise<CampaignResponse> {
+    await this.assertNoAudienceExclusionConflict(input);
     const excludedCampaignIds = await this.validateExcludedCampaignIds(
       input.excludedCampaignIds,
     );
@@ -825,6 +827,30 @@ export class CampaignsService {
   }
 
   /**
+   * 공개 대상과 참여 제외에 같은 캠페인이 동시에 지정됐는지 검사.
+   * 판정은 shared 의 audienceExclusionConflicts 하나로 — 화면도 같은 함수를 쓴다.
+   */
+  private async assertNoAudienceExclusionConflict(input: {
+    audienceCampaignIds?: string[];
+    excludedCampaignIds?: string[];
+  }): Promise<void> {
+    const conflicts = audienceExclusionConflicts(input);
+    if (conflicts.length === 0) return;
+    const campaigns = await this.prisma.campaign.findMany({
+      where: { id: { in: conflicts } },
+      select: { title: true },
+    });
+    const names =
+      campaigns.length > 0
+        ? campaigns.map((campaign) => campaign.title).join(", ")
+        : conflicts.join(", ");
+    throw new BadRequestException({
+      code: "AUDIENCE_EXCLUSION_CONFLICT",
+      message: `같은 캠페인을 공개 대상과 참여 제외에 동시에 지정할 수 없습니다: ${names}`,
+    });
+  }
+
+  /**
    * 입력된 제외 캠페인 id 의 중복 제거 + 실제 존재 여부 검증.
    * 빈 배열이면 그대로 빈 배열 반환.
    */
@@ -912,6 +938,7 @@ export class CampaignsService {
   ): Promise<{ response: CampaignResponse; changedFields: string[] }> {
     const existing = await this.prisma.campaign.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException("Campaign not found");
+    await this.assertNoAudienceExclusionConflict(input);
 
     const data: Record<string, unknown> = {};
     if (input.category !== undefined) data.category = input.category;
@@ -1005,6 +1032,7 @@ export class CampaignsService {
     input: CampaignDraftRequest,
     actor: AuditActor,
   ): Promise<CampaignResponse> {
+    await this.assertNoAudienceExclusionConflict(input);
     const excludedCampaignIds = await this.validateExcludedCampaignIds(
       input.excludedCampaignIds,
     );
@@ -1048,6 +1076,7 @@ export class CampaignsService {
     actor: AuditActor,
   ): Promise<CampaignResponse> {
     await this.assertDraft(id);
+    await this.assertNoAudienceExclusionConflict(input);
     const excludedCampaignIds = await this.validateExcludedCampaignIds(
       input.excludedCampaignIds,
       id,

@@ -95,24 +95,6 @@ export class CampaignsController {
     return this.audience.selection(id);
   }
 
-  /** 비공개 캠페인의 노출 대상자 목록(저장된 것만). */
-  @Get(":id/audience")
-  async listAudience(
-    @Param("id") id: string,
-  ): Promise<CampaignAudienceListResponse> {
-    const audience = await this.audience.list(id);
-    return { audience, unknownTagLabels: [] };
-  }
-
-  /** 대상자 1명 제외 — 캠페인을 다시 저장해도 되살아나지 않는다(대상자는 추가만 한다). */
-  @Delete(":id/audience/:influencerId")
-  removeAudience(
-    @Param("id") id: string,
-    @Param("influencerId") influencerId: string,
-  ): Promise<void> {
-    return this.audience.remove(id, influencerId);
-  }
-
   /** 끌어올리기 — 인플루언서 목록에서 같은 상태 그룹 내 최상단으로 올린다. */
   @Post(":id/bump")
   bump(

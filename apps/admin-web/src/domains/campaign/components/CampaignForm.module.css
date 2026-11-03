@@ -266,6 +266,65 @@
   color: #6b7280;
 }
 
+/*
+ * 공개 설정 섹션 전용 안내 문구. .subLabel 과 달리 margin 을 0 으로 못박는다 —
+ * section 의 gap(16px) 에 <p> 기본 마진까지 더해져 문단 사이가 과하게 벌어졌다.
+ */
+.audienceHint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* 세 가지 지정 방법을 각각 카드로 끊어 서로 다른 수단임을 눈으로 구분시킨다. */
+.audienceOption {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.audienceOptionHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.audienceOptionIndex {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--c-brand);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.audienceOptionTitles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* 결과(대상자 프리뷰)는 입력 카드들과 다른 층위라 위쪽에 선을 긋는다. */
+.audienceResult {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
 .snsRecruits {
   display: flex;
   flex-direction: column;

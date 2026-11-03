@@ -3,6 +3,7 @@ import { useForm, FormProvider, Controller, type Resolver } from "react-hook-for
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CampaignFormSchema,
+  type CampaignAudienceInput,
   type CampaignForm as Values,
   type CampaignResponse,
 } from "@jsure/shared";
@@ -118,10 +119,13 @@ export function CampaignForm({
   // 대상자 태그 입력의 자동완성 후보 — 등록된 태그만 서버가 허용한다.
   const influencerTags = useInfluencerTags();
   const audienceMode = methods.watch("audienceMode");
-  const hasAudienceSelection =
-    methods.watch("audienceCampaignIds").length > 0 ||
-    methods.watch("audienceTagLabels").length > 0 ||
-    methods.watch("audienceInfluencerIds").length > 0;
+  // 대상자 프리뷰는 이 값이 바뀔 때마다 서버에 다시 묻는다 — 승인자·태그 해석은
+  // DB 를 봐야 알 수 있어서 화면에서 계산할 수 없다.
+  const audienceInput: CampaignAudienceInput = {
+    audienceCampaignIds: methods.watch("audienceCampaignIds"),
+    audienceTagLabels: methods.watch("audienceTagLabels"),
+    audienceInfluencerIds: methods.watch("audienceInfluencerIds"),
+  };
   const [banner, setBanner] = useState<string | null>(null);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [thumbnailError, setThumbnailError] = useState<string | null>(null);
@@ -1081,7 +1085,7 @@ export function CampaignForm({
               </div>
             )}
           />
-          <p className={styles.subLabel}>
+          <p className={styles.audienceHint}>
             {audienceMode === "RESTRICTED"
               ? t("domains.campaign.audience.modeRestrictedHint")
               : t("domains.campaign.audience.modePublicHint")}
@@ -1089,17 +1093,22 @@ export function CampaignForm({
 
           {audienceMode === "RESTRICTED" && (
             <>
-              <p className={styles.subLabel}>
+              <p className={styles.audienceHint}>
                 {t("domains.campaign.audience.addHint")}
               </p>
 
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  {t("domains.campaign.audience.fromCampaignsLabel")}
-                </label>
-                <p className={styles.subLabel}>
-                  {t("domains.campaign.audience.fromCampaignsHint")}
-                </p>
+              <div className={styles.audienceOption}>
+                <div className={styles.audienceOptionHead}>
+                  <span className={styles.audienceOptionIndex}>1</span>
+                  <div className={styles.audienceOptionTitles}>
+                    <span className={styles.label}>
+                      {t("domains.campaign.audience.fromCampaignsLabel")}
+                    </span>
+                    <p className={styles.audienceHint}>
+                      {t("domains.campaign.audience.fromCampaignsHint")}
+                    </p>
+                  </div>
+                </div>
                 <Controller
                   control={methods.control}
                   name="audienceCampaignIds"
@@ -1115,10 +1124,18 @@ export function CampaignForm({
                 />
               </div>
 
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  {t("domains.campaign.audience.fromTagsLabel")}
-                </label>
+              <div className={styles.audienceOption}>
+                <div className={styles.audienceOptionHead}>
+                  <span className={styles.audienceOptionIndex}>2</span>
+                  <div className={styles.audienceOptionTitles}>
+                    <span className={styles.label}>
+                      {t("domains.campaign.audience.fromTagsLabel")}
+                    </span>
+                    <p className={styles.audienceHint}>
+                      {t("domains.campaign.audience.fromTagsHint")}
+                    </p>
+                  </div>
+                </div>
                 <Controller
                   control={methods.control}
                   name="audienceTagLabels"
@@ -1127,7 +1144,6 @@ export function CampaignForm({
                       value={field.value}
                       onChange={field.onChange}
                       placeholder={t("domains.campaign.audience.fromTagsPlaceholder")}
-                      hint={t("domains.campaign.audience.fromTagsHint")}
                       suggestions={influencerTags.map((tag) => tag.label)}
                       disabled={submitting}
                     />
@@ -1138,13 +1154,18 @@ export function CampaignForm({
                 )}
               </div>
 
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  {t("domains.campaign.audience.fromInfluencersLabel")}
-                </label>
-                <p className={styles.subLabel}>
-                  {t("domains.campaign.audience.fromInfluencersHint")}
-                </p>
+              <div className={styles.audienceOption}>
+                <div className={styles.audienceOptionHead}>
+                  <span className={styles.audienceOptionIndex}>3</span>
+                  <div className={styles.audienceOptionTitles}>
+                    <span className={styles.label}>
+                      {t("domains.campaign.audience.fromInfluencersLabel")}
+                    </span>
+                    <p className={styles.audienceHint}>
+                      {t("domains.campaign.audience.fromInfluencersHint")}
+                    </p>
+                  </div>
+                </div>
                 <Controller
                   control={methods.control}
                   name="audienceInfluencerIds"
@@ -1157,34 +1178,20 @@ export function CampaignForm({
                   )}
                 />
               </div>
+
+              {/* 결과 프리뷰 — 전체 공개 캠페인에는 의미가 없어 여기 안에만 둔다. */}
+              <div className={styles.audienceResult}>
+                <span className={styles.label}>
+                  {t("domains.campaign.audience.listTitle")}
+                </span>
+                <CampaignAudienceList
+                  campaignId={selfCampaignId}
+                  input={audienceInput}
+                  isRestricted
+                />
+              </div>
             </>
           )}
-
-          <div className={styles.field}>
-            <label className={styles.label}>
-              {t("domains.campaign.audience.listTitle")}
-            </label>
-            {selfCampaignId ? (
-              <CampaignAudienceList
-                campaignId={selfCampaignId}
-                isRestricted={audienceMode === "RESTRICTED"}
-              />
-            ) : (
-              // 신규 작성은 아직 대상자 행이 없다. 일부 공개인데 지정한 대상이 하나도
-              // 없으면 저장 직후 아무에게도 안 보이므로 그 사실을 먼저 알린다.
-              <p
-                className={
-                  audienceMode === "RESTRICTED" && !hasAudienceSelection
-                    ? styles.error
-                    : styles.subLabel
-                }
-              >
-                {audienceMode === "RESTRICTED" && !hasAudienceSelection
-                  ? t("domains.campaign.audience.listEmptyWarning")
-                  : t("domains.campaign.audience.saveFirst")}
-              </p>
-            )}
-          </div>
         </section>
 
         <section className={styles.section}>

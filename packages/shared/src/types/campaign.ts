@@ -4,7 +4,10 @@ import {
   EnabledSnsTypeSchema,
   type CampaignSubType,
 } from "./influencer.js";
-import { INFLUENCER_TAG_LABEL_MAX_LENGTH } from "./influencerTag.js";
+import {
+  AUDIENCE_INPUT_SHAPE,
+  CampaignAudienceModeSchema,
+} from "./campaignAudience.js";
 
 export { CampaignSubTypeSchema };
 export type { CampaignSubType };
@@ -28,42 +31,6 @@ export type RewardType = z.infer<typeof RewardTypeSchema>;
 export const CampaignPublishStateSchema = z.enum(["DRAFT", "PUBLISHED"]);
 export type CampaignPublishState = z.infer<typeof CampaignPublishStateSchema>;
 
-/**
- * 캠페인 공개 범위.
- * - PUBLIC: 모든 인플루언서에게 노출·응모 허용 (기존 동작).
- * - RESTRICTED: 대상자로 등록된 인플루언서에게만 노출·응모 허용. 대상자가 0명이면
- *   아무에게도 보이지 않는다 — 실수로 전체 공개되는 것보다 안전한 쪽을 택했다.
- */
-export const CampaignAudienceModeSchema = z.enum(["PUBLIC", "RESTRICTED"]);
-export type CampaignAudienceMode = z.infer<typeof CampaignAudienceModeSchema>;
-
-/** 한 번의 저장으로 직접 지정할 수 있는 인원 상한. 검색해서 한 명씩 고르는 UI 라 넉넉히 둔다. */
-export const AUDIENCE_MANUAL_MAX_COUNT = 500;
-
-/**
- * 비공개 캠페인의 대상자 "추가" 입력. 세 경로를 함께 쓸 수 있고 서버가 합집합으로 등록한다.
- *
- * 교체가 아니라 추가인 이유: 어드민이 대상자 목록에서 개별 삭제한 사람이 다음 저장
- * 때 되살아나면 안 되기 때문이다. 제거는 대상자 목록 화면에서만 한다.
- */
-const AUDIENCE_INPUT_SHAPE = {
-  /** 이 캠페인들에서 승인(선정)된 적 있는 인플루언서를 대상자로 불러온다. */
-  audienceCampaignIds: z.array(z.string()).max(50).default([]),
-  /**
-   * 이 관리 태그가 달린 인플루언서를 대상자로 불러온다. id 가 아니라 라벨인 이유는
-   * 어드민 폼이 캠페인 태그와 같은 칩 입력(TagsInput)을 쓰기 때문. 등록되지 않은
-   * 라벨은 서버가 거절한다 — 여기서 태그를 새로 만들지는 않는다.
-   */
-  audienceTagLabels: z
-    .array(z.string().trim().min(1).max(INFLUENCER_TAG_LABEL_MAX_LENGTH))
-    .max(10)
-    .default([]),
-  /** 어드민이 검색해서 직접 지정한 인플루언서 id. */
-  audienceInfluencerIds: z
-    .array(z.string())
-    .max(AUDIENCE_MANUAL_MAX_COUNT)
-    .default([]),
-} as const;
 
 const SNS_SUB_TYPE_VALUES = ["INSTAGRAM", "TIKTOK", "X", "YOUTUBE"] as const;
 const FAKE_PURCHASE_SUB_TYPE_VALUES = ["QOO10"] as const;

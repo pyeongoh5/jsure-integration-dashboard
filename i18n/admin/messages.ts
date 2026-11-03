@@ -2456,7 +2456,6 @@ export const adminMessages = {
           en: "Failed to load the target list.",
           ja: "対象者一覧を読み込めませんでした。",
         },
-        sourceColumn: { ko: "출처", en: "Source", ja: "出所" },
         sourceCampaign: {
           ko: "기존 승인자",
           en: "Past approval",
@@ -2465,15 +2464,20 @@ export const adminMessages = {
         sourceTag: { ko: "태그", en: "Tag", ja: "タグ" },
         sourceManual: { ko: "직접 지정", en: "Manual", ja: "直接指定" },
         remove: { ko: "제외", en: "Remove", ja: "除外" },
-        removeFailed: {
-          ko: "대상자를 제외하지 못했습니다.",
-          en: "Failed to remove the target.",
-          ja: "対象者を除外できませんでした。",
+        listPendingCount: {
+          ko: "이번 저장에 {count}명 추가",
+          en: "{count} to be added on save",
+          ja: "今回の保存で{count}名追加",
         },
-        saveFirst: {
-          ko: "캠페인을 저장하면 대상자 목록이 여기에 표시됩니다.",
-          en: "The target list appears here once the campaign is saved.",
-          ja: "キャンペーンを保存すると、対象者一覧がここに表示されます。",
+        pendingBadge: {
+          ko: "추가 예정",
+          en: "To be added",
+          ja: "追加予定",
+        },
+        unknownTags: {
+          ko: "등록되지 않은 태그라 저장할 수 없습니다: {labels}",
+          en: "These tags are not registered and will block saving: {labels}",
+          ja: "未登録のタグのため保存できません: {labels}",
         },
       },
       excludedPicker: {

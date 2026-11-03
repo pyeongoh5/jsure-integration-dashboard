@@ -47,6 +47,7 @@ export const messages = {
       full: { jp: "募集終了", kr: "모집 완료" },
       upcoming: { jp: "開始前", kr: "시작 전" },
       upcomingStart: { jp: "開始予定", kr: "시작 예정" },
+      restricted: { jp: "一部公開", kr: "일부 공개" }, // new
       followerLabel: { jp: "フォロワー", kr: "팔로워" },
       subscriberLabel: { jp: "登録者", kr: "구독자" },
       instagramFeed: { jp: "フィード", kr: "피드" },

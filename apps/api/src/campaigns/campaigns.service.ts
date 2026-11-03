@@ -9,6 +9,7 @@ import {
   SLOT_CONSUMING_STATUSES,
   SUB_TYPE_LABEL,
   type ApplicationStatus,
+  type CampaignAudienceMode,
   type CampaignCategory,
   type CampaignDraftRequest,
   type CampaignPublishState,
@@ -30,6 +31,10 @@ import {
   deriveCampaignStatus,
 } from "./campaign-headcount";
 import { isCampaignFull } from "./campaign-fullness";
+import {
+  CampaignAudienceService,
+  hasAudienceInput,
+} from "./campaign-audience.service";
 import {
   EMPTY_OCCUPANCY,
   loadSlotOccupancy,
@@ -356,6 +361,7 @@ type CampaignRow = {
   title: string;
   tags: string[];
   publishState: CampaignPublishState;
+  audienceMode: CampaignAudienceMode;
   rewardType: RewardType;
   rewardJpy: number;
   recruitStartAt: Date;
@@ -383,6 +389,7 @@ type CampaignCounts = {
   approvedCount: number;
   appliedCount: number;
   viewerCount: number;
+  audienceCount: number;
   occupancy: SlotOccupancy;
 };
 
@@ -390,6 +397,7 @@ const EMPTY_COUNTS: CampaignCounts = {
   approvedCount: 0,
   appliedCount: 0,
   viewerCount: 0,
+  audienceCount: 0,
   occupancy: EMPTY_OCCUPANCY,
 };
 
@@ -461,6 +469,8 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     appliedCount: counts.appliedCount,
     viewerCount: counts.viewerCount,
     excludedCampaignIds: row.exclusionsAsExcluding.map((e) => e.excludedCampaignId),
+    audienceMode: row.audienceMode,
+    audienceCount: counts.audienceCount,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -503,6 +513,7 @@ function toDraftCampaignData(input: CampaignDraftRequest, now: Date) {
     category: input.category ?? "SNS",
     title: input.title,
     tags: input.tags ?? [],
+    audienceMode: input.audienceMode ?? "PUBLIC",
     rewardType: input.rewardType ?? "UNIFIED",
     rewardJpy: input.rewardJpy ?? 0,
     recruitStartAt: input.recruitStartDate
@@ -562,6 +573,7 @@ export class CampaignsService {
     private readonly prisma: PrismaService,
     private readonly uploads: UploadsService,
     private readonly audit: AuditService,
+    private readonly audience: CampaignAudienceService,
   ) {}
 
   private async withResolvedThumbnail(
@@ -605,24 +617,31 @@ export class CampaignsService {
   ): Promise<Map<string, CampaignCounts>> {
     const map = new Map<string, CampaignCounts>();
     if (campaignIds.length === 0) return map;
-    const [grouped, viewGrouped, occupancyMap] = await Promise.all([
-      this.prisma.campaignApplication.groupBy({
-        by: ["campaignId", "status"],
-        where: { campaignId: { in: campaignIds } },
-        _count: { _all: true },
-      }),
-      this.prisma.campaignView.groupBy({
-        by: ["campaignId"],
-        where: { campaignId: { in: campaignIds } },
-        _count: { _all: true },
-      }),
-      loadSlotOccupancy(this.prisma, campaignIds),
-    ]);
+    const [grouped, viewGrouped, audienceGrouped, occupancyMap] =
+      await Promise.all([
+        this.prisma.campaignApplication.groupBy({
+          by: ["campaignId", "status"],
+          where: { campaignId: { in: campaignIds } },
+          _count: { _all: true },
+        }),
+        this.prisma.campaignView.groupBy({
+          by: ["campaignId"],
+          where: { campaignId: { in: campaignIds } },
+          _count: { _all: true },
+        }),
+        this.prisma.campaignAudience.groupBy({
+          by: ["campaignId"],
+          where: { campaignId: { in: campaignIds } },
+          _count: { _all: true },
+        }),
+        loadSlotOccupancy(this.prisma, campaignIds),
+      ]);
     for (const id of campaignIds) {
       map.set(id, {
         approvedCount: 0,
         appliedCount: 0,
         viewerCount: 0,
+        audienceCount: 0,
         occupancy: occupancyMap.get(id) ?? EMPTY_OCCUPANCY,
       });
     }
@@ -630,6 +649,11 @@ export class CampaignsService {
       const entry = map.get(view.campaignId);
       if (!entry) continue;
       entry.viewerCount = view._count._all;
+    }
+    for (const audience of audienceGrouped) {
+      const entry = map.get(audience.campaignId);
+      if (!entry) continue;
+      entry.audienceCount = audience._count._all;
     }
     for (const g of grouped) {
       const entry = map.get(g.campaignId);
@@ -660,40 +684,45 @@ export class CampaignsService {
     validateRecruitsForCategory(input.category, recruits);
     validateRecruitsForRewardType(input.rewardType, recruits);
     validateRecruitOptionConfigs(recruits);
-    const row = await this.prisma.campaign.create({
-      data: {
-        category: input.category,
-        title: input.title,
-        tags: input.tags,
-        rewardType: input.rewardType,
-        rewardJpy: input.rewardJpy,
-        recruitStartAt: jstDayStartUtc(input.recruitStartDate),
-        recruitEndAt: jstDayEndUtc(input.recruitEndDate),
-        postingPeriodDays: input.postingPeriodDays,
-        publishStartAt: input.publishStartDateTime
-          ? jstDateTimeToUtc(input.publishStartDateTime)
-          : null,
-        publishEndAt: input.publishEndDateTime
-          ? jstDateTimeToUtc(input.publishEndDateTime)
-          : null,
-        orderPeriodDays: input.orderPeriodDays ?? null,
-        productSummary: input.productSummary,
-        productOptions: input.productOptions,
-        productDetailUrls: input.productDetailUrls,
-        guideline: input.guideline,
-        referenceMediaUrls: input.referenceMediaUrls,
-        cautions: input.cautions,
-        thumbnailUrl: input.thumbnailUrl ?? null,
-        recruits: {
-          create: recruits.map((recruit) => toRecruitCreateData(recruit)),
+    const row = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.campaign.create({
+        data: {
+          category: input.category,
+          title: input.title,
+          tags: input.tags,
+          audienceMode: input.audienceMode,
+          rewardType: input.rewardType,
+          rewardJpy: input.rewardJpy,
+          recruitStartAt: jstDayStartUtc(input.recruitStartDate),
+          recruitEndAt: jstDayEndUtc(input.recruitEndDate),
+          postingPeriodDays: input.postingPeriodDays,
+          publishStartAt: input.publishStartDateTime
+            ? jstDateTimeToUtc(input.publishStartDateTime)
+            : null,
+          publishEndAt: input.publishEndDateTime
+            ? jstDateTimeToUtc(input.publishEndDateTime)
+            : null,
+          orderPeriodDays: input.orderPeriodDays ?? null,
+          productSummary: input.productSummary,
+          productOptions: input.productOptions,
+          productDetailUrls: input.productDetailUrls,
+          guideline: input.guideline,
+          referenceMediaUrls: input.referenceMediaUrls,
+          cautions: input.cautions,
+          thumbnailUrl: input.thumbnailUrl ?? null,
+          recruits: {
+            create: recruits.map((recruit) => toRecruitCreateData(recruit)),
+          },
+          exclusionsAsExcluding: {
+            create: excludedCampaignIds.map((excludedCampaignId) => ({
+              excludedCampaignId,
+            })),
+          },
         },
-        exclusionsAsExcluding: {
-          create: excludedCampaignIds.map((excludedCampaignId) => ({
-            excludedCampaignId,
-          })),
-        },
-      },
-      include: RECRUITS_INCLUDE,
+        include: RECRUITS_INCLUDE,
+      });
+      await this.audience.addFromInput(tx, created.id, input);
+      return created;
     });
     await this.audit.record({
       action: "CAMPAIGN_CREATE",
@@ -701,7 +730,11 @@ export class CampaignsService {
       campaignId: row.id,
       metadata: { title: row.title, category: row.category },
     });
-    return this.withResolved(toResponse(row, EMPTY_COUNTS));
+    // 응모는 0 이지만 대상자는 방금 등록됐을 수 있어 그때만 다시 센다.
+    const counts = hasAudienceInput(input)
+      ? await this.countsFor(row.id)
+      : EMPTY_COUNTS;
+    return this.withResolved(toResponse(row, counts));
   }
 
   /**
@@ -914,6 +947,7 @@ export class CampaignsService {
     if (input.referenceMediaUrls !== undefined) data.referenceMediaUrls = input.referenceMediaUrls;
     if (input.cautions !== undefined) data.cautions = input.cautions;
     if (input.thumbnailUrl !== undefined) data.thumbnailUrl = input.thumbnailUrl;
+    if (input.audienceMode !== undefined) data.audienceMode = input.audienceMode;
 
     const validatedExcluded =
       input.excludedCampaignIds !== undefined
@@ -949,6 +983,8 @@ export class CampaignsService {
           });
         }
       }
+      // 대상자는 추가만 한다 — 목록 화면에서 지운 사람이 재저장으로 되살아나면 안 된다.
+      await this.audience.addFromInput(tx, id, input);
       return tx.campaign.update({
         where: { id },
         data,
@@ -971,20 +1007,24 @@ export class CampaignsService {
     const excludedCampaignIds = await this.validateExcludedCampaignIds(
       input.excludedCampaignIds,
     );
-    const row = await this.prisma.campaign.create({
-      data: {
-        ...toDraftCampaignData(input, new Date()),
-        publishState: "DRAFT",
-        recruits: {
-          create: (input.recruits ?? []).map(toDraftRecruitCreateData),
+    const row = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.campaign.create({
+        data: {
+          ...toDraftCampaignData(input, new Date()),
+          publishState: "DRAFT",
+          recruits: {
+            create: (input.recruits ?? []).map(toDraftRecruitCreateData),
+          },
+          exclusionsAsExcluding: {
+            create: excludedCampaignIds.map((excludedCampaignId) => ({
+              excludedCampaignId,
+            })),
+          },
         },
-        exclusionsAsExcluding: {
-          create: excludedCampaignIds.map((excludedCampaignId) => ({
-            excludedCampaignId,
-          })),
-        },
-      },
-      include: RECRUITS_INCLUDE,
+        include: RECRUITS_INCLUDE,
+      });
+      await this.audience.addFromInput(tx, created.id, input);
+      return created;
     });
     await this.audit.record({
       action: "CAMPAIGN_DRAFT_CREATE",
@@ -992,7 +1032,10 @@ export class CampaignsService {
       campaignId: row.id,
       metadata: { title: row.title },
     });
-    return this.withResolved(toResponse(row, EMPTY_COUNTS));
+    const counts = hasAudienceInput(input)
+      ? await this.countsFor(row.id)
+      : EMPTY_COUNTS;
+    return this.withResolved(toResponse(row, counts));
   }
 
   /** 임시저장 갱신 — 모집/제외 관계는 전체 교체. 응모가 없으므로 카운트는 항상 0. */
@@ -1022,6 +1065,7 @@ export class CampaignsService {
           })),
         });
       }
+      await this.audience.addFromInput(tx, id, input);
       return tx.campaign.update({
         where: { id },
         data: toDraftCampaignData(input, new Date()),
@@ -1033,7 +1077,7 @@ export class CampaignsService {
       actor,
       campaignId: id,
     });
-    return this.withResolved(toResponse(row, EMPTY_COUNTS));
+    return this.withResolved(toResponse(row, await this.countsFor(id)));
   }
 
   /**

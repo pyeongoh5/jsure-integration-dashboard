@@ -9,8 +9,11 @@ import {
 import { RecruitList } from "./RecruitList";
 import { ReferenceMediaUrlList } from "./ReferenceMediaUrlList";
 import { ExcludedCampaignsPicker } from "./ExcludedCampaignsPicker";
+import { AudienceInfluencerPicker } from "./AudienceInfluencerPicker";
+import { CampaignAudienceList } from "./CampaignAudienceList";
 import { ProductOptionsEditor } from "./ProductOptionsEditor";
 import { TagsInput } from "@/components/composites";
+import { useInfluencerTags } from "@/domains/influencer";
 import { uploadCampaignThumbnail, UploadError } from "@/lib/uploads";
 import { listCampaigns } from "../api";
 import { RichTextEditor } from "@/components/composites/RichTextEditor/RichTextEditor";
@@ -48,6 +51,10 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   cautions: "",
   thumbnailUrl: null,
   excludedCampaignIds: [],
+  audienceMode: "PUBLIC",
+  audienceCampaignIds: [],
+  audienceTagLabels: [],
+  audienceInfluencerIds: [],
 };
 
 type RecruitItemError = Partial<
@@ -108,6 +115,13 @@ export function CampaignForm({
   });
   const formRef = useRef<HTMLFormElement>(null);
   const [allCampaigns, setAllCampaigns] = useState<CampaignResponse[] | null>(null);
+  // 대상자 태그 입력의 자동완성 후보 — 등록된 태그만 서버가 허용한다.
+  const influencerTags = useInfluencerTags();
+  const audienceMode = methods.watch("audienceMode");
+  const hasAudienceSelection =
+    methods.watch("audienceCampaignIds").length > 0 ||
+    methods.watch("audienceTagLabels").length > 0 ||
+    methods.watch("audienceInfluencerIds").length > 0;
   const [banner, setBanner] = useState<string | null>(null);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [thumbnailError, setThumbnailError] = useState<string | null>(null);
@@ -1030,6 +1044,146 @@ export function CampaignForm({
               )}
             />
             {rootError("cautions") && <div className={styles.error}>{rootError("cautions")}</div>}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            {t("domains.campaign.audience.sectionTitle")}
+          </h2>
+          <Controller
+            control={methods.control}
+            name="audienceMode"
+            render={({ field }) => (
+              <div className={styles.radioGroup}>
+                <label className={styles.radioOption}>
+                  <input
+                    type="radio"
+                    name="cf-audience-mode"
+                    value="PUBLIC"
+                    checked={field.value === "PUBLIC"}
+                    disabled={submitting}
+                    onChange={() => field.onChange("PUBLIC")}
+                  />
+                  {t("domains.campaign.audience.modePublic")}
+                </label>
+                <label className={styles.radioOption}>
+                  <input
+                    type="radio"
+                    name="cf-audience-mode"
+                    value="RESTRICTED"
+                    checked={field.value === "RESTRICTED"}
+                    disabled={submitting}
+                    onChange={() => field.onChange("RESTRICTED")}
+                  />
+                  {t("domains.campaign.audience.modeRestricted")}
+                </label>
+              </div>
+            )}
+          />
+          <p className={styles.subLabel}>
+            {audienceMode === "RESTRICTED"
+              ? t("domains.campaign.audience.modeRestrictedHint")
+              : t("domains.campaign.audience.modePublicHint")}
+          </p>
+
+          {audienceMode === "RESTRICTED" && (
+            <>
+              <p className={styles.subLabel}>
+                {t("domains.campaign.audience.addHint")}
+              </p>
+
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  {t("domains.campaign.audience.fromCampaignsLabel")}
+                </label>
+                <p className={styles.subLabel}>
+                  {t("domains.campaign.audience.fromCampaignsHint")}
+                </p>
+                <Controller
+                  control={methods.control}
+                  name="audienceCampaignIds"
+                  render={({ field }) => (
+                    <ExcludedCampaignsPicker
+                      allCampaigns={allCampaigns}
+                      selfId={selfCampaignId}
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={submitting}
+                    />
+                  )}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  {t("domains.campaign.audience.fromTagsLabel")}
+                </label>
+                <Controller
+                  control={methods.control}
+                  name="audienceTagLabels"
+                  render={({ field }) => (
+                    <TagsInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={t("domains.campaign.audience.fromTagsPlaceholder")}
+                      hint={t("domains.campaign.audience.fromTagsHint")}
+                      suggestions={influencerTags.map((tag) => tag.label)}
+                      disabled={submitting}
+                    />
+                  )}
+                />
+                {rootError("audienceTagLabels") && (
+                  <div className={styles.error}>{rootError("audienceTagLabels")}</div>
+                )}
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  {t("domains.campaign.audience.fromInfluencersLabel")}
+                </label>
+                <p className={styles.subLabel}>
+                  {t("domains.campaign.audience.fromInfluencersHint")}
+                </p>
+                <Controller
+                  control={methods.control}
+                  name="audienceInfluencerIds"
+                  render={({ field }) => (
+                    <AudienceInfluencerPicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={submitting}
+                    />
+                  )}
+                />
+              </div>
+            </>
+          )}
+
+          <div className={styles.field}>
+            <label className={styles.label}>
+              {t("domains.campaign.audience.listTitle")}
+            </label>
+            {selfCampaignId ? (
+              <CampaignAudienceList
+                campaignId={selfCampaignId}
+                isRestricted={audienceMode === "RESTRICTED"}
+              />
+            ) : (
+              // 신규 작성은 아직 대상자 행이 없다. 일부 공개인데 지정한 대상이 하나도
+              // 없으면 저장 직후 아무에게도 안 보이므로 그 사실을 먼저 알린다.
+              <p
+                className={
+                  audienceMode === "RESTRICTED" && !hasAudienceSelection
+                    ? styles.error
+                    : styles.subLabel
+                }
+              >
+                {audienceMode === "RESTRICTED" && !hasAudienceSelection
+                  ? t("domains.campaign.audience.listEmptyWarning")
+                  : t("domains.campaign.audience.saveFirst")}
+              </p>
+            )}
           </div>
         </section>
 

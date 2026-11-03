@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import {
   SLOT_CONSUMING_STATUSES,
+  type CampaignAudienceMode,
   type CampaignCategory,
   type CampaignSubType,
   type InfluencerCampaignCard,
@@ -21,6 +22,7 @@ import {
   subTypesWithAllOptionsFull,
 } from "../campaigns/option-capacity";
 import { VISIBLE_PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
+import { audienceVisibleWhere } from "../campaigns/campaign-audience";
 import { parseCampaignProductOptions } from "../common/product-options";
 
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
@@ -28,6 +30,7 @@ const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 type CampaignRow = {
   id: string;
   category: CampaignCategory;
+  audienceMode: CampaignAudienceMode;
   title: string;
   productSummary: string;
   rewardType: RewardType;
@@ -86,6 +89,8 @@ function toCard(
     isNew: !isEnded && !isUpcoming && isNew(row.createdAt, now),
     isEnded,
     isUpcoming,
+    // 이 카드가 보인다는 건 이미 대상자라는 뜻 — "일부 공개" 뱃지는 특별 초대 표기다.
+    isRestricted: row.audienceMode === "RESTRICTED",
     // 모집 완료 판정은 서브타입·옵션별 마감 기준 — 헤드카운트 비교는
     // 전부-선택 캠페인에서 남은 슬롯이 있어도 조기 완료로 오판한다.
     isFull: isCampaignFull({
@@ -153,6 +158,7 @@ export class InfluencerCampaignsService {
     const rows = await this.prisma.campaign.findMany({
       where: {
         ...VISIBLE_PUBLISHED_CAMPAIGN_WHERE,
+        ...audienceVisibleWhere(args.influencerId),
         ...(args.category ? { category: args.category } : {}),
       },
       // 끌어올리기(bump)를 반영한 정렬. bumpedAt 은 생성 시 createdAt 과 같아
@@ -222,7 +228,11 @@ export class InfluencerCampaignsService {
   }): Promise<InfluencerCampaignDetail> {
     const now = new Date();
     const row = await this.prisma.campaign.findFirst({
-      where: { id: args.campaignId, ...VISIBLE_PUBLISHED_CAMPAIGN_WHERE },
+      where: {
+        id: args.campaignId,
+        ...VISIBLE_PUBLISHED_CAMPAIGN_WHERE,
+        ...audienceVisibleWhere(args.influencerId),
+      },
       include: {
         recruits: {
           select: {

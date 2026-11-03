@@ -12,11 +12,14 @@ export {
   hideCampaign,
   unhideCampaign,
   deleteCampaign,
+  listCampaignAudience,
+  removeCampaignAudience,
 } from "./api";
 
 // hooks
 export { useCampaignList, useCampaign } from "./hooks";
 export { useCampaignFormInitial } from "./useCampaignFormInitial";
+export { useCampaignAudience } from "./useCampaignAudience";
 export type { CampaignFormSource } from "./useCampaignFormInitial";
 
 // types
@@ -43,4 +46,6 @@ export { CampaignCardSnsRecruits } from "./components/CampaignCardSnsRecruits";
 export { RecruitList } from "./components/RecruitList";
 export { SnsTypeChips } from "./components/SnsTypeChips";
 export { ExcludedCampaignsPicker } from "./components/ExcludedCampaignsPicker";
+export { CampaignAudienceList } from "./components/CampaignAudienceList";
+export { AudienceInfluencerPicker } from "./components/AudienceInfluencerPicker";
 export { ReferenceMediaUrlList } from "./components/ReferenceMediaUrlList";

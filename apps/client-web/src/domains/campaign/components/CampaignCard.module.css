@@ -52,6 +52,13 @@
   flex: 1;
 }
 
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
 .categoryBadge {
   align-self: flex-start;
   display: inline-flex;
@@ -70,6 +77,20 @@
   background: var(--color-warn-bg);
   color: var(--color-warn-text);
   border-color: var(--color-warn-bg);
+}
+
+/* 대상자 전용 캠페인 — 카테고리 뱃지와 구분되도록 테두리를 강조한다. */
+.restrictedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-warn-bg);
+  color: var(--color-warn-text);
+  border: 1px solid var(--color-warn-text);
+  letter-spacing: 0.02em;
 }
 
 .title {

@@ -45,6 +45,8 @@ export type Campaign = {
   description: string;
   category: CampaignCategory;
   status: CampaignStatus;
+  /** 일부 공개(대상자 전용) 캠페인인지 — 카드에 뱃지로 표시한다. */
+  isRestricted: boolean;
   thumbIcon: string;
   thumbnailUrl: string | null;
   period: string;

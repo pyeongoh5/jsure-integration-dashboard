@@ -45,6 +45,11 @@
   color: #1e40af;
 }
 
+.chipRemove:disabled {
+  color: #9ca3af;
+  cursor: default;
+}
+
 .search {
   height: 34px;
   border: 1px solid #d1d5db;

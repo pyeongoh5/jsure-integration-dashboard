@@ -7,6 +7,8 @@ type Props = {
   status: CampaignStatus;
   category: CampaignCategory;
   dday: number;
+  /** 일부 공개(대상자 전용) 캠페인이면 상태·카테고리 옆에 뱃지를 하나 더 붙인다. */
+  isRestricted: boolean;
 };
 
 const STATUS_CLASS: Record<CampaignStatus, string | undefined> = {
@@ -23,7 +25,7 @@ const CATEGORY_CLASS: Record<CampaignCategory, string | undefined> = {
   SIMPLE_REVIEW: styles.cardCategorySimpleReview,
 };
 
-export function CampaignCardTitle({ status, category, dday }: Props) {
+export function CampaignCardTitle({ status, category, dday, isRestricted }: Props) {
   const t = useT();
   return (
     <div className={styles.titleWrapper}>
@@ -34,6 +36,11 @@ export function CampaignCardTitle({ status, category, dday }: Props) {
         <span className={`${styles.cardCategory} ${CATEGORY_CLASS[category]}`}>
           {t(CATEGORY_LABEL_KO[category])}
         </span>
+        {isRestricted && (
+          <span className={styles.cardRestricted}>
+            {t("domains.campaign.audience.restrictedBadge")}
+          </span>
+        )}
       </span>
       {status === "recruit" && (
         <span className={`${styles.cardDday} ${dday <= 7 ? styles.cardDdayUrgent : ""}`}>

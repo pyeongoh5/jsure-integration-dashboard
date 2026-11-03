@@ -13,35 +13,83 @@ export type CampaignAudienceMode = z.infer<typeof CampaignAudienceModeSchema>;
 /** 한 번의 저장으로 직접 지정할 수 있는 인원 상한. 검색해서 한 명씩 고르는 UI 라 넉넉히 둔다. */
 export const AUDIENCE_MANUAL_MAX_COUNT = 500;
 
+/** 이 캠페인들에서 승인(선정)된 적 있는 인플루언서를 대상자로 불러온다. */
+const AudienceCampaignIdsField = z.array(z.string()).max(50);
 /**
- * 비공개 캠페인의 대상자 "추가" 입력. 세 경로를 함께 쓸 수 있고 서버가 합집합으로 등록한다.
+ * 이 관리 태그가 달린 인플루언서를 대상자로 불러온다. id 가 아니라 라벨인 이유는
+ * 어드민 폼이 캠페인 태그와 같은 칩 입력(TagsInput)을 쓰기 때문. 등록되지 않은
+ * 라벨은 저장 시 거절된다 — 여기서 태그를 새로 만들지는 않는다.
+ */
+const AudienceTagLabelsField = z
+  .array(z.string().trim().min(1).max(INFLUENCER_TAG_LABEL_MAX_LENGTH))
+  .max(10);
+/** 어드민이 검색해서 직접 지정한 인플루언서 id. */
+const AudienceInfluencerIdsField = z
+  .array(z.string())
+  .max(AUDIENCE_MANUAL_MAX_COUNT);
+
+/**
+ * 비공개 캠페인의 대상자 지정 입력 — 세 경로를 함께 쓸 수 있고 결과는 합집합이다.
  *
- * 교체가 아니라 추가인 이유: 어드민이 대상자 목록에서 개별 삭제한 사람이 다음 저장
- * 때 되살아나면 안 되기 때문이다. 제거는 대상자 목록 화면에서만 한다.
+ * 이 값은 "결과 명단"이 아니라 **규칙**이다. 어드민 폼의 피커가 보여주는 선택 상태가
+ * 그대로 여기 담기고, 서버가 규칙을 사람으로 풀어 campaign_audiences 에 반영한다.
+ * - 규칙을 새로 넣으면 그 규칙으로 걸리는 인원이 추가된다.
+ * - 규칙을 빼면 그 규칙으로만 들어온 인원이 빠진다(다른 규칙에도 걸리면 남는다).
+ * - 규칙을 그대로 두면 목록에서 개별 제외한 인원이 되살아나지 않는다.
  *
- * 캠페인 저장 요청(생성/수정/임시저장)과 실시간 프리뷰 요청이 같은 모양을 쓴다.
+ * 캠페인 생성·발행 요청과 실시간 프리뷰 요청이 같은 모양을 쓴다.
  */
 export const AUDIENCE_INPUT_SHAPE = {
-  /** 이 캠페인들에서 승인(선정)된 적 있는 인플루언서를 대상자로 불러온다. */
-  audienceCampaignIds: z.array(z.string()).max(50).default([]),
-  /**
-   * 이 관리 태그가 달린 인플루언서를 대상자로 불러온다. id 가 아니라 라벨인 이유는
-   * 어드민 폼이 캠페인 태그와 같은 칩 입력(TagsInput)을 쓰기 때문. 등록되지 않은
-   * 라벨은 저장 시 거절된다 — 여기서 태그를 새로 만들지는 않는다.
-   */
-  audienceTagLabels: z
-    .array(z.string().trim().min(1).max(INFLUENCER_TAG_LABEL_MAX_LENGTH))
-    .max(10)
-    .default([]),
-  /** 어드민이 검색해서 직접 지정한 인플루언서 id. */
-  audienceInfluencerIds: z
-    .array(z.string())
-    .max(AUDIENCE_MANUAL_MAX_COUNT)
-    .default([]),
+  audienceCampaignIds: AudienceCampaignIdsField.default([]),
+  audienceTagLabels: AudienceTagLabelsField.default([]),
+  audienceInfluencerIds: AudienceInfluencerIdsField.default([]),
+} as const;
+
+/**
+ * 수정·임시저장 요청용. 전부 미지정이면 "대상자를 건드리지 않음" 이다 —
+ * 빈 배열(`[]`)은 "그 규칙을 비운다"는 뜻이라 전체 삭제로 이어지므로,
+ * 필드를 보내지 않는 호출자가 실수로 대상자를 전멸시키지 않도록 구분한다.
+ */
+export const AUDIENCE_PATCH_SHAPE = {
+  audienceCampaignIds: AudienceCampaignIdsField.optional(),
+  audienceTagLabels: AudienceTagLabelsField.optional(),
+  audienceInfluencerIds: AudienceInfluencerIdsField.optional(),
 } as const;
 
 export const CampaignAudienceInputSchema = z.object(AUDIENCE_INPUT_SHAPE);
 export type CampaignAudienceInput = z.infer<typeof CampaignAudienceInputSchema>;
+
+export const CampaignAudiencePatchSchema = z.object(AUDIENCE_PATCH_SHAPE);
+export type CampaignAudiencePatch = z.infer<typeof CampaignAudiencePatchSchema>;
+
+/**
+ * 패치 입력 → 반영할 규칙. 세 필드가 모두 미지정이면 null(건드리지 않음)을 돌려준다.
+ * 하나라도 지정됐으면 나머지는 빈 규칙으로 간주한다 — 어드민 폼은 항상 셋을 함께 보낸다.
+ */
+export function audiencePatchToInput(
+  patch: CampaignAudiencePatch,
+): CampaignAudienceInput | null {
+  if (
+    patch.audienceCampaignIds === undefined &&
+    patch.audienceTagLabels === undefined &&
+    patch.audienceInfluencerIds === undefined
+  ) {
+    return null;
+  }
+  return {
+    audienceCampaignIds: patch.audienceCampaignIds ?? [],
+    audienceTagLabels: patch.audienceTagLabels ?? [],
+    audienceInfluencerIds: patch.audienceInfluencerIds ?? [],
+  };
+}
+
+/** 저장된 대상자에서 거꾸로 복원한 규칙 — 수정 화면이 피커를 기선택 상태로 그린다. */
+export const CampaignAudienceSelectionResponseSchema = z.object(
+  AUDIENCE_INPUT_SHAPE,
+);
+export type CampaignAudienceSelectionResponse = z.infer<
+  typeof CampaignAudienceSelectionResponseSchema
+>;
 
 /**
  * 저장 전 실시간 프리뷰 요청. campaignId 가 있으면 이미 등록된 대상자와 합쳐서

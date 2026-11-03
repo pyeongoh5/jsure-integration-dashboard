@@ -16,6 +16,7 @@ import {
   UpdateCampaignRequestSchema,
   type CampaignAudienceListResponse,
   type CampaignAudiencePreviewRequest,
+  type CampaignAudienceSelectionResponse,
   type CampaignListResponse,
   type CampaignResponse,
   type CreateCampaignRequest,
@@ -80,6 +81,18 @@ export class CampaignsController {
   ): Promise<CampaignAudienceListResponse> {
     const { campaignId, ...input } = body;
     return this.audience.preview(campaignId, input);
+  }
+
+  /**
+   * 저장된 대상자에서 거꾸로 복원한 규칙 — 수정 화면이 피커를 기선택 상태로 그린다.
+   * 캠페인 응답에 섞지 않는 이유: 목록(findAll)에서는 쓰지 않는데 캠페인마다
+   * 대상자 행을 전부 읽어야 해서 목록 조회가 무거워진다.
+   */
+  @Get(":id/audience/selection")
+  selectionAudience(
+    @Param("id") id: string,
+  ): Promise<CampaignAudienceSelectionResponse> {
+    return this.audience.selection(id);
   }
 
   /** 비공개 캠페인의 노출 대상자 목록(저장된 것만). */

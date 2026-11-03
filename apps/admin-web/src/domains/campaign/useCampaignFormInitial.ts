@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { translate } from "@i18n/admin";
-import type { CampaignForm as Values, CampaignResponse } from "@jsure/shared";
+import type {
+  CampaignAudienceInput,
+  CampaignForm as Values,
+  CampaignResponse,
+} from "@jsure/shared";
 import { getStoredLanguage } from "@/lib/i18n";
-import { getCampaign } from "./api";
+import { getCampaign, getCampaignAudienceSelection } from "./api";
 import { EMPTY_CAMPAIGN_FORM } from "./components/CampaignForm";
 
 /** 캠페인 폼 진입 경로. copy 는 기존 캠페인을 원본으로 새 캠페인을 만드는 경우. */
@@ -19,7 +23,16 @@ export type CampaignFormInitialState =
 
 const TITLE_MAX_LENGTH = 100;
 
-function toFormValues(campaign: CampaignResponse): Values {
+const EMPTY_AUDIENCE_SELECTION: CampaignAudienceInput = {
+  audienceCampaignIds: [],
+  audienceTagLabels: [],
+  audienceInfluencerIds: [],
+};
+
+function toFormValues(
+  campaign: CampaignResponse,
+  audience: CampaignAudienceInput,
+): Values {
   return {
     category: campaign.category,
     title: campaign.title,
@@ -42,18 +55,18 @@ function toFormValues(campaign: CampaignResponse): Values {
     thumbnailUrl: campaign.thumbnailUrl,
     excludedCampaignIds: campaign.excludedCampaignIds,
     audienceMode: campaign.audienceMode,
-    // 대상자 지정 입력은 "이번 저장에 추가할 분"만 담는 일회성 값이라 왕복하지 않는다.
-    // 이미 등록된 대상자는 폼이 아니라 대상자 목록 화면이 보여준다.
-    audienceCampaignIds: [],
-    audienceTagLabels: [],
-    audienceInfluencerIds: [],
+    // 저장된 대상자에서 복원한 규칙 — 피커가 기선택 상태로 그려진다.
+    ...audience,
   };
 }
 
 /** 복사 초기값 — 모집기간·게시 기간은 비우고 나머지는 원본을 그대로 쓴다. 제목은 원본과 구분되게 표시. */
-function toCopyValues(campaign: CampaignResponse): Values {
+function toCopyValues(
+  campaign: CampaignResponse,
+  audience: CampaignAudienceInput,
+): Values {
   return {
-    ...toFormValues(campaign),
+    ...toFormValues(campaign, audience),
     title: `${campaign.title}${translate("domains.campaign.copySuffix", getStoredLanguage())}`.slice(
       0,
       TITLE_MAX_LENGTH,
@@ -97,15 +110,21 @@ export function useCampaignFormInitial(
     }
     let cancelled = false;
     setState({ kind: "loading" });
-    getCampaign(sourceId)
-      .then((campaign) => {
+    Promise.all([
+      getCampaign(sourceId),
+      // 대상자 규칙을 못 읽어도 폼은 열려야 한다 — 피커만 빈 상태로 시작한다.
+      getCampaignAudienceSelection(sourceId).catch(
+        () => EMPTY_AUDIENCE_SELECTION,
+      ),
+    ])
+      .then(([campaign, audience]) => {
         if (cancelled) return;
         setState({
           kind: "ready",
           initial:
             sourceKind === "copy"
-              ? toCopyValues(campaign)
-              : toFormValues(campaign),
+              ? toCopyValues(campaign, audience)
+              : toFormValues(campaign, audience),
           campaign,
         });
       })

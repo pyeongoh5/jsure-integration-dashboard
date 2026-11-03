@@ -1,10 +1,12 @@
 import { z } from "zod";
 import {
   CampaignAudienceListResponseSchema,
+  CampaignAudienceSelectionResponseSchema,
   CampaignResponseSchema,
   type CampaignAudienceEntry,
   type CampaignAudienceListResponse,
   type CampaignAudiencePreviewRequest,
+  type CampaignAudienceSelectionResponse,
   type CampaignDraftRequest,
   type CampaignResponse,
   type CreateCampaignRequest,
@@ -120,6 +122,16 @@ export async function listCampaignAudience(
     `/campaigns/${encodeURIComponent(campaignId)}/audience`,
   );
   return CampaignAudienceListResponseSchema.parse(res.data).audience;
+}
+
+/** 저장된 대상자에서 복원한 규칙 — 수정 화면 피커의 기선택 값. */
+export async function getCampaignAudienceSelection(
+  campaignId: string,
+): Promise<CampaignAudienceSelectionResponse> {
+  const res = await api.get(
+    `/campaigns/${encodeURIComponent(campaignId)}/audience/selection`,
+  );
+  return CampaignAudienceSelectionResponseSchema.parse(res.data);
 }
 
 /**

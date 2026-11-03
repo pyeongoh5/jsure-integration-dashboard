@@ -6,6 +6,7 @@ import {
 } from "./influencer.js";
 import {
   AUDIENCE_INPUT_SHAPE,
+  AUDIENCE_PATCH_SHAPE,
   CampaignAudienceModeSchema,
 } from "./campaignAudience.js";
 
@@ -734,7 +735,7 @@ export const UpdateCampaignRequestSchema = z
     thumbnailUrl: z.string().min(1).nullable().optional(),
     excludedCampaignIds: z.array(z.string()).max(50).optional(),
     audienceMode: CampaignAudienceModeSchema.optional(),
-    ...AUDIENCE_INPUT_SHAPE,
+    ...AUDIENCE_PATCH_SHAPE,
   })
   .refine(
     (d) =>
@@ -851,7 +852,7 @@ export const CampaignDraftRequestSchema = z.object({
   thumbnailUrl: z.string().min(1).nullable().optional(),
   excludedCampaignIds: z.array(z.string()).max(50).optional(),
   audienceMode: CampaignAudienceModeSchema.optional(),
-  ...AUDIENCE_INPUT_SHAPE,
+  ...AUDIENCE_PATCH_SHAPE,
 });
 export type CampaignDraftRequest = z.infer<typeof CampaignDraftRequestSchema>;
 

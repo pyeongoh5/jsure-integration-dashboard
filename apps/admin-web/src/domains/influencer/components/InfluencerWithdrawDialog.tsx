@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { INFLUENCER_HISTORY_TAB } from "@jsure/shared";
+import {
+  INFLUENCER_HISTORY_TAB,
+  type InfluencerActivityGroup,
+} from "@jsure/shared";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
 import { useT } from "@/lib/i18n";
 import { fetchInfluencerActivity, withdrawInfluencer } from "../api";
@@ -9,6 +12,12 @@ type CountsState =
   | { kind: "loading" }
   | { kind: "ready"; ongoingCount: number; totalCount: number }
   | { kind: "error"; message: string };
+
+/** 탈퇴 경고 대상 — 승인 대기와 진행 중 모두 탈퇴하면 이어갈 수 없는 건이다. */
+function isOngoing(group: InfluencerActivityGroup): boolean {
+  const tab = INFLUENCER_HISTORY_TAB[group.displayStage];
+  return tab === "APPLIED" || tab === "IN_PROGRESS";
+}
 
 type Props = {
   influencerId: string;
@@ -42,9 +51,7 @@ export function InfluencerWithdrawDialog({
         if (cancelled) return;
         setCounts({
           kind: "ready",
-          ongoingCount: groups.filter(
-            (group) => INFLUENCER_HISTORY_TAB[group.status] === "APPLIED",
-          ).length,
+          ongoingCount: groups.filter(isOngoing).length,
           totalCount: groups.length,
         });
       })

@@ -11,6 +11,7 @@ function makeApplication(
   return {
     id: "application-1",
     status: "APPLIED",
+    displayStage: "APPLIED",
     rejectReason: null,
     subTypes: ["INSTAGRAM"],
     campaign: { id: "campaign-1", title: "여름 신제품 체험단" },
@@ -26,6 +27,7 @@ function makeApplication(
 
 const REJECTED = {
   status: "REJECTED",
+  displayStage: "REJECTED",
   rejectReason: "前回落選",
   reviewedAt: new Date("2026-08-03T00:00:00.000Z"),
   reviewedBy: { id: "admin-9", name: "카린" },
@@ -192,11 +194,16 @@ describe("influencerHistoryGroups", () => {
     expect(ids).toContain("synthetic-application-reject");
   });
 
-  it("취소는 세부 탭에 걸리지 않고, 진행 중 상태는 응모 탭에 묶인다", () => {
-    expect(INFLUENCER_HISTORY_TAB.CANCELLED).toBeNull();
-    expect(INFLUENCER_HISTORY_TAB.SHIPPED).toBe("APPLIED");
-    expect(INFLUENCER_HISTORY_TAB.REVIEW_SUBMITTED).toBe("APPLIED");
-    expect(INFLUENCER_HISTORY_TAB.COMPLETED).toBe("COMPLETED");
+  it("응모 탭은 승인 대기만, 진행 중 단계는 진행중 탭으로 간다", () => {
+    expect(INFLUENCER_HISTORY_TAB.APPLIED).toBe("APPLIED");
+    expect(INFLUENCER_HISTORY_TAB.SHIPPED).toBe("IN_PROGRESS");
+    expect(INFLUENCER_HISTORY_TAB.REVIEWING).toBe("IN_PROGRESS");
     expect(INFLUENCER_HISTORY_TAB.REJECTED).toBe("REJECTED");
+    expect(INFLUENCER_HISTORY_TAB.CANCELLED).toBeNull();
+  });
+
+  it("정산 대기·정산 완료 모두 참가완료 탭에 들어간다", () => {
+    expect(INFLUENCER_HISTORY_TAB.COMPLETED).toBe("COMPLETED");
+    expect(INFLUENCER_HISTORY_TAB.SETTLED).toBe("COMPLETED");
   });
 });

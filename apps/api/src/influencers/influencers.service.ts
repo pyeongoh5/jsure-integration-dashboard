@@ -22,6 +22,7 @@ import { INFLUENCER_TAG_INCLUDE, toTagLabels } from "./influencer-tags";
 import { AuditService } from "../audit/audit.service";
 import type { AuditActor } from "../audit/audit.service";
 import { influencerHistoryGroups } from "../audit/influencer-history";
+import { deriveDisplayStage } from "../influencer-campaigns/display-stage";
 
 /** 탈퇴 회원의 익명화 이메일 접두사 — deleted+<id>@invalid 형식의 단일 출처. */
 const WITHDRAWN_EMAIL_PREFIX = "deleted+";
@@ -289,7 +290,18 @@ export class InfluencersService {
         // 감사 로그 이전 반려 건의 처리자·시각 복원용 (influencer-history 참조)
         reviewedAt: true,
         reviewedById: true,
-        campaign: { select: { id: true, title: true } },
+        // 표시 단계(= 세부 탭 분류) 계산 입력
+        submissionReviewStatus: true,
+        submissionReviewedAt: true,
+        settlement: { select: { status: true } },
+        campaign: {
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            recruits: { select: { subType: true, insightRequired: true } },
+          },
+        },
         posts: {
           select: {
             subType: true,
@@ -323,6 +335,21 @@ export class InfluencersService {
       groups: influencerHistoryGroups(
         applications.map((application) => ({
           ...application,
+          displayStage: deriveDisplayStage({
+            status: application.status,
+            category: application.campaign.category,
+            receivedAt: application.receivedAt,
+            submissionReviewStatus: application.submissionReviewStatus,
+            submissionReviewedAt: application.submissionReviewedAt,
+            settlementStatus: application.settlement?.status ?? null,
+            posts: application.posts.map((post) => ({
+              insightSubmittedAt: post.insightSubmittedAt,
+              insightRequired:
+                application.campaign.recruits.find(
+                  (recruit) => recruit.subType === post.subType,
+                )?.insightRequired ?? true,
+            })),
+          }),
           reviewedBy: application.reviewedById
             ? {
                 id: application.reviewedById,

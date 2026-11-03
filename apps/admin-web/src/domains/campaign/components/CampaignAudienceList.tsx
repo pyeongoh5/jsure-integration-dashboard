@@ -47,6 +47,13 @@ export function CampaignAudienceList({ campaignId, input, isRestricted }: Props)
 
   return (
     <div className={styles.root}>
+      {state.emptyRuleLabels.length > 0 && (
+        <div className={styles.warning}>
+          {t("domains.campaign.audience.emptyRules", {
+            labels: state.emptyRuleLabels.join(", "),
+          })}
+        </div>
+      )}
       {state.unknownTagLabels.length > 0 && (
         <div className={styles.warning}>
           {t("domains.campaign.audience.unknownTags", {

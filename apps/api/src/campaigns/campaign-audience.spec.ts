@@ -19,6 +19,12 @@ function makeService(fixture: {
   tags?: { id: string; label: string }[];
   tagAssignments?: { influencerId: string; tagId: string }[];
   influencers?: { id: string; name?: string; email?: string }[];
+  /** 캠페인에 저장돼 있는 규칙 (selection 복원 검증용) */
+  savedRules?: {
+    audienceCampaignIds: string[];
+    audienceTagIds: string[];
+    audienceInfluencerIds: string[];
+  };
   /** 이미 저장된 대상자 행 (프리뷰 병합 검증용) */
   savedAudience?: {
     influencerId: string;
@@ -30,6 +36,7 @@ function makeService(fixture: {
 }) {
   const created: CreatedRow[] = [];
   const deleted: string[] = [];
+  const savedRuleWrites: Record<string, unknown>[] = [];
   const seenApplicationWhere: Record<string, unknown>[] = [];
   const prisma = {
     campaignApplication: {
@@ -54,6 +61,12 @@ function makeService(fixture: {
     },
     campaign: {
       findMany: async () => [],
+      findUnique: async () => fixture.savedRules ?? null,
+      // applyInput 은 규칙 자체도 캠페인에 남긴다.
+      update: async (args: { data: Record<string, unknown> }) => {
+        savedRuleWrites.push(args.data);
+        return {};
+      },
     },
     campaignAudience: {
       findMany: async () => fixture.savedAudience ?? [],
@@ -76,6 +89,7 @@ function makeService(fixture: {
     prisma,
     created,
     deleted,
+    savedRuleWrites,
     seenApplicationWhere,
   };
 }
@@ -313,5 +327,54 @@ describe("공개 대상 / 참여 제외 충돌", () => {
     expect(audienceExclusionConflicts({ excludedCampaignIds: ["camp-1"] })).toEqual(
       [],
     );
+  });
+});
+
+describe("규칙 저장/복원", () => {
+  it("승인자가 0명인 캠페인을 골라도 규칙은 저장된다", async () => {
+    // 결과 행이 하나도 안 생기는 상황 — 예전에는 복원할 근거가 없어 선택이 사라졌다.
+    const { service, prisma, created, savedRuleWrites } = makeService({
+      approvedApplications: [],
+    });
+
+    await service.applyInput(prisma, "camp-new", {
+      ...EMPTY_INPUT,
+      audienceCampaignIds: ["camp-empty"],
+    });
+
+    expect(created).toEqual([]);
+    expect(savedRuleWrites[0]!.audienceCampaignIds).toEqual(["camp-empty"]);
+  });
+
+  it("복원은 결과 행이 아니라 저장된 규칙 컬럼에서 읽는다", async () => {
+    const { service } = makeService({
+      tags: [{ id: "tag-1", label: "VIP" }],
+      savedRules: {
+        audienceCampaignIds: ["camp-empty"],
+        audienceTagIds: ["tag-1"],
+        audienceInfluencerIds: ["inf-1"],
+      },
+      // 결과 행은 하나도 없다.
+      savedAudience: [],
+    });
+
+    expect(await service.selection("camp-new")).toEqual({
+      audienceCampaignIds: ["camp-empty"],
+      audienceTagLabels: ["VIP"],
+      audienceInfluencerIds: ["inf-1"],
+    });
+  });
+
+  it("아무도 안 걸린 선택은 프리뷰가 이름으로 알려준다", async () => {
+    const { service } = makeService({ approvedApplications: [] });
+
+    const result = await service.preview("camp-new", {
+      ...EMPTY_INPUT,
+      audienceCampaignIds: ["camp-empty"],
+    });
+
+    expect(result.audience).toEqual([]);
+    // 제목을 못 찾으면 id 로라도 알린다.
+    expect(result.emptyRuleLabels).toEqual(["camp-empty"]);
   });
 });

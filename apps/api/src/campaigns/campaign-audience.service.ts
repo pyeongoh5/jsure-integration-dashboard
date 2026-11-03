@@ -22,38 +22,22 @@ type AudienceRow = {
 type ResolvedAudience = {
   rows: AudienceRow[];
   unknownTagLabels: string[];
+  /** 라벨에서 찾아낸 태그 id — 규칙 저장과 프리뷰 경고가 함께 쓴다. */
+  tagIds: string[];
+  /** 선택했지만 아무도 걸리지 않은 규칙의 참조 id(캠페인 id 또는 태그 id). */
+  emptyRuleRefIds: string[];
 };
 
 /** 대상자 해석에 쓰는 트랜잭션 클라이언트 — 캠페인 생성/수정 트랜잭션 안에서도 호출된다. */
 type AudienceTx = Pick<
   PrismaService,
+  | "campaign"
   | "campaignApplication"
   | "influencerTag"
   | "influencerTagAssignment"
   | "influencer"
   | "campaignAudience"
 >;
-
-/** 저장돼 있는 대상자 행 — 여기서 규칙(피커 선택)을 거꾸로 복원한다. */
-type ExistingRow = {
-  influencerId: string;
-  source: CampaignAudienceSource;
-  sourceRefId: string | null;
-};
-
-/** 해당 출처로 들어온 행들의 sourceRefId 집합. */
-function refSet(
-  rows: ExistingRow[],
-  source: CampaignAudienceSource,
-): Set<string> {
-  const refs = new Set<string>();
-  for (const row of rows) {
-    if (row.source === source && row.sourceRefId !== null) {
-      refs.add(row.sourceRefId);
-    }
-  }
-  return refs;
-}
 
 export function hasAudienceInput(input: CampaignAudienceInput): boolean {
   return (
@@ -81,12 +65,31 @@ export class CampaignAudienceService {
   ): Promise<void> {
     if (input === null) return;
 
-    const { rows, unknownTagLabels } = await this.resolve(tx, campaignId, input);
+    const { rows, unknownTagLabels, tagIds } = await this.resolve(
+      tx,
+      campaignId,
+      input,
+    );
     if (unknownTagLabels.length > 0) {
       throw new NotFoundException(
         `등록되지 않은 인플루언서 태그입니다: ${unknownTagLabels.join(", ")}`,
       );
     }
+
+    // 규칙 자체를 캠페인에 남긴다 — 결과가 0명인 규칙(승인자가 아직 없는 캠페인 등)도
+    // 수정 화면에서 선택 상태로 복원되어야 한다.
+    await tx.campaign.update({
+      where: { id: campaignId },
+      data: {
+        audienceCampaignIds: Array.from(
+          new Set(input.audienceCampaignIds.filter((id) => id !== campaignId)),
+        ),
+        audienceTagIds: tagIds,
+        audienceInfluencerIds: Array.from(
+          new Set(input.audienceInfluencerIds),
+        ),
+      },
+    });
 
     // 규칙에서 빠진 사람은 지운다. 빈 명단에 notIn: [] 를 넘기면 조건이 모호해지므로
     // 전체 삭제로 갈라 쓴다.
@@ -102,28 +105,33 @@ export class CampaignAudienceService {
   }
 
   /**
-   * 저장된 대상자에서 규칙을 거꾸로 복원한다 — 수정 화면의 피커 기선택용.
-   * 결과가 0명이었던 규칙은 남는 행이 없어 복원되지 않는다(프리뷰 인원수로 드러난다).
+   * 캠페인에 저장된 대상자 규칙 — 수정 화면의 피커 기선택용.
+   * 결과(campaign_audiences)가 아니라 규칙 컬럼을 읽는다. 승인자가 아직 0명인
+   * 캠페인을 골랐어도 선택이 그대로 복원되어야 하기 때문이다.
    */
   async selection(campaignId: string): Promise<CampaignAudienceInput> {
-    const rows = await this.prisma.campaignAudience.findMany({
-      where: { campaignId },
-      select: { influencerId: true, source: true, sourceRefId: true },
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: campaignId },
+      select: {
+        audienceCampaignIds: true,
+        audienceTagIds: true,
+        audienceInfluencerIds: true,
+      },
     });
-    const tagIds = Array.from(refSet(rows, "TAG"));
+    if (!campaign) throw new NotFoundException("Campaign not found");
+
     const tags =
-      tagIds.length > 0
+      campaign.audienceTagIds.length > 0
         ? await this.prisma.influencerTag.findMany({
-            where: { id: { in: tagIds } },
+            where: { id: { in: campaign.audienceTagIds } },
             select: { label: true },
           })
         : [];
     return {
-      audienceCampaignIds: Array.from(refSet(rows, "CAMPAIGN")),
+      audienceCampaignIds: campaign.audienceCampaignIds,
+      // 라벨이 아니라 id 로 저장한다 — 태그 이름을 고쳐도 규칙이 살아 있어야 한다.
       audienceTagLabels: tags.map((tag) => tag.label),
-      audienceInfluencerIds: rows
-        .filter((row) => row.source === "MANUAL")
-        .map((row) => row.influencerId),
+      audienceInfluencerIds: campaign.audienceInfluencerIds,
     };
   }
 
@@ -142,6 +150,7 @@ export class CampaignAudienceService {
   ): Promise<{
     audience: CampaignAudienceEntry[];
     unknownTagLabels: string[];
+    emptyRuleLabels: string[];
   }> {
     const [savedIds, resolved] = await Promise.all([
       campaignId
@@ -150,8 +159,34 @@ export class CampaignAudienceService {
       this.resolve(this.prisma, campaignId ?? "", input),
     ]);
 
-    const audience = await this.hydrate(resolved.rows, savedIds);
-    return { audience, unknownTagLabels: resolved.unknownTagLabels };
+    const [audience, emptyRuleLabels] = await Promise.all([
+      this.hydrate(resolved.rows, savedIds),
+      this.labelsForRefIds(resolved.emptyRuleRefIds),
+    ]);
+    return {
+      audience,
+      unknownTagLabels: resolved.unknownTagLabels,
+      emptyRuleLabels,
+    };
+  }
+
+  /** 참조 id → 사람이 읽는 이름(캠페인 제목 또는 태그 라벨). */
+  private async labelsForRefIds(refIds: string[]): Promise<string[]> {
+    if (refIds.length === 0) return [];
+    const [campaigns, tags] = await Promise.all([
+      this.prisma.campaign.findMany({
+        where: { id: { in: refIds } },
+        select: { id: true, title: true },
+      }),
+      this.prisma.influencerTag.findMany({
+        where: { id: { in: refIds } },
+        select: { id: true, label: true },
+      }),
+    ]);
+    const byId = new Map<string, string>();
+    for (const campaign of campaigns) byId.set(campaign.id, campaign.title);
+    for (const tag of tags) byId.set(tag.id, tag.label);
+    return refIds.map((refId) => byId.get(refId) ?? refId);
   }
 
   /** 이미 저장된 대상자 id — 프리뷰에서 "추가 예정" 여부를 가르는 데만 쓴다. */
@@ -186,9 +221,22 @@ export class CampaignAudienceService {
     ]) {
       if (!deduped.has(row.influencerId)) deduped.set(row.influencerId, row);
     }
+    // 승인자가 아직 없는 캠페인을 고르면 조용히 0명이 된다 — 어느 규칙이 비었는지
+    // 어드민이 바로 알 수 있어야 한다.
+    const matchedRefIds = new Set(
+      [...fromCampaigns, ...fromTags.rows].map((row) => row.sourceRefId),
+    );
+    const selectedRefIds = [
+      ...input.audienceCampaignIds.filter((id) => id !== campaignId),
+      ...fromTags.tagIds,
+    ];
     return {
       rows: Array.from(deduped.values()),
       unknownTagLabels: fromTags.unknownLabels,
+      tagIds: fromTags.tagIds,
+      emptyRuleRefIds: Array.from(
+        new Set(selectedRefIds.filter((refId) => !matchedRefIds.has(refId))),
+      ),
     };
   }
 
@@ -222,16 +270,17 @@ export class CampaignAudienceService {
     tx: AudienceTx,
     campaignId: string,
     tagLabels: string[],
-  ): Promise<{ rows: AudienceRow[]; unknownLabels: string[] }> {
+  ): Promise<{ rows: AudienceRow[]; unknownLabels: string[]; tagIds: string[] }> {
     const unique = Array.from(new Set(tagLabels));
-    if (unique.length === 0) return { rows: [], unknownLabels: [] };
+    if (unique.length === 0) return { rows: [], unknownLabels: [], tagIds: [] };
     const tags = await tx.influencerTag.findMany({
       where: { label: { in: unique } },
       select: { id: true, label: true },
     });
     const foundLabels = new Set(tags.map((tag) => tag.label));
     const unknownLabels = unique.filter((label) => !foundLabels.has(label));
-    if (tags.length === 0) return { rows: [], unknownLabels };
+    const tagIds = tags.map((tag) => tag.id);
+    if (tags.length === 0) return { rows: [], unknownLabels, tagIds };
 
     const assignments = await tx.influencerTagAssignment.findMany({
       where: { tagId: { in: tags.map((tag) => tag.id) } },
@@ -245,6 +294,7 @@ export class CampaignAudienceService {
         sourceRefId: assignment.tagId,
       })),
       unknownLabels,
+      tagIds,
     };
   }
 

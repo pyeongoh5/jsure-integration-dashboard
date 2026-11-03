@@ -2473,6 +2473,11 @@ export const adminMessages = {
           en: "To be added",
           ja: "追加予定",
         },
+        emptyRules: {
+          ko: "해당하는 인플루언서가 없어 대상자가 추가되지 않은 선택: {labels} (승인된 참여자가 아직 없거나, 태그가 달린 인원이 없습니다)",
+          en: "These selections matched nobody: {labels} (no approved participants yet, or no one carries the tag)",
+          ja: "該当するインフルエンサーがおらず対象者が追加されなかった選択: {labels}（承認済みの参加者がまだいないか、タグが付いた方がいません）",
+        },
         unknownTags: {
           ko: "등록되지 않은 태그라 저장할 수 없습니다: {labels}",
           en: "These tags are not registered and will block saving: {labels}",

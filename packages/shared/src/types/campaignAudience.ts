@@ -146,6 +146,11 @@ export const CampaignAudienceListResponseSchema = z.object({
    * 만들어지는 쪽이 더 위험하다.
    */
   unknownTagLabels: z.array(z.string()).default([]),
+  /**
+   * 선택했지만 아무도 걸리지 않은 규칙의 이름(캠페인 제목·태그 라벨).
+   * 승인자가 아직 없는 캠페인을 고르면 조용히 0명이 되므로 명시적으로 알린다.
+   */
+  emptyRuleLabels: z.array(z.string()).default([]),
 });
 export type CampaignAudienceListResponse = z.infer<
   typeof CampaignAudienceListResponseSchema

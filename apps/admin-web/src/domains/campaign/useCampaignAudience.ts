@@ -14,6 +14,8 @@ type State =
       audience: CampaignAudienceEntry[];
       /** 마스터에 없는 태그 라벨 — 저장은 거절되므로 미리 알린다. */
       unknownTagLabels: string[];
+      /** 선택했지만 아무도 걸리지 않은 규칙 이름. */
+      emptyRuleLabels: string[];
     };
 
 /**
@@ -41,6 +43,7 @@ export function useCampaignAudience(
         kind: "ready",
         audience: result.audience,
         unknownTagLabels: result.unknownTagLabels,
+        emptyRuleLabels: result.emptyRuleLabels,
       });
     } catch {
       setState({ kind: "error" });

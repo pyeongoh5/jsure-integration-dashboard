@@ -152,6 +152,12 @@ model Campaign {
   /// 공개 범위. RESTRICTED 로 바꿔도 audience 행은 지우지 않는다 — 다시 전체 공개로
   /// 되돌렸다가 복구하는 왕복이 가능해야 한다.
   audienceMode       CampaignAudienceMode @default(PUBLIC)
+  /// 대상자 지정 "규칙". campaign_audiences 는 이 규칙을 사람으로 푼 결과물이고,
+  /// 규칙 자체는 여기 남긴다 — 결과가 0명인 규칙(승인자가 아직 없는 캠페인 등)도
+  /// 어드민 폼에서 선택 상태로 복원되어야 하기 때문이다.
+  audienceCampaignIds   String[] @default([])
+  audienceTagIds        String[] @default([])
+  audienceInfluencerIds String[] @default([])
   rewardType         RewardType       @default(UNIFIED)
   /// UNIFIED 캠페인의 보수 금액. PER_SUBTYPE 캠페인에서는 사용하지 않는다.
   rewardJpy          Int

@@ -3,6 +3,8 @@ import {
   CampaignAudienceListResponseSchema,
   CampaignResponseSchema,
   type CampaignAudienceEntry,
+  type CampaignAudienceListResponse,
+  type CampaignAudiencePreviewRequest,
   type CampaignDraftRequest,
   type CampaignResponse,
   type CreateCampaignRequest,
@@ -110,7 +112,7 @@ export async function deleteCampaign(id: string): Promise<void> {
   await api.delete(`/campaigns/${encodeURIComponent(id)}`);
 }
 
-/** 일부 공개 캠페인의 노출 대상자 목록. 전체 공개 캠페인이면 빈 배열이다. */
+/** 일부 공개 캠페인의 노출 대상자 목록(저장된 것만). */
 export async function listCampaignAudience(
   campaignId: string,
 ): Promise<CampaignAudienceEntry[]> {
@@ -118,6 +120,17 @@ export async function listCampaignAudience(
     `/campaigns/${encodeURIComponent(campaignId)}/audience`,
   );
   return CampaignAudienceListResponseSchema.parse(res.data).audience;
+}
+
+/**
+ * 저장 전 대상자 프리뷰 — 이미 등록된 인원 + 지금 지정한 인원을 합쳐서 돌려준다.
+ * 조회지만 입력(캠페인 id·태그·인플루언서 id 배열)이 커서 POST 를 쓴다.
+ */
+export async function previewCampaignAudience(
+  input: CampaignAudiencePreviewRequest,
+): Promise<CampaignAudienceListResponse> {
+  const res = await api.post("/campaigns/audience/preview", input);
+  return CampaignAudienceListResponseSchema.parse(res.data);
 }
 
 /** 대상자 1명 제외 — 캠페인을 다시 저장해도 되살아나지 않는다. */

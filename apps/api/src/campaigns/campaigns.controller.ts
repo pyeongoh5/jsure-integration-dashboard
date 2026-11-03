@@ -11,9 +11,11 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  CampaignAudiencePreviewRequestSchema,
   CreateCampaignRequestSchema,
   UpdateCampaignRequestSchema,
   type CampaignAudienceListResponse,
+  type CampaignAudiencePreviewRequest,
   type CampaignListResponse,
   type CampaignResponse,
   type CreateCampaignRequest,
@@ -66,13 +68,27 @@ export class CampaignsController {
     return this.campaigns.update(id, body, req.user);
   }
 
-  /** 비공개 캠페인의 노출 대상자 목록. 전체 공개 캠페인이면 빈 배열이다. */
+  /**
+   * 저장 전 대상자 프리뷰. 어드민 폼이 피커를 건드릴 때마다 호출해
+   * "지금 저장하면 최종적으로 누가 대상인지"를 실시간으로 보여준다.
+   * 조회만 하므로 POST 지만 아무것도 바꾸지 않는다(입력이 쿼리스트링에 담기엔 크다).
+   */
+  @Post("audience/preview")
+  previewAudience(
+    @Body(new ZodValidationPipe(CampaignAudiencePreviewRequestSchema))
+    body: CampaignAudiencePreviewRequest,
+  ): Promise<CampaignAudienceListResponse> {
+    const { campaignId, ...input } = body;
+    return this.audience.preview(campaignId, input);
+  }
+
+  /** 비공개 캠페인의 노출 대상자 목록(저장된 것만). */
   @Get(":id/audience")
   async listAudience(
     @Param("id") id: string,
   ): Promise<CampaignAudienceListResponse> {
     const audience = await this.audience.list(id);
-    return { audience };
+    return { audience, unknownTagLabels: [] };
   }
 
   /** 대상자 1명 제외 — 캠페인을 다시 저장해도 되살아나지 않는다(대상자는 추가만 한다). */

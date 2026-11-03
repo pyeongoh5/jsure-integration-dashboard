@@ -47,6 +47,18 @@
   border-bottom: none;
 }
 
+/* 아직 저장 전 — 저장하면 추가될 인원임을 배경으로 구분한다. */
+.rowPending {
+  background: #f0f9ff;
+}
+
+.pendingBadge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0369a1;
+}
+
 .name {
   min-width: 0;
   overflow: hidden;

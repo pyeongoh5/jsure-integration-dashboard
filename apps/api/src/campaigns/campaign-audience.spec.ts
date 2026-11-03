@@ -15,7 +15,15 @@ function makeService(fixture: {
   approvedApplications?: { campaignId: string; influencerId: string }[];
   tags?: { id: string; label: string }[];
   tagAssignments?: { influencerId: string; tagId: string }[];
-  influencers?: { id: string }[];
+  influencers?: { id: string; name?: string; email?: string }[];
+  /** 이미 저장된 대상자 행 (프리뷰 병합 검증용) */
+  savedAudience?: {
+    influencerId: string;
+    source: string;
+    sourceRefId: string | null;
+    createdAt: Date;
+    influencer: { name: string; email: string };
+  }[];
 }) {
   const created: CreatedRow[] = [];
   const seenApplicationWhere: Record<string, unknown>[] = [];
@@ -33,9 +41,18 @@ function makeService(fixture: {
       findMany: async () => fixture.tagAssignments ?? [],
     },
     influencer: {
-      findMany: async () => fixture.influencers ?? [],
+      findMany: async () =>
+        (fixture.influencers ?? []).map((influencer) => ({
+          name: `이름-${influencer.id}`,
+          email: `${influencer.id}@example.com`,
+          ...influencer,
+        })),
+    },
+    campaign: {
+      findMany: async () => [],
     },
     campaignAudience: {
+      findMany: async () => fixture.savedAudience ?? [],
       createMany: async (args: { data: CreatedRow[] }) => {
         created.push(...args.data);
         return { count: args.data.length };
@@ -164,5 +181,50 @@ describe("대상자 해석", () => {
         audienceInfluencerIds: ["inf-missing"],
       }),
     ).rejects.toThrow(NotFoundException);
+  });
+});
+
+describe("저장 전 프리뷰", () => {
+  it("저장된 대상자 뒤에 이번에 추가될 인원을 pending 으로 붙인다", async () => {
+    const { service } = makeService({
+      approvedApplications: [
+        { campaignId: "camp-1", influencerId: "inf-saved" },
+        { campaignId: "camp-1", influencerId: "inf-new" },
+      ],
+      influencers: [{ id: "inf-new" }],
+      savedAudience: [
+        {
+          influencerId: "inf-saved",
+          source: "MANUAL",
+          sourceRefId: null,
+          createdAt: new Date("2026-11-01T00:00:00Z"),
+          influencer: { name: "이미 등록", email: "saved@example.com" },
+        },
+      ],
+    });
+
+    const result = await service.preview("camp-new", {
+      ...EMPTY_INPUT,
+      audienceCampaignIds: ["camp-1"],
+    });
+
+    expect(
+      result.audience.map((entry) => [entry.influencerId, entry.pending]),
+    ).toEqual([
+      ["inf-saved", false],
+      ["inf-new", true],
+    ]);
+  });
+
+  it("등록되지 않은 태그는 프리뷰에서 알려만 주고 목록을 깨뜨리지 않는다", async () => {
+    const { service } = makeService({ tags: [] });
+
+    const result = await service.preview(null, {
+      ...EMPTY_INPUT,
+      audienceTagLabels: ["없는태그"],
+    });
+
+    expect(result.unknownTagLabels).toEqual(["없는태그"]);
+    expect(result.audience).toEqual([]);
   });
 });

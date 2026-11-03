@@ -15,6 +15,11 @@ type Props = {
   input: CampaignAudienceInput;
   /** 전체 공개 캠페인이면 대상자 0명이어도 경고하지 않는다. */
   isRestricted: boolean;
+  /**
+   * 직접 지정(MANUAL)한 인원을 규칙에서 빼는 콜백. 직접 지정은 그 자체가 규칙이라
+   * 여기서 빼는 것이 곧 규칙 수정이다 — 명단에 구멍을 내는 것이 아니다.
+   */
+  onRemoveManual: (influencerId: string) => void;
 };
 
 const SOURCE_LABEL: Record<CampaignAudienceSource, AdminTranslationKey> = {
@@ -25,9 +30,15 @@ const SOURCE_LABEL: Record<CampaignAudienceSource, AdminTranslationKey> = {
 
 /**
  * 저장하면 최종적으로 대상이 될 인원을 실시간으로 보여준다.
- * 읽기 전용이다 — 명단에서 빼려면 위 규칙(피커 선택)에서 빼야 한다.
+ * 캠페인·태그로 들어온 인원은 여기서 뺄 수 없다 — 위 규칙에서 빼야 한다.
+ * 직접 지정 인원만 ✕ 로 뺀다(그게 규칙 자체라서).
  */
-export function CampaignAudienceList({ campaignId, input, isRestricted }: Props) {
+export function CampaignAudienceList({
+  campaignId,
+  input,
+  isRestricted,
+  onRemoveManual,
+}: Props) {
   const t = useT();
   const { state } = useCampaignAudience(campaignId, input);
 
@@ -81,7 +92,15 @@ export function CampaignAudienceList({ campaignId, input, isRestricted }: Props)
           </div>
           <div className={styles.list}>
             {state.audience.map((entry) => (
-              <AudienceRow key={entry.influencerId} entry={entry} />
+              <AudienceRow
+                key={entry.influencerId}
+                entry={entry}
+                onRemove={
+                  entry.source === "MANUAL"
+                    ? () => onRemoveManual(entry.influencerId)
+                    : undefined
+                }
+              />
             ))}
           </div>
         </>
@@ -90,7 +109,14 @@ export function CampaignAudienceList({ campaignId, input, isRestricted }: Props)
   );
 }
 
-function AudienceRow({ entry }: { entry: CampaignAudienceEntry }) {
+function AudienceRow({
+  entry,
+  onRemove,
+}: {
+  entry: CampaignAudienceEntry;
+  /** 직접 지정 인원만 뺄 수 있다. 그 외에는 undefined. */
+  onRemove?: () => void;
+}) {
   const t = useT();
   return (
     <div className={`${styles.row} ${entry.pending ? styles.rowPending : ""}`}>
@@ -104,6 +130,11 @@ function AudienceRow({ entry }: { entry: CampaignAudienceEntry }) {
         <span className={styles.pendingBadge}>
           {t("domains.campaign.audience.pendingBadge")}
         </span>
+      )}
+      {onRemove && (
+        <button type="button" className={styles.remove} onClick={onRemove}>
+          {t("domains.campaign.audience.remove")}
+        </button>
       )}
     </div>
   );

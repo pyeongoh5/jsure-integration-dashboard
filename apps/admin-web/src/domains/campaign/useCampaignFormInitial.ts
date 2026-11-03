@@ -113,9 +113,15 @@ export function useCampaignFormInitial(
     Promise.all([
       getCampaign(sourceId),
       // 대상자 규칙을 못 읽어도 폼은 열려야 한다 — 피커만 빈 상태로 시작한다.
-      getCampaignAudienceSelection(sourceId).catch(
-        () => EMPTY_AUDIENCE_SELECTION,
-      ),
+      // 다만 조용히 비우면 "선택이 사라졌다"로 보여 원인을 찾기 어렵다(구버전 API 라
+      // 엔드포인트가 404 인 경우가 실제로 있었다). 이유를 반드시 남긴다.
+      getCampaignAudienceSelection(sourceId).catch((error: unknown) => {
+        console.error(
+          "대상자 지정 규칙을 불러오지 못해 피커를 빈 상태로 엽니다",
+          { campaignId: sourceId, error },
+        );
+        return EMPTY_AUDIENCE_SELECTION;
+      }),
     ])
       .then(([campaign, audience]) => {
         if (cancelled) return;

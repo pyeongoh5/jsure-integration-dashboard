@@ -20,17 +20,17 @@ const MIN_QUERY_LENGTH = 2;
 const SEARCH_LIMIT = 20;
 
 /**
- * 비공개 캠페인 대상자를 한 명씩 검색해 추가하는 입력.
+ * 비공개 캠페인 대상자를 한 명씩 검색해 **추가**하는 입력.
  *
- * 폼이 들고 있는 값은 id 뿐이라, 칩에 보여줄 이름은 검색 결과에서 주워 이 컴포넌트가
- * 기억한다. 기억에 없는 id(폼 외부에서 들어온 값)는 id 를 그대로 보여준다.
+ * 선택된 인원 목록은 여기서 그리지 않는다 — 바로 아래 "현재 대상자" 가 이름과 함께
+ * 보여주고 거기서 뺀다. 폼이 들고 있는 값은 id 뿐이라 여기서 그리면 저장 후 복원된
+ * 인원이 이름 없이 id 로 나온다.
  */
 export function AudienceInfluencerPicker({ value, onChange, disabled }: Props) {
   const t = useT();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<AdminInfluencer[]>([]);
   const [searching, setSearching] = useState(false);
-  const [labels, setLabels] = useState<Record<string, string>>({});
   const debouncedQuery = useDebouncedValue(query.trim());
 
   useEffect(() => {
@@ -63,42 +63,11 @@ export function AudienceInfluencerPicker({ value, onChange, disabled }: Props) {
 
   const add = (influencer: AdminInfluencer) => {
     if (selectedIds.has(influencer.id)) return;
-    setLabels((current) => ({
-      ...current,
-      [influencer.id]: `${influencer.name} (${influencer.email})`,
-    }));
     onChange([...value, influencer.id]);
-  };
-
-  const remove = (influencerId: string) => {
-    onChange(value.filter((current) => current !== influencerId));
   };
 
   return (
     <div className={styles.root}>
-      <div className={styles.selected}>
-        {value.length === 0 ? (
-          <div className={styles.empty}>
-            {t("domains.campaign.excludedPicker.noneSelected")}
-          </div>
-        ) : (
-          value.map((influencerId) => (
-            <span key={influencerId} className={styles.chip}>
-              {labels[influencerId] ?? influencerId}
-              <button
-                type="button"
-                className={styles.chipRemove}
-                onClick={() => remove(influencerId)}
-                disabled={disabled}
-                aria-label={t("domains.campaign.excludedPicker.removeAria")}
-              >
-                ✕
-              </button>
-            </span>
-          ))
-        )}
-      </div>
-
       <input
         type="text"
         className={styles.search}

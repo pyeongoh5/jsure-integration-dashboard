@@ -2456,6 +2456,7 @@ export const adminMessages = {
           en: "Failed to load the target list.",
           ja: "対象者一覧を読み込めませんでした。",
         },
+        remove: { ko: "제외", en: "Remove", ja: "除外" },
         sourceCampaign: {
           ko: "기존 승인자",
           en: "Past approval",

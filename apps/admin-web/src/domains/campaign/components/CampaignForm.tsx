@@ -1189,6 +1189,15 @@ export function CampaignForm({
                   campaignId={selfCampaignId}
                   input={audienceInput}
                   isRestricted
+                  onRemoveManual={(influencerId) =>
+                    methods.setValue(
+                      "audienceInfluencerIds",
+                      methods
+                        .getValues("audienceInfluencerIds")
+                        .filter((current) => current !== influencerId),
+                      { shouldDirty: true },
+                    )
+                  }
                 />
               </div>
             </>

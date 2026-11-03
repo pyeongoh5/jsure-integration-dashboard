@@ -83,3 +83,17 @@
   font-size: 11px;
   color: #6b7280;
 }
+
+.remove {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #b91c1c;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+}
+
+.remove:hover {
+  color: #7f1d1d;
+}

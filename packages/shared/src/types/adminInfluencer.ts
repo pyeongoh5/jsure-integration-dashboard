@@ -5,6 +5,7 @@ import {
   SnsAccountSubTypeSchema,
 } from "./influencer.js";
 import { CampaignCategorySchema } from "./campaign.js";
+import { ResidenceSchema } from "./residence.js";
 import {
   ApplicationOptionSchema,
   ApplicationProductOptionsResponseSchema,
@@ -54,6 +55,12 @@ export const AdminInfluencerSchema = z.object({
   tags: z.array(z.string()).default([]),
   snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   address: AdminInfluencerAddressSchema,
+  /**
+   * 배송지 기준 거주지 — address 에서 파생되지만 판정 규칙(residenceOf)을 서버가
+   * 적용해 내려준다. 목록·CSV·응모자 화면이 같은 값을 보게 하기 위해서다.
+   * default 는 이 필드가 없는 구 API 와의 배포 갭 대비.
+   */
+  residence: ResidenceSchema.default("NONE"),
   /**
    * 지금까지 제출한 추가 공유(크로스포스팅) 누적 건수. 선정 우대 판단용.
    * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
@@ -123,6 +130,11 @@ export const AdminApplicationSchema = z.object({
     email: z.string(),
     flagged: z.boolean(),
     tags: z.array(z.string()).default([]),
+    /**
+     * 배송지 기준 거주지. 주소 전체가 아니라 판정 결과만 싣는다 — 목록은 발송
+     * 가능 여부만 알면 된다. default 는 이 필드가 없는 구 API 와의 배포 갭 대비.
+     */
+    residence: ResidenceSchema.default("NONE"),
     snsAccounts: z.array(AdminInfluencerSnsAccountSchema),
   }),
 });

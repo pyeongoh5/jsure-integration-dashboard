@@ -8,12 +8,15 @@ import {
 import type {
   AdminInfluencer,
   InfluencerFilter,
+  Residence,
   SnsAccountSubType,
 } from "@jsure/shared";
 import {
   InfluencerNotesDialog,
   InfluencerTagFilterChip,
   InfluencerWithdrawDialog,
+  RESIDENCE_LABEL_KEY,
+  ResidenceFilterChip,
   buildInfluencersCsv,
   exportInfluencers,
   influencersCsvFilename,
@@ -94,6 +97,7 @@ export function Influencers() {
     () => new Set(),
   );
   const [tagFilter, setTagFilter] = useState<Set<string>>(() => new Set());
+  const [residenceFilter, setResidenceFilter] = useState<Residence | null>(null);
   const [broadcastCandidates, setBroadcastCandidates] = useState<
     AdminInfluencer[] | null
   >(null);
@@ -113,9 +117,10 @@ export function Influencers() {
       InfluencerFilterSchema.parse({
         snsTypes: [...snsFilter].sort(),
         tagIds: [...tagFilter].sort(),
+        residence: residenceFilter,
         query: debouncedQuery,
       }),
-    [snsFilter, tagFilter, debouncedQuery],
+    [snsFilter, tagFilter, residenceFilter, debouncedQuery],
   );
 
   const {
@@ -231,6 +236,10 @@ export function Influencers() {
             value={snsFilter}
             onChange={setSnsFilter}
           />
+          <ResidenceFilterChip
+            value={residenceFilter}
+            onChange={setResidenceFilter}
+          />
           <InfluencerTagFilterChip value={tagFilter} onChange={setTagFilter} />
         </FilterChipBar>
         <div className={styles.headerActions}>
@@ -286,6 +295,7 @@ export function Influencers() {
               <thead>
                 <tr>
                   <th>{t("common.name")}</th>
+                  <th style={{ width: 80 }}>{t("domains.influencer.residence.label")}</th>
                   <th>{t("pages.influencers.table.emailPhone")}</th>
                   <th>{t("pages.influencers.table.snsAccounts")}</th>
                   <th title={t("pages.influencers.table.crossPostTitle")}>
@@ -323,6 +333,7 @@ export function Influencers() {
                         </div>
                       </div>
                     </td>
+                    <td>{t(RESIDENCE_LABEL_KEY[r.residence])}</td>
                     <td>
                       <div className={styles.contact}>{r.email}</div>
                       <div className={`${styles.contact} ${styles.contactSub}`}>{r.phone}</div>

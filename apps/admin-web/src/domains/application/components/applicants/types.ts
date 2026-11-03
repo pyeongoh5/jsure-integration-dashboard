@@ -7,6 +7,7 @@ import type {
   ApplicationStatus,
   CampaignCategory,
   CampaignSubType,
+  Residence,
   SnsAccountSubType,
 } from "@jsure/shared";
 import type { HandleBySubType } from "@/domains/influencer/handleBySubType";
@@ -62,6 +63,8 @@ export type Applicant = {
   flagged: boolean;
   /** 어드민 전용 관리 태그 라벨. */
   tags: string[];
+  /** 배송지 기준 거주지 — 선정 전 발송 가능 여부 판단용. */
+  residence: Residence;
   campaignId: string;
   campaign: string;
   category: CampaignCategory;

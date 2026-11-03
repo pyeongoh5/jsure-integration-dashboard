@@ -170,16 +170,38 @@ describe("buildApplicantWhereSql", () => {
     expect(sql.values).toContain("%100\\%\\_off%");
   });
 
+  it("거주지 필터는 우편번호 등록 여부까지 함께 본다", () => {
+    // addressCountry 기본값이 JP 라서 국가만 비교하면 주소 미등록 회원이 일본에 섞인다.
+    const japan = buildApplicantWhereSql(
+      parseApplicantFilterParams({ residence: "JP" }),
+    );
+    expect(japan.sql).toContain(`i."postalCode" <> ''`);
+    expect(japan.values).toContain("JP");
+
+    const none = buildApplicantWhereSql(
+      parseApplicantFilterParams({ residence: "NONE" }),
+    );
+    expect(none.sql).toContain(`i."postalCode" = ''`);
+    expect(none.values).not.toContain("NONE");
+  });
+
+  it("거주지 미선택이면 주소 조건을 걸지 않는다", () => {
+    const sql = buildApplicantWhereSql(parseApplicantFilterParams({}));
+    expect(sql.sql).not.toContain(`i."postalCode"`);
+  });
+
   it("알 수 없는 필터 값은 무시한다", () => {
     const filter = parseApplicantFilterParams({
       media: "myspace",
       status: "SOMETHING",
       category: "NOPE",
       minFollowers: "-5",
+      residence: "USA",
     });
     expect(filter.mediaKeys).toEqual([]);
     expect(filter.viewStatuses).toEqual([]);
     expect(filter.category).toBeNull();
     expect(filter.minFollowers).toBeNull();
+    expect(filter.residence).toBeNull();
   });
 });

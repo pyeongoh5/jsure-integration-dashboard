@@ -5,6 +5,7 @@ import {
   ApplicationStatusSchema,
 } from "./application.js";
 import { CampaignCategorySchema } from "./campaign.js";
+import { ResidenceSchema } from "./residence.js";
 
 export const ApprovedApplicantExportRowSchema = z.object({
   applicationId: z.string(),
@@ -57,6 +58,8 @@ export const ApplicantExportRowSchema = ApprovedApplicantExportRowSchema.extend(
   memo: z.string(),
   /** 응모 반려 사유. */
   rejectReason: z.string().nullable(),
+  /** 배송지 기준 거주지. default 는 이 필드가 없는 구 API 와의 배포 갭 대비. */
+  residence: ResidenceSchema.default("NONE"),
 });
 export type ApplicantExportRow = z.infer<typeof ApplicantExportRowSchema>;
 

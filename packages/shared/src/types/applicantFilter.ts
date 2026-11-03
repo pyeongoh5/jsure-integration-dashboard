@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ApplicationStatusSchema, type ApplicationStatus } from "./application.js";
 import { CampaignCategorySchema, type CampaignCategory } from "./campaign.js";
 import { CampaignSubTypeSchema, type CampaignSubType } from "./influencer.js";
+import { ResidenceSchema } from "./residence.js";
 
 /**
  * 응모자 관리 화면에 노출되는 상태. raw ApplicationStatus 를 캠페인 카테고리·수령 여부와
@@ -166,6 +167,8 @@ export const ApplicantFilterSchema = z.object({
   minFollowers: z.number().int().nonnegative().nullable().default(null),
   /** 어드민 관리 태그 id — 전부 보유해야 포함(AND). 상세는 InfluencerFilterSchema.tagIds. */
   tagIds: z.array(z.string()).default([]),
+  /** 배송지 기준 거주지. null 이면 전체. 판정 규칙은 residenceOf. */
+  residence: ResidenceSchema.nullable().default(null),
   /** 이름·인플루언서 id·SNS 핸들 부분일치 검색어. */
   query: z.string().default(""),
 });
@@ -189,6 +192,7 @@ export function applicantFilterToParams(
     params.minFollowers = String(filter.minFollowers);
   }
   if (filter.tagIds.length > 0) params.tags = filter.tagIds.join(",");
+  if (filter.residence) params.residence = filter.residence;
   if (filter.query.trim()) params.q = filter.query.trim();
   return params;
 }
@@ -224,6 +228,9 @@ export function parseApplicantFilterParams(
         ? Math.floor(minFollowers)
         : null,
     tagIds: splitList(raw.tags),
+    residence: ResidenceSchema.safeParse(raw.residence).success
+      ? raw.residence
+      : null,
     query: typeof raw.q === "string" ? raw.q : "",
   });
 }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { SnsAccountSubTypeSchema } from "./influencer.js";
 import type { SnsAccountSubType } from "./influencer.js";
+import { ResidenceSchema } from "./residence.js";
 
 /** 인플루언서 관리 목록·CSV 내보내기·일괄 발송 후보가 함께 쓰는 필터 조건. */
 export const InfluencerFilterSchema = z.object({
@@ -12,6 +13,8 @@ export const InfluencerFilterSchema = z.object({
    * 쿼리스트링 직렬화가 깨지고, 라벨을 고치면 저장된 URL 이 죽기 때문.
    */
   tagIds: z.array(z.string()).default([]),
+  /** 배송지 기준 거주지. null 이면 전체. 판정 규칙은 residenceOf. */
+  residence: ResidenceSchema.nullable().default(null),
   /** 이름·이메일·SNS 핸들 부분일치 검색어. */
   query: z.string().default(""),
 });
@@ -27,6 +30,7 @@ export function influencerFilterToParams(
   const params: Record<string, string> = {};
   if (filter.snsTypes.length > 0) params.sns = filter.snsTypes.join(",");
   if (filter.tagIds.length > 0) params.tags = filter.tagIds.join(",");
+  if (filter.residence) params.residence = filter.residence;
   if (filter.query.trim()) params.q = filter.query.trim();
   return params;
 }
@@ -49,6 +53,9 @@ export function parseInfluencerFilterParams(
         SnsAccountSubTypeSchema.safeParse(value).success,
     ),
     tagIds: splitList(raw.tags),
+    residence: ResidenceSchema.safeParse(raw.residence).success
+      ? raw.residence
+      : null,
     query: typeof raw.q === "string" ? raw.q : "",
   });
 }

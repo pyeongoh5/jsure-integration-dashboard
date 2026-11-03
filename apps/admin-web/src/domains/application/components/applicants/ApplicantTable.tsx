@@ -11,6 +11,7 @@ import {
   TagChipList,
 } from "@/components/composites";
 import { Button } from "@/components/ui";
+import { RESIDENCE_LABEL_KEY } from "@/domains/influencer";
 import { useT } from "@/lib/i18n";
 import {
   APPLICANT_STATUS_LABEL,
@@ -279,6 +280,7 @@ export function ApplicantTable({
                 />
               </th>
               <th>{t("domains.application.applicants.table.influencer")}</th>
+              <th>{t("domains.influencer.residence.label")}</th>
               <th>{t("domains.application.applicants.table.campaign")}</th>
               <th>{t("domains.application.applicants.table.category")}</th>
               <th>{t("domains.application.applicants.table.subType")}</th>
@@ -329,6 +331,7 @@ export function ApplicantTable({
                     </div>
                   </div>
                 </td>
+                <td width="80">{t(RESIDENCE_LABEL_KEY[applicant.residence])}</td>
                 <td>{applicant.campaign}</td>
                 <td width="100">{renderCategory(applicant, t)}</td>
                 <td>

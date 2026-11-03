@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
-import { INFLUENCER_EXPORT_MAX_ROWS } from "@jsure/shared";
+import { INFLUENCER_EXPORT_MAX_ROWS, residenceOf } from "@jsure/shared";
 import type {
   AddressCountry,
   AdminInfluencer,
@@ -85,6 +85,7 @@ function toAdminResponse(
       addressLine1: row.addressLine1,
       addressLine2: row.addressLine2,
     },
+    residence: residenceOf(row),
     crossPostCount,
     createdAt: row.createdAt.toISOString(),
   };
@@ -119,6 +120,16 @@ export class InfluencersService {
     if (filter.snsTypes.length > 0) {
       conditions.push({
         snsAccounts: { some: { snsType: { in: filter.snsTypes } } },
+      });
+    }
+    // 거주지 판정은 shared 의 residenceOf 와 같은 규칙이어야 한다 — 어긋나면
+    // 필터 결과와 행에 찍힌 거주지가 달라진다.
+    if (filter.residence === "NONE") {
+      conditions.push({ postalCode: "" });
+    } else if (filter.residence) {
+      conditions.push({
+        addressCountry: filter.residence,
+        postalCode: { not: "" },
       });
     }
     // 태그는 조건을 하나씩 쌓는다 — 선택한 태그를 모두 보유해야 걸리도록(AND).

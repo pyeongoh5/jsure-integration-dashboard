@@ -6,6 +6,7 @@ import {
   SUB_TYPE_OPTION_LABEL,
   snsProfileUrlOrNull,
   type AddressCountry,
+  residenceOf,
   type AdminActivityLog,
   bankLabel,
   formatTitleWithTags,
@@ -99,6 +100,8 @@ type AdminApplicationRow = {
     name: string;
     email: string;
     flaggedAt: Date | null;
+    addressCountry: AddressCountry;
+    postalCode: string;
     tagAssignments: { tag: { label: string } }[];
     snsAccounts: { snsType: string; handle: string; followerCount: number }[];
   };
@@ -133,6 +136,7 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
       email: row.influencer.email,
       flagged: row.influencer.flaggedAt !== null,
       tags: toTagLabels(row.influencer.tagAssignments),
+      residence: residenceOf(row.influencer),
       snsAccounts: row.influencer.snsAccounts.map((account) => ({
         snsType:
           account.snsType as AdminApplication["influencer"]["snsAccounts"][number]["snsType"],
@@ -162,6 +166,9 @@ const APPLICATION_INCLUDE = {
       name: true,
       email: true,
       flaggedAt: true,
+      // 거주지 판정(residenceOf)에 필요한 두 컬럼. 주소 전체는 목록에 쓰지 않는다.
+      addressCountry: true,
+      postalCode: true,
       tagAssignments: INFLUENCER_TAG_INCLUDE,
       snsAccounts: {
         select: { snsType: true, handle: true, followerCount: true },
@@ -1540,6 +1547,7 @@ const APPLICANT_EXPORT_SELECT = {
       name: true,
       nameKana: true,
       phone: true,
+      addressCountry: true,
       postalCode: true,
       prefecture: true,
       city: true,
@@ -1572,6 +1580,7 @@ type ApplicantExportPrismaRow = {
     name: string;
     nameKana: string | null;
     phone: string;
+    addressCountry: AddressCountry;
     postalCode: string;
     prefecture: string;
     city: string;
@@ -1613,6 +1622,7 @@ function toApplicantExportRow(
       .reduce((sum, account) => sum + account.followerCount, 0),
     memo,
     rejectReason: row.rejectReason,
+    residence: residenceOf(row.influencer),
   };
 }
 

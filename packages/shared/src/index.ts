@@ -3,6 +3,7 @@ export * from "./types/auth.js";
 export * from "./types/campaign.js";
 export * from "./types/influencer.js";
 export * from "./types/influencerAuth.js";
+export * from "./types/residence.js";
 export * from "./types/application.js";
 export * from "./types/adminInfluencer.js";
 export * from "./types/applicantFilter.js";

@@ -124,6 +124,29 @@ describe("InfluencersService.listForAdminPage", () => {
     expect(count.mock.calls[0]?.[0].where).toEqual(where);
   });
 
+  it("거주지 필터는 우편번호 등록 여부까지 함께 본다", async () => {
+    // addressCountry 기본값이 JP 라서 국가만 비교하면 주소 미등록 회원이 일본에 섞인다.
+    const { service, findMany } = makeService([]);
+    await service.listForAdminPage(
+      InfluencerFilterSchema.parse({ residence: "JP" }),
+      null,
+      30,
+    );
+    expect(findMany.mock.calls[0]?.[0].where).toEqual({
+      AND: [{ addressCountry: "JP", postalCode: { not: "" } }],
+    });
+
+    const unregistered = makeService([]);
+    await unregistered.service.listForAdminPage(
+      InfluencerFilterSchema.parse({ residence: "NONE" }),
+      null,
+      30,
+    );
+    expect(unregistered.findMany.mock.calls[0]?.[0].where).toEqual({
+      AND: [{ postalCode: "" }],
+    });
+  });
+
   it("검색어는 이름·이메일·핸들을 대소문자 구분 없이 훑는다", async () => {
     const { service, findMany } = makeService([]);
     await service.listForAdminPage(

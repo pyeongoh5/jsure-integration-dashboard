@@ -98,6 +98,16 @@ export function buildApplicantWhereSql(filter: ApplicantFilter): Prisma.Sql {
     conditions.push(Prisma.sql`${applicantFollowersSql} >= ${filter.minFollowers}`);
   }
 
+  // 거주지 판정은 shared 의 residenceOf 와 같은 규칙이어야 한다 — 어긋나면
+  // 필터 결과와 행에 찍힌 거주지가 달라진다.
+  if (filter.residence === "NONE") {
+    conditions.push(Prisma.sql`i."postalCode" = ''`);
+  } else if (filter.residence) {
+    conditions.push(
+      Prisma.sql`(i."postalCode" <> '' AND i."addressCountry"::text = ${filter.residence})`,
+    );
+  }
+
   // 태그는 조건을 하나씩 쌓는다 — 선택한 태그를 모두 보유해야 걸리도록(AND).
   for (const tagId of filter.tagIds) {
     conditions.push(Prisma.sql`EXISTS (

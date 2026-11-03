@@ -5,6 +5,7 @@ import {
   APPLICANT_EXPORT_MAX_ROWS,
   type ApplicantFilter,
   type CampaignCategory,
+  type Residence,
 } from "@jsure/shared";
 import {
   ApplicantFilters,
@@ -50,6 +51,7 @@ export function Applicants() {
   const [categoryFilter, setCategoryFilter] =
     useState<CampaignCategory | null>(null);
   const [tagFilter, setTagFilter] = useState<Set<string>>(() => new Set());
+  const [residenceFilter, setResidenceFilter] = useState<Residence | null>(null);
   const [detailTarget, setDetailTarget] = useState<Applicant | null>(null);
   const [query, setQuery] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -69,6 +71,7 @@ export function Applicants() {
       category: categoryFilter,
       minFollowers,
       tagIds: [...tagFilter].sort(),
+      residence: residenceFilter,
       query: debouncedQuery.trim(),
     }),
     [
@@ -78,6 +81,7 @@ export function Applicants() {
       categoryFilter,
       minFollowers,
       tagFilter,
+      residenceFilter,
       debouncedQuery,
     ],
   );
@@ -218,6 +222,8 @@ export function Applicants() {
           onCategoryChange={setCategoryFilter}
           tagFilter={tagFilter}
           onTagFilterChange={setTagFilter}
+          residence={residenceFilter}
+          onResidenceChange={setResidenceFilter}
         />
         <ApplicantStatusFilter value={statusFilter} onChange={setStatusFilter} />
         <div className={styles.searchSpacer} />

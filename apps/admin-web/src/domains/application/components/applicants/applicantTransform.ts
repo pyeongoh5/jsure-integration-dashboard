@@ -93,6 +93,7 @@ export function toApplicant(
       : null,
     flagged: application.influencer.flagged,
     tags: application.influencer.tags,
+    residence: application.influencer.residence,
     campaignId: application.campaign.id,
     campaign: application.campaign.title,
     category: application.campaign.category,

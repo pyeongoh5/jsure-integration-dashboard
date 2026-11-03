@@ -7,6 +7,7 @@ import {
 } from "@jsure/shared";
 import { translate, type AdminTranslationKey } from "@i18n/admin";
 import { getStoredLanguage } from "@/lib/i18n";
+import { RESIDENCE_LABEL_KEY } from "@/domains/influencer";
 import { APPLICANT_STATUS_LABEL } from "./components/applicants/types";
 import { escapeCsvCell, triggerCsvDownload } from "./buildApprovedApplicantsCsv";
 
@@ -27,6 +28,7 @@ const APPLICANT_EXPORT_HEADER_KEYS = [
   "domains.application.export.productOptions",
   "domains.application.applicants.table.followers",
   "domains.application.export.phone",
+  "domains.influencer.residence.label",
   "domains.application.export.postalCode",
   "domains.application.export.address",
   "domains.application.applicants.table.status",
@@ -88,6 +90,7 @@ function formatRow(
     formatProductOptions(row.productOptions),
     String(row.followers),
     row.phone,
+    translateLabel(RESIDENCE_LABEL_KEY[row.residence]),
     row.postalCode,
     row.address,
     viewStatus ? translateLabel(APPLICANT_STATUS_LABEL[viewStatus]) : "",

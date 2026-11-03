@@ -2890,6 +2890,18 @@ export const adminMessages = {
       },
     },
     influencer: {
+      residence: {
+        label: { ko: "거주지", en: "Residence", ja: "居住地" },
+        kr: { ko: "한국", en: "South Korea", ja: "韓国" },
+        jp: { ko: "일본", en: "Japan", ja: "日本" },
+        none: { ko: "미등록", en: "Not registered", ja: "未登録" },
+        chipEmpty: { ko: "+ 거주지", en: "+ Residence", ja: "+ 居住地" },
+        filterTitle: {
+          ko: "배송지 주소 기준 거주지",
+          en: "Residence by shipping address",
+          ja: "配送先住所による居住地",
+        },
+      },
       tagFilter: {
         chipEmpty: { ko: "+ 태그", en: "+ Tag", ja: "+ タグ" },
         prefix: { ko: "태그", en: "Tag", ja: "タグ" },
@@ -2904,7 +2916,6 @@ export const adminMessages = {
         phone: { ko: "연락처", en: "Phone", ja: "電話番号" },
         accountColumn: { ko: "{sns} 계정", en: "{sns} account", ja: "{sns}アカウント" },
         followerColumn: { ko: "{sns} 팔로워", en: "{sns} followers", ja: "{sns}フォロワー" },
-        country: { ko: "주소 국가", en: "Country", ja: "住所の国" },
         postalCode: { ko: "우편번호", en: "Postal code", ja: "郵便番号" },
         address: { ko: "주소", en: "Address", ja: "住所" },
         countryJp: { ko: "일본", en: "Japan", ja: "日本" },

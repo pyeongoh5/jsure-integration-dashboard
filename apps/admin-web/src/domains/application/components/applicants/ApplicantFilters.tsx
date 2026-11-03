@@ -1,4 +1,4 @@
-import type { CampaignCategory } from "@jsure/shared";
+import type { CampaignCategory, Residence } from "@jsure/shared";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { useT } from "@/lib/i18n";
 import {
@@ -6,7 +6,7 @@ import {
   SingleSelectFilterChip,
   MultiSelectFilterChip,
 } from "@/components/composites/FilterChip";
-import { InfluencerTagFilterChip } from "@/domains/influencer";
+import { InfluencerTagFilterChip, ResidenceFilterChip } from "@/domains/influencer";
 import { CampaignFilterChip } from "./CampaignFilterChip";
 import { MinFollowersFilterChip } from "./MinFollowersFilterChip";
 import {
@@ -68,6 +68,10 @@ type Props = {
   // 어드민 관리 태그 필터도 응모 관리 페이지 전용. props 를 생략하면 칩이 사라진다.
   tagFilter?: Set<string>;
   onTagFilterChange?: (next: Set<string>) => void;
+
+  // 거주지 필터도 응모 관리 페이지 전용. props 를 생략하면 칩이 사라진다.
+  residence?: Residence | null;
+  onResidenceChange?: (next: Residence | null) => void;
 };
 
 export function ApplicantFilters({
@@ -84,6 +88,8 @@ export function ApplicantFilters({
   onCategoryChange,
   tagFilter,
   onTagFilterChange,
+  residence,
+  onResidenceChange,
 }: Props) {
   const t = useT();
   const categoryOptions = CATEGORY_FILTER_OPTIONS.map((option) => ({
@@ -129,6 +135,13 @@ export function ApplicantFilters({
         value={mediaFilter}
         onChange={onMediaChange}
       />
+
+      {onResidenceChange && (
+        <ResidenceFilterChip
+          value={residence ?? null}
+          onChange={onResidenceChange}
+        />
+      )}
 
       {onTagFilterChange && (
         <InfluencerTagFilterChip

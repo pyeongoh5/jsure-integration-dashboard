@@ -1,6 +1,7 @@
 import type { AdminInfluencer, SnsAccountSubType } from "@jsure/shared";
 import { translate, type AdminLanguage, type AdminTranslationKey } from "@i18n/admin";
 import { getStoredLanguage } from "@/lib/i18n";
+import { RESIDENCE_LABEL_KEY } from "./residenceLabel";
 
 // SNS 를 플랫폼별로 분리하고, 플랫폼마다 계정·팔로워 수를 별도 컬럼으로 표현. 없으면 빈칸.
 const SNS_COLUMNS: { type: SnsAccountSubType; labelKey: AdminTranslationKey }[] = [
@@ -24,7 +25,7 @@ function buildHeaders(language: AdminLanguage): string[] {
     }),
     translate("common.status", language),
     translate("common.joinedAt", language),
-    translate("domains.influencer.csv.country", language),
+    translate("domains.influencer.residence.label", language),
     translate("domains.influencer.csv.postalCode", language),
     translate("domains.influencer.csv.address", language),
   ];
@@ -36,11 +37,6 @@ function snsCells(row: AdminInfluencer, type: SnsAccountSubType): [string, strin
   if (!account) return ["", ""];
   return [`@${account.handle}`, String(account.followerCount)];
 }
-
-const COUNTRY_LABEL_KEY: Record<AdminInfluencer["address"]["country"], AdminTranslationKey> = {
-  JP: "domains.influencer.csv.countryJp",
-  KR: "domains.influencer.csv.countryKr",
-};
 
 function formatAddress(address: AdminInfluencer["address"]): string {
   return [
@@ -83,7 +79,7 @@ function formatRow(row: AdminInfluencer, language: AdminLanguage): string[] {
       ? translate("common.active", language)
       : translate("common.suspended", language),
     formatJoinDate(row.createdAt, language),
-    translate(COUNTRY_LABEL_KEY[row.address.country], language),
+    translate(RESIDENCE_LABEL_KEY[row.residence], language),
     row.address.postalCode,
     formatAddress(row.address),
   ];

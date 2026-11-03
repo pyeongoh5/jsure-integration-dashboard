@@ -67,7 +67,10 @@
 }
 
 .row {
+  /* width 를 명시하지 않으면 긴 제목 때문에 행이 내용 크기로 줄어들어
+     선택 하이라이트와 구분선이 가로를 다 채우지 못한다. */
   display: flex;
+  width: 100%;
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
@@ -101,5 +104,22 @@
 .rowMeta {
   font-size: 11px;
   color: #6b7280;
+  flex-shrink: 0;
+  /* 제목이 짧아도 날짜·인원은 오른쪽에 붙인다. */
+  margin-left: auto;
+}
+
+.rowCount {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1d4ed8;
+  flex-shrink: 0;
+}
+
+/* 승인자가 없으면 고르더라도 대상자가 안 늘어난다 — 미리 눈에 띄게. */
+.rowCountEmpty {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b45309;
   flex-shrink: 0;
 }

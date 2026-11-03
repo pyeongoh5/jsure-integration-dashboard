@@ -1119,6 +1119,7 @@ export function CampaignForm({
                       value={field.value}
                       onChange={field.onChange}
                       disabled={submitting}
+                      showApprovedCount
                     />
                   )}
                 />

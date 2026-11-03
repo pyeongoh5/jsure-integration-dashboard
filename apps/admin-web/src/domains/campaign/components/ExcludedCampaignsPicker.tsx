@@ -11,6 +11,12 @@ type Props = {
   value: string[];
   onChange: (next: string[]) => void;
   disabled?: boolean;
+  /**
+   * 승인(선정) 인원수를 함께 표시한다. 대상자 지정에서만 켠다 — 거기서는 이 숫자가
+   * 곧 "불러올 인원"이라, 0명인 캠페인을 고르는 혼선을 미리 막는다.
+   * 참여 제외는 완료(제출물 승인) 기준이라 이 숫자와 축이 달라 켜지 않는다.
+   */
+  showApprovedCount?: boolean;
 };
 
 export function ExcludedCampaignsPicker({
@@ -19,6 +25,7 @@ export function ExcludedCampaignsPicker({
   value,
   onChange,
   disabled,
+  showApprovedCount,
 }: Props) {
   const t = useT();
   const [query, setQuery] = useState("");
@@ -113,6 +120,19 @@ export function ExcludedCampaignsPicker({
                 <span className={styles.rowMeta}>
                   {campaign.recruitStartDate} ~ {campaign.recruitEndDate}
                 </span>
+                {showApprovedCount && (
+                  <span
+                    className={
+                      campaign.approvedCount === 0
+                        ? styles.rowCountEmpty
+                        : styles.rowCount
+                    }
+                  >
+                    {t("domains.campaign.excludedPicker.approvedCount", {
+                      count: campaign.approvedCount,
+                    })}
+                  </span>
+                )}
               </label>
             );
           })

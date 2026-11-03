@@ -2500,6 +2500,11 @@ export const adminMessages = {
           en: "No campaigns selected.",
           ja: "選択されたキャンペーンはありません。",
         },
+        approvedCount: {
+          ko: "승인 {count}명",
+          en: "{count} approved",
+          ja: "承認{count}名",
+        },
         removeAria: { ko: "제거", en: "Remove", ja: "削除" },
         searchPlaceholder: {
           ko: "제목으로 검색...",

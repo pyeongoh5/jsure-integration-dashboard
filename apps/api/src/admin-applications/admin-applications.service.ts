@@ -415,7 +415,10 @@ export class AdminApplicationsService {
       throw new BadRequestException("운송장 번호를 입력하세요");
     }
 
-    await this.prisma.campaignApplication.update({
+    // 갱신 결과를 그대로 디스패치 컨텍스트로 쓴다 — existing 은 발송 처리 전
+    // 스냅샷이라 shippedAt 이 비어 있고, 그대로 넘기면 템플릿의 발송일 변수가
+    // 빈 문자열로 치환된다.
+    const shipped = await this.prisma.campaignApplication.update({
       where: { id },
       data: {
         status: "SHIPPED",
@@ -424,6 +427,7 @@ export class AdminApplicationsService {
         // 사후 등록은 출고 시각을 바꾸지 않는다 — 실제 출고는 이미 일어났다
         ...(isLateTrackingEntry ? {} : { shippedAt: new Date() }),
       },
+      include: DISPATCH_APPLICATION_INCLUDE,
     });
     await this.audit.record({
       action: "APPLICATION_SHIP",
@@ -444,9 +448,7 @@ export class AdminApplicationsService {
       hasTrackingNumber: Boolean(number),
     });
     if (triggerKey) {
-      void this.dispatcher.dispatch(triggerKey, {
-        application: { ...existing, trackingCarrier, trackingNumber: number },
-      });
+      void this.dispatcher.dispatch(triggerKey, { application: shipped });
     }
     return this.fetch(id);
   }
@@ -471,12 +473,14 @@ export class AdminApplicationsService {
     if (existing.status !== "SHIPPED") {
       throw new BadRequestException(`현재 상태(${existing.status})에서는 배송 완료 처리를 할 수 없습니다`);
     }
-    await this.prisma.campaignApplication.update({
+    // ship() 과 같은 이유로 갱신 결과를 쓴다 — existing 에는 deliveredAt 이 없다.
+    const delivered = await this.prisma.campaignApplication.update({
       where: { id },
       data: {
         status: "DELIVERED",
         deliveredAt: new Date(),
       },
+      include: DISPATCH_APPLICATION_INCLUDE,
     });
     await this.audit.record({
       action: "APPLICATION_DELIVER",
@@ -488,7 +492,7 @@ export class AdminApplicationsService {
       existing.campaign.category === "SIMPLE_REVIEW"
         ? "SIMPLE_REVIEW_APPLICATION_DELIVERED"
         : "SNS_APPLICATION_DELIVERED";
-    void this.dispatcher.dispatch(deliveredTriggerKey, { application: existing });
+    void this.dispatcher.dispatch(deliveredTriggerKey, { application: delivered });
     return this.fetch(id);
   }
 

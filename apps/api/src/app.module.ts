@@ -21,6 +21,7 @@ import { InfluencerNoticesModule } from "./influencer-notices/influencer-notices
 import { R2Module } from "./r2/r2.module";
 import { UploadsModule } from "./uploads/uploads.module";
 import { LineTemplatesModule } from "./line-templates/line-templates.module";
+import { LineMessagingModule } from "./influencer-auth/line-messaging.module";
 import { AdminMeModule } from "./admin-me/admin-me.module";
 
 @Module({
@@ -29,6 +30,7 @@ import { AdminMeModule } from "./admin-me/admin-me.module";
     ScheduleModule.forRoot(),
     PrismaModule,
     AuditModule,
+    LineMessagingModule,
     AuthModule,
     AdminUsersModule,
     CampaignsModule,

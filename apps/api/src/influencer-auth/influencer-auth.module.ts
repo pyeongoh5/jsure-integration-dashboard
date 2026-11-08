@@ -5,7 +5,6 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { InfluencerAuthController } from "./influencer-auth.controller";
 import { InfluencerAuthService } from "./influencer-auth.service";
 import { InfluencerLineAuthService } from "./influencer-line-auth.service";
-import { LineMessagingService } from "./line-messaging.service";
 import { InfluencerSessionsService } from "./influencer-sessions.service";
 import { InfluencerJwtStrategy } from "./strategies/influencer-jwt.strategy";
 import { InfluencersModule } from "../influencers/influencers.module";
@@ -28,15 +27,10 @@ import { InfluencersModule } from "../influencers/influencers.module";
   providers: [
     InfluencerAuthService,
     InfluencerLineAuthService,
-    LineMessagingService,
     InfluencerSessionsService,
     InfluencerJwtStrategy,
   ],
   controllers: [InfluencerAuthController],
-  exports: [
-    InfluencerAuthService,
-    InfluencerJwtStrategy,
-    LineMessagingService,
-  ],
+  exports: [InfluencerAuthService, InfluencerJwtStrategy],
 })
 export class InfluencerAuthModule {}

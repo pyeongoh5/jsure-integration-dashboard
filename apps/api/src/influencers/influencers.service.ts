@@ -14,15 +14,21 @@ import type {
   InfluencerFilter,
   InfluencerNotesResponse,
   InfluencerMemoEntry,
+  InfluencerWithdrawal,
   InfluencerTagListResponse,
   UpdateInfluencerTagsResponse,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { INFLUENCER_TAG_INCLUDE, toTagLabels } from "./influencer-tags";
+import {
+  toWithdrawalResponse,
+  type WithdrawalRow,
+} from "../common/withdrawal-response";
 import { AuditService } from "../audit/audit.service";
 import type { AuditActor } from "../audit/audit.service";
 import { influencerHistoryGroups } from "../audit/influencer-history";
 import { deriveDisplayStage } from "../influencer-campaigns/display-stage";
+import { LineDispatcherService } from "../line-templates/line-dispatcher.service";
 
 /** 탈퇴 회원의 익명화 이메일 접두사 — deleted+<id>@invalid 형식의 단일 출처. */
 const WITHDRAWN_EMAIL_PREFIX = "deleted+";
@@ -33,6 +39,12 @@ const ADMIN_INFLUENCER_INCLUDE = {
     orderBy: { snsType: "asc" as const },
   },
   tagAssignments: INFLUENCER_TAG_INCLUDE,
+  // 가장 최근 신청 1건만 — 목록 배지·CSV·승인 다이얼로그가 보는 건 현재 상태다.
+  withdrawals: {
+    orderBy: { requestedAt: "desc" as const },
+    take: 1,
+    include: { decidedBy: { select: { name: true } } },
+  },
 } as const;
 
 type AdminInfluencerRow = {
@@ -57,6 +69,7 @@ type AdminInfluencerRow = {
     followerCount: number;
   }[];
   tagAssignments: { tag: { label: string } }[];
+  withdrawals: WithdrawalRow[];
 };
 
 function toAdminResponse(
@@ -88,6 +101,9 @@ function toAdminResponse(
     },
     residence: residenceOf(row),
     crossPostCount,
+    withdrawal: row.withdrawals[0]
+      ? toWithdrawalResponse(row.withdrawals[0])
+      : null,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -97,6 +113,7 @@ export class InfluencersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly dispatcher: LineDispatcherService,
   ) {}
 
   findByEmail(email: string) {
@@ -150,6 +167,11 @@ export class InfluencersService {
           },
         ],
       });
+    }
+    // 대기 건은 인플루언서당 1개뿐이고 승인은 종착점이라, "그런 신청이 하나라도
+    // 있는가"가 곧 "현재 그 상태인가"다.
+    if (filter.withdrawal) {
+      conditions.push({ withdrawals: { some: { decision: filter.withdrawal } } });
     }
     return conditions.length > 0 ? { AND: conditions } : {};
   }
@@ -535,13 +557,30 @@ export class InfluencersService {
   async withdraw(influencerId: string, actor: AuditActor): Promise<void> {
     const existing = await this.prisma.influencer.findUnique({
       where: { id: influencerId },
-      select: { email: true },
+      select: { email: true, name: true, lineUserId: true },
     });
     if (!existing) throw new NotFoundException("인플루언서를 찾을 수 없습니다");
     if (existing.email.startsWith(WITHDRAWN_EMAIL_PREFIX))
       throw new ConflictException("이미 탈퇴 처리된 회원입니다");
 
+    const pending = await this.prisma.influencerWithdrawal.findFirst({
+      where: { influencerId, decision: "PENDING" },
+      select: { id: true },
+    });
+
     await this.prisma.$transaction([
+      ...(pending
+        ? [
+            this.prisma.influencerWithdrawal.update({
+              where: { id: pending.id },
+              data: {
+                decision: "APPROVED" as const,
+                decidedAt: new Date(),
+                decidedById: actor.id,
+              },
+            }),
+          ]
+        : []),
       this.prisma.influencerSnsAccount.deleteMany({ where: { influencerId } }),
       this.prisma.influencerBankAccount.deleteMany({ where: { influencerId } }),
       // 세션 삭제 = 로그인된 기기 전부 강제 로그아웃
@@ -567,11 +606,70 @@ export class InfluencersService {
       }),
     ]);
 
+    // 익명화가 lineUserId 와 이름을 지운 뒤라, 트랜잭션 전에 읽어둔 값으로 보낸다
+    // (dispatchCommon 은 DB 를 다시 읽지 않는다). 탈퇴가 실제로 끝난 다음에
+    // 보내야 트랜잭션이 실패했을 때 "탈퇴 완료" 안내만 나가는 일이 없다.
+    await this.dispatcher.dispatchCommon("COMMON_WITHDRAWAL_APPROVED", {
+      influencer: {
+        id: influencerId,
+        name: existing.name,
+        lineUserId: existing.lineUserId,
+      },
+    });
+
     // 익명화 전 PII(이름·이메일)는 로그에도 남기지 않는다.
     await this.audit.record({
       action: "INFLUENCER_WITHDRAW",
       actor,
       influencerId,
+      metadata: { fromRequest: pending !== null },
     });
+  }
+
+  /**
+   * 탈퇴 신청 반려 — 미정산 잔액이나 오신청처럼 지금 탈퇴시키면 안 되는 사유가
+   * 있을 때. 계정은 건드리지 않으므로(대기 중에도 상태는 ACTIVE 였다) 신청 건만
+   * 닫고 LINE 으로 사유를 안내한다.
+   */
+  async rejectWithdrawal(
+    influencerId: string,
+    actor: AuditActor,
+    rejectReason: string,
+  ): Promise<InfluencerWithdrawal> {
+    const pending = await this.prisma.influencerWithdrawal.findFirst({
+      where: { influencerId, decision: "PENDING" },
+      select: { id: true, influencer: { select: { name: true, lineUserId: true } } },
+    });
+    if (!pending)
+      throw new NotFoundException("처리 대기 중인 탈퇴 신청이 없습니다");
+
+    const updated = await this.prisma.influencerWithdrawal.update({
+      where: { id: pending.id },
+      data: {
+        decision: "REJECTED",
+        decidedAt: new Date(),
+        decidedById: actor.id,
+        rejectReason,
+      },
+      include: { decidedBy: { select: { name: true } } },
+    });
+
+    await this.dispatcher.dispatchCommon("COMMON_WITHDRAWAL_REJECTED", {
+      influencer: {
+        id: influencerId,
+        name: pending.influencer.name,
+        lineUserId: pending.influencer.lineUserId,
+      },
+      withdrawal: { rejectReason },
+    });
+
+    // 반려 사유는 자유 입력이라 감사 로그에 본문을 넣지 않는다 — 신청 테이블에 남는다.
+    await this.audit.record({
+      action: "INFLUENCER_WITHDRAW_REJECT",
+      actor,
+      influencerId,
+    });
+
+    return toWithdrawalResponse(updated);
   }
 }

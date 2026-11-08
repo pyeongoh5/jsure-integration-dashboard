@@ -8,13 +8,25 @@ import { InfluencersService } from "./influencers.service";
 import type { AuthenticatedUser } from "../auth/strategies/jwt.strategy";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { AuditService, AuditActor } from "../audit/audit.service";
+import type { LineDispatcherService } from "../line-templates/line-dispatcher.service";
 
 const actor: AuditActor = { id: "admin-1", name: "운영자" };
 
-function makeMocks(existing: { email: string } | null) {
+function makeMocks(
+  existing: { email: string } | null,
+  pending: { id: string } | null = null,
+) {
   const prisma = {
     influencer: {
-      findUnique: jest.fn().mockResolvedValue(existing),
+      findUnique: jest
+        .fn()
+        .mockResolvedValue(
+          existing && { name: "나기사", lineUserId: "U1", ...existing },
+        ),
+      update: jest.fn().mockResolvedValue({}),
+    },
+    influencerWithdrawal: {
+      findFirst: jest.fn().mockResolvedValue(pending),
       update: jest.fn().mockResolvedValue({}),
     },
     influencerSnsAccount: { deleteMany: jest.fn().mockResolvedValue({}) },
@@ -25,11 +37,13 @@ function makeMocks(existing: { email: string } | null) {
     ),
   };
   const audit = { record: jest.fn().mockResolvedValue(undefined) };
+  const dispatcher = { dispatchCommon: jest.fn().mockResolvedValue(undefined) };
   const service = new InfluencersService(
     prisma as unknown as PrismaService,
     audit as unknown as AuditService,
+    dispatcher as unknown as LineDispatcherService,
   );
-  return { prisma, audit, service };
+  return { prisma, audit, dispatcher, service };
 }
 
 describe("인플루언서 탈퇴 처리", () => {
@@ -71,6 +85,7 @@ describe("인플루언서 탈퇴 처리", () => {
       action: "INFLUENCER_WITHDRAW",
       actor,
       influencerId: "inf-1",
+      metadata: { fromRequest: false },
     });
   });
 
@@ -101,9 +116,149 @@ describe("인플루언서 탈퇴 처리", () => {
   });
 });
 
+describe("셀프 탈퇴 신청의 승인", () => {
+  it("대기 중인 신청을 APPROVED 로 닫고 처리 관리자를 남긴다", async () => {
+    const { prisma, service } = makeMocks(
+      { email: "nagisa@example.com" },
+      { id: "wd-1" },
+    );
+
+    await service.withdraw("inf-1", actor);
+
+    expect(prisma.influencerWithdrawal.update).toHaveBeenCalledWith({
+      where: { id: "wd-1" },
+      data: expect.objectContaining({
+        decision: "APPROVED",
+        decidedById: "admin-1",
+      }),
+    });
+  });
+
+  it("익명화 전에 읽어둔 이름·lineUserId 로 LINE 안내를 보낸다", async () => {
+    const { prisma, dispatcher, service } = makeMocks(
+      { email: "nagisa@example.com" },
+      { id: "wd-1" },
+    );
+
+    await service.withdraw("inf-1", actor);
+
+    // 익명화가 이 값들을 지우므로, 트랜잭션 전에 읽은 스냅샷을 넘겨야 한다.
+    expect(dispatcher.dispatchCommon).toHaveBeenCalledWith(
+      "COMMON_WITHDRAWAL_APPROVED",
+      { influencer: { id: "inf-1", name: "나기사", lineUserId: "U1" } },
+    );
+    // 발송은 탈퇴가 실제로 끝난 뒤여야 한다 — 트랜잭션이 실패하면 안내도 나가면 안 된다.
+    const [dispatchOrder] = dispatcher.dispatchCommon.mock.invocationCallOrder;
+    const [transactionOrder] = prisma.$transaction.mock.invocationCallOrder;
+    expect(dispatchOrder).toBeDefined();
+    expect(transactionOrder).toBeDefined();
+    expect(dispatchOrder).toBeGreaterThan(transactionOrder as number);
+  });
+
+  it("탈퇴 트랜잭션이 실패하면 LINE 안내를 보내지 않는다", async () => {
+    const { prisma, dispatcher, service } = makeMocks(
+      { email: "nagisa@example.com" },
+      { id: "wd-1" },
+    );
+    prisma.$transaction.mockRejectedValue(new Error("DB 오류"));
+
+    await expect(service.withdraw("inf-1", actor)).rejects.toThrow("DB 오류");
+
+    expect(dispatcher.dispatchCommon).not.toHaveBeenCalled();
+  });
+
+  it("어드민이 직접 탈퇴시킨 건(대기 신청 없음)은 신청 테이블을 건드리지 않는다", async () => {
+    const { prisma, service } = makeMocks({ email: "nagisa@example.com" });
+
+    await service.withdraw("inf-1", actor);
+
+    expect(prisma.influencerWithdrawal.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("탈퇴 신청 반려", () => {
+  function makeRejectMocks(pending: unknown) {
+    const prisma = {
+      influencerWithdrawal: {
+        findFirst: jest.fn().mockResolvedValue(pending),
+        update: jest.fn().mockResolvedValue({
+          id: "wd-1",
+          reason: "SNS_INACTIVE",
+          reasonDetail: "",
+          decision: "REJECTED",
+          requestedAt: new Date("2026-11-01T00:00:00Z"),
+          decidedAt: new Date("2026-11-02T00:00:00Z"),
+          decidedBy: { name: "운영자" },
+          rejectReason: "미정산 보수가 남아 있습니다",
+        }),
+      },
+    };
+    const audit = { record: jest.fn().mockResolvedValue(undefined) };
+    const dispatcher = { dispatchCommon: jest.fn().mockResolvedValue(undefined) };
+    const service = new InfluencersService(
+      prisma as unknown as PrismaService,
+      audit as unknown as AuditService,
+      dispatcher as unknown as LineDispatcherService,
+    );
+    return { prisma, audit, dispatcher, service };
+  }
+
+  const pendingRow = {
+    id: "wd-1",
+    influencer: { name: "나기사", lineUserId: "U1" },
+  };
+
+  it("REJECTED 로 닫고 사유를 LINE 으로 안내한다", async () => {
+    const { prisma, dispatcher, service } = makeRejectMocks(pendingRow);
+
+    const result = await service.rejectWithdrawal(
+      "inf-1",
+      actor,
+      "미정산 보수가 남아 있습니다",
+    );
+
+    expect(prisma.influencerWithdrawal.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          decision: "REJECTED",
+          decidedById: "admin-1",
+          rejectReason: "미정산 보수가 남아 있습니다",
+        }),
+      }),
+    );
+    expect(dispatcher.dispatchCommon).toHaveBeenCalledWith(
+      "COMMON_WITHDRAWAL_REJECTED",
+      expect.objectContaining({
+        withdrawal: { rejectReason: "미정산 보수가 남아 있습니다" },
+      }),
+    );
+    expect(result.decision).toBe("REJECTED");
+  });
+
+  it("반려 사유 본문은 감사 로그에 남기지 않는다", async () => {
+    const { audit, service } = makeRejectMocks(pendingRow);
+
+    await service.rejectWithdrawal("inf-1", actor, "미정산 보수가 남아 있습니다");
+
+    expect(JSON.stringify(audit.record.mock.calls[0][0])).not.toContain(
+      "미정산 보수가 남아 있습니다",
+    );
+  });
+
+  it("대기 건이 없으면 404", async () => {
+    const { service } = makeRejectMocks(null);
+    await expect(
+      service.rejectWithdrawal("inf-1", actor, "사유"),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
+
 describe("탈퇴 권한 (컨트롤러)", () => {
   function makeController() {
-    const svc = { withdraw: jest.fn().mockResolvedValue(undefined) };
+    const svc = {
+      withdraw: jest.fn().mockResolvedValue(undefined),
+      rejectWithdrawal: jest.fn().mockResolvedValue(undefined),
+    };
     const controller = new InfluencersController(
       svc as unknown as InfluencersService,
     );
@@ -129,4 +284,14 @@ describe("탈퇴 권한 (컨트롤러)", () => {
       expect(svc.withdraw).not.toHaveBeenCalled();
     },
   );
+
+  it.each(["ADMIN", "GUEST"])("%s 는 반려도 할 수 없다", async (role) => {
+    const { svc, controller } = makeController();
+    await expect(
+      controller.rejectWithdrawal({ user: userWithRole(role) }, "inf-1", {
+        rejectReason: "사유",
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(svc.rejectWithdrawal).not.toHaveBeenCalled();
+  });
 });

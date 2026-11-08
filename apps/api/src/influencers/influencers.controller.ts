@@ -14,6 +14,7 @@ import {
 } from "@nestjs/common";
 import {
   CreateInfluencerMemoRequestSchema,
+  RejectWithdrawalRequestSchema,
   UpdateInfluencerTagsRequestSchema,
   parseInfluencerFilterParams,
   type AdminInfluencerExportResponse,
@@ -23,6 +24,8 @@ import {
   type InfluencerMemoEntry,
   type InfluencerNotesResponse,
   type InfluencerTagListResponse,
+  type InfluencerWithdrawal,
+  type RejectWithdrawalRequest,
   type UpdateInfluencerTagsRequest,
   type UpdateInfluencerTagsResponse,
 } from "@jsure/shared";
@@ -113,6 +116,24 @@ export class InfluencersController {
       throw new ForbiddenException("탈퇴 처리는 OWNER 만 할 수 있습니다");
     }
     await this.svc.withdraw(id, req.user);
+  }
+
+  /**
+   * 탈퇴 신청 반려. 승인과 같은 저울에 올리는 판단이라 권한도 같게 OWNER 전용이다.
+   * (화면도 OWNER 에게만 버튼을 보여주지만, 최종 방어선은 여기다.)
+   */
+  @Post(":id/withdrawal/reject")
+  @HttpCode(200)
+  async rejectWithdrawal(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(RejectWithdrawalRequestSchema))
+    body: RejectWithdrawalRequest,
+  ): Promise<InfluencerWithdrawal> {
+    if (req.user.role !== "OWNER") {
+      throw new ForbiddenException("탈퇴 반려는 OWNER 만 할 수 있습니다");
+    }
+    return this.svc.rejectWithdrawal(id, req.user, body.rejectReason);
   }
 
   @Post(":id/flag")

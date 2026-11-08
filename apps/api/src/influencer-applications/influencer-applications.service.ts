@@ -346,6 +346,21 @@ export class InfluencerApplicationsService {
   ): Promise<InfluencerApplication> {
     let subTypes = subTypesInput;
     const now = new Date();
+
+    // 탈퇴 승인 대기 중에는 새 응모를 받지 않는다. 받으면 승인 시점에 진행 중인
+    // 캠페인이 되살아나 "제품만 받고 탈퇴"가 가능해진다 — 신청 시점의 검증이
+    // 승인 시점까지 유효하도록 입구를 막는 쪽이 확실하다.
+    const pendingWithdrawal = await this.prisma.influencerWithdrawal.findFirst({
+      where: { influencerId, decision: "PENDING" },
+      select: { id: true },
+    });
+    if (pendingWithdrawal) {
+      throw new BadRequestException({
+        code: "WITHDRAWAL_PENDING",
+        message: "탈퇴 승인 대기 중에는 응모할 수 없습니다",
+      });
+    }
+
     const campaign = await this.prisma.campaign.findFirst({
       where: {
         id: campaignId,

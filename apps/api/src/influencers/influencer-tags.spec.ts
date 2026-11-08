@@ -2,6 +2,7 @@ import { NotFoundException } from "@nestjs/common";
 import { InfluencersService } from "./influencers.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { AuditService, AuditActor } from "../audit/audit.service";
+import type { LineDispatcherService } from "../line-templates/line-dispatcher.service";
 
 const actor: AuditActor = { id: "admin-1", name: "운영자" };
 
@@ -31,6 +32,7 @@ function makeMocks(influencerExists = true) {
   const service = new InfluencersService(
     prisma as unknown as PrismaService,
     audit as unknown as AuditService,
+    { dispatchCommon: jest.fn() } as unknown as LineDispatcherService,
   );
   return { prisma, audit, service, upsert, deleteMany, createMany };
 }

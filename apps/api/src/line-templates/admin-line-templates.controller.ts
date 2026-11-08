@@ -11,13 +11,13 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
-  CampaignCategorySchema,
+  LineTemplateCategorySchema,
   LineTriggerKeySchema,
   PreviewLineMessageTemplateRequestSchema,
   TestSendLineMessageTemplateRequestSchema,
   ToggleLineMessageTemplateEnabledRequestSchema,
   UpdateLineMessageTemplateRequestSchema,
-  type CampaignCategory,
+  type LineTemplateCategory,
   type LineMessageTemplateDetailResponse,
   type LineMessageTemplateListResponse,
   type LineMessageTemplateResponse,
@@ -37,9 +37,9 @@ import { AdminLineTemplatesService } from "./admin-line-templates.service";
 function parseParams(
   category: string,
   triggerKey: string,
-): { category: CampaignCategory; triggerKey: LineTriggerKey } {
+): { category: LineTemplateCategory; triggerKey: LineTriggerKey } {
   return {
-    category: CampaignCategorySchema.parse(category),
+    category: LineTemplateCategorySchema.parse(category),
     triggerKey: LineTriggerKeySchema.parse(triggerKey),
   };
 }
@@ -51,7 +51,7 @@ export class AdminLineTemplatesController {
 
   @Get()
   async list(@Query("category") category: string): Promise<LineMessageTemplateListResponse> {
-    const parsedCategory = CampaignCategorySchema.parse(category);
+    const parsedCategory = LineTemplateCategorySchema.parse(category);
     return this.svc.list(parsedCategory);
   }
 

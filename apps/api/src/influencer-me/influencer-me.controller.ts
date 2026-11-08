@@ -2,34 +2,44 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   Param,
   Patch,
+  Post,
   Put,
   Request,
   UseGuards,
   UsePipes,
 } from "@nestjs/common";
 import {
+  CreateWithdrawalRequestSchema,
   InfluencerBankAccountSchema,
   InfluencerSnsAccountInputSchema,
   SnsAccountSubTypeSchema,
   UpdateInfluencerAddressRequestSchema,
   UpdateInfluencerProfileRequestSchema,
+  type CreateWithdrawalRequest,
   type InfluencerBankAccount,
   type InfluencerSnsAccountInput,
+  type InfluencerWithdrawal,
   type UpdateInfluencerAddressRequest,
   type UpdateInfluencerProfileRequest,
+  type WithdrawalEligibilityResponse,
 } from "@jsure/shared";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { InfluencerJwtAuthGuard } from "../influencer-auth/guards/influencer-jwt-auth.guard";
 import type { AuthenticatedInfluencer } from "../influencer-auth/strategies/influencer-jwt.strategy";
 import { InfluencerMeService } from "./influencer-me.service";
+import { InfluencerMeWithdrawalService } from "./influencer-me-withdrawal.service";
 
 @UseGuards(InfluencerJwtAuthGuard)
 @Controller("influencer-me")
 export class InfluencerMeController {
-  constructor(private readonly svc: InfluencerMeService) {}
+  constructor(
+    private readonly svc: InfluencerMeService,
+    private readonly withdrawals: InfluencerMeWithdrawalService,
+  ) {}
 
   @Patch("profile")
   @HttpCode(204)
@@ -79,5 +89,23 @@ export class InfluencerMeController {
     @Body() dto: InfluencerBankAccount,
   ) {
     await this.svc.upsertBankAccount(req.user.id, dto);
+  }
+
+  /** 탈퇴 안내 화면이 신청 가능 여부와 그 근거를 한 번에 받는다. */
+  @Get("withdrawal")
+  withdrawalEligibility(
+    @Request() req: { user: AuthenticatedInfluencer },
+  ): Promise<WithdrawalEligibilityResponse> {
+    return this.withdrawals.getEligibility(req.user.id);
+  }
+
+  @Post("withdrawal")
+  @HttpCode(201)
+  requestWithdrawal(
+    @Request() req: { user: AuthenticatedInfluencer },
+    @Body(new ZodValidationPipe(CreateWithdrawalRequestSchema))
+    dto: CreateWithdrawalRequest,
+  ): Promise<InfluencerWithdrawal> {
+    return this.withdrawals.request(req.user.id, dto);
   }
 }

@@ -48,6 +48,9 @@ export const AdminActivityActionSchema = z.enum([
   "INFLUENCER_FLAG_CLEAR",
   "INFLUENCER_TAGS_UPDATE",
   "INFLUENCER_WITHDRAW",
+  // 인플루언서 본인이 낸 탈퇴 신청. actor 가 없어 origin 은 SYSTEM 으로 남는다.
+  "INFLUENCER_WITHDRAW_REQUEST",
+  "INFLUENCER_WITHDRAW_REJECT",
 ]);
 export type AdminActivityAction = z.infer<typeof AdminActivityActionSchema>;
 

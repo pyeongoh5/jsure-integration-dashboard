@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMe, logout as logoutApi } from "@/domains/auth";
+import { fetchWithdrawalEligibility } from "@/domains/me";
 import { useInfluencerAuth } from "../../context/InfluencerAuthContext";
 import { t } from "@i18n";
 import styles from "./Me.module.css";
@@ -9,6 +10,10 @@ export function Me() {
   const nav = useNavigate();
   const auth = useInfluencerAuth();
   const { data } = useQuery({ queryKey: ["me"], queryFn: fetchMe });
+  const { data: withdrawal } = useQuery({
+    queryKey: ["me", "withdrawal"],
+    queryFn: fetchWithdrawalEligibility,
+  });
 
   function logout() {
     void logoutApi(); // 서버 리프레시 세션 폐기 (실패 무시)
@@ -85,6 +90,12 @@ export function Me() {
       <button type="button" className={styles.logout} onClick={logout}>
         {t("pages.me.index.logout")}
       </button>
+
+      <Link to="/me/withdrawal" className={styles.withdrawal}>
+        {withdrawal?.latest?.decision === "PENDING"
+          ? t("pages.me.index.withdrawalPending")
+          : t("pages.me.index.withdrawalEntry")}
+      </Link>
     </div>
   );
 }

@@ -1,9 +1,16 @@
+import {
+  InfluencerWithdrawalSchema,
+  WithdrawalEligibilityResponseSchema,
+} from "@jsure/shared";
 import type {
+  CreateWithdrawalRequest,
   InfluencerBankAccount,
   InfluencerSnsAccountInput,
+  InfluencerWithdrawal,
   SnsAccountSubType,
   UpdateInfluencerAddressRequest,
   UpdateInfluencerProfileRequest,
+  WithdrawalEligibilityResponse,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
@@ -33,4 +40,16 @@ export async function upsertBankAccount(
   input: InfluencerBankAccount,
 ): Promise<void> {
   await api.put("/influencer-me/bank", input);
+}
+
+export async function fetchWithdrawalEligibility(): Promise<WithdrawalEligibilityResponse> {
+  const res = await api.get("/influencer-me/withdrawal");
+  return WithdrawalEligibilityResponseSchema.parse(res.data);
+}
+
+export async function requestWithdrawal(
+  input: CreateWithdrawalRequest,
+): Promise<InfluencerWithdrawal> {
+  const res = await api.post("/influencer-me/withdrawal", input);
+  return InfluencerWithdrawalSchema.parse(res.data);
 }

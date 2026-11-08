@@ -10,6 +10,7 @@ import type {
   InfluencerFilter,
   Residence,
   SnsAccountSubType,
+  WithdrawalFilter,
 } from "@jsure/shared";
 import {
   InfluencerNotesDialog,
@@ -17,6 +18,9 @@ import {
   InfluencerWithdrawDialog,
   RESIDENCE_LABEL_KEY,
   ResidenceFilterChip,
+  WithdrawalFilterChip,
+  InfluencerWithdrawalRejectDialog,
+  withdrawalTooltip,
   buildInfluencersCsv,
   exportInfluencers,
   influencersCsvFilename,
@@ -25,7 +29,12 @@ import {
 import { triggerCsvDownload } from "@/domains/application";
 import { getStoredUser } from "@/domains/auth";
 import { BroadcastDialog } from "@/domains/broadcast";
-import { ScrollTable, SnsProfileLink, TagChipList } from "@/components/composites";
+import {
+  ScrollTable,
+  SnsProfileLink,
+  TagChipList,
+  WithdrawalBadge,
+} from "@/components/composites";
 import {
   FilterChipBar,
   MultiSelectFilterChip,
@@ -98,6 +107,8 @@ export function Influencers() {
   );
   const [tagFilter, setTagFilter] = useState<Set<string>>(() => new Set());
   const [residenceFilter, setResidenceFilter] = useState<Residence | null>(null);
+  const [withdrawalFilter, setWithdrawalFilter] =
+    useState<WithdrawalFilter | null>(null);
   const [broadcastCandidates, setBroadcastCandidates] = useState<
     AdminInfluencer[] | null
   >(null);
@@ -110,6 +121,7 @@ export function Influencers() {
   const [withdrawTarget, setWithdrawTarget] = useState<AdminInfluencer | null>(
     null,
   );
+  const [rejectTarget, setRejectTarget] = useState<AdminInfluencer | null>(null);
 
   // 선택 순서가 다른 쿼리 키를 만들지 않도록 정렬해서 넣는다.
   const filter = useMemo<InfluencerFilter>(
@@ -119,8 +131,9 @@ export function Influencers() {
         tagIds: [...tagFilter].sort(),
         residence: residenceFilter,
         query: debouncedQuery,
+        withdrawal: withdrawalFilter,
       }),
-    [snsFilter, tagFilter, residenceFilter, debouncedQuery],
+    [snsFilter, tagFilter, residenceFilter, debouncedQuery, withdrawalFilter],
   );
 
   const {
@@ -241,6 +254,10 @@ export function Influencers() {
             onChange={setResidenceFilter}
           />
           <InfluencerTagFilterChip value={tagFilter} onChange={setTagFilter} />
+          <WithdrawalFilterChip
+            value={withdrawalFilter}
+            onChange={setWithdrawalFilter}
+          />
         </FilterChipBar>
         <div className={styles.headerActions}>
           <div className={styles.search}>
@@ -379,6 +396,12 @@ export function Influencers() {
                       >
                         {r.status === "ACTIVE" ? t("common.active") : t("common.suspended")}
                       </span>
+                      {r.withdrawal && (
+                        <WithdrawalBadge
+                          decision={r.withdrawal.decision}
+                          detail={withdrawalTooltip(r.withdrawal, t)}
+                        />
+                      )}
                     </td>
                     <td className={styles.date}>
                       {new Date(r.createdAt).toLocaleDateString(language, {
@@ -431,11 +454,28 @@ export function Influencers() {
         <InfluencerWithdrawDialog
           influencerId={withdrawTarget.id}
           influencerName={withdrawTarget.name}
+          withdrawal={withdrawTarget.withdrawal}
           onDone={() => {
             setWithdrawTarget(null);
             reload();
           }}
+          onReject={() => {
+            setRejectTarget(withdrawTarget);
+            setWithdrawTarget(null);
+          }}
           onCancel={() => setWithdrawTarget(null)}
+        />
+      )}
+
+      {rejectTarget && (
+        <InfluencerWithdrawalRejectDialog
+          influencerId={rejectTarget.id}
+          influencerName={rejectTarget.name}
+          onDone={() => {
+            setRejectTarget(null);
+            reload();
+          }}
+          onCancel={() => setRejectTarget(null)}
         />
       )}
     </div>

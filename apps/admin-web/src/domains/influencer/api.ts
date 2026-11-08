@@ -5,6 +5,7 @@ import {
   InfluencerMemoEntrySchema,
   InfluencerNotesResponseSchema,
   InfluencerTagListResponseSchema,
+  InfluencerWithdrawalSchema,
   UpdateInfluencerTagsResponseSchema,
   influencerFilterToParams,
   type AdminInfluencerExportResponse,
@@ -14,6 +15,7 @@ import {
   type InfluencerMemoEntry,
   type InfluencerNotesResponse,
   type InfluencerTag,
+  type InfluencerWithdrawal,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
@@ -100,7 +102,19 @@ export async function unflagInfluencer(influencerId: string): Promise<void> {
   await api.delete(`/influencers/${encodeURIComponent(influencerId)}/flag`);
 }
 
-/** 탈퇴 처리 — PII 익명화. 되돌릴 수 없다. */
+/** 탈퇴 처리 — PII 익명화. 되돌릴 수 없다. 대기 중인 신청이 있으면 함께 승인된다. */
 export async function withdrawInfluencer(influencerId: string): Promise<void> {
   await api.post(`/influencers/${encodeURIComponent(influencerId)}/withdraw`);
+}
+
+/** 탈퇴 신청 반려 — 계정은 그대로 두고 신청 건만 닫는다. */
+export async function rejectInfluencerWithdrawal(
+  influencerId: string,
+  rejectReason: string,
+): Promise<InfluencerWithdrawal> {
+  const res = await api.post(
+    `/influencers/${encodeURIComponent(influencerId)}/withdrawal/reject`,
+    { rejectReason },
+  );
+  return InfluencerWithdrawalSchema.parse(res.data);
 }

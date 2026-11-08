@@ -22,6 +22,7 @@ import { MeProfile } from "./pages/Me/Profile";
 import { MeSns } from "./pages/Me/Sns";
 import { MeBank } from "./pages/Me/Bank";
 import { MeAddress } from "./pages/Me/Address";
+import { MeWithdrawal } from "./pages/Me/Withdrawal";
 import { NotFound } from "./pages/NotFound";
 
 export function App() {
@@ -53,6 +54,7 @@ export function App() {
         <Route path="/me/sns" element={<MeSns />} />
         <Route path="/me/bank" element={<MeBank />} />
         <Route path="/me/address" element={<MeAddress />} />
+        <Route path="/me/withdrawal" element={<MeWithdrawal />} />
         <Route path="/notices" element={<Notices />} />
         <Route path="/notices/:id" element={<NoticeDetail />} />
       </Route>

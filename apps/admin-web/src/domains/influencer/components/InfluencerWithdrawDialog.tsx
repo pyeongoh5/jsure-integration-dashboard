@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import {
   INFLUENCER_HISTORY_TAB,
   type InfluencerActivityGroup,
+  type InfluencerWithdrawal,
 } from "@jsure/shared";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import { Button } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 import { fetchInfluencerActivity, withdrawInfluencer } from "../api";
+import { WITHDRAWAL_REASON_LABEL_KEY } from "../withdrawalLabel";
 import styles from "./InfluencerWithdrawDialog.module.css";
 
 type CountsState =
@@ -22,8 +25,12 @@ function isOngoing(group: InfluencerActivityGroup): boolean {
 type Props = {
   influencerId: string;
   influencerName: string;
+  /** 본인이 낸 탈퇴 신청. 어드민이 직접 탈퇴시키는 경우에는 null. */
+  withdrawal: InfluencerWithdrawal | null;
   /** 탈퇴 성공 후 — 목록 갱신용. */
   onDone: () => void;
+  /** 대기 중인 신청을 반려하러 넘어갈 때. 신청이 없으면 호출되지 않는다. */
+  onReject: () => void;
   onCancel: () => void;
 };
 
@@ -35,7 +42,9 @@ type Props = {
 export function InfluencerWithdrawDialog({
   influencerId,
   influencerName,
+  withdrawal,
   onDone,
+  onReject,
   onCancel,
 }: Props) {
   const t = useT();
@@ -95,10 +104,19 @@ export function InfluencerWithdrawDialog({
       title={t("domains.influencer.withdrawDialog.title", {
         name: influencerName,
       })}
-      subtitle={<DialogBody counts={counts} error={error} />}
+      subtitle={
+        <DialogBody counts={counts} error={error} withdrawal={withdrawal} />
+      }
       confirmLabel={t("domains.influencer.withdrawDialog.confirm")}
       busy={busy}
       confirmDisabled={counts.kind === "loading"}
+      secondaryAction={
+        withdrawal?.decision === "PENDING" ? (
+          <Button variant="secondary" size="sm" disabled={busy} onClick={onReject}>
+            {t("domains.influencer.withdrawal.rejectConfirm")}
+          </Button>
+        ) : undefined
+      }
       onConfirm={handleConfirm}
       onCancel={() => {
         if (!busy) onCancel();
@@ -110,14 +128,19 @@ export function InfluencerWithdrawDialog({
 function DialogBody({
   counts,
   error,
+  withdrawal,
 }: {
   counts: CountsState;
   error: string | null;
+  withdrawal: InfluencerWithdrawal | null;
 }) {
   const t = useT();
 
   return (
     <>
+      {withdrawal?.decision === "PENDING" && (
+        <WithdrawalRequestSummary withdrawal={withdrawal} />
+      )}
       {counts.kind === "loading" && (
         <span className={styles.line}>{t("common.loading")}</span>
       )}
@@ -153,5 +176,42 @@ function DialogBody({
       </span>
       {error && <span className={`${styles.line} ${styles.warn}`}>{error}</span>}
     </>
+  );
+}
+
+/** 본인이 적어낸 신청 내용 — 승인 전에 사유와 신청 시점을 눈으로 확인하는 자리다. */
+function WithdrawalRequestSummary({
+  withdrawal,
+}: {
+  withdrawal: InfluencerWithdrawal;
+}) {
+  const t = useT();
+
+  return (
+    <span className={styles.request}>
+      <span className={styles.requestTitle}>
+        {t("domains.influencer.withdrawal.requestBoxTitle")}
+      </span>
+      <span className={styles.line}>
+        <span className={styles.requestLabel}>
+          {t("domains.influencer.withdrawal.requestedAt")}
+        </span>
+        {new Date(withdrawal.requestedAt).toLocaleString()}
+      </span>
+      <span className={styles.line}>
+        <span className={styles.requestLabel}>
+          {t("domains.influencer.withdrawal.reason")}
+        </span>
+        {t(WITHDRAWAL_REASON_LABEL_KEY[withdrawal.reason])}
+      </span>
+      {withdrawal.reasonDetail.trim() !== "" && (
+        <span className={styles.line}>
+          <span className={styles.requestLabel}>
+            {t("domains.influencer.withdrawal.reasonDetail")}
+          </span>
+          {withdrawal.reasonDetail}
+        </span>
+      )}
+    </span>
   );
 }

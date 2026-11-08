@@ -803,6 +803,44 @@ export const messages = {
         login: { jp: "ログイン", kr: "로그인" },
         logout: { jp: "ログアウト", kr: "로그아웃" },
         terms: { jp: "利用規約", kr: "이용약관" },
+        withdrawalEntry: { jp: "退会をご希望の方はこちら", kr: "회원 탈퇴를 원하시면 여기를 클릭해 주세요" }, // new
+        withdrawalPending: { jp: "退会申請済み（承認待ち）", kr: "탈퇴 신청 완료 (승인 대기중)" }, // new
+      },
+      withdrawal: {
+        title: { jp: "退会のお申し込み", kr: "회원 탈퇴 신청" }, // new
+        loading: { jp: "読み込み中...", kr: "불러오는 중..." }, // new
+        back: { jp: "マイページへ戻る", kr: "마이페이지로 돌아가기" }, // new
+        noticeTitle: { jp: "お申し込みの前にご確認ください", kr: "탈퇴 전 유의사항" }, // new
+        noticeApproval: { jp: "退会申請の後、運営（管理者）の確認・承認を経て退会が完了します。", kr: "탈퇴 신청 후 운영진(관리자) 확인 및 승인을 거쳐 최종 탈퇴가 완료됩니다." }, // new
+        noticeRewards: { jp: "最終承認の時点で、保有中のリワード・ポイントはすべて消滅します。", kr: "최종 승인 시 보유하신 리워드·포인트는 모두 소멸합니다." }, // new
+        noticeOngoing: { jp: "進行中のキャンペーンがある場合はお申し込みいただけません。", kr: "진행 중인 캠페인이 있는 경우 신청하실 수 없습니다." }, // new
+        noticeAutoCancelPrefix: { jp: "審査中の応募 ", kr: "심사 중인 응모 " }, // new
+        noticeAutoCancelSuffix: { jp: " 件は、お申し込みと同時に取り消されます。", kr: "건은 신청과 동시에 취소됩니다." }, // new
+        blockedTitle: { jp: "退会のお申し込みができません", kr: "탈퇴 신청이 불가합니다" }, // new
+        blockedDescription: { jp: "進行中のキャンペーンがあるため、退会のお申し込みができません。すべてのキャンペーンの完了・精算終了後にお申し込みください。", kr: "진행 중인 캠페인이 있어 탈퇴 신청이 불가합니다. 모든 캠페인 완료 및 정산 종료 후 신청해 주세요." }, // new
+        blockedListTitle: { jp: "進行中のキャンペーン", kr: "진행 중인 캠페인" }, // new
+        pendingTitle: { jp: "退会申請が完了しました", kr: "탈퇴 신청이 완료되었습니다" }, // new
+        pendingDescription: { jp: "管理者の確認の後、最終的に処理されます。", kr: "관리자 확인 후 최종 처리됩니다." }, // new
+        pendingRequestedAtLabel: { jp: "申請日時", kr: "신청 일시" }, // new
+        rejectedTitle: { jp: "退会申請が差し戻されました", kr: "탈퇴 신청이 반려되었습니다" }, // new
+        rejectedReasonLabel: { jp: "差し戻しの理由", kr: "반려 사유" }, // new
+        rejectedRetry: { jp: "内容をご確認のうえ、改めてお申し込みいただけます。", kr: "내용을 확인하신 후 다시 신청하실 수 있습니다." }, // new
+        reasonTitle: { jp: "退会の理由", kr: "탈퇴 사유" }, // new
+        reasonRequiredMark: { jp: "必須", kr: "필수" }, // new
+        reasonRequiredError: { jp: "退会の理由を選択してください", kr: "탈퇴 사유를 선택해 주세요" }, // new
+        reasonNotEnoughCampaigns: { jp: "参加したいキャンペーンが少ないため", kr: "참여하고 싶은 캠페인이 부족해서" }, // new
+        reasonGuidelineBurden: { jp: "キャンペーンのガイドライン・依頼事項が負担のため", kr: "캠페인 가이드라인/요청사항이 까다로워서" }, // new
+        reasonRewardUnsatisfied: { jp: "提供される特典（報酬・原稿料・商品）に満足できないため", kr: "제공 혜택(보수/원고료/제품)이 만족스럽지 않아서" }, // new
+        reasonUsingOtherPlatform: { jp: "他のプラットフォーム・代理店を主に利用するため", kr: "타 플랫폼/에이전시를 주로 이용하게 되어서" }, // new
+        reasonSnsInactive: { jp: "SNS活動の休止、または個人的な事情", kr: "SNS 활동 중단 또는 개인 사정" }, // new
+        reasonOther: { jp: "その他（自由記入）", kr: "기타 (직접 작성)" }, // new
+        detailLabel: { jp: "詳細な理由・改善のご意見", kr: "상세 사유 및 개선 의견" }, // new
+        detailPlaceholder: { jp: "プラットフォームの運営で残念だった点や改善してほしい点を自由にお書きいただけると、サービス改善の大きな助けになります。（最大500文字）", kr: "플랫폼 운영에 아쉬웠던 점이나 개선할 점을 자유롭게 적어주시면 서비스 개선에 큰 도움이 됩니다. (최대 500자)" }, // new
+        submit: { jp: "退会を申し込む", kr: "탈퇴 신청하기" }, // new
+        submitting: { jp: "送信中...", kr: "신청 중..." }, // new
+        errorOngoing: { jp: "進行中のキャンペーンがあるため、退会のお申し込みができません。", kr: "진행 중인 캠페인이 있어 탈퇴 신청이 불가합니다." }, // new
+        errorAlreadyPending: { jp: "すでに承認待ちの退会申請があります。", kr: "이미 처리 대기 중인 탈퇴 신청이 있습니다." }, // new
+        errorGeneric: { jp: "退会のお申し込みに失敗しました。時間をおいて再度お試しください。", kr: "탈퇴 신청에 실패했습니다. 잠시 후 다시 시도해 주세요." }, // new
       },
       profile: {
         required: { jp: "必須", kr: "필수" },

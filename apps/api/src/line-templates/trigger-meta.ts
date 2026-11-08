@@ -1,6 +1,9 @@
 import {
+  isCommonLineTriggerKey,
   resolvePostingDeadline,
   type CampaignCategory,
+  type CommonLineTriggerKey,
+  type LineTemplateCategory,
   type LineTriggerKey,
   type TriggerVariable,
 } from "@jsure/shared";
@@ -64,6 +67,29 @@ export type TriggerMetaEntry = {
   category: CampaignCategory;
   variables: TriggerVariableWithResolver[];
 };
+
+/**
+ * 캠페인 응모 맥락 없이 인플루언서에게 직접 보내는 알림의 컨텍스트.
+ * 응모가 없으므로 DispatchContext 와 모양이 다르고, 그래서 메타 표와 발송 경로를
+ * 따로 둔다 (DispatchContext.application 을 optional 로 바꾸면 기존 캠페인 트리거
+ * 50여 개의 resolver 가 전부 깨진다).
+ */
+export type CommonDispatchContext = {
+  influencer: Pick<Influencer, "id" | "name" | "lineUserId">;
+  withdrawal?: { rejectReason: string | null };
+};
+
+export type CommonTriggerVariableWithResolver = TriggerVariable & {
+  resolver: (ctx: CommonDispatchContext) => string | null;
+};
+
+export type CommonTriggerMetaEntry = {
+  category: "COMMON";
+  variables: CommonTriggerVariableWithResolver[];
+};
+
+/** 캠페인 응모를 컨텍스트로 갖는 트리거 — TRIGGER_META 가 다루는 범위. */
+export type CampaignLineTriggerKey = Exclude<LineTriggerKey, CommonLineTriggerKey>;
 
 /**
  * Prisma include 형태 상수. 디스패치 컨텍스트에 필요한 캠페인/인플루언서 필드를
@@ -449,7 +475,7 @@ function withBase(...extra: TriggerVariableWithResolver[]): TriggerVariableWithR
   return [...BASE_VARS, ...extra];
 }
 
-export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
+export const TRIGGER_META: Record<CampaignLineTriggerKey, TriggerMetaEntry> = {
   SNS_APPLICATION_APPLIED: {
     category: "SNS",
     variables: withBase(),
@@ -686,8 +712,57 @@ export const TRIGGER_META: Record<LineTriggerKey, TriggerMetaEntry> = {
   },
 };
 
-export function getMeta(triggerKey: LineTriggerKey): TriggerMetaEntry {
+const commonInfluencerName: CommonTriggerVariableWithResolver = {
+  key: "influencerName",
+  label: "인플루언서 이름",
+  description: "インフルエンサー名",
+  sample: "山田花子",
+  resolver: (ctx) => ctx.influencer.name,
+};
+
+const withdrawalRejectReason: CommonTriggerVariableWithResolver = {
+  key: "rejectReason",
+  label: "반려 사유",
+  description: "退会申請が差し戻された理由",
+  sample: "未精算の報酬が残っているため",
+  resolver: (ctx) => ctx.withdrawal?.rejectReason ?? "",
+};
+
+export const COMMON_TRIGGER_META: Record<
+  CommonLineTriggerKey,
+  CommonTriggerMetaEntry
+> = {
+  COMMON_WITHDRAWAL_APPROVED: {
+    category: "COMMON",
+    variables: [commonInfluencerName],
+  },
+  COMMON_WITHDRAWAL_REJECTED: {
+    category: "COMMON",
+    variables: [commonInfluencerName, withdrawalRejectReason],
+  },
+};
+
+/**
+ * 캠페인 트리거의 메타. 공통 트리거를 넘기면 undefined 다 — 컨텍스트 모양이 달라
+ * 같은 표에 담을 수 없기 때문이다. 공통 트리거는 getCommonMeta 를 쓴다.
+ * (트리거 키를 문자열 조합으로 만드는 호출부가 있어 조회 실패가 실제로 가능하다.)
+ */
+export function getMeta(triggerKey: LineTriggerKey): TriggerMetaEntry | undefined {
+  if (isCommonLineTriggerKey(triggerKey)) return undefined;
   return TRIGGER_META[triggerKey];
+}
+
+export function getCommonMeta(
+  triggerKey: CommonLineTriggerKey,
+): CommonTriggerMetaEntry {
+  return COMMON_TRIGGER_META[triggerKey];
+}
+
+/** 트리거가 속한 템플릿 탭. 트리거 키만으로 결정된다. */
+export function triggerCategory(triggerKey: LineTriggerKey): LineTemplateCategory {
+  return isCommonLineTriggerKey(triggerKey)
+    ? COMMON_TRIGGER_META[triggerKey].category
+    : TRIGGER_META[triggerKey].category;
 }
 
 /**
@@ -702,12 +777,21 @@ export function campaignCompletedTriggerKeyFor(
   return "SNS_CAMPAIGN_COMPLETED";
 }
 
-export function listTriggersForCategory(category: CampaignCategory): LineTriggerKey[] {
-  return (Object.keys(TRIGGER_META) as LineTriggerKey[]).filter(
-    (k) => TRIGGER_META[k].category === category,
+export function listTriggersForCategory(
+  category: LineTemplateCategory,
+): LineTriggerKey[] {
+  if (category === "COMMON") {
+    return Object.keys(COMMON_TRIGGER_META) as CommonLineTriggerKey[];
+  }
+  return (Object.keys(TRIGGER_META) as CampaignLineTriggerKey[]).filter(
+    (triggerKey) => TRIGGER_META[triggerKey].category === category,
   );
 }
 
+/** resolver 를 떼어낸 변수 목록 — 어드민 화면과 본문 검증이 쓴다. */
 export function publicVariables(triggerKey: LineTriggerKey): TriggerVariable[] {
-  return TRIGGER_META[triggerKey].variables.map(({ resolver: _resolver, ...rest }) => rest);
+  const variables = isCommonLineTriggerKey(triggerKey)
+    ? COMMON_TRIGGER_META[triggerKey].variables
+    : TRIGGER_META[triggerKey].variables;
+  return variables.map(({ resolver: _resolver, ...rest }) => rest);
 }

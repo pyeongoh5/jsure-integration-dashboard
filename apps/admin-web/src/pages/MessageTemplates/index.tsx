@@ -5,7 +5,7 @@ import {
   setTemplateEnabled,
   TRIGGER_DESCRIPTIONS,
   TRIGGER_LABELS,
-  type CampaignCategory,
+  type LineTemplateCategory,
   type LineMessageTemplateListItem,
 } from "@/domains/messageTemplate";
 import { Switch } from "@/components/ui";
@@ -14,17 +14,18 @@ import { useLanguage, useT } from "@/lib/i18n";
 import type { AdminTranslationKey } from "@i18n/admin";
 import styles from "./MessageTemplates.module.css";
 
-const CATEGORIES: { key: CampaignCategory; labelKey: AdminTranslationKey }[] = [
+const CATEGORIES: { key: LineTemplateCategory; labelKey: AdminTranslationKey }[] = [
   { key: "SNS", labelKey: "pages.messageTemplates.categorySns" },
   { key: "FAKE_PURCHASE", labelKey: "pages.messageTemplates.categoryFakePurchase" },
   { key: "SIMPLE_REVIEW", labelKey: "pages.messageTemplates.categorySimpleReview" },
+  { key: "COMMON", labelKey: "pages.messageTemplates.categoryCommon" },
 ];
 
 const CATEGORY_KEYS = CATEGORIES.map((entry) => entry.key);
 
-function parseCategory(raw: string | null): CampaignCategory {
-  return CATEGORY_KEYS.includes(raw as CampaignCategory)
-    ? (raw as CampaignCategory)
+function parseCategory(raw: string | null): LineTemplateCategory {
+  return CATEGORY_KEYS.includes(raw as LineTemplateCategory)
+    ? (raw as LineTemplateCategory)
     : "SNS";
 }
 
@@ -38,7 +39,7 @@ export function MessageTemplates(): JSX.Element {
   const [loading, setLoading] = useState(true);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
 
-  const setCategory = (nextCategory: CampaignCategory): void => {
+  const setCategory = (nextCategory: LineTemplateCategory): void => {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);

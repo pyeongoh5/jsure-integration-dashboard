@@ -1789,6 +1789,16 @@ export const adminMessages = {
             en: "Influencer withdrawn",
             ja: "インフルエンサー退会処理",
           },
+          influencerWithdrawRequest: {
+            ko: "탈퇴 신청 접수",
+            en: "Withdrawal requested",
+            ja: "退会申請を受付",
+          },
+          influencerWithdrawReject: {
+            ko: "탈퇴 신청 반려",
+            en: "Withdrawal rejected",
+            ja: "退会申請を差し戻し",
+          },
           applicationRestore: {
             ko: "강제 취소 되돌림",
             en: "Force cancel undone",
@@ -2967,6 +2977,16 @@ export const adminMessages = {
           en: "9. Unpaid campaign completion notice",
           ja: "9. 無報酬キャンペーン終了のご案内",
         },
+        commonWithdrawalApproved: {
+          ko: "1. 탈퇴 승인 안내",
+          en: "1. Withdrawal approved notice",
+          ja: "1. 退会承認のご案内",
+        },
+        commonWithdrawalRejected: {
+          ko: "2. 탈퇴 반려 안내",
+          en: "2. Withdrawal rejected notice",
+          ja: "2. 退会申請差し戻しのご案内",
+        },
       },
       triggerDescriptions: {
         deliveryReminder: {
@@ -3037,6 +3057,62 @@ export const adminMessages = {
       },
     },
     influencer: {
+      withdrawal: {
+        statusPending: { ko: "탈퇴 신청 대기", en: "Withdrawal pending", ja: "退会申請（承認待ち）" },
+        statusApproved: { ko: "탈퇴 완료", en: "Withdrawn", ja: "退会完了" },
+        statusRejected: { ko: "탈퇴 반려", en: "Withdrawal rejected", ja: "退会申請差し戻し" },
+        chipEmpty: { ko: "+ 탈퇴", en: "+ Withdrawal", ja: "+ 退会" },
+        prefix: { ko: "탈퇴", en: "Withdrawal", ja: "退会" },
+        filterTitle: { ko: "탈퇴 처리 상태", en: "Withdrawal status", ja: "退会処理ステータス" },
+        requestedAt: { ko: "탈퇴 신청일시", en: "Requested at", ja: "退会申請日時" },
+        decidedAt: { ko: "탈퇴 승인일시", en: "Approved at", ja: "退会承認日時" },
+        decidedBy: { ko: "처리 관리자", en: "Processed by", ja: "処理した管理者" },
+        reason: { ko: "탈퇴 사유", en: "Reason", ja: "退会理由" },
+        reasonDetail: { ko: "상세 사유", en: "Reason detail", ja: "詳細な理由" },
+        rejectReason: { ko: "반려 사유", en: "Rejection reason", ja: "差し戻しの理由" },
+        reasonNotEnoughCampaigns: {
+          ko: "참여하고 싶은 캠페인이 부족해서",
+          en: "Not enough campaigns to join",
+          ja: "参加したいキャンペーンが少ない",
+        },
+        reasonGuidelineBurden: {
+          ko: "캠페인 가이드라인/요청사항이 까다로워서",
+          en: "Guidelines or requests too demanding",
+          ja: "ガイドライン・依頼事項が負担",
+        },
+        reasonRewardUnsatisfied: {
+          ko: "제공 혜택(보수/원고료/제품)이 만족스럽지 않아서",
+          en: "Unsatisfied with rewards",
+          ja: "提供される特典に満足できない",
+        },
+        reasonUsingOtherPlatform: {
+          ko: "타 플랫폼/에이전시를 주로 이용하게 되어서",
+          en: "Mainly using another platform",
+          ja: "他のプラットフォームを主に利用",
+        },
+        reasonSnsInactive: {
+          ko: "SNS 활동 중단 또는 개인 사정",
+          en: "Stopped SNS activity or personal reasons",
+          ja: "SNS活動の休止・個人的な事情",
+        },
+        reasonOther: { ko: "기타 (직접 작성)", en: "Other", ja: "その他" },
+        rejectTitle: { ko: "탈퇴 신청 반려", en: "Reject withdrawal", ja: "退会申請を差し戻す" },
+        rejectDescription: {
+          ko: "반려 사유는 인플루언서에게 LINE 으로 전달됩니다.",
+          en: "The rejection reason is sent to the influencer via LINE.",
+          ja: "差し戻しの理由はLINEでインフルエンサーに送信されます。",
+        },
+        rejectPlaceholder: {
+          ko: "예: 미지급 잔여 정산금 확인이 필요합니다",
+          en: "e.g. Unsettled payments need to be checked",
+          ja: "例：未精算の報酬の確認が必要です",
+        },
+        rejectRequired: { ko: "반려 사유를 입력해 주세요", en: "Enter a rejection reason", ja: "差し戻しの理由を入力してください" },
+        rejectConfirm: { ko: "반려", en: "Reject", ja: "差し戻す" },
+        rejectFailed: { ko: "반려 처리에 실패했습니다", en: "Failed to reject", ja: "差し戻しに失敗しました" },
+        approveConfirm: { ko: "탈퇴 승인", en: "Approve withdrawal", ja: "退会を承認" },
+        requestBoxTitle: { ko: "본인이 신청한 탈퇴 건", en: "Self-requested withdrawal", ja: "本人による退会申請" },
+      },
       residence: {
         label: { ko: "거주지", en: "Residence", ja: "居住地" },
         kr: { ko: "한국", en: "South Korea", ja: "韓国" },
@@ -3536,6 +3612,11 @@ export const adminMessages = {
         ko: "단순 리뷰 캠페인",
         en: "Quick review campaigns",
         ja: "簡易レビューキャンペーン",
+      },
+      categoryCommon: {
+        ko: "공통",
+        en: "Common",
+        ja: "共通",
       },
       toggleFailed: {
         ko: "상태 변경 실패",

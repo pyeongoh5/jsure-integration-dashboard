@@ -3,6 +3,10 @@ import { SnsAccountSubTypeSchema } from "./influencer.js";
 import type { SnsAccountSubType } from "./influencer.js";
 import { ResidenceSchema } from "./residence.js";
 
+/** 인플루언서 목록의 탈퇴 상태 필터 값. */
+export const WithdrawalFilterSchema = z.enum(["PENDING", "APPROVED"]);
+export type WithdrawalFilter = z.infer<typeof WithdrawalFilterSchema>;
+
 /** 인플루언서 관리 목록·CSV 내보내기·일괄 발송 후보가 함께 쓰는 필터 조건. */
 export const InfluencerFilterSchema = z.object({
   /** 선택한 채널 중 하나라도 계정을 보유하면 포함(OR 매칭). 빈 배열이면 전체. */
@@ -17,6 +21,13 @@ export const InfluencerFilterSchema = z.object({
   residence: ResidenceSchema.nullable().default(null),
   /** 이름·이메일·SNS 핸들 부분일치 검색어. */
   query: z.string().default(""),
+  /**
+   * 탈퇴 처리 상태. null 이면 전체(신청 이력 없는 회원 포함).
+   * 두 값만 두는 이유: 대기 건은 인플루언서당 1개뿐이고 승인은 종착점이라,
+   * "그런 신청이 하나라도 있는가"가 곧 "현재 그 상태인가"와 같다. 반려는
+   * 이후 재신청으로 덮이므로 같은 판정이 성립하지 않아 필터로 두지 않는다.
+   */
+  withdrawal: WithdrawalFilterSchema.nullable().default(null),
 });
 export type InfluencerFilter = z.infer<typeof InfluencerFilterSchema>;
 
@@ -32,6 +43,7 @@ export function influencerFilterToParams(
   if (filter.tagIds.length > 0) params.tags = filter.tagIds.join(",");
   if (filter.residence) params.residence = filter.residence;
   if (filter.query.trim()) params.q = filter.query.trim();
+  if (filter.withdrawal) params.withdrawal = filter.withdrawal;
   return params;
 }
 
@@ -57,5 +69,8 @@ export function parseInfluencerFilterParams(
       ? raw.residence
       : null,
     query: typeof raw.q === "string" ? raw.q : "",
+    withdrawal: WithdrawalFilterSchema.safeParse(raw.withdrawal).success
+      ? raw.withdrawal
+      : null,
   });
 }

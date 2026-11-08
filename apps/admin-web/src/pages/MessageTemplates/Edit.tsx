@@ -7,7 +7,7 @@ import {
   TRIGGER_DESCRIPTIONS,
   TRIGGER_LABELS,
   VariablesPanel,
-  type CampaignCategory,
+  type LineTemplateCategory,
   type LineMessageTemplateDetailResponse,
   type LineTriggerKey,
 } from "@/domains/messageTemplate";
@@ -35,7 +35,7 @@ function findUnknownVariables(body: string, allowed: string[]): string[] {
 export function MessageTemplateEdit(): JSX.Element {
   const t = useT();
   const params = useParams<{
-    category: CampaignCategory;
+    category: LineTemplateCategory;
     triggerKey: LineTriggerKey;
   }>();
   const navigate = useNavigate();

@@ -56,6 +56,10 @@ export const ACTIVITY_ACTION_LABEL: Record<
   INFLUENCER_TAGS_UPDATE:
     "domains.application.history.actions.influencerTagsUpdate",
   INFLUENCER_WITHDRAW: "domains.application.history.actions.influencerWithdraw",
+  INFLUENCER_WITHDRAW_REQUEST:
+    "domains.application.history.actions.influencerWithdrawRequest",
+  INFLUENCER_WITHDRAW_REJECT:
+    "domains.application.history.actions.influencerWithdrawReject",
   APPLICATION_RESTORE: "domains.application.history.actions.applicationRestore",
 };
 

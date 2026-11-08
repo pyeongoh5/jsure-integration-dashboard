@@ -4,7 +4,7 @@ import {
   LineMessageTemplateResponseSchema,
   PreviewLineMessageTemplateResponseSchema,
   TestSendLineMessageTemplateResponseSchema,
-  type CampaignCategory,
+  type LineTemplateCategory,
   type LineMessageTemplateDetailResponse,
   type LineMessageTemplateListResponse,
   type LineMessageTemplateResponse,
@@ -15,19 +15,19 @@ import {
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
-function pathOf(category: CampaignCategory, triggerKey: LineTriggerKey): string {
+function pathOf(category: LineTemplateCategory, triggerKey: LineTriggerKey): string {
   return `/admin/line-templates/${category}/${triggerKey}`;
 }
 
 export async function listTemplates(
-  category: CampaignCategory,
+  category: LineTemplateCategory,
 ): Promise<LineMessageTemplateListResponse> {
   const res = await api.get("/admin/line-templates", { params: { category } });
   return LineMessageTemplateListResponseSchema.parse(res.data);
 }
 
 export async function getTemplate(
-  category: CampaignCategory,
+  category: LineTemplateCategory,
   triggerKey: LineTriggerKey,
 ): Promise<LineMessageTemplateDetailResponse> {
   const res = await api.get(pathOf(category, triggerKey));
@@ -35,7 +35,7 @@ export async function getTemplate(
 }
 
 export async function updateTemplate(
-  category: CampaignCategory,
+  category: LineTemplateCategory,
   triggerKey: LineTriggerKey,
   input: UpdateLineMessageTemplateRequest,
 ): Promise<LineMessageTemplateResponse> {
@@ -44,7 +44,7 @@ export async function updateTemplate(
 }
 
 export async function previewTemplate(
-  category: CampaignCategory,
+  category: LineTemplateCategory,
   triggerKey: LineTriggerKey,
   body: string,
 ): Promise<PreviewLineMessageTemplateResponse> {
@@ -53,7 +53,7 @@ export async function previewTemplate(
 }
 
 export async function testSendTemplate(
-  category: CampaignCategory,
+  category: LineTemplateCategory,
   triggerKey: LineTriggerKey,
   body: string,
 ): Promise<TestSendLineMessageTemplateResponse> {
@@ -62,7 +62,7 @@ export async function testSendTemplate(
 }
 
 export async function setTemplateEnabled(
-  category: CampaignCategory,
+  category: LineTemplateCategory,
   triggerKey: LineTriggerKey,
   enabled: boolean,
 ): Promise<LineMessageTemplateResponse> {

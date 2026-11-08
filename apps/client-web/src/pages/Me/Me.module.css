@@ -69,3 +69,13 @@
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
+
+/* 되돌릴 수 없는 출구라 로그아웃보다 더 약하게, 본문 흐름 밖에 둔다. */
+.withdrawal {
+  display: block;
+  margin: 20px 16px 32px;
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  text-decoration: underline;
+}

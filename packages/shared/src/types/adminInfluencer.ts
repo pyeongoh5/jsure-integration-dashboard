@@ -14,6 +14,7 @@ import {
   PostReviewStatusSchema,
 } from "./application.js";
 import { AttachmentSchema, InsightAttachmentInputSchema } from "./uploads.js";
+import { InfluencerWithdrawalSchema } from "./influencerWithdrawal.js";
 
 export { PostReviewStatusSchema };
 export type { PostReviewStatus } from "./application.js";
@@ -66,6 +67,12 @@ export const AdminInfluencerSchema = z.object({
    * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
    */
   crossPostCount: z.number().int().nonnegative().default(0),
+  /**
+   * 가장 최근 탈퇴 신청 1건. 신청 이력이 없으면 null.
+   * 목록 배지·CSV·승인 다이얼로그가 모두 이 값을 본다.
+   * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
+   */
+  withdrawal: InfluencerWithdrawalSchema.nullable().default(null),
   createdAt: z.string().datetime(),
 });
 export type AdminInfluencer = z.infer<typeof AdminInfluencerSchema>;

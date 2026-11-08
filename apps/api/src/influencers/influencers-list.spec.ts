@@ -9,6 +9,7 @@ import {
 import { InfluencersService } from "./influencers.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { AuditService } from "../audit/audit.service";
+import type { LineDispatcherService } from "../line-templates/line-dispatcher.service";
 
 describe("influencer 필터 직렬화", () => {
   const cases: InfluencerFilter[] = [
@@ -67,6 +68,7 @@ function makeRow(id: string) {
     addressLine2: "",
     snsAccounts: [{ snsType: "INSTAGRAM", handle: id, followerCount: 100 }],
     tagAssignments: [],
+    withdrawals: [],
   };
 }
 
@@ -79,7 +81,11 @@ function makeService(rows: InfluencerRow[], total = rows.length) {
     influencer: { findMany, count },
     campaignApplication: { findMany: jest.fn().mockResolvedValue([]) },
   } as unknown as PrismaService;
-  const service = new InfluencersService(prisma, {} as AuditService);
+  const service = new InfluencersService(
+    prisma,
+    {} as AuditService,
+    {} as LineDispatcherService,
+  );
   return { service, findMany, count, prisma };
 }
 

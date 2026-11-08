@@ -1,6 +1,6 @@
 import type { AdminTranslationKey } from "@i18n/admin";
 import type {
-  CampaignCategory,
+  LineTemplateCategory,
   LineMessageTemplateDetailResponse,
   LineMessageTemplateListItem,
   LineMessageTemplateListResponse,
@@ -96,6 +96,10 @@ export const TRIGGER_LABELS: Record<LineTriggerKey, AdminTranslationKey> = {
     "domains.messageTemplate.triggerLabels.simpleReviewSettlementCompleted",
   SIMPLE_REVIEW_CAMPAIGN_COMPLETED:
     "domains.messageTemplate.triggerLabels.simpleReviewCampaignCompleted",
+  COMMON_WITHDRAWAL_APPROVED:
+    "domains.messageTemplate.triggerLabels.commonWithdrawalApproved",
+  COMMON_WITHDRAWAL_REJECTED:
+    "domains.messageTemplate.triggerLabels.commonWithdrawalRejected",
 };
 
 /**
@@ -141,7 +145,7 @@ export const TRIGGER_DESCRIPTIONS: Partial<Record<LineTriggerKey, AdminTranslati
 };
 
 export type {
-  CampaignCategory,
+  LineTemplateCategory,
   LineMessageTemplateDetailResponse,
   LineMessageTemplateListItem,
   LineMessageTemplateListResponse,

@@ -1,5 +1,6 @@
 import {
   extractVariableKeys,
+  renderSample,
   renderTemplate,
   validateBodyVariables,
 } from "./template-renderer";
@@ -80,10 +81,14 @@ describe("renderTemplate", () => {
     expect(renderTemplate("Hi {{unknown}}", vars, ctx)).toBe("Hi {{unknown}}");
   });
 
-  it("샘플 모드에서는 sample 값을 사용", () => {
-    expect(renderTemplate("Hi {{name}} {{title}}", vars, ctx, { useSample: true })).toBe(
+  it("renderSample 은 sample 값을 사용", () => {
+    expect(renderSample("Hi {{name}} {{title}}", vars)).toBe(
       "Hi SAMPLE_NAME SAMPLE_TITLE",
     );
+  });
+
+  it("renderSample 도 허용 목록에 없는 변수는 원문 유지", () => {
+    expect(renderSample("Hi {{unknown}}", vars)).toBe("Hi {{unknown}}");
   });
 
   it("빈 본문은 그대로", () => {

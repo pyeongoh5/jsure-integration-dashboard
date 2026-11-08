@@ -2,6 +2,8 @@ import type { AdminInfluencer, SnsAccountSubType } from "@jsure/shared";
 import { translate, type AdminLanguage, type AdminTranslationKey } from "@i18n/admin";
 import { getStoredLanguage } from "@/lib/i18n";
 import { RESIDENCE_LABEL_KEY } from "./residenceLabel";
+import { WITHDRAWAL_REASON_LABEL_KEY } from "./withdrawalLabel";
+import { WITHDRAWAL_DECISION_LABEL_KEY } from "@/components/composites";
 
 // SNS 를 플랫폼별로 분리하고, 플랫폼마다 계정·팔로워 수를 별도 컬럼으로 표현. 없으면 빈칸.
 const SNS_COLUMNS: { type: SnsAccountSubType; labelKey: AdminTranslationKey }[] = [
@@ -28,6 +30,36 @@ function buildHeaders(language: AdminLanguage): string[] {
     translate("domains.influencer.residence.label", language),
     translate("domains.influencer.csv.postalCode", language),
     translate("domains.influencer.csv.address", language),
+    translate("domains.influencer.withdrawal.prefix", language),
+    translate("domains.influencer.withdrawal.requestedAt", language),
+    translate("domains.influencer.withdrawal.decidedAt", language),
+    translate("domains.influencer.withdrawal.reason", language),
+    translate("domains.influencer.withdrawal.reasonDetail", language),
+  ];
+}
+
+function formatDateTime(iso: string | null, language: AdminLanguage): string {
+  return iso ? new Date(iso).toLocaleString(language) : "";
+}
+
+/**
+ * 탈퇴 컬럼 5개. 신청 이력이 없으면 전부 빈칸 — 빈 문자열이 "신청한 적 없음"이라는
+ * 뜻이 되도록 상태 컬럼에도 라벨을 넣지 않는다.
+ */
+function withdrawalCells(
+  withdrawal: AdminInfluencer["withdrawal"],
+  language: AdminLanguage,
+): string[] {
+  if (!withdrawal) return ["", "", "", "", ""];
+  return [
+    translate(WITHDRAWAL_DECISION_LABEL_KEY[withdrawal.decision], language),
+    formatDateTime(withdrawal.requestedAt, language),
+    // 승인일시 — 반려 건의 처리 시각은 승인일시가 아니므로 비운다.
+    withdrawal.decision === "APPROVED"
+      ? formatDateTime(withdrawal.decidedAt, language)
+      : "",
+    translate(WITHDRAWAL_REASON_LABEL_KEY[withdrawal.reason], language),
+    withdrawal.reasonDetail,
   ];
 }
 
@@ -82,6 +114,7 @@ function formatRow(row: AdminInfluencer, language: AdminLanguage): string[] {
     translate(RESIDENCE_LABEL_KEY[row.residence], language),
     row.address.postalCode,
     formatAddress(row.address),
+    ...withdrawalCells(row.withdrawal, language),
   ];
 }
 

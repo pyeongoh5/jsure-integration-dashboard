@@ -10,4 +10,8 @@ export { SubTypeIcon } from "./SubTypeIcon";
 export { SubTypePill } from "./SubTypePill";
 export { TagChip } from "./TagChip";
 export { TagChipList } from "./TagChipList";
+export {
+  WithdrawalBadge,
+  WITHDRAWAL_DECISION_LABEL_KEY,
+} from "./WithdrawalBadge";
 export { TagsInput } from "./TagsInput";

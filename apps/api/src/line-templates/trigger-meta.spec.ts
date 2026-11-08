@@ -1,17 +1,35 @@
-import { LineTriggerKeySchema } from "@jsure/shared";
-import { publicVariables, TRIGGER_META } from "./trigger-meta";
+import { LineTriggerKeySchema, isCommonLineTriggerKey } from "@jsure/shared";
+import { COMMON_TRIGGER_META, publicVariables, TRIGGER_META } from "./trigger-meta";
 
 const ALL_TRIGGERS = LineTriggerKeySchema.options;
+/** 공통 트리거는 응모가 없어 캠페인 변수를 가질 수 없다. */
+const CAMPAIGN_TRIGGERS = ALL_TRIGGERS.filter(
+  (triggerKey) => !isCommonLineTriggerKey(triggerKey),
+);
 
 describe("트리거 변수 목록", () => {
-  it("모든 트리거에서 참여 서브타입을 쓸 수 있다", () => {
-    const missing = ALL_TRIGGERS.filter(
+  it("모든 캠페인 트리거에서 참여 서브타입을 쓸 수 있다", () => {
+    const missing = CAMPAIGN_TRIGGERS.filter(
       (triggerKey) =>
         !publicVariables(triggerKey).some(
           (variable) => variable.key === "subType",
         ),
     );
     expect(missing).toEqual([]);
+  });
+
+  it("공통 트리거는 모두 COMMON 탭에 속한다", () => {
+    for (const [triggerKey, meta] of Object.entries(COMMON_TRIGGER_META)) {
+      expect(meta.category).toBe("COMMON");
+      expect(isCommonLineTriggerKey(triggerKey as never)).toBe(true);
+    }
+  });
+
+  it("탈퇴 반려 트리거만 반려 사유 변수를 제공한다", () => {
+    const keysOf = (triggerKey: "COMMON_WITHDRAWAL_APPROVED" | "COMMON_WITHDRAWAL_REJECTED") =>
+      publicVariables(triggerKey).map((variable) => variable.key);
+    expect(keysOf("COMMON_WITHDRAWAL_REJECTED")).toContain("rejectReason");
+    expect(keysOf("COMMON_WITHDRAWAL_APPROVED")).not.toContain("rejectReason");
   });
 
   it("변수 키가 트리거 안에서 중복되지 않는다", () => {

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import type {
-  CampaignCategory,
+  LineTemplateCategory,
   LineMessageTemplateDetailResponse,
   LineMessageTemplateListResponse,
   LineMessageTemplateResponse,
@@ -9,8 +9,12 @@ import type {
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { LineMessagingService } from "../influencer-auth/line-messaging.service";
-import { listTriggersForCategory, publicVariables, getMeta } from "./trigger-meta";
-import { renderTemplate, validateBodyVariables } from "./template-renderer";
+import {
+  listTriggersForCategory,
+  publicVariables,
+  triggerCategory,
+} from "./trigger-meta";
+import { renderSample, validateBodyVariables } from "./template-renderer";
 
 @Injectable()
 export class AdminLineTemplatesService {
@@ -19,7 +23,7 @@ export class AdminLineTemplatesService {
     private readonly line: LineMessagingService,
   ) {}
 
-  async list(category: CampaignCategory): Promise<LineMessageTemplateListResponse> {
+  async list(category: LineTemplateCategory): Promise<LineMessageTemplateListResponse> {
     const triggerKeys = listTriggersForCategory(category);
     const rows = await this.prisma.lineMessageTemplate.findMany({
       where: { category },
@@ -46,11 +50,10 @@ export class AdminLineTemplatesService {
   }
 
   async detail(
-    category: CampaignCategory,
+    category: LineTemplateCategory,
     triggerKey: LineTriggerKey,
   ): Promise<LineMessageTemplateDetailResponse> {
-    const meta = getMeta(triggerKey);
-    if (meta.category !== category) {
+    if (triggerCategory(triggerKey) !== category) {
       throw new BadRequestException("Trigger does not belong to the given category");
     }
     const row = await this.prisma.lineMessageTemplate.findUnique({
@@ -84,16 +87,15 @@ export class AdminLineTemplatesService {
   }
 
   async update(
-    category: CampaignCategory,
+    category: LineTemplateCategory,
     triggerKey: LineTriggerKey,
     updatedById: string,
     input: UpdateLineMessageTemplateRequest,
   ): Promise<LineMessageTemplateResponse> {
-    const meta = getMeta(triggerKey);
-    if (meta.category !== category) {
+    if (triggerCategory(triggerKey) !== category) {
       throw new BadRequestException("Trigger does not belong to the given category");
     }
-    const validation = validateBodyVariables(input.body, meta.variables);
+    const validation = validateBodyVariables(input.body, publicVariables(triggerKey));
     if (!validation.ok) {
       throw new BadRequestException(
         `Unknown variables in body: ${validation.unknown.map((k) => `{{${k}}}`).join(", ")}`,
@@ -126,13 +128,12 @@ export class AdminLineTemplatesService {
   }
 
   async setEnabled(
-    category: CampaignCategory,
+    category: LineTemplateCategory,
     triggerKey: LineTriggerKey,
     updatedById: string,
     enabled: boolean,
   ): Promise<LineMessageTemplateResponse> {
-    const meta = getMeta(triggerKey);
-    if (meta.category !== category) {
+    if (triggerCategory(triggerKey) !== category) {
       throw new BadRequestException("Trigger does not belong to the given category");
     }
     // 시드 누락 등으로 row 가 없어도 토글이 가능하도록 upsert. 본문이 비어있는 경우
@@ -161,14 +162,14 @@ export class AdminLineTemplatesService {
   }
 
   async preview(triggerKey: LineTriggerKey, body: string): Promise<{ renderedBody: string }> {
-    const meta = getMeta(triggerKey);
-    const validation = validateBodyVariables(body, meta.variables);
+    const variables = publicVariables(triggerKey);
+    const validation = validateBodyVariables(body, variables);
     if (!validation.ok) {
       throw new BadRequestException(
         `Unknown variables in body: ${validation.unknown.map((k) => `{{${k}}}`).join(", ")}`,
       );
     }
-    const renderedBody = renderTemplate(body, meta.variables, {} as never, { useSample: true });
+    const renderedBody = renderSample(body, variables);
     return { renderedBody };
   }
 
@@ -177,8 +178,8 @@ export class AdminLineTemplatesService {
     body: string,
     adminUserId: string,
   ): Promise<{ sent: boolean }> {
-    const meta = getMeta(triggerKey);
-    const validation = validateBodyVariables(body, meta.variables);
+    const variables = publicVariables(triggerKey);
+    const validation = validateBodyVariables(body, variables);
     if (!validation.ok) {
       throw new BadRequestException(
         `Unknown variables in body: ${validation.unknown.map((k) => `{{${k}}}`).join(", ")}`,
@@ -194,7 +195,7 @@ export class AdminLineTemplatesService {
         message: "테스트 발송에 사용할 LINE 사용자 ID가 등록되어 있지 않습니다",
       });
     }
-    const rendered = renderTemplate(body, meta.variables, {} as never, { useSample: true });
+    const rendered = renderSample(body, variables);
     const result = await this.line.pushToLineUserId(admin.testLineUserId, [
       { type: "text", text: rendered },
     ]);

@@ -112,7 +112,7 @@ export function InfluencerWithdrawDialog({
       confirmDisabled={counts.kind === "loading"}
       secondaryAction={
         withdrawal?.decision === "PENDING" ? (
-          <Button variant="secondary" size="sm" disabled={busy} onClick={onReject}>
+          <Button variant="secondary" size="md" disabled={busy} onClick={onReject}>
             {t("domains.influencer.withdrawal.rejectConfirm")}
           </Button>
         ) : undefined

@@ -17,6 +17,7 @@ import type {
   InfluencerWithdrawal,
   InfluencerTagListResponse,
   UpdateInfluencerTagsResponse,
+  WithdrawalSnsSnapshot,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { INFLUENCER_TAG_INCLUDE, toTagLabels } from "./influencer-tags";
@@ -557,7 +558,13 @@ export class InfluencersService {
   async withdraw(influencerId: string, actor: AuditActor): Promise<void> {
     const existing = await this.prisma.influencer.findUnique({
       where: { id: influencerId },
-      select: { email: true, name: true, lineUserId: true },
+      select: {
+        email: true,
+        name: true,
+        lineUserId: true,
+        // 아래 트랜잭션이 지우기 전의 보유 현황 — 탈퇴 기록에 스냅샷으로 남긴다.
+        snsAccounts: { select: { snsType: true, followerCount: true } },
+      },
     });
     if (!existing) throw new NotFoundException("인플루언서를 찾을 수 없습니다");
     if (existing.email.startsWith(WITHDRAWN_EMAIL_PREFIX))
@@ -567,20 +574,32 @@ export class InfluencersService {
       where: { influencerId, decision: "PENDING" },
       select: { id: true },
     });
+    // 본인이 낸 신청이 있어야만 탈퇴시킬 수 있다. 어드민의 일방적 강제 탈퇴를
+    // 막는 동시에, 사유·SNS 스냅샷을 담을 기록이 반드시 존재하도록 보장한다.
+    if (!pending) {
+      throw new ConflictException(
+        "탈퇴 신청이 없는 회원은 탈퇴 처리할 수 없습니다",
+      );
+    }
+
+    // 채널 종류와 팔로워 수만. 핸들은 개인 식별자라 익명화 취지에 맞게 제외한다.
+    const snsSnapshot: WithdrawalSnsSnapshot = existing.snsAccounts.map(
+      (account) => ({
+        snsType: account.snsType,
+        followerCount: account.followerCount,
+      }),
+    );
 
     await this.prisma.$transaction([
-      ...(pending
-        ? [
-            this.prisma.influencerWithdrawal.update({
-              where: { id: pending.id },
-              data: {
-                decision: "APPROVED" as const,
-                decidedAt: new Date(),
-                decidedById: actor.id,
-              },
-            }),
-          ]
-        : []),
+      this.prisma.influencerWithdrawal.update({
+        where: { id: pending.id },
+        data: {
+          decision: "APPROVED" as const,
+          decidedAt: new Date(),
+          decidedById: actor.id,
+          snsSnapshot,
+        },
+      }),
       this.prisma.influencerSnsAccount.deleteMany({ where: { influencerId } }),
       this.prisma.influencerBankAccount.deleteMany({ where: { influencerId } }),
       // 세션 삭제 = 로그인된 기기 전부 강제 로그아웃

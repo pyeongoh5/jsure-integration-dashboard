@@ -415,8 +415,12 @@ export function Influencers() {
                         <Button variant="secondary" size="sm" onClick={() => setNotesTarget(r)}>
                           {t("domains.application.applicants.actions.memo")}
                         </Button>
-                        {/* 탈퇴는 비가역이라 OWNER 에게만 노출한다 (서버도 OWNER 만 허용) */}
-                        {canWithdraw && (
+                        {/*
+                          탈퇴는 비가역이라 OWNER 에게만 노출한다 (서버도 OWNER 만 허용).
+                          본인이 낸 신청이 있는 회원만 — 어드민이 일방적으로 탈퇴시킬 수
+                          없다. 서버도 신청이 없으면 거절한다.
+                        */}
+                        {canWithdraw && r.withdrawal?.decision === "PENDING" && (
                           <Button variant="danger" size="sm" onClick={() => setWithdrawTarget(r)}>
                             {t("domains.influencer.withdrawDialog.openButton")}
                           </Button>

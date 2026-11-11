@@ -34,6 +34,26 @@ export const WITHDRAWAL_REASON_DETAIL_MAX = 500;
 /** 반려 사유 입력 상한. */
 export const WITHDRAWAL_REJECT_REASON_MAX = 500;
 
+/**
+ * 탈퇴 승인 시점의 SNS 보유 현황 1건.
+ *
+ * 승인 처리가 InfluencerSnsAccount 를 지우므로, 채널별 이탈 분석을 하려면
+ * 지우기 전에 떠둬야 한다. 개인을 특정할 수 없도록 핸들은 담지 않는다 —
+ * 탈퇴는 PII 익명화이고, 핸들은 그 자체로 개인 식별자다.
+ */
+export const WithdrawalSnsSnapshotEntrySchema = z.object({
+  snsType: z.string(),
+  followerCount: z.number().int().nonnegative(),
+});
+export type WithdrawalSnsSnapshotEntry = z.infer<
+  typeof WithdrawalSnsSnapshotEntrySchema
+>;
+
+export const WithdrawalSnsSnapshotSchema = z.array(
+  WithdrawalSnsSnapshotEntrySchema,
+);
+export type WithdrawalSnsSnapshot = z.infer<typeof WithdrawalSnsSnapshotSchema>;
+
 export const CreateWithdrawalRequestSchema = z.object({
   reason: WithdrawalReasonSchema,
   reasonDetail: z.string().max(WITHDRAWAL_REASON_DETAIL_MAX).default(""),

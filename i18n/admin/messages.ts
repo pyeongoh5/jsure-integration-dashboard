@@ -1548,6 +1548,31 @@ export const adminMessages = {
             en: "Approve this draft?",
             ja: "この下書きを承認しますか？",
           },
+          refundLabel: {
+            ko: "상품 환급액 (엔)",
+            en: "Product refund (JPY)",
+            ja: "商品返金額（円）",
+          },
+          refundSubmitted: {
+            ko: "인플루언서 제출 실결제 금액",
+            en: "Submitted payment amount",
+            ja: "インフルエンサー提出の実支払金額",
+          },
+          refundMissing: {
+            ko: "실결제 금액 제출 전 응모입니다. 영수증을 확인하고 직접 입력해 주세요.",
+            en: "Submitted before the payment-amount field existed. Check the receipt and enter it manually.",
+            ja: "実支払金額の提出前の応募です。領収書を確認して直接入力してください。",
+          },
+          refundChanged: {
+            ko: "제출 금액과 다릅니다. 이 금액으로 정산됩니다.",
+            en: "Differs from the submitted amount. This value will be settled.",
+            ja: "提出金額と異なります。この金額で精算されます。",
+          },
+          refundRequired: {
+            ko: "상품 환급액을 입력해 주세요",
+            en: "Enter the product refund amount",
+            ja: "商品返金額を入力してください",
+          },
         },
         rejectDialog: {
           title: {
@@ -1615,6 +1640,11 @@ export const adminMessages = {
           screenshots: { ko: "스크린샷", en: "Screenshots", ja: "スクリーンショット" },
           orderInfo: { ko: "주문 정보", en: "Order information", ja: "注文情報" },
           orderNumber: { ko: "주문번호", en: "Order number", ja: "注文番号" },
+          actualPayment: {
+            ko: "실결제 금액",
+            en: "Actual payment",
+            ja: "実支払金額",
+          },
           orderReceipt: { ko: "주문 명세서", en: "Order receipt", ja: "注文明細書" },
           receiptNotSubmitted: {
             ko: "명세서가 아직 제출되지 않았습니다.",

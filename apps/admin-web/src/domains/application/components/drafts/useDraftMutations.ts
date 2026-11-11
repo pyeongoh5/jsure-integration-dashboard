@@ -13,7 +13,8 @@ import type { DraftReview } from "./types";
 
 export type PendingDraftActionType = "approve" | "reject" | "undo" | "forceCancel";
 
-export type DraftConfirmInput = string | CancelInput;
+/** 승인은 가구매 환급액(number), 반려는 사유(string), 강제취소는 CancelInput 을 넘긴다. */
+export type DraftConfirmInput = string | number | CancelInput;
 
 export type PendingDraftAction = {
   type: PendingDraftActionType;
@@ -57,9 +58,24 @@ export function useDraftMutations(
     try {
       const applicationId = pending.draft.id;
       switch (pending.type) {
-        case "approve":
-          await approveSubmission(applicationId);
+        case "approve": {
+          // 가구매만 환급액을 함께 보낸다. 다른 카테고리는 다이얼로그가 값을 주지 않는다.
+          const productRefundJpy = typeof input === "number" ? input : undefined;
+          if (
+            pending.draft.category === "FAKE_PURCHASE" &&
+            productRefundJpy === undefined
+          ) {
+            setError(
+              translate(
+                "domains.application.drafts.approveDialog.refundRequired",
+                getStoredLanguage(),
+              ),
+            );
+            return false;
+          }
+          await approveSubmission(applicationId, productRefundJpy);
           break;
+        }
         case "reject": {
           const comment = typeof input === "string" ? input.trim() : "";
           if (comment === "") {

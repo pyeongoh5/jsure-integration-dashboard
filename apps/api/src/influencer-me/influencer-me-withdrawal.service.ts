@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import {
+  blocksWithdrawal,
   WITHDRAW_AUTO_CANCEL_STATUSES,
   WITHDRAW_BLOCKING_STATUSES,
   type CreateWithdrawalRequest,
@@ -32,9 +33,7 @@ export class InfluencerMeWithdrawalService {
       this.relevantApplications(influencerId),
       this.latestWithdrawal(influencerId),
     ]);
-    const blockingApplications = applications.filter((application) =>
-      WITHDRAW_BLOCKING_STATUSES.includes(application.status),
-    );
+    const blockingApplications = applications.filter(blocksWithdrawal);
     return {
       eligible:
         blockingApplications.length === 0 && latest?.decision !== "PENDING",
@@ -63,9 +62,7 @@ export class InfluencerMeWithdrawalService {
     if (!influencer) throw new NotFoundException("인플루언서를 찾을 수 없습니다");
 
     const applications = await this.relevantApplications(influencerId);
-    const blocking = applications.filter((application) =>
-      WITHDRAW_BLOCKING_STATUSES.includes(application.status),
-    );
+    const blocking = applications.filter(blocksWithdrawal);
     if (blocking.length > 0) {
       throw new ConflictException({
         code: "ONGOING_CAMPAIGN",
@@ -139,6 +136,7 @@ export class InfluencerMeWithdrawalService {
       select: {
         id: true,
         status: true,
+        submissionReviewStatus: true,
         campaign: { select: { title: true } },
       },
       orderBy: { appliedAt: "desc" },

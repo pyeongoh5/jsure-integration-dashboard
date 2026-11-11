@@ -7,6 +7,8 @@ import type { AuditService } from "../audit/audit.service";
 type ApplicationRow = {
   id: string;
   status: string;
+  /** 생략 시 PENDING — 아직 검수가 끝나지 않은 진행 중 건. */
+  submissionReviewStatus?: "PENDING" | "APPROVED" | "REJECTED";
   campaign: { title: string };
 };
 
@@ -15,7 +17,12 @@ function makeService(
   latestWithdrawal: unknown = null,
 ) {
   const campaignApplication = {
-    findMany: jest.fn().mockResolvedValue(applications),
+    findMany: jest.fn().mockResolvedValue(
+      applications.map((application) => ({
+        submissionReviewStatus: "PENDING" as const,
+        ...application,
+      })),
+    ),
     updateMany: jest.fn().mockResolvedValue({ count: 0 }),
   };
   const influencerWithdrawal = {
@@ -60,6 +67,39 @@ describe("탈퇴 신청 가능 여부", () => {
         code: "ONGOING_CAMPAIGN",
         campaignTitles: ["가을 신상 체험단"],
       },
+    });
+    expect(influencerWithdrawal.create).not.toHaveBeenCalled();
+  });
+
+  // 정산 완료로 status 가 COMPLETED 로 넘어가기 전 구간. 인플루언서가 할 일은
+  // 끝났으므로 막지 않는다 — 막으면 송금까지 끝난 사람도 탈퇴할 수 없다.
+  it("제출물이 승인된 건은 상태가 REVIEW_SUBMITTED 라도 막지 않는다", async () => {
+    const { service, influencerWithdrawal } = makeService([
+      {
+        id: "app-1",
+        status: "REVIEW_SUBMITTED",
+        submissionReviewStatus: "APPROVED",
+        campaign: { title: "정산까지 끝난 캠페인" },
+      },
+    ]);
+
+    await service.request("inf-1", input);
+
+    expect(influencerWithdrawal.create).toHaveBeenCalled();
+  });
+
+  it("제출물 검수가 아직 안 끝났으면 막는다", async () => {
+    const { service, influencerWithdrawal } = makeService([
+      {
+        id: "app-1",
+        status: "REVIEW_SUBMITTED",
+        submissionReviewStatus: "PENDING",
+        campaign: { title: "검수 대기 캠페인" },
+      },
+    ]);
+
+    await expect(service.request("inf-1", input)).rejects.toMatchObject({
+      response: { code: "ONGOING_CAMPAIGN" },
     });
     expect(influencerWithdrawal.create).not.toHaveBeenCalled();
   });

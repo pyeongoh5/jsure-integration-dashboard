@@ -208,7 +208,7 @@ export class InfluencerLineAuthService {
     }
 
     const passwordHash = input.password
-      ? await import("bcrypt").then((m) => m.hash(input.password!, 10))
+      ? await import("bcryptjs").then((m) => m.hash(input.password!, 10))
       : null;
 
     let influencerId: string;

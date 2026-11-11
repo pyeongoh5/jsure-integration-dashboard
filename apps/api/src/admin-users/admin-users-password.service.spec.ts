@@ -1,4 +1,4 @@
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 import { AdminUsersService } from "./admin-users.service";
 
 type Captured = {

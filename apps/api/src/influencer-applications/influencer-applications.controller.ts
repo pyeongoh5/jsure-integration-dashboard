@@ -80,7 +80,13 @@ export class InfluencerApplicationsController {
     @Body(new ZodValidationPipe(SubmitOrderRequestSchema))
     dto: SubmitOrderRequest,
   ) {
-    return this.svc.submitOrder(req.user.id, id, dto.orderNumber, dto.receipts);
+    return this.svc.submitOrder(
+      req.user.id,
+      id,
+      dto.orderNumber,
+      dto.actualPaymentJpy,
+      dto.receipts,
+    );
   }
 
   @Post(":id/review")

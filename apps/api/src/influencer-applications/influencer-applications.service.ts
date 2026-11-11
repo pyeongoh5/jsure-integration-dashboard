@@ -952,6 +952,7 @@ export class InfluencerApplicationsService {
     influencerId: string,
     applicationId: string,
     orderNumber: string,
+    actualPaymentJpy: number,
     receipts: AttachmentUploadInput[],
   ): Promise<InfluencerApplication> {
     const application = await this.prisma.campaignApplication.findUnique({
@@ -984,6 +985,12 @@ export class InfluencerApplicationsService {
         message: "주문번호를 입력해주세요",
       });
     }
+    if (!Number.isInteger(actualPaymentJpy) || actualPaymentJpy <= 0) {
+      throw new BadRequestException({
+        code: "ACTUAL_PAYMENT_REQUIRED",
+        message: "실제 결제 금액을 입력해주세요",
+      });
+    }
     if (receipts.length < 1) {
       throw new BadRequestException({
         code: "RECEIPT_REQUIRED",
@@ -1013,6 +1020,7 @@ export class InfluencerApplicationsService {
         where: { id: applicationId },
         data: {
           orderNumber: trimmedOrderNumber,
+          actualPaymentJpy,
           orderSubmittedAt: now,
           status: "ORDER_SUBMITTED",
         },

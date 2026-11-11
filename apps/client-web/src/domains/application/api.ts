@@ -94,11 +94,12 @@ export async function submitInsights(
 export async function submitOrder(
   applicationId: string,
   orderNumber: string,
+  actualPaymentJpy: number,
   receipts: AttachmentUploadInput[],
 ): Promise<InfluencerApplication> {
   const res = await api.post(
     `/influencer/applications/${applicationId}/order`,
-    { orderNumber, receipts },
+    { orderNumber, actualPaymentJpy, receipts },
   );
   return InfluencerApplicationSchema.parse(res.data);
 }

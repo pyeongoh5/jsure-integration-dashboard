@@ -53,11 +53,14 @@ export async function fetchApplicationAttachments(
   return AttachmentListResponseSchema.parse(res.data).attachments;
 }
 
+/** 가구매는 운영자가 영수증과 대조해 조정한 상품 환급액을 함께 보낸다. */
 export async function approveSubmission(
   applicationId: string,
+  productRefundJpy?: number,
 ): Promise<AdminSubmission> {
   const res = await api.post(
     `/campaign-applications/${encodeURIComponent(applicationId)}/submission/approve`,
+    productRefundJpy === undefined ? {} : { productRefundJpy },
   );
   return AdminSubmissionSchema.parse(res.data);
 }

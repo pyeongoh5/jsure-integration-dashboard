@@ -18,6 +18,15 @@ const schema = z.object({
     .string()
     .trim()
     .min(1, t("application.orderForm.orderNumberRequired")),
+  /** 엔 단위 정수 문자열. 제출 시 Number 로 변환한다. */
+  actualPaymentJpy: z
+    .string()
+    .trim()
+    .regex(/^[0-9]+$/, t("application.orderForm.actualPaymentRequired"))
+    .refine(
+      (value) => Number(value) > 0,
+      t("application.orderForm.actualPaymentRequired"),
+    ),
 });
 type Values = z.infer<typeof schema>;
 
@@ -27,6 +36,7 @@ interface Props {
   orderDeadlineAt: string | null; // new
   onSubmit: (
     orderNumber: string,
+    actualPaymentJpy: number, // new
     receipts: AttachmentUploadInput[],
   ) => Promise<void>;
   submitting: boolean;
@@ -46,7 +56,7 @@ export function OrderSubmitForm({
 }: Props) {
   const methods = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { orderNumber: "" },
+    defaultValues: { orderNumber: "", actualPaymentJpy: "" },
   });
   const upload = useAttachmentUpload({
     applicationId,
@@ -71,7 +81,11 @@ export function OrderSubmitForm({
       return;
     }
     try {
-      await onSubmit(values.orderNumber.trim(), receipts);
+      await onSubmit(
+        values.orderNumber.trim(),
+        Number(values.actualPaymentJpy),
+        receipts,
+      );
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const message =
@@ -116,6 +130,28 @@ export function OrderSubmitForm({
             />
           )}
         </FormField>
+
+        <FormField
+          name="actualPaymentJpy"
+          label={t("application.stage.awaitingOrder.actualPaymentLabel")}
+        >
+          {(field) => (
+            <Input
+              id={field.id}
+              type="text"
+              inputMode="numeric"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              placeholder={t("application.orderForm.actualPaymentPlaceholder")}
+              error={field.error}
+              aria-invalid={field["aria-invalid"]}
+            />
+          )}
+        </FormField>
+        <p className={styles.sectionHint}>
+          {t("application.stage.awaitingOrder.actualPaymentHint")}
+        </p>
 
         <div className={styles.section}>
           <div className={styles.sectionTitle}>

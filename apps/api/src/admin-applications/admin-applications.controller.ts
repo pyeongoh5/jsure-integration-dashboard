@@ -17,6 +17,7 @@ import {
   ApplicationStatusSchema,
   parseApplicantFilterParams,
   RejectApplicationRequestSchema,
+  ApproveSubmissionRequestSchema,
   RejectSubmissionRequestSchema,
   ShipApplicationRequestSchema,
   type AdminApplicantPageResponse,
@@ -36,6 +37,7 @@ import {
   type AttachmentListResponse,
   type ApplicationStatus,
   type RejectApplicationRequest,
+  type ApproveSubmissionRequest,
   type RejectSubmissionRequest,
   type ShipApplicationRequest,
 } from "@jsure/shared";
@@ -188,8 +190,10 @@ export class AdminApplicationsController {
   approveSubmission(
     @Req() req: { user: AuthenticatedUser },
     @Param("id") id: string,
+    @Body(new ZodValidationPipe(ApproveSubmissionRequestSchema))
+    body: ApproveSubmissionRequest,
   ): Promise<AdminSubmission> {
-    return this.svc.approveSubmission(id, req.user);
+    return this.svc.approveSubmission(id, req.user, body.productRefundJpy);
   }
 
   @Post(":id/submission/reject")

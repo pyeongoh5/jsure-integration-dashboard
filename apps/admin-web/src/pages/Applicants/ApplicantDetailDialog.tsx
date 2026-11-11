@@ -108,6 +108,14 @@ export function ApplicantDetailDialog({ applicant, onClose }: Props) {
                   <div className={styles.fieldValue}>
                     {applicant.orderNumber ?? "—"}
                   </div>
+                  <div className={styles.fieldLabel}>
+                    {t("domains.application.drafts.insightDialog.actualPayment")}
+                  </div>
+                  <div className={styles.fieldValue}>
+                    {applicant.actualPaymentJpy === null
+                      ? "—"
+                      : `¥${applicant.actualPaymentJpy.toLocaleString()}`}
+                  </div>
                 </div>
               </section>
 

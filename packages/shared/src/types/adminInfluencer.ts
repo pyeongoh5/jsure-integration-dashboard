@@ -121,6 +121,8 @@ export const AdminApplicationSchema = z.object({
   /** 응모 시 선택한 제품 옵션 (호수/사이즈 등). */
   productOptions: ApplicationProductOptionsResponseSchema,
   orderNumber: z.string().nullable(),
+  /** 가구매 실결제 금액(JPY) — 인플루언서 제출값. 도입 전 응모는 null. */
+  actualPaymentJpy: z.number().int().nullable().default(null),
   orderSubmittedAt: z.string().datetime().nullable(),
   reviewSubmittedAt: z.string().datetime().nullable(),
 
@@ -250,6 +252,11 @@ export const AdminSubmissionSchema = z.object({
   selectedOptions: z.array(ApplicationOptionSchema),
   /** 가구매 주문번호. default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비. */
   orderNumber: z.string().nullable().default(null),
+  /**
+   * 가구매 실결제 금액(JPY) — 인플루언서 제출값. 도입 전 응모는 null.
+   * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
+   */
+  actualPaymentJpy: z.number().int().nullable().default(null),
   reviewSubmittedAt: z.string().datetime().nullable(),
 
   submissionReviewStatus: PostReviewStatusSchema,
@@ -309,6 +316,17 @@ export const AdminSubmissionPageResponseSchema = z.object({
 });
 export type AdminSubmissionPageResponse = z.infer<
   typeof AdminSubmissionPageResponseSchema
+>;
+
+/**
+ * 제출물 승인 요청. 가구매는 운영자가 영수증과 대조해 상품 환급액을 조정할 수 있다 —
+ * 생략하면 인플루언서가 제출한 실결제 금액(없으면 캠페인 상품가)이 그대로 확정된다.
+ */
+export const ApproveSubmissionRequestSchema = z.object({
+  productRefundJpy: z.number().int().nonnegative().max(10_000_000).optional(),
+});
+export type ApproveSubmissionRequest = z.infer<
+  typeof ApproveSubmissionRequestSchema
 >;
 
 export const RejectSubmissionRequestSchema = z.object({

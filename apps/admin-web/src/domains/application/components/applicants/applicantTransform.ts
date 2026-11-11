@@ -99,6 +99,7 @@ export function toApplicant(
     category: application.campaign.category,
     subTypes: application.subTypes,
     orderNumber: application.orderNumber,
+    actualPaymentJpy: application.actualPaymentJpy,
     media: application.subTypes.map((subType) => SNS_TO_MEDIA[subType]),
     selectedOptions: application.selectedOptions,
     productOptions: application.productOptions,

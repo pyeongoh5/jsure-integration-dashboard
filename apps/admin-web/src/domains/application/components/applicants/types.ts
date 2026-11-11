@@ -70,6 +70,8 @@ export type Applicant = {
   category: CampaignCategory;
   subTypes: CampaignSubType[];
   orderNumber: string | null;
+  /** 가구매 실결제 금액(JPY) — 인플루언서 제출값. 도입 전 응모는 null. */
+  actualPaymentJpy: number | null;
   media: Media[];
   /** 응모가 선택한 서브타입 옵션 (INSTAGRAM 이면 FEED/REELS). */
   selectedOptions: ApplicationOption[];

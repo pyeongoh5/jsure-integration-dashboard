@@ -1,5 +1,5 @@
 import { Injectable, ConflictException } from "@nestjs/common";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 import type { PublicAdminUser } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 

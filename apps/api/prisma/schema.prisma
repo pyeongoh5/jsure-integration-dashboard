@@ -371,6 +371,12 @@ model InfluencerWithdrawal {
   decidedById  String?
   rejectReason String?
 
+  /// 탈퇴 승인 시점의 SNS 보유 현황 — [{ "snsType": "INSTAGRAM", "followerCount": 1200 }].
+  /// 승인 시 InfluencerSnsAccount 는 삭제되므로, 채널별 이탈 분석을 하려면 지우기
+  /// 전에 떠둬야 한다. 개인을 특정할 수 없도록 핸들은 담지 않는다.
+  /// null 은 스냅샷 도입 전 탈퇴 건, 또는 아직 승인되지 않은 신청.
+  snsSnapshot  Json?
+
   influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
   decidedBy  AdminUser? @relation(fields: [decidedById], references: [id], onDelete: SetNull)
 

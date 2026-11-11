@@ -13,16 +13,29 @@ import type { LineDispatcherService } from "../line-templates/line-dispatcher.se
 const actor: AuditActor = { id: "admin-1", name: "운영자" };
 
 function makeMocks(
-  existing: { email: string } | null,
+  existing:
+    | {
+        email: string;
+        /** 익명화가 지우기 전의 보유 채널 — 생략 시 없음. */
+        snsAccounts?: {
+          snsType: string;
+          handle: string;
+          followerCount: number;
+        }[];
+      }
+    | null,
   pending: { id: string } | null = null,
 ) {
   const prisma = {
     influencer: {
-      findUnique: jest
-        .fn()
-        .mockResolvedValue(
-          existing && { name: "나기사", lineUserId: "U1", ...existing },
-        ),
+      findUnique: jest.fn().mockResolvedValue(
+        existing && {
+          name: "나기사",
+          lineUserId: "U1",
+          snsAccounts: [],
+          ...existing,
+        },
+      ),
       update: jest.fn().mockResolvedValue({}),
     },
     influencerWithdrawal: {
@@ -46,11 +59,69 @@ function makeMocks(
   return { prisma, audit, dispatcher, service };
 }
 
+describe("탈퇴 SNS 스냅샷", () => {
+  const withAccounts = {
+    email: "nagisa@example.com",
+    snsAccounts: [
+      { snsType: "INSTAGRAM", handle: "@nagisa", followerCount: 1200 },
+      { snsType: "TIKTOK", handle: "@nagisa_tt", followerCount: 300 },
+    ],
+  };
+
+  it("계정을 지우기 전의 채널·팔로워를 승인 기록에 남긴다", async () => {
+    const { prisma, service } = makeMocks(withAccounts, { id: "wd-1" });
+
+    await service.withdraw("inf-1", actor);
+
+    expect(prisma.influencerWithdrawal.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "wd-1" },
+        data: expect.objectContaining({
+          decision: "APPROVED",
+          snsSnapshot: [
+            { snsType: "INSTAGRAM", followerCount: 1200 },
+            { snsType: "TIKTOK", followerCount: 300 },
+          ],
+        }),
+      }),
+    );
+  });
+
+  // 탈퇴는 PII 익명화다. 핸들은 그 자체로 개인 식별자라 분석용 스냅샷에 들어가면 안 된다.
+  it("핸들은 스냅샷에 담지 않는다", async () => {
+    const { prisma, service } = makeMocks(withAccounts, { id: "wd-1" });
+
+    await service.withdraw("inf-1", actor);
+
+    const snapshot = JSON.stringify(
+      prisma.influencerWithdrawal.update.mock.calls[0]?.[0],
+    );
+    expect(snapshot).not.toContain("@nagisa");
+    expect(snapshot).not.toContain("handle");
+  });
+
+  it("보유 채널이 없으면 빈 배열로 남긴다", async () => {
+    const { prisma, service } = makeMocks(
+      { email: "nagisa@example.com" },
+      { id: "wd-1" },
+    );
+
+    await service.withdraw("inf-1", actor);
+
+    expect(prisma.influencerWithdrawal.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ snsSnapshot: [] }),
+      }),
+    );
+  });
+});
+
 describe("인플루언서 탈퇴 처리", () => {
   it("PII 를 익명화하고 SNS·계좌·세션을 지우고 감사 로그를 남긴다", async () => {
-    const { prisma, audit, service } = makeMocks({
-      email: "nagisa@example.com",
-    });
+    const { prisma, audit, service } = makeMocks(
+      { email: "nagisa@example.com" },
+      { id: "wd-1" },
+    );
 
     await service.withdraw("inf-1", actor);
 
@@ -85,12 +156,15 @@ describe("인플루언서 탈퇴 처리", () => {
       action: "INFLUENCER_WITHDRAW",
       actor,
       influencerId: "inf-1",
-      metadata: { fromRequest: false },
+      metadata: { fromRequest: true },
     });
   });
 
   it("감사 로그 metadata 에 익명화 전 PII 를 남기지 않는다", async () => {
-    const { audit, service } = makeMocks({ email: "nagisa@example.com" });
+    const { audit, service } = makeMocks(
+      { email: "nagisa@example.com" },
+      { id: "wd-1" },
+    );
 
     await service.withdraw("inf-1", actor);
 
@@ -167,12 +241,16 @@ describe("셀프 탈퇴 신청의 승인", () => {
     expect(dispatcher.dispatchCommon).not.toHaveBeenCalled();
   });
 
-  it("어드민이 직접 탈퇴시킨 건(대기 신청 없음)은 신청 테이블을 건드리지 않는다", async () => {
+  // 어드민이 일방적으로 탈퇴시킬 수 없어야 한다. 본인 신청이 전제이며,
+  // 그래야 사유·SNS 스냅샷을 담을 기록이 반드시 존재한다.
+  it("대기 중인 신청이 없으면 409 — 아무것도 바꾸지 않는다", async () => {
     const { prisma, service } = makeMocks({ email: "nagisa@example.com" });
 
-    await service.withdraw("inf-1", actor);
-
-    expect(prisma.influencerWithdrawal.update).not.toHaveBeenCalled();
+    await expect(service.withdraw("inf-1", actor)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.influencer.update).not.toHaveBeenCalled();
   });
 });
 

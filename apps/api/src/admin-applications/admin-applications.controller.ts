@@ -20,6 +20,7 @@ import {
   ApproveSubmissionRequestSchema,
   RejectSubmissionRequestSchema,
   ShipApplicationRequestSchema,
+  UpdateSettlementRefundRequestSchema,
   type AdminApplicantPageResponse,
   type AdminApplication,
   type AdminApplicationCountsResponse,
@@ -40,6 +41,8 @@ import {
   type ApproveSubmissionRequest,
   type RejectSubmissionRequest,
   type ShipApplicationRequest,
+  type UpdateSettlementRefundRequest,
+  type UpdateSettlementRefundResponse,
 } from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
@@ -231,6 +234,17 @@ export class AdminApplicationsController {
   ): Promise<AdminSettlementListResponse> {
     const settlements = await this.svc.listSettlements(month);
     return { settlements };
+  }
+
+  /** 가구매 정산 건의 상품 환급액 수정 — 정산 완료 전까지만. */
+  @Patch("settlements/:id/refund")
+  updateSettlementRefund(
+    @Req() req: { user: AuthenticatedUser },
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(UpdateSettlementRefundRequestSchema))
+    body: UpdateSettlementRefundRequest,
+  ): Promise<UpdateSettlementRefundResponse> {
+    return this.svc.updateSettlementRefund(req.user, id, body.productRefundJpy);
   }
 
   @Get("settlements/pending-count")

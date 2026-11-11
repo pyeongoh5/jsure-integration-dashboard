@@ -1766,6 +1766,11 @@ export const adminMessages = {
           settlementCreate: { ko: "정산 생성", en: "Settlement created", ja: "精算作成" },
           settlementRegister: { ko: "정산 등록", en: "Settlement registered", ja: "精算登録" },
           settlementComplete: { ko: "정산 완료", en: "Settlement completed", ja: "精算完了" },
+          settlementRefundUpdate: {
+            ko: "상품 환급액 수정",
+            en: "Product refund updated",
+            ja: "商品返金額の修正",
+          },
           settlementAutoComplete: {
             ko: "정산 자동 완료",
             en: "Settlement auto-completed",
@@ -4051,6 +4056,24 @@ export const adminMessages = {
           ja: "{label}（¥{amount}）を精算完了処理しますか？",
         },
       },
+      refundEdit: {
+        action: { ko: "수정", en: "Edit", ja: "修正" },
+        title: {
+          ko: "상품 환급액을 수정할까요?",
+          en: "Edit the product refund?",
+          ja: "商品返金額を修正しますか？",
+        },
+        current: {
+          ko: "현재 환급액 ¥{refund} · 보수 ¥{reward}",
+          en: "Current refund ¥{refund} · reward ¥{reward}",
+          ja: "現在の返金額 ¥{refund}・報酬 ¥{reward}",
+        },
+        nextTotal: {
+          ko: "수정 후 합계 ¥{amount}",
+          en: "New total ¥{amount}",
+          ja: "修正後の合計 ¥{amount}",
+        },
+      },
       errors: {
         loadFailed: {
           ko: "정산 목록을 불러올 수 없습니다.",
@@ -4061,6 +4084,11 @@ export const adminMessages = {
           ko: "완료 처리에 실패했습니다.",
           en: "Failed to mark as completed.",
           ja: "完了処理に失敗しました。",
+        },
+        refundUpdateFailed: {
+          ko: "환급액 수정에 실패했습니다.",
+          en: "Failed to update the refund amount.",
+          ja: "返金額の修正に失敗しました。",
         },
       },
       searchPlaceholder: {

@@ -88,6 +88,9 @@ export { DraftTable } from "./components/drafts/DraftTable";
 export { DraftUndoDialog } from "./components/drafts/DraftUndoDialog";
 export { InsightDetailDialog } from "./components/drafts/InsightDetailDialog";
 export { toDraftReview } from "./components/drafts/draftTransform";
+// settlement components
+export { SettlementRefundDialog } from "./components/settlements/SettlementRefundDialog";
+
 export { useSubmissionDetail } from "./useSubmissionDetail";
 export { useDraftMutations } from "./components/drafts/useDraftMutations";
 export { useDraftReviewsData } from "./components/drafts/useDraftReviewsData";

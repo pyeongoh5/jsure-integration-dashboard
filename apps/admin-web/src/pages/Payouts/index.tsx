@@ -12,6 +12,8 @@ import { getStoredLanguage, useLanguage, useT } from "@/lib/i18n";
 import {
   completeSettlements,
   listSettlements,
+  updateSettlementRefund,
+  SettlementRefundDialog,
   useSubmissionDetail,
   ApplicationHistoryDialog,
   CampaignFilterChip,
@@ -19,6 +21,7 @@ import {
   CATEGORY_FILTER_OPTIONS,
   type HistoryTarget,
 } from "@/domains/application";
+import { extractApiErrorMessage } from "@/lib/api";
 import { ScrollTable, SnsHandleCell } from "@/components/composites";
 import { FilterChipBar } from "@/components/composites/FilterChip";
 import { Button } from "@/components/ui";
@@ -251,6 +254,10 @@ export function Payouts() {
   const [campaignId, setCampaignId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(null);
+  // 상품 환급액 수정 — 대상 정산 건 하나만 다루므로 페이지 로컬 상태로 충분.
+  const [refundTarget, setRefundTarget] = useState<AdminSettlement | null>(null);
+  const [refundSaving, setRefundSaving] = useState(false);
+  const [refundError, setRefundError] = useState<string | null>(null);
   // 제출물/인사이트 상세 모달 — 응모 단건 조회 후 검수 화면과 동일한 다이얼로그로 표시.
   const submissionDetail = useSubmissionDetail(() =>
     setReloadKey((current) => current + 1),
@@ -396,6 +403,38 @@ export function Payouts() {
       );
     } finally {
       setCompleting(false);
+    }
+  }
+
+  async function handleRefundConfirm(productRefundJpy: number) {
+    if (!refundTarget) return;
+    setRefundSaving(true);
+    setRefundError(null);
+    try {
+      const updated = await updateSettlementRefund(
+        refundTarget.id,
+        productRefundJpy,
+      );
+      // 목록 전체를 다시 불러오면 스크롤·선택이 튄다 — 수정한 행만 갈아끼운다.
+      setState((current) => {
+        if (current.kind !== "ready") return current;
+        return {
+          ...current,
+          rows: current.rows.map((row) =>
+            row.id === refundTarget.id ? { ...row, ...updated } : row,
+          ),
+        };
+      });
+      setRefundTarget(null);
+    } catch (err) {
+      setRefundError(
+        extractApiErrorMessage(
+          err,
+          t("pages.payouts.errors.refundUpdateFailed"),
+        ),
+      );
+    } finally {
+      setRefundSaving(false);
     }
   }
 
@@ -652,7 +691,22 @@ export function Payouts() {
                       <td>{row.influencer.bankAccount?.accountHolder ?? "—"}</td>
                       <td>{row.influencer.bankAccount?.invoiceRegistrationNumber || "—"}</td>
                       <td className={styles.amount}>{formatJpy(row.rewardAmountJpy)}</td>
-                      <td className={styles.amount}>{formatRefund(row.productRefundJpy)}</td>
+                      <td className={styles.amount}>
+                        <div>{formatRefund(row.productRefundJpy)}</div>
+                        {/* 환급액은 승인 시 확정되지만 영수증 재확인으로 틀릴 수 있다 — 입금 전까지 수정 허용. */}
+                        {row.campaign.category === "FAKE_PURCHASE" && isPending && (
+                          <button
+                            type="button"
+                            className={styles.insightLink}
+                            onClick={() => {
+                              setRefundError(null);
+                              setRefundTarget(row);
+                            }}
+                          >
+                            {t("pages.payouts.refundEdit.action")}
+                          </button>
+                        )}
+                      </td>
                       <td className={styles.amount}>{formatJpy(row.amountJpy)}</td>
                       <td>{formatDateTime(row.createdAt, language)}</td>
                       <td>{formatDateTime(row.completedAt, language)}</td>
@@ -696,6 +750,16 @@ export function Payouts() {
       </div>
 
       {submissionDetail.dialog}
+
+      {refundTarget && (
+        <SettlementRefundDialog
+          settlement={refundTarget}
+          mutating={refundSaving}
+          error={refundError}
+          onConfirm={handleRefundConfirm}
+          onCancel={() => setRefundTarget(null)}
+        />
+      )}
 
       {historyTarget && (
         <ApplicationHistoryDialog

@@ -4,12 +4,14 @@ import {
   AdminSubmissionSchema,
   submissionFilterToParams,
   AttachmentListResponseSchema,
+  UpdateSettlementRefundResponseSchema,
   type AdminSettlement,
   type AdminSubmission,
   type AdminSubmissionPageResponse,
   type AdminUpdateInsightRequest,
   type SubmissionFilter,
   type Attachment,
+  type UpdateSettlementRefundResponse,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
@@ -113,6 +115,18 @@ export async function listSettlements(
     params: month ? { month } : undefined,
   });
   return AdminSettlementListResponseSchema.parse(res.data).settlements;
+}
+
+/** 가구매 정산 건의 상품 환급액 수정. 총액은 서버가 보수 + 환급액으로 재계산한다. */
+export async function updateSettlementRefund(
+  settlementId: string,
+  productRefundJpy: number,
+): Promise<UpdateSettlementRefundResponse> {
+  const res = await api.patch(
+    `/campaign-applications/settlements/${encodeURIComponent(settlementId)}/refund`,
+    { productRefundJpy },
+  );
+  return UpdateSettlementRefundResponseSchema.parse(res.data);
 }
 
 export async function completeSettlements(

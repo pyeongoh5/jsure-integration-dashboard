@@ -472,3 +472,22 @@ export const AdminSettlementListResponseSchema = z.object({
 export type AdminSettlementListResponse = z.infer<
   typeof AdminSettlementListResponseSchema
 >;
+
+/**
+ * 가구매 정산 건의 상품 환급액 수정. 승인 시 확정한 금액이 영수증과 달랐을 때
+ * 정산 완료 전까지 바로잡는다. 총액(amountJpy)은 보수 + 이 금액으로 재계산된다.
+ */
+export const UpdateSettlementRefundRequestSchema = z.object({
+  productRefundJpy: z.number().int().nonnegative().max(10_000_000),
+});
+export type UpdateSettlementRefundRequest = z.infer<
+  typeof UpdateSettlementRefundRequestSchema
+>;
+
+export const UpdateSettlementRefundResponseSchema = z.object({
+  productRefundJpy: z.number().int().nonnegative(),
+  amountJpy: z.number().int().nonnegative(),
+});
+export type UpdateSettlementRefundResponse = z.infer<
+  typeof UpdateSettlementRefundResponseSchema
+>;

@@ -1274,6 +1274,56 @@ export class AdminApplicationsService {
     return rows.map((row) => toSettlementResponse(row));
   }
 
+  /**
+   * 가구매 정산 건의 상품 환급액 수정. 입금 전(PENDING)에만 허용하고
+   * 총액은 보수 + 수정된 환급액으로 다시 계산한다.
+   */
+  async updateSettlementRefund(
+    actor: AuditActor,
+    settlementId: string,
+    productRefundJpy: number,
+  ): Promise<{ productRefundJpy: number; amountJpy: number }> {
+    const existing = await this.prisma.settlement.findUnique({
+      where: { id: settlementId },
+      select: {
+        status: true,
+        rewardAmountJpy: true,
+        productRefundJpy: true,
+        applicationId: true,
+        application: {
+          select: { campaignId: true, campaign: { select: { category: true } } },
+        },
+      },
+    });
+    if (!existing) throw new NotFoundException("정산 건을 찾을 수 없습니다");
+    if (existing.status !== "PENDING") {
+      throw new BadRequestException("완료된 정산은 환급액을 수정할 수 없습니다");
+    }
+    if (existing.application.campaign.category !== "FAKE_PURCHASE") {
+      throw new BadRequestException(
+        "가구매 캠페인 정산만 환급액을 수정할 수 있습니다",
+      );
+    }
+    const amountJpy = existing.rewardAmountJpy + productRefundJpy;
+    await this.prisma.settlement.update({
+      where: { id: settlementId },
+      data: { productRefundJpy, amountJpy },
+    });
+    await this.audit.record({
+      action: "SETTLEMENT_REFUND_UPDATE",
+      actor,
+      applicationId: existing.applicationId,
+      campaignId: existing.application.campaignId,
+      settlementId,
+      metadata: {
+        before: existing.productRefundJpy,
+        after: productRefundJpy,
+        amountJpy,
+      },
+    });
+    return { productRefundJpy, amountJpy };
+  }
+
   /** PENDING Settlement 건수. 사이드바 뱃지용. */
   async pendingSettlementCount(): Promise<{ count: number }> {
     const count = await this.prisma.settlement.count({

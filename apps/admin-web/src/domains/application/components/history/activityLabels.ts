@@ -26,6 +26,8 @@ export const ACTIVITY_ACTION_LABEL: Record<
   SETTLEMENT_CREATE: "domains.application.history.actions.settlementCreate",
   SETTLEMENT_REGISTER: "domains.application.history.actions.settlementRegister",
   SETTLEMENT_COMPLETE: "domains.application.history.actions.settlementComplete",
+  SETTLEMENT_REFUND_UPDATE:
+    "domains.application.history.actions.settlementRefundUpdate",
   SETTLEMENT_AUTO_COMPLETE:
     "domains.application.history.actions.settlementAutoComplete",
   CAMPAIGN_CREATE: "domains.application.history.actions.campaignCreate",

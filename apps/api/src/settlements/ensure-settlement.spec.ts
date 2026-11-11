@@ -8,6 +8,8 @@ type ApplicationSelect = {
   subTypes: string[];
   options: { subType: string; option: string }[];
   posts: { subType: string; insightSubmittedAt: Date | null }[];
+  /** 가구매 실결제 금액 — 생략 시 도입 전 응모(null 폴백). */
+  actualPaymentJpy?: number | null;
   /** 기존 정산 존재 여부 — 생략 시 없음. */
   settlement?: { id: string } | null;
   /** 계좌 스냅샷용 — 생략 시 계좌 미등록. */
@@ -40,12 +42,18 @@ function makeStubPrisma(
   createdSettlementId = "settle-created",
 ) {
   const upserts: unknown[] = [];
+  /** 응모를 COMPLETED 로 넘기는 updateMany 호출 기록. */
+  const applicationUpdates: unknown[] = [];
   const prisma = {
     campaignApplication: {
       findUnique: async () =>
         application
           ? { influencer: { bankAccount: null }, ...application }
           : null,
+      updateMany: async (args: unknown) => {
+        applicationUpdates.push(args);
+        return { count: 1 };
+      },
     },
     settlement: {
       upsert: async (args: unknown) => {
@@ -54,7 +62,7 @@ function makeStubPrisma(
       },
     },
   } as never;
-  return { prisma, upserts };
+  return { prisma, upserts, applicationUpdates };
 }
 
 type UpsertArgs = {
@@ -436,6 +444,120 @@ describe("ensureSettlementForApplication — SNS", () => {
     const args = upserts[0] as UpsertArgs;
     expect(args.create.bankCode).toBeNull();
     expect(args.create.accountNumber).toBeNull();
+  });
+});
+
+describe("ensureSettlementForApplication — 가구매 환급액 3단 폴백", () => {
+  const fakePurchase = (
+    actualPaymentJpy?: number | null,
+  ): ApplicationSelect => ({
+    submissionReviewStatus: "APPROVED",
+    subTypes: ["QOO10"],
+    options: [],
+    posts: [],
+    actualPaymentJpy,
+    campaign: {
+      category: "FAKE_PURCHASE",
+      rewardType: "UNIFIED",
+      rewardJpy: 1000,
+      recruits: [
+        {
+          subType: "QOO10",
+          insightRequired: false,
+          productPriceJpy: 3000,
+          rewardJpy: null,
+        },
+      ],
+    },
+  });
+
+  async function refundOf(
+    application: ApplicationSelect,
+    override?: number,
+  ): Promise<number> {
+    const { prisma, upserts } = makeStubPrisma(application);
+    await ensureSettlementForApplication(prisma, "app-1", override);
+    return (upserts[0] as UpsertArgs).create.productRefundJpy;
+  }
+
+  it("운영자 조정액이 있으면 그 값으로 환급한다", async () => {
+    expect(await refundOf(fakePurchase(2500), 2300)).toBe(2300);
+  });
+
+  it("조정이 없으면 인플루언서가 제출한 실결제 금액으로 환급한다", async () => {
+    expect(await refundOf(fakePurchase(2500))).toBe(2500);
+  });
+
+  it("실결제 금액이 없는(도입 전) 응모는 캠페인 상품가로 폴백한다", async () => {
+    expect(await refundOf(fakePurchase(null))).toBe(3000);
+  });
+
+  // 0엔 조정은 "조정하지 않음"이 아니다 — 전액 포인트 결제 등으로 환급 0 이 될 수 있다.
+  it("운영자가 0엔으로 조정하면 제출값이 아니라 0 이 적용된다", async () => {
+    expect(await refundOf(fakePurchase(2500), 0)).toBe(0);
+  });
+
+  it("가구매가 아니면 실결제 금액이 있어도 환급은 0 이다", async () => {
+    const application = fakePurchase(2500);
+    application.campaign.category = "SIMPLE_REVIEW";
+    expect(await refundOf(application)).toBe(0);
+  });
+});
+
+describe("정산 완료 시 응모 상태 전이", () => {
+  const zeroYenFakePurchase: ApplicationSelect = {
+    submissionReviewStatus: "APPROVED",
+    subTypes: ["QOO10"],
+    options: [],
+    posts: [],
+    actualPaymentJpy: 0,
+    campaign: {
+      category: "FAKE_PURCHASE",
+      rewardType: "UNIFIED",
+      rewardJpy: 0,
+      recruits: [
+        {
+          subType: "QOO10",
+          insightRequired: false,
+          productPriceJpy: 0,
+          rewardJpy: null,
+        },
+      ],
+    },
+  };
+
+  it("0엔 자동완료면 응모도 COMPLETED 로 넘긴다", async () => {
+    const { prisma, applicationUpdates } = makeStubPrisma(zeroYenFakePurchase);
+    const { autoCompleted } = await ensureSettlementForApplication(
+      prisma,
+      "app-1",
+    );
+    expect(autoCompleted).toBe(true);
+    expect(applicationUpdates).toHaveLength(1);
+    const args = applicationUpdates[0] as {
+      where: { id: { in: string[] }; status: { in: string[] } };
+      data: { status: string; completedAt: Date };
+    };
+    expect(args.where.id.in).toEqual(["app-1"]);
+    expect(args.data.status).toBe("COMPLETED");
+    // 반려·취소된 건까지 휩쓸지 않도록 진행 구간으로 한정한다.
+    expect(args.where.status.in).not.toContain("CANCELLED");
+    expect(args.where.status.in).not.toContain("REJECTED");
+  });
+
+  it("정산 대기(PENDING)면 응모 상태를 건드리지 않는다", async () => {
+    const pendingSettlement: ApplicationSelect = {
+      ...zeroYenFakePurchase,
+      actualPaymentJpy: 3000,
+      campaign: { ...zeroYenFakePurchase.campaign, rewardJpy: 1000 },
+    };
+    const { prisma, applicationUpdates } = makeStubPrisma(pendingSettlement);
+    const { autoCompleted } = await ensureSettlementForApplication(
+      prisma,
+      "app-1",
+    );
+    expect(autoCompleted).toBe(false);
+    expect(applicationUpdates).toHaveLength(0);
   });
 });
 

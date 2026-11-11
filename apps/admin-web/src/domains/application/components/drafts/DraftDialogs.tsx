@@ -30,7 +30,12 @@ export function DraftDialogs({
 
   switch (pending.type) {
     case "approve":
-      return <DraftApproveDialog {...common} onConfirm={() => onConfirm()} />;
+      return (
+        <DraftApproveDialog
+          {...common}
+          onConfirm={(productRefundJpy) => onConfirm(productRefundJpy)}
+        />
+      );
     case "reject":
       return (
         <DraftRejectDialog

@@ -193,6 +193,16 @@ export function InsightDetailDialog({
                       <div className={styles.fieldValue}>
                         {draft.orderNumber ?? "—"}
                       </div>
+                      <div className={styles.fieldLabel}>
+                        {t(
+                          "domains.application.drafts.insightDialog.actualPayment",
+                        )}
+                      </div>
+                      <div className={styles.fieldValue}>
+                        {draft.actualPaymentJpy === null
+                          ? "—"
+                          : `¥${draft.actualPaymentJpy.toLocaleString()}`}
+                      </div>
                     </div>
                   </section>
 

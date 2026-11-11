@@ -79,6 +79,8 @@ export type DraftReview = {
   selectedOptions: ApplicationOption[];
   /** 가구매 주문번호. */
   orderNumber: string | null;
+  /** 가구매 실결제 금액(JPY) — 인플루언서 제출값. 도입 전 응모는 null. */
+  actualPaymentJpy: number | null;
   posts: DraftPost[];
   reviewUrls: Partial<Record<"LIPS" | "ATCOSME", string>>;
   /** 응모하지 않은 플랫폼에 함께 공유한 기록. 참고 표시용이며 승인·반려 대상이 아니다. */

@@ -521,6 +521,11 @@ model CampaignApplication {
   completedAt    DateTime?
 
   orderNumber        String?
+  /// 가구매 주문 제출 시 인플루언서가 입력한 실결제 금액(JPY) — 쿠폰·포인트 차감 후 실제 지출액.
+  /// 정산의 상품 환급액 기준값이며, 운영자가 승인 시 조정하면 확정액은 Settlement.productRefundJpy 에 남는다
+  /// (둘을 비교하면 제출액 ↔ 확정액 대조 이력이 된다).
+  /// null 은 이 필드 도입 전 응모 — 정산은 기존대로 CampaignRecruit.productPriceJpy 로 폴백한다.
+  actualPaymentJpy   Int?
   orderSubmittedAt   DateTime?
   /// 제출물(게시물/리뷰) 최종 제출 시각 — 전 카테고리 공통.
   reviewSubmittedAt  DateTime?

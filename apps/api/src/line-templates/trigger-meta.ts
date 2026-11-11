@@ -401,6 +401,7 @@ const totalSettlementJpy: TriggerVariableWithResolver = {
       ctx.application.campaign,
       ctx.application.subTypes,
       ctx.application.options,
+      { actualPaymentJpy: ctx.application.actualPaymentJpy },
     );
     return formatJpy(rewardAmountJpy + productRefundJpy);
   },

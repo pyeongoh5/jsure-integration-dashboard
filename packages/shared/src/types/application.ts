@@ -190,6 +190,12 @@ export type SubmitInsightsRequest = z.infer<typeof SubmitInsightsRequestSchema>;
 
 export const SubmitOrderRequestSchema = z.object({
   orderNumber: z.string().min(1, "注文番号を入力してください").max(200),
+  /** 쿠폰·포인트를 뺀 실제 결제 금액(JPY). 정산의 상품 환급액 기준이 된다. */
+  actualPaymentJpy: z
+    .number({ invalid_type_error: "実際のお支払い金額を入力してください" })
+    .int("実際のお支払い金額は整数で入力してください")
+    .positive("実際のお支払い金額を入力してください")
+    .max(10_000_000, "実際のお支払い金額が大きすぎます"),
   receipts: z
     .array(AttachmentUploadInputSchema)
     .min(1, "注文明細のスクリーンショットを1枚以上ご提出ください")

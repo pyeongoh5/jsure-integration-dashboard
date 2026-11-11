@@ -68,6 +68,7 @@ import {
 import { R2Service } from "../r2/r2.service";
 import {
   ensureSettlementForApplication,
+  markApplicationsCompleted,
   settlementAmounts,
 } from "../settlements/ensure-settlement";
 import { AuditService } from "../audit/audit.service";
@@ -92,6 +93,7 @@ type AdminApplicationRow = {
   options: { subType: CampaignSubType; option: string }[];
   productOptions: unknown;
   orderNumber: string | null;
+  actualPaymentJpy: number | null;
   orderSubmittedAt: Date | null;
   reviewSubmittedAt: Date | null;
   campaign: { id: string; title: string; category: CampaignCategory };
@@ -127,6 +129,7 @@ function toResponse(row: AdminApplicationRow): AdminApplication {
     })),
     productOptions: parseApplicationProductOptions(row.productOptions),
     orderNumber: row.orderNumber,
+    actualPaymentJpy: row.actualPaymentJpy,
     orderSubmittedAt: row.orderSubmittedAt ? row.orderSubmittedAt.toISOString() : null,
     reviewSubmittedAt: row.reviewSubmittedAt ? row.reviewSubmittedAt.toISOString() : null,
     campaign: row.campaign,
@@ -843,16 +846,29 @@ export class AdminApplicationsService {
     return this.fetch(id);
   }
 
-  /** 제출물 전체 승인 — 응모 단위. */
+  /**
+   * 제출물 전체 승인 — 응모 단위.
+   *
+   * 가구매는 운영자가 영수증과 대조해 상품 환급액을 조정할 수 있다. 조정액은
+   * 이 승인으로 생성되는 Settlement 에 확정액으로 박히고, 인플루언서 제출값
+   * (application.actualPaymentJpy)은 대조 이력으로 그대로 남는다.
+   */
   async approveSubmission(
     applicationId: string,
     actor: AuditActor,
+    productRefundOverride?: number,
   ): Promise<AdminSubmission> {
     const existing = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
-      select: { id: true, campaignId: true },
+      select: { id: true, campaignId: true, campaign: { select: { category: true } } },
     });
     if (!existing) throw new NotFoundException("Application not found");
+    if (
+      productRefundOverride !== undefined &&
+      existing.campaign.category !== "FAKE_PURCHASE"
+    ) {
+      throw new BadRequestException("상품 환급액은 가구매 캠페인에서만 조정할 수 있습니다");
+    }
     await this.prisma.campaignApplication.update({
       where: { id: applicationId },
       data: {
@@ -869,7 +885,11 @@ export class AdminApplicationsService {
     });
     // 인사이트가 이미 제출돼 있던 경우, 승인 시점에 자동 정산.
     const { autoCompleted, createdSettlementId } =
-      await ensureSettlementForApplication(this.prisma, applicationId);
+      await ensureSettlementForApplication(
+        this.prisma,
+        applicationId,
+        productRefundOverride,
+      );
     if (createdSettlementId) {
       // 어드민 승인의 부수효과 — 액터는 승인자지만 "직접 정산 버튼을 눌렀다"와
       // 구분되도록 origin 은 CASCADE.
@@ -1073,6 +1093,7 @@ export class AdminApplicationsService {
       existing.campaign,
       existing.subTypes,
       existing.options,
+      { actualPaymentJpy: existing.actualPaymentJpy },
     );
     const amountJpy = rewardAmountJpy + productRefundJpy;
     // 총액 0원이면 정산 대기 없이 즉시 완료 처리 (ensure-settlement 와 동일 규칙).
@@ -1105,6 +1126,10 @@ export class AdminApplicationsService {
       update: {},
       select: { id: true },
     });
+    // 0엔 즉시완료는 캠페인 종료 — 응모 상태도 함께 넘긴다.
+    if (autoCompleted) {
+      await markApplicationsCompleted(this.prisma, [applicationId], new Date());
+    }
     // 어드민이 누른 액션은 '등록' 하나다. 0엔 즉시완료는 그 결과이므로
     // 별도 행으로 남기지 않고 metadata 로 표기한다.
     await this.audit.record({
@@ -1314,6 +1339,12 @@ export class AdminApplicationsService {
         completedById: actor.id,
       },
     });
+    // 정산 완료 = 캠페인 종료. 응모 상태도 COMPLETED 로 넘긴다.
+    await markApplicationsCompleted(
+      this.prisma,
+      targets.map((target) => target.applicationId),
+      now,
+    );
     // 정산 건당 1행. applicationId 를 함께 넣어 응모 타임라인이 단일 인덱스
     // 쿼리로 정산 이력까지 커버하게 한다.
     await this.audit.recordMany(
@@ -1691,6 +1722,7 @@ type SubmissionRow = {
   subTypes: CampaignSubType[];
   options: { subType: CampaignSubType; option: string }[];
   orderNumber: string | null;
+  actualPaymentJpy: number | null;
   reviewSubmittedAt: Date | null;
   submissionReviewStatus: "PENDING" | "APPROVED" | "REJECTED";
   submissionReviewedAt: Date | null;
@@ -1786,6 +1818,7 @@ async function toSubmissionResponse(
       option: entry.option,
     })),
     orderNumber: row.orderNumber,
+    actualPaymentJpy: row.actualPaymentJpy,
     reviewSubmittedAt: row.reviewSubmittedAt
       ? row.reviewSubmittedAt.toISOString()
       : null,

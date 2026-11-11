@@ -319,6 +319,16 @@ export const messages = {
         jp: "注文明細のスクリーンショットを1枚以上ご提出ください",
         kr: "주문 명세서 스크린샷을 1장 이상 제출해 주세요",
       },
+      actualPaymentPlaceholder: {
+        // new
+        jp: "例）2480",
+        kr: "예) 2480",
+      },
+      actualPaymentRequired: {
+        // new
+        jp: "実際のお支払い金額を入力してください",
+        kr: "실제 결제 금액을 입력해 주세요",
+      },
       submitting: { jp: "送信中…", kr: "전송 중…" },
       deadlineDaysPrefix: {
         jp: "注文期限まであと ",
@@ -473,6 +483,16 @@ export const messages = {
           kr: "상품 구매 후 주문번호와 주문 명세서 스크린샷을 제출해 주세요",
         },
         orderNumberLabel: { jp: "注文番号", kr: "주문번호" },
+        actualPaymentLabel: {
+          // new
+          jp: "実際のお支払い金額 (円)",
+          kr: "실제 결제 금액 (엔)",
+        },
+        actualPaymentHint: {
+          // new
+          jp: "クーポン・ポイントを除いた、実際にお支払い(ご負担)いただいた最終決済金額をご入力ください。(領収書の実支払金額と一致する必要があります)",
+          kr: "쿠폰 및 포인트를 제외하고, 실제로 결제(지출)하신 최종 결제 금액을 입력해 주세요. (영수증의 실결제 금액과 일치해야 합니다)",
+        },
         receiptsLabel: {
           jp: "注文明細のスクリーンショット (1枚以上)",
           kr: "주문 명세서 스크린샷 (1장 이상)",

@@ -302,6 +302,28 @@
   color: #6b7280;
   word-break: break-all;
 }
+.refundLabel {
+  display: block;
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+.refundInput {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.refundDiff {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #b45309;
+}
 .mutationError {
   margin-top: 8px;
   color: #dc2626;

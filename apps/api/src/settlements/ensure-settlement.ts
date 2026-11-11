@@ -1,4 +1,38 @@
+import { IN_PROGRESS_STATUSES } from "@jsure/shared";
 import type { PrismaService } from "../prisma/prisma.service";
+
+/** campaignApplication.updateMany 만 필요한 최소 인터페이스 — 트랜잭션 클라이언트도 받는다. */
+type ApplicationUpdater = {
+  campaignApplication: {
+    updateMany: (args: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    }) => Promise<{ count: number }>;
+  };
+};
+
+/**
+ * 정산이 완료된 응모를 COMPLETED 로 넘긴다.
+ *
+ * 정산 완료가 곧 캠페인 종료다. 이걸 하지 않으면 응모는 영원히 REVIEW_SUBMITTED 에
+ * 머물러, 탈퇴 차단처럼 "진행 중"을 묻는 모든 판정이 끝난 건을 진행 중으로 본다.
+ * 진행 구간(IN_PROGRESS_STATUSES)에 있는 건만 건드린다 — 반려·취소 건은 그대로 둔다.
+ */
+export async function markApplicationsCompleted(
+  prisma: ApplicationUpdater,
+  applicationIds: string[],
+  completedAt: Date,
+): Promise<number> {
+  if (applicationIds.length === 0) return 0;
+  const { count } = await prisma.campaignApplication.updateMany({
+    where: {
+      id: { in: applicationIds },
+      status: { in: IN_PROGRESS_STATUSES },
+    },
+    data: { status: "COMPLETED", completedAt },
+  });
+  return count;
+}
 
 type RewardRecruit = {
   subType: string;
@@ -52,6 +86,36 @@ export function applicationRewardJpy(
     }, 0);
 }
 
+type RefundBasis = {
+  /** 인플루언서가 주문 제출 시 입력한 실결제 금액. 도입 전 응모는 null. */
+  actualPaymentJpy: number | null;
+  /** 운영자가 승인하며 영수증과 대조해 조정한 확정액. 조정하지 않았으면 null. */
+  override?: number | null;
+};
+
+/**
+ * 가구매 상품 환급액 — 우선순위 3단.
+ * 1) 운영자 조정액 2) 인플루언서가 제출한 실결제 금액
+ * 3) 둘 다 없으면(필드 도입 전 응모) 캠페인 모집 설정의 상품가 합산
+ *
+ * 가구매가 아니면 환급은 없다.
+ */
+function productRefundFor(
+  campaign: {
+    category: "SNS" | "FAKE_PURCHASE" | "SIMPLE_REVIEW";
+    recruits: { subType: string; productPriceJpy: number | null }[];
+  },
+  subTypes: string[],
+  refund: RefundBasis,
+): number {
+  if (campaign.category !== "FAKE_PURCHASE") return 0;
+  if (refund.override != null) return refund.override;
+  if (refund.actualPaymentJpy != null) return refund.actualPaymentJpy;
+  return campaign.recruits
+    .filter((recruit) => subTypes.includes(recruit.subType))
+    .reduce((sum, recruit) => sum + (recruit.productPriceJpy ?? 0), 0);
+}
+
 /** 응모 기준 정산 금액(보수 + 가구매 상품 환급). */
 export function settlementAmounts(
   campaign: {
@@ -62,19 +126,17 @@ export function settlementAmounts(
   },
   subTypes: string[],
   selectedOptions: SelectedOption[],
+  refund: RefundBasis,
 ): { rewardAmountJpy: number; productRefundJpy: number } {
   const rewardAmountJpy = applicationRewardJpy(
     campaign,
     subTypes,
     selectedOptions,
   );
-  const productRefundJpy =
-    campaign.category === "FAKE_PURCHASE"
-      ? campaign.recruits
-          .filter((recruit) => subTypes.includes(recruit.subType))
-          .reduce((sum, recruit) => sum + (recruit.productPriceJpy ?? 0), 0)
-      : 0;
-  return { rewardAmountJpy, productRefundJpy };
+  return {
+    rewardAmountJpy,
+    productRefundJpy: productRefundFor(campaign, subTypes, refund),
+  };
 }
 
 /**
@@ -111,7 +173,8 @@ export function insightMissingForSettlement(application: {
  * 정산액:
  * - rewardAmountJpy = UNIFIED 면 campaign.rewardJpy, PER_SUBTYPE 면 참여
  *   서브타입 기여 합산(옵션별 보수 분리 recruit 은 선택 옵션의 보수)
- * - productRefundJpy = 가구매(FAKE_PURCHASE)만 recruit.productPriceJpy 합산
+ * - productRefundJpy = 가구매(FAKE_PURCHASE)만. productRefundOverride(운영자 조정액)
+ *   → application.actualPaymentJpy(실결제 금액) → recruit.productPriceJpy 순 폴백.
  *
  * 총액 0원이면 정산 대기 없이 COMPLETED 로 자동 완료 생성한다. 이번 호출에서
  * 자동 완료가 일어났을 때만 autoCompleted=true — 호출자가 캠페인 종료 메시지를
@@ -123,12 +186,15 @@ export function insightMissingForSettlement(application: {
 export async function ensureSettlementForApplication(
   prisma: PrismaService,
   applicationId: string,
+  /** 운영자가 승인하며 영수증과 대조해 조정한 가구매 환급액. 조정하지 않았으면 생략. */
+  productRefundOverride?: number | null,
 ): Promise<{ autoCompleted: boolean; createdSettlementId: string | null }> {
   const application = await prisma.campaignApplication.findUnique({
     where: { id: applicationId },
     select: {
       submissionReviewStatus: true,
       subTypes: true,
+      actualPaymentJpy: true,
       options: { select: { subType: true, option: true } },
       posts: { select: { subType: true, insightSubmittedAt: true } },
       settlement: { select: { id: true } },
@@ -185,6 +251,10 @@ export async function ensureSettlementForApplication(
     campaign,
     application.subTypes,
     application.options,
+    {
+      actualPaymentJpy: application.actualPaymentJpy,
+      override: productRefundOverride,
+    },
   );
   const amountJpy = rewardAmountJpy + productRefundJpy;
   // 총액 0원이면 정산 대기를 거치지 않고 즉시 완료 (캠페인 종료).
@@ -203,6 +273,7 @@ export async function ensureSettlementForApplication(
     invoiceRegistrationNumber: null,
   };
 
+  const now = new Date();
   const created = await prisma.settlement.upsert({
     where: { applicationId },
     create: {
@@ -211,11 +282,15 @@ export async function ensureSettlementForApplication(
       rewardAmountJpy,
       productRefundJpy,
       status: autoCompleted ? "COMPLETED" : "PENDING",
-      completedAt: autoCompleted ? new Date() : null,
+      completedAt: autoCompleted ? now : null,
       ...bankSnapshot,
     },
     update: {},
     select: { id: true },
   });
+  // 0엔 정산은 생성 즉시 완료 = 캠페인 종료. 응모 상태도 함께 넘긴다.
+  if (autoCompleted) {
+    await markApplicationsCompleted(prisma, [applicationId], now);
+  }
   return { autoCompleted, createdSettlementId: created.id };
 }

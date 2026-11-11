@@ -85,11 +85,13 @@ export function ApplicationDetail() {
   const order = useMutation({
     mutationFn: ({
       orderNumber,
+      actualPaymentJpy,
       receipts,
     }: {
       orderNumber: string;
+      actualPaymentJpy: number;
       receipts: AttachmentUploadInput[];
-    }) => submitOrder(id, orderNumber, receipts),
+    }) => submitOrder(id, orderNumber, actualPaymentJpy, receipts),
     onSuccess: () => invalidate(),
   });
   const review = useMutation({
@@ -354,8 +356,8 @@ export function ApplicationDetail() {
           <OrderSubmitForm
             applicationId={data.id}
             orderDeadlineAt={data.orderDeadlineAt}
-            onSubmit={async (orderNumber, receipts) => {
-              await order.mutateAsync({ orderNumber, receipts });
+            onSubmit={async (orderNumber, actualPaymentJpy, receipts) => {
+              await order.mutateAsync({ orderNumber, actualPaymentJpy, receipts });
             }}
             submitting={order.isPending}
           />

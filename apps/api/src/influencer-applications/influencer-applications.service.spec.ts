@@ -86,7 +86,7 @@ describe("InfluencerApplicationsService.submitOrder", () => {
     };
     const svc = makeService({ prisma });
     await expect(
-      svc.submitOrder("inf-1", "app-1", "ORDER-1", receipts),
+      svc.submitOrder("inf-1", "app-1", "ORDER-1", 2480, receipts),
     ).rejects.toThrow(/CATEGORY_MISMATCH|가구매 리뷰/);
   });
 
@@ -133,7 +133,7 @@ describe("InfluencerApplicationsService.submitOrder", () => {
       dispatcher: { dispatch },
     });
 
-    await svc.submitOrder("inf-1", "app-1", "  ORDER-1  ", receipts);
+    await svc.submitOrder("inf-1", "app-1", "  ORDER-1  ", 2480, receipts);
 
     expect(verifyAttachmentUploads).toHaveBeenCalledWith(
       receipts,
@@ -154,6 +154,7 @@ describe("InfluencerApplicationsService.submitOrder", () => {
         data: expect.objectContaining({
           status: "ORDER_SUBMITTED",
           orderNumber: "ORDER-1",
+          actualPaymentJpy: 2480,
         }),
       }),
     );
@@ -194,7 +195,7 @@ describe("InfluencerApplicationsService.submitOrder", () => {
       dispatcher: { dispatch: jest.fn() },
     });
 
-    await svc.submitOrder("inf-1", "app-1", "ORDER-2", receipts);
+    await svc.submitOrder("inf-1", "app-1", "ORDER-2", 2480, receipts);
 
     expect(deleteMany).toHaveBeenCalledWith({
       where: { applicationId: "app-1", kind: "ORDER_RECEIPT" },
@@ -216,7 +217,7 @@ describe("InfluencerApplicationsService.submitOrder", () => {
     };
     const svc = makeService({ prisma });
     await expect(
-      svc.submitOrder("inf-1", "app-1", "ORDER-1", receipts),
+      svc.submitOrder("inf-1", "app-1", "ORDER-1", 2480, receipts),
     ).rejects.toThrow(/INVALID_TRANSITION|주문 정보를 제출/);
   });
 
@@ -234,7 +235,7 @@ describe("InfluencerApplicationsService.submitOrder", () => {
     };
     const svc = makeService({ prisma });
     await expect(
-      svc.submitOrder("inf-1", "app-1", "ORDER-1", []),
+      svc.submitOrder("inf-1", "app-1", "ORDER-1", 2480, []),
     ).rejects.toThrow(/RECEIPT_REQUIRED|스크린샷/);
   });
 });

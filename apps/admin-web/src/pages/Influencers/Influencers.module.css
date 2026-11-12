@@ -167,6 +167,14 @@
   margin-top: 2px;
 }
 
+/* 상세 사유는 500자까지 들어올 수 있다 — 한 줄로 자르고 전문은 title 로. */
+.withdrawalReason {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .contact {
   font-size: var(--font-size-md);
   color: var(--c-text);

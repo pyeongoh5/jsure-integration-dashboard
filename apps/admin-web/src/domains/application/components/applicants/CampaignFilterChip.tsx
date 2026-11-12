@@ -182,7 +182,7 @@ function CampaignPopover({
           {t("domains.application.applicants.campaignFilter.noSearchResults")}
         </div>
       ) : (
-        <div className={`${styles.popoverItems} ${styles.popoverItemsScroll}`}>
+        <div className={styles.popoverItems}>
           {filtered.map((campaign) => {
             const selected = campaign.id === campaignId;
             return (

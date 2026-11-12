@@ -48,6 +48,8 @@ export const AdminActivityActionSchema = z.enum([
   "INFLUENCER_FLAG_SET",
   "INFLUENCER_FLAG_CLEAR",
   "INFLUENCER_TAGS_UPDATE",
+  // 태그 마스터 삭제. 복구 단서가 이 로그뿐이라 라벨과 영향 인원을 metadata 에 남긴다.
+  "INFLUENCER_TAG_DELETE",
   "INFLUENCER_WITHDRAW",
   // 인플루언서 본인이 낸 탈퇴 신청. actor 가 없어 origin 은 SYSTEM 으로 남는다.
   "INFLUENCER_WITHDRAW_REQUEST",

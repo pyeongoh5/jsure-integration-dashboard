@@ -110,3 +110,50 @@ describe("InfluencersService.updateTags", () => {
     expect(audit.record).not.toHaveBeenCalled();
   });
 });
+
+describe("InfluencersService.deleteTag", () => {
+  function makeDeleteMocks(tag: unknown) {
+    const prisma = {
+      influencerTag: {
+        findUnique: jest.fn().mockResolvedValue(tag),
+        delete: jest.fn().mockResolvedValue({}),
+      },
+    };
+    const audit = { record: jest.fn().mockResolvedValue(undefined) };
+    const service = new InfluencersService(
+      prisma as unknown as PrismaService,
+      audit as unknown as AuditService,
+      { dispatchCommon: jest.fn() } as unknown as LineDispatcherService,
+    );
+    return { prisma, audit, service };
+  }
+
+  it("태그를 지우고 라벨·영향 인원을 감사 로그에 남긴다", async () => {
+    const { prisma, audit, service } = makeDeleteMocks({
+      label: "韓国在住",
+      _count: { assignments: 3 },
+    });
+
+    await service.deleteTag("tag-1", actor);
+
+    expect(prisma.influencerTag.delete).toHaveBeenCalledWith({
+      where: { id: "tag-1" },
+    });
+    // 지우고 나면 이 로그가 유일한 복구 단서다 — 라벨과 인원이 모두 있어야 한다.
+    expect(audit.record).toHaveBeenCalledWith({
+      action: "INFLUENCER_TAG_DELETE",
+      actor,
+      metadata: { label: "韓国在住", assignedCount: 3 },
+    });
+  });
+
+  it("없는 태그면 404 — 아무것도 지우지 않는다", async () => {
+    const { prisma, audit, service } = makeDeleteMocks(null);
+
+    await expect(service.deleteTag("ghost", actor)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(prisma.influencerTag.delete).not.toHaveBeenCalled();
+    expect(audit.record).not.toHaveBeenCalled();
+  });
+});

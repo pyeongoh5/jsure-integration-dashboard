@@ -57,6 +57,8 @@ export const ACTIVITY_ACTION_LABEL: Record<
     "domains.application.history.actions.influencerFlagClear",
   INFLUENCER_TAGS_UPDATE:
     "domains.application.history.actions.influencerTagsUpdate",
+  INFLUENCER_TAG_DELETE:
+    "domains.application.history.actions.influencerTagDelete",
   INFLUENCER_WITHDRAW: "domains.application.history.actions.influencerWithdraw",
   INFLUENCER_WITHDRAW_REQUEST:
     "domains.application.history.actions.influencerWithdrawRequest",

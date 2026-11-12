@@ -8,6 +8,7 @@ export { ResidenceFilterChip } from "./components/ResidenceFilterChip";
 export { WithdrawalFilterChip } from "./components/WithdrawalFilterChip";
 export { WITHDRAWAL_REASON_LABEL_KEY, withdrawalTooltip } from "./withdrawalLabel";
 export { RESIDENCE_LABEL_KEY, RESIDENCE_ORDER } from "./residenceLabel";
+export { InfluencerTagManageDialog } from "./components/InfluencerTagManageDialog";
 export { InfluencerWithdrawDialog } from "./components/InfluencerWithdrawDialog";
 export { InfluencerWithdrawalRejectDialog } from "./components/InfluencerWithdrawalRejectDialog";
 export {

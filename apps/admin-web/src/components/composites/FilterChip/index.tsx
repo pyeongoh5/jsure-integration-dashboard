@@ -156,7 +156,13 @@ export function FilterChip({
           <div
             ref={popoverRef}
             className={styles.popover}
-            style={{ top: rect.bottom + 6, left: rect.left }}
+            // 칩 아래로만 펼치므로 남은 뷰포트 높이가 곧 상한이다. 이걸 안 걸면
+            // 옵션이 많은 칩(태그 등)이 화면 밖으로 흘러 스크롤도 못 한다.
+            style={{
+              top: rect.bottom + 6,
+              left: rect.left,
+              maxHeight: `calc(100vh - ${rect.bottom + 6}px - 12px)`,
+            }}
             onPointerDown={(event) => event.stopPropagation()}
           >
             {popoverTitle && <div className={styles.popoverTitle}>{popoverTitle}</div>}

@@ -14,6 +14,7 @@ import type {
 } from "@jsure/shared";
 import {
   InfluencerNotesDialog,
+  InfluencerTagManageDialog,
   InfluencerTagFilterChip,
   InfluencerWithdrawDialog,
   RESIDENCE_LABEL_KEY,
@@ -117,8 +118,10 @@ export function Influencers() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [csvPending, setCsvPending] = useState(false);
   const [notesTarget, setNotesTarget] = useState<AdminInfluencer | null>(null);
-  // 탈퇴는 PII 익명화라 되돌릴 수 없다 — OWNER 에게만 입구를 연다
-  const canWithdraw = getStoredUser()?.role === "OWNER";
+  // 탈퇴(PII 익명화)도 태그 삭제도 되돌릴 수 없다 — OWNER 에게만 입구를 연다
+  // (화면만 가리는 게 아니라 서버도 OWNER 만 허용한다).
+  const isOwner = getStoredUser()?.role === "OWNER";
+  const [tagManageOpen, setTagManageOpen] = useState(false);
   const [withdrawTarget, setWithdrawTarget] = useState<AdminInfluencer | null>(
     null,
   );
@@ -233,7 +236,19 @@ export function Influencers() {
   return (
     <div className={styles.inf}>
       <div>
-        <h1 className={styles.title}>{t("nav.items.influencers")}</h1>
+        <div className={styles.titleRow}>
+          <h1 className={styles.title}>{t("nav.items.influencers")}</h1>
+          {/* 태그 삭제는 비가역이라 OWNER 에게만 노출한다 (서버도 OWNER 만 허용) */}
+          {isOwner && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setTagManageOpen(true)}
+            >
+              {t("domains.influencer.tagManage.openButton")}
+            </Button>
+          )}
+        </div>
         <p className={styles.subtitle}>
           {state.kind === "ready"
             ? t("pages.influencers.totalCount", { count: total })
@@ -433,7 +448,7 @@ export function Influencers() {
                           본인이 낸 신청이 있는 회원만 — 어드민이 일방적으로 탈퇴시킬 수
                           없다. 서버도 신청이 없으면 거절한다.
                         */}
-                        {canWithdraw && r.withdrawal?.decision === "PENDING" && (
+                        {isOwner && r.withdrawal?.decision === "PENDING" && (
                           <Button variant="danger" size="sm" onClick={() => setWithdrawTarget(r)}>
                             {t("domains.influencer.withdrawDialog.openButton")}
                           </Button>
@@ -456,6 +471,13 @@ export function Influencers() {
         candidates={broadcastCandidates ?? []}
         onClose={() => setBroadcastCandidates(null)}
       />
+
+      {tagManageOpen && (
+        <InfluencerTagManageDialog
+          onClose={() => setTagManageOpen(false)}
+          onDeleted={reload}
+        />
+      )}
 
       {notesTarget && (
         <InfluencerNotesDialog

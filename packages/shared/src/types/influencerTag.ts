@@ -8,6 +8,11 @@ export const INFLUENCER_TAGS_MAX_COUNT = 10;
 export const InfluencerTagSchema = z.object({
   id: z.string(),
   label: z.string(),
+  /**
+   * 이 태그가 달린 인플루언서 수. 삭제 시 몇 명에게서 떨어지는지 보여주는 용도다.
+   * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
+   */
+  assignedCount: z.number().int().nonnegative().default(0),
 });
 export type InfluencerTag = z.infer<typeof InfluencerTagSchema>;
 

@@ -77,6 +77,14 @@ export async function listInfluencerTags(): Promise<InfluencerTag[]> {
   return InfluencerTagListResponseSchema.parse(res.data).tags;
 }
 
+/**
+ * 태그 마스터에서 완전히 제거. 달려 있던 인플루언서에게서도 함께 떨어진다.
+ * OWNER 전용이며 되돌릴 수 없다.
+ */
+export async function deleteInfluencerTag(tagId: string): Promise<void> {
+  await api.delete(`/influencers/tags/${encodeURIComponent(tagId)}`);
+}
+
 /** 태그 전체 교체. 마스터에 없는 라벨은 서버가 만든다. */
 export async function updateInfluencerTags(
   influencerId: string,

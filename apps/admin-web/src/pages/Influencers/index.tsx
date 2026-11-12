@@ -352,7 +352,6 @@ export function Influencers() {
                           {r.withdrawal?.decision === "APPROVED" && (
                             <div
                               className={`${styles.nameSub} ${styles.withdrawalReason}`}
-                              title={r.withdrawal.reasonDetail || undefined}
                             >
                               {t(WITHDRAWAL_REASON_LABEL_KEY[r.withdrawal.reason])}
                               {r.withdrawal.reasonDetail.trim() !== "" &&
@@ -364,8 +363,10 @@ export function Influencers() {
                     </td>
                     <td>{t(RESIDENCE_LABEL_KEY[r.residence])}</td>
                     <td>
-                      <div className={styles.contact}>{r.email}</div>
-                      <div className={`${styles.contact} ${styles.contactSub}`}>{r.phone}</div>
+                      <div className={styles.contact}>{r.email || "—"}</div>
+                      <div className={`${styles.contact} ${styles.contactSub}`}>
+                        {r.phone || "—"}
+                      </div>
                     </td>
                     <td>
                       {r.snsAccounts.length === 0 ? (

@@ -79,7 +79,9 @@ function toAdminResponse(
 ): AdminInfluencer {
   return {
     id: row.id,
-    email: row.email,
+    // 익명화 이메일(deleted+<id>@invalid)은 연락처가 아니라 내부 자리표시자다 —
+    // 표시용 응답에서는 비워, 화면·CSV 가 모두 빈 값으로 다룬다.
+    email: row.email.startsWith(WITHDRAWN_EMAIL_PREFIX) ? "" : row.email,
     name: row.name,
     nameKana: row.nameKana,
     phone: row.phone,

@@ -167,12 +167,11 @@
   margin-top: 2px;
 }
 
-/* 상세 사유는 500자까지 들어올 수 있다 — 한 줄로 자르고 전문은 title 로. */
+/* 상세 사유는 500자까지 들어올 수 있다 — 자르지 않고 폭만 묶어 줄바꿈시킨다. */
 .withdrawalReason {
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 275px;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .contact {

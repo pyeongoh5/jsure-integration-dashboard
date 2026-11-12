@@ -378,10 +378,22 @@ export function Influencers() {
                     </td>
                     <td>{t(RESIDENCE_LABEL_KEY[r.residence])}</td>
                     <td>
-                      <div className={styles.contact}>{r.email || "—"}</div>
-                      <div className={`${styles.contact} ${styles.contactSub}`}>
-                        {r.phone || "—"}
-                      </div>
+                      {/*
+                        탈퇴 회원은 이메일·전화가 모두 비어 — 가 두 줄로 겹친다.
+                        둘 다 없으면 다른 빈 칸과 같이 한 줄로만 표시한다.
+                      */}
+                      {!r.email && !r.phone ? (
+                        <span className={styles.emptyCell}>—</span>
+                      ) : (
+                        <>
+                          <div className={styles.contact}>{r.email || "—"}</div>
+                          <div
+                            className={`${styles.contact} ${styles.contactSub}`}
+                          >
+                            {r.phone || "—"}
+                          </div>
+                        </>
+                      )}
                     </td>
                     <td>
                       {r.snsAccounts.length === 0 ? (

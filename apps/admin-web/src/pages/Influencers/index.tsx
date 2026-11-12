@@ -20,6 +20,7 @@ import {
   ResidenceFilterChip,
   WithdrawalFilterChip,
   InfluencerWithdrawalRejectDialog,
+  WITHDRAWAL_REASON_LABEL_KEY,
   withdrawalTooltip,
   buildInfluencersCsv,
   exportInfluencers,
@@ -347,6 +348,17 @@ export function Influencers() {
                             <TagChipList tags={r.tags} />
                           </div>
                           {r.nameKana && <div className={styles.nameSub}>{r.nameKana}</div>}
+                          {/* 탈퇴 완료 회원은 이름이 익명화되므로, 식별 대신 이탈 사유를 보여준다. */}
+                          {r.withdrawal?.decision === "APPROVED" && (
+                            <div
+                              className={`${styles.nameSub} ${styles.withdrawalReason}`}
+                              title={r.withdrawal.reasonDetail || undefined}
+                            >
+                              {t(WITHDRAWAL_REASON_LABEL_KEY[r.withdrawal.reason])}
+                              {r.withdrawal.reasonDetail.trim() !== "" &&
+                                ` — ${r.withdrawal.reasonDetail}`}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>

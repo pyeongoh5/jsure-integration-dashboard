@@ -3,6 +3,7 @@ export const adminMessages = {
     languageName: { ko: "한국어", en: "English", ja: "日本語" },
     cancel: { ko: "취소", en: "Cancel", ja: "キャンセル" },
     close: { ko: "닫기", en: "Close", ja: "閉じる" },
+    delete: { ko: "삭제", en: "Delete", ja: "削除" },
     removeTag: { ko: "태그 삭제", en: "Remove tag", ja: "タグを削除" },
     loading: { ko: "불러오는 중…", en: "Loading…", ja: "読み込み中…" },
     itemCount: { ko: "{count}건", en: "{count} items", ja: "{count}件" },
@@ -1819,6 +1820,11 @@ export const adminMessages = {
             en: "Admin tags updated",
             ja: "管理者タグ変更",
           },
+          influencerTagDelete: {
+            ko: "관리자 태그 삭제",
+            en: "Admin tag deleted",
+            ja: "管理者タグ削除",
+          },
           influencerWithdraw: {
             ko: "인플루언서 탈퇴 처리",
             en: "Influencer withdrawn",
@@ -3303,6 +3309,55 @@ export const adminMessages = {
             rejected: { ko: "반려", en: "Rejected", ja: "却下" },
             cancelled: { ko: "취소", en: "Cancelled", ja: "キャンセル" },
           },
+        },
+      },
+      tagManage: {
+        openButton: { ko: "태그 관리", en: "Manage tags", ja: "タグ管理" },
+        title: { ko: "태그 관리", en: "Manage tags", ja: "タグ管理" },
+        hint: {
+          ko: "태그를 삭제하면 그 태그가 달린 회원에게서도 함께 떨어집니다.",
+          en: "Deleting a tag also removes it from every member it is assigned to.",
+          ja: "タグを削除すると、そのタグが付いている会員からも外れます。",
+        },
+        empty: {
+          ko: "등록된 태그가 없습니다.",
+          en: "No tags yet.",
+          ja: "登録されたタグはありません。",
+        },
+        assignedCount: {
+          ko: "{count}명",
+          en: "{count} members",
+          ja: "{count}名",
+        },
+        confirmTitle: {
+          ko: "'{label}' 태그를 삭제할까요?",
+          en: "Delete the tag “{label}”?",
+          ja: "「{label}」タグを削除しますか？",
+        },
+        confirmAssigned: {
+          ko: "{count}명에게서 이 태그가 제거됩니다.",
+          en: "This tag will be removed from {count} members.",
+          ja: "{count}名からこのタグが外れます。",
+        },
+        confirmUnassigned: {
+          ko: "이 태그가 달린 회원은 없습니다.",
+          en: "No members have this tag.",
+          ja: "このタグが付いている会員はいません。",
+        },
+        confirmIrreversible: {
+          ko: "되돌릴 수 없습니다.",
+          en: "This cannot be undone.",
+          ja: "元に戻せません。",
+        },
+        loadFailed: {
+          ko: "태그를 불러오지 못했습니다.",
+          en: "Failed to load tags.",
+          ja: "タグを読み込めませんでした。",
+        },
+        deleteFailed: {
+          ko: "태그를 삭제하지 못했습니다.",
+          en: "Failed to delete the tag.",
+          ja: "タグを削除できませんでした。",
         },
       },
       withdrawDialog: {

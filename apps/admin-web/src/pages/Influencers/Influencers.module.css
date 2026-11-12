@@ -12,10 +12,22 @@
   gap: var(--space-4);
 }
 
+/*
+  제목 글자 줄에만 액션을 맞춘다. 아래 총원 줄은 중앙 계산에 들어가지 않도록
+  제목과 같은 행에 두고, 행 간격(6px)은 h1 이 아니라 이 행이 갖는다 —
+  h1 의 margin-bottom 이 남아 있으면 그만큼 버튼이 위로 밀린다.
+*/
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: 6px;
+}
+
 .title {
   font-size: 26px;
   font-weight: var(--font-weight-bold);
-  margin: 0 0 6px;
+  margin: 0;
   letter-spacing: -0.01em;
 }
 

@@ -456,9 +456,40 @@ export class InfluencersService {
   async listTags(): Promise<InfluencerTagListResponse> {
     const tags = await this.prisma.influencerTag.findMany({
       orderBy: { label: "asc" },
-      select: { id: true, label: true },
+      select: {
+        id: true,
+        label: true,
+        _count: { select: { assignments: true } },
+      },
     });
-    return { tags };
+    return {
+      tags: tags.map((tag) => ({
+        id: tag.id,
+        label: tag.label,
+        assignedCount: tag._count.assignments,
+      })),
+    };
+  }
+
+  /**
+   * 태그 마스터 삭제. 달려 있던 인플루언서에게서도 함께 떨어진다
+   * (InfluencerTagAssignment 가 onDelete: Cascade). 되돌릴 수 없으므로
+   * 라벨과 영향 인원을 감사 로그에 남긴다 — 삭제 후엔 이 로그가 유일한 단서다.
+   */
+  async deleteTag(tagId: string, actor: AuditActor): Promise<void> {
+    const tag = await this.prisma.influencerTag.findUnique({
+      where: { id: tagId },
+      select: { label: true, _count: { select: { assignments: true } } },
+    });
+    if (!tag) throw new NotFoundException("태그를 찾을 수 없습니다");
+
+    await this.prisma.influencerTag.delete({ where: { id: tagId } });
+
+    await this.audit.record({
+      action: "INFLUENCER_TAG_DELETE",
+      actor,
+      metadata: { label: tag.label, assignedCount: tag._count.assignments },
+    });
   }
 
   /**

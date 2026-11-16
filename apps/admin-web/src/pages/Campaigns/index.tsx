@@ -158,7 +158,16 @@ export function Campaigns() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelectedIds(new Set());
+      if (event.key !== "Escape") return;
+      const target = event.target as HTMLElement | null;
+      // 검색창 등 입력 중에는 Esc 가 입력 취소 용도이지 선택 해제가 아니다.
+      if (
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
+      ) {
+        return;
+      }
+      setSelectedIds(new Set());
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -296,7 +305,7 @@ export function Campaigns() {
             onChange={(value) => setStatusFilter(value ?? "all")}
           />
           <MultiSelectFilterChip
-            emptyLabel={t("pages.campaigns.managerFilter.chipEmpty")}
+            emptyLabel={t("domains.campaign.managers.chipEmpty")}
             labelPrefix={t("pages.campaigns.managerFilter.prefix")}
             popoverTitle={t("pages.campaigns.managerFilter.title")}
             options={managerFilterOptions}

@@ -3514,7 +3514,6 @@ export const adminMessages = {
       },
       statusFilterTitle: { ko: "상태 선택", en: "Select status", ja: "ステータス選択" },
       managerFilter: {
-        chipEmpty: { ko: "+ 담당자", en: "+ Manager", ja: "+ 担当者" },
         prefix: { ko: "담당자", en: "Manager", ja: "担当者" },
         title: { ko: "담당자 필터", en: "Manager filter", ja: "担当者フィルター" },
         mine: {

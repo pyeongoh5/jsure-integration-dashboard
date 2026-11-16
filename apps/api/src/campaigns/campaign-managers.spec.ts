@@ -65,6 +65,8 @@ type MakeServiceOverrides = {
   }) => void;
   onRecordMany?: (entries: AuditEntry[]) => void;
   existingAdminIds?: string[];
+  /** 삭제되지 않아 assignManagers 의 대상이 되는 캠페인 id. 생략하면 요청한 id 전부가 존재하는 것으로 본다. */
+  existingCampaignIds?: string[];
   row?: Record<string, unknown>;
   updateManyCount?: number;
 };
@@ -110,7 +112,13 @@ function makeService(overrides: MakeServiceOverrides = {}) {
         overrides.onCreate?.(args);
         return row;
       },
-      findMany: async () => [],
+      findMany: async (args: { where: { id: { in: string[] } } }) => {
+        const existingCampaignIds =
+          overrides.existingCampaignIds ?? args.where.id.in;
+        return args.where.id.in
+          .filter((id) => existingCampaignIds.includes(id))
+          .map((id) => ({ id }));
+      },
       findUnique: async () => ({ ...row }),
       findFirst: async () => row,
       update: async (args: { data: Record<string, unknown> }) => {
@@ -118,11 +126,11 @@ function makeService(overrides: MakeServiceOverrides = {}) {
         return row;
       },
       updateMany: async (args: {
-        where: Record<string, unknown>;
+        where: { id: { in: string[] } };
         data: Record<string, unknown>;
       }) => {
         overrides.onUpdateMany?.(args);
-        return { count: overrides.updateManyCount ?? 0 };
+        return { count: overrides.updateManyCount ?? args.where.id.in.length };
       },
     },
     adminUser: {
@@ -302,11 +310,15 @@ describe("assignManagers", () => {
       where: Record<string, unknown>;
       data: Record<string, unknown>;
     } | null = null;
+    let recordedEntries: AuditEntry[] = [];
     const service = makeService({
       existingAdminIds: ["admin-2"],
-      updateManyCount: 1,
+      existingCampaignIds: ["c1"], // c2 는 삭제된 것으로 취급
       onUpdateMany: (args) => {
         updateManyArgs = args;
+      },
+      onRecordMany: (entries) => {
+        recordedEntries = entries;
       },
     });
 
@@ -314,6 +326,8 @@ describe("assignManagers", () => {
 
     expect(updateManyArgs!.where.deletedAt).toBe(null);
     expect(response.updatedCount).toBe(1);
+    // 실제로 갱신된 c1 에만 감사 로그가 남고, 걸러진 c2 에는 남지 않는다.
+    expect(recordedEntries.map((entry) => entry.campaignId)).toEqual(["c1"]);
   });
 
   it("managerIds 가 비면 담당자를 해제한다", async () => {
@@ -370,6 +384,7 @@ describe("assignManagers", () => {
         action: "CAMPAIGN_MANAGERS_ASSIGN",
         actor: TEST_ACTOR,
         campaignId,
+        metadata: { managerCount: bulkAssignRequest.managerIds.length },
       });
     }
   });

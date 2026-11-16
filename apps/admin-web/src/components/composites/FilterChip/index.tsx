@@ -275,17 +275,14 @@ export function MultiSelectFilterChip<T extends string>({
     .map((option) => option.label);
   const { text: selectedLabelText, title: selectedLabelTitle } =
     buildMultiSelectLabel(selectedLabels, maxVisibleLabels);
-  const activeLabel =
-    selectedLabels.length > 0
-      ? labelPrefix
-        ? `${labelPrefix}: ${selectedLabelText}`
-        : selectedLabelText
-      : null;
+  const withLabelPrefix = (label: string) =>
+    labelPrefix ? `${labelPrefix}: ${label}` : label;
+  const activeLabel = selectedLabels.length > 0 ? withLabelPrefix(selectedLabelText) : null;
+  // 접힌 경우(텍스트가 "+N" 으로 줄어든 경우)에만 title 을 건다 — 안 접히면 보이는
+  // 글자와 title 이 같아 툴팁이 무의미하고, 기존 6개 호출부에 없던 호버 동작만 생긴다.
   const activeTitle =
-    selectedLabels.length > 0
-      ? labelPrefix
-        ? `${labelPrefix}: ${selectedLabelTitle}`
-        : selectedLabelTitle
+    selectedLabels.length > 0 && selectedLabelText !== selectedLabelTitle
+      ? withLabelPrefix(selectedLabelTitle)
       : undefined;
 
   const toggle = (key: T) => {

@@ -2573,6 +2573,11 @@ export const adminMessages = {
         label: { ko: "운영 담당자", en: "Managers", ja: "運営担当者" },
         chipEmpty: { ko: "+ 담당자", en: "+ Manager", ja: "+ 担当者" },
         popoverTitle: { ko: "담당자 선택", en: "Select managers", ja: "担当者を選択" },
+        loadFailed: {
+          ko: "담당자 후보를 불러오지 못했습니다.",
+          en: "Failed to load manager candidates.",
+          ja: "担当者候補を読み込めませんでした。",
+        },
       },
     },
     auth: {

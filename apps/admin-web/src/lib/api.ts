@@ -35,6 +35,15 @@ export const jwinApi = axios.create({
   timeout: 10_000,
 });
 
+/**
+ * 빌더 API. 지금은 대시보드 API 와 같은 서버·같은 인증을 쓰지만,
+ * 나중에 빌더 서버를 분리하면 VITE_BUILDER_API_BASE_URL 하나로 전환된다.
+ */
+export const builderApi = axios.create({
+  baseURL: import.meta.env.VITE_BUILDER_API_BASE_URL || "/api",
+  timeout: 10_000,
+});
+
 let refreshInFlight: Promise<string | null> | null = null;
 
 async function performRefresh(): Promise<string | null> {
@@ -114,6 +123,7 @@ function attachAuthInterceptors(instance: AxiosInstance) {
 
 attachAuthInterceptors(api);
 attachAuthInterceptors(jwinApi);
+attachAuthInterceptors(builderApi);
 
 /** API 에러 응답에서 사용자에게 보여줄 메시지를 뽑아낸다. NestJS 는 message 를 문자열 또는 배열로 내려준다. */
 export function extractApiErrorMessage(error: unknown, fallback: string): string {

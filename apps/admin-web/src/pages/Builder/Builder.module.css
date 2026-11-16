@@ -1,0 +1,18 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 1400px;
+  margin: auto;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
+}
+
+.empty {
+  text-align: center;
+  padding: 48px var(--space-4);
+  color: var(--color-text-muted);
+}

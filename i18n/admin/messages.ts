@@ -33,6 +33,7 @@ export const adminMessages = {
       customers: { ko: "고객", en: "Customers", ja: "顧客" },
       finance: { ko: "재무", en: "Finance", ja: "財務" },
       system: { ko: "시스템", en: "System", ja: "システム" },
+      builder: { ko: "제작", en: "Build", ja: "作成" },
     },
     items: {
       dashboard: { ko: "대시보드", en: "Dashboard", ja: "ダッシュボード" },
@@ -51,6 +52,7 @@ export const adminMessages = {
       jwinWinners: { ko: "당첨자 관리", en: "Winners", ja: "当選者管理" },
       jwinPrizes: { ko: "경품·기프트코드", en: "Prizes & Gift Codes", ja: "景品・ギフトコード" },
       jwinStats: { ko: "캠페인 통계", en: "Campaign stats", ja: "キャンペーン統計" },
+      surveys: { ko: "앙케이트", en: "Surveys", ja: "アンケート" },
     },
     groupsJwin: {
       prizes: { ko: "경품", en: "Prizes", ja: "景品" },
@@ -68,6 +70,12 @@ export const adminMessages = {
         ko: "X 인스턴트윈",
         en: "X instant win",
         ja: "Xインスタントウィン",
+      },
+      builder: { ko: "빌더", en: "Builder", ja: "ビルダー" },
+      builderDescription: {
+        ko: "앙케이트·양식 제작",
+        en: "Survey & form builder",
+        ja: "アンケート・フォーム作成",
       },
     },
   },
@@ -4182,6 +4190,14 @@ export const adminMessages = {
         rewardJpy: { ko: "보수(JPY)", en: "Reward (JPY)", ja: "報酬(JPY)" },
         refundJpy: { ko: "상품환급(JPY)", en: "Product refund (JPY)", ja: "商品返金(JPY)" },
         totalJpy: { ko: "합계(JPY)", en: "Total (JPY)", ja: "合計(JPY)" },
+      },
+    },
+    builderSurveys: {
+      title: { ko: "앙케이트", en: "Surveys", ja: "アンケート" },
+      empty: {
+        ko: "아직 만든 앙케이트가 없습니다",
+        en: "No surveys have been created yet",
+        ja: "まだ作成されたアンケートはありません",
       },
     },
   },

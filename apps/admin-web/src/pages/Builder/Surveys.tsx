@@ -36,6 +36,34 @@ export function BuilderSurveys() {
     await copySurvey(selectedId);
   }
 
+  function renderBody() {
+    if (state.kind === "loading") {
+      return <div className={styles.empty}>{t("common.loading")}</div>;
+    }
+    if (state.kind === "error") {
+      return (
+        <div className={styles.empty}>
+          {state.message}{" "}
+          <Button variant="secondary" size="sm" onClick={reload}>
+            {t("common.retry")}
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <SurveyTable
+        surveys={surveys}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        onEdit={(id) => navigate(`/builder/surveys/${encodeURIComponent(id)}/edit`)}
+        onRequestDelete={requestDelete}
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        onLoadMore={loadMore}
+      />
+    );
+  }
+
   return (
     <div className={styles.root}>
       <div className={styles.header}>
@@ -58,31 +86,7 @@ export function BuilderSurveys() {
         </div>
       </div>
 
-      <div className={styles.card}>
-        {state.kind === "loading" ? (
-          <div className={styles.empty}>{t("common.loading")}</div>
-        ) : state.kind === "error" ? (
-          <div className={styles.empty}>
-            {state.message}{" "}
-            <Button variant="secondary" size="sm" onClick={reload}>
-              {t("common.retry")}
-            </Button>
-          </div>
-        ) : (
-          <SurveyTable
-            surveys={surveys}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onEdit={(id) =>
-              navigate(`/builder/surveys/${encodeURIComponent(id)}/edit`)
-            }
-            onRequestDelete={requestDelete}
-            hasMore={hasMore}
-            loadingMore={loadingMore}
-            onLoadMore={loadMore}
-          />
-        )}
-      </div>
+      <div className={styles.card}>{renderBody()}</div>
 
       <ConfirmDialog
         open={deleteTarget !== null}

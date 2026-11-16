@@ -4017,6 +4017,11 @@ export const adminMessages = {
         postReview: { ko: "게시물 검토", en: "Post review", ja: "投稿レビュー" },
         pendingPosts: { ko: "검토 대기 게시물", en: "Posts awaiting review", ja: "レビュー待ちの投稿" },
         pendingPayoutAmount: { ko: "지급 대기 금액", en: "Pending payout amount", ja: "支払い待ち金額" },
+        myRecruitingCampaigns: {
+          ko: "내 담당 모집중 캠페인",
+          en: "My recruiting campaigns",
+          ja: "担当の募集中キャンペーン",
+        },
         pendingSettlements: {
           ko: "{count}건 정산 대기",
           en: "{count} settlements pending",
@@ -4078,6 +4083,7 @@ export const adminMessages = {
         applicationRate: { ko: "응모율(%)", en: "Application rate (%)", ja: "応募率(%)" },
         postUrl: { ko: "게시물 URL", en: "Post URL", ja: "投稿URL" },
         submittedAt: { ko: "제출일", en: "Submitted on", ja: "提出日" },
+        managers: { ko: "담당자", en: "Managers", ja: "担当者" },
       },
       downloadDialog: {
         subtitle: {

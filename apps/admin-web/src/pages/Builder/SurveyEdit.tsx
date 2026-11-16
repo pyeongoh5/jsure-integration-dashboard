@@ -4,6 +4,8 @@ import type { CreateBuilderSurveyRequest } from "@jsure/shared";
 import { createSurvey, fetchSurvey, updateSurvey } from "@/domains/builderSurvey";
 import { SurveyEditorForm } from "@/components/BuilderSurveys/SurveyEditorForm";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
+import { newQuestion } from "@/components/BuilderSurveys/questionDefaults";
+import { extractApiErrorMessage } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import styles from "./Builder.module.css";
 
@@ -13,11 +15,13 @@ type Props = {
   mode: Mode;
 };
 
-const EMPTY_SURVEY: CreateBuilderSurveyRequest = {
-  title: "",
-  description: undefined,
-  questions: [],
-};
+function createEmptySurvey(): CreateBuilderSurveyRequest {
+  return {
+    title: "",
+    description: undefined,
+    questions: [newQuestion("SINGLE")],
+  };
+}
 
 export function SurveyEdit({ mode }: Props) {
   const t = useT();
@@ -26,7 +30,7 @@ export function SurveyEdit({ mode }: Props) {
   const surveyId = params.id;
 
   const [initial, setInitial] = useState<CreateBuilderSurveyRequest | null>(
-    mode === "create" ? EMPTY_SURVEY : null,
+    () => (mode === "create" ? createEmptySurvey() : null),
   );
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -48,7 +52,7 @@ export function SurveyEdit({ mode }: Props) {
       } catch (caught) {
         if (cancelled) return;
         setLoadError(
-          caught instanceof Error ? caught.message : t("pages.builderSurveys.editor.loadFailed"),
+          extractApiErrorMessage(caught, t("pages.builderSurveys.editor.loadFailed")),
         );
       }
     })();
@@ -69,7 +73,7 @@ export function SurveyEdit({ mode }: Props) {
       navigate("/builder/surveys");
     } catch (caught) {
       setSubmitError(
-        caught instanceof Error ? caught.message : t("pages.builderSurveys.editor.saveFailed"),
+        extractApiErrorMessage(caught, t("pages.builderSurveys.editor.saveFailed")),
       );
     } finally {
       setSubmitting(false);

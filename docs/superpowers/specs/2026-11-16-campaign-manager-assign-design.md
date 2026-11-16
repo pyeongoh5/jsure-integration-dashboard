@@ -245,7 +245,8 @@ export function adminUserLabel(user: { name: string | null; email: string }): st
 
 ### 5.7 admin-web — 대시보드 (`pages/Overview/index.tsx`)
 
-- `buildKpis` 에 카드 한 장 추가: 라벨 "내 담당 모집중 캠페인", 값 `stats.myRecruitingCampaignCount`, `to: "/campaigns?manager=me"`.
+- `buildKpis` 에 카드 한 장 추가: 라벨 "내 담당 모집중 캠페인", 값 `stats.myRecruitingCampaignCount`, `to: "/campaigns?manager=me&status=recruit"`.
+  - 상태 필터를 함께 거는 이유: 카드가 세는 건 "모집중" 뿐인데 딥링크가 담당자만 걸면 임시저장·종료까지 열려 카드 숫자와 목록이 어긋난다. 형제 카드도 `?status=recruit` 를 건다.
 - 기존 KPI 카드가 이미 `to` 로 딥링크하는 구조라 추가 배선이 없다.
 
 ### 5.8 admin-web — 성과 리포트 엑셀 (`pages/Reports/index.tsx`)

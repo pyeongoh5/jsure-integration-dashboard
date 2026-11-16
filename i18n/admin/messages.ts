@@ -4294,13 +4294,11 @@ export const adminMessages = {
           confirm: { ko: "나가기", en: "Leave", ja: "終了する" },
         },
         question: {
-          titleLabel: { ko: "질문", en: "Question", ja: "質問" },
           titlePlaceholder: {
             ko: "질문을 입력하세요",
             en: "Enter a question",
             ja: "質問を入力してください",
           },
-          descriptionLabel: { ko: "설명 (선택)", en: "Description (optional)", ja: "説明（任意）" },
           descriptionPlaceholder: {
             ko: "부가 설명을 입력하세요",
             en: "Enter additional description",

@@ -74,6 +74,10 @@ export function SurveyEditorForm({
   }
 
   function onInvalid() {
+    if (methods.getValues("questions").length === 0) {
+      setValidationError(t("pages.builderSurveys.editor.questionsRequiredError"));
+      return;
+    }
     setValidationError(t("pages.builderSurveys.editor.validationError"));
   }
 

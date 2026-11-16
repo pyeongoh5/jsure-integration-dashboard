@@ -88,6 +88,14 @@ type Props = {
   initialThumbnail?: { objectKey: string; viewUrl: string };
   onCancel: () => void;
   selfCampaignId?: string;
+  /**
+   * 운영 담당자 — 페이지 헤더의 피커가 들고 있는 상태를 그대로 받는다.
+   * 피커가 폼 바깥(헤더)에 있어 react-hook-form 컨텍스트에 닿지 않으므로,
+   * 제출·임시저장 시점에 폼 값 위에 덮어쓴다. CampaignFormSchema 의
+   * managerIds 필드는 RHF 기본값 채움 용도일 뿐 실제로는 쓰이지 않는다.
+   */
+  managerIds: string[];
+  onManagerIdsChange: (managerIds: string[]) => void;
 };
 
 function parseIntegerInput(raw: string): number {
@@ -109,6 +117,7 @@ export function CampaignForm({
   initialThumbnail,
   onCancel,
   selfCampaignId,
+  managerIds,
 }: Props) {
   const t = useT();
   const methods = useForm<Values>({
@@ -243,7 +252,7 @@ export function CampaignForm({
     setBanner(null);
     setSavingDraft(true);
     try {
-      await onSaveDraft(withMediaFields(methods.getValues()));
+      await onSaveDraft({ ...withMediaFields(methods.getValues()), managerIds });
     } catch (err) {
       setBanner(err instanceof Error ? err.message : t("domains.campaign.form.draftSaveFailed"));
     } finally {
@@ -337,7 +346,7 @@ export function CampaignForm({
         rewardJpy: values.rewardType === "PER_SUBTYPE" ? 0 : values.rewardJpy,
         recruits: normalizedRecruits,
       };
-      await onSubmit(withMediaFields(finalValues));
+      await onSubmit({ ...withMediaFields(finalValues), managerIds });
     } catch (err) {
       setBanner(err instanceof Error ? err.message : t("domains.campaign.form.saveError"));
     }

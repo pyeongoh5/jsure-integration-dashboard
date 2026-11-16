@@ -22,6 +22,7 @@ export { useCampaignFormInitial } from "./useCampaignFormInitial";
 export { useCampaignAudience } from "./useCampaignAudience";
 export { useAdminUserOptions } from "./useAdminUserOptions";
 export type { CampaignFormSource } from "./useCampaignFormInitial";
+export { initialManagerIds } from "./initialManagerIds";
 
 // types
 export type * from "./types";

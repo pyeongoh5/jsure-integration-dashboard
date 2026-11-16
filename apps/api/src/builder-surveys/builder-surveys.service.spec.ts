@@ -92,6 +92,22 @@ describe("BuilderSurveysService", () => {
     expect(findMany.mock.calls[0]?.[0]?.orderBy).toEqual([{ updatedAt: "desc" }, { id: "desc" }]);
   });
 
+  it("목록 조회는 questions(JSONB) 를 select 하지 않는다", async () => {
+    const findMany = jest.fn(async (_queryArgs: Prisma.BuilderSurveyFindManyArgs) => []);
+    const { service } = makeService({ findMany });
+
+    await service.listPage(null, 30);
+
+    expect(findMany.mock.calls[0]?.[0]?.select).toEqual({
+      id: true,
+      title: true,
+      createdAt: true,
+      updatedAt: true,
+      createdBy: true,
+      updatedBy: true,
+    });
+  });
+
   it("목록·조회는 deletedAt: null 로 거른다", async () => {
     const findMany = jest.fn(async (_queryArgs: Prisma.BuilderSurveyFindManyArgs) => []);
     const findFirst = jest.fn(async (_queryArgs: Prisma.BuilderSurveyFindFirstArgs) => makeRow());

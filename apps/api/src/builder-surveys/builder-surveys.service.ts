@@ -24,6 +24,12 @@ type BuilderSurveyRow = {
   updatedAt: Date;
 };
 
+/** 목록 조회가 실제로 쓰는 컬럼만. `questions`(JSONB) 를 끌어오지 않는다. */
+type BuilderSurveyListRow = Pick<
+  BuilderSurveyRow,
+  "id" | "title" | "createdAt" | "updatedAt" | "createdBy" | "updatedBy"
+>;
+
 @Injectable()
 export class BuilderSurveysService {
   constructor(private readonly prisma: PrismaService) {}
@@ -42,7 +48,7 @@ export class BuilderSurveysService {
     return namesById;
   }
 
-  private toListItem(row: BuilderSurveyRow, namesById: Map<string, string>): BuilderSurveyListItem {
+  private toListItem(row: BuilderSurveyListRow, namesById: Map<string, string>): BuilderSurveyListItem {
     return {
       id: row.id,
       title: row.title,
@@ -82,6 +88,14 @@ export class BuilderSurveysService {
     const [rows, total] = await Promise.all([
       this.prisma.builderSurvey.findMany({
         where,
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          updatedAt: true,
+          createdBy: true,
+          updatedBy: true,
+        },
         orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
         // 한 건 더 받아 다음 페이지 존재를 판정한다.
         take: limit + 1,

@@ -11,6 +11,8 @@ import {
   audienceExclusionConflicts,
   audiencePatchToInput,
   type ApplicationStatus,
+  type BulkAssignCampaignManagersRequest,
+  type BulkAssignCampaignManagersResponse,
   type CampaignAudienceMode,
   type CampaignCategory,
   type CampaignDraftRequest,
@@ -1361,6 +1363,31 @@ export class CampaignsService {
         await this.managersFor(row.managerIds),
       ),
     );
+  }
+
+  /**
+   * 선택한 캠페인의 담당자를 통째로 교체한다 — 추가가 아니라 덮어쓰기다.
+   * 삭제된 캠페인은 where 의 deletedAt: null 로 걸러져 교체되지 않으므로
+   * updatedCount 가 요청 건수보다 작을 수 있다.
+   */
+  async assignManagers(
+    input: BulkAssignCampaignManagersRequest,
+    actor: AuditActor,
+  ): Promise<BulkAssignCampaignManagersResponse> {
+    await this.assertManagersExist(input.managerIds);
+    const result = await this.prisma.campaign.updateMany({
+      where: { id: { in: input.campaignIds }, deletedAt: null },
+      data: { managerIds: input.managerIds },
+    });
+    await this.audit.recordMany(
+      input.campaignIds.map((campaignId) => ({
+        action: "CAMPAIGN_MANAGERS_ASSIGN",
+        actor,
+        campaignId,
+        metadata: { managerCount: input.managerIds.length },
+      })),
+    );
+    return { updatedCount: result.count };
   }
 
   /**

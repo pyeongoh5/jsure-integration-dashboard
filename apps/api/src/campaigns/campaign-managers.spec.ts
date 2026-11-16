@@ -2,10 +2,12 @@ import { BadRequestException } from "@nestjs/common";
 import {
   CreateCampaignRequestSchema,
   UpdateCampaignRequestSchema,
+  type BulkAssignCampaignManagersRequest,
   type CampaignManager,
   type CreateCampaignRequest,
   type UpdateCampaignRequest,
 } from "@jsure/shared";
+import type { AuditEntry } from "../audit/audit.service";
 import { CampaignsService, pickManagers } from "./campaigns.service";
 import { CampaignAudienceService } from "./campaign-audience.service";
 
@@ -57,8 +59,14 @@ function updateRequest(
 type MakeServiceOverrides = {
   onCreate?: (args: { data: Record<string, unknown> }) => void;
   onUpdate?: (args: { data: Record<string, unknown> }) => void;
+  onUpdateMany?: (args: {
+    where: Record<string, unknown>;
+    data: Record<string, unknown>;
+  }) => void;
+  onRecordMany?: (entries: AuditEntry[]) => void;
   existingAdminIds?: string[];
   row?: Record<string, unknown>;
+  updateManyCount?: number;
 };
 
 /** campaign-drafts.spec.ts 의 makeService stub-prisma 패턴을 그대로 따른다. */
@@ -109,6 +117,13 @@ function makeService(overrides: MakeServiceOverrides = {}) {
         overrides.onUpdate?.(args);
         return row;
       },
+      updateMany: async (args: {
+        where: Record<string, unknown>;
+        data: Record<string, unknown>;
+      }) => {
+        overrides.onUpdateMany?.(args);
+        return { count: overrides.updateManyCount ?? 0 };
+      },
     },
     adminUser: {
       findMany: async (args: { where: { id: { in: string[] } } }) =>
@@ -140,7 +155,9 @@ function makeService(overrides: MakeServiceOverrides = {}) {
   } as never;
   const audit = {
     record: jest.fn(),
-    recordMany: jest.fn(),
+    recordMany: jest.fn((entries: AuditEntry[]) => {
+      overrides.onRecordMany?.(entries);
+    }),
   } as never;
   const audience = new CampaignAudienceService(prisma);
   return new CampaignsService(prisma, uploads, audit, audience);
@@ -254,5 +271,106 @@ describe("캠페인 수정 시 담당자 저장", () => {
         TEST_ACTOR,
       ),
     ).rejects.toThrow(BadRequestException);
+  });
+});
+
+describe("assignManagers", () => {
+  const bulkAssignRequest: BulkAssignCampaignManagersRequest = {
+    campaignIds: ["c1", "c2"],
+    managerIds: ["admin-2"],
+  };
+
+  it("선택한 캠페인의 담당자를 통째로 교체한다 — 추가가 아니다", async () => {
+    let updateManyArgs: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    } | null = null;
+    const service = makeService({
+      existingAdminIds: ["admin-2"],
+      onUpdateMany: (args) => {
+        updateManyArgs = args;
+      },
+    });
+
+    await service.assignManagers(bulkAssignRequest, TEST_ACTOR);
+
+    expect(updateManyArgs!.data.managerIds).toEqual(["admin-2"]);
+  });
+
+  it("삭제된 캠페인은 대상에서 제외한다", async () => {
+    let updateManyArgs: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    } | null = null;
+    const service = makeService({
+      existingAdminIds: ["admin-2"],
+      updateManyCount: 1,
+      onUpdateMany: (args) => {
+        updateManyArgs = args;
+      },
+    });
+
+    const response = await service.assignManagers(bulkAssignRequest, TEST_ACTOR);
+
+    expect(updateManyArgs!.where.deletedAt).toBe(null);
+    expect(response.updatedCount).toBe(1);
+  });
+
+  it("managerIds 가 비면 담당자를 해제한다", async () => {
+    let updateManyArgs: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    } | null = null;
+    const service = makeService({
+      onUpdateMany: (args) => {
+        updateManyArgs = args;
+      },
+    });
+
+    await service.assignManagers(
+      { campaignIds: ["c1"], managerIds: [] },
+      TEST_ACTOR,
+    );
+
+    expect(updateManyArgs!.data.managerIds).toEqual([]);
+  });
+
+  it("존재하지 않는 어드민 id 가 섞이면 BadRequest 를 던지고 updateMany 를 호출하지 않는다", async () => {
+    let updateManyCalled = false;
+    const service = makeService({
+      existingAdminIds: [],
+      onUpdateMany: () => {
+        updateManyCalled = true;
+      },
+    });
+
+    await expect(
+      service.assignManagers(
+        { campaignIds: ["c1"], managerIds: ["ghost"] },
+        TEST_ACTOR,
+      ),
+    ).rejects.toThrow(BadRequestException);
+    expect(updateManyCalled).toBe(false);
+  });
+
+  it("CAMPAIGN_MANAGERS_ASSIGN 감사 로그를 캠페인당 1행씩 recordMany 로 남긴다", async () => {
+    let recordedEntries: AuditEntry[] = [];
+    const service = makeService({
+      existingAdminIds: ["admin-2"],
+      onRecordMany: (entries) => {
+        recordedEntries = entries;
+      },
+    });
+
+    await service.assignManagers(bulkAssignRequest, TEST_ACTOR);
+
+    expect(recordedEntries).toHaveLength(bulkAssignRequest.campaignIds.length);
+    for (const [index, campaignId] of bulkAssignRequest.campaignIds.entries()) {
+      expect(recordedEntries[index]).toMatchObject({
+        action: "CAMPAIGN_MANAGERS_ASSIGN",
+        actor: TEST_ACTOR,
+        campaignId,
+      });
+    }
   });
 });

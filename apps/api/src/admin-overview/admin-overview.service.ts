@@ -7,11 +7,12 @@ import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 export class AdminOverviewService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async stats(): Promise<AdminOverviewResponse> {
+  async stats(adminUserId: string): Promise<AdminOverviewResponse> {
     const now = new Date();
 
     const [
       recruitingCampaignCount,
+      myRecruitingCampaignCount,
       pendingApplicationCount,
       pendingPostReviewCount,
       pendingSettlementAgg,
@@ -23,6 +24,16 @@ export class AdminOverviewService {
           closedAt: null,
           recruitStartAt: { lte: now },
           recruitEndAt: { gte: now },
+        },
+      }),
+      // 모집 중 캠페인 중 로그인한 어드민이 담당자로 지정된 것만.
+      this.prisma.campaign.count({
+        where: {
+          ...PUBLISHED_CAMPAIGN_WHERE,
+          closedAt: null,
+          recruitStartAt: { lte: now },
+          recruitEndAt: { gte: now },
+          managerIds: { has: adminUserId },
         },
       }),
       // 응모 관리 페이지에 노출되는 행 수와 일치시킨다.
@@ -54,8 +65,7 @@ export class AdminOverviewService {
       pendingPostReviewCount,
       pendingSettlementAmountJpy: pendingSettlementAgg._sum.amountJpy ?? 0,
       pendingSettlementCount: pendingSettlementAgg._count._all,
-      // 담당자 기준 집계는 이 필드를 소비하는 기능과 함께 채운다.
-      myRecruitingCampaignCount: 0,
+      myRecruitingCampaignCount,
     };
   }
 }

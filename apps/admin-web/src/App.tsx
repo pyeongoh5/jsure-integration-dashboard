@@ -24,6 +24,7 @@ import { JwinBrandAccounts } from "./pages/Jwin/BrandAccounts";
 import { JwinWinners } from "./pages/Jwin/Winners";
 import { JwinStats } from "./pages/Jwin/Stats";
 import { BuilderSurveys } from "./pages/Builder/Surveys";
+import { SurveyEdit } from "./pages/Builder/SurveyEdit";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Settings } from "./pages/Settings";
@@ -77,6 +78,8 @@ export function App() {
           {/* 빌더 (앙케이트·양식 제작). /builder 아래에 둔다. */}
           <Route path="/builder" element={<Navigate to="/builder/surveys" replace />} />
           <Route path="/builder/surveys" element={<BuilderSurveys />} />
+          <Route path="/builder/surveys/new" element={<SurveyEdit mode="create" />} />
+          <Route path="/builder/surveys/:id/edit" element={<SurveyEdit mode="edit" />} />
         </Route>
         <Route path="/*" element={<NotFound />} />
       </Routes>

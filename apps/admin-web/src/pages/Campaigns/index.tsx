@@ -521,7 +521,7 @@ export function Campaigns() {
           onDone={() => {
             setBulkAssignOpen(false);
             setSelectedIds(new Set());
-            setReloadKey((k) => k + 1);
+            setReloadKey((previousReloadKey) => previousReloadKey + 1);
           }}
           onCancel={() => setBulkAssignOpen(false)}
         />

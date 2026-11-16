@@ -23,19 +23,25 @@ type Props = {
 export function BulkAssignManagersDialog({ campaignIds, onDone, onCancel }: Props) {
   const t = useT();
   const { managers, error: optionsError } = useAdminUserOptions();
+  // 열렸을 때 선택돼 있던 캠페인에 작용한다 — 부모의 selectedIds 가 이후
+  // (예: Esc 로 선택 해제) 바뀌어도 다이얼로그가 가리키는 대상은 그대로다.
+  const [targetCampaignIds] = useState(() => [...campaignIds]);
   const [managerIds, setManagerIds] = useState<string[]>([]);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const count = campaignIds.length;
+  const count = targetCampaignIds.length;
 
   async function handleConfirm() {
     if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const result = await bulkAssignCampaignManagers({ campaignIds, managerIds });
+      const result = await bulkAssignCampaignManagers({
+        campaignIds: targetCampaignIds,
+        managerIds,
+      });
       if (result.updatedCount !== count) {
         window.alert(
           t("pages.campaigns.bulkAssign.partialUpdate", {

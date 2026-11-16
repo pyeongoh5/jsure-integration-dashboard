@@ -4199,6 +4199,46 @@ export const adminMessages = {
         en: "No surveys have been created yet",
         ja: "まだ作成されたアンケートはありません",
       },
+      loadFailed: {
+        ko: "앙케이트 목록을 불러오지 못했습니다.",
+        en: "Failed to load the survey list.",
+        ja: "アンケート一覧の読み込みに失敗しました。",
+      },
+      loadingMore: { ko: "불러오는 중...", en: "Loading more...", ja: "読み込み中..." },
+      copySuffix: { ko: "사본", en: "copy", ja: "コピー" },
+      copyButton: { ko: "복사", en: "Copy", ja: "コピー" },
+      copyFailed: {
+        ko: "앙케이트 복사에 실패했습니다.",
+        en: "Failed to copy the survey.",
+        ja: "アンケートの複製に失敗しました。",
+      },
+      createButton: {
+        ko: "앙케이트 만들기",
+        en: "Create survey",
+        ja: "アンケートを作成",
+      },
+      deleteFailed: {
+        ko: "앙케이트 삭제에 실패했습니다.",
+        en: "Failed to delete the survey.",
+        ja: "アンケートの削除に失敗しました。",
+      },
+      table: {
+        select: { ko: "선택", en: "Select", ja: "選択" },
+        title: { ko: "제목", en: "Title", ja: "タイトル" },
+        createdAt: { ko: "생성일", en: "Created", ja: "作成日" },
+        updatedAt: { ko: "수정일", en: "Updated", ja: "更新日" },
+        createdBy: { ko: "생성자", en: "Created by", ja: "作成者" },
+        updatedBy: { ko: "수정자", en: "Updated by", ja: "更新者" },
+        actionsAria: { ko: "작업 메뉴", en: "Actions menu", ja: "操作メニュー" },
+      },
+      actions: {
+        edit: { ko: "수정", en: "Edit", ja: "編集" },
+        delete: { ko: "삭제", en: "Delete", ja: "削除" },
+      },
+      deleteDialog: {
+        title: { ko: "앙케이트를 삭제하시겠습니까?", en: "Delete this survey?", ja: "アンケートを削除しますか？" },
+        confirm: { ko: "삭제", en: "Delete", ja: "削除" },
+      },
     },
   },
   sidebar: {

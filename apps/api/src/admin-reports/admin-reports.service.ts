@@ -139,6 +139,8 @@ export class AdminReportsService {
         participantCount,
         viewerCount,
         applicationRate,
+        // 담당자 조회는 이 필드를 소비하는 기능과 함께 채운다.
+        managers: [],
       };
     });
 

@@ -36,6 +36,7 @@ export const AdminActivityActionSchema = z.enum([
   "CAMPAIGN_DRAFT_CREATE",
   "CAMPAIGN_DRAFT_UPDATE",
   "CAMPAIGN_DRAFT_PUBLISH",
+  "CAMPAIGN_MANAGERS_ASSIGN",
   // 인플루언서 본인이 수행한 액션. 감사 로그 행이 아니라 응모의 타임스탬프
   // 컬럼(appliedAt 등)에서 조회 시점에 합성된다 — DB 에 기록되지 않는다.
   "APPLICATION_APPLY",

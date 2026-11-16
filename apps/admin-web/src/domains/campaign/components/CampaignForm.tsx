@@ -56,6 +56,7 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   audienceCampaignIds: [],
   audienceTagLabels: [],
   audienceInfluencerIds: [],
+  managerIds: [],
 };
 
 type RecruitItemError = Partial<

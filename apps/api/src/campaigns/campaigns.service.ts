@@ -473,6 +473,8 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     excludedCampaignIds: row.exclusionsAsExcluding.map((e) => e.excludedCampaignId),
     audienceMode: row.audienceMode,
     audienceCount: counts.audienceCount,
+    // 담당자 조회는 이 필드를 소비하는 기능과 함께 채운다.
+    managers: [],
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

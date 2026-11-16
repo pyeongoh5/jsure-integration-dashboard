@@ -54,6 +54,8 @@ export class AdminOverviewService {
       pendingPostReviewCount,
       pendingSettlementAmountJpy: pendingSettlementAgg._sum.amountJpy ?? 0,
       pendingSettlementCount: pendingSettlementAgg._count._all,
+      // 담당자 기준 집계는 이 필드를 소비하는 기능과 함께 채운다.
+      myRecruitingCampaignCount: 0,
     };
   }
 }

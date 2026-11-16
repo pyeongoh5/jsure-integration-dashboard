@@ -1791,6 +1791,11 @@ export const adminMessages = {
           campaignDraftCreate: { ko: "임시저장 생성", en: "Draft created", ja: "下書き作成" },
           campaignDraftUpdate: { ko: "임시저장 수정", en: "Draft updated", ja: "下書き修正" },
           campaignDraftPublish: { ko: "임시저장 발행", en: "Draft published", ja: "下書き公開" },
+          campaignManagersAssign: {
+            ko: "담당자 지정",
+            en: "Managers assigned",
+            ja: "担当者の指定",
+          },
           applicationApply: { ko: "응모", en: "Applied", ja: "応募" },
           applicationOrderSubmit: {
             ko: "주문번호 제출",

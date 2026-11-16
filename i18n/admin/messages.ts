@@ -4370,11 +4370,11 @@ export const adminMessages = {
   builderSurveys: {
     likert: {
       AGREEMENT: {
-        step1: { ko: "전혀 동의하지 않음", en: "Strongly disagree", ja: "全く同意しない" },
-        step2: { ko: "동의하지 않음", en: "Disagree", ja: "同意しない" },
-        step3: { ko: "보통", en: "Neutral", ja: "どちらともいえない" },
-        step4: { ko: "동의함", en: "Agree", ja: "同意する" },
-        step5: { ko: "매우 동의함", en: "Strongly agree", ja: "強く同意する" },
+        step1: { ko: "전혀 그렇지 않다", en: "Strongly disagree", ja: "全く同意しない" },
+        step2: { ko: "그렇지 않다", en: "Disagree", ja: "同意しない" },
+        step3: { ko: "보통이다", en: "Neutral", ja: "どちらともいえない" },
+        step4: { ko: "그렇다", en: "Agree", ja: "同意する" },
+        step5: { ko: "매우 그렇다", en: "Strongly agree", ja: "強く同意する" },
       },
       SATISFACTION: {
         step1: { ko: "매우 불만족", en: "Very dissatisfied", ja: "非常に不満" },
@@ -4384,11 +4384,11 @@ export const adminMessages = {
         step5: { ko: "매우 만족", en: "Very satisfied", ja: "非常に満足" },
       },
       FREQUENCY: {
-        step1: { ko: "전혀 없음", en: "Never", ja: "全くない" },
-        step2: { ko: "가끔", en: "Rarely", ja: "たまに" },
-        step3: { ko: "보통", en: "Sometimes", ja: "ときどき" },
+        step1: { ko: "전혀 안 함", en: "Never", ja: "全くない" },
+        step2: { ko: "거의 안 함", en: "Rarely", ja: "めったにない" },
+        step3: { ko: "가끔", en: "Sometimes", ja: "ときどき" },
         step4: { ko: "자주", en: "Often", ja: "よく" },
-        step5: { ko: "항상", en: "Always", ja: "いつも" },
+        step5: { ko: "항상 함", en: "Always", ja: "いつも" },
       },
       NUMERIC: {
         min: { ko: "매우 낮음", en: "Very low", ja: "非常に低い" },

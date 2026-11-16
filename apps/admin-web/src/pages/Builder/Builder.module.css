@@ -29,6 +29,11 @@
   overflow: hidden;
 }
 
+.errorMessage {
+  color: #b91c1c;
+  font-size: 13px;
+}
+
 .empty {
   text-align: center;
   padding: 48px var(--space-4);

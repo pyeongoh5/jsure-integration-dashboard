@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import type { BuilderSurveyListItem } from "@jsure/shared";
 import { createSurvey, deleteSurvey, fetchSurvey } from "@/domains/builderSurvey";
+import { extractApiErrorMessage } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { copyTitle } from "./copyTitle";
 
@@ -35,11 +36,7 @@ export function useSurveyMutations({ onMutated }: Options = {}) {
         await onMutated?.();
         return true;
       } catch (caught) {
-        setError(
-          caught instanceof Error
-            ? caught.message
-            : t("pages.builderSurveys.copyFailed"),
-        );
+        setError(extractApiErrorMessage(caught, t("pages.builderSurveys.copyFailed")));
         return false;
       } finally {
         setCopyPending(false);
@@ -49,10 +46,12 @@ export function useSurveyMutations({ onMutated }: Options = {}) {
   );
 
   const requestDelete = useCallback((survey: BuilderSurveyListItem) => {
+    setError(null);
     setDeleteTarget(survey);
   }, []);
 
   const cancelDelete = useCallback(() => {
+    setError(null);
     setDeleteTarget(null);
   }, []);
 
@@ -65,11 +64,7 @@ export function useSurveyMutations({ onMutated }: Options = {}) {
       await onMutated?.();
       setDeleteTarget(null);
     } catch (caught) {
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : t("pages.builderSurveys.deleteFailed"),
-      );
+      setError(extractApiErrorMessage(caught, t("pages.builderSurveys.deleteFailed")));
     } finally {
       setDeletePending(false);
     }

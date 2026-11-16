@@ -24,6 +24,7 @@ export function BuilderSurveys() {
     requestDelete,
     cancelDelete,
     confirmDelete,
+    error: mutationError,
   } = useSurveyMutations({
     onMutated: () => {
       reload();
@@ -86,12 +87,18 @@ export function BuilderSurveys() {
         </div>
       </div>
 
+      {/* 삭제 실패는 다이얼로그가 열려 있을 때 나므로 그 subtitle 에 싣는다 —
+          여기서는 복사 실패(다이얼로그 없이 조용히 끝나는 흐름)만 보여준다. */}
+      {deleteTarget === null && mutationError && (
+        <p className={styles.errorMessage}>{mutationError}</p>
+      )}
+
       <div className={styles.card}>{renderBody()}</div>
 
       <ConfirmDialog
         open={deleteTarget !== null}
         title={t("pages.builderSurveys.deleteDialog.title")}
-        subtitle={deleteTarget?.title}
+        subtitle={mutationError ?? deleteTarget?.title}
         confirmLabel={t("pages.builderSurveys.deleteDialog.confirm")}
         tone="danger"
         busy={deletePending}

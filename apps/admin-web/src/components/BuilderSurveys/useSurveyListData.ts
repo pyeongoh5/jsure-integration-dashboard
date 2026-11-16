@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { translate } from "@i18n/admin";
 import type { AdminLanguage } from "@i18n/admin";
+import { extractApiErrorMessage } from "@/lib/api";
 import { getStoredLanguage } from "@/lib/i18n";
 import type { BuilderSurveyListItem } from "@jsure/shared";
 import { listSurveysPage } from "@/domains/builderSurvey";
@@ -27,8 +28,10 @@ export type UseSurveyListDataResult = {
 const surveysQueryKey = ["builderSurveys"] as const;
 
 function errorMessage(error: unknown, language: AdminLanguage): string {
-  if (error instanceof Error) return error.message;
-  return translate("pages.builderSurveys.loadFailed", language);
+  return extractApiErrorMessage(
+    error,
+    translate("pages.builderSurveys.loadFailed", language),
+  );
 }
 
 function toLoadState(

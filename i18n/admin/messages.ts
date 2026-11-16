@@ -3513,6 +3513,16 @@ export const adminMessages = {
         ja: "すべてのキャンペーンの状態と進行状況を一目で確認できます。",
       },
       statusFilterTitle: { ko: "상태 선택", en: "Select status", ja: "ステータス選択" },
+      managerFilter: {
+        chipEmpty: { ko: "+ 담당자", en: "+ Manager", ja: "+ 担当者" },
+        prefix: { ko: "담당자", en: "Manager", ja: "担当者" },
+        title: { ko: "담당자 필터", en: "Manager filter", ja: "担当者フィルター" },
+        mine: {
+          ko: "내 캠페인만 보기",
+          en: "Show only my campaigns",
+          ja: "自分のキャンペーンのみ表示",
+        },
+      },
       searchPlaceholder: {
         ko: "브랜드 또는 캠페인 이름 검색",
         en: "Search by brand or campaign name",

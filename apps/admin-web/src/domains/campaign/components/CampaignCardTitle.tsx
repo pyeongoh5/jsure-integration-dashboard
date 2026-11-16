@@ -1,7 +1,15 @@
 import styles from "@/pages/Campaigns/Campaigns.module.css";
 import { CATEGORY_LABEL_KO } from "@/domains/application";
 import { useT } from "@/lib/i18n";
-import { STATUS_LABEL, type CampaignCategory, type CampaignStatus } from "../types";
+import {
+  STATUS_LABEL,
+  type CampaignCategory,
+  type CampaignManager,
+  type CampaignStatus,
+} from "../types";
+import { CampaignManagerChips } from "./CampaignManagerChips";
+
+const MAX_VISIBLE_CARD_MANAGER_LABELS = 2;
 
 type Props = {
   status: CampaignStatus;
@@ -9,6 +17,7 @@ type Props = {
   dday: number;
   /** 일부 공개(대상자 전용) 캠페인이면 상태·카테고리 옆에 뱃지를 하나 더 붙인다. */
   isRestricted: boolean;
+  managers: CampaignManager[];
 };
 
 const STATUS_CLASS: Record<CampaignStatus, string | undefined> = {
@@ -25,7 +34,7 @@ const CATEGORY_CLASS: Record<CampaignCategory, string | undefined> = {
   SIMPLE_REVIEW: styles.cardCategorySimpleReview,
 };
 
-export function CampaignCardTitle({ status, category, dday, isRestricted }: Props) {
+export function CampaignCardTitle({ status, category, dday, isRestricted, managers }: Props) {
   const t = useT();
   return (
     <div className={styles.titleWrapper}>
@@ -42,11 +51,14 @@ export function CampaignCardTitle({ status, category, dday, isRestricted }: Prop
           </span>
         )}
       </span>
-      {status === "recruit" && (
-        <span className={`${styles.cardDday} ${dday <= 7 ? styles.cardDdayUrgent : ""}`}>
-          D-{dday}
-        </span>
-      )}
+      <span className={styles.cardRight}>
+        <CampaignManagerChips managers={managers} maxVisible={MAX_VISIBLE_CARD_MANAGER_LABELS} />
+        {status === "recruit" && (
+          <span className={`${styles.cardDday} ${dday <= 7 ? styles.cardDdayUrgent : ""}`}>
+            D-{dday}
+          </span>
+        )}
+      </span>
     </div>
   );
 }

@@ -3539,6 +3539,40 @@ export const adminMessages = {
         ja: "最終更新 {date}",
       },
       create: { ko: "생성", en: "Create", ja: "作成" },
+      bulkAssign: {
+        button: {
+          ko: "{count}개 캠페인 담당자 지정",
+          en: "Assign managers for {count} campaigns",
+          ja: "{count}件のキャンペーンの担当者を指定",
+        },
+        title: { ko: "담당자 일괄 지정", en: "Bulk-assign managers", ja: "担当者の一括指定" },
+        subtitle: {
+          ko: "선택한 {count}개 캠페인의 담당자를 지정합니다.",
+          en: "Assign managers for the {count} selected campaigns.",
+          ja: "選択した{count}件のキャンペーンの担当者を指定します。",
+        },
+        submit: { ko: "저장", en: "Save", ja: "保存" },
+        confirmTitle: {
+          ko: "담당자를 모두 교체합니다",
+          en: "This replaces all managers",
+          ja: "担当者をすべて置き換えます",
+        },
+        confirmBody: {
+          ko: "선택한 {count}개 캠페인의 담당자가 지정한 담당자로 모두 교체됩니다. 기존 담당자는 해제됩니다.",
+          en: "The managers of the {count} selected campaigns will all be replaced with the ones you picked. Existing managers will be unassigned.",
+          ja: "選択した{count}件のキャンペーンの担当者が、指定した担当者にすべて置き換わります。既存の担当者は解除されます。",
+        },
+        failed: {
+          ko: "담당자 지정에 실패했습니다",
+          en: "Failed to assign managers",
+          ja: "担当者の指定に失敗しました",
+        },
+        partialUpdate: {
+          ko: "{requested}개 중 {updated}개 캠페인만 반영되었습니다. 나머지는 삭제되었거나 변경할 수 없는 캠페인일 수 있습니다.",
+          en: "Only {updated} of {requested} campaigns were updated. The rest may have been deleted or are no longer changeable.",
+          ja: "{requested}件中{updated}件のキャンペーンのみ反映されました。残りは削除済みか変更できないキャンペーンの可能性があります。",
+        },
+      },
       edit: {
         draftTitle: { ko: "임시저장 캠페인", en: "Draft campaign", ja: "下書きキャンペーン" },
         draftSubtitle: {

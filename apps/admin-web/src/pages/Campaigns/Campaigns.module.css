@@ -71,7 +71,11 @@
   color: var(--c-subtle);
 }
 
-.newBtn {
+/* 우측 액션 묶음 — 선택이 있을 때만 보이는 일괄 지정 버튼이 + 새 캠페인 왼쪽에 붙는다. */
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
 }
 

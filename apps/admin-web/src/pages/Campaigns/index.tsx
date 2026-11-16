@@ -14,6 +14,7 @@ import {
   CampaignCardBody,
   CampaignCardFooter,
   CampaignActionsMenu,
+  BulkAssignManagersDialog,
   BumpCampaignDialog,
   CloseCampaignDialog,
   DeleteCampaignDialog,
@@ -153,6 +154,7 @@ export function Campaigns() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const currentAdminUserId = getStoredUser()?.id ?? null;
   const { managers: managerOptions } = useAdminUserOptions();
 
@@ -322,14 +324,16 @@ export function Campaigns() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => navigate("/campaigns/new")}
-          className={styles.newBtn}
-        >
-          {t("pages.campaigns.newCampaign")}
-        </Button>
+        <div className={styles.toolbarActions}>
+          {selectedIds.size > 0 && (
+            <Button variant="secondary" size="md" onClick={() => setBulkAssignOpen(true)}>
+              {t("pages.campaigns.bulkAssign.button", { count: selectedIds.size })}
+            </Button>
+          )}
+          <Button variant="primary" size="md" onClick={() => navigate("/campaigns/new")}>
+            {t("pages.campaigns.newCampaign")}
+          </Button>
+        </div>
       </div>
 
       {state.kind === "loading" ? (
@@ -510,6 +514,18 @@ export function Campaigns() {
         }}
         onCancel={() => setDeleteTargetId(null)}
       />
+
+      {bulkAssignOpen && (
+        <BulkAssignManagersDialog
+          campaignIds={[...selectedIds]}
+          onDone={() => {
+            setBulkAssignOpen(false);
+            setSelectedIds(new Set());
+            setReloadKey((k) => k + 1);
+          }}
+          onCancel={() => setBulkAssignOpen(false)}
+        />
+      )}
     </div>
   );
 }

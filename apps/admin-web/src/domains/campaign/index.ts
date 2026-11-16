@@ -14,6 +14,7 @@ export {
   deleteCampaign,
   getCampaignAudienceSelection,
   previewCampaignAudience,
+  bulkAssignCampaignManagers,
 } from "./api";
 
 // hooks
@@ -53,3 +54,4 @@ export { AudienceInfluencerPicker } from "./components/AudienceInfluencerPicker"
 export { ReferenceMediaUrlList } from "./components/ReferenceMediaUrlList";
 export { CampaignManagerPicker } from "./components/CampaignManagerPicker";
 export { CampaignManagerChips } from "./components/CampaignManagerChips";
+export { BulkAssignManagersDialog } from "./components/BulkAssignManagersDialog";

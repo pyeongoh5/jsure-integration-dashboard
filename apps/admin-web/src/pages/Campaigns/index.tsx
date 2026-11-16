@@ -3,10 +3,12 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { formatRewardRange, type CampaignResponse } from "@jsure/shared";
 import { Card } from "@/components/composites/Card";
 import {
+  FilterChip,
   FilterChipBar,
   MultiSelectFilterChip,
   SingleSelectFilterChip,
 } from "@/components/composites/FilterChip";
+import filterChipStyles from "@/components/composites/FilterChip/FilterChip.module.css";
 import { Button } from "@/components/ui";
 import { getStoredUser } from "@/domains/auth";
 import {
@@ -156,7 +158,7 @@ export function Campaigns() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const currentAdminUserId = getStoredUser()?.id ?? null;
-  const { managers: managerOptions } = useAdminUserOptions();
+  const { managers: managerOptions, error: managerOptionsError } = useAdminUserOptions();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -169,11 +171,33 @@ export function Campaigns() {
       ) {
         return;
       }
+      // 일괄 지정 다이얼로그·ConfirmDialog·액션 메뉴 등 모달이 떠 있으면 Esc 는 그
+      // 모달이 처리한다 — 여기서 먼저 선택을 지우면 모달을 취소하고 돌아왔을 때
+      // 선택이 이미 사라져 있다.
+      const anyModalOpen =
+        bulkAssignOpen ||
+        openMenu !== null ||
+        approvedListCampaignId !== null ||
+        bumpTargetId !== null ||
+        closeTargetId !== null ||
+        deleteTargetId !== null ||
+        hideTargetId !== null ||
+        unhideTargetId !== null;
+      if (anyModalOpen) return;
       setSelectedIds(new Set());
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [
+    bulkAssignOpen,
+    openMenu,
+    approvedListCampaignId,
+    bumpTargetId,
+    closeTargetId,
+    deleteTargetId,
+    hideTargetId,
+    unhideTargetId,
+  ]);
 
   const toggleSelected = (campaignId: string) => {
     setSelectedIds((previous) => {
@@ -306,15 +330,26 @@ export function Campaigns() {
             value={statusFilter === "all" ? null : statusFilter}
             onChange={(value) => setStatusFilter(value ?? "all")}
           />
-          <MultiSelectFilterChip
-            emptyLabel={t("domains.campaign.managers.chipEmpty")}
-            labelPrefix={t("pages.campaigns.managerFilter.prefix")}
-            popoverTitle={t("pages.campaigns.managerFilter.title")}
-            options={managerFilterOptions}
-            value={new Set(managerFilter)}
-            onChange={setManagerFilter}
-            maxVisibleLabels={MAX_VISIBLE_MANAGER_FILTER_LABELS}
-          />
+          {managerOptionsError ? (
+            <FilterChip
+              activeLabel={null}
+              emptyLabel={t("domains.campaign.managers.chipEmpty")}
+              popoverTitle={t("pages.campaigns.managerFilter.title")}
+              renderPopover={() => (
+                <div className={filterChipStyles.popoverEmpty}>{managerOptionsError}</div>
+              )}
+            />
+          ) : (
+            <MultiSelectFilterChip
+              emptyLabel={t("domains.campaign.managers.chipEmpty")}
+              labelPrefix={t("pages.campaigns.managerFilter.prefix")}
+              popoverTitle={t("pages.campaigns.managerFilter.title")}
+              options={managerFilterOptions}
+              value={new Set(managerFilter)}
+              onChange={setManagerFilter}
+              maxVisibleLabels={MAX_VISIBLE_MANAGER_FILTER_LABELS}
+            />
+          )}
         </FilterChipBar>
         <div className={styles.search}>
           <i className="fa-solid fa-magnifying-glass" />

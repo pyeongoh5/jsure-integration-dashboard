@@ -3508,9 +3508,9 @@ export const adminMessages = {
     },
     campaigns: {
       subtitle: {
-        ko: "전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요.",
-        en: "See the status and progress of all campaigns at a glance.",
-        ja: "すべてのキャンペーンの状態と進行状況を一目で確認できます。",
+        ko: "전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요. 카드를 클릭해 선택하고, 우클릭하면 메뉴가 열립니다.",
+        en: "See the status and progress of all campaigns at a glance. Click a card to select it, right-click to open its menu.",
+        ja: "すべてのキャンペーンの状態と進行状況を一目で確認できます。カードをクリックして選択し、右クリックするとメニューが開きます。",
       },
       statusFilterTitle: { ko: "상태 선택", en: "Select status", ja: "ステータス選択" },
       managerFilter: {
@@ -3561,6 +3561,11 @@ export const adminMessages = {
           ko: "선택한 {count}개 캠페인의 담당자가 지정한 담당자로 모두 교체됩니다. 기존 담당자는 해제됩니다.",
           en: "The managers of the {count} selected campaigns will all be replaced with the ones you picked. Existing managers will be unassigned.",
           ja: "選択した{count}件のキャンペーンの担当者が、指定した担当者にすべて置き換わります。既存の担当者は解除されます。",
+        },
+        confirmBodyUnassign: {
+          ko: "선택한 {count}개 캠페인의 담당자가 모두 해제됩니다. 지정된 담당자가 없는 상태가 됩니다.",
+          en: "The managers of the {count} selected campaigns will all be unassigned, leaving them with no manager.",
+          ja: "選択した{count}件のキャンペーンの担当者がすべて解除され、担当者未設定の状態になります。",
         },
         failed: {
           ko: "담당자 지정에 실패했습니다",

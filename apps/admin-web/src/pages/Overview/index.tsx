@@ -46,7 +46,7 @@ function buildKpis(
       icon: <i className="fa-solid fa-user-check" />,
       label: t("pages.overview.kpi.myRecruitingCampaigns"),
       value: String(stats.myRecruitingCampaignCount),
-      to: "/campaigns?manager=me",
+      to: "/campaigns?manager=me&status=recruit",
     },
     {
       icon: "✓",

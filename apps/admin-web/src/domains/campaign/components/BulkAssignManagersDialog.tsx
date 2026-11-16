@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/composites/ConfirmDialog";
 import { Button } from "@/components/ui";
+import { extractApiErrorMessage } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { bulkAssignCampaignManagers } from "../api";
 import { useAdminUserOptions } from "../useAdminUserOptions";
@@ -52,7 +53,7 @@ export function BulkAssignManagersDialog({ campaignIds, onDone, onCancel }: Prop
       }
       onDone();
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : t("pages.campaigns.bulkAssign.failed"));
+      setError(extractApiErrorMessage(caught, t("pages.campaigns.bulkAssign.failed")));
       setConfirming(false);
     } finally {
       setBusy(false);
@@ -65,7 +66,11 @@ export function BulkAssignManagersDialog({ campaignIds, onDone, onCancel }: Prop
       <ConfirmDialog
         open
         title={t("pages.campaigns.bulkAssign.confirmTitle")}
-        subtitle={t("pages.campaigns.bulkAssign.confirmBody", { count })}
+        subtitle={
+          managerIds.length === 0
+            ? t("pages.campaigns.bulkAssign.confirmBodyUnassign", { count })
+            : t("pages.campaigns.bulkAssign.confirmBody", { count })
+        }
         confirmLabel={t("pages.campaigns.bulkAssign.submit")}
         tone="danger"
         busy={busy}

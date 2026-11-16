@@ -2569,6 +2569,11 @@ export const adminMessages = {
           ja: "タイトルで検索...",
         },
       },
+      managers: {
+        label: { ko: "운영 담당자", en: "Managers", ja: "運営担当者" },
+        chipEmpty: { ko: "+ 담당자", en: "+ Manager", ja: "+ 担当者" },
+        popoverTitle: { ko: "담당자 선택", en: "Select managers", ja: "担当者を選択" },
+      },
     },
     auth: {
       checkEmailAndPassword: {

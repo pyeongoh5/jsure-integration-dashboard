@@ -20,6 +20,7 @@ export {
 export { useCampaignList, useCampaign } from "./hooks";
 export { useCampaignFormInitial } from "./useCampaignFormInitial";
 export { useCampaignAudience } from "./useCampaignAudience";
+export { useAdminUserOptions } from "./useAdminUserOptions";
 export type { CampaignFormSource } from "./useCampaignFormInitial";
 
 // types
@@ -49,3 +50,5 @@ export { ExcludedCampaignsPicker } from "./components/ExcludedCampaignsPicker";
 export { CampaignAudienceList } from "./components/CampaignAudienceList";
 export { AudienceInfluencerPicker } from "./components/AudienceInfluencerPicker";
 export { ReferenceMediaUrlList } from "./components/ReferenceMediaUrlList";
+export { CampaignManagerPicker } from "./components/CampaignManagerPicker";
+export { CampaignManagerChips } from "./components/CampaignManagerChips";

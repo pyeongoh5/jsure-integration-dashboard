@@ -40,7 +40,10 @@ export const jwinApi = axios.create({
  * 나중에 빌더 서버를 분리하면 VITE_BUILDER_API_BASE_URL 하나로 전환된다.
  */
 export const builderApi = axios.create({
-  baseURL: import.meta.env.VITE_BUILDER_API_BASE_URL || "/api",
+  baseURL:
+    import.meta.env.VITE_BUILDER_API_BASE_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    "/api",
   timeout: 10_000,
 });
 

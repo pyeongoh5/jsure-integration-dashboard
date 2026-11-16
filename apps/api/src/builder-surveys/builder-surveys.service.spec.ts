@@ -150,14 +150,26 @@ describe("BuilderSurveysService", () => {
   });
 
   it("삭제는 deletedAt 을 채우고 행을 지우지 않는다", async () => {
+    const findFirst = jest.fn(async (_queryArgs: Prisma.BuilderSurveyFindFirstArgs) => makeRow());
     const update = jest.fn(async (_queryArgs: Prisma.BuilderSurveyUpdateArgs) => makeRow());
     const deleteRow = jest.fn();
-    const { service } = makeService({ update, deleteRow });
+    const { service } = makeService({ findFirst, update, deleteRow });
 
     await service.softDelete("survey-1");
 
     expect(update.mock.calls[0]?.[0]?.data?.deletedAt).toBeInstanceOf(Date);
     expect(deleteRow).not.toHaveBeenCalled();
+  });
+
+  it("삭제된(또는 없는) 설문을 다시 삭제하면 NotFoundException 이고 update 를 호출하지 않는다", async () => {
+    const findFirst = jest.fn(async (_queryArgs: Prisma.BuilderSurveyFindFirstArgs) => null);
+    const update = jest.fn(async (_queryArgs: Prisma.BuilderSurveyUpdateArgs) => makeRow());
+    const { service } = makeService({ findFirst, update });
+
+    await expect(service.softDelete("survey-1")).rejects.toMatchObject({
+      status: 404,
+    });
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("create 는 schemaVersion 1 과 createdBy=updatedBy=요청자로 저장한다", async () => {

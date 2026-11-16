@@ -68,6 +68,15 @@ export class BuilderSurveysService {
     });
   }
 
+  /** 삭제되지 않은 설문을 찾는다. 없으면 404 — get/update/softDelete 가 공유한다. */
+  private async findActiveOrThrow(id: string): Promise<BuilderSurveyRow> {
+    const row = await this.prisma.builderSurvey.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!row) this.notFound();
+    return row;
+  }
+
   async listPage(cursor: string | null, limit: number): Promise<BuilderSurveyPageResponse> {
     const where = { deletedAt: null };
     const [rows, total] = await Promise.all([
@@ -94,10 +103,7 @@ export class BuilderSurveysService {
   }
 
   async get(id: string): Promise<BuilderSurveyResponse> {
-    const row = await this.prisma.builderSurvey.findFirst({
-      where: { id, deletedAt: null },
-    });
-    if (!row) this.notFound();
+    const row = await this.findActiveOrThrow(id);
     const namesById = await this.adminNamesByIds([row.createdBy, row.updatedBy]);
     return this.toResponse(row, namesById);
   }
@@ -125,10 +131,7 @@ export class BuilderSurveysService {
     adminUserId: string,
     body: UpdateBuilderSurveyRequest,
   ): Promise<BuilderSurveyResponse> {
-    const existing = await this.prisma.builderSurvey.findFirst({
-      where: { id, deletedAt: null },
-    });
-    if (!existing) this.notFound();
+    await this.findActiveOrThrow(id);
 
     const row = await this.prisma.builderSurvey.update({
       where: { id },
@@ -144,6 +147,7 @@ export class BuilderSurveysService {
   }
 
   async softDelete(id: string): Promise<void> {
+    await this.findActiveOrThrow(id);
     await this.prisma.builderSurvey.update({
       where: { id },
       data: { deletedAt: new Date() },

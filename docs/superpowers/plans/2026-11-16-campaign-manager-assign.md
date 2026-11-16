@@ -342,8 +342,9 @@ describe("assignManagers", () => {
 
   it("존재하지 않는 어드민 id 가 섞이면 BadRequest 를 던지고 updateMany 를 호출하지 않는다", async () => {});
 
-  it("CAMPAIGN_MANAGERS_ASSIGN 감사 로그를 남긴다", async () => {
-    // audit.record 호출 캡처: action, actor, campaignId
+  it("CAMPAIGN_MANAGERS_ASSIGN 감사 로그를 캠페인당 1행씩 recordMany 로 남긴다", async () => {
+    // audit.recordMany 호출 캡처: entries.length === campaignIds.length,
+    // 각 엔트리의 action / actor / campaignId
   });
 });
 ```
@@ -358,7 +359,7 @@ Expected: FAIL — `assignManagers` 미정의
 `assignManagers(input, actor)`:
 1. `assertManagersExist(input.managerIds)`
 2. `this.prisma.campaign.updateMany({ where: { id: { in: input.campaignIds }, deletedAt: null }, data: { managerIds: input.managerIds } })`
-3. 캠페인마다 `audit.record({ action: "CAMPAIGN_MANAGERS_ASSIGN", actor, campaignId, metadata: { managerCount: input.managerIds.length } })`. 감사는 best-effort 이므로 기존 호출부와 같이 await 하되 실패가 액션을 깨지 않는 `AuditService` 의 기존 동작에 맡긴다.
+3. `audit.recordMany(...)` 로 캠페인당 1행씩 한 번에 기록한다 (`audit.service.ts:72`). 최대 200건이라 `record` 를 200번 호출하면 insert 가 200번 나간다. 각 엔트리는 `{ action: "CAMPAIGN_MANAGERS_ASSIGN", actor, campaignId, metadata: { managerCount: input.managerIds.length } }`. 감사는 best-effort 라 실패가 액션을 깨지 않는 `AuditService` 의 기존 동작에 맡긴다.
 4. `{ updatedCount: result.count }` 반환
 
 - [ ] **Step 4: 컨트롤러 라우트 추가**
@@ -411,15 +412,22 @@ git commit -m "feat(api): 캠페인 담당자 일괄 지정 엔드포인트 추�
 
 ```ts
 describe("AdminOverviewService.stats", () => {
-  it("내 담당 모집중 집계에 managerIds has 조건을 건다", async () => {
-    // 두 번째 campaign.count 호출의 where 에 managerIds: { has: "admin-1" } 가 있어야 한다
+  it("내 담당 모집중 집계는 모집중 조건에 managerIds has 를 더한 where 를 쓴다", async () => {
+    // campaign.count 가 두 번 호출된다. 두 번째 호출의 where 가
+    //   managerIds: { has: "admin-1" } 를 갖고,
+    //   동시에 첫 번째(전체 모집중) where 의 조건 — closedAt: null,
+    //   recruitStartAt lte / recruitEndAt gte — 도 그대로 갖는다.
+    // 담당자 조건만 더해졌는지를 보는 게 요점이다.
   });
 
-  it("담당자가 없는 캠페인은 내 담당 집계에 들어가지 않는다", async () => {
-    // stub 이 where 를 실제로 평가: managerIds: [] 인 행은 0 으로 센다
+  it("두 집계가 서로 다른 값을 돌려준다", async () => {
+    // stub 이 호출 순서대로 [5, 2] 를 돌려주면
+    // recruitingCampaignCount === 5, myRecruitingCampaignCount === 2
   });
 });
 ```
+
+stub prisma 는 where 절을 평가하지 않는다. 검증 대상은 **서비스가 만든 where 의 모양**이지 그 결과가 아니다.
 
 `admin-reports.service.spec.ts` 의 기존 `makeService` stub 캠페인에 `managerIds: ["admin-1"]` 을 더하고:
 
@@ -526,6 +534,8 @@ Expected: FAIL — 모듈 없음
 - [ ] **Step 3: `buildMultiSelectLabel` 구현**
 
 `+M` 의 `M` 은 `labels.length - maxVisibleLabels`. `maxVisibleLabels` 가 `undefined` 면 접지 않는다.
+
+`+M` 은 번역하지 않는다. 언어 중립 기호이고, 번역기를 주입하면 이 함수가 순수 함수가 아니게 되어 위 테스트가 성립하지 않는다. 전원 목록은 `title` 에 그대로 담긴다.
 
 - [ ] **Step 4: 테스트 통과 확인**
 
@@ -766,7 +776,6 @@ Expected: PASS
 - [ ] **Step 8: i18n 키 추가**
 
 ko/en/ja 로:
-- `domains.campaign.managers.overflow` — "외 {count}명"
 - `pages.campaigns.managerFilter.chipEmpty` — "+ 담당자"
 - `pages.campaigns.managerFilter.prefix` — "담당자"
 - `pages.campaigns.managerFilter.title` — "담당자 필터"

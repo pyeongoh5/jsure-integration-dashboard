@@ -102,7 +102,6 @@ export function CampaignNew() {
         initialThumbnail={copiedThumbnail}
         onCancel={() => navigate("/campaigns")}
         managerIds={managerIds}
-        onManagerIdsChange={setManagerIds}
       />
     </div>
   );

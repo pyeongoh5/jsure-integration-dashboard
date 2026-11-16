@@ -94,7 +94,6 @@ function CampaignEditReady({ id, initial, campaign }: ReadyProps) {
         onCancel={() => navigate("/campaigns")}
         selfCampaignId={id}
         managerIds={managerIds}
-        onManagerIdsChange={setManagerIds}
       />
     </div>
   );

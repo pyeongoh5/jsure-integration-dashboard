@@ -95,7 +95,6 @@ type Props = {
    * managerIds 필드는 RHF 기본값 채움 용도일 뿐 실제로는 쓰이지 않는다.
    */
   managerIds: string[];
-  onManagerIdsChange: (managerIds: string[]) => void;
 };
 
 function parseIntegerInput(raw: string): number {

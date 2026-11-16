@@ -3,7 +3,6 @@ import {
   SLOT_CONSUMING_STATUSES,
   formatTitleWithTags,
   postUrls,
-  type CampaignManager,
   type CampaignParticipantsResponse,
   type CampaignReportParticipant,
   type CampaignReportResponse,
@@ -13,7 +12,11 @@ import {
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
-import { pickManagers, utcToJstDateStr } from "../campaigns/campaigns.service";
+import {
+  loadManagers,
+  pickManagers,
+  utcToJstDateStr,
+} from "../campaigns/campaigns.service";
 
 @Injectable()
 export class AdminReportsService {
@@ -48,7 +51,7 @@ export class AdminReportsService {
       viewGrouped.map((view) => [view.campaignId, view._count._all]),
     );
 
-    const managersById = await this.loadManagers(campaigns);
+    const managersById = await loadManagers(this.prisma, campaigns);
 
     const rows: CampaignReportRow[] = campaigns.map((campaign) => {
       const influencerSet = new Set<string>();
@@ -149,25 +152,6 @@ export class AdminReportsService {
     rows.sort((rowA, rowB) => compareRows(rowA, rowB, sort, order));
 
     return { rows };
-  }
-
-  /** 전 캠페인의 managerIds 를 합집합으로 모아 adminUser.findMany 를 한 번만 호출한다. */
-  private async loadManagers(
-    campaigns: { managerIds: string[] }[],
-  ): Promise<Map<string, CampaignManager>> {
-    const uniqueManagerIds = Array.from(
-      new Set(campaigns.flatMap((campaign) => campaign.managerIds)),
-    );
-    const map = new Map<string, CampaignManager>();
-    if (uniqueManagerIds.length === 0) return map;
-    const adminUsers = await this.prisma.adminUser.findMany({
-      where: { id: { in: uniqueManagerIds } },
-      select: { id: true, name: true, email: true },
-    });
-    for (const adminUser of adminUsers) {
-      map.set(adminUser.id, adminUser);
-    }
-    return map;
   }
 
   /**

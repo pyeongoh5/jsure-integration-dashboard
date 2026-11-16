@@ -424,6 +424,26 @@ export function pickManagers(
   return managers;
 }
 
+/** 전 행의 managerIds 를 합집합으로 모아 adminUser.findMany 를 한 번만 호출한다. */
+export async function loadManagers(
+  prisma: PrismaService,
+  rows: { managerIds: string[] }[],
+): Promise<Map<string, CampaignManager>> {
+  const uniqueManagerIds = Array.from(
+    new Set(rows.flatMap((row) => row.managerIds)),
+  );
+  const map = new Map<string, CampaignManager>();
+  if (uniqueManagerIds.length === 0) return map;
+  const adminUsers = await prisma.adminUser.findMany({
+    where: { id: { in: uniqueManagerIds } },
+    select: { id: true, name: true, email: true },
+  });
+  for (const adminUser of adminUsers) {
+    map.set(adminUser.id, adminUser);
+  }
+  return map;
+}
+
 function toResponse(
   row: CampaignRow,
   counts: CampaignCounts,
@@ -701,28 +721,9 @@ export class CampaignsService {
     return map.get(id) ?? EMPTY_COUNTS;
   }
 
-  /** 전 행의 managerIds 를 합집합으로 모아 adminUser.findMany 를 한 번만 호출한다. */
-  private async loadManagers(
-    rows: { managerIds: string[] }[],
-  ): Promise<Map<string, CampaignManager>> {
-    const uniqueManagerIds = Array.from(
-      new Set(rows.flatMap((row) => row.managerIds)),
-    );
-    const map = new Map<string, CampaignManager>();
-    if (uniqueManagerIds.length === 0) return map;
-    const adminUsers = await this.prisma.adminUser.findMany({
-      where: { id: { in: uniqueManagerIds } },
-      select: { id: true, name: true, email: true },
-    });
-    for (const adminUser of adminUsers) {
-      map.set(adminUser.id, adminUser);
-    }
-    return map;
-  }
-
   /** 단건 응답용 — 한 캠페인의 managerIds 를 담당자 정보로 풀어낸다. */
   private async managersFor(managerIds: string[]): Promise<CampaignManager[]> {
-    const managersById = await this.loadManagers([{ managerIds }]);
+    const managersById = await loadManagers(this.prisma, [{ managerIds }]);
     return pickManagers(managerIds, managersById);
   }
 
@@ -956,7 +957,7 @@ export class CampaignsService {
       include: RECRUITS_INCLUDE,
     });
     const counts = await this.loadCounts(rows.map((r) => r.id));
-    const managersById = await this.loadManagers(rows);
+    const managersById = await loadManagers(this.prisma, rows);
     const responses = await Promise.all(
       rows.map((row) =>
         this.withResolved(

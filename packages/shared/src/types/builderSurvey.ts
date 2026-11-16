@@ -6,7 +6,12 @@ import { z } from "zod";
  * 여기서 파생된 타입을 쓴다.
  */
 
-export const LIKERT_PRESETS = ["AGREEMENT", "SATISFACTION", "FREQUENCY", "NUMERIC"] as const;
+export const LIKERT_PRESETS = [
+  "AGREEMENT",
+  "SATISFACTION",
+  "FREQUENCY",
+  "NUMERIC",
+] as const;
 export const LikertPresetSchema = z.enum(LIKERT_PRESETS);
 export type LikertPreset = z.infer<typeof LikertPresetSchema>;
 
@@ -82,7 +87,9 @@ export const BuilderSurveyPageResponseSchema = z.object({
   nextCursor: z.string().nullable(),
   total: z.number().int().nonnegative(),
 });
-export type BuilderSurveyPageResponse = z.infer<typeof BuilderSurveyPageResponseSchema>;
+export type BuilderSurveyPageResponse = z.infer<
+  typeof BuilderSurveyPageResponseSchema
+>;
 
 export const BuilderSurveyResponseSchema = BuilderSurveyListItemSchema.extend({
   description: z.string().nullable(),
@@ -95,7 +102,11 @@ export const CreateBuilderSurveyRequestSchema = z.object({
   description: z.string().max(1000).optional(),
   questions: SurveyQuestionsSchema,
 });
-export type CreateBuilderSurveyRequest = z.infer<typeof CreateBuilderSurveyRequestSchema>;
+export type CreateBuilderSurveyRequest = z.infer<
+  typeof CreateBuilderSurveyRequestSchema
+>;
 
 export const UpdateBuilderSurveyRequestSchema = CreateBuilderSurveyRequestSchema;
-export type UpdateBuilderSurveyRequest = z.infer<typeof UpdateBuilderSurveyRequestSchema>;
+export type UpdateBuilderSurveyRequest = z.infer<
+  typeof UpdateBuilderSurveyRequestSchema
+>;

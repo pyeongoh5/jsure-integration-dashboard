@@ -865,6 +865,7 @@ export const CampaignDraftRequestSchema = z.object({
   thumbnailUrl: z.string().min(1).nullable().optional(),
   excludedCampaignIds: z.array(z.string()).max(50).optional(),
   audienceMode: CampaignAudienceModeSchema.optional(),
+  surveyId: z.string().nullable().optional(),
   ...AUDIENCE_PATCH_SHAPE,
 });
 export type CampaignDraftRequest = z.infer<typeof CampaignDraftRequestSchema>;

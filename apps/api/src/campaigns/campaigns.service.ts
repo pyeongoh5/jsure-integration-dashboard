@@ -550,6 +550,8 @@ function toDraftCampaignData(input: CampaignDraftRequest, now: Date) {
     ...(input.thumbnailUrl !== undefined
       ? { thumbnailUrl: input.thumbnailUrl }
       : {}),
+    // surveyId 도 동일 — 미지정이면 기존 연결을 유지한다.
+    ...(input.surveyId !== undefined ? { surveyId: input.surveyId } : {}),
   };
 }
 

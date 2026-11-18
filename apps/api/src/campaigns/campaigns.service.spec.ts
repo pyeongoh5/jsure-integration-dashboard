@@ -1,5 +1,9 @@
 import { BadRequestException } from "@nestjs/common";
-import { CreateCampaignRequestSchema, UpdateCampaignRequestSchema } from "@jsure/shared";
+import {
+  CampaignDraftRequestSchema,
+  CreateCampaignRequestSchema,
+  UpdateCampaignRequestSchema,
+} from "@jsure/shared";
 import type { AuditActor } from "../audit/audit.service";
 import {
   CampaignsService,
@@ -558,6 +562,24 @@ describe("CampaignsService — surveyId 연결", () => {
     expect(builderSurveyFindUnique.mock.calls[0]?.[0]).toEqual({
       where: { id: "survey-1" },
       select: { title: true },
+    });
+  });
+
+  it("임시저장이 surveyId 를 보존한다", async () => {
+    const campaignCreate = jest.fn(
+      async (_args: { data: Record<string, unknown> }) =>
+        makeCampaignRow({ surveyId: "survey-1" }),
+    );
+    const { service } = makeCampaignService({ campaignCreate });
+    const input = CampaignDraftRequestSchema.parse({
+      title: "임시저장 캠페인",
+      surveyId: "survey-1",
+    });
+
+    await service.createDraft(input, actor);
+
+    expect(campaignCreate.mock.calls[0]?.[0]?.data).toMatchObject({
+      surveyId: "survey-1",
     });
   });
 });

@@ -33,8 +33,11 @@ export const CampaignReportParticipantSchema = z.object({
     views: z.number().int().nullable(),
     reach: z.number().int().nullable(),
   }),
-  /** 응모 단위 앙케이트 응답. 설문 미연결 캠페인이거나 응답 전이면 null. */
-  surveyAnswers: SurveyAnswersSchema.nullable(),
+  /**
+   * 응모 단위 앙케이트 응답. 설문 미연결 캠페인이거나 응답 전이면 null.
+   * default 는 이 필드가 없는 구 API 와의 배포 갭 대비.
+   */
+  surveyAnswers: SurveyAnswersSchema.nullable().default(null),
 });
 export type CampaignReportParticipant = z.infer<
   typeof CampaignReportParticipantSchema
@@ -73,10 +76,14 @@ export const CampaignReportRowSchema = z.object({
 export const CampaignParticipantsResponseSchema = z.object({
   total: z.number().int(),
   participants: z.array(CampaignReportParticipantSchema),
-  /** 캠페인에 연결된 설문의 현재 문항. 설문 미연결이면 null. */
+  /**
+   * 캠페인에 연결된 설문의 현재 문항. 설문 미연결이면 null.
+   * default 는 이 필드가 없는 구 API 와의 배포 갭 대비.
+   */
   survey: z
     .object({ id: z.string(), questions: z.array(SurveyQuestionSchema) })
-    .nullable(),
+    .nullable()
+    .default(null),
 });
 export type CampaignParticipantsResponse = z.infer<
   typeof CampaignParticipantsResponseSchema

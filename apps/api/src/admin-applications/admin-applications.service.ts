@@ -574,20 +574,23 @@ export class AdminApplicationsService {
 
     const hasMore = idRows.length > limit;
     const pageIds = idRows.slice(0, limit).map((row) => row.id);
-    const rows = await this.prisma.campaignApplication.findMany({
-      where: { id: { in: pageIds } },
-      include: SUBMISSION_INCLUDE,
-    });
+    // 둘 다 pageIds 에만 의존하고 서로 무관해 동시에 보낸다.
+    // builderSurveyResponse.applicationId 는 FK 가 아니다(toSubmissionResponse 와 동일한
+    // 사유) — 페이지 전체를 한 번에 조회해 행마다 조회하지 않는다.
+    const [rows, surveyResponses] = await Promise.all([
+      this.prisma.campaignApplication.findMany({
+        where: { id: { in: pageIds } },
+        include: SUBMISSION_INCLUDE,
+      }),
+      this.prisma.builderSurveyResponse.findMany({
+        where: { applicationId: { in: pageIds } },
+        select: { applicationId: true, questionsSnapshot: true, answers: true, submittedAt: true },
+      }),
+    ]);
     const byId = new Map(rows.map((row) => [row.id, row]));
     const ordered = pageIds.flatMap((id) => {
       const row = byId.get(id);
       return row ? [row] : [];
-    });
-    // builderSurveyResponse.applicationId 는 FK 가 아니다(toSubmissionResponse 와 동일한
-    // 사유) — 페이지 전체를 한 번에 조회해 행마다 조회하지 않는다.
-    const surveyResponses = await this.prisma.builderSurveyResponse.findMany({
-      where: { applicationId: { in: pageIds } },
-      select: { applicationId: true, questionsSnapshot: true, answers: true, submittedAt: true },
     });
     const surveyResponseByApplicationId = new Map(
       surveyResponses.map((surveyResponse) => [surveyResponse.applicationId, surveyResponse]),
@@ -1870,14 +1873,23 @@ type SurveyResponseRow = {
 /**
  * 응모자가 낸 앙케이트 응답을 응답 모양으로. 문항·답은 DB 에 Json 으로 저장돼 있어
  * zod 로 다시 파싱해 모양을 보증한다(쓰는 쪽은 Task 4 의 influencer-applications 서비스).
+ *
+ * safeParse 로 실패를 삼키고 null 을 돌려준다 — resolveThumbnail 과 같은 이유로,
+ * 응답 하나가 깨졌다고(schemaVersion 이 다른 옛 스냅샷 등) 검토 목록/상세 응답
+ * 전체가 500 이 되면 안 된다. 그 행은 섹션이 안 그려질 뿐 나머지는 멀쩡하다.
  */
 function toSurveyResponseField(
   surveyResponseRow: SurveyResponseRow,
 ): AdminSubmissionSurveyResponse | null {
   if (!surveyResponseRow) return null;
+  const questionsSnapshot = SurveyQuestionsSchema.safeParse(
+    surveyResponseRow.questionsSnapshot,
+  );
+  const answers = SurveyAnswersSchema.safeParse(surveyResponseRow.answers);
+  if (!questionsSnapshot.success || !answers.success) return null;
   return {
-    questionsSnapshot: SurveyQuestionsSchema.parse(surveyResponseRow.questionsSnapshot),
-    answers: SurveyAnswersSchema.parse(surveyResponseRow.answers),
+    questionsSnapshot: questionsSnapshot.data,
+    answers: answers.data,
     submittedAt: surveyResponseRow.submittedAt.toISOString(),
   };
 }

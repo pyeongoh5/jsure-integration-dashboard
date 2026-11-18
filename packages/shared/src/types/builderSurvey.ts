@@ -110,3 +110,140 @@ export const UpdateBuilderSurveyRequestSchema = CreateBuilderSurveyRequestSchema
 export type UpdateBuilderSurveyRequest = z.infer<
   typeof UpdateBuilderSurveyRequestSchema
 >;
+
+/**
+ * 문항 하나에 대한 응답자의 답. SINGLE/MULTI 는 선택지 문자열(인덱스 아님),
+ * LIKERT 는 1-based 단계 번호(라벨 문자열 아님)를 저장한다.
+ */
+export const SurveyAnswerSchema = z.union([
+  z.string().max(2000),
+  z.array(z.string().max(200)),
+  z.number().int().positive(),
+]);
+export type SurveyAnswer = z.infer<typeof SurveyAnswerSchema>;
+
+/** 문항 id -> 답. 설문의 questions 와 짝을 이루는 응답 전체 모양. */
+export const SurveyAnswersSchema = z.record(z.string().min(1), SurveyAnswerSchema);
+export type SurveyAnswers = z.infer<typeof SurveyAnswersSchema>;
+
+/**
+ * 답이 문항 규칙을 어긴 사실만 표현한다. 문구는 만들지 않는다 — 서버는 한국어,
+ * client-web 은 일본어로 각자 메시지를 붙인다.
+ */
+export type SurveyAnswerIssue = {
+  questionId: string;
+  kind: "REQUIRED_MISSING" | "UNKNOWN_OPTION" | "OUT_OF_RANGE" | "WRONG_SHAPE";
+};
+
+/** 리커트 척도의 단계 수. 프리셋은 5단계 고정, CUSTOM 은 labels 길이. */
+export function likertStepCount(
+  scale: Extract<SurveyQuestion, { type: "LIKERT" }>["scale"],
+): number {
+  if (scale.preset === "CUSTOM") {
+    return scale.labels.length;
+  }
+  return 5;
+}
+
+function isEmptyAnswer(answer: SurveyAnswer | undefined): boolean {
+  if (answer === undefined || answer === null) {
+    return true;
+  }
+  if (typeof answer === "string") {
+    return answer.trim().length === 0;
+  }
+  if (Array.isArray(answer)) {
+    return answer.length === 0;
+  }
+  return false;
+}
+
+function choiceQuestionIssue(
+  question: Extract<SurveyQuestion, { type: "SINGLE" | "MULTI" }>,
+  answer: SurveyAnswer | undefined,
+): SurveyAnswerIssue["kind"] | undefined {
+  if (question.type === "SINGLE") {
+    if (typeof answer !== "string") {
+      return "WRONG_SHAPE";
+    }
+    if (!question.options.includes(answer)) {
+      return "UNKNOWN_OPTION";
+    }
+    return undefined;
+  }
+  if (!Array.isArray(answer)) {
+    return "WRONG_SHAPE";
+  }
+  const hasUnknownOption = answer.some(
+    (selectedOption) => !question.options.includes(selectedOption),
+  );
+  if (hasUnknownOption) {
+    return "UNKNOWN_OPTION";
+  }
+  return undefined;
+}
+
+function likertQuestionIssue(
+  question: Extract<SurveyQuestion, { type: "LIKERT" }>,
+  answer: SurveyAnswer | undefined,
+): SurveyAnswerIssue["kind"] | undefined {
+  if (typeof answer !== "number") {
+    return "WRONG_SHAPE";
+  }
+  if (answer < 1 || answer > likertStepCount(question.scale)) {
+    return "OUT_OF_RANGE";
+  }
+  return undefined;
+}
+
+function textQuestionIssue(
+  answer: SurveyAnswer | undefined,
+): SurveyAnswerIssue["kind"] | undefined {
+  if (typeof answer !== "string") {
+    return "WRONG_SHAPE";
+  }
+  return undefined;
+}
+
+/**
+ * 문항을 순서대로 순회하며 문항당 최대 한 건의 이슈를 낸다(먼저 걸리는 종류 하나).
+ * 설문에 없는 questionId 가 답에 섞여 있어도 무시한다.
+ */
+export function surveyAnswerIssues(
+  questions: SurveyQuestion[],
+  answers: SurveyAnswers,
+): SurveyAnswerIssue[] {
+  const issues: SurveyAnswerIssue[] = [];
+
+  for (const question of questions) {
+    const answer = answers[question.id];
+
+    if (question.required && isEmptyAnswer(answer)) {
+      issues.push({ questionId: question.id, kind: "REQUIRED_MISSING" });
+      continue;
+    }
+    if (isEmptyAnswer(answer)) {
+      continue;
+    }
+
+    let issueKind: SurveyAnswerIssue["kind"] | undefined;
+    switch (question.type) {
+      case "SINGLE":
+      case "MULTI":
+        issueKind = choiceQuestionIssue(question, answer);
+        break;
+      case "LIKERT":
+        issueKind = likertQuestionIssue(question, answer);
+        break;
+      case "TEXT":
+        issueKind = textQuestionIssue(answer);
+        break;
+    }
+
+    if (issueKind !== undefined) {
+      issues.push({ questionId: question.id, kind: issueKind });
+    }
+  }
+
+  return issues;
+}

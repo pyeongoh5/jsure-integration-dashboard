@@ -403,7 +403,10 @@ export const InfluencerApplicationSchema = z.object({
    * 구 API 와의 배포 갭 대비.
    */
   insightDueAt: z.string().datetime().nullable().default(null),
-  /** 캠페인에 연결된 앙케이트. 없으면 null — 설문 단계를 건너뛴다. */
+  /**
+   * 캠페인에 연결된 앙케이트. 없으면 null — 설문 단계를 건너뛴다.
+   * default 는 이 필드가 없는 구 API 와의 배포 갭 대비.
+   */
   survey: z
     .object({
       id: z.string(),
@@ -411,7 +414,14 @@ export const InfluencerApplicationSchema = z.object({
       description: z.string().nullable(),
       questions: z.array(SurveyQuestionSchema),
     })
-    .nullable(),
+    .nullable()
+    .default(null),
+  /**
+   * 이 응모가 이미 제출한 앙케이트 답. 아직 답하지 않았으면 null.
+   * `survey` 는 "무엇을 묻는가", 이 필드는 "무엇을 답했나" — 재제출 시 기존 답을
+   * 프리필하는 데 쓴다. default 는 이 필드가 없는 구 API 와의 배포 갭 대비.
+   */
+  surveyAnswers: SurveyAnswersSchema.nullable().default(null),
 });
 export type InfluencerApplication = z.infer<typeof InfluencerApplicationSchema>;
 

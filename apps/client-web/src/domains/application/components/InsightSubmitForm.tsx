@@ -44,6 +44,8 @@ interface Props {
   insightDueAt: string | null;
   /** 캠페인에 연결된 앙케이트. 없으면 null — 설문 단계를 건너뛴다. */
   survey: InfluencerApplication["survey"];
+  /** 이미 제출한 앙케이트 답(재제출 프리필용). 없으면 null. */
+  surveyAnswers: InfluencerApplication["surveyAnswers"];
 }
 
 function formatInsightDueDate(iso: string): string {
@@ -75,6 +77,7 @@ export function InsightSubmitForm({
   submitting,
   insightDueAt,
   survey,
+  surveyAnswers: initialSurveyAnswers,
 }: Props) {
   const [stepIndex, setStepIndex] = useState(0);
   // 단계를 오갈 때 입력값을 보존하기 위한 서브타입별 스냅샷.
@@ -84,7 +87,11 @@ export function InsightSubmitForm({
   const [attachmentsBySubType, setAttachmentsBySubType] = useState<
     Partial<Record<CampaignSubType, InsightAttachment[]>>
   >({});
-  const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers>({});
+  // 재제출 시 기존 답으로 시작 — 운영자가 반려해 다시 제출하는 경우 설문까지
+  // 처음부터 다시 입력하게 만들면 안 된다.
+  const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers>(
+    initialSurveyAnswers ?? {},
+  );
 
   const hasSurveyStep = survey !== null;
   const totalSteps = targets.length + (hasSurveyStep ? 1 : 0);

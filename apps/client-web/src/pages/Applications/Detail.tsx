@@ -355,6 +355,7 @@ export function ApplicationDetail() {
             submitting={insight.isPending}
             insightDueAt={data.insightDueAt}
             survey={data.survey}
+            surveyAnswers={data.surveyAnswers}
           />
         )}
 

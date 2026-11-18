@@ -174,6 +174,24 @@ describe("submitInsights — 앙케이트", () => {
     expect(submittedPostUpdate).toHaveBeenCalledTimes(1);
   });
 
+  it("깨진 questions 는 null 을 돌려주고 throw 하지 않는다", async () => {
+    const { service, builderSurveyResponseUpsert, submittedPostUpdate } =
+      makeService({
+        applicationRow: makeApplicationRow({
+          campaign: { ...makeApplicationRow().campaign, surveyId: SURVEY_ID },
+        }),
+        // 배열이 아닌 값 — SurveyQuestionSchema.array() 파싱이 실패해야 한다.
+        surveyRow: makeBuilderSurveyRow({ questions: "이건 배열이 아니다" }),
+      });
+
+    await expect(
+      service.submitInsights(INFLUENCER_ID, APPLICATION_ID, ONE_INSIGHT),
+    ).resolves.toBeDefined();
+
+    expect(builderSurveyResponseUpsert).not.toHaveBeenCalled();
+    expect(submittedPostUpdate).toHaveBeenCalledTimes(1);
+  });
+
   it("설문 미연결인데 surveyAnswers 가 와도 조용히 무시한다", async () => {
     const { service, builderSurveyResponseUpsert } = makeService({
       applicationRow: makeApplicationRow(),
@@ -359,6 +377,7 @@ describe("listForInfluencer — 앙케이트 일괄 조회", () => {
       makeBuilderSurveyRow({ id: "survey-2" }),
     ]);
     const builderSurveyFindUnique = jest.fn(async (_args: PrismaCallArgs) => null);
+    const builderSurveyResponseFindMany = jest.fn(async (_args: PrismaCallArgs) => []);
     const prisma = {
       campaignApplication: {
         findMany: jest.fn(async (_args: PrismaCallArgs) => rows),
@@ -366,6 +385,9 @@ describe("listForInfluencer — 앙케이트 일괄 조회", () => {
       builderSurvey: {
         findMany: builderSurveyFindMany,
         findUnique: builderSurveyFindUnique,
+      },
+      builderSurveyResponse: {
+        findMany: builderSurveyResponseFindMany,
       },
     };
     const uploads = {

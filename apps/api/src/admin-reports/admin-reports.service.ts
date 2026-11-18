@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import {
   SLOT_CONSUMING_STATUSES,
   SurveyAnswersSchema,
-  SurveyQuestionSchema,
   formatTitleWithTags,
   postUrls,
   type CampaignParticipantsResponse,
@@ -16,6 +15,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 import { utcToJstDateStr } from "../campaigns/campaigns.service";
+import { parseSurveyQuestions } from "../common/survey-questions";
 
 @Injectable()
 export class AdminReportsService {
@@ -291,9 +291,11 @@ export class AdminReportsService {
       select: { id: true, questions: true },
     });
     if (!survey) return null;
+    const questions = parseSurveyQuestions(survey.questions, surveyId);
+    if (questions === null) return null;
     return {
       id: survey.id,
-      questions: SurveyQuestionSchema.array().parse(survey.questions),
+      questions,
     };
   }
 }

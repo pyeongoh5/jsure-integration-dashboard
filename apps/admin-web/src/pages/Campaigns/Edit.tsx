@@ -101,6 +101,7 @@ export function CampaignEdit() {
         }
         onSubmit={handleSubmit}
         onSaveDraft={isDraft ? handleSaveDraft : undefined}
+        initialSurveyTitle={state.campaign?.surveyTitle ?? null}
         onCancel={() => navigate("/campaigns")}
         selfCampaignId={id}
       />

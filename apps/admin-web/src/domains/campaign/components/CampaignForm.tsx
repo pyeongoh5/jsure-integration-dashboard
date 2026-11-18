@@ -13,6 +13,7 @@ import { ExcludedCampaignsPicker } from "./ExcludedCampaignsPicker";
 import { AudienceInfluencerPicker } from "./AudienceInfluencerPicker";
 import { CampaignAudienceList } from "./CampaignAudienceList";
 import { ProductOptionsEditor } from "./ProductOptionsEditor";
+import { SurveySelectField } from "./SurveySelectField";
 import { TagsInput } from "@/components/composites";
 import { useInfluencerTags } from "@/domains/influencer";
 import { uploadCampaignThumbnail, UploadError } from "@/lib/uploads";
@@ -52,6 +53,7 @@ export const EMPTY_CAMPAIGN_FORM: Values = {
   cautions: "",
   thumbnailUrl: null,
   excludedCampaignIds: [],
+  surveyId: null,
   audienceMode: "PUBLIC",
   audienceCampaignIds: [],
   audienceTagLabels: [],
@@ -85,6 +87,8 @@ type Props = {
   onSaveDraft?: (values: Values) => Promise<void>;
   /** 캠페인 복사 진입용 — 원본 썸네일을 그대로 이어받는다(미리보기 URL + 저장 키). */
   initialThumbnail?: { objectKey: string; viewUrl: string };
+  /** 현재 연결된 설문의 제목. 설문이 소프트 삭제돼도 제목은 그대로 보여줘야 해서 props 로 받는다. */
+  initialSurveyTitle?: string | null;
   onCancel: () => void;
   selfCampaignId?: string;
 };
@@ -106,6 +110,7 @@ export function CampaignForm({
   onSubmit,
   onSaveDraft,
   initialThumbnail,
+  initialSurveyTitle,
   onCancel,
   selfCampaignId,
 }: Props) {
@@ -840,6 +845,27 @@ export function CampaignForm({
             </div>
             {rootError("thumbnailUrl") && (
               <div className={styles.error}>{rootError("thumbnailUrl")}</div>
+            )}
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>
+              {t("domains.campaign.form.surveySelectLabel")}
+            </label>
+            <Controller
+              control={methods.control}
+              name="surveyId"
+              render={({ field }) => (
+                <SurveySelectField
+                  value={field.value}
+                  onChange={field.onChange}
+                  selectedSurveyTitle={initialSurveyTitle}
+                  disabled={submitting}
+                />
+              )}
+            />
+            {rootError("surveyId") && (
+              <div className={styles.error}>{rootError("surveyId")}</div>
             )}
           </div>
         </section>

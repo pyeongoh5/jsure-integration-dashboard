@@ -2214,6 +2214,42 @@ export const adminMessages = {
           ja: "PNG・JPEG・WebP、5MB以下",
         },
         uploading: { ko: "업로드 중...", en: "Uploading...", ja: "アップロード中..." },
+        surveySelectLabel: {
+          ko: "연결할 앙케이트",
+          en: "Linked survey",
+          ja: "連携するアンケート",
+        },
+        surveySelectNoneOption: { ko: "선택 안 함", en: "None", ja: "選択しない" },
+        surveySelectCurrent: {
+          ko: "현재 연결됨: {title}",
+          en: "Currently linked: {title}",
+          ja: "現在連携中: {title}",
+        },
+        surveySelectNone: {
+          ko: "연결된 설문이 없습니다.",
+          en: "No survey is linked.",
+          ja: "連携されたアンケートはありません。",
+        },
+        surveySelectSearchPlaceholder: {
+          ko: "설문 제목으로 검색...",
+          en: "Search by survey title...",
+          ja: "アンケートタイトルで検索...",
+        },
+        surveySelectEmpty: {
+          ko: "검색 결과가 없습니다.",
+          en: "No matching surveys.",
+          ja: "検索結果がありません。",
+        },
+        surveySelectHint: {
+          ko: "연결하면 인플루언서가 인사이트 제출 시 이 설문에 답합니다.",
+          en: "Once linked, influencers answer this survey when they submit their insight.",
+          ja: "連携すると、インフルエンサーはインサイト提出時にこのアンケートに回答します。",
+        },
+        surveySelectChangeNotice: {
+          ko: "설문을 바꾸면 변경 이후에 제출되는 응답부터 새 설문이 적용됩니다. 이전에 제출된 응답은 그대로 남습니다.",
+          en: "Changing the survey applies only to responses submitted after the change. Responses already submitted stay as they are.",
+          ja: "アンケートを変更すると、変更後に提出される回答から新しいアンケートが適用されます。すでに提出された回答はそのまま残ります。",
+        },
         sectionRecruitsFake: {
           ko: "가구매 채널별 모집",
           en: "Recruitment by pending-purchase channel",

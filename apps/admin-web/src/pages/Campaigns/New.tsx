@@ -81,6 +81,7 @@ export function CampaignNew() {
         onSubmit={handleSubmit}
         onSaveDraft={handleSaveDraft}
         initialThumbnail={copiedThumbnail}
+        initialSurveyTitle={state.campaign?.surveyTitle ?? null}
         onCancel={() => navigate("/campaigns")}
       />
     </div>

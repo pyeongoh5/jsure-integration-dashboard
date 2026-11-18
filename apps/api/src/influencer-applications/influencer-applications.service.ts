@@ -12,6 +12,8 @@ import {
   SLOT_CONSUMING_STATUSES,
   SUB_TYPE_LABEL,
   SUB_TYPE_OPTION_LABEL,
+  surveyAnswerIssues,
+  SurveyQuestionSchema,
   usesOptionCountSplit,
   type ApplicationOption,
   type ApplicationProductOption,
@@ -25,6 +27,8 @@ import {
   type InfluencerApplication,
   type RewardType,
   type SubmittedPost,
+  type SurveyAnswers,
+  type SurveyQuestion,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { VISIBLE_PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
@@ -118,6 +122,8 @@ type ApplicationRow = {
     orderPeriodDays: number | null;
     publishStartAt: Date | null;
     publishEndAt: Date | null;
+    /** 연결된 앙케이트(builder_surveys.id). FK 가 아니다 — null 이면 설문 없음. */
+    surveyId: string | null;
     recruits: {
       subType: CampaignSubType;
       insightRequired: boolean;
@@ -242,6 +248,8 @@ function toResponse(row: ApplicationRow): InfluencerApplication {
     orderDeadlineAt: orderDeadline ? orderDeadline.toISOString() : null,
     reviewSubmittedAt: row.reviewSubmittedAt ? row.reviewSubmittedAt.toISOString() : null,
     insightDueAt: insightDue ? insightDue.toISOString() : null,
+    // resolveResponse 가 builderSurvey 를 따로 조회해 채운다 — 여기선 자리만 잡는다.
+    survey: null,
   };
 }
 
@@ -273,6 +281,7 @@ const INCLUDE = {
       postingPeriodDays: true,
       publishStartAt: true,
       publishEndAt: true,
+      surveyId: true,
       recruits: {
         select: {
           subType: true,
@@ -305,7 +314,30 @@ export class InfluencerApplicationsService {
       await this.uploads.resolveCampaignThumbnailUrl(
         response.campaignThumbnailUrl,
       );
+    response.survey = await this.resolveSurvey(row.campaign.surveyId);
     return response;
+  }
+
+  /**
+   * 캠페인에 연결된 앙케이트 본문. relation 이 없으므로(1차 §7 격리 규칙)
+   * `builderSurvey.findUnique` 로 따로 읽는다. surveyId 가 없으면 조회 자체를
+   * 생략한다 — 설문 미연결 캠페인은 추가 쿼리가 전혀 없어야 한다.
+   */
+  private async resolveSurvey(
+    surveyId: string | null,
+  ): Promise<InfluencerApplication["survey"]> {
+    if (!surveyId) return null;
+    const survey = await this.prisma.builderSurvey.findUnique({
+      where: { id: surveyId },
+      select: { id: true, title: true, description: true, questions: true },
+    });
+    if (!survey) return null;
+    return {
+      id: survey.id,
+      title: survey.title,
+      description: survey.description,
+      questions: SurveyQuestionSchema.array().parse(survey.questions),
+    };
   }
 
   async listForInfluencer(
@@ -858,6 +890,7 @@ export class InfluencerApplicationsService {
       reach: number;
       attachments?: AttachmentUploadInput[];
     }[],
+    surveyAnswers?: SurveyAnswers,
   ): Promise<InfluencerApplication> {
     const app = await this.assertOwnedWithCampaign(influencerId, applicationId);
     if (app.campaign.category !== "SNS") {
@@ -892,6 +925,12 @@ export class InfluencerApplicationsService {
       }
     }
 
+    // 지표 저장보다 앞에서 끝나야 한다 — 검증 실패 시 지표도 함께 저장하지 않는다.
+    const validatedSurvey = await this.validateSurveyAnswers(
+      app.campaign.surveyId,
+      surveyAnswers,
+    );
+
     const now = new Date();
     for (const insight of insights) {
       const post = postBySubType.get(insight.subType)!;
@@ -911,6 +950,22 @@ export class InfluencerApplicationsService {
       if (insight.attachments && insight.attachments.length > 0) {
         await this.uploads.attachInsightUploads(post.id, insight.attachments);
       }
+    }
+    if (validatedSurvey) {
+      await this.prisma.builderSurveyResponse.upsert({
+        where: { applicationId },
+        create: {
+          applicationId,
+          surveyId: validatedSurvey.surveyId,
+          questionsSnapshot: validatedSurvey.questions,
+          answers: validatedSurvey.answers,
+        },
+        update: {
+          surveyId: validatedSurvey.surveyId,
+          questionsSnapshot: validatedSurvey.questions,
+          answers: validatedSurvey.answers,
+        },
+      });
     }
     // 제출물이 이미 승인된 상태라면 인사이트 제출 시점에 자동 정산.
     const { autoCompleted, createdSettlementId } =
@@ -1360,6 +1415,40 @@ export class InfluencerApplicationsService {
     return this.getForInfluencer(influencerId, applicationId);
   }
 
+  /**
+   * 캠페인에 연결된 앙케이트 응답을 검증한다. 설문 미연결 캠페인은 surveyAnswers 를
+   * 조용히 무시한다 — 운영자가 방금 설문을 뗀 타이밍에 제출이 들어올 수 있다.
+   */
+  private async validateSurveyAnswers(
+    surveyId: string | null,
+    surveyAnswers: SurveyAnswers | undefined,
+  ): Promise<{
+    surveyId: string;
+    questions: SurveyQuestion[];
+    answers: SurveyAnswers;
+  } | null> {
+    if (!surveyId) return null;
+    if (!surveyAnswers) {
+      throw new BadRequestException({
+        code: "SURVEY_ANSWERS_REQUIRED",
+        message: "앙케이트에 응답해주세요",
+      });
+    }
+    const survey = await this.prisma.builderSurvey.findUnique({
+      where: { id: surveyId },
+      select: { questions: true },
+    });
+    const questions = SurveyQuestionSchema.array().parse(survey?.questions ?? []);
+    const issues = surveyAnswerIssues(questions, surveyAnswers);
+    if (issues.length > 0) {
+      throw new BadRequestException({
+        code: "SURVEY_ANSWERS_INVALID",
+        message: "앙케이트 응답을 확인해주세요",
+      });
+    }
+    return { surveyId, questions, answers: surveyAnswers };
+  }
+
   private async assertOwned(influencerId: string, applicationId: string) {
     const app = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
@@ -1377,7 +1466,12 @@ export class InfluencerApplicationsService {
       where: { id: applicationId },
       include: {
         campaign: {
-          select: { category: true, publishStartAt: true, publishEndAt: true },
+          select: {
+            category: true,
+            publishStartAt: true,
+            publishEndAt: true,
+            surveyId: true,
+          },
         },
       },
     });

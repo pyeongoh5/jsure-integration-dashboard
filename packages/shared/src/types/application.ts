@@ -4,6 +4,7 @@ import {
   CampaignCategorySchema,
   OPTION_SELECTABLE_SUB_TYPES,
 } from "./campaign.js";
+import { SurveyAnswersSchema, SurveyQuestionSchema } from "./builderSurvey.js";
 
 export const ApplicationStatusSchema = z.enum([
   "APPLIED",
@@ -185,6 +186,8 @@ export const SubmitInsightsRequestSchema = z.object({
       (arr) => new Set(arr.map((i) => i.subType)).size === arr.length,
       "投稿先が重複しています",
     ),
+  /** 캠페인에 설문이 연결된 경우에만 보낸다. { questionId: answer } */
+  surveyAnswers: SurveyAnswersSchema.optional(),
 });
 export type SubmitInsightsRequest = z.infer<typeof SubmitInsightsRequestSchema>;
 
@@ -400,6 +403,15 @@ export const InfluencerApplicationSchema = z.object({
    * 구 API 와의 배포 갭 대비.
    */
   insightDueAt: z.string().datetime().nullable().default(null),
+  /** 캠페인에 연결된 앙케이트. 없으면 null — 설문 단계를 건너뛴다. */
+  survey: z
+    .object({
+      id: z.string(),
+      title: z.string(),
+      description: z.string().nullable(),
+      questions: z.array(SurveyQuestionSchema),
+    })
+    .nullable(),
 });
 export type InfluencerApplication = z.infer<typeof InfluencerApplicationSchema>;
 

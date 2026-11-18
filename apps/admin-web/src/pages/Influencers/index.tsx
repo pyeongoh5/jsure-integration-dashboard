@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   ENABLED_SNS_TYPES,
   INFLUENCER_EXPORT_MAX_ROWS,
   InfluencerFilterSchema,
   SUB_TYPE_LABEL,
+  WithdrawalFilterSchema,
 } from "@jsure/shared";
 import type {
   AdminInfluencer,
@@ -99,9 +101,16 @@ const SNS_FILTER_OPTIONS = SNS_FILTER_ORDER.filter((type) =>
   icon: SNS_ICON[type],
 }));
 
+/** 대시보드 '탈퇴 신청 대기' 카드가 ?withdrawal=PENDING 으로 들어온다. */
+function initialWithdrawalFilter(raw: string | null): WithdrawalFilter | null {
+  const parsed = WithdrawalFilterSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+
 export function Influencers() {
   const t = useT();
   const { language } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 300);
   const [snsFilter, setSnsFilter] = useState<Set<SnsAccountSubType>>(
@@ -110,7 +119,9 @@ export function Influencers() {
   const [tagFilter, setTagFilter] = useState<Set<string>>(() => new Set());
   const [residenceFilter, setResidenceFilter] = useState<Residence | null>(null);
   const [withdrawalFilter, setWithdrawalFilter] =
-    useState<WithdrawalFilter | null>(null);
+    useState<WithdrawalFilter | null>(() =>
+      initialWithdrawalFilter(searchParams.get("withdrawal")),
+    );
   const [broadcastCandidates, setBroadcastCandidates] = useState<
     AdminInfluencer[] | null
   >(null);

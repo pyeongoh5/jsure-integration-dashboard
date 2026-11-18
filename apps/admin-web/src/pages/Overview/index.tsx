@@ -1,10 +1,33 @@
+import { useMemo, useState } from "react";
 import { getStoredUser } from "@/domains/auth";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import {
+  formatTitleWithTags,
+  type CampaignCategory,
+  type CampaignStage,
+  type DailyActionAlertKind,
+} from "@jsure/shared";
 import { Card } from "@/components/composites/Card";
+import {
+  FilterChipBar,
+  SingleSelectFilterChip,
+} from "@/components/composites/FilterChip";
+import { CATEGORY_FILTER_OPTIONS } from "@/domains/application";
 import { MonthlyCampaignChart } from "./MonthlyCampaignChart";
-import { getOverviewStats } from "@/domains/overview";
+import {
+  CampaignBoardTable,
+  DailyActionAlerts,
+  DailyAlertRemindDialog,
+  StagePipelineBar,
+  getCampaignBoard,
+  getDailyActionAlerts,
+  getOverviewStats,
+  overviewBoardStyles,
+} from "@/domains/overview";
 import { useT } from "@/lib/i18n";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
+import { foldForSearch } from "@/lib/searchText";
 import styles from "./Overview.module.css";
 import { ReactNode } from "react";
 
@@ -12,11 +35,18 @@ type Kpi = {
   icon: ReactNode;
   label: string;
   value: string;
-  delta?: { text: string; tone: "up" | "down" | "neutral" };
+  delta?: string;
   to?: string;
 };
 
 type TranslateFn = ReturnType<typeof useT>;
+
+const EMPTY_STAGE_COUNTS: Record<CampaignStage, number> = {
+  OPEN_PENDING: 0,
+  IN_PROGRESS: 0,
+  INSIGHT_COLLECTING: 0,
+  SETTLEMENT_PENDING: 0,
+};
 
 function formatJpy(value: number): string {
   if (value >= 1_000_000) return `¥${(value / 1_000_000).toFixed(1)}M`;
@@ -52,91 +82,55 @@ function buildKpis(
       icon: "✓",
       label: t("pages.overview.kpi.applicantReview"),
       value: String(stats.pendingApplicationCount),
-      delta: { text: t("pages.overview.kpi.pendingApplications"), tone: "neutral" },
+      delta: t("pages.overview.kpi.pendingApplications"),
       to: "/applicants",
     },
     {
       icon: <i className="fa-solid fa-file-pen" />,
       label: t("pages.overview.kpi.postReview"),
       value: String(stats.pendingPostReviewCount),
-      delta: { text: t("pages.overview.kpi.pendingPosts"), tone: "neutral" },
+      delta: t("pages.overview.kpi.pendingPosts"),
       to: "/drafts",
     },
     {
       icon: <i className="fa-solid fa-money-check-dollar" />,
       label: t("pages.overview.kpi.pendingPayoutAmount"),
       value: formatJpy(stats.pendingSettlementAmountJpy),
-      delta: {
-        text: t("pages.overview.kpi.pendingSettlements", {
-          count: stats.pendingSettlementCount,
-        }),
-        tone: "neutral",
-      },
+      delta: t("pages.overview.kpi.pendingSettlements", {
+        count: stats.pendingSettlementCount,
+      }),
       to: "/payouts",
     },
   ];
 }
 
-// type Activity = {
-//   type: "approve" | "draft" | "campaign" | "alert" | "payout" | "complete";
-//   text: string;
-//   ago: string;
-// };
-
-// const ACTIVITIES: Activity[] = [
-//   { type: "approve", text: "유나의 응모를 승인 처리했습니다.", ago: "2분 전" },
-//   { type: "draft", text: "민준이 비오데르마 캠페인 초안을 제출했습니다.", ago: "15분 전" },
-//   {
-//     type: "campaign",
-//     text: "스타벅스 프라푸치노 서머 캠페인 모집 인원이 90% 채워졌습니다.",
-//     ago: "1시간 전",
-//   },
-//   { type: "alert", text: "@unknown_1234 계정이 의심 활동으로 신고되었습니다.", ago: "2시간 전" },
-//   { type: "payout", text: "지윤의 정산 처리가 대기열에 추가되었습니다. (₩18M)", ago: "3시간 전" },
-//   { type: "complete", text: "대한항공 호놀룰루 캠페인이 완료 처리되었습니다.", ago: "어제" },
-// ];
-
-// const ACTIVITY_STYLE: Record<Activity["type"], { icon: string; bg: string; fg: string }> = {
-//   approve: { icon: "✓", bg: "#ecfdf5", fg: "#10b981" },
-//   draft: { icon: "✎", bg: "#eff6ff", fg: "#2563eb" },
-//   campaign: { icon: "◁", bg: "#eff6ff", fg: "#2563eb" },
-//   alert: { icon: "!", bg: "#fef2f2", fg: "#ef4444" },
-//   payout: { icon: "$", bg: "#f5f3ff", fg: "#8b5cf6" },
-//   complete: { icon: "✓", bg: "#ecfdf5", fg: "#10b981" },
-// };
-
-type UrgentRow = {
-  type: string;
-  tone: "warn" | "info";
-  target: string;
-  receivedAt: string;
-  sla: string;
-  slaTone: "danger" | "warn";
-  assignee: string;
-  action: string;
-};
-
-const _URGENT: UrgentRow[] = [
-  {
-    type: "응모 검토",
-    tone: "warn",
-    target: "유나 → 라이프스토어 그린 프로젝트",
-    receivedAt: "2시간 전",
-    sla: "D-1",
-    slaTone: "warn",
-    assignee: "HR",
-    action: "검토",
-  },
-];
-
 export function Overview() {
   const t = useT();
   const user = getStoredUser();
+  const [stageFilter, setStageFilter] = useState<CampaignStage | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<CampaignCategory | null>(
+    null,
+  );
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 300);
+  const [alertKind, setAlertKind] = useState<DailyActionAlertKind | null>(null);
+
   const { data: stats } = useQuery({
     queryKey: ["admin", "overview"],
     queryFn: getOverviewStats,
     staleTime: 30_000,
   });
+  const boardQuery = useQuery({
+    queryKey: ["admin", "overview", "campaign-board"],
+    queryFn: getCampaignBoard,
+    staleTime: 30_000,
+  });
+  const alertsQuery = useQuery({
+    queryKey: ["admin", "overview", "daily-alerts"],
+    queryFn: getDailyActionAlerts,
+    staleTime: 30_000,
+  });
+
   const kpis = buildKpis(
     stats ?? {
       recruitingCampaignCount: 0,
@@ -149,6 +143,37 @@ export function Overview() {
     t,
   );
 
+  // 단계 카운터는 카테고리·검색까지 반영한 뒤의 집계다 — 카운터를 눌러 테이블이
+  // 걸러졌을 때 숫자와 행 수가 어긋나지 않도록.
+  const scopedRows = useMemo(() => {
+    const rows = boardQuery.data?.rows ?? [];
+    const folded = foldForSearch(debouncedQuery.trim());
+    return rows.filter((row) => {
+      if (categoryFilter !== null && row.category !== categoryFilter) return false;
+      if (
+        folded &&
+        !foldForSearch(formatTitleWithTags(row.tags, row.title)).includes(folded)
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [boardQuery.data, categoryFilter, debouncedQuery]);
+
+  const stageCounts = useMemo(() => {
+    const counts = { ...EMPTY_STAGE_COUNTS };
+    for (const row of scopedRows) counts[row.stage] += 1;
+    return counts;
+  }, [scopedRows]);
+
+  const visibleRows = useMemo(
+    () =>
+      stageFilter === null
+        ? scopedRows
+        : scopedRows.filter((row) => row.stage === stageFilter),
+    [scopedRows, stageFilter],
+  );
+
   return (
     <div className={styles.ov}>
       <div className={styles.header}>
@@ -159,109 +184,107 @@ export function Overview() {
         <p className={styles.subtitle}>{t("pages.overview.subtitle")}</p>
       </div>
 
+      <StagePipelineBar
+        counts={stageCounts}
+        selected={stageFilter}
+        onSelect={setStageFilter}
+      />
+
+      <DailyActionAlerts
+        counts={
+          alertsQuery.data ?? {
+            postOverdueCount: 0,
+            deliveryUnconfirmedCount: 0,
+            withdrawalPendingCount: 0,
+          }
+        }
+        onOpenTargets={setAlertKind}
+        withdrawalTo="/influencers?withdrawal=PENDING"
+      />
+
+      <section className={overviewBoardStyles.boardCard}>
+        <header className={overviewBoardStyles.boardHead}>
+          <h2 className={overviewBoardStyles.boardTitle}>
+            {t("pages.overview.board.title")}
+          </h2>
+          <div className={overviewBoardStyles.boardTools}>
+            <FilterChipBar>
+              <SingleSelectFilterChip
+                emptyLabel={t(
+                  "domains.application.applicants.categoryFilter.chipEmpty",
+                )}
+                labelPrefix={t(
+                  "domains.application.applicants.categoryFilter.prefix",
+                )}
+                popoverTitle={t(
+                  "domains.application.applicants.categoryFilter.title",
+                )}
+                options={CATEGORY_FILTER_OPTIONS.map((option) => ({
+                  key: option.key,
+                  label: t(option.label),
+                }))}
+                value={categoryFilter}
+                onChange={setCategoryFilter}
+              />
+            </FilterChipBar>
+            <div className={overviewBoardStyles.search}>
+              <i className="fa-solid fa-magnifying-glass" />
+              <input
+                type="text"
+                placeholder={t("pages.overview.board.searchPlaceholder")}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </div>
+          </div>
+        </header>
+
+        {boardQuery.isPending && (
+          <div className={overviewBoardStyles.empty}>{t("common.loading")}</div>
+        )}
+        {boardQuery.isError && (
+          <div className={overviewBoardStyles.empty}>
+            {t("pages.overview.loadFailed")}
+          </div>
+        )}
+        {boardQuery.isSuccess && <CampaignBoardTable rows={visibleRows} />}
+      </section>
+
       <div className={styles.kpis}>
-        {kpis.map((k) => {
+        {kpis.map((kpi) => {
           const card = (
             <Card
               title={
                 <>
-                  <span className={styles.kpiIcon}>{k.icon}</span>
-                  <span className={styles.kpiLabel}>{k.label}</span>
+                  <span className={styles.kpiIcon}>{kpi.icon}</span>
+                  <span className={styles.kpiLabel}>{kpi.label}</span>
                 </>
               }
-              content={<div className={styles.kpiValue}>{k.value}</div>}
-              bottomAffix={
-                k.delta && (
-                  <span
-                    className={
-                      k.delta.tone === "up"
-                        ? styles.kpiDeltaUp
-                        : k.delta.tone === "down"
-                          ? styles.kpiDeltaDown
-                          : ""
-                    }
-                  >
-                    {k.delta.text}
-                  </span>
-                )
-              }
+              content={<div className={styles.kpiValue}>{kpi.value}</div>}
+              bottomAffix={kpi.delta && <span>{kpi.delta}</span>}
             />
           );
-          return k.to ? (
-            <Link key={k.label} to={k.to} className={styles.kpiLink}>
+          return kpi.to ? (
+            <Link key={kpi.label} to={kpi.to} className={styles.kpiLink}>
               {card}
             </Link>
           ) : (
-            <div key={k.label}>{card}</div>
+            <div key={kpi.label}>{card}</div>
           );
         })}
       </div>
 
       <div className={styles.row}>
         <MonthlyCampaignChart />
-
-        {/* <section className="ov-card ov__activity">
-          <header className="ov-card__head">
-            <h2>실시간 활동</h2>
-            <span className="ov-card__meta">전체</span>
-          </header>
-          <ul className="ov-activity">
-            {ACTIVITIES.map((a, i) => {
-              const s = ACTIVITY_STYLE[a.type];
-              return (
-                <li key={i} className="ov-activity__item">
-                  <span className="ov-activity__icon" style={{ background: s.bg, color: s.fg }}>
-                    {s.icon}
-                  </span>
-                  <div className="ov-activity__body">
-                    <div className="ov-activity__text">{a.text}</div>
-                    <div className="ov-activity__ago">{a.ago}</div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section> */}
       </div>
 
-      {/* <section className="ov-card ov__urgent">
-        <header className="ov-card__head">
-          <h2>긴급 처리 항목</h2>
-          <span className="ov-card__meta">우선순위 순</span>
-        </header>
-        <table className="ov-table">
-          <thead>
-            <tr>
-              <th>유형</th>
-              <th>대상</th>
-              <th>접수 시각</th>
-              <th>SLA</th>
-              <th>담당자</th>
-              <th>액션</th>
-            </tr>
-          </thead>
-          <tbody>
-            {URGENT.map((row, i) => (
-              <tr key={i}>
-                <td>
-                  <span className={`ov-tag ov-tag--${row.tone}`}>● {row.type}</span>
-                </td>
-                <td>{row.target}</td>
-                <td>{row.receivedAt}</td>
-                <td>
-                  <span className={`ov-sla ov-sla--${row.slaTone}`}>{row.sla}</span>
-                </td>
-                <td>
-                  <span className="ov-assignee">{row.assignee}</span>
-                </td>
-                <td>
-                  <button className="ov-action">{row.action}</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section> */}
+      {alertKind && (
+        <DailyAlertRemindDialog
+          kind={alertKind}
+          onClose={() => setAlertKind(null)}
+          onSent={() => alertsQuery.refetch()}
+        />
+      )}
     </div>
   );
 }

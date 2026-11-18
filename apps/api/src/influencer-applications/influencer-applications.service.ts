@@ -306,15 +306,23 @@ export class InfluencerApplicationsService {
     private readonly audit: AuditService,
   ) {}
 
+  /**
+   * `preloadedSurvey` 를 주면 그 값을 그대로 쓰고(목록 조회의 일괄 조회 결과),
+   * 주지 않으면(단건 조회) `resolveSurvey` 로 그 자리에서 조회한다.
+   */
   private async resolveResponse(
     row: ApplicationRow,
+    preloadedSurvey?: InfluencerApplication["survey"],
   ): Promise<InfluencerApplication> {
     const response = toResponse(row);
     response.campaignThumbnailUrl =
       await this.uploads.resolveCampaignThumbnailUrl(
         response.campaignThumbnailUrl,
       );
-    response.survey = await this.resolveSurvey(row.campaign.surveyId);
+    response.survey =
+      preloadedSurvey !== undefined
+        ? preloadedSurvey
+        : await this.resolveSurvey(row.campaign.surveyId);
     return response;
   }
 
@@ -340,6 +348,31 @@ export class InfluencerApplicationsService {
     };
   }
 
+  /** 목록용 설문 일괄 조회 — 응모마다 조회하면 N+1 이라 distinct id 로 한 번에 읽는다. */
+  private async surveysByIds(
+    surveyIds: string[],
+  ): Promise<Map<string, NonNullable<InfluencerApplication["survey"]>>> {
+    const surveyBySurveyId = new Map<
+      string,
+      NonNullable<InfluencerApplication["survey"]>
+    >();
+    const uniqueSurveyIds = [...new Set(surveyIds)];
+    if (uniqueSurveyIds.length === 0) return surveyBySurveyId;
+    const surveys = await this.prisma.builderSurvey.findMany({
+      where: { id: { in: uniqueSurveyIds } },
+      select: { id: true, title: true, description: true, questions: true },
+    });
+    for (const survey of surveys) {
+      surveyBySurveyId.set(survey.id, {
+        id: survey.id,
+        title: survey.title,
+        description: survey.description,
+        questions: SurveyQuestionSchema.array().parse(survey.questions),
+      });
+    }
+    return surveyBySurveyId;
+  }
+
   async listForInfluencer(
     influencerId: string,
   ): Promise<InfluencerApplication[]> {
@@ -349,12 +382,28 @@ export class InfluencerApplicationsService {
       orderBy: { appliedAt: "desc" },
       include: INCLUDE,
     });
-    return Promise.all(rows.map((row) => this.resolveResponse(row)));
+    const surveyIds = rows
+      .map((row) => row.campaign.surveyId)
+      .filter((surveyId): surveyId is string => surveyId !== null);
+    const surveyBySurveyId = await this.surveysByIds(surveyIds);
+    return Promise.all(
+      rows.map((row) =>
+        this.resolveResponse(
+          row,
+          row.campaign.surveyId
+            ? (surveyBySurveyId.get(row.campaign.surveyId) ?? null)
+            : null,
+        ),
+      ),
+    );
   }
 
   async getForInfluencer(
     influencerId: string,
     applicationId: string,
+    // submitInsights 가 검증 과정에서 이미 읽은 설문을 넘기면 같은 설문을 또
+    // 조회하지 않는다 — 생략하면(다른 호출부는 전부 생략) 평소처럼 직접 읽는다.
+    preloadedSurvey?: InfluencerApplication["survey"],
   ): Promise<InfluencerApplication> {
     const row = await this.prisma.campaignApplication.findUnique({
       where: { id: applicationId },
@@ -366,7 +415,7 @@ export class InfluencerApplicationsService {
     if (row.status === "CANCELLED") {
       throw new NotFoundException("Application not found");
     }
-    return this.resolveResponse(row);
+    return this.resolveResponse(row, preloadedSurvey);
   }
 
   async create(
@@ -1000,7 +1049,11 @@ export class InfluencerApplicationsService {
       });
     }
 
-    return this.getForInfluencer(influencerId, applicationId);
+    return this.getForInfluencer(
+      influencerId,
+      applicationId,
+      validatedSurvey?.survey,
+    );
   }
 
   async submitOrder(
@@ -1418,6 +1471,13 @@ export class InfluencerApplicationsService {
   /**
    * 캠페인에 연결된 앙케이트 응답을 검증한다. 설문 미연결 캠페인은 surveyAnswers 를
    * 조용히 무시한다 — 운영자가 방금 설문을 뗀 타이밍에 제출이 들어올 수 있다.
+   *
+   * surveyId 가 가리키는 설문이 실제로 없거나(오염된 참조) 문항이 비어 있을 때도
+   * 같은 "설문 없음"으로 취급한다 — campaigns 서비스는 surveyId 유효성을 검증하지
+   * 않으므로(별도 범위) 이 상태가 실제로 생길 수 있다. 여기서 REQUIRED 를 던지면
+   * resolveSurvey(GET)는 이미 null 을 내려 화면에 설문 폼이 뜨지 않는데 제출만
+   * 막혀 인플루언서가 영구히 제출 불가 상태에 갇힌다 — GET 과 같은 기준("설문이
+   * 실제로 해석되는가")을 써야 이 잠금이 생기지 않는다.
    */
   private async validateSurveyAnswers(
     surveyId: string | null,
@@ -1426,19 +1486,27 @@ export class InfluencerApplicationsService {
     surveyId: string;
     questions: SurveyQuestion[];
     answers: SurveyAnswers;
+    // title/description 까지 함께 읽어두면 제출 끝의 getForInfluencer 가 같은
+    // 설문을 또 조회하지 않아도 된다(I2) — select 를 questions 만으로 좁히는
+    // 대신 이 한 번의 조회로 응답 조립까지 겸한다.
+    survey: NonNullable<InfluencerApplication["survey"]>;
   } | null> {
     if (!surveyId) return null;
+    const survey = await this.prisma.builderSurvey.findUnique({
+      where: { id: surveyId },
+      select: { title: true, description: true, questions: true },
+    });
+    // SurveyQuestionsSchema(.min(1) + id 중복 검증) 대신 느슨한 배열 스키마를
+    // 쓰는 것은 의도된 선택이다 — 운영자 설정 실수로 문항이 비정상이어도 500 이
+    // 아니라 아래에서 "설문 없음"으로 조용히 넘어가게 하기 위해서다.
+    const questions = SurveyQuestionSchema.array().parse(survey?.questions ?? []);
+    if (!survey || questions.length === 0) return null;
     if (!surveyAnswers) {
       throw new BadRequestException({
         code: "SURVEY_ANSWERS_REQUIRED",
         message: "앙케이트에 응답해주세요",
       });
     }
-    const survey = await this.prisma.builderSurvey.findUnique({
-      where: { id: surveyId },
-      select: { questions: true },
-    });
-    const questions = SurveyQuestionSchema.array().parse(survey?.questions ?? []);
     const issues = surveyAnswerIssues(questions, surveyAnswers);
     if (issues.length > 0) {
       throw new BadRequestException({
@@ -1446,7 +1514,17 @@ export class InfluencerApplicationsService {
         message: "앙케이트 응답을 확인해주세요",
       });
     }
-    return { surveyId, questions, answers: surveyAnswers };
+    return {
+      surveyId,
+      questions,
+      answers: surveyAnswers,
+      survey: {
+        id: surveyId,
+        title: survey.title,
+        description: survey.description,
+        questions,
+      },
+    };
   }
 
   private async assertOwned(influencerId: string, applicationId: string) {

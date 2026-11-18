@@ -302,12 +302,89 @@ describe("submitInsights — 앙케이트", () => {
 
     expect(builderSurveyFindUnique).toHaveBeenCalledWith({
       where: { id: SURVEY_ID },
-      select: { questions: true },
+      select: { title: true, description: true, questions: true },
     });
     // campaign.select 에 survey relation 을 요청한 적이 없어야 한다(FK 가 없어
     // 애초에 불가능하다) — surveyId(scalar)는 허용하므로 콜론까지 포함해 구분한다.
     for (const call of campaignApplicationFindUnique.mock.calls) {
       expect(JSON.stringify(call[0] ?? {})).not.toContain('"survey":');
     }
+  });
+
+  it("surveyId 가 가리키는 설문이 없으면 설문 없는 것처럼 지표만 저장한다", async () => {
+    const { service, builderSurveyResponseUpsert, submittedPostUpdate } =
+      makeService({
+        applicationRow: makeApplicationRow({
+          campaign: { ...makeApplicationRow().campaign, surveyId: SURVEY_ID },
+        }),
+        surveyRow: null,
+      });
+
+    await service.submitInsights(INFLUENCER_ID, APPLICATION_ID, ONE_INSIGHT);
+
+    expect(builderSurveyResponseUpsert).not.toHaveBeenCalled();
+    expect(submittedPostUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("surveyId 가 가리키는 설문이 없으면 surveyAnswers 없이도 성공한다", async () => {
+    const { service } = makeService({
+      applicationRow: makeApplicationRow({
+        campaign: { ...makeApplicationRow().campaign, surveyId: SURVEY_ID },
+      }),
+      surveyRow: null,
+    });
+
+    // campaigns 서비스는 surveyId 유효성을 검증하지 않아(별도 범위) 오염된
+    // 참조가 실제로 생길 수 있다 — SURVEY_ANSWERS_REQUIRED 로 막히면 안 된다.
+    await expect(
+      service.submitInsights(INFLUENCER_ID, APPLICATION_ID, ONE_INSIGHT),
+    ).resolves.toBeDefined();
+  });
+});
+
+describe("listForInfluencer — 앙케이트 일괄 조회", () => {
+  it("응모 목록은 설문을 id 묶음으로 한 번에 조회한다", async () => {
+    const rows = [
+      makeApplicationRow({
+        id: "app-1",
+        campaign: { ...makeApplicationRow().campaign, surveyId: "survey-1" },
+      }),
+      makeApplicationRow({
+        id: "app-2",
+        campaign: { ...makeApplicationRow().campaign, surveyId: "survey-2" },
+      }),
+    ];
+    const builderSurveyFindMany = jest.fn(async (_args: PrismaCallArgs) => [
+      makeBuilderSurveyRow({ id: "survey-1" }),
+      makeBuilderSurveyRow({ id: "survey-2" }),
+    ]);
+    const builderSurveyFindUnique = jest.fn(async (_args: PrismaCallArgs) => null);
+    const prisma = {
+      campaignApplication: {
+        findMany: jest.fn(async (_args: PrismaCallArgs) => rows),
+      },
+      builderSurvey: {
+        findMany: builderSurveyFindMany,
+        findUnique: builderSurveyFindUnique,
+      },
+    };
+    const uploads = {
+      resolveCampaignThumbnailUrl: jest.fn(async (raw: string | null) => raw),
+    };
+    const service = new InfluencerApplicationsService(
+      prisma as never,
+      uploads as never,
+      {} as never,
+      { dispatch: jest.fn() } as never,
+      { record: jest.fn() } as never,
+    );
+
+    await service.listForInfluencer(INFLUENCER_ID);
+
+    expect(builderSurveyFindMany).toHaveBeenCalledTimes(1);
+    expect(builderSurveyFindUnique).not.toHaveBeenCalled();
+    expect(builderSurveyFindMany.mock.calls[0]?.[0]?.where).toEqual({
+      id: { in: ["survey-1", "survey-2"] },
+    });
   });
 });

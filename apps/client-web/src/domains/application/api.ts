@@ -7,6 +7,7 @@ import {
   type InfluencerApplication,
   type CampaignSubType,
   type CrossPostInput,
+  type SurveyAnswers,
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
@@ -66,7 +67,10 @@ export async function submitSubmission(
   return InfluencerApplicationSchema.parse(res.data);
 }
 
-/** SNS 인사이트 일괄 제출 — 참여한 모든 서브타입을 한 번에. */
+/**
+ * SNS 인사이트 일괄 제출 — 참여한 모든 서브타입을 한 번에.
+ * surveyAnswers 는 캠페인에 설문이 연결된 경우에만 넘긴다. undefined 면 JSON 에서 빠진다.
+ */
 export async function submitInsights(
   id: string,
   insights: {
@@ -84,9 +88,11 @@ export async function submitInsights(
       sizeBytes: number;
     }[];
   }[],
+  surveyAnswers?: SurveyAnswers,
 ): Promise<InfluencerApplication> {
   const res = await api.put(`/influencer/applications/${id}/insights`, {
     insights,
+    surveyAnswers,
   });
   return InfluencerApplicationSchema.parse(res.data);
 }

@@ -1,11 +1,17 @@
 import { useState } from "react";
-import { SUB_TYPE_LABEL, type CampaignSubType } from "@jsure/shared";
+import {
+  SUB_TYPE_LABEL,
+  type CampaignSubType,
+  type InfluencerApplication,
+  type SurveyAnswers,
+} from "@jsure/shared";
 import { t } from "@i18n";
 import {
   EMPTY_METRIC_VALUES,
   InsightStepForm,
   type InsightMetricValues,
 } from "./InsightStepForm";
+import { SurveyStepForm } from "./SurveyStepForm";
 import type {
   InsightAttachment,
   InsightImageContentType,
@@ -32,10 +38,12 @@ export interface InsightTarget {
 interface Props {
   applicationId: string;
   targets: InsightTarget[]; // 참여한 모든 서브타입의 인사이트를 한 폼에서 일괄 제출
-  onSubmit: (insights: InsightEntry[]) => Promise<void>;
+  onSubmit: (insights: InsightEntry[], surveyAnswers?: SurveyAnswers) => Promise<void>;
   submitting: boolean;
   /** 인사이트 제출 기한 — 서버가 검토 완료일 기준으로 계산해 내려준다. */
   insightDueAt: string | null;
+  /** 캠페인에 연결된 앙케이트. 없으면 null — 설문 단계를 건너뛴다. */
+  survey: InfluencerApplication["survey"];
 }
 
 function formatInsightDueDate(iso: string): string {
@@ -66,6 +74,7 @@ export function InsightSubmitForm({
   onSubmit,
   submitting,
   insightDueAt,
+  survey,
 }: Props) {
   const [stepIndex, setStepIndex] = useState(0);
   // 단계를 오갈 때 입력값을 보존하기 위한 서브타입별 스냅샷.
@@ -75,12 +84,41 @@ export function InsightSubmitForm({
   const [attachmentsBySubType, setAttachmentsBySubType] = useState<
     Partial<Record<CampaignSubType, InsightAttachment[]>>
   >({});
+  const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers>({});
+
+  const hasSurveyStep = survey !== null;
+  const totalSteps = targets.length + (hasSurveyStep ? 1 : 0);
+  const isSurveyStep = hasSurveyStep && stepIndex === targets.length;
 
   const currentTarget = targets[stepIndex] ?? targets[0]!;
-  const isLastStep = stepIndex >= targets.length - 1;
+  // 설문 단계가 붙으면 그 설문 단계가 마지막이 된다 — SNS 단계만으로는 더 이상 끝이 아니다.
+  const isLastStep = stepIndex >= targets.length - 1 && !hasSurveyStep;
 
   function saveValues(subType: CampaignSubType, values: InsightMetricValues) {
     setValuesBySubType((prev) => ({ ...prev, [subType]: values }));
+  }
+
+  function buildEntries(
+    valuesForCurrentSubType: Partial<Record<CampaignSubType, InsightMetricValues>>,
+  ): InsightEntry[] {
+    return targets.map((target) => {
+      const group = valuesForCurrentSubType[target.subType] ?? EMPTY_METRIC_VALUES;
+      return {
+        subType: target.subType,
+        likes: Number(group.likes),
+        comments: Number(group.comments),
+        shares: Number(group.shares),
+        reposts: Number(group.reposts),
+        saves: Number(group.saves),
+        views: Number(group.views),
+        reach: Number(group.reach),
+        attachments: (attachmentsBySubType[target.subType] ?? []).map((attachment) => ({
+          objectKey: attachment.objectKey,
+          contentType: attachment.contentType,
+          sizeBytes: attachment.sizeBytes,
+        })),
+      };
+    });
   }
 
   async function handleNext(values: InsightMetricValues) {
@@ -90,31 +128,22 @@ export function InsightSubmitForm({
       return;
     }
     const merged = { ...valuesBySubType, [currentTarget.subType]: values };
-    await onSubmit(
-      targets.map((target) => {
-        const group = merged[target.subType] ?? EMPTY_METRIC_VALUES;
-        return {
-          subType: target.subType,
-          likes: Number(group.likes),
-          comments: Number(group.comments),
-          shares: Number(group.shares),
-          reposts: Number(group.reposts),
-          saves: Number(group.saves),
-          views: Number(group.views),
-          reach: Number(group.reach),
-          attachments: (attachmentsBySubType[target.subType] ?? []).map((attachment) => ({
-            objectKey: attachment.objectKey,
-            contentType: attachment.contentType,
-            sizeBytes: attachment.sizeBytes,
-          })),
-        };
-      }),
-    );
+    await onSubmit(buildEntries(merged));
   }
 
   function handleBack(values: InsightMetricValues) {
     saveValues(currentTarget.subType, values);
     setStepIndex(stepIndex - 1);
+  }
+
+  function handleSurveyBack(answers: SurveyAnswers) {
+    setSurveyAnswers(answers);
+    setStepIndex(stepIndex - 1);
+  }
+
+  async function handleSurveySubmit(answers: SurveyAnswers) {
+    setSurveyAnswers(answers);
+    await onSubmit(buildEntries(valuesBySubType), answers);
   }
 
   return (
@@ -129,11 +158,11 @@ export function InsightSubmitForm({
         )}
       </div>
 
-      {targets.length > 1 && (
+      {totalSteps > 1 && (
         <div className={styles.progress}>
-          {targets.map((target, index) => (
+          {Array.from({ length: totalSteps }, (_, index) => (
             <div
-              key={target.subType}
+              key={index}
               className={`${styles.progressSegment} ${
                 index <= stepIndex ? styles.progressSegmentDone : ""
               }`}
@@ -143,34 +172,44 @@ export function InsightSubmitForm({
       )}
 
       <div className={styles.sectionTitle}>
-        {SUB_TYPE_LABEL[currentTarget.subType]}
-        {targets.length > 1 && (
+        {survey !== null && isSurveyStep ? survey.title : SUB_TYPE_LABEL[currentTarget.subType]}
+        {totalSteps > 1 && (
           <span className={styles.stepCount}>
-            {stepIndex + 1}/{targets.length}
+            {stepIndex + 1}/{totalSteps}
           </span>
         )}
       </div>
 
-      <InsightStepForm
-        key={currentTarget.subType}
-        applicationId={applicationId}
-        subType={currentTarget.subType}
-        defaultValues={
-          valuesBySubType[currentTarget.subType] ?? fromInitial(currentTarget.initial)
-        }
-        attachments={attachmentsBySubType[currentTarget.subType] ?? []}
-        onAttachmentsChange={(next) =>
-          setAttachmentsBySubType((prev) => ({
-            ...prev,
-            [currentTarget.subType]: next,
-          }))
-        }
-        isFirstStep={stepIndex === 0}
-        isLastStep={isLastStep}
-        submitting={submitting}
-        onBack={handleBack}
-        onNext={handleNext}
-      />
+      {survey !== null && isSurveyStep ? (
+        <SurveyStepForm
+          survey={survey}
+          initialAnswers={surveyAnswers}
+          onBack={handleSurveyBack}
+          onSubmit={handleSurveySubmit}
+          submitting={submitting}
+        />
+      ) : (
+        <InsightStepForm
+          key={currentTarget.subType}
+          applicationId={applicationId}
+          subType={currentTarget.subType}
+          defaultValues={
+            valuesBySubType[currentTarget.subType] ?? fromInitial(currentTarget.initial)
+          }
+          attachments={attachmentsBySubType[currentTarget.subType] ?? []}
+          onAttachmentsChange={(next) =>
+            setAttachmentsBySubType((prev) => ({
+              ...prev,
+              [currentTarget.subType]: next,
+            }))
+          }
+          isFirstStep={stepIndex === 0}
+          isLastStep={isLastStep}
+          submitting={submitting}
+          onBack={handleBack}
+          onNext={handleNext}
+        />
+      )}
     </div>
   );
 }

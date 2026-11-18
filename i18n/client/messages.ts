@@ -414,6 +414,12 @@ export const messages = {
       nextStep: { jp: "次へ", kr: "다음" }, // — 서브타입 퍼널 이동
       prevStep: { jp: "戻る", kr: "이전" },
     },
+    surveyForm: {
+      requiredMissing: { jp: "この質問は必須です", kr: "필수 항목입니다" }, // new
+      unknownOption: { jp: "選択肢から選び直してください", kr: "제시된 선택지 중에서 다시 선택해 주세요" }, // new
+      outOfRange: { jp: "選択した段階が範囲外です", kr: "선택한 단계가 범위를 벗어났습니다" }, // new
+      wrongShape: { jp: "回答の形式が正しくありません", kr: "답변 형식이 올바르지 않습니다" }, // new
+    },
     postForm: {
       urlInvalid: { jp: "有効なURLを入力してください", kr: "올바른 URL을 입력해 주세요" },
       labelSuffix: { jp: "投稿URL", kr: "게시 URL" },
@@ -955,6 +961,35 @@ export const messages = {
     notFound: {
       heading: { jp: "ページが見つかりません", kr: "페이지를 찾을 수 없습니다" },
       home: { jp: "ホームへ", kr: "홈으로" },
+    },
+  },
+  builderSurveys: {
+    likert: {
+      AGREEMENT: {
+        step1: { jp: "全く同意しない", kr: "전혀 그렇지 않다" }, // new
+        step2: { jp: "同意しない", kr: "그렇지 않다" }, // new
+        step3: { jp: "どちらともいえない", kr: "보통이다" }, // new
+        step4: { jp: "同意する", kr: "그렇다" }, // new
+        step5: { jp: "強く同意する", kr: "매우 그렇다" }, // new
+      },
+      SATISFACTION: {
+        step1: { jp: "非常に不満", kr: "매우 불만족" }, // new
+        step2: { jp: "不満", kr: "불만족" }, // new
+        step3: { jp: "どちらともいえない", kr: "보통" }, // new
+        step4: { jp: "満足", kr: "만족" }, // new
+        step5: { jp: "非常に満足", kr: "매우 만족" }, // new
+      },
+      FREQUENCY: {
+        step1: { jp: "全くない", kr: "전혀 안 함" }, // new
+        step2: { jp: "めったにない", kr: "거의 안 함" }, // new
+        step3: { jp: "ときどき", kr: "가끔" }, // new
+        step4: { jp: "よく", kr: "자주" }, // new
+        step5: { jp: "いつも", kr: "항상 함" }, // new
+      },
+      NUMERIC: {
+        min: { jp: "非常に低い", kr: "매우 낮음" }, // new
+        max: { jp: "非常に高い", kr: "매우 높음" }, // new
+      },
     },
   },
 } as const;

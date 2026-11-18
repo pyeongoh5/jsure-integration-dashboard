@@ -5,6 +5,7 @@ import {
   SUB_TYPE_LABEL,
   type CampaignSubType,
   type CrossPostInput,
+  type SurveyAnswers,
 } from "@jsure/shared";
 import { useState } from "react";
 import {
@@ -115,7 +116,10 @@ export function ApplicationDetail() {
     onSuccess: () => invalidate(),
   });
   const insight = useMutation({
-    mutationFn: (
+    mutationFn: ({
+      insights,
+      surveyAnswers,
+    }: {
       insights: {
         subType: CampaignSubType;
         likes: number;
@@ -130,8 +134,9 @@ export function ApplicationDetail() {
           contentType: "image/png" | "image/jpeg" | "image/webp";
           sizeBytes: number;
         }[];
-      }[],
-    ) => submitInsights(id, insights),
+      }[];
+      surveyAnswers?: SurveyAnswers;
+    }) => submitInsights(id, insights, surveyAnswers),
     onSuccess: () => invalidate(),
   });
 
@@ -344,11 +349,12 @@ export function ApplicationDetail() {
                   }
                 : null,
             }))}
-            onSubmit={async (insights) => {
-              await insight.mutateAsync(insights);
+            onSubmit={async (insights, surveyAnswers) => {
+              await insight.mutateAsync({ insights, surveyAnswers });
             }}
             submitting={insight.isPending}
             insightDueAt={data.insightDueAt}
+            survey={data.survey}
           />
         )}
 

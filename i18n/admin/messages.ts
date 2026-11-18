@@ -2290,6 +2290,11 @@ export const adminMessages = {
           en: "Recruitment by SNS",
           ja: "SNS別募集",
         },
+        sectionSurvey: {
+          ko: "앙케이트",
+          en: "Survey",
+          ja: "アンケート",
+        },
         recruitsHintFake: {
           ko: "가구매를 진행할 채널을 선택하고, 채널별 모집 인원과 상품 정보를 입력하세요.",
           en: "Select the channels for pending purchases and enter the recruitment count and product information for each channel.",

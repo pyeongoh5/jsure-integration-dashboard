@@ -857,26 +857,6 @@ export function CampaignForm({
             )}
           </div>
 
-          <div className={styles.field}>
-            <label className={styles.label}>
-              {t("domains.campaign.form.surveySelectLabel")}
-            </label>
-            <Controller
-              control={methods.control}
-              name="surveyId"
-              render={({ field }) => (
-                <SurveySelectField
-                  value={field.value}
-                  onChange={field.onChange}
-                  selectedSurveyTitle={initialSurveyTitle}
-                  disabled={submitting}
-                />
-              )}
-            />
-            {rootError("surveyId") && (
-              <div className={styles.error}>{rootError("surveyId")}</div>
-            )}
-          </div>
         </section>
 
         <section className={styles.section}>
@@ -956,6 +936,30 @@ export function CampaignForm({
             )}
           />
           {rootError("recruits") && <div className={styles.error}>{rootError("recruits")}</div>}
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t("domains.campaign.form.sectionSurvey")}</h2>
+          <div className={styles.field}>
+            <label className={styles.label}>
+              {t("domains.campaign.form.surveySelectLabel")}
+            </label>
+            <Controller
+              control={methods.control}
+              name="surveyId"
+              render={({ field }) => (
+                <SurveySelectField
+                  value={field.value}
+                  onChange={field.onChange}
+                  selectedSurveyTitle={initialSurveyTitle}
+                  disabled={submitting}
+                />
+              )}
+            />
+            {rootError("surveyId") && (
+              <div className={styles.error}>{rootError("surveyId")}</div>
+            )}
+          </div>
         </section>
 
         <section className={styles.section}>

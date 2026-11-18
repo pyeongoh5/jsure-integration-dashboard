@@ -20,7 +20,8 @@
 }
 
 .list {
-  max-height: 200px;
+  /* 한 행이 약 36px(패딩 16 + 본문 19 + 구분선 1)이라 10개가 보이는 높이. */
+  max-height: 360px;
   overflow-y: auto;
   border: 1px solid #e5e7eb;
   border-radius: 8px;

@@ -1,3 +1,10 @@
+/*
+ * ⚠️ index.html 이 CDN 에서 불러오는 Web Awesome(webawesome.css)은 모든 button 에
+ * height: var(--wa-form-control-height)(43px)·흰 글자·align-items: center·고정
+ * line-height 를 먹인다. 카드 모양 button 은 이 네 가지를 직접 되돌려 놓아야
+ * 내용이 상자 밖으로 넘치고 글씨가 흰색이 되는 걸 막는다(아래 두 규칙).
+ */
+
 /* 파이프라인 카운터 */
 .pipeline {
   display: grid;
@@ -9,7 +16,11 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
+  height: auto;
+  color: var(--c-text);
+  line-height: 1.45;
   padding: 16px var(--space-4);
   background: var(--c-card);
   border: 1px solid var(--c-border);
@@ -56,6 +67,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  height: auto;
+  color: var(--c-text);
+  line-height: 1.45;
   padding: 16px var(--space-4);
   background: var(--c-card);
   border: 1px solid var(--c-border);
@@ -289,6 +303,15 @@
 .dialogMessage {
   font-size: var(--font-size-sm);
   color: var(--c-muted);
+  min-width: 0;
+}
+
+/* 안내 문구가 길어져도 버튼은 줄바꿈되지 않게 한다. */
+.dialogActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 
 @media (max-width: 1100px) {

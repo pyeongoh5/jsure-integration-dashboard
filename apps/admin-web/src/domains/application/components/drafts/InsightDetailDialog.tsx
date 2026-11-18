@@ -14,6 +14,7 @@ import { getStoredLanguage, useLanguage, useT } from "@/lib/i18n";
 import { fetchApplicationAttachments } from "@/domains/application/draftsApi";
 import { toDraftReview } from "./draftTransform";
 import { InsightEditForm, METRIC_LABEL } from "./InsightEditForm";
+import { SurveyResponseSection } from "./SurveyResponseSection";
 import type { DraftReview } from "./types";
 import styles from "./InsightDetailDialog.module.css";
 
@@ -298,6 +299,13 @@ export function InsightDetailDialog({
                     )}
                   </section>
                 ))}
+
+              {!editing && draft.surveyResponse && (
+                <SurveyResponseSection
+                  questionsSnapshot={draft.surveyResponse.questionsSnapshot}
+                  answers={draft.surveyResponse.answers}
+                />
+              )}
 
               {!editing && (
                 <section className={styles.section}>

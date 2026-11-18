@@ -15,6 +15,7 @@ import {
   type AdminSettlement,
   type AdminSubmission,
   type AdminSubmissionPageResponse,
+  type AdminSubmissionSurveyResponse,
   type SubmissionFilter,
   type AdminUpdateInsightRequest,
   type ApplicantExportResponse,
@@ -26,6 +27,8 @@ import {
   type CampaignSubType,
   type CancelReasonCategory,
   type CrossPostPlatform,
+  SurveyAnswersSchema,
+  SurveyQuestionsSchema,
 } from "@jsure/shared";
 import {
   FORCE_CANCEL_BLOCK_MESSAGE,
@@ -580,10 +583,25 @@ export class AdminApplicationsService {
       const row = byId.get(id);
       return row ? [row] : [];
     });
+    // builderSurveyResponse.applicationId 는 FK 가 아니다(toSubmissionResponse 와 동일한
+    // 사유) — 페이지 전체를 한 번에 조회해 행마다 조회하지 않는다.
+    const surveyResponses = await this.prisma.builderSurveyResponse.findMany({
+      where: { applicationId: { in: pageIds } },
+      select: { applicationId: true, questionsSnapshot: true, answers: true, submittedAt: true },
+    });
+    const surveyResponseByApplicationId = new Map(
+      surveyResponses.map((surveyResponse) => [surveyResponse.applicationId, surveyResponse]),
+    );
 
     return {
       submissions: await Promise.all(
-        ordered.map((row) => toSubmissionResponse(row, this.r2)),
+        ordered.map((row) =>
+          toSubmissionResponse(
+            row,
+            this.r2,
+            surveyResponseByApplicationId.get(row.id) ?? null,
+          ),
+        ),
       ),
       nextCursor: hasMore ? (pageIds[pageIds.length - 1] ?? null) : null,
       total: Number(countRows[0]?.count ?? 0),
@@ -1210,7 +1228,14 @@ export class AdminApplicationsService {
       include: SUBMISSION_INCLUDE,
     });
     if (!row) throw new NotFoundException("Application not found");
-    return toSubmissionResponse(row, this.r2);
+    // builderSurveyResponse.applicationId 는 FK 가 아니다(1차 설계 §7, 빌더 서버 분리 대비) —
+    // relation include 대신 별도 조회. admin-applications 는 이 역방향 참조를 쓰는
+    // 네 번째 지점이다(기존 허용 지점: campaigns·influencer-applications·admin-reports).
+    const surveyResponse = await this.prisma.builderSurveyResponse.findUnique({
+      where: { applicationId },
+      select: { questionsSnapshot: true, answers: true, submittedAt: true },
+    });
+    return toSubmissionResponse(row, this.r2, surveyResponse);
   }
 
   /**
@@ -1835,6 +1860,28 @@ type SubmissionRow = {
   };
 };
 
+/** builderSurveyResponse 행에서 검수 팝업이 필요로 하는 컬럼만. */
+type SurveyResponseRow = {
+  questionsSnapshot: unknown;
+  answers: unknown;
+  submittedAt: Date;
+} | null;
+
+/**
+ * 응모자가 낸 앙케이트 응답을 응답 모양으로. 문항·답은 DB 에 Json 으로 저장돼 있어
+ * zod 로 다시 파싱해 모양을 보증한다(쓰는 쪽은 Task 4 의 influencer-applications 서비스).
+ */
+function toSurveyResponseField(
+  surveyResponseRow: SurveyResponseRow,
+): AdminSubmissionSurveyResponse | null {
+  if (!surveyResponseRow) return null;
+  return {
+    questionsSnapshot: SurveyQuestionsSchema.parse(surveyResponseRow.questionsSnapshot),
+    answers: SurveyAnswersSchema.parse(surveyResponseRow.answers),
+    submittedAt: surveyResponseRow.submittedAt.toISOString(),
+  };
+}
+
 /**
  * 썸네일 표시용 URL. presign 실패(R2 미설정·일시 장애)를 삼켜 null 을 돌려준다 —
  * 썸네일 하나 때문에 검토 목록 응답 전체가 500 이 되면 안 된다.
@@ -1854,6 +1901,7 @@ async function resolveThumbnail(raw: string | null, r2: R2Service): Promise<stri
 async function toSubmissionResponse(
   row: SubmissionRow,
   r2: R2Service,
+  surveyResponseRow: SurveyResponseRow,
 ): Promise<AdminSubmission> {
   const campaignThumbnailUrl = await resolveThumbnail(
     row.campaign.thumbnailUrl,
@@ -1923,6 +1971,7 @@ async function toSubmissionResponse(
       url: crossPost.url,
       submittedAt: crossPost.submittedAt.toISOString(),
     })),
+    surveyResponse: toSurveyResponseField(surveyResponseRow),
     settlement: row.settlement
       ? {
           id: row.settlement.id,

@@ -1,5 +1,6 @@
 import type { AdminTranslationKey } from "@i18n/admin";
 import type {
+  AdminSubmissionSurveyResponse,
   ApplicationOption,
   ApplicationStatus,
   CampaignCategory,
@@ -85,6 +86,8 @@ export type DraftReview = {
   reviewUrls: Partial<Record<"LIPS" | "ATCOSME", string>>;
   /** 응모하지 않은 플랫폼에 함께 공유한 기록. 참고 표시용이며 승인·반려 대상이 아니다. */
   crossPosts: CrossPost[];
+  /** 캠페인에 연결된 앙케이트에 이 응모자가 낸 답. 설문 미연결이거나 아직 미제출이면 null. */
+  surveyResponse: AdminSubmissionSurveyResponse | null;
   submittedAt: string; // relative
   /** 모든 게시물의 인사이트가 제출되었는지. */
   insightSubmitted: boolean;

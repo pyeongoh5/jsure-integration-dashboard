@@ -110,6 +110,7 @@ export function toDraftReview(
     })),
     reviewUrls: extractReviewUrls(qooPost?.submissionData ?? null),
     crossPosts: submission.crossPosts,
+    surveyResponse: submission.surveyResponse,
     submittedAt: formatRelative(latestSubmittedAt, now, language),
     insightSubmitted,
     reviewStatus: submission.submissionReviewStatus,

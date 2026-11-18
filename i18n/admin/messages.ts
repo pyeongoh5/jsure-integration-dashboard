@@ -1710,6 +1710,10 @@ export const adminMessages = {
             views: { ko: "조회수", en: "Views", ja: "閲覧数" },
             reach: { ko: "도달 수", en: "Reach", ja: "リーチ数" },
           },
+          surveyResponse: {
+            title: { ko: "앙케이트 응답", en: "Survey responses", ja: "アンケート回答" },
+            noAnswer: { ko: "답변 없음", en: "No answer", ja: "回答なし" },
+          },
         },
       },
       history: {

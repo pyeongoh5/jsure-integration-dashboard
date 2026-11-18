@@ -1217,6 +1217,22 @@ export const adminMessages = {
     },
   },
   domains: {
+    overview: {
+      stage: {
+        openPending: { ko: "오픈 준비중", en: "Pre-open", ja: "オープン準備中" },
+        inProgress: { ko: "진행중", en: "In progress", ja: "進行中" },
+        insightCollecting: {
+          ko: "인사이트 회수",
+          en: "Collecting insights",
+          ja: "インサイト回収",
+        },
+        settlementPending: {
+          ko: "정산/종료 대기",
+          en: "Awaiting settlement",
+          ja: "精算・終了待ち",
+        },
+      },
+    },
     application: {
       status: {
         applied: { ko: "승인 대기", en: "Pending approval", ja: "承認待ち" },
@@ -3975,6 +3991,80 @@ export const adminMessages = {
           en: "Could not load application trends.",
           ja: "応募推移を読み込めませんでした。",
         },
+      },
+      loadFailed: {
+        ko: "불러오기에 실패했습니다.",
+        en: "Failed to load.",
+        ja: "読み込みに失敗しました。",
+      },
+      pipeline: {
+        stepIndex: { ko: "{index}단계", en: "Step {index}", ja: "ステップ{index}" },
+      },
+      alerts: {
+        personCount: { ko: "{count}명", en: "{count} people", ja: "{count}名" },
+        postOverdue: { ko: "투고 기한 초과", en: "Posting overdue", ja: "投稿期限超過" },
+        deliveryUnconfirmed: {
+          ko: "배송 수령 미확인",
+          en: "Delivery unconfirmed",
+          ja: "受取未確認",
+        },
+        withdrawalPending: {
+          ko: "탈퇴 신청 대기",
+          en: "Withdrawal requests pending",
+          ja: "退会申請待ち",
+        },
+      },
+      remind: {
+        notice: {
+          ko: "기존 리마인드 메시지 템플릿으로 LINE 발송합니다.",
+          en: "Sends the existing reminder template over LINE.",
+          ja: "既存のリマインドテンプレートをLINEで送信します。",
+        },
+        sendAll: {
+          ko: "{count}명에게 리마인드 발송",
+          en: "Send reminder to {count}",
+          ja: "{count}名にリマインド送信",
+        },
+        sent: {
+          ko: "{count}건 발송을 요청했습니다.",
+          en: "Requested {count} sends.",
+          ja: "{count}件の送信を依頼しました。",
+        },
+        empty: {
+          ko: "대상이 없습니다.",
+          en: "No targets.",
+          ja: "対象がありません。",
+        },
+        noLine: { ko: "LINE 미연동", en: "LINE not linked", ja: "LINE未連携" },
+        overdueDays: { ko: "마감 +{days}일", en: "{days}d overdue", ja: "期限+{days}日" },
+        shippedDaysAgo: { ko: "출고 +{days}일", en: "{days}d since shipping", ja: "発送+{days}日" },
+      },
+      board: {
+        title: {
+          ko: "진행 중 캠페인 실시간 현황",
+          en: "Live campaign status",
+          ja: "進行中キャンペーンのリアルタイム状況",
+        },
+        searchPlaceholder: {
+          ko: "캠페인명 검색",
+          en: "Search campaigns",
+          ja: "キャンペーン名で検索",
+        },
+        empty: {
+          ko: "표시할 캠페인이 없습니다.",
+          en: "No campaigns to show.",
+          ja: "表示するキャンペーンがありません。",
+        },
+        columns: {
+          campaign: { ko: "브랜드 / 캠페인명", en: "Brand / Campaign", ja: "ブランド / キャンペーン名" },
+          stage: { ko: "진행 상태", en: "Stage", ja: "進行状況" },
+          progress: { ko: "달성률 / 진척도", en: "Progress", ja: "達成率 / 進捗" },
+          urgentIssue: { ko: "긴급 이슈", en: "Urgent issues", ja: "緊急イシュー" },
+          quickLinks: { ko: "빠른 이동", en: "Quick links", ja: "クイックリンク" },
+        },
+        goManage: { ko: "관리", en: "Manage", ja: "管理" },
+        goApplicants: { ko: "응모자", en: "Applicants", ja: "応募者" },
+        goReview: { ko: "검수", en: "Review", ja: "検収" },
       },
     },
     reports: {

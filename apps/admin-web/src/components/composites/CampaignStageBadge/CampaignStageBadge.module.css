@@ -1,0 +1,32 @@
+.badge {
+  display: inline-flex;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.openPending {
+  background: #eef2f7;
+  color: #5b6b7c;
+}
+
+.inProgress {
+  background: var(--c-brand-soft);
+  color: var(--c-brand);
+}
+
+.insightCollecting {
+  background: var(--c-amber-soft);
+  color: #b45309;
+}
+
+.settlementPending {
+  background: #ecfdf5;
+  color: #047857;
+}

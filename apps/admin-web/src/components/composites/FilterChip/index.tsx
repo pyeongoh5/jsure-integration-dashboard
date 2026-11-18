@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { buildMultiSelectLabel } from "./buildMultiSelectLabel";
 import styles from "./FilterChip.module.css";
 
 type OpenState = {
@@ -97,6 +98,8 @@ type FilterChipProps = {
   renderPopover: (close: () => void) => ReactNode;
   /** 팝오버 상단 라벨. */
   popoverTitle?: string;
+  /** 활성 상태일 때 칩 버튼에 거는 네이티브 title(호버 툴팁). 생략하면 안 건다. */
+  activeTitle?: string;
 };
 
 export function FilterChip({
@@ -105,6 +108,7 @@ export function FilterChip({
   onClear,
   renderPopover,
   popoverTitle,
+  activeTitle,
 }: FilterChipProps) {
   const bar = useChipBar();
   const id = useId();
@@ -132,6 +136,7 @@ export function FilterChip({
         ref={buttonRef}
         type="button"
         className={`${styles.filter} ${active ? styles.filterActive : ""}`}
+        title={active ? activeTitle : undefined}
         onClick={() => {
           if (buttonRef.current) bar.toggle(id, buttonRef.current);
         }}
@@ -249,6 +254,8 @@ type MultiSelectFilterChipProps<T extends string> = {
   value: Set<T>;
   onChange: (value: Set<T>) => void;
   popoverTitle?: string;
+  /** 넘기면 활성 라벨을 이 개수만큼만 보이고 나머지는 "+M" 으로 접는다. 생략하면 안 접는다. */
+  maxVisibleLabels?: number;
 };
 
 /**
@@ -261,16 +268,22 @@ export function MultiSelectFilterChip<T extends string>({
   value,
   onChange,
   popoverTitle,
+  maxVisibleLabels,
 }: MultiSelectFilterChipProps<T>) {
   const selectedLabels = options
     .filter((option) => value.has(option.key))
     .map((option) => option.label);
-  const activeLabel =
-    selectedLabels.length > 0
-      ? labelPrefix
-        ? `${labelPrefix}: ${selectedLabels.join(", ")}`
-        : selectedLabels.join(", ")
-      : null;
+  const { text: selectedLabelText, title: selectedLabelTitle } =
+    buildMultiSelectLabel(selectedLabels, maxVisibleLabels);
+  const withLabelPrefix = (label: string) =>
+    labelPrefix ? `${labelPrefix}: ${label}` : label;
+  const activeLabel = selectedLabels.length > 0 ? withLabelPrefix(selectedLabelText) : null;
+  // 접힌 경우(텍스트가 "+N" 으로 줄어든 경우)에만 title 을 건다 — 안 접히면 보이는
+  // 글자와 title 이 같아 툴팁이 무의미하고, 기존 6개 호출부에 없던 호버 동작만 생긴다.
+  const activeTitle =
+    selectedLabels.length > 0 && selectedLabelText !== selectedLabelTitle
+      ? withLabelPrefix(selectedLabelTitle)
+      : undefined;
 
   const toggle = (key: T) => {
     const next = new Set(value);
@@ -285,6 +298,7 @@ export function MultiSelectFilterChip<T extends string>({
       emptyLabel={emptyLabel}
       onClear={() => onChange(new Set())}
       popoverTitle={popoverTitle}
+      activeTitle={activeTitle}
       renderPopover={() => (
         <div className={styles.popoverItems}>
           {options.map((option) => {

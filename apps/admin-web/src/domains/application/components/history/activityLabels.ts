@@ -43,6 +43,8 @@ export const ACTIVITY_ACTION_LABEL: Record<
     "domains.application.history.actions.campaignDraftUpdate",
   CAMPAIGN_DRAFT_PUBLISH:
     "domains.application.history.actions.campaignDraftPublish",
+  CAMPAIGN_MANAGERS_ASSIGN:
+    "domains.application.history.actions.campaignManagersAssign",
   APPLICATION_APPLY: "domains.application.history.actions.applicationApply",
   APPLICATION_ORDER_SUBMIT:
     "domains.application.history.actions.applicationOrderSubmit",

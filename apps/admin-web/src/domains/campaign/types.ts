@@ -2,12 +2,14 @@ import type { AdminTranslationKey } from "@i18n/admin";
 import type {
   CampaignCategory,
   CampaignForm,
+  CampaignManager,
   CampaignSubType,
   InstagramPostType,
 } from "@jsure/shared";
 
 export type {
   CampaignCategory,
+  CampaignManager,
   CampaignResponse,
   CreateCampaignRequest,
   UpdateCampaignRequest,
@@ -58,6 +60,7 @@ export type Campaign = {
   dday: number;
   updatedAt: string;
   recruits: CampaignCardRecruit[];
+  managers: CampaignManager[];
 };
 
 export const SNS_FOLLOWER_LABEL: Record<CampaignSubType, AdminTranslationKey> = {

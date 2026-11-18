@@ -1799,6 +1799,11 @@ export const adminMessages = {
           campaignDraftCreate: { ko: "임시저장 생성", en: "Draft created", ja: "下書き作成" },
           campaignDraftUpdate: { ko: "임시저장 수정", en: "Draft updated", ja: "下書き修正" },
           campaignDraftPublish: { ko: "임시저장 발행", en: "Draft published", ja: "下書き公開" },
+          campaignManagersAssign: {
+            ko: "담당자 지정",
+            en: "Managers assigned",
+            ja: "担当者の指定",
+          },
           applicationApply: { ko: "응모", en: "Applied", ja: "応募" },
           applicationOrderSubmit: {
             ko: "주문번호 제출",
@@ -2570,6 +2575,16 @@ export const adminMessages = {
           ko: "제목으로 검색...",
           en: "Search by title...",
           ja: "タイトルで検索...",
+        },
+      },
+      managers: {
+        label: { ko: "운영 담당자", en: "Managers", ja: "運営担当者" },
+        chipEmpty: { ko: "+ 담당자", en: "+ Manager", ja: "+ 担当者" },
+        popoverTitle: { ko: "담당자 선택", en: "Select managers", ja: "担当者を選択" },
+        loadFailed: {
+          ko: "담당자 후보를 불러오지 못했습니다.",
+          en: "Failed to load manager candidates.",
+          ja: "担当者候補を読み込めませんでした。",
         },
       },
     },
@@ -3501,11 +3516,20 @@ export const adminMessages = {
     },
     campaigns: {
       subtitle: {
-        ko: "전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요.",
-        en: "See the status and progress of all campaigns at a glance.",
-        ja: "すべてのキャンペーンの状態と進行状況を一目で確認できます。",
+        ko: "전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요. 카드를 클릭해 선택하고, 우클릭하면 메뉴가 열립니다.",
+        en: "See the status and progress of all campaigns at a glance. Click a card to select it, right-click to open its menu.",
+        ja: "すべてのキャンペーンの状態と進行状況を一目で確認できます。カードをクリックして選択し、右クリックするとメニューが開きます。",
       },
       statusFilterTitle: { ko: "상태 선택", en: "Select status", ja: "ステータス選択" },
+      managerFilter: {
+        prefix: { ko: "담당자", en: "Manager", ja: "担当者" },
+        title: { ko: "담당자 필터", en: "Manager filter", ja: "担当者フィルター" },
+        mine: {
+          ko: "내 캠페인만 보기",
+          en: "Show only my campaigns",
+          ja: "自分のキャンペーンのみ表示",
+        },
+      },
       searchPlaceholder: {
         ko: "브랜드 또는 캠페인 이름 검색",
         en: "Search by brand or campaign name",
@@ -3523,6 +3547,45 @@ export const adminMessages = {
         ja: "最終更新 {date}",
       },
       create: { ko: "생성", en: "Create", ja: "作成" },
+      bulkAssign: {
+        button: {
+          ko: "{count}개 캠페인 담당자 지정",
+          en: "Assign managers for {count} campaigns",
+          ja: "{count}件のキャンペーンの担当者を指定",
+        },
+        title: { ko: "담당자 일괄 지정", en: "Bulk-assign managers", ja: "担当者の一括指定" },
+        subtitle: {
+          ko: "선택한 {count}개 캠페인의 담당자를 지정합니다.",
+          en: "Assign managers for the {count} selected campaigns.",
+          ja: "選択した{count}件のキャンペーンの担当者を指定します。",
+        },
+        submit: { ko: "저장", en: "Save", ja: "保存" },
+        confirmTitle: {
+          ko: "담당자를 모두 교체합니다",
+          en: "This replaces all managers",
+          ja: "担当者をすべて置き換えます",
+        },
+        confirmBody: {
+          ko: "선택한 {count}개 캠페인의 담당자가 지정한 담당자로 모두 교체됩니다. 기존 담당자는 해제됩니다.",
+          en: "The managers of the {count} selected campaigns will all be replaced with the ones you picked. Existing managers will be unassigned.",
+          ja: "選択した{count}件のキャンペーンの担当者が、指定した担当者にすべて置き換わります。既存の担当者は解除されます。",
+        },
+        confirmBodyUnassign: {
+          ko: "선택한 {count}개 캠페인의 담당자가 모두 해제됩니다. 지정된 담당자가 없는 상태가 됩니다.",
+          en: "The managers of the {count} selected campaigns will all be unassigned, leaving them with no manager.",
+          ja: "選択した{count}件のキャンペーンの担当者がすべて解除され、担当者未設定の状態になります。",
+        },
+        failed: {
+          ko: "담당자 지정에 실패했습니다",
+          en: "Failed to assign managers",
+          ja: "担当者の指定に失敗しました",
+        },
+        partialUpdate: {
+          ko: "{requested}개 중 {updated}개 캠페인만 반영되었습니다. 나머지는 삭제되었거나 변경할 수 없는 캠페인일 수 있습니다.",
+          en: "Only {updated} of {requested} campaigns were updated. The rest may have been deleted or are no longer changeable.",
+          ja: "{requested}件中{updated}件のキャンペーンのみ反映されました。残りは削除済みか変更できないキャンペーンの可能性があります。",
+        },
+      },
       edit: {
         draftTitle: { ko: "임시저장 캠페인", en: "Draft campaign", ja: "下書きキャンペーン" },
         draftSubtitle: {
@@ -3967,6 +4030,11 @@ export const adminMessages = {
         postReview: { ko: "게시물 검토", en: "Post review", ja: "投稿レビュー" },
         pendingPosts: { ko: "검토 대기 게시물", en: "Posts awaiting review", ja: "レビュー待ちの投稿" },
         pendingPayoutAmount: { ko: "지급 대기 금액", en: "Pending payout amount", ja: "支払い待ち金額" },
+        myRecruitingCampaigns: {
+          ko: "내 담당 모집중 캠페인",
+          en: "My recruiting campaigns",
+          ja: "担当の募集中キャンペーン",
+        },
         pendingSettlements: {
           ko: "{count}건 정산 대기",
           en: "{count} settlements pending",
@@ -4028,6 +4096,7 @@ export const adminMessages = {
         applicationRate: { ko: "응모율(%)", en: "Application rate (%)", ja: "応募率(%)" },
         postUrl: { ko: "게시물 URL", en: "Post URL", ja: "投稿URL" },
         submittedAt: { ko: "제출일", en: "Submitted on", ja: "提出日" },
+        managers: { ko: "담당자", en: "Managers", ja: "担当者" },
       },
       downloadDialog: {
         subtitle: {

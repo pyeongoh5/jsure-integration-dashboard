@@ -22,7 +22,11 @@ type StubApplication = {
 
 const SUBMITTED_AT = new Date("2026-07-20T02:00:00Z");
 
-function makeService(applications: StubApplication[], viewerCount = 0) {
+function makeService(
+  applications: StubApplication[],
+  viewerCount = 0,
+  managerIds: string[] = ["admin-1"],
+) {
   const prisma = {
     campaign: {
       findMany: async () => [
@@ -34,6 +38,7 @@ function makeService(applications: StubApplication[], viewerCount = 0) {
           recruitStartAt: new Date("2026-06-30T15:00:00Z"), // JST 2026-07-01 00:00
           recruitEndAt: new Date("2026-07-31T14:59:59Z"), // JST 2026-07-31 23:59
           applications,
+          managerIds,
         },
       ],
       findFirst: async () => ({ id: "c1" }),
@@ -56,6 +61,11 @@ function makeService(applications: StubApplication[], viewerCount = 0) {
             ...post,
           })),
         })),
+    },
+    adminUser: {
+      findMany: async () => [
+        { id: "admin-1", name: "선희", email: "sunhee@example.com" },
+      ],
     },
   } as never;
   return new AdminReportsService(prisma);
@@ -236,5 +246,19 @@ describe("참여자 목록", () => {
     expect(rows[0]!.category).toBe("SNS");
     expect(rows[0]!.recruitStartDate).toBe("2026-07-01");
     expect(rows[0]!.recruitEndDate).toBe("2026-07-31");
+  });
+
+  it("리포트 행에 담당자를 담는다", async () => {
+    const service = makeService([]);
+    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    expect(rows[0]!.managers).toEqual([
+      { id: "admin-1", name: "선희", email: "sunhee@example.com" },
+    ]);
+  });
+
+  it("담당자가 없는 캠페인은 빈 배열이다", async () => {
+    const service = makeService([], 0, []);
+    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    expect(rows[0]!.managers).toEqual([]);
   });
 });

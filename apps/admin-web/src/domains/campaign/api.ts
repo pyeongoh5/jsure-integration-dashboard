@@ -1,8 +1,11 @@
 import { z } from "zod";
 import {
+  BulkAssignCampaignManagersResponseSchema,
   CampaignAudienceListResponseSchema,
   CampaignAudienceSelectionResponseSchema,
   CampaignResponseSchema,
+  type BulkAssignCampaignManagersRequest,
+  type BulkAssignCampaignManagersResponse,
   type CampaignAudienceListResponse,
   type CampaignAudiencePreviewRequest,
   type CampaignAudienceSelectionResponse,
@@ -154,4 +157,16 @@ export async function hideCampaign(id: string): Promise<CampaignResponse> {
 export async function unhideCampaign(id: string): Promise<CampaignResponse> {
   const res = await api.post(`/campaigns/${encodeURIComponent(id)}/unhide`);
   return CampaignResponseSchema.parse(res.data);
+}
+
+/**
+ * 선택한 캠페인들의 담당자를 통째로 교체(덮어쓰기)한다 — 추가가 아니다.
+ * 논리 삭제된 캠페인은 서버가 대상에서 제외해 updatedCount 가 요청 건수보다
+ * 작을 수 있다.
+ */
+export async function bulkAssignCampaignManagers(
+  input: BulkAssignCampaignManagersRequest,
+): Promise<BulkAssignCampaignManagersResponse> {
+  const res = await api.post("/campaigns/managers/bulk", input);
+  return BulkAssignCampaignManagersResponseSchema.parse(res.data);
 }

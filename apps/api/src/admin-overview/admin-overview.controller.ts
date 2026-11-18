@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import {
   DailyActionAlertKindSchema,
   SendDailyActionRemindersRequestSchema,
@@ -11,6 +19,7 @@ import {
   type SendDailyActionRemindersResponse,
 } from "@jsure/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import type { AuthenticatedUser } from "../auth/strategies/jwt.strategy";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { AdminOverviewService } from "./admin-overview.service";
 import { AdminCampaignBoardService } from "./admin-campaign-board.service";
@@ -26,8 +35,10 @@ export class AdminOverviewController {
   ) {}
 
   @Get()
-  stats(): Promise<AdminOverviewResponse> {
-    return this.svc.stats();
+  stats(
+    @Req() request: { user: AuthenticatedUser },
+  ): Promise<AdminOverviewResponse> {
+    return this.svc.stats(request.user.id);
   }
 
   @Get("campaign-board")

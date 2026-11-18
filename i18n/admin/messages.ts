@@ -33,6 +33,7 @@ export const adminMessages = {
       customers: { ko: "고객", en: "Customers", ja: "顧客" },
       finance: { ko: "재무", en: "Finance", ja: "財務" },
       system: { ko: "시스템", en: "System", ja: "システム" },
+      builder: { ko: "제작", en: "Build", ja: "作成" },
     },
     items: {
       dashboard: { ko: "대시보드", en: "Dashboard", ja: "ダッシュボード" },
@@ -51,6 +52,7 @@ export const adminMessages = {
       jwinWinners: { ko: "당첨자 관리", en: "Winners", ja: "当選者管理" },
       jwinPrizes: { ko: "경품·기프트코드", en: "Prizes & Gift Codes", ja: "景品・ギフトコード" },
       jwinStats: { ko: "캠페인 통계", en: "Campaign stats", ja: "キャンペーン統計" },
+      surveys: { ko: "앙케이트", en: "Surveys", ja: "アンケート" },
     },
     groupsJwin: {
       prizes: { ko: "경품", en: "Prizes", ja: "景品" },
@@ -68,6 +70,12 @@ export const adminMessages = {
         ko: "X 인스턴트윈",
         en: "X instant win",
         ja: "Xインスタントウィン",
+      },
+      builder: { ko: "빌더", en: "Builder", ja: "ビルダー" },
+      builderDescription: {
+        ko: "앙케이트·양식 제작",
+        en: "Survey & form builder",
+        ja: "アンケート・フォーム作成",
       },
     },
   },
@@ -1807,6 +1815,11 @@ export const adminMessages = {
           campaignDraftCreate: { ko: "임시저장 생성", en: "Draft created", ja: "下書き作成" },
           campaignDraftUpdate: { ko: "임시저장 수정", en: "Draft updated", ja: "下書き修正" },
           campaignDraftPublish: { ko: "임시저장 발행", en: "Draft published", ja: "下書き公開" },
+          campaignManagersAssign: {
+            ko: "담당자 지정",
+            en: "Managers assigned",
+            ja: "担当者の指定",
+          },
           applicationApply: { ko: "응모", en: "Applied", ja: "応募" },
           applicationOrderSubmit: {
             ko: "주문번호 제출",
@@ -2578,6 +2591,16 @@ export const adminMessages = {
           ko: "제목으로 검색...",
           en: "Search by title...",
           ja: "タイトルで検索...",
+        },
+      },
+      managers: {
+        label: { ko: "운영 담당자", en: "Managers", ja: "運営担当者" },
+        chipEmpty: { ko: "+ 담당자", en: "+ Manager", ja: "+ 担当者" },
+        popoverTitle: { ko: "담당자 선택", en: "Select managers", ja: "担当者を選択" },
+        loadFailed: {
+          ko: "담당자 후보를 불러오지 못했습니다.",
+          en: "Failed to load manager candidates.",
+          ja: "担当者候補を読み込めませんでした。",
         },
       },
     },
@@ -3509,11 +3532,20 @@ export const adminMessages = {
     },
     campaigns: {
       subtitle: {
-        ko: "전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요.",
-        en: "See the status and progress of all campaigns at a glance.",
-        ja: "すべてのキャンペーンの状態と進行状況を一目で確認できます。",
+        ko: "전체 캠페인의 상태와 진행 현황을 한눈에 확인하세요. 카드를 클릭해 선택하고, 우클릭하면 메뉴가 열립니다.",
+        en: "See the status and progress of all campaigns at a glance. Click a card to select it, right-click to open its menu.",
+        ja: "すべてのキャンペーンの状態と進行状況を一目で確認できます。カードをクリックして選択し、右クリックするとメニューが開きます。",
       },
       statusFilterTitle: { ko: "상태 선택", en: "Select status", ja: "ステータス選択" },
+      managerFilter: {
+        prefix: { ko: "담당자", en: "Manager", ja: "担当者" },
+        title: { ko: "담당자 필터", en: "Manager filter", ja: "担当者フィルター" },
+        mine: {
+          ko: "내 캠페인만 보기",
+          en: "Show only my campaigns",
+          ja: "自分のキャンペーンのみ表示",
+        },
+      },
       searchPlaceholder: {
         ko: "브랜드 또는 캠페인 이름 검색",
         en: "Search by brand or campaign name",
@@ -3531,6 +3563,45 @@ export const adminMessages = {
         ja: "最終更新 {date}",
       },
       create: { ko: "생성", en: "Create", ja: "作成" },
+      bulkAssign: {
+        button: {
+          ko: "{count}개 캠페인 담당자 지정",
+          en: "Assign managers for {count} campaigns",
+          ja: "{count}件のキャンペーンの担当者を指定",
+        },
+        title: { ko: "담당자 일괄 지정", en: "Bulk-assign managers", ja: "担当者の一括指定" },
+        subtitle: {
+          ko: "선택한 {count}개 캠페인의 담당자를 지정합니다.",
+          en: "Assign managers for the {count} selected campaigns.",
+          ja: "選択した{count}件のキャンペーンの担当者を指定します。",
+        },
+        submit: { ko: "저장", en: "Save", ja: "保存" },
+        confirmTitle: {
+          ko: "담당자를 모두 교체합니다",
+          en: "This replaces all managers",
+          ja: "担当者をすべて置き換えます",
+        },
+        confirmBody: {
+          ko: "선택한 {count}개 캠페인의 담당자가 지정한 담당자로 모두 교체됩니다. 기존 담당자는 해제됩니다.",
+          en: "The managers of the {count} selected campaigns will all be replaced with the ones you picked. Existing managers will be unassigned.",
+          ja: "選択した{count}件のキャンペーンの担当者が、指定した担当者にすべて置き換わります。既存の担当者は解除されます。",
+        },
+        confirmBodyUnassign: {
+          ko: "선택한 {count}개 캠페인의 담당자가 모두 해제됩니다. 지정된 담당자가 없는 상태가 됩니다.",
+          en: "The managers of the {count} selected campaigns will all be unassigned, leaving them with no manager.",
+          ja: "選択した{count}件のキャンペーンの担当者がすべて解除され、担当者未設定の状態になります。",
+        },
+        failed: {
+          ko: "담당자 지정에 실패했습니다",
+          en: "Failed to assign managers",
+          ja: "担当者の指定に失敗しました",
+        },
+        partialUpdate: {
+          ko: "{requested}개 중 {updated}개 캠페인만 반영되었습니다. 나머지는 삭제되었거나 변경할 수 없는 캠페인일 수 있습니다.",
+          en: "Only {updated} of {requested} campaigns were updated. The rest may have been deleted or are no longer changeable.",
+          ja: "{requested}件中{updated}件のキャンペーンのみ反映されました。残りは削除済みか変更できないキャンペーンの可能性があります。",
+        },
+      },
       edit: {
         draftTitle: { ko: "임시저장 캠페인", en: "Draft campaign", ja: "下書きキャンペーン" },
         draftSubtitle: {
@@ -3975,6 +4046,11 @@ export const adminMessages = {
         postReview: { ko: "게시물 검토", en: "Post review", ja: "投稿レビュー" },
         pendingPosts: { ko: "검토 대기 게시물", en: "Posts awaiting review", ja: "レビュー待ちの投稿" },
         pendingPayoutAmount: { ko: "지급 대기 금액", en: "Pending payout amount", ja: "支払い待ち金額" },
+        myRecruitingCampaigns: {
+          ko: "내 담당 모집중 캠페인",
+          en: "My recruiting campaigns",
+          ja: "担当の募集中キャンペーン",
+        },
         pendingSettlements: {
           ko: "{count}건 정산 대기",
           en: "{count} settlements pending",
@@ -4110,6 +4186,7 @@ export const adminMessages = {
         applicationRate: { ko: "응모율(%)", en: "Application rate (%)", ja: "応募率(%)" },
         postUrl: { ko: "게시물 URL", en: "Post URL", ja: "投稿URL" },
         submittedAt: { ko: "제출일", en: "Submitted on", ja: "提出日" },
+        managers: { ko: "담당자", en: "Managers", ja: "担当者" },
       },
       downloadDialog: {
         subtitle: {
@@ -4274,6 +4351,161 @@ export const adminMessages = {
         totalJpy: { ko: "합계(JPY)", en: "Total (JPY)", ja: "合計(JPY)" },
       },
     },
+    builderSurveys: {
+      title: { ko: "앙케이트", en: "Surveys", ja: "アンケート" },
+      empty: {
+        ko: "아직 만든 앙케이트가 없습니다",
+        en: "No surveys have been created yet",
+        ja: "まだ作成されたアンケートはありません",
+      },
+      loadFailed: {
+        ko: "앙케이트 목록을 불러오지 못했습니다.",
+        en: "Failed to load the survey list.",
+        ja: "アンケート一覧の読み込みに失敗しました。",
+      },
+      loadingMore: { ko: "불러오는 중...", en: "Loading more...", ja: "読み込み中..." },
+      copySuffix: { ko: "사본", en: "copy", ja: "コピー" },
+      copyButton: { ko: "복사", en: "Copy", ja: "コピー" },
+      copyFailed: {
+        ko: "앙케이트 복사에 실패했습니다.",
+        en: "Failed to copy the survey.",
+        ja: "アンケートの複製に失敗しました。",
+      },
+      createButton: {
+        ko: "앙케이트 만들기",
+        en: "Create survey",
+        ja: "アンケートを作成",
+      },
+      deleteFailed: {
+        ko: "앙케이트 삭제에 실패했습니다.",
+        en: "Failed to delete the survey.",
+        ja: "アンケートの削除に失敗しました。",
+      },
+      table: {
+        select: { ko: "선택", en: "Select", ja: "選択" },
+        title: { ko: "제목", en: "Title", ja: "タイトル" },
+        createdAt: { ko: "생성일", en: "Created", ja: "作成日" },
+        updatedAt: { ko: "수정일", en: "Updated", ja: "更新日" },
+        createdBy: { ko: "생성자", en: "Created by", ja: "作成者" },
+        updatedBy: { ko: "수정자", en: "Updated by", ja: "更新者" },
+        actionsAria: { ko: "작업 메뉴", en: "Actions menu", ja: "操作メニュー" },
+      },
+      actions: {
+        edit: { ko: "수정", en: "Edit", ja: "編集" },
+        delete: { ko: "삭제", en: "Delete", ja: "削除" },
+      },
+      deleteDialog: {
+        title: { ko: "앙케이트를 삭제하시겠습니까?", en: "Delete this survey?", ja: "アンケートを削除しますか？" },
+        confirm: { ko: "삭제", en: "Delete", ja: "削除" },
+      },
+      editor: {
+        createTitle: { ko: "앙케이트 만들기", en: "Create survey", ja: "アンケートを作成" },
+        editTitle: { ko: "앙케이트 수정", en: "Edit survey", ja: "アンケートを編集" },
+        titleLabel: { ko: "설문 제목", en: "Survey title", ja: "アンケートタイトル" },
+        titlePlaceholder: {
+          ko: "설문 제목을 입력하세요",
+          en: "Enter a survey title",
+          ja: "アンケートタイトルを入力してください",
+        },
+        descriptionLabel: { ko: "설문 설명", en: "Survey description", ja: "アンケートの説明" },
+        descriptionPlaceholder: {
+          ko: "설문에 대한 설명을 입력하세요 (선택)",
+          en: "Enter a description (optional)",
+          ja: "説明を入力してください（任意）",
+        },
+        questionsLabel: { ko: "문항", en: "Questions", ja: "設問" },
+        addQuestionButton: { ko: "+ 문항 추가", en: "+ Add question", ja: "+ 設問を追加" },
+        questionsRequiredError: {
+          ko: "문항을 1개 이상 추가하세요.",
+          en: "Add at least one question.",
+          ja: "設問を1つ以上追加してください。",
+        },
+        submitCreate: { ko: "만들기", en: "Create", ja: "作成" },
+        submitSave: { ko: "저장", en: "Save", ja: "保存" },
+        saving: { ko: "저장 중...", en: "Saving...", ja: "保存中..." },
+        cancelButton: { ko: "취소", en: "Cancel", ja: "キャンセル" },
+        loadFailed: {
+          ko: "앙케이트를 불러오지 못했습니다.",
+          en: "Failed to load the survey.",
+          ja: "アンケートの読み込みに失敗しました。",
+        },
+        saveFailed: {
+          ko: "앙케이트 저장에 실패했습니다.",
+          en: "Failed to save the survey.",
+          ja: "アンケートの保存に失敗しました。",
+        },
+        validationError: {
+          ko: "입력값을 확인해주세요.",
+          en: "Please check your input.",
+          ja: "入力内容をご確認ください。",
+        },
+        leaveDialog: {
+          title: {
+            ko: "저장하지 않고 나가시겠습니까?",
+            en: "Leave without saving?",
+            ja: "保存せずに終了しますか？",
+          },
+          subtitle: {
+            ko: "지금까지 입력한 내용이 사라집니다.",
+            en: "The changes you made will be lost.",
+            ja: "これまでの入力内容は失われます。",
+          },
+          confirm: { ko: "나가기", en: "Leave", ja: "終了する" },
+        },
+        question: {
+          titlePlaceholder: {
+            ko: "질문을 입력하세요",
+            en: "Enter a question",
+            ja: "質問を入力してください",
+          },
+          descriptionPlaceholder: {
+            ko: "부가 설명을 입력하세요",
+            en: "Enter additional description",
+            ja: "補足説明を入力してください",
+          },
+          typeLabel: { ko: "문항 유형", en: "Question type", ja: "設問タイプ" },
+          typeOptions: {
+            SINGLE: { ko: "단일 선택", en: "Single choice", ja: "単一選択" },
+            MULTI: { ko: "다중 선택", en: "Multiple choice", ja: "複数選択" },
+            LIKERT: { ko: "척도(리커트)", en: "Rating scale", ja: "評価尺度" },
+            TEXT: { ko: "주관식", en: "Free text", ja: "自由記述" },
+          },
+          requiredLabel: { ko: "필수 응답", en: "Required", ja: "必須回答" },
+          multilineLabel: {
+            ko: "여러 줄 입력 허용",
+            en: "Allow multi-line answers",
+            ja: "複数行の入力を許可",
+          },
+          duplicateAria: { ko: "문항 복제", en: "Duplicate question", ja: "設問を複製" },
+          deleteAria: { ko: "문항 삭제", en: "Delete question", ja: "設問を削除" },
+          dragHandleAria: { ko: "문항 순서 변경", en: "Reorder question", ja: "設問の並び替え" },
+        },
+        options: {
+          addButton: { ko: "+ 선택지 추가", en: "+ Add option", ja: "+ 選択肢を追加" },
+          itemPlaceholder: { ko: "선택지 {index}", en: "Option {index}", ja: "選択肢{index}" },
+          removeAria: {
+            ko: "선택지 {index} 삭제",
+            en: "Remove option {index}",
+            ja: "選択肢{index}を削除",
+          },
+        },
+        likert: {
+          presetLabel: { ko: "응답 형태", en: "Response scale", ja: "回答形式" },
+          presetAgreement: { ko: "동의 정도", en: "Agreement", ja: "同意度" },
+          presetSatisfaction: { ko: "만족도", en: "Satisfaction", ja: "満足度" },
+          presetFrequency: { ko: "빈도", en: "Frequency", ja: "頻度" },
+          presetNumeric: { ko: "숫자(1~5)", en: "Numeric (1–5)", ja: "数値（1〜5）" },
+          presetCustom: { ko: "직접 입력", en: "Custom labels", ja: "カスタム入力" },
+          customAddButton: { ko: "+ 라벨 추가", en: "+ Add label", ja: "+ ラベルを追加" },
+          customItemPlaceholder: { ko: "라벨 {index}", en: "Label {index}", ja: "ラベル{index}" },
+          customRemoveAria: {
+            ko: "라벨 {index} 삭제",
+            en: "Remove label {index}",
+            ja: "ラベル{index}を削除",
+          },
+        },
+      },
+    },
   },
   sidebar: {
     footer: {
@@ -4289,6 +4521,35 @@ export const adminMessages = {
         ko: "현재 기기에서 세션이 종료되며, 다시 사용하려면 로그인이 필요합니다.",
         en: "Your session on this device will end. You will need to log in again to continue.",
         ja: "この端末のセッションが終了します。再度利用するにはログインが必要です。",
+      },
+    },
+  },
+  builderSurveys: {
+    likert: {
+      AGREEMENT: {
+        step1: { ko: "전혀 그렇지 않다", en: "Strongly disagree", ja: "全く同意しない" },
+        step2: { ko: "그렇지 않다", en: "Disagree", ja: "同意しない" },
+        step3: { ko: "보통이다", en: "Neutral", ja: "どちらともいえない" },
+        step4: { ko: "그렇다", en: "Agree", ja: "同意する" },
+        step5: { ko: "매우 그렇다", en: "Strongly agree", ja: "強く同意する" },
+      },
+      SATISFACTION: {
+        step1: { ko: "매우 불만족", en: "Very dissatisfied", ja: "非常に不満" },
+        step2: { ko: "불만족", en: "Dissatisfied", ja: "不満" },
+        step3: { ko: "보통", en: "Neutral", ja: "どちらともいえない" },
+        step4: { ko: "만족", en: "Satisfied", ja: "満足" },
+        step5: { ko: "매우 만족", en: "Very satisfied", ja: "非常に満足" },
+      },
+      FREQUENCY: {
+        step1: { ko: "전혀 안 함", en: "Never", ja: "全くない" },
+        step2: { ko: "거의 안 함", en: "Rarely", ja: "めったにない" },
+        step3: { ko: "가끔", en: "Sometimes", ja: "ときどき" },
+        step4: { ko: "자주", en: "Often", ja: "よく" },
+        step5: { ko: "항상 함", en: "Always", ja: "いつも" },
+      },
+      NUMERIC: {
+        min: { ko: "매우 낮음", en: "Very low", ja: "非常に低い" },
+        max: { ko: "매우 높음", en: "Very high", ja: "非常に高い" },
       },
     },
   },

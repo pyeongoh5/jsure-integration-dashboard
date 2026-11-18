@@ -61,6 +61,7 @@ function buildKpis(
     pendingPostReviewCount: number;
     pendingSettlementAmountJpy: number;
     pendingSettlementCount: number;
+    myRecruitingCampaignCount: number;
   },
   t: TranslateFn,
 ): Kpi[] {
@@ -70,6 +71,12 @@ function buildKpis(
       label: t("pages.overview.kpi.recruitingCampaigns"),
       value: String(stats.recruitingCampaignCount),
       to: "/campaigns?status=recruit",
+    },
+    {
+      icon: <i className="fa-solid fa-user-check" />,
+      label: t("pages.overview.kpi.myRecruitingCampaigns"),
+      value: String(stats.myRecruitingCampaignCount),
+      to: "/campaigns?manager=me&status=recruit",
     },
     {
       icon: "✓",
@@ -131,6 +138,7 @@ export function Overview() {
       pendingPostReviewCount: 0,
       pendingSettlementAmountJpy: 0,
       pendingSettlementCount: 0,
+      myRecruitingCampaignCount: 0,
     },
     t,
   );

@@ -3,15 +3,20 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { formatRewardRange, type CampaignResponse } from "@jsure/shared";
 import { Card } from "@/components/composites/Card";
 import {
+  FilterChip,
   FilterChipBar,
+  MultiSelectFilterChip,
   SingleSelectFilterChip,
 } from "@/components/composites/FilterChip";
+import filterChipStyles from "@/components/composites/FilterChip/FilterChip.module.css";
 import { Button } from "@/components/ui";
+import { getStoredUser } from "@/domains/auth";
 import {
   CampaignCardTitle,
   CampaignCardBody,
   CampaignCardFooter,
   CampaignActionsMenu,
+  BulkAssignManagersDialog,
   BumpCampaignDialog,
   CloseCampaignDialog,
   DeleteCampaignDialog,
@@ -19,15 +24,22 @@ import {
   UnhideCampaignDialog,
   listCampaigns,
   campaignFormStyles,
+  useAdminUserOptions,
 } from "@/domains/campaign";
 import type { Campaign, CampaignCategory, CampaignStatus } from "@/domains/campaign";
+import { matchesManagerFilter, parseManagerFilter } from "@/domains/campaign/managerFilter";
 import { CATEGORY_FILTER_OPTIONS } from "@/domains/application";
+import { adminUserLabel } from "@/domains/team";
 import { translate, type AdminTranslationKey } from "@i18n/admin";
 import { getStoredLanguage, useT } from "@/lib/i18n";
 import { foldForSearch } from "@/lib/searchText";
 import { ApprovedApplicantsDialog } from "../Applicants/ApprovedApplicantsDialog";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import styles from "./Campaigns.module.css";
+
+const MANAGER_PARAM = "manager";
+const MINE_MANAGER_KEY = "me";
+const MAX_VISIBLE_MANAGER_FILTER_LABELS = 2;
 
 type StatusFilterKey = "all" | CampaignStatus;
 
@@ -121,6 +133,7 @@ function toCard(c: CampaignResponse, now: Date): Campaign {
       minFollowers: r.minFollowers,
       subTypeOptions: r.subTypeOptions,
     })),
+    managers: c.managers,
   };
 }
 
@@ -142,6 +155,58 @@ export function Campaigns() {
   const [unhideTargetId, setUnhideTargetId] = useState<string | null>(null);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
+  const currentAdminUserId = getStoredUser()?.id ?? null;
+  const { managers: managerOptions, error: managerOptionsError } = useAdminUserOptions();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      const target = event.target as HTMLElement | null;
+      // 검색창 등 입력 중에는 Esc 가 입력 취소 용도이지 선택 해제가 아니다.
+      if (
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
+      ) {
+        return;
+      }
+      // 일괄 지정 다이얼로그·ConfirmDialog·액션 메뉴 등 모달이 떠 있으면 Esc 는 그
+      // 모달이 처리한다 — 여기서 먼저 선택을 지우면 모달을 취소하고 돌아왔을 때
+      // 선택이 이미 사라져 있다.
+      const anyModalOpen =
+        bulkAssignOpen ||
+        openMenu !== null ||
+        approvedListCampaignId !== null ||
+        bumpTargetId !== null ||
+        closeTargetId !== null ||
+        deleteTargetId !== null ||
+        hideTargetId !== null ||
+        unhideTargetId !== null;
+      if (anyModalOpen) return;
+      setSelectedIds(new Set());
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [
+    bulkAssignOpen,
+    openMenu,
+    approvedListCampaignId,
+    bumpTargetId,
+    closeTargetId,
+    deleteTargetId,
+    hideTargetId,
+    unhideTargetId,
+  ]);
+
+  const toggleSelected = (campaignId: string) => {
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(campaignId)) next.delete(campaignId);
+      else next.add(campaignId);
+      return next;
+    });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -184,8 +249,30 @@ export function Campaigns() {
     setSearchParams(next);
   };
 
+  const rawManager = searchParams.get(MANAGER_PARAM);
+  const managerFilter = useMemo(() => parseManagerFilter(rawManager), [rawManager]);
+
+  const setManagerFilter = (value: Set<string>) => {
+    const next = new URLSearchParams(searchParams);
+    if (value.size === 0) next.delete(MANAGER_PARAM);
+    else next.set(MANAGER_PARAM, Array.from(value).join(","));
+    setSearchParams(next);
+  };
+
+  const managerFilterOptions = useMemo(
+    () => [
+      { key: MINE_MANAGER_KEY, label: t("pages.campaigns.managerFilter.mine") },
+      ...managerOptions.map((manager) => ({ key: manager.id, label: adminUserLabel(manager) })),
+    ],
+    [managerOptions, t],
+  );
+
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 300);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [statusFilter, categoryFilter, debouncedQuery, managerFilter]);
 
   const cards = useMemo(() => {
     if (state.kind !== "ready") return [];
@@ -200,9 +287,17 @@ export function Campaigns() {
       if (statusFilter !== "all" && c.status !== statusFilter) return false;
       if (categoryFilter !== null && c.category !== categoryFilter) return false;
       if (q && !foldForSearch(`${c.brand} ${c.name}`).includes(q)) return false;
+      if (
+        !matchesManagerFilter(
+          c.managers.map((manager) => manager.id),
+          managerFilter,
+          currentAdminUserId,
+        )
+      )
+        return false;
       return true;
     });
-  }, [cards, statusFilter, categoryFilter, debouncedQuery]);
+  }, [cards, statusFilter, categoryFilter, debouncedQuery, managerFilter, currentAdminUserId]);
 
   return (
     <div className={styles.root}>
@@ -235,6 +330,26 @@ export function Campaigns() {
             value={statusFilter === "all" ? null : statusFilter}
             onChange={(value) => setStatusFilter(value ?? "all")}
           />
+          {managerOptionsError ? (
+            <FilterChip
+              activeLabel={null}
+              emptyLabel={t("domains.campaign.managers.chipEmpty")}
+              popoverTitle={t("pages.campaigns.managerFilter.title")}
+              renderPopover={() => (
+                <div className={filterChipStyles.popoverEmpty}>{managerOptionsError}</div>
+              )}
+            />
+          ) : (
+            <MultiSelectFilterChip
+              emptyLabel={t("domains.campaign.managers.chipEmpty")}
+              labelPrefix={t("pages.campaigns.managerFilter.prefix")}
+              popoverTitle={t("pages.campaigns.managerFilter.title")}
+              options={managerFilterOptions}
+              value={new Set(managerFilter)}
+              onChange={setManagerFilter}
+              maxVisibleLabels={MAX_VISIBLE_MANAGER_FILTER_LABELS}
+            />
+          )}
         </FilterChipBar>
         <div className={styles.search}>
           <i className="fa-solid fa-magnifying-glass" />
@@ -244,14 +359,16 @@ export function Campaigns() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => navigate("/campaigns/new")}
-          className={styles.newBtn}
-        >
-          {t("pages.campaigns.newCampaign")}
-        </Button>
+        <div className={styles.toolbarActions}>
+          {selectedIds.size > 0 && (
+            <Button variant="secondary" size="md" onClick={() => setBulkAssignOpen(true)}>
+              {t("pages.campaigns.bulkAssign.button", { count: selectedIds.size })}
+            </Button>
+          )}
+          <Button variant="primary" size="md" onClick={() => navigate("/campaigns/new")}>
+            {t("pages.campaigns.newCampaign")}
+          </Button>
+        </div>
       </div>
 
       {state.kind === "loading" ? (
@@ -274,15 +391,24 @@ export function Campaigns() {
           {filtered.map((c) => (
             <div
               key={c.id}
-              className={styles.camCardWrap}
-              onClick={(e) => {
+              className={`${styles.camCardWrap} ${
+                selectedIds.has(c.id) ? styles.camCardWrapSelected : ""
+              }`}
+              onClick={() => toggleSelected(c.id)}
+              onContextMenu={(event) => {
+                event.preventDefault();
                 if (openMenu?.id === c.id) {
                   setOpenMenu(null);
                 } else {
-                  setOpenMenu({ id: c.id, x: e.clientX, y: e.clientY });
+                  setOpenMenu({ id: c.id, x: event.clientX, y: event.clientY });
                 }
               }}
             >
+              {selectedIds.has(c.id) && (
+                <span className={styles.cardSelectedCheck}>
+                  <i className="fa-solid fa-check" />
+                </span>
+              )}
               <Card
                 title={
                   <CampaignCardTitle
@@ -290,6 +416,7 @@ export function Campaigns() {
                     status={c.status}
                     category={c.category}
                     isRestricted={c.isRestricted}
+                    managers={c.managers}
                   />
                 }
                 content={
@@ -422,6 +549,18 @@ export function Campaigns() {
         }}
         onCancel={() => setDeleteTargetId(null)}
       />
+
+      {bulkAssignOpen && (
+        <BulkAssignManagersDialog
+          campaignIds={[...selectedIds]}
+          onDone={() => {
+            setBulkAssignOpen(false);
+            setSelectedIds(new Set());
+            setReloadKey((previousReloadKey) => previousReloadKey + 1);
+          }}
+          onCancel={() => setBulkAssignOpen(false)}
+        />
+      )}
     </div>
   );
 }

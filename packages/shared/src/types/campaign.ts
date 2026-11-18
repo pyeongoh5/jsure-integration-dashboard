@@ -673,6 +673,8 @@ export const CampaignFormSchema = z
     /** 이 캠페인 응모를 막을 기존 캠페인 id 목록. */
     excludedCampaignIds: z.array(z.string()).max(50).optional().default([]),
     audienceMode: CampaignAudienceModeSchema.default("PUBLIC"),
+    /** 이 캠페인의 운영 담당 어드민 id 목록. */
+    managerIds: z.array(z.string()).max(20).default([]),
     ...AUDIENCE_INPUT_SHAPE,
   })
   .refine((d) => d.recruitStartDate <= d.recruitEndDate, {
@@ -744,6 +746,7 @@ export const UpdateCampaignRequestSchema = z
     thumbnailUrl: z.string().min(1).nullable().optional(),
     excludedCampaignIds: z.array(z.string()).max(50).optional(),
     audienceMode: CampaignAudienceModeSchema.optional(),
+    managerIds: z.array(z.string()).max(20).optional(),
     ...AUDIENCE_PATCH_SHAPE,
   })
   .refine(
@@ -861,9 +864,21 @@ export const CampaignDraftRequestSchema = z.object({
   thumbnailUrl: z.string().min(1).nullable().optional(),
   excludedCampaignIds: z.array(z.string()).max(50).optional(),
   audienceMode: CampaignAudienceModeSchema.optional(),
+  managerIds: z.array(z.string()).max(20).optional(),
   ...AUDIENCE_PATCH_SHAPE,
 });
 export type CampaignDraftRequest = z.infer<typeof CampaignDraftRequestSchema>;
+
+/**
+ * 캠페인 운영 담당 어드민 — 어드민 전용 필드다.
+ * InfluencerCampaignCardSchema / InfluencerCampaignDetailSchema 에는 절대 포함하지 않는다.
+ */
+export const CampaignManagerSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  email: z.string(),
+});
+export type CampaignManager = z.infer<typeof CampaignManagerSchema>;
 
 /**
  * 어드민 캠페인 목록의 파생 상태(서버가 계산). 정렬·뱃지 표기의 단일 소스.
@@ -933,6 +948,8 @@ export const CampaignResponseSchema = z.object({
   audienceMode: CampaignAudienceModeSchema.default("PUBLIC"),
   /** 등록된 대상자 수. RESTRICTED 인데 0 이면 아무에게도 보이지 않는다. */
   audienceCount: z.number().int().nonnegative().default(0),
+  /** 운영 담당 어드민. default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비. */
+  managers: z.array(CampaignManagerSchema).default([]),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -942,6 +959,22 @@ export const CampaignListResponseSchema = z.object({
   campaigns: z.array(CampaignResponseSchema),
 });
 export type CampaignListResponse = z.infer<typeof CampaignListResponseSchema>;
+
+/** 여러 캠페인에 담당자를 일괄 지정(해제 포함)하는 요청. managerIds 가 비면 전원 해제다. */
+export const BulkAssignCampaignManagersRequestSchema = z.object({
+  campaignIds: z.array(z.string()).min(1).max(200),
+  managerIds: z.array(z.string()).max(20),
+});
+export type BulkAssignCampaignManagersRequest = z.infer<
+  typeof BulkAssignCampaignManagersRequestSchema
+>;
+
+export const BulkAssignCampaignManagersResponseSchema = z.object({
+  updatedCount: z.number().int().nonnegative(),
+});
+export type BulkAssignCampaignManagersResponse = z.infer<
+  typeof BulkAssignCampaignManagersResponseSchema
+>;
 
 export const InfluencerCampaignCardSchema = z.object({
   id: z.string(),

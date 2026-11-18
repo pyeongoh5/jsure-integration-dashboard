@@ -14,6 +14,15 @@ const questions: SurveyQuestion[] = [
 ];
 
 describe("buildSurveyColumns", () => {
+  it("key 는 survey_ 접두사 + 문항 id 다 — 고정 컬럼 key 와 네임스페이스가 겹치지 않는다", () => {
+    expect(buildSurveyColumns(questions, label).map((column) => column.key)).toEqual([
+      "survey_q1",
+      "survey_q2",
+      "survey_q3",
+      "survey_q4",
+    ]);
+  });
+
   it("헤더가 Q번호. 문항제목 형식이다", () => {
     expect(buildSurveyColumns(questions, label).map((column) => column.label)).toEqual([
       "Q1. 어디서 알았나요",

@@ -399,9 +399,17 @@ export const CampaignParticipantsResponseSchema = z.object({
    합친다. relation `include` 를 쓰는 순간 분리가 막힌다.
 2. **응답 테이블은 `builder_` prefix.**
 3. **빌더 서비스는 기존 서비스를 import 하지 않는다.** 반대 방향(기존 서비스가 빌더
-   테이블을 Prisma 로 직접 읽는 것)은 **이번에 허용한다** — `influencer-applications`,
-   `admin-reports`, `campaigns` 세 곳이 그렇게 한다. 서버를 분리하는 날 이 세 지점이
-   "빌더 API 호출"로 바뀐다. **어느 세 곳인지 이 문서가 기록이다.**
+   테이블을 Prisma 로 직접 읽는 것)은 **이번에 허용한다** — `campaigns`,
+   `influencer-applications`, `admin-reports`, `admin-applications` **네 곳**이 그렇게
+   한다. 서버를 분리하는 날 이 네 지점이 "빌더 API 호출"로 바뀐다. **어느 네 곳인지,
+   각각 무엇을 읽는지 이 문서가 기록이다.**
+   - `campaigns` — `builder_surveys` 의 설문 **제목**(목록·상세에 `surveyTitle` 로 노출).
+   - `influencer-applications` — `builder_surveys` 의 설문 **본문**(문항) +
+     `builder_survey_responses` 의 **응답**(제출·재제출 프리필).
+   - `admin-reports` — `builder_surveys` 의 **문항** + `builder_survey_responses` 의
+     **응답**(참가자 리포트·엑셀).
+   - `admin-applications` — `builder_survey_responses` 의 **응답**(검수 팝업이 설문
+     섹션을 직접 그린다).
 4. **프런트의 설문 선택 드롭다운은 `builderApi` 로 호출한다.** 기존 `api` 를 쓰면
    분리 시 놓친다.
 

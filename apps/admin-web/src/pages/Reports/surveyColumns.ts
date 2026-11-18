@@ -73,7 +73,7 @@ export function buildSurveyColumns(
 ): SurveyColumn[] {
   if (!questions) return [];
   return questions.map((question, index) => ({
-    key: question.id,
+    key: `survey_${question.id}`,
     label: `Q${index + 1}. ${question.title}`,
     value: (participant) =>
       surveyCellText(question, participant.surveyAnswers?.[question.id], translateLabel),

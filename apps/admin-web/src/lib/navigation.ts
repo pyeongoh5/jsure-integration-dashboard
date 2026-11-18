@@ -14,7 +14,7 @@ import type { AdminTranslationKey } from "@i18n/admin";
  * label/title/description 은 전부 i18n 키다. 렌더 시점에 번역한다.
  */
 
-export type ProductKey = "influencer" | "jwin";
+export type ProductKey = "influencer" | "jwin" | "builder";
 
 export type NavItem = {
   to: string;
@@ -114,7 +114,28 @@ const JWIN_PRODUCT: Product = {
   ],
 };
 
-export const PRODUCTS: Product[] = [INFLUENCER_PRODUCT, JWIN_PRODUCT];
+const BUILDER_PRODUCT: Product = {
+  key: "builder",
+  label: "nav.products.builder",
+  description: "nav.products.builderDescription",
+  icon: "fa-solid fa-screwdriver-wrench",
+  pathPrefix: "/builder",
+  homePath: "/builder/surveys",
+  groups: [
+    {
+      title: "nav.groups.builder",
+      items: [
+        {
+          to: "/builder/surveys",
+          label: "nav.items.surveys",
+          icon: "fa-solid fa-clipboard-question",
+        },
+      ],
+    },
+  ],
+};
+
+export const PRODUCTS: Product[] = [INFLUENCER_PRODUCT, JWIN_PRODUCT, BUILDER_PRODUCT];
 
 /** 경로가 속한 제품. prefix 가 있는 제품을 먼저 보고, 없으면 기본 제품. */
 export function findProductByPath(pathname: string): Product {

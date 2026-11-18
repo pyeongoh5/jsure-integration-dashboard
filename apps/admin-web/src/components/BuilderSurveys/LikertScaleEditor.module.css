@@ -1,0 +1,39 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.presetGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.numericPreview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.numericMid {
+  letter-spacing: 8px;
+}

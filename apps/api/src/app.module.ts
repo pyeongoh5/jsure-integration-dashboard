@@ -23,6 +23,7 @@ import { UploadsModule } from "./uploads/uploads.module";
 import { LineTemplatesModule } from "./line-templates/line-templates.module";
 import { LineMessagingModule } from "./influencer-auth/line-messaging.module";
 import { AdminMeModule } from "./admin-me/admin-me.module";
+import { BuilderSurveysModule } from "./builder-surveys/builder-surveys.module";
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { AdminMeModule } from "./admin-me/admin-me.module";
     UploadsModule,
     LineTemplatesModule,
     AdminMeModule,
+    BuilderSurveysModule,
   ],
 })
 export class AppModule {}

@@ -3,7 +3,7 @@ import {
   ApplicationStatusSchema,
   PostReviewStatusSchema,
 } from "./application.js";
-import { CampaignCategorySchema } from "./campaign.js";
+import { CampaignCategorySchema, CampaignManagerSchema } from "./campaign.js";
 import { CampaignSubTypeSchema } from "./influencer.js";
 import { SurveyAnswersSchema, SurveyQuestionSchema } from "./builderSurvey.js";
 
@@ -71,6 +71,7 @@ export const CampaignReportRowSchema = z.object({
   viewerCount: z.number().int(),
   /** 응모율(%) — 전체 응모 건수 / 조회 인원. 조회 인원이 0 이면 null. */
   applicationRate: z.number().nullable(),
+  managers: z.array(CampaignManagerSchema).default([]),
 });
 
 export const CampaignParticipantsResponseSchema = z.object({

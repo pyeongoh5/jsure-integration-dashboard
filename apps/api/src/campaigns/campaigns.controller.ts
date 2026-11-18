@@ -11,9 +11,12 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  BulkAssignCampaignManagersRequestSchema,
   CampaignAudiencePreviewRequestSchema,
   CreateCampaignRequestSchema,
   UpdateCampaignRequestSchema,
+  type BulkAssignCampaignManagersRequest,
+  type BulkAssignCampaignManagersResponse,
   type CampaignAudienceListResponse,
   type CampaignAudiencePreviewRequest,
   type CampaignAudienceSelectionResponse,
@@ -93,6 +96,19 @@ export class CampaignsController {
     @Param("id") id: string,
   ): Promise<CampaignAudienceSelectionResponse> {
     return this.audience.selection(id);
+  }
+
+  /**
+   * 여러 캠페인의 담당자를 한 번에 교체한다 — 덮어쓰기지 추가가 아니다.
+   * ":id/bump" 보다 반드시 위에 선언해야 "managers" 가 :id 와일드카드에 먹히지 않는다.
+   */
+  @Post("managers/bulk")
+  assignManagers(
+    @Req() request: { user: AuthenticatedUser },
+    @Body(new ZodValidationPipe(BulkAssignCampaignManagersRequestSchema))
+    body: BulkAssignCampaignManagersRequest,
+  ): Promise<BulkAssignCampaignManagersResponse> {
+    return this.campaigns.assignManagers(body, request.user);
   }
 
   /** 끌어올리기 — 인플루언서 목록에서 같은 상태 그룹 내 최상단으로 올린다. */

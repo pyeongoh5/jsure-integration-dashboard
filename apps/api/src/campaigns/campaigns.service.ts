@@ -11,9 +11,12 @@ import {
   audienceExclusionConflicts,
   audiencePatchToInput,
   type ApplicationStatus,
+  type BulkAssignCampaignManagersRequest,
+  type BulkAssignCampaignManagersResponse,
   type CampaignAudienceMode,
   type CampaignCategory,
   type CampaignDraftRequest,
+  type CampaignManager,
   type CampaignPublishState,
   type CampaignResponse,
   type CreateCampaignRequest,
@@ -387,6 +390,7 @@ type CampaignRow = {
   updatedAt: Date;
   recruits: CampaignRecruitRow[];
   exclusionsAsExcluding: { excludedCampaignId: string }[];
+  managerIds: string[];
 };
 
 type CampaignCounts = {
@@ -409,10 +413,44 @@ const EMPTY_COUNTS: CampaignCounts = {
 // "모집된 인원" 계산은 shared 의 SLOT_CONSUMING_STATUSES 를 사용
 // (승인 이후 흐름 전체: 승인/배송/주문제출/리뷰제출/완료).
 
+/** row.managerIds 순서대로 담당자 정보를 풀어낸다. 조회에 없는(탈퇴 등) id는 건너뛴다. */
+export function pickManagers(
+  managerIds: string[],
+  byId: Map<string, CampaignManager>,
+): CampaignManager[] {
+  const managers: CampaignManager[] = [];
+  for (const managerId of managerIds) {
+    const manager = byId.get(managerId);
+    if (manager) managers.push(manager);
+  }
+  return managers;
+}
+
+/** 전 행의 managerIds 를 합집합으로 모아 adminUser.findMany 를 한 번만 호출한다. */
+export async function loadManagers(
+  prisma: PrismaService,
+  rows: { managerIds: string[] }[],
+): Promise<Map<string, CampaignManager>> {
+  const uniqueManagerIds = Array.from(
+    new Set(rows.flatMap((row) => row.managerIds)),
+  );
+  const map = new Map<string, CampaignManager>();
+  if (uniqueManagerIds.length === 0) return map;
+  const adminUsers = await prisma.adminUser.findMany({
+    where: { id: { in: uniqueManagerIds } },
+    select: { id: true, name: true, email: true },
+  });
+  for (const adminUser of adminUsers) {
+    map.set(adminUser.id, adminUser);
+  }
+  return map;
+}
+
 function toResponse(
   row: CampaignRow,
   counts: CampaignCounts,
   surveyTitle: string | null,
+  managers: CampaignManager[] = [],
 ): CampaignResponse {
   return {
     id: row.id,
@@ -481,6 +519,7 @@ function toResponse(
     surveyTitle,
     audienceMode: row.audienceMode,
     audienceCount: counts.audienceCount,
+    managers,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -552,6 +591,10 @@ function toDraftCampaignData(input: CampaignDraftRequest, now: Date) {
       : {}),
     // surveyId 도 동일 — 미지정이면 기존 연결을 유지한다.
     ...(input.surveyId !== undefined ? { surveyId: input.surveyId } : {}),
+    // managerIds 도 동일 — 미지정이면 기존 담당자를 건드리지 않는다.
+    ...(input.managerIds !== undefined
+      ? { managerIds: input.managerIds }
+      : {}),
   };
 }
 
@@ -714,12 +757,34 @@ export class CampaignsService {
     return titleBySurveyId;
   }
 
-  private async toResponseWithSurvey(
+  /** 단건 응답용 — 한 캠페인의 managerIds 를 담당자 정보로 풀어낸다. */
+  private async managersFor(managerIds: string[]): Promise<CampaignManager[]> {
+    const managersById = await loadManagers(this.prisma, [{ managerIds }]);
+    return pickManagers(managerIds, managersById);
+  }
+
+  /** managerIds 에 존재하지 않는 어드민 id 가 섞여 있으면 거부한다. */
+  private async assertManagersExist(managerIds: string[]): Promise<void> {
+    const uniqueManagerIds = Array.from(new Set(managerIds));
+    if (uniqueManagerIds.length === 0) return;
+    const count = await this.prisma.adminUser.count({
+      where: { id: { in: uniqueManagerIds } },
+    });
+    if (count !== uniqueManagerIds.length) {
+      throw new BadRequestException("존재하지 않는 담당자가 포함돼 있습니다");
+    }
+  }
+
+  /** 단건 응답용 — 설문 제목과 담당자를 둘 다 풀어 toResponse 에 넘긴다. */
+  private async toResponseResolved(
     row: CampaignRow,
     counts: CampaignCounts,
   ): Promise<CampaignResponse> {
-    const surveyTitle = await this.surveyTitleById(row.surveyId);
-    return toResponse(row, counts, surveyTitle);
+    const [surveyTitle, managers] = await Promise.all([
+      this.surveyTitleById(row.surveyId),
+      this.managersFor(row.managerIds),
+    ]);
+    return toResponse(row, counts, surveyTitle, managers);
   }
 
   async create(
@@ -734,6 +799,9 @@ export class CampaignsService {
     validateRecruitsForCategory(input.category, recruits);
     validateRecruitsForRewardType(input.rewardType, recruits);
     validateRecruitOptionConfigs(recruits);
+    if (input.managerIds !== undefined) {
+      await this.assertManagersExist(input.managerIds);
+    }
     const row = await this.prisma.$transaction(async (tx) => {
       const created = await tx.campaign.create({
         data: {
@@ -761,6 +829,9 @@ export class CampaignsService {
           referenceMediaUrls: input.referenceMediaUrls,
           cautions: input.cautions,
           thumbnailUrl: input.thumbnailUrl ?? null,
+          ...(input.managerIds !== undefined
+            ? { managerIds: input.managerIds }
+            : {}),
           recruits: {
             create: recruits.map((recruit) => toRecruitCreateData(recruit)),
           },
@@ -785,7 +856,7 @@ export class CampaignsService {
     const counts = hasAudienceInput(input)
       ? await this.countsFor(row.id)
       : EMPTY_COUNTS;
-    return this.withResolved(await this.toResponseWithSurvey(row, counts));
+    return this.withResolved(await this.toResponseResolved(row, counts));
   }
 
   /**
@@ -936,13 +1007,21 @@ export class CampaignsService {
     const surveyIds = rows
       .map((row) => row.surveyId)
       .filter((surveyId): surveyId is string => surveyId !== null);
-    const titleBySurveyId = await this.surveyTitlesByIds(surveyIds);
+    const [titleBySurveyId, managersById] = await Promise.all([
+      this.surveyTitlesByIds(surveyIds),
+      loadManagers(this.prisma, rows),
+    ]);
     const responses = await Promise.all(
       rows.map((row) => {
         const surveyTitle =
           row.surveyId === null ? null : (titleBySurveyId.get(row.surveyId) ?? null);
         return this.withResolved(
-          toResponse(row, counts.get(row.id) ?? EMPTY_COUNTS, surveyTitle),
+          toResponse(
+            row,
+            counts.get(row.id) ?? EMPTY_COUNTS,
+            surveyTitle,
+            pickManagers(row.managerIds, managersById),
+          ),
         );
       }),
     );
@@ -960,7 +1039,7 @@ export class CampaignsService {
     });
     if (!row) throw new NotFoundException("Campaign not found");
     return this.withResolved(
-      await this.toResponseWithSurvey(row, await this.countsFor(id)),
+      await this.toResponseResolved(row, await this.countsFor(id)),
     );
   }
 
@@ -1031,6 +1110,10 @@ export class CampaignsService {
     if (input.thumbnailUrl !== undefined) data.thumbnailUrl = input.thumbnailUrl;
     if (input.audienceMode !== undefined) data.audienceMode = input.audienceMode;
     if (input.surveyId !== undefined) data.surveyId = input.surveyId;
+    if (input.managerIds !== undefined) {
+      await this.assertManagersExist(input.managerIds);
+      data.managerIds = input.managerIds;
+    }
 
     const validatedExcluded =
       input.excludedCampaignIds !== undefined
@@ -1076,7 +1159,7 @@ export class CampaignsService {
     });
     return {
       response: await this.withResolved(
-        await this.toResponseWithSurvey(row, await this.countsFor(id)),
+        await this.toResponseResolved(row, await this.countsFor(id)),
       ),
       changedFields: Object.keys(data),
     };
@@ -1091,6 +1174,9 @@ export class CampaignsService {
     const excludedCampaignIds = await this.validateExcludedCampaignIds(
       input.excludedCampaignIds,
     );
+    if (input.managerIds !== undefined) {
+      await this.assertManagersExist(input.managerIds);
+    }
     const row = await this.prisma.$transaction(async (tx) => {
       const created = await tx.campaign.create({
         data: {
@@ -1121,7 +1207,7 @@ export class CampaignsService {
       draftAudience !== null && hasAudienceInput(draftAudience)
         ? await this.countsFor(row.id)
         : EMPTY_COUNTS;
-    return this.withResolved(await this.toResponseWithSurvey(row, counts));
+    return this.withResolved(await this.toResponseResolved(row, counts));
   }
 
   /** 임시저장 갱신 — 모집/제외 관계는 전체 교체. 응모가 없으므로 카운트는 항상 0. */
@@ -1136,6 +1222,9 @@ export class CampaignsService {
       input.excludedCampaignIds,
       id,
     );
+    if (input.managerIds !== undefined) {
+      await this.assertManagersExist(input.managerIds);
+    }
     const row = await this.prisma.$transaction(async (tx) => {
       await tx.campaignRecruit.deleteMany({ where: { campaignId: id } });
       for (const recruit of input.recruits ?? []) {
@@ -1164,7 +1253,9 @@ export class CampaignsService {
       actor,
       campaignId: id,
     });
-    return this.withResolved(await this.toResponseWithSurvey(row, await this.countsFor(id)));
+    return this.withResolved(
+      await this.toResponseResolved(row, await this.countsFor(id)),
+    );
   }
 
   /**
@@ -1190,7 +1281,9 @@ export class CampaignsService {
       campaignId: id,
       metadata: { title: row.title, category: row.category },
     });
-    return this.withResolved(await this.toResponseWithSurvey(row, EMPTY_COUNTS));
+    return this.withResolved(
+      await this.toResponseResolved(row, EMPTY_COUNTS),
+    );
   }
 
   private async assertDraft(id: string): Promise<void> {
@@ -1225,7 +1318,7 @@ export class CampaignsService {
       campaignId: id,
     });
     return this.withResolved(
-      await this.toResponseWithSurvey(row, await this.countsFor(id)),
+      await this.toResponseResolved(row, await this.countsFor(id)),
     );
   }
 
@@ -1249,7 +1342,7 @@ export class CampaignsService {
       campaignId: id,
     });
     return this.withResolved(
-      await this.toResponseWithSurvey(row, await this.countsFor(id)),
+      await this.toResponseResolved(row, await this.countsFor(id)),
     );
   }
 
@@ -1299,7 +1392,41 @@ export class CampaignsService {
       data: { hiddenAt },
       include: RECRUITS_INCLUDE,
     });
-    return this.withResolved(await this.toResponseWithSurvey(row, await this.countsFor(id)));
+    return this.withResolved(
+      await this.toResponseResolved(row, await this.countsFor(id)),
+    );
+  }
+
+  /**
+   * 선택한 캠페인의 담당자를 통째로 교체한다 — 추가가 아니라 덮어쓰기다.
+   * 삭제된 캠페인은 먼저 걸러내 실제로 갱신되는 캠페인에만 감사 로그를
+   * 남긴다 — 건드리지 않은 캠페인에 허위 CAMPAIGN_MANAGERS_ASSIGN 기록이
+   * 생기면 안 되기 때문이다.
+   */
+  async assignManagers(
+    input: BulkAssignCampaignManagersRequest,
+    actor: AuditActor,
+  ): Promise<BulkAssignCampaignManagersResponse> {
+    await this.assertManagersExist(input.managerIds);
+    const targetCampaigns = await this.prisma.campaign.findMany({
+      where: { id: { in: input.campaignIds }, deletedAt: null },
+      select: { id: true },
+    });
+    if (targetCampaigns.length === 0) return { updatedCount: 0 };
+    const targetCampaignIds = targetCampaigns.map((campaign) => campaign.id);
+    const result = await this.prisma.campaign.updateMany({
+      where: { id: { in: targetCampaignIds }, deletedAt: null },
+      data: { managerIds: input.managerIds },
+    });
+    await this.audit.recordMany(
+      targetCampaignIds.map((campaignId) => ({
+        action: "CAMPAIGN_MANAGERS_ASSIGN",
+        actor,
+        campaignId,
+        metadata: { managerCount: input.managerIds.length },
+      })),
+    );
+    return { updatedCount: result.count };
   }
 
   /**

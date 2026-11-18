@@ -449,6 +449,7 @@ describe("CampaignsService — surveyId 연결", () => {
       updatedAt: new Date("2026-08-01T00:00:00Z"),
       recruits: [],
       exclusionsAsExcluding: [],
+      managerIds: [],
       ...overrides,
     };
   }
@@ -471,6 +472,13 @@ describe("CampaignsService — surveyId 연결", () => {
       builderSurvey: {
         findUnique: overrides?.builderSurveyFindUnique ?? jest.fn(async () => null),
         findMany: jest.fn(async () => []),
+      },
+      // 이 스펙은 설문 연결만 다루지만 toResponseResolved 경로가 담당자도 함께
+      // 조회한다 — managerIds 가 항상 빈 배열(makeCampaignRow 기본값)이라 조회를
+      // 건너뛰므로 빈 배열을 돌려주는 더미면 충분하다.
+      adminUser: {
+        findMany: jest.fn(async () => []),
+        count: jest.fn(async () => 0),
       },
       campaignApplication: { groupBy: jest.fn(async () => []) },
       campaignView: { groupBy: jest.fn(async () => []) },

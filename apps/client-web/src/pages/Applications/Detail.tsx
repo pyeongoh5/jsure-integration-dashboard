@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   formatProductOptions,
@@ -192,6 +192,9 @@ export function ApplicationDetail() {
             {formatProductOptions(data.productOptions)} {/* new */}
           </div>
         )}
+        <Link className={styles.campaignLink} to={`/campaigns/${data.campaignId}`}>
+          {t("pages.applications.detail.viewCampaign")} {/* new */}
+        </Link>
         <div className={styles.stepper}>
           <ApplicationStepper stage={stage} category={data.campaignCategory} />
         </div>

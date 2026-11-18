@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { CampaignForm as Values } from "@jsure/shared";
+import { getStoredUser } from "@/domains/auth";
 import {
   CampaignForm,
+  CampaignManagerPicker,
   campaignFormStyles,
   createCampaign,
   createCampaignDraft,
+  initialManagerIds,
+  useAdminUserOptions,
   useCampaignFormInitial,
 } from "@/domains/campaign";
 import { useT } from "@/lib/i18n";
@@ -21,6 +25,11 @@ export function CampaignNew() {
     copyFrom ? { kind: "copy", id: copyFrom } : { kind: "empty" },
     reloadKey,
   );
+  // copy/new 모드는 원본 캠페인을 승계하지 않으므로 campaign 인자는 쓰이지 않는다.
+  const [managerIds, setManagerIds] = useState(() =>
+    initialManagerIds(copyFrom ? "copy" : "new", null, getStoredUser()?.id ?? null),
+  );
+  const { managers, error: managersError } = useAdminUserOptions();
 
   const handleSubmit = async (values: Values) => {
     await createCampaign(values);
@@ -66,14 +75,24 @@ export function CampaignNew() {
       : undefined;
 
   return (
-    <div className="cmp">
-      <div className="cmp__header">
-        <h1 className="cmp__title">{t("pages.campaigns.new.title")}</h1>
-        <p className="cmp__subtitle">
-          {copyFrom
-            ? t("pages.campaigns.new.copySubtitle")
-            : t("pages.campaigns.new.subtitle")}
-        </p>
+    <div className={styles.root}>
+      <div className={`${styles.header} ${styles.headerRow}`}>
+        <div>
+          <h1 className={styles.title}>{t("pages.campaigns.new.title")}</h1>
+          <p className={styles.subtitle}>
+            {copyFrom
+              ? t("pages.campaigns.new.copySubtitle")
+              : t("pages.campaigns.new.subtitle")}
+          </p>
+        </div>
+        <div className={styles.headerActions}>
+          <CampaignManagerPicker
+            value={managerIds}
+            onChange={setManagerIds}
+            managers={managers}
+            error={managersError}
+          />
+        </div>
       </div>
       <CampaignForm
         initialValue={state.initial}
@@ -83,6 +102,7 @@ export function CampaignNew() {
         initialThumbnail={copiedThumbnail}
         initialSurveyTitle={state.campaign?.surveyTitle ?? null}
         onCancel={() => navigate("/campaigns")}
+        managerIds={managerIds}
       />
     </div>
   );

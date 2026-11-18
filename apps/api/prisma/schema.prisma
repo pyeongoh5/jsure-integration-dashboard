@@ -159,6 +159,9 @@ model Campaign {
   audienceCampaignIds   String[] @default([])
   audienceTagIds        String[] @default([])
   audienceInfluencerIds String[] @default([])
+  /// 이 캠페인의 운영 담당 어드민 id. 표시·필터용 꼬리표이며 권한과 무관하다.
+  /// AdminUser 와 FK 로 묶지 않는다 — audience* 배열과 같은 취급.
+  managerIds String[] @default([])
   rewardType         RewardType       @default(UNIFIED)
   /// UNIFIED 캠페인의 보수 금액. PER_SUBTYPE 캠페인에서는 사용하지 않는다.
   rewardJpy          Int
@@ -208,6 +211,7 @@ model Campaign {
   exclusionsAsExcluded  CampaignExclusion[] @relation("excludedCampaign")
 
   @@index([recruitStartAt])
+  @@index([managerIds], type: Gin)
   @@map("campaigns")
 }
 

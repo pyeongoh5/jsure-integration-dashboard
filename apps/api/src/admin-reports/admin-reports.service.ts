@@ -14,7 +14,11 @@ import {
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
-import { utcToJstDateStr } from "../campaigns/campaigns.service";
+import {
+  loadManagers,
+  pickManagers,
+  utcToJstDateStr,
+} from "../campaigns/campaigns.service";
 import { parseSurveyQuestions } from "../common/survey-questions";
 
 @Injectable()
@@ -49,6 +53,8 @@ export class AdminReportsService {
     const viewerCountByCampaign = new Map<string, number>(
       viewGrouped.map((view) => [view.campaignId, view._count._all]),
     );
+
+    const managersById = await loadManagers(this.prisma, campaigns);
 
     const rows: CampaignReportRow[] = campaigns.map((campaign) => {
       const influencerSet = new Set<string>();
@@ -142,6 +148,7 @@ export class AdminReportsService {
         participantCount,
         viewerCount,
         applicationRate,
+        managers: pickManagers(campaign.managerIds, managersById),
       };
     });
 

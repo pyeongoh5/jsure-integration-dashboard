@@ -10,6 +10,7 @@ import { translate, type AdminLanguage, type AdminTranslationKey } from "@i18n/a
 import { ScrollTable, SnsProfileLink } from "@/components/composites";
 import { FilterChipBar, MultiSelectFilterChip } from "@/components/composites/FilterChip";
 import { CATEGORY_FILTER_OPTIONS, useSubmissionDetail } from "@/domains/application";
+import { adminUserLabel } from "@/domains/team";
 import { Button } from "@/components/ui";
 import { getStoredLanguage, useT } from "@/lib/i18n";
 import {
@@ -163,6 +164,12 @@ function addSummarySheet(
     { key: "recruitStartDate", labelKey: "pages.reports.recruitStartDate" },
     { key: "recruitEndDate", labelKey: "pages.reports.recruitEndDate" },
   ] as const;
+  // 화면 테이블에는 두지 않고 엑셀 시트에만 담당자 컬럼을 덧붙인다 (periodColumns 와 같은 패턴).
+  const managerColumn = {
+    key: "managers",
+    labelKey: "pages.reports.columns.managers",
+    format: (row: CampaignReportRow) => row.managers.map(adminUserLabel).join(", "),
+  } as const;
   sheet.columns = [
     ...COLUMNS.map((column) => ({
       header: translate(column.labelKey, language),
@@ -175,6 +182,11 @@ function addSummarySheet(
       key: column.key,
       width: 14,
     })),
+    {
+      header: translate(managerColumn.labelKey, language),
+      key: managerColumn.key,
+      width: 30,
+    },
   ];
   sheet.getRow(1).font = { bold: true };
   for (const target of targets) {
@@ -186,6 +198,7 @@ function addSummarySheet(
     for (const column of periodColumns) {
       row[column.key] = target[column.key];
     }
+    row[managerColumn.key] = managerColumn.format(target);
     sheet.addRow(row);
   }
 }

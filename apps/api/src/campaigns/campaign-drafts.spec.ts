@@ -47,6 +47,7 @@ function makeService(overrides: {
     updatedAt: new Date("2026-07-28T00:00:00Z"),
     recruits: [],
     exclusionsAsExcluding: [],
+    managerIds: [],
   };
   const prisma = {
     campaign: {
@@ -71,6 +72,10 @@ function makeService(overrides: {
         overrides.onDelete?.(args);
         return row;
       },
+    },
+    adminUser: {
+      findMany: async () => [],
+      count: async () => 0,
     },
     campaignApplication: {
       groupBy: async () => [],

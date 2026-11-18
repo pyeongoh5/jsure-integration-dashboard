@@ -744,6 +744,8 @@ export const messages = {
         msgApplied: { jp: "承認をお待ちください。", kr: "승인을 기다려 주세요." },
         msgApproved: { jp: "JSUREで発送準備中です。", kr: "JSURE에서 발송 준비 중입니다." },
         productOptions: { jp: "選択オプション", kr: "선택 옵션" }, // new
+        // new — 응모 상세에서 캠페인 상세로 이동
+        viewCampaign: { jp: "キャンペーン詳細を見る", kr: "캠페인 상세 보기" },
         trackingCarrier: { jp: "配送業者", kr: "배송업체" },
         trackingNumber: { jp: "運送番号", kr: "운송장 번호" },
         // new — 송장 없이 선발송된 건

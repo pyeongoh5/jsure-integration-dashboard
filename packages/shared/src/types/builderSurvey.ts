@@ -82,6 +82,12 @@ export const BuilderSurveyListItemSchema = z.object({
 });
 export type BuilderSurveyListItem = z.infer<typeof BuilderSurveyListItemSchema>;
 
+/** 목록 조회 쿼리 — q 는 제목 부분 일치 검색어. 공백만 있으면 검색 조건 없이 전체를 돌려준다. */
+export const BuilderSurveyListQuerySchema = z.object({
+  q: z.string().trim().max(200).optional(),
+});
+export type BuilderSurveyListQuery = z.infer<typeof BuilderSurveyListQuerySchema>;
+
 export const BuilderSurveyPageResponseSchema = z.object({
   items: z.array(BuilderSurveyListItemSchema),
   nextCursor: z.string().nullable(),

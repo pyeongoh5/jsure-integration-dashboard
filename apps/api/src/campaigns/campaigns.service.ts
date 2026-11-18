@@ -366,6 +366,8 @@ type CampaignRow = {
   audienceMode: CampaignAudienceMode;
   rewardType: RewardType;
   rewardJpy: number;
+  /** 연결된 앙케이트(builder_surveys.id). FK 가 아니다(1차 §7 격리 규칙). */
+  surveyId: string | null;
   recruitStartAt: Date;
   recruitEndAt: Date;
   closedAt: Date | null;
@@ -407,7 +409,11 @@ const EMPTY_COUNTS: CampaignCounts = {
 // "모집된 인원" 계산은 shared 의 SLOT_CONSUMING_STATUSES 를 사용
 // (승인 이후 흐름 전체: 승인/배송/주문제출/리뷰제출/완료).
 
-function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse {
+function toResponse(
+  row: CampaignRow,
+  counts: CampaignCounts,
+  surveyTitle: string | null,
+): CampaignResponse {
   return {
     id: row.id,
     category: row.category,
@@ -471,6 +477,8 @@ function toResponse(row: CampaignRow, counts: CampaignCounts): CampaignResponse 
     appliedCount: counts.appliedCount,
     viewerCount: counts.viewerCount,
     excludedCampaignIds: row.exclusionsAsExcluding.map((e) => e.excludedCampaignId),
+    surveyId: row.surveyId,
+    surveyTitle,
     audienceMode: row.audienceMode,
     audienceCount: counts.audienceCount,
     createdAt: row.createdAt.toISOString(),
@@ -675,6 +683,43 @@ export class CampaignsService {
     return map.get(id) ?? EMPTY_COUNTS;
   }
 
+  /**
+   * surveyId 로 설문 제목을 조회한다. relation 이 없으므로(1차 §7 격리 규칙) 별도 조회다.
+   * 설문이 삭제(soft delete)됐어도 행은 남아 있으므로 deletedAt 필터를 걸지 않는다 —
+   * 제목은 캠페인에 연결된 이력 그대로 보여준다.
+   */
+  private async surveyTitleById(surveyId: string | null): Promise<string | null> {
+    if (surveyId === null) return null;
+    const survey = await this.prisma.builderSurvey.findUnique({
+      where: { id: surveyId },
+      select: { title: true },
+    });
+    return survey?.title ?? null;
+  }
+
+  /** 목록용 설문 제목 일괄 조회 — 캠페인마다 조회하면 N+1 이라 한 번에 모아 읽는다. */
+  private async surveyTitlesByIds(surveyIds: string[]): Promise<Map<string, string>> {
+    const titleBySurveyId = new Map<string, string>();
+    const uniqueSurveyIds = [...new Set(surveyIds)];
+    if (uniqueSurveyIds.length === 0) return titleBySurveyId;
+    const surveys = await this.prisma.builderSurvey.findMany({
+      where: { id: { in: uniqueSurveyIds } },
+      select: { id: true, title: true },
+    });
+    for (const survey of surveys) {
+      titleBySurveyId.set(survey.id, survey.title);
+    }
+    return titleBySurveyId;
+  }
+
+  private async toResponseWithSurvey(
+    row: CampaignRow,
+    counts: CampaignCounts,
+  ): Promise<CampaignResponse> {
+    const surveyTitle = await this.surveyTitleById(row.surveyId);
+    return toResponse(row, counts, surveyTitle);
+  }
+
   async create(
     input: CreateCampaignRequest,
     actor: AuditActor,
@@ -696,6 +741,7 @@ export class CampaignsService {
           audienceMode: input.audienceMode,
           rewardType: input.rewardType,
           rewardJpy: input.rewardJpy,
+          surveyId: input.surveyId,
           recruitStartAt: jstDayStartUtc(input.recruitStartDate),
           recruitEndAt: jstDayEndUtc(input.recruitEndDate),
           postingPeriodDays: input.postingPeriodDays,
@@ -737,7 +783,7 @@ export class CampaignsService {
     const counts = hasAudienceInput(input)
       ? await this.countsFor(row.id)
       : EMPTY_COUNTS;
-    return this.withResolved(toResponse(row, counts));
+    return this.withResolved(await this.toResponseWithSurvey(row, counts));
   }
 
   /**
@@ -885,12 +931,18 @@ export class CampaignsService {
       include: RECRUITS_INCLUDE,
     });
     const counts = await this.loadCounts(rows.map((r) => r.id));
+    const surveyIds = rows
+      .map((row) => row.surveyId)
+      .filter((surveyId): surveyId is string => surveyId !== null);
+    const titleBySurveyId = await this.surveyTitlesByIds(surveyIds);
     const responses = await Promise.all(
-      rows.map((row) =>
-        this.withResolved(
-          toResponse(row, counts.get(row.id) ?? EMPTY_COUNTS),
-        ),
-      ),
+      rows.map((row) => {
+        const surveyTitle =
+          row.surveyId === null ? null : (titleBySurveyId.get(row.surveyId) ?? null);
+        return this.withResolved(
+          toResponse(row, counts.get(row.id) ?? EMPTY_COUNTS, surveyTitle),
+        );
+      }),
     );
     // 모집중 → 임시저장 → 모집 완료 → 모집 종료 순. 동일 상태는 DB 정렬(createdAt desc) 유지.
     // 클라이언트가 아닌 서버에서 정렬해야 향후 페이지네이션과 정합.
@@ -906,7 +958,7 @@ export class CampaignsService {
     });
     if (!row) throw new NotFoundException("Campaign not found");
     return this.withResolved(
-      toResponse(row, await this.countsFor(id)),
+      await this.toResponseWithSurvey(row, await this.countsFor(id)),
     );
   }
 
@@ -976,6 +1028,7 @@ export class CampaignsService {
     if (input.cautions !== undefined) data.cautions = input.cautions;
     if (input.thumbnailUrl !== undefined) data.thumbnailUrl = input.thumbnailUrl;
     if (input.audienceMode !== undefined) data.audienceMode = input.audienceMode;
+    if (input.surveyId !== undefined) data.surveyId = input.surveyId;
 
     const validatedExcluded =
       input.excludedCampaignIds !== undefined
@@ -1021,7 +1074,7 @@ export class CampaignsService {
     });
     return {
       response: await this.withResolved(
-        toResponse(row, await this.countsFor(id)),
+        await this.toResponseWithSurvey(row, await this.countsFor(id)),
       ),
       changedFields: Object.keys(data),
     };
@@ -1066,7 +1119,7 @@ export class CampaignsService {
       draftAudience !== null && hasAudienceInput(draftAudience)
         ? await this.countsFor(row.id)
         : EMPTY_COUNTS;
-    return this.withResolved(toResponse(row, counts));
+    return this.withResolved(await this.toResponseWithSurvey(row, counts));
   }
 
   /** 임시저장 갱신 — 모집/제외 관계는 전체 교체. 응모가 없으므로 카운트는 항상 0. */
@@ -1109,7 +1162,7 @@ export class CampaignsService {
       actor,
       campaignId: id,
     });
-    return this.withResolved(toResponse(row, await this.countsFor(id)));
+    return this.withResolved(await this.toResponseWithSurvey(row, await this.countsFor(id)));
   }
 
   /**
@@ -1135,7 +1188,7 @@ export class CampaignsService {
       campaignId: id,
       metadata: { title: row.title, category: row.category },
     });
-    return this.withResolved(toResponse(row, EMPTY_COUNTS));
+    return this.withResolved(await this.toResponseWithSurvey(row, EMPTY_COUNTS));
   }
 
   private async assertDraft(id: string): Promise<void> {
@@ -1170,7 +1223,7 @@ export class CampaignsService {
       campaignId: id,
     });
     return this.withResolved(
-      toResponse(row, await this.countsFor(id)),
+      await this.toResponseWithSurvey(row, await this.countsFor(id)),
     );
   }
 
@@ -1194,7 +1247,7 @@ export class CampaignsService {
       campaignId: id,
     });
     return this.withResolved(
-      toResponse(row, await this.countsFor(id)),
+      await this.toResponseWithSurvey(row, await this.countsFor(id)),
     );
   }
 
@@ -1244,7 +1297,7 @@ export class CampaignsService {
       data: { hiddenAt },
       include: RECRUITS_INCLUDE,
     });
-    return this.withResolved(toResponse(row, await this.countsFor(id)));
+    return this.withResolved(await this.toResponseWithSurvey(row, await this.countsFor(id)));
   }
 
   /**

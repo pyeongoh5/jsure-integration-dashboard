@@ -1,6 +1,8 @@
 import { BadRequestException } from "@nestjs/common";
 import { CreateCampaignRequestSchema, UpdateCampaignRequestSchema } from "@jsure/shared";
+import type { AuditActor } from "../audit/audit.service";
 import {
+  CampaignsService,
   jstDayStartUtc,
   jstDayEndUtc,
   utcToJstDateStr,
@@ -371,5 +373,191 @@ describe("UpdateCampaignRequestSchema 게시 기간", () => {
       publishEndDateTime: "2026-09-10T23:59",
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("CampaignsService — surveyId 연결", () => {
+  const actor: AuditActor = { id: "admin-1", name: "어드민" };
+
+  const validCreateInput = {
+    category: "SNS" as const,
+    title: "테스트 캠페인",
+    tags: [],
+    rewardType: "UNIFIED" as const,
+    rewardJpy: 1000,
+    recruitStartDate: "2026-08-01",
+    recruitEndDate: "2026-08-20",
+    postingPeriodDays: 14,
+    recruits: [
+      {
+        subType: "INSTAGRAM" as const,
+        minFollowers: 0,
+        recruitCount: 1,
+        subTypeOptions: ["FEED"],
+        insightRequired: true,
+        isRequired: false,
+        productPriceJpy: null,
+        productUrl: null,
+        options: [],
+      },
+    ],
+    productSummary: "요약",
+    productDetailUrls: ["https://example.com/product"],
+    guideline: "가이드",
+    referenceMediaUrls: [],
+    cautions: "주의",
+    thumbnailUrl: null,
+    excludedCampaignIds: [],
+  };
+
+  function makeCampaignRow(overrides: Record<string, unknown> = {}) {
+    return {
+      id: "campaign-1",
+      category: "SNS",
+      title: "캠페인",
+      tags: [],
+      publishState: "PUBLISHED",
+      audienceMode: "PUBLIC",
+      audienceCampaignIds: [],
+      audienceTagIds: [],
+      audienceInfluencerIds: [],
+      rewardType: "UNIFIED",
+      rewardJpy: 1000,
+      surveyId: null,
+      recruitStartAt: new Date("2026-08-01T00:00:00Z"),
+      recruitEndAt: new Date("2026-08-20T00:00:00Z"),
+      closedAt: null,
+      hiddenAt: null,
+      deletedAt: null,
+      postingPeriodDays: 14,
+      publishStartAt: null,
+      publishEndAt: null,
+      orderPeriodDays: null,
+      productSummary: "요약",
+      productOptions: [],
+      productDetailUrls: ["https://example.com/product"],
+      guideline: "가이드",
+      referenceMediaUrls: [],
+      cautions: "주의",
+      thumbnailUrl: null,
+      createdAt: new Date("2026-08-01T00:00:00Z"),
+      bumpedAt: new Date("2026-08-01T00:00:00Z"),
+      updatedAt: new Date("2026-08-01T00:00:00Z"),
+      recruits: [],
+      exclusionsAsExcluding: [],
+      ...overrides,
+    };
+  }
+
+  function makeCampaignService(overrides?: {
+    campaignCreate?: jest.Mock<Promise<unknown>, [{ data: Record<string, unknown> }]>;
+    campaignFindUnique?: jest.Mock;
+    campaignFindFirst?: jest.Mock;
+    campaignUpdate?: jest.Mock;
+    builderSurveyFindUnique?: jest.Mock<Promise<{ title: string } | null>, [unknown]>;
+  }) {
+    const prisma: Record<string, unknown> = {
+      campaign: {
+        create: overrides?.campaignCreate ?? jest.fn(async () => makeCampaignRow()),
+        findUnique: overrides?.campaignFindUnique ?? jest.fn(async () => makeCampaignRow()),
+        findFirst: overrides?.campaignFindFirst ?? jest.fn(async () => makeCampaignRow()),
+        findMany: jest.fn(async () => []),
+        update: overrides?.campaignUpdate ?? jest.fn(async () => makeCampaignRow()),
+      },
+      builderSurvey: {
+        findUnique: overrides?.builderSurveyFindUnique ?? jest.fn(async () => null),
+        findMany: jest.fn(async () => []),
+      },
+      campaignApplication: { groupBy: jest.fn(async () => []) },
+      campaignView: { groupBy: jest.fn(async () => []) },
+      campaignAudience: { groupBy: jest.fn(async () => []) },
+      $queryRaw: jest.fn(async () => []),
+    };
+    prisma.$transaction = jest.fn(async (callback: (tx: unknown) => unknown) =>
+      callback(prisma),
+    );
+    const uploads = {
+      resolveCampaignThumbnailUrl: jest.fn(async (url: string | null) => url),
+      resolveR2ImagesInHtml: jest.fn(async (html: string) => html),
+    };
+    const audit = { record: jest.fn(async () => undefined) };
+    const audience = { applyInput: jest.fn(async () => undefined) };
+    const service = new CampaignsService(
+      prisma as never,
+      uploads as never,
+      audit as never,
+      audience as never,
+    );
+    return { service, prisma, uploads, audit, audience };
+  }
+
+  it("surveyId 를 저장한다", async () => {
+    const campaignCreate = jest.fn(
+      async (_args: { data: Record<string, unknown> }) =>
+        makeCampaignRow({ surveyId: "survey-1" }),
+    );
+    const { service } = makeCampaignService({ campaignCreate });
+    const input = CreateCampaignRequestSchema.parse({
+      ...validCreateInput,
+      surveyId: "survey-1",
+    });
+
+    await service.create(input, actor);
+
+    expect(campaignCreate.mock.calls[0]?.[0]?.data).toMatchObject({
+      surveyId: "survey-1",
+    });
+  });
+
+  it("surveyId 가 있으면 응답에 surveyTitle 을 채운다", async () => {
+    const campaignCreate = jest.fn(
+      async (_args: { data: Record<string, unknown> }) =>
+        makeCampaignRow({ surveyId: "survey-1" }),
+    );
+    const builderSurveyFindUnique = jest.fn(async (_args: unknown) => ({ title: "7월 설문" }));
+    const { service } = makeCampaignService({ campaignCreate, builderSurveyFindUnique });
+    const input = CreateCampaignRequestSchema.parse({
+      ...validCreateInput,
+      surveyId: "survey-1",
+    });
+
+    const response = await service.create(input, actor);
+
+    expect(response.surveyTitle).toBe("7월 설문");
+    // include 로 가져오지 않는다 (FK 가 없다) — 별도 findUnique 호출이어야 한다.
+    expect(builderSurveyFindUnique.mock.calls[0]?.[0]).toEqual({
+      where: { id: "survey-1" },
+      select: { title: true },
+    });
+  });
+
+  it("surveyId 가 null 이면 surveyTitle 도 null 이고 설문을 조회하지 않는다", async () => {
+    const builderSurveyFindUnique = jest.fn(async (_args: unknown) => ({ title: "안 쓰임" }));
+    const { service } = makeCampaignService({ builderSurveyFindUnique });
+    const input = CreateCampaignRequestSchema.parse({
+      ...validCreateInput,
+      surveyId: null,
+    });
+
+    const response = await service.create(input, actor);
+
+    expect(response.surveyTitle).toBeNull();
+    expect(builderSurveyFindUnique).not.toHaveBeenCalled();
+  });
+
+  it("연결된 설문이 삭제됐어도 제목을 그대로 내린다", async () => {
+    const campaignFindFirst = jest.fn(
+      async (_args: unknown) => makeCampaignRow({ surveyId: "survey-1" }),
+    );
+    const builderSurveyFindUnique = jest.fn(async (_args: unknown) => ({ title: "삭제된 설문" }));
+    const { service } = makeCampaignService({ campaignFindFirst, builderSurveyFindUnique });
+
+    const response = await service.findById("campaign-1");
+
+    expect(response.surveyTitle).toBe("삭제된 설문");
+    expect(builderSurveyFindUnique.mock.calls[0]?.[0]).toEqual({
+      where: { id: "survey-1" },
+      select: { title: true },
+    });
   });
 });

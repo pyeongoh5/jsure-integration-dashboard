@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  BuilderSurveyListQuerySchema,
   CreateBuilderSurveyRequestSchema,
   UpdateBuilderSurveyRequestSchema,
   type BuilderSurveyPageResponse,
@@ -42,8 +43,11 @@ export class BuilderSurveysController {
   list(
     @Query("cursor") cursor?: string,
     @Query("limit") limit?: string,
+    @Query("q") q?: string,
   ): Promise<BuilderSurveyPageResponse> {
-    return this.surveys.listPage(cursor ?? null, parseLimit(limit));
+    const parsedQuery = BuilderSurveyListQuerySchema.safeParse({ q });
+    const query = parsedQuery.success ? parsedQuery.data.q : undefined;
+    return this.surveys.listPage(cursor ?? null, parseLimit(limit), query);
   }
 
   @Get(":id")

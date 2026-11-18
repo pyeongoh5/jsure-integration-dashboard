@@ -30,6 +30,7 @@ function makeService(overrides: {
     audienceMode: "PUBLIC",
     rewardType: "UNIFIED",
     rewardJpy: 0,
+    surveyId: null,
     recruitStartAt: new Date("2026-07-28T00:00:00Z"),
     recruitEndAt: overrides.recruitEndAt ?? new Date("2026-07-28T00:00:00Z"),
     closedAt: overrides.closedAt ?? null,
@@ -86,6 +87,9 @@ function makeService(overrides: {
     campaignAudience: {
       groupBy: async () => [],
       createMany: async () => ({ count: 0 }),
+    },
+    builderSurvey: {
+      findUnique: async () => null,
     },
     // 캠페인 저장은 모집·대상자 반영과 한 트랜잭션이다. 테스트에서는 같은 더블을 그대로 넘긴다.
     $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),

@@ -54,6 +54,7 @@ function toFormValues(
     cautions: campaign.cautions,
     thumbnailUrl: campaign.thumbnailUrl,
     excludedCampaignIds: campaign.excludedCampaignIds,
+    surveyId: campaign.surveyId,
     audienceMode: campaign.audienceMode,
     managerIds: campaign.managers.map((manager) => manager.id),
     // 저장된 대상자에서 복원한 규칙 — 피커가 기선택 상태로 그려진다.

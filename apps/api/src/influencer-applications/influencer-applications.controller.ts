@@ -144,6 +144,11 @@ export class InfluencerApplicationsController {
     @Body(new ZodValidationPipe(SubmitInsightsRequestSchema))
     dto: SubmitInsightsRequest,
   ) {
-    return this.svc.submitInsights(req.user.id, id, dto.insights);
+    return this.svc.submitInsights(
+      req.user.id,
+      id,
+      dto.insights,
+      dto.surveyAnswers,
+    );
   }
 }

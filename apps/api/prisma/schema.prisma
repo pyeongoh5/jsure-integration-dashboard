@@ -165,6 +165,9 @@ model Campaign {
   rewardType         RewardType       @default(UNIFIED)
   /// UNIFIED 캠페인의 보수 금액. PER_SUBTYPE 캠페인에서는 사용하지 않는다.
   rewardJpy          Int
+  /// 연결된 앙케이트(builder_surveys.id). FK를 걸지 않는다 — 1차 §7 격리 규칙.
+  /// null이면 이 캠페인은 설문을 받지 않는다(기존 캠페인 전부가 여기 해당).
+  surveyId           String?
   recruitStartAt     DateTime
   recruitEndAt       DateTime
   closedAt           DateTime?
@@ -929,4 +932,21 @@ model BuilderSurvey {
 
   @@index([deletedAt, updatedAt, id])
   @@map("builder_surveys")
+}
+
+/// 인플루언서가 인사이트와 함께 제출한 앙케이트 응답.
+/// 격리 규칙(1차 §7): surveyId·applicationId 는 String 일 뿐 FK 가 아니다.
+model BuilderSurveyResponse {
+  id            String   @id @default(cuid())
+  surveyId      String
+  applicationId String   @unique
+  /// 응답 당시의 questions 배열 통째 — 설문이 수정돼도 이 응답의 해석이 고정된다.
+  questionsSnapshot Json
+  /// { "<questionId>": <답> }. 답의 모양은 문항 타입에 따라 다르다.
+  answers       Json
+  schemaVersion Int      @default(1)
+  submittedAt   DateTime @default(now())
+
+  @@index([surveyId])
+  @@map("builder_survey_responses")
 }

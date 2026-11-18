@@ -83,8 +83,18 @@ export class BuilderSurveysService {
     return row;
   }
 
-  async listPage(cursor: string | null, limit: number): Promise<BuilderSurveyPageResponse> {
-    const where = { deletedAt: null };
+  async listPage(
+    cursor: string | null,
+    limit: number,
+    query?: string,
+  ): Promise<BuilderSurveyPageResponse> {
+    const trimmedQuery = query?.trim();
+    const where = trimmedQuery
+      ? {
+          deletedAt: null,
+          title: { contains: trimmedQuery, mode: "insensitive" as const },
+        }
+      : { deletedAt: null };
     const [rows, total] = await Promise.all([
       this.prisma.builderSurvey.findMany({
         where,

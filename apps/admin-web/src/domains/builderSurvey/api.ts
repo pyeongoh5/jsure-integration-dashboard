@@ -12,10 +12,12 @@ import { builderApi } from "@/lib/api";
 export async function listSurveysPage(
   cursor: string | null,
   limit: number,
+  query?: string,
 ): Promise<BuilderSurveyPageResponse> {
   const search = new URLSearchParams();
   search.set("limit", String(limit));
   if (cursor) search.set("cursor", cursor);
+  if (query) search.set("q", query);
   const res = await builderApi.get(`/admin/builder/surveys?${search}`);
   return BuilderSurveyPageResponseSchema.parse(res.data);
 }

@@ -673,6 +673,8 @@ export const CampaignFormSchema = z
     /** 이 캠페인 응모를 막을 기존 캠페인 id 목록. */
     excludedCampaignIds: z.array(z.string()).max(50).optional().default([]),
     audienceMode: CampaignAudienceModeSchema.default("PUBLIC"),
+    /** 연결된 앙케이트(builder_surveys.id). FK 가 아니다(1차 §7 격리 규칙). null 이면 미연결. */
+    surveyId: z.string().nullable().default(null),
     /** 이 캠페인의 운영 담당 어드민 id 목록. */
     managerIds: z.array(z.string()).max(20).default([]),
     ...AUDIENCE_INPUT_SHAPE,
@@ -746,6 +748,8 @@ export const UpdateCampaignRequestSchema = z
     thumbnailUrl: z.string().min(1).nullable().optional(),
     excludedCampaignIds: z.array(z.string()).max(50).optional(),
     audienceMode: CampaignAudienceModeSchema.optional(),
+    /** 연결된 앙케이트(builder_surveys.id). 미포함이면 기존 연결을 건드리지 않는다. */
+    surveyId: z.string().nullable().optional(),
     managerIds: z.array(z.string()).max(20).optional(),
     ...AUDIENCE_PATCH_SHAPE,
   })
@@ -864,6 +868,7 @@ export const CampaignDraftRequestSchema = z.object({
   thumbnailUrl: z.string().min(1).nullable().optional(),
   excludedCampaignIds: z.array(z.string()).max(50).optional(),
   audienceMode: CampaignAudienceModeSchema.optional(),
+  surveyId: z.string().nullable().optional(),
   managerIds: z.array(z.string()).max(20).optional(),
   ...AUDIENCE_PATCH_SHAPE,
 });
@@ -944,6 +949,16 @@ export const CampaignResponseSchema = z.object({
   /** 캠페인 상세를 열람한 인플루언서 수(명). 같은 사람이 여러 번 봐도 1. */
   viewerCount: z.number().int().nonnegative(),
   excludedCampaignIds: z.array(z.string()),
+  /**
+   * 연결된 앙케이트(builder_surveys.id). null 이면 미연결.
+   * default 는 이 필드가 없는 구 API 와의 배포 갭 대비.
+   */
+  surveyId: z.string().nullable().default(null),
+  /**
+   * surveyId 로 조회한 설문 제목. 설문이 삭제돼도(soft delete) 제목은 그대로 내려준다.
+   * default 는 이 필드가 없는 구 API 와의 배포 갭 대비.
+   */
+  surveyTitle: z.string().nullable().default(null),
   /** 공개 범위. default 는 이 필드가 없는 구 API 와의 배포 갭 대비. */
   audienceMode: CampaignAudienceModeSchema.default("PUBLIC"),
   /** 등록된 대상자 수. RESTRICTED 인데 0 이면 아무에게도 보이지 않는다. */

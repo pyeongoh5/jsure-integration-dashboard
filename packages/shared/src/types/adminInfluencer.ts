@@ -15,6 +15,7 @@ import {
 } from "./application.js";
 import { AttachmentSchema, InsightAttachmentInputSchema } from "./uploads.js";
 import { InfluencerWithdrawalSchema } from "./influencerWithdrawal.js";
+import { SurveyAnswersSchema, SurveyQuestionsSchema } from "./builderSurvey.js";
 
 export { PostReviewStatusSchema };
 export type { PostReviewStatus } from "./application.js";
@@ -223,6 +224,19 @@ export type SubmittedPostRejection = z.infer<
   typeof SubmittedPostRejectionSchema
 >;
 
+/**
+ * 응모자가 제출한 앙케이트 응답 — 검수 팝업에 그 사람이 답한 그대로를 보여주기 위해
+ * 제출 시점 문항 스냅샷을 함께 내린다(현재 설문이 아니다).
+ */
+export const AdminSubmissionSurveyResponseSchema = z.object({
+  questionsSnapshot: SurveyQuestionsSchema,
+  answers: SurveyAnswersSchema,
+  submittedAt: z.string().datetime(),
+});
+export type AdminSubmissionSurveyResponse = z.infer<
+  typeof AdminSubmissionSurveyResponseSchema
+>;
+
 export const AdminSubmissionPostSchema = z.object({
   id: z.string(),
   subType: CampaignSubTypeSchema,
@@ -269,6 +283,12 @@ export const AdminSubmissionSchema = z.object({
    * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
    */
   crossPosts: z.array(CrossPostSchema).default([]),
+
+  /**
+   * 캠페인에 연결된 앙케이트에 이 응모자가 낸 답. 설문 미연결이거나 아직 미제출이면 null.
+   * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
+   */
+  surveyResponse: AdminSubmissionSurveyResponseSchema.nullable().default(null),
 
   settlement: z
     .object({

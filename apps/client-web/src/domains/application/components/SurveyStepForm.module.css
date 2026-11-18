@@ -1,0 +1,39 @@
+.surveyDescription {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-4);
+}
+
+.question {
+  margin-bottom: var(--space-5);
+}
+
+.questionTitle {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.required {
+  color: var(--color-danger);
+  margin-left: 2px;
+}
+
+.questionDescription {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-2);
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.issue {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+  margin-top: var(--space-2);
+}

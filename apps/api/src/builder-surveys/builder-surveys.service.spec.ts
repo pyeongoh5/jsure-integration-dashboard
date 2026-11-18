@@ -212,6 +212,32 @@ describe("BuilderSurveysService", () => {
     });
   });
 
+  it("q 를 주면 제목 부분 일치로 거른다", async () => {
+    const findMany = jest.fn(async (_queryArgs: Prisma.BuilderSurveyFindManyArgs) => []);
+    const count = jest.fn(async (_queryArgs: Prisma.BuilderSurveyCountArgs) => 0);
+    const { service } = makeService({ findMany, count });
+
+    await service.listPage(null, 30, "7월");
+
+    const expectedWhere = {
+      deletedAt: null,
+      title: { contains: "7월", mode: "insensitive" },
+    };
+    expect(findMany.mock.calls[0]?.[0]?.where).toEqual(expectedWhere);
+    expect(count.mock.calls[0]?.[0]?.where).toEqual(expectedWhere);
+  });
+
+  it("q 가 비어 있거나 공백뿐이면 제목 조건을 걸지 않는다", async () => {
+    const findMany = jest.fn(async (_queryArgs: Prisma.BuilderSurveyFindManyArgs) => []);
+    const count = jest.fn(async (_queryArgs: Prisma.BuilderSurveyCountArgs) => 0);
+    const { service } = makeService({ findMany, count });
+
+    await service.listPage(null, 30, "   ");
+
+    expect(findMany.mock.calls[0]?.[0]?.where).toEqual({ deletedAt: null });
+    expect(count.mock.calls[0]?.[0]?.where).toEqual({ deletedAt: null });
+  });
+
   it("update 는 updatedBy 만 바꾸고 createdBy 는 건드리지 않는다", async () => {
     const findFirst = jest.fn(async (_queryArgs: Prisma.BuilderSurveyFindFirstArgs) => makeRow());
     const update = jest.fn(async (_queryArgs: Prisma.BuilderSurveyUpdateArgs) => makeRow());

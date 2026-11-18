@@ -141,6 +141,12 @@ function makeService(overrides: MakeServiceOverrides = {}) {
       count: async (args: { where: { id: { in: string[] } } }) =>
         args.where.id.in.filter((id) => existingAdminIds.has(id)).length,
     },
+    // 이 스펙은 담당자 기능만 다루지만 toResponseResolved 경로가 설문 제목도 함께
+    // 조회한다 — 이 스펙의 캠페인은 설문과 무관하므로 항상 null 을 돌려준다.
+    builderSurvey: {
+      findUnique: async () => null,
+      findMany: async () => [],
+    },
     campaignApplication: {
       groupBy: async () => [],
       count: async () => 0,

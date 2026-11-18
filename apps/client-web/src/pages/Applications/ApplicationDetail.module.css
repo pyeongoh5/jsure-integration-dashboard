@@ -21,6 +21,14 @@
   color: #111;
 }
 
+.campaignLink {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
 .reward {
   font-size: var(--font-size-2xl);
   font-weight: 800;

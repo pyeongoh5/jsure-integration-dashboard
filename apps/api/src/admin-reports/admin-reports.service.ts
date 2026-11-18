@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import {
   SLOT_CONSUMING_STATUSES,
+  SurveyAnswersSchema,
+  SurveyQuestionSchema,
   formatTitleWithTags,
   postUrls,
   type CampaignParticipantsResponse,
@@ -9,6 +11,7 @@ import {
   type CampaignReportRow,
   type CampaignReportSortKey,
   type CampaignReportSortOrder,
+  type SurveyAnswers,
 } from "@jsure/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
@@ -158,24 +161,32 @@ export class AdminReportsService {
   ): Promise<CampaignParticipantsResponse> {
     const campaign = await this.prisma.campaign.findFirst({
       where: { id: campaignId, ...PUBLISHED_CAMPAIGN_WHERE },
-      select: { id: true },
+      select: { id: true, surveyId: true },
     });
     if (!campaign) throw new NotFoundException("Campaign not found");
 
-    const participants = await this.collectParticipants(campaignId);
+    const survey = await this.resolveSurveyQuestions(campaign.surveyId);
+    const participants = await this.collectParticipants(campaignId, survey);
     const total = participants.length;
     const start = page * pageSize;
     return {
       total,
       participants: participants.slice(start, start + pageSize),
+      survey,
     };
   }
 
   /**
    * 참여자 목록 — 응모가 승인된 이후 단계인 인플루언서를 참여 서브타입별 행으로 편다.
    * 아직 게시물을 제출하지 않았어도 행으로 나오며 인사이트는 빈 값이다.
+   *
+   * 앙케이트 응답은 응모(applicationId) 단위이므로 같은 응모가 펼쳐진 서브타입 행들에는
+   * 같은 답이 반복된다. `survey` 가 null(설문 미연결)이면 응답 조회 자체를 생략한다.
    */
-  private async collectParticipants(campaignId: string): Promise<CampaignReportParticipant[]> {
+  private async collectParticipants(
+    campaignId: string,
+    survey: CampaignParticipantsResponse["survey"],
+  ): Promise<CampaignReportParticipant[]> {
     const applications = await this.prisma.campaignApplication.findMany({
       where: { campaignId, status: { in: SLOT_CONSUMING_STATUSES } },
       orderBy: { appliedAt: "asc" },
@@ -195,6 +206,12 @@ export class AdminReportsService {
         },
       },
     });
+
+    const surveyAnswersByApplicationId = survey
+      ? await this.surveyAnswersByApplicationIds(
+          applications.map((application) => application.id),
+        )
+      : new Map<string, SurveyAnswers>();
 
     return applications.flatMap((application) =>
       [...application.subTypes]
@@ -232,9 +249,52 @@ export class AdminReportsService {
               views: post?.insightViews ?? null,
               reach: post?.insightReach ?? null,
             },
+            surveyAnswers: surveyAnswersByApplicationId.get(application.id) ?? null,
           };
         }),
     );
+  }
+
+  /**
+   * 설문 응답을 응모 묶음으로 한 번에 읽는다(행마다 조회하면 N+1).
+   * `builderSurveyResponse.applicationId` 는 FK 가 아니다(1차 §7 격리 규칙).
+   */
+  private async surveyAnswersByApplicationIds(
+    applicationIds: string[],
+  ): Promise<Map<string, SurveyAnswers>> {
+    const surveyAnswersByApplicationId = new Map<string, SurveyAnswers>();
+    if (applicationIds.length === 0) return surveyAnswersByApplicationId;
+    const surveyResponses = await this.prisma.builderSurveyResponse.findMany({
+      where: { applicationId: { in: applicationIds } },
+      select: { applicationId: true, answers: true },
+    });
+    for (const surveyResponse of surveyResponses) {
+      const answers = SurveyAnswersSchema.safeParse(surveyResponse.answers);
+      if (answers.success) {
+        surveyAnswersByApplicationId.set(surveyResponse.applicationId, answers.data);
+      }
+    }
+    return surveyAnswersByApplicationId;
+  }
+
+  /**
+   * 캠페인에 연결된 설문의 현재 문항. relation 이 없으므로(1차 §7 격리 규칙)
+   * `builderSurvey.findUnique` 로 따로 읽는다. 미연결이거나 가리키는 설문이
+   * 없으면 null — 리포트 엑셀은 이 경우 설문 컬럼을 전혀 붙이지 않는다.
+   */
+  private async resolveSurveyQuestions(
+    surveyId: string | null,
+  ): Promise<CampaignParticipantsResponse["survey"]> {
+    if (!surveyId) return null;
+    const survey = await this.prisma.builderSurvey.findUnique({
+      where: { id: surveyId },
+      select: { id: true, questions: true },
+    });
+    if (!survey) return null;
+    return {
+      id: survey.id,
+      questions: SurveyQuestionSchema.array().parse(survey.questions),
+    };
   }
 }
 

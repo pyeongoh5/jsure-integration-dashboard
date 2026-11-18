@@ -1,3 +1,4 @@
+import type { SurveyQuestion } from "@jsure/shared";
 import { AdminReportsService } from "./admin-reports.service";
 
 type StubApplication = {
@@ -236,5 +237,138 @@ describe("참여자 목록", () => {
     expect(rows[0]!.category).toBe("SNS");
     expect(rows[0]!.recruitStartDate).toBe("2026-07-01");
     expect(rows[0]!.recruitEndDate).toBe("2026-07-31");
+  });
+});
+
+/**
+ * 참여자 목록에 붙는 설문 응답 스텁. `builderSurvey.findUnique`/`builderSurveyResponse.findMany`
+ * 를 `makeService` 와 별도로 둔다 — 기존 테스트가 쓰는 `campaign.findFirst` 모양(select: id 만)을
+ * 건드리지 않기 위해서다.
+ */
+function makeServiceWithSurvey(options: {
+  applications: StubApplication[];
+  surveyId: string | null;
+  surveyQuestions?: SurveyQuestion[];
+  surveyResponses?: { applicationId: string; answers: unknown }[];
+}) {
+  const campaignFindFirst = jest
+    .fn()
+    .mockResolvedValue({ id: "c1", surveyId: options.surveyId });
+  const campaignApplicationFindMany = jest.fn().mockResolvedValue(
+    options.applications.map((application, index) => ({
+      ...application,
+      id: `app${index + 1}`,
+      options: application.options ?? [],
+      posts: application.posts.map((post) => ({
+        url: null,
+        submittedAt: SUBMITTED_AT,
+        ...post,
+      })),
+    })),
+  );
+  const builderSurveyFindUnique = jest.fn().mockResolvedValue(
+    options.surveyId
+      ? { id: options.surveyId, questions: options.surveyQuestions ?? [] }
+      : null,
+  );
+  const builderSurveyResponseFindMany = jest
+    .fn()
+    .mockResolvedValue(options.surveyResponses ?? []);
+  const prisma = {
+    campaign: { findFirst: campaignFindFirst },
+    campaignApplication: { findMany: campaignApplicationFindMany },
+    builderSurvey: { findUnique: builderSurveyFindUnique },
+    builderSurveyResponse: { findMany: builderSurveyResponseFindMany },
+  } as never;
+  const service = new AdminReportsService(prisma);
+  return {
+    service,
+    builderSurveyFindUnique,
+    builderSurveyResponseFindMany,
+  };
+}
+
+describe("참여자 목록 — 설문 응답", () => {
+  const textQuestion: SurveyQuestion = {
+    id: "q1",
+    type: "TEXT",
+    title: "한마디",
+    required: false,
+    multiline: true,
+  };
+
+  it("설문 미연결 캠페인은 survey 가 null 이고 참가자 surveyAnswers 도 null", async () => {
+    const { service } = makeServiceWithSurvey({
+      applications: [application({ influencerId: "i1", status: "APPROVED" })],
+      surveyId: null,
+    });
+
+    const { participants, survey } = await service.campaignParticipants("c1", 0, 20);
+
+    expect(survey).toBeNull();
+    expect(participants[0]!.surveyAnswers).toBeNull();
+  });
+
+  it("설문 연결 캠페인은 survey.questions 를 함께 내린다", async () => {
+    const { service } = makeServiceWithSurvey({
+      applications: [application({ influencerId: "i1", status: "APPROVED" })],
+      surveyId: "survey-1",
+      surveyQuestions: [textQuestion],
+    });
+
+    const { survey } = await service.campaignParticipants("c1", 0, 20);
+
+    expect(survey).toEqual({ id: "survey-1", questions: [textQuestion] });
+  });
+
+  it("같은 응모의 서브타입 행들이 같은 surveyAnswers 를 갖는다", async () => {
+    const { service } = makeServiceWithSurvey({
+      applications: [
+        application({
+          influencerId: "i1",
+          status: "APPROVED",
+          subTypes: ["INSTAGRAM", "TIKTOK"],
+        }),
+      ],
+      surveyId: "survey-1",
+      surveyQuestions: [textQuestion],
+      surveyResponses: [{ applicationId: "app1", answers: { q1: "좋아요" } }],
+    });
+
+    const { participants } = await service.campaignParticipants("c1", 0, 20);
+
+    expect(participants).toHaveLength(2);
+    expect(participants[0]!.surveyAnswers).toEqual({ q1: "좋아요" });
+    expect(participants[1]!.surveyAnswers).toEqual({ q1: "좋아요" });
+  });
+
+  it("응답 조회는 applicationId 묶음으로 한 번에 한다", async () => {
+    const { service, builderSurveyResponseFindMany } = makeServiceWithSurvey({
+      applications: [
+        application({ influencerId: "i1", status: "APPROVED" }),
+        application({ influencerId: "i2", status: "APPROVED" }),
+      ],
+      surveyId: "survey-1",
+      surveyQuestions: [textQuestion],
+    });
+
+    await service.campaignParticipants("c1", 0, 20);
+
+    expect(builderSurveyResponseFindMany).toHaveBeenCalledTimes(1);
+    expect(builderSurveyResponseFindMany).toHaveBeenCalledWith({
+      where: { applicationId: { in: ["app1", "app2"] } },
+      select: { applicationId: true, answers: true },
+    });
+  });
+
+  it("설문이 연결되지 않으면 응답 조회 자체를 생략한다", async () => {
+    const { service, builderSurveyResponseFindMany } = makeServiceWithSurvey({
+      applications: [application({ influencerId: "i1", status: "APPROVED" })],
+      surveyId: null,
+    });
+
+    await service.campaignParticipants("c1", 0, 20);
+
+    expect(builderSurveyResponseFindMany).not.toHaveBeenCalled();
   });
 });

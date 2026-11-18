@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import ExcelJS from "exceljs";
 import {
   type CampaignCategory,
+  type CampaignParticipantsResponse,
   type CampaignReportParticipant,
 } from "@jsure/shared";
 import { subTypeOptionLabel } from "@/domains/application/subTypeOptionLabel";
@@ -18,6 +19,7 @@ import {
   type CampaignReportSortKey,
   type CampaignReportSortOrder,
 } from "@/domains/report";
+import { buildSurveyColumns } from "./surveyColumns";
 import styles from "./Reports.module.css";
 
 const SNS_LABEL: Record<CampaignReportParticipant["subType"], string> = {
@@ -486,7 +488,7 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
       addSummarySheet(workbook, targets, language, usedSheetNames);
       for (const target of targets) {
         // 다운로드 시점에 백엔드에서 전체 참여자 일괄 조회.
-        const participants = await fetchAllParticipants(target.campaignId);
+        const { participants, survey } = await fetchAllParticipants(target.campaignId);
         const sheetName = uniqueSheetName(
           target.campaignTitle,
           usedSheetNames,
@@ -508,6 +510,9 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
             value: target.recruitEndDate,
           },
         ];
+        const translateLabel: Translator = (key, params) => translate(key, language, params);
+        // 설문이 연결되지 않은 캠페인은 빈 배열이라 시트 구조가 지금과 완전히 동일하다.
+        const surveyColumns = buildSurveyColumns(survey?.questions ?? null, translateLabel);
         sheet.columns = [
           ...sheetColumns.map((column) => ({
             header: translate(column.labelKey, language),
@@ -520,9 +525,13 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
             key: column.key,
             width: 14,
           })),
+          ...surveyColumns.map((column) => ({
+            header: column.label,
+            key: column.key,
+            width: 24,
+          })),
         ];
         sheet.getRow(1).font = { bold: true };
-        const translateLabel: Translator = (key, params) => translate(key, language, params);
         for (const participant of participants) {
           const row: Record<string, string | number> = {};
           for (const column of sheetColumns) {
@@ -530,6 +539,9 @@ function CampaignDownloadDialog({ rows, onClose }: CampaignDownloadDialogProps) 
           }
           for (const column of recruitPeriodColumns) {
             row[column.key] = column.value;
+          }
+          for (const column of surveyColumns) {
+            row[column.key] = column.value(participant);
           }
           sheet.addRow(row);
         }
@@ -654,11 +666,14 @@ const PARTICIPANTS_DOWNLOAD_PAGE_SIZE = 10000;
 /**
  * 참여자 전량 수집. 서버는 응모를 서브타입별 행으로 펼치므로
  * participantCount(응모 수)보다 행이 많을 수 있어 total 도달까지 반복 조회한다.
+ * `survey` 는 캠페인 단위 값이라 페이지마다 동일 — 마지막 응답의 값을 쓴다.
  */
-async function fetchAllParticipants(
-  campaignId: string,
-): Promise<CampaignReportParticipant[]> {
+async function fetchAllParticipants(campaignId: string): Promise<{
+  participants: CampaignReportParticipant[];
+  survey: CampaignParticipantsResponse["survey"];
+}> {
   const collected: CampaignReportParticipant[] = [];
+  let survey: CampaignParticipantsResponse["survey"] = null;
   for (let page = 0; ; page += 1) {
     const response = await getCampaignParticipants(
       campaignId,
@@ -666,8 +681,11 @@ async function fetchAllParticipants(
       PARTICIPANTS_DOWNLOAD_PAGE_SIZE,
     );
     collected.push(...response.participants);
+    survey = response.survey;
     const noMoreRows = response.participants.length === 0;
-    if (collected.length >= response.total || noMoreRows) return collected;
+    if (collected.length >= response.total || noMoreRows) {
+      return { participants: collected, survey };
+    }
   }
 }
 

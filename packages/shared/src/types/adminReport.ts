@@ -5,6 +5,7 @@ import {
 } from "./application.js";
 import { CampaignCategorySchema } from "./campaign.js";
 import { CampaignSubTypeSchema } from "./influencer.js";
+import { SurveyAnswersSchema, SurveyQuestionSchema } from "./builderSurvey.js";
 
 export const CampaignReportParticipantSchema = z.object({
   /** 제출물 상세 모달을 여는 키. */
@@ -32,6 +33,8 @@ export const CampaignReportParticipantSchema = z.object({
     views: z.number().int().nullable(),
     reach: z.number().int().nullable(),
   }),
+  /** 응모 단위 앙케이트 응답. 설문 미연결 캠페인이거나 응답 전이면 null. */
+  surveyAnswers: SurveyAnswersSchema.nullable(),
 });
 export type CampaignReportParticipant = z.infer<
   typeof CampaignReportParticipantSchema
@@ -70,6 +73,10 @@ export const CampaignReportRowSchema = z.object({
 export const CampaignParticipantsResponseSchema = z.object({
   total: z.number().int(),
   participants: z.array(CampaignReportParticipantSchema),
+  /** 캠페인에 연결된 설문의 현재 문항. 설문 미연결이면 null. */
+  survey: z
+    .object({ id: z.string(), questions: z.array(SurveyQuestionSchema) })
+    .nullable(),
 });
 export type CampaignParticipantsResponse = z.infer<
   typeof CampaignParticipantsResponseSchema

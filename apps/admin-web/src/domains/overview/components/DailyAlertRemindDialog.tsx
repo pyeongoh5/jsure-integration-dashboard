@@ -88,7 +88,7 @@ export function DailyAlertRemindDialog({ kind, onClose, onSent }: Props) {
               ? t("pages.overview.remind.notice")
               : t("pages.overview.remind.sent", { count: sentCount })}
           </span>
-          <span className={styles.boardTools}>
+          <span className={styles.dialogActions}>
             <Button variant="secondary" size="md" onClick={onClose}>
               {t("common.close")}
             </Button>

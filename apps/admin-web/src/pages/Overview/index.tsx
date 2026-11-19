@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   formatTitleWithTags,
@@ -49,6 +49,12 @@ export function Overview() {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 300);
   const [alertKind, setAlertKind] = useState<DailyActionAlertKind | null>(null);
+  const [boardPage, setBoardPage] = useState(0);
+
+  // 필터를 바꾸면 목록이 통째로 달라지므로 항상 첫 페이지부터 보여 준다.
+  useEffect(() => {
+    setBoardPage(0);
+  }, [stageFilter, categoryFilter, debouncedQuery]);
 
   const boardQuery = useQuery({
     queryKey: ["admin", "overview", "campaign-board"],
@@ -159,7 +165,13 @@ export function Overview() {
             {t("pages.overview.loadFailed")}
           </div>
         )}
-        {boardQuery.isSuccess && <CampaignBoardTable rows={visibleRows} />}
+        {boardQuery.isSuccess && (
+          <CampaignBoardTable
+            rows={visibleRows}
+            page={boardPage}
+            onPageChange={setBoardPage}
+          />
+        )}
       </section>
 
       {alertKind && (

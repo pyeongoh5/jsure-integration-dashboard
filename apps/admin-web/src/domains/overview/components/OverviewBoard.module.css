@@ -229,6 +229,20 @@
   color: var(--c-subtle);
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.pageStatus {
+  font-size: var(--font-size-sm);
+  color: var(--c-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* 리마인드 다이얼로그 */
 .targetList {
   display: flex;

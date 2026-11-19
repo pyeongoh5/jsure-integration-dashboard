@@ -59,10 +59,27 @@ function likertStepLabel(scale: LikertScale, step: number): string {
   return key ? t(key) : "";
 }
 
-/** 라디오 옵션에 표시할 문구 — 라벨이 없는 단계(NUMERIC 중간)는 번호만 보여준다. */
-function likertOptionLabel(scale: LikertScale, step: number): string {
+/** 척도 칸의 내용 — 단계 번호 아래에 라벨. 라벨이 없는 단계(NUMERIC 중간)는 번호만. */
+function LikertCellLabel({ scale, step }: { scale: LikertScale; step: number }) {
   const label = likertStepLabel(scale, step);
-  return label ? `${step} - ${label}` : String(step);
+  return (
+    <span className={styles.likertCellLabel}>
+      <span className={styles.likertStep}>{step}</span>
+      {label && <span className={styles.likertText}>{label}</span>}
+    </span>
+  );
+}
+
+function optionRowClass(checked: boolean): string {
+  return [styles.optionRow, checked ? styles.optionRowChecked : ""]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function likertCellClass(checked: boolean): string {
+  return [styles.likertCell, checked ? styles.likertCellChecked : ""]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function issueMessage(kind: SurveyAnswerIssue["kind"]): string {
@@ -104,6 +121,7 @@ function renderQuestionInput(
               checked={answer === option}
               onChange={() => onAnswerChange(option)}
               label={option}
+              className={optionRowClass(answer === option)}
             />
           ))}
         </div>
@@ -124,6 +142,7 @@ function renderQuestionInput(
                 )
               }
               label={option}
+              className={optionRowClass(selected.includes(option))}
             />
           ))}
         </div>
@@ -133,14 +152,15 @@ function renderQuestionInput(
       const stepCount = likertStepCount(question.scale);
       const steps = Array.from({ length: stepCount }, (_, index) => index + 1);
       return (
-        <div className={styles.optionList}>
+        <div className={styles.likertScale}>
           {steps.map((step) => (
             <Radio
               key={step}
               name={question.id}
               checked={answer === step}
               onChange={() => onAnswerChange(step)}
-              label={likertOptionLabel(question.scale, step)}
+              label={<LikertCellLabel scale={question.scale} step={step} />}
+              className={likertCellClass(answer === step)}
             />
           ))}
         </div>
@@ -194,13 +214,19 @@ export function SurveyStepForm({
       {survey.description && (
         <p className={styles.surveyDescription}>{survey.description}</p>
       )}
-      {survey.questions.map((question) => {
+      {survey.questions.map((question, index) => {
         const issueKind = issueKindByQuestionId[question.id];
+        const questionClass = [styles.question, issueKind ? styles.questionInvalid : ""]
+          .filter(Boolean)
+          .join(" ");
         return (
-          <div key={question.id} className={styles.question}>
-            <div className={styles.questionTitle}>
-              {question.title}
-              {question.required && <span className={styles.required}>*</span>}
+          <div key={question.id} className={questionClass}>
+            <div className={styles.questionHead}>
+              <span className={styles.questionNumber}>Q{index + 1}</span>
+              <span className={styles.questionTitle}>
+                {question.title}
+                {question.required && <span className={styles.required}>*</span>}
+              </span>
             </div>
             {question.description && (
               <p className={styles.questionDescription}>{question.description}</p>

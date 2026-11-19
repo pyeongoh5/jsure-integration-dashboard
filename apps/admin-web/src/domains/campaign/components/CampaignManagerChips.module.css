@@ -24,14 +24,14 @@
 
 /*
  * 접힌 담당자를 보여주는 툴팁. 네이티브 title 은 표시까지 1초 이상 걸리고
- * 모양을 줄 수 없어 직접 그린다. 칩 아래·오른쪽 정렬이라 카드 밖으로 넘치지
- * 않는다(카드 조상에 overflow:hidden 이 없음을 확인했다).
+ * 모양을 줄 수 없어 직접 그린다. 칩 위·오른쪽 정렬이며, 카드 조상에
+ * overflow:hidden 이 없어 카드 바깥으로 넘쳐도 잘리지 않는다.
  */
 .tooltip {
   position: absolute;
-  top: calc(100% + 6px);
+  bottom: calc(100% + 6px);
   right: 0;
-  z-index: 2;
+  z-index: 3;
   max-width: 240px;
   padding: 6px 10px;
   border-radius: 6px;

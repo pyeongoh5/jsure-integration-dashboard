@@ -24,12 +24,20 @@ import { PrimaryButton } from "../../components/composites/PrimaryButton";
 import { Toast } from "../../components/composites/Toast";
 import styles from "./Apply.module.css";
 
-const CONFIRM_KEYS_SNS = ["PR_LABEL", "DEADLINE", "INSIGHTS", "YAKKIHO", "GUIDELINE"] as const;
+const CONFIRM_KEYS_SNS = [
+  "PR_LABEL",
+  "DEADLINE",
+  "INSIGHTS",
+  "YAKKIHO",
+  "GUIDELINE",
+  "LINE_SNS_ID",
+] as const;
 const CONFIRM_KEYS_FAKE_PURCHASE = [
   "NATURAL_REVIEW", // 가구매는 PR 표기 대신 자연스러운 리뷰 항목
   "DEADLINE",
   "YAKKIHO",
   "GUIDELINE",
+  "LINE_SNS_ID",
 ] as const;
 
 const CONFIRM_KEYS_SIMPLE_REVIEW = [
@@ -37,6 +45,7 @@ const CONFIRM_KEYS_SIMPLE_REVIEW = [
   "DEADLINE",
   "YAKKIHO",
   "GUIDELINE",
+  "LINE_SNS_ID",
 ] as const;
 
 type ConfirmKey =
@@ -66,6 +75,8 @@ function confirmLabel(
       return t("pages.apply.confirmYakkiho");
     case "GUIDELINE":
       return t("pages.apply.confirmGuideline");
+    case "LINE_SNS_ID":
+      return t("pages.apply.confirmLineSnsId"); // new
   }
 }
 

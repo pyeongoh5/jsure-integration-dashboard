@@ -45,8 +45,8 @@ const PRESET_STEP_KEYS: Record<FullLabelPreset, readonly AdminTranslationKey[]> 
   ],
 };
 
-const NUMERIC_MIN_KEY: AdminTranslationKey = "builderSurveys.likert.NUMERIC.min";
-const NUMERIC_MAX_KEY: AdminTranslationKey = "builderSurveys.likert.NUMERIC.max";
+const NUMERIC_POINT_KEY: AdminTranslationKey = "builderSurveys.likert.NUMERIC.point";
+const NUMERIC_STEPS = [1, 2, 3, 4, 5] as const;
 
 const CUSTOM_LABELS_MAX = 10;
 
@@ -84,13 +84,9 @@ export function LikertScaleEditor({ value, onChange, disabled = false }: Props) 
       case "NUMERIC":
         return (
           <div className={styles.numericPreview}>
-            <span>
-              1 — {t(NUMERIC_MIN_KEY)}
-            </span>
-            <span className={styles.numericMid}>2 3 4</span>
-            <span>
-              5 — {t(NUMERIC_MAX_KEY)}
-            </span>
+            {NUMERIC_STEPS.map((step) => (
+              <span key={step}>{t(NUMERIC_POINT_KEY, { step })}</span>
+            ))}
           </div>
         );
       case "CUSTOM":

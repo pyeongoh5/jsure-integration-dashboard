@@ -4593,8 +4593,8 @@ export const adminMessages = {
         step5: { ko: "항상 함", en: "Always", ja: "いつも" },
       },
       NUMERIC: {
-        min: { ko: "매우 낮음", en: "Very low", ja: "非常に低い" },
-        max: { ko: "매우 높음", en: "Very high", ja: "非常に高い" },
+        /** 숫자형은 양끝 라벨 대신 단계마다 점수로 표기한다. */
+        point: { ko: "{step}점", en: "{step} pt", ja: "{step}点" },
       },
     },
   },

@@ -42,8 +42,8 @@ const LIKERT_PRESET_STEP_KEYS: Record<LikertFullLabelPreset, readonly Translatio
   ],
 };
 
-const LIKERT_NUMERIC_MIN_KEY: TranslationKey = "builderSurveys.likert.NUMERIC.min";
-const LIKERT_NUMERIC_MAX_KEY: TranslationKey = "builderSurveys.likert.NUMERIC.max";
+const LIKERT_NUMERIC_POINT_SUFFIX_KEY: TranslationKey =
+  "builderSurveys.likert.NUMERIC.pointSuffix";
 
 /** 리커트 단계(1-based)의 라벨. 프리셋만 i18n 에서 읽고, CUSTOM 라벨은 운영자 입력 그대로 쓴다. */
 function likertStepLabel(scale: LikertScale, step: number): string {
@@ -51,21 +51,18 @@ function likertStepLabel(scale: LikertScale, step: number): string {
     return scale.labels[step - 1] ?? "";
   }
   if (scale.preset === "NUMERIC") {
-    if (step === 1) return t(LIKERT_NUMERIC_MIN_KEY);
-    if (step === likertStepCount(scale)) return t(LIKERT_NUMERIC_MAX_KEY);
-    return "";
+    return `${step}${t(LIKERT_NUMERIC_POINT_SUFFIX_KEY)}`;
   }
   const key = LIKERT_PRESET_STEP_KEYS[scale.preset][step - 1];
   return key ? t(key) : "";
 }
 
 /**
- * 모든 단계에 라벨이 있나 — 프리셋(동의도·만족도·빈도)과 CUSTOM 은 참, NUMERIC 은 거짓.
- * 참이면 라벨을 칸 안에, 거짓이면 양끝 라벨만 척도 아래 캡션으로 뺀다. 섞으면
- * 라벨 있는 칸만 길어져 아래쪽이 들쭉날쭉해진다.
+ * 숫자형은 라벨 자체가 `3점` 이라 단계 번호를 따로 띄우면 `3` 과 `3점` 이 겹친다.
+ * 나머지 척도는 번호 + 라벨을 함께 보여줘 척도상 위치를 알 수 있게 한다.
  */
-function hasLabelOnEveryStep(scale: LikertScale, steps: number[]): boolean {
-  return steps.every((step) => likertStepLabel(scale, step) !== "");
+function showsStepNumber(scale: LikertScale): boolean {
+  return scale.preset !== "NUMERIC";
 }
 
 function optionRowClass(checked: boolean): string {
@@ -150,38 +147,26 @@ function renderQuestionInput(
       const scale = question.scale;
       const stepCount = likertStepCount(scale);
       const steps = Array.from({ length: stepCount }, (_, index) => index + 1);
-      const labelInCell = hasLabelOnEveryStep(scale, steps);
+      const withStepNumber = showsStepNumber(scale);
       return (
-        <div className={styles.likert}>
-          <div className={styles.likertScale}>
-            {steps.map((step) => (
-              <Radio
-                key={step}
-                name={question.id}
-                checked={answer === step}
-                onChange={() => onAnswerChange(step)}
-                label={
-                  <span className={styles.likertCellLabel}>
-                    <span className={styles.likertStep}>{step}</span>
-                    {labelInCell && (
-                      <span className={styles.likertText}>
-                        {likertStepLabel(scale, step)}
-                      </span>
-                    )}
+        <div className={styles.likertScale}>
+          {steps.map((step) => (
+            <Radio
+              key={step}
+              name={question.id}
+              checked={answer === step}
+              onChange={() => onAnswerChange(step)}
+              label={
+                <span className={styles.likertCellLabel}>
+                  {withStepNumber && <span className={styles.likertStep}>{step}</span>}
+                  <span className={withStepNumber ? styles.likertText : styles.likertStep}>
+                    {likertStepLabel(scale, step)}
                   </span>
-                }
-                className={likertCellClass(answer === step)}
-              />
-            ))}
-          </div>
-          {!labelInCell && (
-            <div className={styles.likertEnds}>
-              <span className={styles.likertText}>{likertStepLabel(scale, 1)}</span>
-              <span className={styles.likertText}>
-                {likertStepLabel(scale, stepCount)}
-              </span>
-            </div>
-          )}
+                </span>
+              }
+              className={likertCellClass(answer === step)}
+            />
+          ))}
         </div>
       );
     }

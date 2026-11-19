@@ -82,23 +82,12 @@
 }
 
 /* 리커트는 세로 목록이 아니라 가로 척도여야 "정도를 고르는 것"으로 읽힌다. */
-.likert {
-  margin-top: var(--space-3);
-}
-
 /* stretch — 칸마다 라벨 길이가 달라도 높이는 같아야 아래선이 가지런하다. */
 .likertScale {
   display: flex;
   align-items: stretch;
   gap: var(--space-1);
-}
-
-/* 양끝만 라벨이 있는 척도(NUMERIC)의 캡션. 칸 안에 넣으면 그 칸만 길어진다. */
-.likertEnds {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
 }
 
 .likertCell.likertCell {

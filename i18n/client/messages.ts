@@ -989,8 +989,8 @@ export const messages = {
         step5: { jp: "いつも", kr: "항상 함" }, // new
       },
       NUMERIC: {
-        min: { jp: "非常に低い", kr: "매우 낮음" }, // new
-        max: { jp: "非常に高い", kr: "매우 높음" }, // new
+        // t() 는 파라미터 보간을 지원하지 않아 접미사만 둔다 — 호출부가 `${step}` 뒤에 붙인다.
+        pointSuffix: { jp: "点", kr: "점" }, // new
       },
     },
   },

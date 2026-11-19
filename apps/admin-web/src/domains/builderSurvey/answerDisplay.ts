@@ -32,32 +32,32 @@ const LIKERT_PRESET_STEP_KEYS: Record<
   ],
 };
 
-const LIKERT_NUMERIC_MIN_KEY: AdminTranslationKey = "builderSurveys.likert.NUMERIC.min";
-const LIKERT_NUMERIC_MAX_KEY: AdminTranslationKey = "builderSurveys.likert.NUMERIC.max";
+const LIKERT_NUMERIC_POINT_KEY: AdminTranslationKey = "builderSurveys.likert.NUMERIC.point";
 
 /**
  * 리커트 척도 단계(1-based)의 표시 라벨. 프리셋은 `translateLabel`(어드민 i18n) 로,
  * CUSTOM 은 설문 작성 시 운영자가 입력한 라벨을 그대로 읽는다.
  *
- * NUMERIC 프리셋은 양 끝(최소/최대)만 라벨이 있고 중간 단계는 숫자만 쓰므로 빈 문자열을
- * 돌려준다. 범위를 벗어난 step 도 빈 문자열 — 호출부가 숫자만 보여줄 수 있게.
+ * NUMERIC 프리셋은 단계마다 점수로 표기한다 — `1점`, `2점` … 범위를 벗어난 step 만
+ * 빈 문자열이다.
  *
- * Task 8(캠페인 리포트 엑셀)이 같은 변환을 그대로 가져다 쓴다 — 화면과 엑셀의 라벨이
+ * 캠페인 리포트 엑셀이 같은 변환을 그대로 가져다 쓴다 — 화면과 엑셀의 라벨이
  * 갈라지지 않도록 이 함수 하나로 고정한다.
  */
 export function likertLabel(
   scale: LikertScale,
   step: number,
-  translateLabel: (key: AdminTranslationKey) => string,
+  translateLabel: (
+    key: AdminTranslationKey,
+    params?: Record<string, string | number>,
+  ) => string,
 ): string {
   if (step < 1 || step > likertStepCount(scale)) return "";
   if (scale.preset === "CUSTOM") {
     return scale.labels[step - 1] ?? "";
   }
   if (scale.preset === "NUMERIC") {
-    if (step === 1) return translateLabel(LIKERT_NUMERIC_MIN_KEY);
-    if (step === likertStepCount(scale)) return translateLabel(LIKERT_NUMERIC_MAX_KEY);
-    return "";
+    return translateLabel(LIKERT_NUMERIC_POINT_KEY, { step });
   }
   const key = LIKERT_PRESET_STEP_KEYS[scale.preset][step - 1];
   return key ? translateLabel(key) : "";

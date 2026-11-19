@@ -30,15 +30,6 @@
 }
 
 /* 표시 전용 pill. .filter 와 같은 모양이지만 버튼이 아니라 hover 효과를 넣지 않는다. */
-.staticChip {
-  display: inline-block;
-  border: 1px solid var(--c-border);
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 12px;
-  color: var(--c-muted);
-}
-
 .clearButton {
   background: transparent;
   border: none;

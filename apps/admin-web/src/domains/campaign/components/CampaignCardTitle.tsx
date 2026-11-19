@@ -9,7 +9,9 @@ import {
 } from "../types";
 import { CampaignManagerChips } from "./CampaignManagerChips";
 
-const MAX_VISIBLE_CARD_MANAGER_LABELS = 2;
+// 카드는 뱃지·D-day 와 한 줄을 나눠 쓴다. 2명을 펼치면 이름이 긴 담당자에서
+// 칩이 D-day 를 밀어내므로 1명만 펼치고 나머지는 +N 으로 접는다.
+const MAX_VISIBLE_CARD_MANAGER_LABELS = 1;
 
 type Props = {
   status: CampaignStatus;

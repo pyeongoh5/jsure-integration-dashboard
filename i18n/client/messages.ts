@@ -576,6 +576,11 @@ export const messages = {
       },
       confirmYakkiho: { jp: "薬事法の遵守", kr: "약기법 준수" },
       confirmGuideline: { jp: "ガイドラインを確認し、遵守します", kr: "가이드라인 확인·준수" },
+      // new — LINE 으로 SNS 계정 ID 를 공유했는지 확인
+      confirmLineSnsId: {
+        jp: "LINEでSNSのIDを共有しました。",
+        kr: "LINE으로 SNS 아이디를 공유했습니다.",
+      },
       snsFollower: { jp: "フォロワー", kr: "팔로워" },
       snsSubscriber: { jp: "登録者", kr: "구독자" },
       instagramFeed: { jp: "フィード", kr: "피드" },

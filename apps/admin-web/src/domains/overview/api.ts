@@ -3,7 +3,9 @@ import {
   DailyActionAlertTargetsResponseSchema,
   DailyActionAlertsResponseSchema,
   SendDailyActionRemindersResponseSchema,
+  campaignBoardFilterToParams,
   type AdminCampaignBoardResponse,
+  type CampaignBoardFilter,
   type DailyActionAlertKind,
   type DailyActionAlertTargetsResponse,
   type DailyActionAlertsResponse,
@@ -11,8 +13,15 @@ import {
 } from "@jsure/shared";
 import { api } from "@/lib/api";
 
-export async function getCampaignBoard(): Promise<AdminCampaignBoardResponse> {
-  const res = await api.get("/admin/overview/campaign-board");
+/** 통합 테이블 한 페이지. 필터·페이징은 전부 서버에서 적용된다. */
+export async function getCampaignBoard(
+  filter: CampaignBoardFilter,
+): Promise<AdminCampaignBoardResponse> {
+  const search = new URLSearchParams(campaignBoardFilterToParams(filter));
+  const query = search.toString();
+  const res = await api.get(
+    `/admin/overview/campaign-board${query ? `?${query}` : ""}`,
+  );
   return AdminCampaignBoardResponseSchema.parse(res.data);
 }
 

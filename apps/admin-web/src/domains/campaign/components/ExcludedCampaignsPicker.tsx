@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
-import type { CampaignResponse } from "@jsure/shared";
+import { foldForSearch, type CampaignResponse } from "@jsure/shared";
 import { useT } from "@/lib/i18n";
-import { foldForSearch } from "@/lib/searchText";
 import styles from "./ExcludedCampaignsPicker.module.css";
 
 type Props = {

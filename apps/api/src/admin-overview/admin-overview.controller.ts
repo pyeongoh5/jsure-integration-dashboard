@@ -1,14 +1,7 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Req,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
 import {
   DailyActionAlertKindSchema,
+  parseCampaignBoardFilterParams,
   SendDailyActionRemindersRequestSchema,
   type AdminCampaignBoardResponse,
   type AdminOverviewResponse,
@@ -35,15 +28,13 @@ export class AdminOverviewController {
   ) {}
 
   @Get()
-  stats(
-    @Req() request: { user: AuthenticatedUser },
-  ): Promise<AdminOverviewResponse> {
+  stats(@Req() request: { user: AuthenticatedUser }): Promise<AdminOverviewResponse> {
     return this.svc.stats(request.user.id);
   }
 
   @Get("campaign-board")
-  campaignBoard(): Promise<AdminCampaignBoardResponse> {
-    return this.board.board();
+  campaignBoard(@Query() query: Record<string, string>): Promise<AdminCampaignBoardResponse> {
+    return this.board.board(parseCampaignBoardFilterParams(query));
   }
 
   @Get("daily-alerts")

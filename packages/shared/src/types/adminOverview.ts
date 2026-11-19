@@ -71,12 +71,59 @@ export const CampaignBoardRowSchema = z.object({
 });
 export type CampaignBoardRow = z.infer<typeof CampaignBoardRowSchema>;
 
-export const AdminCampaignBoardResponseSchema = z.object({
-  rows: z.array(CampaignBoardRowSchema),
+/** 단계별 건수. 단계 필터는 빼고 집계하므로 단계를 골라도 숫자가 유지된다. */
+export const CampaignStageCountsSchema = z.object({
+  OPEN_PENDING: z.number().int().nonnegative(),
+  IN_PROGRESS: z.number().int().nonnegative(),
+  INSIGHT_COLLECTING: z.number().int().nonnegative(),
+  SETTLEMENT_PENDING: z.number().int().nonnegative(),
 });
-export type AdminCampaignBoardResponse = z.infer<
-  typeof AdminCampaignBoardResponseSchema
->;
+export type CampaignStageCounts = z.infer<typeof CampaignStageCountsSchema>;
+
+export const AdminCampaignBoardResponseSchema = z.object({
+  /** 요청한 페이지의 행만 담는다. */
+  rows: z.array(CampaignBoardRowSchema),
+  /** 필터에 걸린 전체 행 수. 페이지 수 계산용. */
+  total: z.number().int().nonnegative(),
+  stageCounts: CampaignStageCountsSchema,
+});
+export type AdminCampaignBoardResponse = z.infer<typeof AdminCampaignBoardResponseSchema>;
+
+/** 통합 테이블 한 페이지의 행 수. */
+export const CAMPAIGN_BOARD_PAGE_SIZE = 15;
+
+/** 통합 테이블 목록 필터. 전부 서버에서 적용된다. */
+export const CampaignBoardFilterSchema = z.object({
+  stage: CampaignStageSchema.nullable().default(null),
+  category: CampaignCategorySchema.nullable().default(null),
+  /** 캠페인명·어드민 태그 부분일치 검색어. */
+  query: z.string().default(""),
+  page: z.number().int().nonnegative().default(0),
+});
+export type CampaignBoardFilter = z.infer<typeof CampaignBoardFilterSchema>;
+
+export const EMPTY_CAMPAIGN_BOARD_FILTER: CampaignBoardFilter = CampaignBoardFilterSchema.parse({});
+
+/** 필터를 쿼리스트링 파라미터로 직렬화. 파싱은 parseCampaignBoardFilterParams. */
+export function campaignBoardFilterToParams(filter: CampaignBoardFilter): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (filter.stage) params.stage = filter.stage;
+  if (filter.category) params.category = filter.category;
+  if (filter.query.trim()) params.q = filter.query.trim();
+  if (filter.page > 0) params.page = String(filter.page);
+  return params;
+}
+
+/** 쿼리스트링에서 필터 복원. 알 수 없는 값은 조용히 버린다(필터를 좁히지 않는 쪽이 안전). */
+export function parseCampaignBoardFilterParams(raw: Record<string, unknown>): CampaignBoardFilter {
+  const page = Number(raw.page);
+  return CampaignBoardFilterSchema.parse({
+    stage: CampaignStageSchema.safeParse(raw.stage).success ? raw.stage : null,
+    category: CampaignCategorySchema.safeParse(raw.category).success ? raw.category : null,
+    query: typeof raw.q === "string" ? raw.q : "",
+    page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 0,
+  });
+}
 
 /** 출고 후 이 일수가 지나도록 수령 확인이 없으면 미수령 알림 대상. */
 export const DELIVERY_UNCONFIRMED_DAYS = 10;
@@ -86,15 +133,10 @@ export const DailyActionAlertsResponseSchema = z.object({
   deliveryUnconfirmedCount: z.number().int().nonnegative(),
   withdrawalPendingCount: z.number().int().nonnegative(),
 });
-export type DailyActionAlertsResponse = z.infer<
-  typeof DailyActionAlertsResponseSchema
->;
+export type DailyActionAlertsResponse = z.infer<typeof DailyActionAlertsResponseSchema>;
 
 /** 목록·리마인드 발송을 지원하는 알림 종류. 탈퇴 대기는 발송이 아니라 이동이다. */
-export const DailyActionAlertKindSchema = z.enum([
-  "POST_OVERDUE",
-  "DELIVERY_UNCONFIRMED",
-]);
+export const DailyActionAlertKindSchema = z.enum(["POST_OVERDUE", "DELIVERY_UNCONFIRMED"]);
 export type DailyActionAlertKind = z.infer<typeof DailyActionAlertKindSchema>;
 
 export const DailyActionAlertTargetSchema = z.object({
@@ -106,23 +148,17 @@ export const DailyActionAlertTargetSchema = z.object({
   /** LINE 미연동이면 리마인드가 발송되지 않는다(발송 로그에 SKIP 으로 남는다). */
   lineLinked: z.boolean(),
 });
-export type DailyActionAlertTarget = z.infer<
-  typeof DailyActionAlertTargetSchema
->;
+export type DailyActionAlertTarget = z.infer<typeof DailyActionAlertTargetSchema>;
 
 export const DailyActionAlertTargetsResponseSchema = z.object({
   targets: z.array(DailyActionAlertTargetSchema),
 });
-export type DailyActionAlertTargetsResponse = z.infer<
-  typeof DailyActionAlertTargetsResponseSchema
->;
+export type DailyActionAlertTargetsResponse = z.infer<typeof DailyActionAlertTargetsResponseSchema>;
 
 export const SendDailyActionRemindersRequestSchema = z.object({
   applicationIds: z.array(z.string().min(1)).min(1).max(300),
 });
-export type SendDailyActionRemindersRequest = z.infer<
-  typeof SendDailyActionRemindersRequestSchema
->;
+export type SendDailyActionRemindersRequest = z.infer<typeof SendDailyActionRemindersRequestSchema>;
 
 export const SendDailyActionRemindersResponseSchema = z.object({
   /** 발송을 요청한 건수. 개별 성공·실패는 LINE 발송 로그에 남는다. */

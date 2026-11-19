@@ -1,31 +1,34 @@
 import { Link } from "react-router-dom";
-import { formatTitleWithTags, type CampaignBoardRow } from "@jsure/shared";
+import {
+  CAMPAIGN_BOARD_PAGE_SIZE,
+  formatTitleWithTags,
+  type CampaignBoardRow,
+} from "@jsure/shared";
 import { CampaignStageBadge, ScrollTable } from "@/components/composites";
 import { Button } from "@/components/ui";
 import { CATEGORY_LABEL_KO } from "@/domains/application";
 import { useT } from "@/lib/i18n";
 import styles from "./OverviewBoard.module.css";
 
-const PAGE_SIZE = 15;
-
 type Props = {
-  /** 필터까지 적용된 전체 행. 페이지 자르기는 이 컴포넌트가 한다. */
+  /** 현재 페이지의 행만. 자르기는 서버가 한다. */
   rows: CampaignBoardRow[];
+  /** 필터에 걸린 전체 행 수 — 페이지 수 계산용. */
+  total: number;
   page: number;
   onPageChange: (page: number) => void;
 };
 
-export function CampaignBoardTable({ rows, page, onPageChange }: Props) {
+export function CampaignBoardTable({ rows, total, page, onPageChange }: Props) {
   const t = useT();
 
   if (rows.length === 0) {
     return <div className={styles.empty}>{t("pages.overview.board.empty")}</div>;
   }
 
-  // 필터로 행이 줄어 현재 페이지가 사라졌을 때를 대비해 범위 안으로 당긴다.
-  const totalPages = Math.ceil(rows.length / PAGE_SIZE);
+  // 서버가 요청 페이지를 범위 안으로 당겨 응답하므로 여기서도 같은 값을 쓴다.
+  const totalPages = Math.ceil(total / CAMPAIGN_BOARD_PAGE_SIZE);
   const safePage = Math.min(page, totalPages - 1);
-  const pageRows = rows.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
 
   return (
     <>
@@ -41,7 +44,7 @@ export function CampaignBoardTable({ rows, page, onPageChange }: Props) {
             </tr>
           </thead>
           <tbody>
-            {pageRows.map((row) => (
+            {rows.map((row) => (
               <tr key={row.campaignId}>
                 <td>
                   <div className={styles.campaignTitle}>

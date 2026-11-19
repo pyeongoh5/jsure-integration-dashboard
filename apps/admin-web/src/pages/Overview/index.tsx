@@ -1,15 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
-  formatTitleWithTags,
+  CampaignBoardFilterSchema,
+  type CampaignBoardFilter,
   type CampaignCategory,
   type CampaignStage,
+  type CampaignStageCounts,
   type DailyActionAlertKind,
 } from "@jsure/shared";
-import {
-  FilterChipBar,
-  SingleSelectFilterChip,
-} from "@/components/composites/FilterChip";
+import { FilterChipBar, SingleSelectFilterChip } from "@/components/composites/FilterChip";
 import { CATEGORY_FILTER_OPTIONS } from "@/domains/application";
 import { getStoredUser } from "@/domains/auth";
 import {
@@ -23,10 +22,9 @@ import {
 } from "@/domains/overview";
 import { useT } from "@/lib/i18n";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
-import { foldForSearch } from "@/lib/searchText";
 import styles from "./Overview.module.css";
 
-const EMPTY_STAGE_COUNTS: Record<CampaignStage, number> = {
+const EMPTY_STAGE_COUNTS: CampaignStageCounts = {
   OPEN_PENDING: 0,
   IN_PROGRESS: 0,
   INSIGHT_COLLECTING: 0,
@@ -43,60 +41,41 @@ export function Overview() {
   const t = useT();
   const user = getStoredUser();
   const [stageFilter, setStageFilter] = useState<CampaignStage | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<CampaignCategory | null>(
-    null,
-  );
+  const [categoryFilter, setCategoryFilter] = useState<CampaignCategory | null>(null);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 300);
   const [alertKind, setAlertKind] = useState<DailyActionAlertKind | null>(null);
-  const [boardPage, setBoardPage] = useState(0);
+  const [page, setPage] = useState(0);
 
   // 필터를 바꾸면 목록이 통째로 달라지므로 항상 첫 페이지부터 보여 준다.
-  useEffect(() => {
-    setBoardPage(0);
-  }, [stageFilter, categoryFilter, debouncedQuery]);
+  const changeFilter = (apply: () => void) => {
+    setPage(0);
+    apply();
+  };
+
+  const boardFilter = useMemo<CampaignBoardFilter>(
+    () =>
+      CampaignBoardFilterSchema.parse({
+        stage: stageFilter,
+        category: categoryFilter,
+        query: debouncedQuery.trim(),
+        page,
+      }),
+    [stageFilter, categoryFilter, debouncedQuery, page],
+  );
 
   const boardQuery = useQuery({
-    queryKey: ["admin", "overview", "campaign-board"],
-    queryFn: getCampaignBoard,
+    queryKey: ["admin", "overview", "campaign-board", boardFilter],
+    queryFn: () => getCampaignBoard(boardFilter),
     staleTime: 30_000,
+    // 페이지를 넘길 때 표가 빈 화면으로 깜빡이지 않도록 이전 페이지를 남겨 둔다.
+    placeholderData: keepPreviousData,
   });
   const alertsQuery = useQuery({
     queryKey: ["admin", "overview", "daily-alerts"],
     queryFn: getDailyActionAlerts,
     staleTime: 30_000,
   });
-
-  // 단계 카운터는 카테고리·검색까지 반영한 뒤의 집계다 — 카운터를 눌러 테이블이
-  // 걸러졌을 때 숫자와 행 수가 어긋나지 않도록.
-  const scopedRows = useMemo(() => {
-    const rows = boardQuery.data?.rows ?? [];
-    const folded = foldForSearch(debouncedQuery.trim());
-    return rows.filter((row) => {
-      if (categoryFilter !== null && row.category !== categoryFilter) return false;
-      if (
-        folded &&
-        !foldForSearch(formatTitleWithTags(row.tags, row.title)).includes(folded)
-      ) {
-        return false;
-      }
-      return true;
-    });
-  }, [boardQuery.data, categoryFilter, debouncedQuery]);
-
-  const stageCounts = useMemo(() => {
-    const counts = { ...EMPTY_STAGE_COUNTS };
-    for (const row of scopedRows) counts[row.stage] += 1;
-    return counts;
-  }, [scopedRows]);
-
-  const visibleRows = useMemo(
-    () =>
-      stageFilter === null
-        ? scopedRows
-        : scopedRows.filter((row) => row.stage === stageFilter),
-    [scopedRows, stageFilter],
-  );
 
   return (
     <div className={styles.ov}>
@@ -109,9 +88,9 @@ export function Overview() {
       </div>
 
       <StagePipelineBar
-        counts={stageCounts}
+        counts={boardQuery.data?.stageCounts ?? EMPTY_STAGE_COUNTS}
         selected={stageFilter}
-        onSelect={setStageFilter}
+        onSelect={(stage) => changeFilter(() => setStageFilter(stage))}
       />
 
       <DailyActionAlerts
@@ -122,27 +101,19 @@ export function Overview() {
 
       <section className={overviewBoardStyles.boardCard}>
         <header className={overviewBoardStyles.boardHead}>
-          <h2 className={overviewBoardStyles.boardTitle}>
-            {t("pages.overview.board.title")}
-          </h2>
+          <h2 className={overviewBoardStyles.boardTitle}>{t("pages.overview.board.title")}</h2>
           <div className={overviewBoardStyles.boardTools}>
             <FilterChipBar>
               <SingleSelectFilterChip
-                emptyLabel={t(
-                  "domains.application.applicants.categoryFilter.chipEmpty",
-                )}
-                labelPrefix={t(
-                  "domains.application.applicants.categoryFilter.prefix",
-                )}
-                popoverTitle={t(
-                  "domains.application.applicants.categoryFilter.title",
-                )}
+                emptyLabel={t("domains.application.applicants.categoryFilter.chipEmpty")}
+                labelPrefix={t("domains.application.applicants.categoryFilter.prefix")}
+                popoverTitle={t("domains.application.applicants.categoryFilter.title")}
                 options={CATEGORY_FILTER_OPTIONS.map((option) => ({
                   key: option.key,
                   label: t(option.label),
                 }))}
                 value={categoryFilter}
-                onChange={setCategoryFilter}
+                onChange={(category) => changeFilter(() => setCategoryFilter(category))}
               />
             </FilterChipBar>
             <div className={overviewBoardStyles.search}>
@@ -151,7 +122,7 @@ export function Overview() {
                 type="text"
                 placeholder={t("pages.overview.board.searchPlaceholder")}
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => changeFilter(() => setQuery(event.target.value))}
               />
             </div>
           </div>
@@ -161,15 +132,14 @@ export function Overview() {
           <div className={overviewBoardStyles.empty}>{t("common.loading")}</div>
         )}
         {boardQuery.isError && (
-          <div className={overviewBoardStyles.empty}>
-            {t("pages.overview.loadFailed")}
-          </div>
+          <div className={overviewBoardStyles.empty}>{t("pages.overview.loadFailed")}</div>
         )}
-        {boardQuery.isSuccess && (
+        {boardQuery.data && (
           <CampaignBoardTable
-            rows={visibleRows}
-            page={boardPage}
-            onPageChange={setBoardPage}
+            rows={boardQuery.data.rows}
+            total={boardQuery.data.total}
+            page={page}
+            onPageChange={setPage}
           />
         )}
       </section>

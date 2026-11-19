@@ -4429,6 +4429,7 @@ export const adminMessages = {
       table: {
         select: { ko: "선택", en: "Select", ja: "選択" },
         title: { ko: "제목", en: "Title", ja: "タイトル" },
+        responseCount: { ko: "응답자 수", en: "Responses", ja: "回答者数" },
         createdAt: { ko: "생성일", en: "Created", ja: "作成日" },
         updatedAt: { ko: "수정일", en: "Updated", ja: "更新日" },
         createdBy: { ko: "생성자", en: "Created by", ja: "作成者" },
@@ -4446,6 +4447,11 @@ export const adminMessages = {
       editor: {
         createTitle: { ko: "앙케이트 만들기", en: "Create survey", ja: "アンケートを作成" },
         editTitle: { ko: "앙케이트 수정", en: "Edit survey", ja: "アンケートを編集" },
+        responsesExistWarning: {
+          ko: "이미 {count}명이 응답했습니다. 문항을 고쳐도 기존 응답은 그대로 남지만, 수정 이후에 제출되는 응답부터 새 문항이 적용됩니다.",
+          en: "{count} people have already responded. Editing the questions keeps existing responses intact, but responses submitted after the change use the new questions.",
+          ja: "すでに{count}名が回答しています。設問を修正しても既存の回答はそのまま残りますが、修正後に提出される回答から新しい設問が適用されます。",
+        },
         titleLabel: { ko: "설문 제목", en: "Survey title", ja: "アンケートタイトル" },
         titlePlaceholder: {
           ko: "설문 제목을 입력하세요",
@@ -4593,8 +4599,8 @@ export const adminMessages = {
         step5: { ko: "항상 함", en: "Always", ja: "いつも" },
       },
       NUMERIC: {
-        min: { ko: "매우 낮음", en: "Very low", ja: "非常に低い" },
-        max: { ko: "매우 높음", en: "Very high", ja: "非常に高い" },
+        /** 숫자형은 양끝 라벨 대신 단계마다 점수로 표기한다. */
+        point: { ko: "{step}점", en: "{step} pt", ja: "{step}点" },
       },
     },
   },

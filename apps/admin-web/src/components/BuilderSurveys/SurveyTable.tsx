@@ -67,6 +67,9 @@ export function SurveyTable({
               {t("pages.builderSurveys.table.select")}
             </th>
             <th>{t("pages.builderSurveys.table.title")}</th>
+            <th className={styles.countCell}>
+              {t("pages.builderSurveys.table.responseCount")}
+            </th>
             <th style={{ width: 120 }}>{t("pages.builderSurveys.table.createdAt")}</th>
             <th style={{ width: 120 }}>{t("pages.builderSurveys.table.updatedAt")}</th>
             <th style={{ width: 140 }}>{t("pages.builderSurveys.table.createdBy")}</th>
@@ -88,6 +91,7 @@ export function SurveyTable({
                 />
               </td>
               <td>{survey.title}</td>
+              <td className={styles.countCell}>{survey.responseCount}</td>
               <td className={styles.date}>{formatDate(survey.createdAt)}</td>
               <td className={styles.date}>{formatDate(survey.updatedAt)}</td>
               <td>{survey.createdByName}</td>

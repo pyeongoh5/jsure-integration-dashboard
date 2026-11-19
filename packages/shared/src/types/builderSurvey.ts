@@ -79,6 +79,12 @@ export const BuilderSurveyListItemSchema = z.object({
   updatedAt: z.string(),
   createdByName: z.string(),
   updatedByName: z.string(),
+  /**
+   * 이 설문에 제출된 응답자 수. 응답은 응모당 1건이라 사람 수와 같다.
+   * 문항을 고쳐도 과거 응답은 스냅샷으로 보존되지만, 0 이 아니면 수정 시 주의가 필요하다.
+   * default 는 이 필드를 아직 내려주지 않는 구 API 와의 배포 갭 대비.
+   */
+  responseCount: z.number().int().nonnegative().default(0),
 });
 export type BuilderSurveyListItem = z.infer<typeof BuilderSurveyListItemSchema>;
 

@@ -37,6 +37,8 @@ function makeService(overrides?: {
   count?: jest.Mock;
   deleteRow?: jest.Mock;
   adminUserFindMany?: jest.Mock;
+  responseGroupBy?: jest.Mock;
+  responseCount?: jest.Mock;
 }) {
   const prisma = {
     builderSurvey: {
@@ -46,6 +48,10 @@ function makeService(overrides?: {
       update: overrides?.update ?? jest.fn(async () => makeRow()),
       count: overrides?.count ?? jest.fn(async () => 0),
       delete: overrides?.deleteRow ?? jest.fn(),
+    },
+    builderSurveyResponse: {
+      groupBy: overrides?.responseGroupBy ?? jest.fn(async () => []),
+      count: overrides?.responseCount ?? jest.fn(async () => 0),
     },
     adminUser: {
       findMany: overrides?.adminUserFindMany ?? jest.fn(async () => []),
@@ -260,5 +266,58 @@ describe("BuilderSurveysService", () => {
       updatedBy: "admin-2",
     });
     expect(update.mock.calls[0]?.[0]?.data).not.toHaveProperty("createdBy");
+  });
+
+  it("목록은 응답자 수를 설문 id 묶음으로 한 번에 조회한다", async () => {
+    const rows = makeRows(3);
+    const responseGroupBy = jest.fn(
+      async (_queryArgs: Prisma.BuilderSurveyResponseGroupByArgs) => [
+        { surveyId: "survey-1", _count: { _all: 37 } },
+        { surveyId: "survey-3", _count: { _all: 2 } },
+      ],
+    );
+    const { service } = makeService({
+      findMany: jest.fn(async () => rows),
+      count: jest.fn(async () => 3),
+      responseGroupBy,
+    });
+
+    const page = await service.listPage(null, 30);
+
+    expect(responseGroupBy).toHaveBeenCalledTimes(1);
+    expect(responseGroupBy.mock.calls[0]?.[0]).toMatchObject({
+      by: ["surveyId"],
+      where: { surveyId: { in: ["survey-1", "survey-2", "survey-3"] } },
+    });
+    // 응답이 없는 설문은 groupBy 결과에 아예 안 나오므로 0 으로 채워야 한다.
+    expect(page.items.map((item) => item.responseCount)).toEqual([37, 0, 2]);
+  });
+
+  it("상세 조회는 그 설문의 응답자 수를 센다", async () => {
+    const responseCount = jest.fn(async () => 37);
+    const { service } = makeService({
+      findFirst: jest.fn(async () => makeRow()),
+      responseCount,
+    });
+
+    const survey = await service.get("survey-1");
+
+    expect(responseCount).toHaveBeenCalledWith({ where: { surveyId: "survey-1" } });
+    expect(survey.responseCount).toBe(37);
+  });
+
+  it("생성 직후에는 응답자 수가 0 이고 세지 않는다", async () => {
+    const responseCount = jest.fn(async () => 0);
+    const { service } = makeService({ responseCount });
+
+    const survey = await service.create("admin-1", {
+      title: "제목",
+      questions: [
+        { id: "q1", type: "TEXT", title: "문항", required: true, multiline: false },
+      ],
+    });
+
+    expect(survey.responseCount).toBe(0);
+    expect(responseCount).not.toHaveBeenCalled();
   });
 });

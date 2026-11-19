@@ -36,6 +36,8 @@ export function SurveyEdit({ mode }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  // 이미 답한 사람이 있으면 문항 수정 전에 알린다. 생성 모드는 항상 0.
+  const [responseCount, setResponseCount] = useState(0);
 
   useEffect(() => {
     if (mode !== "edit" || !surveyId) return;
@@ -49,6 +51,7 @@ export function SurveyEdit({ mode }: Props) {
           description: survey.description ?? undefined,
           questions: survey.questions,
         });
+        setResponseCount(survey.responseCount);
       } catch (caught) {
         if (cancelled) return;
         setLoadError(
@@ -105,6 +108,13 @@ export function SurveyEdit({ mode }: Props) {
   return (
     <div className={styles.edit}>
       <div className={styles.editTitle}>{pageTitle}</div>
+      {responseCount > 0 && (
+        <p className={styles.usageWarning}>
+          {t("pages.builderSurveys.editor.responsesExistWarning", {
+            count: responseCount,
+          })}
+        </p>
+      )}
       <SurveyEditorForm
         initialValue={initial}
         busy={submitting}

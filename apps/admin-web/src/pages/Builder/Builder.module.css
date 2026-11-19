@@ -52,3 +52,18 @@
   font-size: 24px;
   font-weight: var(--font-weight-bold);
 }
+
+/*
+ * 이미 응답이 쌓인 설문을 고칠 때의 안내. 막는 게 아니라 알리는 것이라
+ * 위험(빨강)이 아니라 경고 계열로 둔다.
+ */
+.usageWarning {
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--color-warn-border, #fcd34d);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-warn-bg, #fffbeb);
+  color: var(--color-warn-text, #92400e);
+  font-size: 13px;
+  line-height: 1.5;
+}

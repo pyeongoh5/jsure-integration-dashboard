@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { likertLabel } from "./answerDisplay";
 
-const identityTranslate = (key: AdminTranslationKey) => key;
+/** 키와 파라미터를 그대로 돌려줘 어느 키를 어떤 값으로 읽었는지 단언할 수 있게 한다. */
+const identityTranslate = (
+  key: AdminTranslationKey,
+  params?: Record<string, string | number>,
+) => (params ? `${key}:${JSON.stringify(params)}` : key);
 
 describe("likertLabel", () => {
   it("프리셋(AGREEMENT)은 단계별 i18n 키를 읽는다", () => {
@@ -20,15 +24,17 @@ describe("likertLabel", () => {
     expect(likertLabel(scale, 3, identityTranslate)).toBe("최고");
   });
 
-  it("NUMERIC 은 양 끝만 라벨이 있고 중간 단계는 빈 문자열", () => {
+  it("NUMERIC 은 모든 단계를 점수로 표기한다", () => {
     const scale = { preset: "NUMERIC" as const };
     expect(likertLabel(scale, 1, identityTranslate)).toBe(
-      "builderSurveys.likert.NUMERIC.min",
+      'builderSurveys.likert.NUMERIC.point:{"step":1}',
+    );
+    expect(likertLabel(scale, 3, identityTranslate)).toBe(
+      'builderSurveys.likert.NUMERIC.point:{"step":3}',
     );
     expect(likertLabel(scale, 5, identityTranslate)).toBe(
-      "builderSurveys.likert.NUMERIC.max",
+      'builderSurveys.likert.NUMERIC.point:{"step":5}',
     );
-    expect(likertLabel(scale, 3, identityTranslate)).toBe("");
   });
 
   it("범위 밖 단계는 빈 문자열", () => {

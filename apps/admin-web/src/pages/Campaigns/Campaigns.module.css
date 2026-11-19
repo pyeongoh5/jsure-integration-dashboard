@@ -6,6 +6,16 @@
   margin: auto;
 }
 
+/*
+ * 생성·수정처럼 폼 하나만 있는 화면. 폼(.root, CampaignForm.module.css)이 720px 이라
+ * 목록용 1400px 을 그대로 쓰면 헤더만 폼 바깥까지 벌어진다. 헤더와 폼을 같은 폭으로
+ * 묶어 함께 가운데 정렬한다. .root 와 함께 붙여 쓰며, 선언 순서에 기대지 않도록
+ * 두 클래스를 겹쳐 특이도로 이긴다.
+ */
+.root.formPage {
+  max-width: 720px;
+}
+
 .header {
   margin-bottom: 4px;
 }

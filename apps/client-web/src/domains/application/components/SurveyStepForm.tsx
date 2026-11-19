@@ -59,15 +59,13 @@ function likertStepLabel(scale: LikertScale, step: number): string {
   return key ? t(key) : "";
 }
 
-/** 척도 칸의 내용 — 단계 번호 아래에 라벨. 라벨이 없는 단계(NUMERIC 중간)는 번호만. */
-function LikertCellLabel({ scale, step }: { scale: LikertScale; step: number }) {
-  const label = likertStepLabel(scale, step);
-  return (
-    <span className={styles.likertCellLabel}>
-      <span className={styles.likertStep}>{step}</span>
-      {label && <span className={styles.likertText}>{label}</span>}
-    </span>
-  );
+/**
+ * 모든 단계에 라벨이 있나 — 프리셋(동의도·만족도·빈도)과 CUSTOM 은 참, NUMERIC 은 거짓.
+ * 참이면 라벨을 칸 안에, 거짓이면 양끝 라벨만 척도 아래 캡션으로 뺀다. 섞으면
+ * 라벨 있는 칸만 길어져 아래쪽이 들쭉날쭉해진다.
+ */
+function hasLabelOnEveryStep(scale: LikertScale, steps: number[]): boolean {
+  return steps.every((step) => likertStepLabel(scale, step) !== "");
 }
 
 function optionRowClass(checked: boolean): string {
@@ -149,20 +147,41 @@ function renderQuestionInput(
       );
     }
     case "LIKERT": {
-      const stepCount = likertStepCount(question.scale);
+      const scale = question.scale;
+      const stepCount = likertStepCount(scale);
       const steps = Array.from({ length: stepCount }, (_, index) => index + 1);
+      const labelInCell = hasLabelOnEveryStep(scale, steps);
       return (
-        <div className={styles.likertScale}>
-          {steps.map((step) => (
-            <Radio
-              key={step}
-              name={question.id}
-              checked={answer === step}
-              onChange={() => onAnswerChange(step)}
-              label={<LikertCellLabel scale={question.scale} step={step} />}
-              className={likertCellClass(answer === step)}
-            />
-          ))}
+        <div className={styles.likert}>
+          <div className={styles.likertScale}>
+            {steps.map((step) => (
+              <Radio
+                key={step}
+                name={question.id}
+                checked={answer === step}
+                onChange={() => onAnswerChange(step)}
+                label={
+                  <span className={styles.likertCellLabel}>
+                    <span className={styles.likertStep}>{step}</span>
+                    {labelInCell && (
+                      <span className={styles.likertText}>
+                        {likertStepLabel(scale, step)}
+                      </span>
+                    )}
+                  </span>
+                }
+                className={likertCellClass(answer === step)}
+              />
+            ))}
+          </div>
+          {!labelInCell && (
+            <div className={styles.likertEnds}>
+              <span className={styles.likertText}>{likertStepLabel(scale, 1)}</span>
+              <span className={styles.likertText}>
+                {likertStepLabel(scale, stepCount)}
+              </span>
+            </div>
+          )}
         </div>
       );
     }

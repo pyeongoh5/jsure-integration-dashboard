@@ -48,7 +48,11 @@ export class BuilderSurveysService {
     return namesById;
   }
 
-  private toListItem(row: BuilderSurveyListRow, namesById: Map<string, string>): BuilderSurveyListItem {
+  private toListItem(
+    row: BuilderSurveyListRow,
+    namesById: Map<string, string>,
+    responseCount: number,
+  ): BuilderSurveyListItem {
     return {
       id: row.id,
       title: row.title,
@@ -56,15 +60,41 @@ export class BuilderSurveysService {
       updatedAt: row.updatedAt.toISOString(),
       createdByName: namesById.get(row.createdBy) ?? UNKNOWN_ADMIN_NAME,
       updatedByName: namesById.get(row.updatedBy) ?? UNKNOWN_ADMIN_NAME,
+      responseCount,
     };
   }
 
-  private toResponse(row: BuilderSurveyRow, namesById: Map<string, string>): BuilderSurveyResponse {
+  private toResponse(
+    row: BuilderSurveyRow,
+    namesById: Map<string, string>,
+    responseCount: number,
+  ): BuilderSurveyResponse {
     return {
-      ...this.toListItem(row, namesById),
+      ...this.toListItem(row, namesById, responseCount),
       description: row.description,
       questions: SurveyQuestionsSchema.parse(row.questions),
     };
+  }
+
+  /**
+   * 설문별 응답자 수 일괄 조회 — 설문마다 세면 N+1 이라 한 번에 모아 읽는다.
+   * 응답은 응모당 1건(applicationId 유니크)이라 건수가 곧 사람 수다.
+   */
+  private async responseCountsBySurveyIds(
+    surveyIds: string[],
+  ): Promise<Map<string, number>> {
+    const countBySurveyId = new Map<string, number>();
+    const uniqueSurveyIds = [...new Set(surveyIds)];
+    if (uniqueSurveyIds.length === 0) return countBySurveyId;
+    const grouped = await this.prisma.builderSurveyResponse.groupBy({
+      by: ["surveyId"],
+      where: { surveyId: { in: uniqueSurveyIds } },
+      _count: { _all: true },
+    });
+    for (const group of grouped) {
+      countBySurveyId.set(group.surveyId, group._count._all);
+    }
+    return countBySurveyId;
   }
 
   private notFound(): never {
@@ -116,11 +146,14 @@ export class BuilderSurveysService {
 
     const hasMore = rows.length > limit;
     const pageRows = hasMore ? rows.slice(0, limit) : rows;
-    const namesById = await this.adminNamesByIds(
-      pageRows.flatMap((row) => [row.createdBy, row.updatedBy]),
-    );
+    const [namesById, responseCountBySurveyId] = await Promise.all([
+      this.adminNamesByIds(pageRows.flatMap((row) => [row.createdBy, row.updatedBy])),
+      this.responseCountsBySurveyIds(pageRows.map((row) => row.id)),
+    ]);
     return {
-      items: pageRows.map((row) => this.toListItem(row, namesById)),
+      items: pageRows.map((row) =>
+        this.toListItem(row, namesById, responseCountBySurveyId.get(row.id) ?? 0),
+      ),
       nextCursor: hasMore ? (pageRows[pageRows.length - 1]?.id ?? null) : null,
       total,
     };
@@ -128,8 +161,11 @@ export class BuilderSurveysService {
 
   async get(id: string): Promise<BuilderSurveyResponse> {
     const row = await this.findActiveOrThrow(id);
-    const namesById = await this.adminNamesByIds([row.createdBy, row.updatedBy]);
-    return this.toResponse(row, namesById);
+    const [namesById, responseCount] = await Promise.all([
+      this.adminNamesByIds([row.createdBy, row.updatedBy]),
+      this.prisma.builderSurveyResponse.count({ where: { surveyId: id } }),
+    ]);
+    return this.toResponse(row, namesById, responseCount);
   }
 
   async create(
@@ -147,7 +183,8 @@ export class BuilderSurveysService {
       },
     });
     const namesById = await this.adminNamesByIds([adminUserId]);
-    return this.toResponse(row, namesById);
+    // 방금 만든 설문이라 응답이 있을 수 없다 — 세지 않는다.
+    return this.toResponse(row, namesById, 0);
   }
 
   async update(
@@ -166,8 +203,11 @@ export class BuilderSurveysService {
         updatedBy: adminUserId,
       },
     });
-    const namesById = await this.adminNamesByIds([row.createdBy, row.updatedBy]);
-    return this.toResponse(row, namesById);
+    const [namesById, responseCount] = await Promise.all([
+      this.adminNamesByIds([row.createdBy, row.updatedBy]),
+      this.prisma.builderSurveyResponse.count({ where: { surveyId: id } }),
+    ]);
+    return this.toResponse(row, namesById, responseCount);
   }
 
   async softDelete(id: string): Promise<void> {

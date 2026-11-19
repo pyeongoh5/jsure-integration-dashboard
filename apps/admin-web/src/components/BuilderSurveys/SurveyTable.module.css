@@ -30,6 +30,13 @@
   white-space: nowrap;
 }
 
+/* 숫자는 오른쪽 정렬이라야 자릿수가 달라도 눈으로 비교된다. */
+.countCell {
+  width: 96px;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .actionsCell {
   width: 56px;
 }

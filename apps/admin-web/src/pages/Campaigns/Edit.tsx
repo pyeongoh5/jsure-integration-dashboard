@@ -51,7 +51,7 @@ function CampaignEditReady({ id, initial, campaign }: ReadyProps) {
   };
 
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root} ${styles.formPage}`}>
       <div className={`${styles.header} ${styles.headerRow}`}>
         <div>
           <h1 className={styles.title}>

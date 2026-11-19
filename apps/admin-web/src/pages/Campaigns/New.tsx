@@ -75,7 +75,7 @@ export function CampaignNew() {
       : undefined;
 
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root} ${styles.formPage}`}>
       <div className={`${styles.header} ${styles.headerRow}`}>
         <div>
           <h1 className={styles.title}>{t("pages.campaigns.new.title")}</h1>

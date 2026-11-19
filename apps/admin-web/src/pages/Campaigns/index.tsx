@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { formatRewardRange, type CampaignResponse } from "@jsure/shared";
+import { foldForSearch, formatRewardRange, type CampaignResponse } from "@jsure/shared";
 import { Card } from "@/components/composites/Card";
 import {
   FilterChip,
@@ -32,7 +32,6 @@ import { CATEGORY_FILTER_OPTIONS } from "@/domains/application";
 import { adminUserLabel } from "@/domains/team";
 import { translate, type AdminTranslationKey } from "@i18n/admin";
 import { getStoredLanguage, useT } from "@/lib/i18n";
-import { foldForSearch } from "@/lib/searchText";
 import { ApprovedApplicantsDialog } from "../Applicants/ApprovedApplicantsDialog";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import styles from "./Campaigns.module.css";

@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { foldForSearch } from "@jsure/shared";
 import type { AdminTranslationKey } from "@i18n/admin";
 import { useT } from "@/lib/i18n";
-import { foldForSearch } from "@/lib/searchText";
 import { FilterChip } from "@/components/composites/FilterChip";
 import { TagChip } from "@/components/composites";
 import styles from "@/components/composites/FilterChip/FilterChip.module.css";

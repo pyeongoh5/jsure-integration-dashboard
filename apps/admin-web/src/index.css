@@ -18,7 +18,45 @@ button {
   font-family: inherit;
 }
 
+/*
+ * 네이티브 셀렉트 스타일.
+ *
+ * 이전에는 index.html 이 CDN 에서 불러오던 Web Awesome 가 모든 네이티브 폼
+ * 컨트롤을 대신 칠해 줬다. 그 스타일시트는 button 에도 고정 높이·흰 글자를
+ * 먹여 카드형 버튼을 깨뜨렸기에 걷어냈고, 실제로 쓰고 있던 셀렉트 외형만
+ * 여기로 옮겨 왔다. 값은 걷어내기 전 화면과 같도록 그대로 떠 온 것이다.
+ */
 select {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  height: 43px;
+  padding: 0 30px 0 16px;
+  color: #1b1d26;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 19.2px;
+  vertical-align: middle;
+  background-color: #ffffff;
+  /* 오른쪽 꺾쇠. 인라인 SVG 라 네트워크 요청이 없다. */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="rgb(100 103 120)" d="M201.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 338.7 54.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center right 16px;
   background-size: 0.8rem 0.8rem;
-  padding-right: 30px !important;
+  border: 1px solid #9194a2;
+  border-radius: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+select[multiple] {
+  height: auto;
+  padding-right: 16px;
+  background-image: none;
 }

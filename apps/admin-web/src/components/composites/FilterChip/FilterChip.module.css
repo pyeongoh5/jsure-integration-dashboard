@@ -5,6 +5,10 @@
 }
 
 .filter {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
   border: 1px dashed var(--c-border);
   background: transparent;
   border-radius: 999px;
@@ -15,6 +19,36 @@
   transition:
     border-color 0.15s,
     color 0.15s;
+}
+
+/* 선택값(캠페인 제목 등)이 길어도 칩이 필터 줄을 독차지하지 않도록 잘라낸다. */
+.filterLabel {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * 잘린 라벨 전문을 보여주는 툴팁. 네이티브 title 은 표시까지 1초 이상 걸리고
+ * 모양을 줄 수 없어 직접 그린다 — CampaignManagerChips 와 같은 방식.
+ */
+.labelTooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 3;
+  max-width: 420px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--c-text);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;
+  pointer-events: none;
 }
 
 .filter:hover {

@@ -1993,6 +1993,7 @@ export const adminMessages = {
         },
       },
       actionsMenu: {
+        submissions: { ko: "제출물 관리", en: "Submissions", ja: "提出物管理" },
         edit: { ko: "캠페인 수정", en: "Edit campaign", ja: "キャンペーンを編集" },
         copy: { ko: "캠페인 복사", en: "Copy campaign", ja: "キャンペーンをコピー" },
         bump: {

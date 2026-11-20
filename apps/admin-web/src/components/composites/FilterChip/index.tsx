@@ -114,7 +114,10 @@ export function FilterChip({
   const id = useId();
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  const labelRef = useRef<HTMLSpanElement | null>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  // 라벨이 말줄임으로 잘렸을 때만 툴팁을 띄운다 — hover 시점에 한 번 측정한다.
+  const [labelTruncated, setLabelTruncated] = useState(false);
 
   const active = activeLabel !== null;
   const isOpen = bar.openId === id;
@@ -140,8 +143,20 @@ export function FilterChip({
         onClick={() => {
           if (buttonRef.current) bar.toggle(id, buttonRef.current);
         }}
+        onMouseEnter={() => {
+          const label = labelRef.current;
+          setLabelTruncated(!!label && label.scrollWidth > label.clientWidth);
+        }}
+        onMouseLeave={() => setLabelTruncated(false)}
       >
-        {active ? activeLabel : emptyLabel}
+        <span ref={labelRef} className={styles.filterLabel}>
+          {active ? activeLabel : emptyLabel}
+        </span>
+        {active && labelTruncated && (
+          <span className={styles.labelTooltip} role="tooltip">
+            {activeLabel}
+          </span>
+        )}
         {active && onClear && (
           <span
             className={styles.clearButton}

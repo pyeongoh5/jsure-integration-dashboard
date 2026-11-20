@@ -455,6 +455,10 @@ export function Campaigns() {
                     setOpenMenu(null);
                     navigate(`/applicants?campaignId=${encodeURIComponent(c.id)}`);
                   }}
+                  onSubmissions={() => {
+                    setOpenMenu(null);
+                    navigate(`/drafts?campaignId=${encodeURIComponent(c.id)}`);
+                  }}
                   onEdit={() => {
                     setOpenMenu(null);
                     navigate(`/campaigns/${encodeURIComponent(c.id)}/edit`);

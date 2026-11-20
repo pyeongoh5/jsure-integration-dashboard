@@ -12,6 +12,7 @@ type Props = {
   /** 액션 노출 조건의 단일 소스(서버가 계산한 파생 상태). */
   status: CampaignStatus;
   onApplicants: () => void;
+  onSubmissions: () => void;
   onEdit: () => void;
   onCopy: () => void;
   onViewApproved: () => void;
@@ -27,6 +28,7 @@ export function CampaignActionsMenu({
   anchor,
   status,
   onApplicants,
+  onSubmissions,
   onEdit,
   onCopy,
   onViewApproved,
@@ -116,6 +118,14 @@ export function CampaignActionsMenu({
             onClick={onApplicants}
           >
             {t("nav.items.applicants")}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.item}
+            onClick={onSubmissions}
+          >
+            {t("domains.campaign.actionsMenu.submissions")}
           </button>
           <button
             type="button"

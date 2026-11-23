@@ -50,8 +50,19 @@ describe("addressIssues", () => {
     expect(addressIssues({ ...JP, postalCode: "1500001" })).toEqual([]);
   });
 
-  it("목록에 없는 시·도는 위반이다", () => {
-    expect(addressIssues({ ...KR, prefecture: "서울특별시" })).toEqual([
+  it("일본은 목록에 없는 도도부현을 위반으로 본다", () => {
+    expect(addressIssues({ ...JP, prefecture: "東京" })).toEqual([
+      { field: "prefecture", code: "prefectureInvalid" },
+    ]);
+  });
+
+  // 행정구역 통합으로 생긴 이름(전남광주통합특별시)까지 손으로 관리할 수 없어
+  // 한국은 목록 대신 빈 값만 막는다.
+  it("한국은 목록에 없는 시·도도 받아들이고 빈 값만 막는다", () => {
+    expect(
+      addressIssues({ ...KR, prefecture: "전남광주통합특별시" }),
+    ).toEqual([]);
+    expect(addressIssues({ ...KR, prefecture: "  " })).toEqual([
       { field: "prefecture", code: "prefectureInvalid" },
     ]);
   });

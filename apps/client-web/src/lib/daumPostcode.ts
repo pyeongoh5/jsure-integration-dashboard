@@ -11,8 +11,9 @@ import { toKrAddress, type DaumPostcodeData, type KrAddressResult } from "@jsure
 
 export type { KrAddressResult };
 
+// t1.daumcdn.net 은 2026-12-01 에 종료된다(카카오 공지). 신 도메인만 쓴다.
 const SCRIPT_SRC =
-  "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+  "https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
 
 interface DaumPostcodeConstructorOptions {
   oncomplete: (data: DaumPostcodeData) => void;

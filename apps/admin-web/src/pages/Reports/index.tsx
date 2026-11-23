@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import ExcelJS from "exceljs";
 import {
+  foldForSearch,
   type CampaignCategory,
   type CampaignParticipantsResponse,
   type CampaignReportParticipant,
@@ -220,6 +221,33 @@ function formatRecruitPeriod(startDate: string, endDate: string): string {
   return `${shorten(startDate)} - ${endLabel}`;
 }
 
+/** 로컬 기준 YYYY-MM-DD. date input 과 모집기간 문자열이 모두 이 형식이다. */
+function toDateInputValue(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** 오늘을 포함해 최근 days 일. days=1 이면 오늘 하루. */
+function recentPeriod(days: number): { startDate: string; endDate: string } {
+  const today = new Date();
+  const start = new Date(today);
+  start.setDate(start.getDate() - (days - 1));
+  return { startDate: toDateInputValue(start), endDate: toDateInputValue(today) };
+}
+
+const PERIOD_PRESET_DAYS = [1, 7, 30] as const;
+const PERIOD_PRESET_LABEL_KEY: Record<
+  (typeof PERIOD_PRESET_DAYS)[number],
+  AdminTranslationKey
+> = {
+  1: "pages.reports.periodPreset.day1",
+  7: "pages.reports.periodPreset.day7",
+  30: "pages.reports.periodPreset.day30",
+};
+
+/** 기본 조회 기간 — 최근 7일. */
+const DEFAULT_PERIOD = recentPeriod(7);
+
 /** 모집기간과 필터 기간이 하루라도 겹치면 true. 빈 필터 값은 열린 구간으로 본다. */
 function recruitPeriodOverlaps(
   row: CampaignReportRow,
@@ -241,8 +269,11 @@ export function Reports() {
   const [sortOrder, setSortOrder] = useState<CampaignReportSortOrder>("desc");
   const [downloadOpen, setDownloadOpen] = useState<boolean>(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-  const [filterStartDate, setFilterStartDate] = useState<string>("");
-  const [filterEndDate, setFilterEndDate] = useState<string>("");
+  const [filterStartDate, setFilterStartDate] = useState<string>(
+    DEFAULT_PERIOD.startDate,
+  );
+  const [filterEndDate, setFilterEndDate] = useState<string>(DEFAULT_PERIOD.endDate);
+  const [query, setQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<Set<CampaignCategory>>(
     () => new Set(),
   );
@@ -290,15 +321,16 @@ export function Reports() {
     }
   };
 
-  const filteredRows = useMemo(
-    () =>
-      rows.filter(
-        (row) =>
-          recruitPeriodOverlaps(row, filterStartDate, filterEndDate) &&
-          (selectedCategories.size === 0 || selectedCategories.has(row.category)),
-      ),
-    [rows, filterStartDate, filterEndDate, selectedCategories],
-  );
+  const filteredRows = useMemo(() => {
+    const normalizedQuery = foldForSearch(query.trim());
+    return rows.filter(
+      (row) =>
+        recruitPeriodOverlaps(row, filterStartDate, filterEndDate) &&
+        (selectedCategories.size === 0 || selectedCategories.has(row.category)) &&
+        (normalizedQuery === "" ||
+          foldForSearch(row.campaignTitle).includes(normalizedQuery)),
+    );
+  }, [rows, filterStartDate, filterEndDate, selectedCategories, query]);
 
   const subtitle = useMemo(() => {
     if (loading) return t("common.loading");
@@ -343,6 +375,39 @@ export function Reports() {
               onChange={(event) => setFilterEndDate(event.target.value)}
               aria-label={t("pages.reports.recruitPeriodEndAria")}
             />
+            {PERIOD_PRESET_DAYS.map((days) => {
+              const preset = recentPeriod(days);
+              const active =
+                filterStartDate === preset.startDate &&
+                filterEndDate === preset.endDate;
+              return (
+                <button
+                  key={days}
+                  type="button"
+                  className={`${styles.periodPreset} ${active ? styles.periodPresetOn : ""}`}
+                  onClick={() => {
+                    setFilterStartDate(preset.startDate);
+                    setFilterEndDate(preset.endDate);
+                  }}
+                >
+                  {t(PERIOD_PRESET_LABEL_KEY[days])}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className={`${styles.periodPreset} ${
+                filterStartDate === "" && filterEndDate === ""
+                  ? styles.periodPresetOn
+                  : ""
+              }`}
+              onClick={() => {
+                setFilterStartDate("");
+                setFilterEndDate("");
+              }}
+            >
+              {t("pages.reports.periodPreset.all")}
+            </button>
           </div>
           <MultiSelectFilterChip
             emptyLabel={t("pages.reports.categoryFilter")}
@@ -354,6 +419,16 @@ export function Reports() {
             value={selectedCategories}
             onChange={setSelectedCategories}
           />
+          <div className={styles.searchSpacer} />
+          <div className={styles.search}>
+            <i className="fa-solid fa-magnifying-glass" />
+            <input
+              type="text"
+              placeholder={t("pages.reports.searchPlaceholder")}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
         </FilterChipBar>
       </div>
 

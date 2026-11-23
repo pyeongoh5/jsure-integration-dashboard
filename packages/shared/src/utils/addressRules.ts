@@ -10,7 +10,6 @@
  */
 
 import { JP_PREFECTURES } from "../types/influencer.js";
-import { KR_PROVINCES } from "../data/krBanks.js";
 
 export const POSTAL_PATTERN = {
   JP: /^\d{3}-?\d{4}$/,
@@ -58,8 +57,13 @@ export function addressIssues(values: AddressRuleInput): AddressIssue[] {
     issues.push({ field: "postalCode", code: "postalFormat" });
   }
 
-  const provinces: readonly string[] = isJp ? JP_PREFECTURES : KR_PROVINCES;
-  if (!provinces.includes(values.prefecture)) {
+  // 일본 도도부현은 47개로 고정이라 목록으로 본다. 한국 시·도는 행정구역
+  // 통합(전남광주통합특별시 등)으로 이름이 바뀌어 손으로 관리한 목록이 금세
+  // 낡는다 — 다음 우편번호 검색이 돌려준 값을 그대로 받고 빈 값만 막는다.
+  const invalidPrefecture = isJp
+    ? !JP_PREFECTURES.includes(values.prefecture as (typeof JP_PREFECTURES)[number])
+    : !values.prefecture.trim();
+  if (invalidPrefecture) {
     issues.push({ field: "prefecture", code: "prefectureInvalid" });
   }
 

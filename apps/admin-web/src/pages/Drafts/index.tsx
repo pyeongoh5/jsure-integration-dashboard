@@ -23,6 +23,7 @@ import {
 } from "@/domains/application";
 import { InfluencerNotesDialog } from "@/domains/influencer";
 import { useT } from "@/lib/i18n";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
 import styles from "./Drafts.module.css";
 
 export function Drafts() {
@@ -49,6 +50,8 @@ export function Drafts() {
   const [insightView, setInsightView] = useState<DraftReview | null>(null);
   const [notesTarget, setNotesTarget] = useState<DraftReview | null>(null);
   const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(null);
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 300);
   // 서버 필터 조건. Set 은 정렬해서 담는다 — 선택 순서가 달라도 같은 쿼리로 취급하기 위해.
   const filter = useMemo<SubmissionFilter>(
     () => ({
@@ -56,8 +59,9 @@ export function Drafts() {
       mediaKeys: [...mediaFilter].sort(),
       viewStatuses: [...statusFilter].sort(),
       category: categoryFilter,
+      query: debouncedQuery.trim(),
     }),
-    [campaignId, mediaFilter, statusFilter, categoryFilter],
+    [campaignId, mediaFilter, statusFilter, categoryFilter, debouncedQuery],
   );
 
   const {
@@ -130,6 +134,16 @@ export function Drafts() {
           onCategoryChange={setCategoryFilter}
         />
         <DraftStatusFilter value={statusFilter} onChange={setStatusFilter} />
+        <div className={styles.searchSpacer} />
+        <div className={styles.search}>
+          <i className="fa-solid fa-magnifying-glass" />
+          <input
+            type="text"
+            placeholder={t("pages.applicants.searchPlaceholder")}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </div>
       </div>
 
       {state.kind === "loading" ? (

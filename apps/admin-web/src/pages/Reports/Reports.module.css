@@ -410,6 +410,58 @@
   background: var(--c-card);
 }
 
+/* 기간 프리셋. 필터 칩과 같은 pill 모양이되 토글이라 실선 테두리를 쓴다. */
+.periodPreset {
+  padding: 4px 10px;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background: var(--c-card);
+  font: inherit;
+  font-size: 12px;
+  color: var(--c-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.periodPreset:hover {
+  border-color: var(--c-brand);
+  color: var(--c-brand);
+}
+
+.periodPresetOn {
+  border-color: var(--c-brand);
+  color: var(--c-brand);
+  background: rgba(37, 99, 235, 0.06);
+}
+
+/* 검색 입력은 응모자 관리·검토와 같은 모양(필터 줄 오른쪽 끝). */
+.searchSpacer {
+  flex: 1;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: 6px var(--space-3);
+  min-width: 260px;
+  height: 34px;
+}
+.search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--font-size-md);
+  flex: 1;
+  color: var(--c-text);
+}
+.search i {
+  color: var(--c-subtle);
+}
+
 .recruitPeriod {
   display: block;
   margin-top: 2px;

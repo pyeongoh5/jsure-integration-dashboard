@@ -4203,6 +4203,17 @@ export const adminMessages = {
         ja: "募集期間検索の終了日",
       },
       categoryFilter: { ko: "카테고리", en: "Category", ja: "カテゴリー" },
+      periodPreset: {
+        day1: { ko: "1일", en: "1 day", ja: "1日" },
+        day7: { ko: "7일", en: "7 days", ja: "7日" },
+        day30: { ko: "30일", en: "30 days", ja: "30日" },
+        all: { ko: "전체", en: "All", ja: "全期間" },
+      },
+      searchPlaceholder: {
+        ko: "캠페인명 검색",
+        en: "Search campaign name",
+        ja: "キャンペーン名で検索",
+      },
       recruitStartDate: { ko: "모집 시작일", en: "Recruitment start", ja: "募集開始日" },
       recruitEndDate: { ko: "모집 종료일", en: "Recruitment end", ja: "募集終了日" },
       totalCampaigns: {

@@ -67,6 +67,7 @@ describe("submissionFilterToParams / parseSubmissionFilterParams", () => {
       mediaKeys: ["ig-feed", "yt"],
       viewStatuses: ["REVIEW_PENDING", "REJECTED"],
       category: "SNS",
+      query: "하나코",
     };
     expect(parseSubmissionFilterParams(submissionFilterToParams(filter))).toEqual(
       filter,
@@ -86,6 +87,7 @@ describe("submissionFilterToParams / parseSubmissionFilterParams", () => {
       // SETTLED 는 검토 화면 상태가 아니라 버려진다
       viewStatuses: ["REVIEW_PENDING"],
       category: null,
+      query: "",
     });
   });
 });

@@ -110,6 +110,8 @@ export const SubmissionFilterSchema = z.object({
   mediaKeys: z.array(ApplicantMediaFilterKeySchema),
   viewStatuses: z.array(DraftViewStatusSchema),
   category: CampaignCategorySchema.nullable(),
+  /** 인플루언서 이름·SNS 핸들·ID 검색어. 응모자 관리와 같은 대상이다. */
+  query: z.string().default(""),
 });
 export type SubmissionFilter = z.infer<typeof SubmissionFilterSchema>;
 
@@ -118,6 +120,7 @@ export const EMPTY_SUBMISSION_FILTER: SubmissionFilter = {
   mediaKeys: [],
   viewStatuses: [],
   category: null,
+  query: "",
 };
 
 /** 필터를 쿼리스트링 파라미터로 직렬화. 파싱은 parseSubmissionFilterParams. */
@@ -131,6 +134,7 @@ export function submissionFilterToParams(
     params.status = filter.viewStatuses.join(",");
   }
   if (filter.category) params.category = filter.category;
+  if (filter.query.trim()) params.q = filter.query.trim();
   return params;
 }
 
@@ -162,5 +166,6 @@ export function parseSubmissionFilterParams(
     category: CampaignCategorySchema.safeParse(raw.category).success
       ? (raw.category as CampaignCategory)
       : null,
+    query: typeof raw.q === "string" ? raw.q : "",
   });
 }

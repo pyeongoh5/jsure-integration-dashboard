@@ -187,6 +187,34 @@
   gap: 8px;
 }
 
+/* 검색 입력은 응모자 관리와 같은 모양·같은 자리(필터 줄 오른쪽 끝). */
+.searchSpacer {
+  flex: 1;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: 6px var(--space-3);
+  min-width: 260px;
+  height: 34px;
+}
+.search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--font-size-md);
+  flex: 1;
+  color: var(--c-text);
+}
+.search i {
+  color: var(--c-subtle);
+}
+
 /* Tabs */
 .tabs {
   display: flex;

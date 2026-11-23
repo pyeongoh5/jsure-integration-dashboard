@@ -5,6 +5,7 @@ import {
   type DraftViewStatusRule,
   type SubmissionFilter,
 } from "@jsure/shared";
+import { likePattern } from "./applicant-filter.sql";
 
 /**
  * 제출물 검토 목록이 쓰는 FROM 절. 별칭: a=응모, c=캠페인.
@@ -92,6 +93,25 @@ export function buildSubmissionWhereSql(filter: SubmissionFilter): Prisma.Sql {
       return Prisma.sql`${target.subType}::text = ANY(a."subTypes"::text[])`;
     });
     conditions.push(Prisma.sql`(${Prisma.join(mediaConditions, " OR ")})`);
+  }
+
+  // 검색 대상은 응모자 관리와 같다(이름·ID·SNS 핸들). 인플루언서는 FROM 에
+  // 조인돼 있지 않아 EXISTS 로 붙인다.
+  const query = filter.query.trim();
+  if (query) {
+    const pattern = likePattern(query);
+    conditions.push(Prisma.sql`EXISTS (
+      SELECT 1 FROM influencers i
+      WHERE i.id = a."influencerId"
+        AND (
+          i."name" ILIKE ${pattern}
+          OR i.id ILIKE ${pattern}
+          OR EXISTS (
+            SELECT 1 FROM influencer_sns_accounts s
+            WHERE s."influencerId" = i.id AND s."handle" ILIKE ${pattern}
+          )
+        )
+    )`);
   }
 
   return Prisma.join(conditions, " AND ");

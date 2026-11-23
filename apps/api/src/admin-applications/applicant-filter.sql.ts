@@ -47,7 +47,7 @@ export const applicantFollowersSql = Prisma.sql`COALESCE((
 ), 0)`;
 
 /** LIKE 메타문자를 이스케이프. 기본 이스케이프 문자(\)를 그대로 쓴다. */
-function likePattern(value: string): string {
+export function likePattern(value: string): string {
   return `%${value.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
 }
 

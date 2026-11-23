@@ -15,6 +15,8 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { PUBLISHED_CAMPAIGN_WHERE } from "../campaigns/published-campaign";
 import {
+  jstDayEndUtc,
+  jstDayStartUtc,
   loadManagers,
   pickManagers,
   utcToJstDateStr,
@@ -25,12 +27,24 @@ import { parseSurveyQuestions } from "../common/survey-questions";
 export class AdminReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * 캠페인별 집계. 기간(JST YYYY-MM-DD)은 모집기간이 하루라도 겹치는 캠페인만
+   * 남긴다 — 화면의 겹침 규칙과 같다.
+   *
+   * 기간을 서버에서 거르는 이유: 응모·인플루언서·게시물까지 통째로 읽어 집계하므로
+   * 전 캠페인을 대상으로 하면 금세 타임아웃 난다. 좁히는 일은 DB 가 먼저 해야 한다.
+   */
   async campaignReports(
     sort: CampaignReportSortKey,
     order: CampaignReportSortOrder,
+    period: { from: string; to: string },
   ): Promise<CampaignReportResponse> {
     const campaigns = await this.prisma.campaign.findMany({
-      where: PUBLISHED_CAMPAIGN_WHERE,
+      where: {
+        ...PUBLISHED_CAMPAIGN_WHERE,
+        recruitStartAt: { lte: jstDayEndUtc(period.to) },
+        recruitEndAt: { gte: jstDayStartUtc(period.from) },
+      },
       include: {
         applications: {
           include: {

@@ -248,18 +248,6 @@ const PERIOD_PRESET_LABEL_KEY: Record<
 /** 기본 조회 기간 — 최근 7일. */
 const DEFAULT_PERIOD = recentPeriod(7);
 
-/** 모집기간과 필터 기간이 하루라도 겹치면 true. 빈 필터 값은 열린 구간으로 본다. */
-function recruitPeriodOverlaps(
-  row: CampaignReportRow,
-  filterStartDate: string,
-  filterEndDate: string,
-): boolean {
-  // YYYY-MM-DD 문자열은 사전순 비교가 곧 날짜 비교라 Date 변환이 필요 없다.
-  if (filterEndDate !== "" && row.recruitStartDate > filterEndDate) return false;
-  if (filterStartDate !== "" && row.recruitEndDate < filterStartDate) return false;
-  return true;
-}
-
 export function Reports() {
   const t = useT();
   const [rows, setRows] = useState<CampaignReportRow[]>([]);
@@ -293,7 +281,10 @@ export function Reports() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getCampaignReports(sortKey, sortOrder)
+    getCampaignReports(sortKey, sortOrder, {
+      from: filterStartDate,
+      to: filterEndDate,
+    })
       .then((response) => {
         if (!cancelled) setRows(response.rows);
       })
@@ -310,7 +301,7 @@ export function Reports() {
     return () => {
       cancelled = true;
     };
-  }, [sortKey, sortOrder, reloadKey]);
+  }, [sortKey, sortOrder, reloadKey, filterStartDate, filterEndDate]);
 
   const handleSortClick = (key: CampaignReportSortKey) => {
     if (key === sortKey) {
@@ -321,16 +312,16 @@ export function Reports() {
     }
   };
 
+  // 기간은 서버가 이미 걸러서 내려준다 — 여기서는 카테고리·검색어만 추린다.
   const filteredRows = useMemo(() => {
     const normalizedQuery = foldForSearch(query.trim());
     return rows.filter(
       (row) =>
-        recruitPeriodOverlaps(row, filterStartDate, filterEndDate) &&
         (selectedCategories.size === 0 || selectedCategories.has(row.category)) &&
         (normalizedQuery === "" ||
           foldForSearch(row.campaignTitle).includes(normalizedQuery)),
     );
-  }, [rows, filterStartDate, filterEndDate, selectedCategories, query]);
+  }, [rows, selectedCategories, query]);
 
   const subtitle = useMemo(() => {
     if (loading) return t("common.loading");
@@ -364,7 +355,10 @@ export function Reports() {
               type="date"
               className={styles.dateInput}
               value={filterStartDate}
-              onChange={(event) => setFilterStartDate(event.target.value)}
+              // 기간은 필수다 — 비우면 기본값(최근 7일)으로 되돌린다.
+              onChange={(event) =>
+                setFilterStartDate(event.target.value || DEFAULT_PERIOD.startDate)
+              }
               aria-label={t("pages.reports.recruitPeriodStartAria")}
             />
             <span aria-hidden="true">~</span>
@@ -372,7 +366,9 @@ export function Reports() {
               type="date"
               className={styles.dateInput}
               value={filterEndDate}
-              onChange={(event) => setFilterEndDate(event.target.value)}
+              onChange={(event) =>
+                setFilterEndDate(event.target.value || DEFAULT_PERIOD.endDate)
+              }
               aria-label={t("pages.reports.recruitPeriodEndAria")}
             />
             {PERIOD_PRESET_DAYS.map((days) => {
@@ -394,20 +390,6 @@ export function Reports() {
                 </button>
               );
             })}
-            <button
-              type="button"
-              className={`${styles.periodPreset} ${
-                filterStartDate === "" && filterEndDate === ""
-                  ? styles.periodPresetOn
-                  : ""
-              }`}
-              onClick={() => {
-                setFilterStartDate("");
-                setFilterEndDate("");
-              }}
-            >
-              {t("pages.reports.periodPreset.all")}
-            </button>
           </div>
           <MultiSelectFilterChip
             emptyLabel={t("pages.reports.categoryFilter")}

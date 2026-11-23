@@ -1,6 +1,9 @@
 import type { SurveyQuestion } from "@jsure/shared";
 import { AdminReportsService } from "./admin-reports.service";
 
+/** 집계 로직 검증이 목적이라 기간은 고정값을 쓴다(stub 은 기간을 보지 않는다). */
+const PERIOD = { from: "2026-01-01", to: "2026-12-31" };
+
 type StubApplication = {
   influencerId: string;
   status: string;
@@ -109,7 +112,7 @@ describe("캠페인 리포트 집계", () => {
       }),
     ]);
 
-    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    const { rows } = await service.campaignReports("campaignTitle", "asc", PERIOD);
 
     expect(rows[0]!.participantCount).toBe(2);
   });
@@ -134,7 +137,7 @@ describe("캠페인 리포트 집계", () => {
       }),
     ]);
 
-    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    const { rows } = await service.campaignReports("campaignTitle", "asc", PERIOD);
 
     expect(rows[0]!.postCount).toBe(1);
     expect(rows[0]!.totalLikes).toBe(10);
@@ -228,7 +231,7 @@ describe("참여자 목록", () => {
       ],
       20,
     );
-    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    const { rows } = await service.campaignReports("campaignTitle", "asc", PERIOD);
     expect(rows[0]!.viewerCount).toBe(20);
     // 탈락 응모도 분자에 포함 — 2 / 20 = 10%.
     expect(rows[0]!.applicationRate).toBe(10);
@@ -236,14 +239,14 @@ describe("참여자 목록", () => {
 
   it("campaignReports 는 조회 인원이 0 이면 응모율을 null 로 내려준다", async () => {
     const service = makeService([application({ influencerId: "i1" })]);
-    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    const { rows } = await service.campaignReports("campaignTitle", "asc", PERIOD);
     expect(rows[0]!.viewerCount).toBe(0);
     expect(rows[0]!.applicationRate).toBeNull();
   });
 
   it("campaignReports 는 카테고리와 JST 모집기간을 내려준다", async () => {
     const service = makeService([]);
-    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    const { rows } = await service.campaignReports("campaignTitle", "asc", PERIOD);
     expect(rows[0]!.category).toBe("SNS");
     expect(rows[0]!.recruitStartDate).toBe("2026-07-01");
     expect(rows[0]!.recruitEndDate).toBe("2026-07-31");
@@ -251,7 +254,7 @@ describe("참여자 목록", () => {
 
   it("리포트 행에 담당자를 담는다", async () => {
     const service = makeService([]);
-    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    const { rows } = await service.campaignReports("campaignTitle", "asc", PERIOD);
     expect(rows[0]!.managers).toEqual([
       { id: "admin-1", name: "선희", email: "sunhee@example.com" },
     ]);
@@ -259,7 +262,7 @@ describe("참여자 목록", () => {
 
   it("담당자가 없는 캠페인은 빈 배열이다", async () => {
     const service = makeService([], 0, []);
-    const { rows } = await service.campaignReports("campaignTitle", "asc");
+    const { rows } = await service.campaignReports("campaignTitle", "asc", PERIOD);
     expect(rows[0]!.managers).toEqual([]);
   });
 });

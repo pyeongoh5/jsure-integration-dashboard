@@ -4207,7 +4207,6 @@ export const adminMessages = {
         day1: { ko: "1일", en: "1 day", ja: "1日" },
         day7: { ko: "7일", en: "7 days", ja: "7日" },
         day30: { ko: "30일", en: "30 days", ja: "30日" },
-        all: { ko: "전체", en: "All", ja: "全期間" },
       },
       searchPlaceholder: {
         ko: "캠페인명 검색",

@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import {
-  DELIVERY_UNCONFIRMED_DAYS,
   resolvePostingDeadline,
   type DailyActionAlertKind,
   type DailyActionAlertTarget,
@@ -23,8 +22,12 @@ const DELIVERY_CATEGORIES = DELIVERY_RECEIPT_REMINDER_CONFIGS.map(
   (config) => config.category,
 );
 
-/** 출고됐지만 아직 수령 확인을 받지 못한 구간. */
-const DELIVERY_PENDING_STATUSES: ApplicationStatus[] = ["SHIPPED", "DELIVERED"];
+/**
+ * 배송이 완료됐는데 수령 확인을 받지 못한 구간.
+ * 응모자 관리의 '수령 확인 대기'(DELIVERED + receivedAt 없음)와 같은 기준이다 —
+ * 두 화면이 다른 수를 보여주면 어느 쪽을 믿어야 할지 알 수 없다.
+ */
+const DELIVERY_PENDING_STATUSES: ApplicationStatus[] = ["DELIVERED"];
 
 function elapsedDaysSince(from: Date, now: Date): number {
   return Math.max(0, Math.floor((now.getTime() - from.getTime()) / DAY_MS));
@@ -49,7 +52,7 @@ export class AdminDailyAlertsService {
       await Promise.all([
         this.collectPostOverdue(),
         this.prisma.campaignApplication.count({
-          where: this.deliveryUnconfirmedWhere(new Date()),
+          where: this.deliveryUnconfirmedWhere(),
         }),
         this.prisma.influencerWithdrawal.count({ where: { decision: "PENDING" } }),
       ]);
@@ -109,11 +112,12 @@ export class AdminDailyAlertsService {
     );
   }
 
-  private deliveryUnconfirmedWhere(now: Date) {
+  private deliveryUnconfirmedWhere() {
     return {
       status: { in: DELIVERY_PENDING_STATUSES },
       receivedAt: null,
-      shippedAt: { lte: new Date(now.getTime() - DELIVERY_UNCONFIRMED_DAYS * DAY_MS) },
+      // 삭제된 캠페인은 응모자 관리와 달리 제외한다 — 더는 운영하지 않는 건이라
+      // '오늘 처리할 일'로 올릴 대상이 아니다.
       campaign: { category: { in: DELIVERY_CATEGORIES }, deletedAt: null },
     };
   }
@@ -121,25 +125,28 @@ export class AdminDailyAlertsService {
   private async collectDeliveryUnconfirmed(): Promise<DailyActionAlertTarget[]> {
     const now = new Date();
     const applications = await this.prisma.campaignApplication.findMany({
-      where: this.deliveryUnconfirmedWhere(now),
+      where: this.deliveryUnconfirmedWhere(),
       select: {
         id: true,
         shippedAt: true,
+        deliveredAt: true,
         campaign: { select: { title: true } },
         influencer: { select: { name: true, lineUserId: true } },
       },
-      orderBy: { shippedAt: "asc" },
+      orderBy: { deliveredAt: "asc" },
     });
 
-    return applications.map((application) => ({
-      applicationId: application.id,
-      influencerName: application.influencer.name,
-      campaignTitle: application.campaign.title,
-      elapsedDays: application.shippedAt
-        ? elapsedDaysSince(application.shippedAt, now)
-        : 0,
-      lineLinked: application.influencer.lineUserId !== null,
-    }));
+    return applications.map((application) => {
+      // 경과일은 배송 완료 시점 기준. 선발송처럼 완료 시각이 없으면 출고일로 센다.
+      const since = application.deliveredAt ?? application.shippedAt;
+      return {
+        applicationId: application.id,
+        influencerName: application.influencer.name,
+        campaignTitle: application.campaign.title,
+        elapsedDays: since ? elapsedDaysSince(since, now) : 0,
+        lineLinked: application.influencer.lineUserId !== null,
+      };
+    });
   }
 
   /**

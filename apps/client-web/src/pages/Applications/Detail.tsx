@@ -27,6 +27,7 @@ import {
   submitReview,
   submitSimpleReview,
   useApplication,
+  applicationSubTypeTags,
 } from "@/domains/application";
 import { useCampaign } from "@/domains/campaign";
 import { postUrls, type AttachmentUploadInput } from "@jsure/shared";
@@ -184,6 +185,14 @@ export function ApplicationDetail() {
         <div className={styles.headRow}>
           <div className={styles.title}>{data.campaignTitle}</div>
           <StageBadge stage={stage} />
+        </div>
+        {/* 어떤 서브타입·옵션(피드/릴스)으로 응모했는지 — 목록 카드와 같은 표기. */}
+        <div className={styles.snsTags}>
+          {applicationSubTypeTags(data).map((tag) => (
+            <span key={tag.subType} className={styles.snsTag}>
+              {tag.label} {/* new */}
+            </span>
+          ))}
         </div>
         <div className={styles.reward}>¥{data.rewardJpy.toLocaleString("ja-JP")}</div>
         {data.productOptions.length > 0 && (

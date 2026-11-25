@@ -1,6 +1,8 @@
-import type {
-  ApplicationDisplayStage,
-  CampaignCategory,
+import {
+  SUB_TYPE_LABEL,
+  type ApplicationDisplayStage,
+  type CampaignCategory,
+  type CampaignSubType,
 } from "@jsure/shared";
 import { t } from "@i18n";
 
@@ -100,6 +102,30 @@ export function stageProgressFor(
 // 카테고리별 스텝 총 개수. 스테퍼 렌더링용.
 export function stageTotalFor(_category: CampaignCategory): number {
   return 8;
+}
+
+/** 서브타입 옵션 표시명. 지금은 인스타그램 피드/릴스만 있다. */
+const SUB_TYPE_OPTION_LABEL: Record<string, string> = {
+  FEED: t("campaign.card.instagramFeed"),
+  REELS: t("campaign.card.instagramReels"),
+};
+
+/**
+ * 응모가 참여하는 서브타입 태그 — 선택 옵션이 있으면 함께 보여준다.
+ * 목록 카드와 상세가 같은 표기를 쓰도록 한 곳에서 만든다.
+ */
+export function applicationSubTypeTags(application: {
+  subTypes: CampaignSubType[];
+  selectedOptions: { subType: CampaignSubType; option: string }[];
+}): { subType: CampaignSubType; label: string }[] {
+  return application.subTypes.map((subType) => {
+    const selected = application.selectedOptions.find(
+      (entry) => entry.subType === subType,
+    );
+    if (!selected) return { subType, label: SUB_TYPE_LABEL[subType] };
+    const optionLabel = SUB_TYPE_OPTION_LABEL[selected.option] ?? selected.option;
+    return { subType, label: `${SUB_TYPE_LABEL[subType]} - ${optionLabel}` };
+  });
 }
 
 /** @deprecated 카테고리 인지가 필요 없는 옛 호출용. stageProgressFor 사용 권장. */

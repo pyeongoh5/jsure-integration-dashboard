@@ -21,6 +21,23 @@
   color: #111;
 }
 
+/* 응모한 서브타입·옵션 태그. 목록 카드(.sns)와 같은 모양. */
+.snsTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.snsTag {
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+}
+
 .campaignLink {
   display: inline-block;
   margin-top: 6px;

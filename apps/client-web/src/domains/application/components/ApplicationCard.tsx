@@ -1,6 +1,6 @@
-import { SUB_TYPE_LABEL, type InfluencerApplication } from "@jsure/shared";
+import { type InfluencerApplication } from "@jsure/shared";
 import { t } from "@i18n";
-import { STAGE_PROGRESS, STAGE_TOTAL } from "../utils";
+import { applicationSubTypeTags, STAGE_PROGRESS, STAGE_TOTAL } from "../utils";
 import { StageBadge } from "./StageBadge";
 import styles from "./ApplicationCard.module.css";
 
@@ -41,18 +41,11 @@ export function ApplicationCard({ app, onSelect }: Props) {
       <div className={styles.head}>
         <div className={styles.title}>
           {app.campaignTitle}
-          {app.subTypes.map((subType) => { // 선택 옵션(FEED/REELS)은 한 태그로 합쳐 표기
-            const selected = app.selectedOptions.find(
-              (entry) => entry.subType === subType,
-            );
-            return (
-              <span key={subType} className={styles.sns}>
-                {selected
-                  ? `${SUB_TYPE_LABEL[subType]} - ${selected.option}`
-                  : SUB_TYPE_LABEL[subType]}
-              </span>
-            );
-          })}
+          {applicationSubTypeTags(app).map((tag) => ( // 선택 옵션(피드/릴스)은 한 태그로 합쳐 표기
+            <span key={tag.subType} className={styles.sns}>
+              {tag.label} {/* new */}
+            </span>
+          ))}
         </div>
         <StageBadge stage={app.displayStage} />
       </div>

@@ -125,9 +125,6 @@ export function parseCampaignBoardFilterParams(raw: Record<string, unknown>): Ca
   });
 }
 
-/** 출고 후 이 일수가 지나도록 수령 확인이 없으면 미수령 알림 대상. */
-export const DELIVERY_UNCONFIRMED_DAYS = 10;
-
 export const DailyActionAlertsResponseSchema = z.object({
   postOverdueCount: z.number().int().nonnegative(),
   deliveryUnconfirmedCount: z.number().int().nonnegative(),

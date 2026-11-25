@@ -4,6 +4,9 @@
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
+  /* 긴 제목 옆에 flex 아이템으로 놓이면 글자 단위로 접힌다 — 폭을 지킨다. */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .neutral {

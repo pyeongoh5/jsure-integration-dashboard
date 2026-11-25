@@ -13,12 +13,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-2);
 }
 
 .title {
   font-size: 16px;
   font-weight: var(--font-weight-bold);
   color: #111;
+  /* 띄어쓰기 없는 일본어 제목도 접히도록 — 없으면 배지를 밀어낸다. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* 응모한 서브타입·옵션 태그. 목록 카드(.sns)와 같은 모양. */

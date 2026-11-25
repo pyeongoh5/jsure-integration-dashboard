@@ -180,7 +180,8 @@ export function ApplicationDetail() {
 
   return (
     <div>
-      <PageHeader showBack title={data.campaignTitle} />
+      {/* 제목은 바로 아래 본문 블록이 배지·보수와 함께 보여준다 — 헤더에 또 넣지 않는다. */}
+      <PageHeader showBack />
       <div className={styles.top}>
         <div className={styles.headRow}>
           <div className={styles.title}>{data.campaignTitle}</div>
